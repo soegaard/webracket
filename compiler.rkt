@@ -1942,7 +1942,7 @@
     (define lifted-abstractions (make-hasheq))
     (define (formals->arity f)
       ; +n means precisely n
-      ;  0 means preciely  0
+      ;  0 means precisely  0
       ; -1 means at least 0
       ; -2 means at least 1
       ; -n means at least n-1
@@ -1980,7 +1980,7 @@
     [(case-lambda ,s ,ab ...)
      (define (formals->arity f)
        ; +n means precisely n
-       ;  0 means preciely  0
+       ;  0 means precisely  0
        ; -1 means at least 0
        ; -2 means at least 1
        ; -n means at least n-1
@@ -3552,7 +3552,7 @@
                        (field $name   (ref eq))   ;; $false or a $String    
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0)
                        ;                              +n means precisely n  
-                       ;                               0 means preciely  0  
+                       ;                               0 means precisely  0
                        ;                              -1 means at least 0   
                        ;                              -2 means at least 1   
                        ;                              -n means at least n-1 
