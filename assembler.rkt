@@ -34,7 +34,7 @@
 
 ; The assembler `wat2wasm` from the "official" wabt tools
 ; does not support the GC proposal (which includes i31).
-; The tool as a flag `--enable-gc` but it has no effect on the assembler.
+; The tool has a flag `--enable-gc` but it has no effect on the assembler.
 ; The issue is that the options are shared between a set of tools,
 ; and some of the other tools support the GC proposal.
 
