@@ -12176,8 +12176,10 @@
          (global $fasl-boolean    (ref i31) (ref.i31 (i32.const 0x05)))
          (global $fasl-null       (ref i31) (ref.i31 (i32.const 0x06)))
          (global $fasl-pair       (ref i31) (ref.i31 (i32.const 0x07)))
-         (global $fasl-vector     (ref i31) (ref.i31 (i32.const 0x08)))
-         (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
+        (global $fasl-vector     (ref i31) (ref.i31 (i32.const 0x08)))
+        (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
+        (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
+        (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
 
          
         (func $s-exp->fasl/immediate
@@ -12207,11 +12209,11 @@
                             (else
                              ;; Void immediate
                              (if (i32.eq (local.get $i) (i32.const ,void-value))
-                                 (then (call $write-byte (ref.i31 (i32.const 10)) (local.get $out)))
+                                 (then (call $write-byte (global.get $fasl-void) (local.get $out)))
                                  (else
                                   ;; EOF immediate
                                   (if (i32.eq (local.get $i) (i32.const ,eof-value))
-                                      (then (call $write-byte (ref.i31 (i32.const 11)) (local.get $out)))
+                                      (then (call $write-byte (global.get $fasl-eof) (local.get $out)))
                                       (else (unreachable)))))))))
               (global.get $void))
 
