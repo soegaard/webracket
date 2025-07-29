@@ -12245,14 +12245,13 @@
                                                                                         (i32.lt_u (local.get $i) (local.get $n))
                                                                                         (block
                                                                                          (call $s-exp->fasl
-                                                                                               (array.get (local.get $arr) (local.get $i)) (local.get $out))
+                                                                                               (array.get $Array (local.get $arr) (local.get $i))
+                                                                                               (local.get $out))
                                                                                          (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                                                                          )))))
                                                                       (else
                                                                        (unreachable) ;; unsupported type
                                                                        ))))))))))))))
-         
-
 
         (func $fasl:write-u32
                (param $v i32)
