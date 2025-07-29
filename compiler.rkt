@@ -10334,7 +10334,8 @@
          ;;       since the #\return#\newline combination counts as a
          ;;       single position.
 
-         (func $raise-check-string-port (param $x (ref eq)) (unreachable))
+        (func $raise-check-string-port (param $x (ref eq)) (unreachable))
+        (func $raise-check-port-or-false (param $x (ref eq)) (unreachable))
          
          (func $string-port?
                (param $v (ref eq))
@@ -12181,16 +12182,27 @@
          (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
          (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
          
-         (func $s-exp->fasl
-               (param $v   (ref eq))
-               (param $out (ref eq)) ;; a StringPort
-               (result     (ref eq))
+        (func $s-exp->fasl
+              (param $v   (ref eq))
+              (param $out (ref eq)) ;; a StringPort or #f
+              (result     (ref eq))
 
-               ; the write-to-port case
-               (call $fasl:s-exp->fasl
-                     (local.get $v) (local.get $out))
+              (local $port (ref eq))
+              (local $res  (ref eq))
 
-               (global.get $void))
+              (if (ref.eq (local.get $out) (global.get $false))
+                  (then
+                   (local.set $port (call $open-output-bytes))
+                   (call $fasl:s-exp->fasl (local.get $v) (local.get $port))
+                   (local.set $res (call $get-output-bytes (local.get $port)))
+                   (local.get $res))
+                  (else
+                   (if (ref.test (ref $StringPort) (local.get $out))
+                       (then
+                        (call $fasl:s-exp->fasl (local.get $v) (local.get $out))
+                        (global.get $void))
+                       (else (call $raise-check-port-or-false (local.get $out))
+                             (unreachable)))))
                               
          (func $fasl:s-exp->fasl
                (param $v   (ref eq))
