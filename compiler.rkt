@@ -12182,27 +12182,29 @@
          (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
          (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
          
-        (func $s-exp->fasl
-              (param $v   (ref eq))
-              (param $out (ref eq)) ;; a StringPort or #f
-              (result     (ref eq))
+         (func $s-exp->fasl
+               (param $v   (ref eq))
+               (param $out (ref eq)) ;; a StringPort or #f
+               (result     (ref eq))
 
-              (local $port (ref eq))
-              (local $res  (ref eq))
+               (local $port (ref eq))
+               (local $res  (ref eq))
 
-              (if (ref.eq (local.get $out) (global.get $false))
-                  (then
-                   (local.set $port (call $open-output-bytes))
-                   (call $fasl:s-exp->fasl (local.get $v) (local.get $port))
-                   (local.set $res (call $get-output-bytes (local.get $port)))
-                   (local.get $res))
-                  (else
-                   (if (ref.test (ref $StringPort) (local.get $out))
-                       (then
-                        (call $fasl:s-exp->fasl (local.get $v) (local.get $out))
-                        (global.get $void))
-                       (else (call $raise-check-port-or-false (local.get $out))
-                             (unreachable)))))
+               (if (result (ref eq))
+                   (ref.eq (local.get $out) (global.get $false))
+                   (then
+                    (local.set $port (call $open-output-bytes))
+                    (call $fasl:s-exp->fasl (local.get $v) (local.get $port))
+                    (local.set $res (call $get-output-bytes (local.get $port)))
+                    (local.get $res))
+                   (else
+                    (if (result (ref eq))
+                        (ref.test (ref $StringPort) (local.get $out))
+                        (then
+                         (call $fasl:s-exp->fasl (local.get $v) (local.get $out))
+                         (global.get $void))
+                        (else (call $raise-check-port-or-false (local.get $out))
+                              (unreachable))))))
                               
          (func $fasl:s-exp->fasl
                (param $v   (ref eq))
