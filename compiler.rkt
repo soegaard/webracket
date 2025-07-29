@@ -12176,51 +12176,16 @@
          (global $fasl-boolean    (ref i31) (ref.i31 (i32.const 0x05)))
          (global $fasl-null       (ref i31) (ref.i31 (i32.const 0x06)))
          (global $fasl-pair       (ref i31) (ref.i31 (i32.const 0x07)))
-        (global $fasl-vector     (ref i31) (ref.i31 (i32.const 0x08)))
-        (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
-        (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
-        (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
-
+         (global $fasl-vector     (ref i31) (ref.i31 (i32.const 0x08)))
+         (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
+         (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
+         (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
          
-        (func $s-exp->fasl/immediate
-              (param $i i32)
-              (param $v (ref eq))
-              (param $out (ref eq))
-              (result (ref eq))
 
-              (local $b i32)
-
-              ;; Character immediate
-              (if (i32.eq (i32.and (local.get $i) (i32.const ,char-mask)) (i32.const ,char-tag))
-                  (then
-                   (call $write-byte (global.get $fasl-character) (local.get $out))
-                   (call $fasl:write-u32 (i32.shr_u (local.get $i) (i32.const ,char-shift)) (local.get $out)))
-                  (else
-                   ;; Boolean immediate
-                   (if (i32.eq (i32.and (local.get $i) (i32.const ,boolean-mask)) (i32.const ,boolean-tag))
-                       (then
-                        (local.set $b (i32.shr_u (local.get $i) (i32.const ,boolean-shift)))
-                        (call $write-byte (global.get $fasl-boolean) (local.get $out))
-                        (call $write-byte (ref.i31 (i32.shl (local.get $b) (i32.const 1))) (local.get $out)))
-                       (else
-                        ;; Null immediate
-                        (if (i32.eq (local.get $i) (i32.const ,empty-value))
-                            (then (call $write-byte (global.get $fasl-null) (local.get $out)))
-                            (else
-                             ;; Void immediate
-                             (if (i32.eq (local.get $i) (i32.const ,void-value))
-                                 (then (call $write-byte (global.get $fasl-void) (local.get $out)))
-                                 (else
-                                  ;; EOF immediate
-                                  (if (i32.eq (local.get $i) (i32.const ,eof-value))
-                                      (then (call $write-byte (global.get $fasl-eof) (local.get $out)))
-                                      (else (unreachable)))))))))
-              (global.get $void))
-
-        (func $s-exp->fasl
-              (param $v   (ref eq))
-              (param $out (ref eq)) ;; a StringPort
-              (result     (ref eq))
+         (func $s-exp->fasl
+               (param $v   (ref eq))
+               (param $out (ref eq)) ;; a StringPort
+               (result     (ref eq))
 
                (local $i   i32)
                (local $n   i32)
@@ -12235,7 +12200,7 @@
                     (if (i32.eqz (i32.and (local.get $i) (i32.const 1)))
                         ;; Fixnum
                         (then
-                         (call $write-byte (global.get $fasl-fixnum) (local.get $out))
+                         (drop (call $write-byte (global.get $fasl-fixnum) (local.get $out)))
                          (call $fasl:write-u32 (i32.shr_u (local.get $i) (i32.const 1)) (local.get $out)))
                         ;; Immediate — test tag
                         (else
@@ -12245,75 +12210,114 @@
                    (else
                     (if (ref.test (ref $String) (local.get $v))
                         (then
-                         (call $write-byte (global.get $fasl-string) (local.get $out))
+                         (drop (call $write-byte (global.get $fasl-string) (local.get $out)))
                          (call $fasl:write-string (ref.cast (ref $String) (local.get $v)) (local.get $out)))
 
                         (else (if (ref.test (ref $Bytes) (local.get $v))
                                   (then
-                                   (call $write-byte (global.get $fasl-bytes) (local.get $out))
+                                   (drop (call $write-byte (global.get $fasl-bytes) (local.get $out)))
                                    (call $fasl:write-bytes (ref.cast (ref $Bytes) (local.get $v)) (local.get $out)))
 
                                   (else (if (ref.test (ref $Symbol) (local.get $v))
                                             (then
-                                             (call $write-byte (global.get $fasl-symbol) (local.get $out))
+                                             (drop (call $write-byte (global.get $fasl-symbol) (local.get $out)))
                                              (call $fasl:write-symbol (ref.cast (ref $Symbol) (local.get $v)) (local.get $out)))
 
                                             (else (if (ref.test (ref $Flonum) (local.get $v))
                                                       (then
-                                                       (call $write-byte (global.get $fasl-flonum) (local.get $out))
+                                                       (drop (call $write-byte (global.get $fasl-flonum) (local.get $out)))
                                                        (call $fasl:write-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $v))) (local.get $out)))
 
                                                       (else (if (ref.test (ref $Pair) (local.get $v))
                                                                 (then
-                                                                 (call $write-byte (global.get $fasl-pair) (local.get $out))
-                                                                 (call $s-exp->fasl (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))) (local.get $out))
-                                                                 (call $s-exp->fasl (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))) (local.get $out)))
+                                                                 (drop (call $write-byte (global.get $fasl-pair) (local.get $out)))
+                                                                 (drop (call $s-exp->fasl
+                                                                             (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v)))
+                                                                             (local.get $out)))
+                                                                 (drop (call $s-exp->fasl
+                                                                             (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v)))
+                                                                             (local.get $out))))
+                                                                (else
+                                                                 (if (ref.test (ref $Vector) (local.get $v))
+                                                                     (then
+                                                                      (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                                                                      (drop (call $write-byte (global.get $fasl-vector) (local.get $out)))
+                                                                      (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                                                                      (local.set $n (array.len (local.get $arr)))
+                                                                      (call $fasl:write-u32 (local.get $n) (local.get $out))
+                                                                      (local.set $i (i32.const 0))
+                                                                      (loop $loop
+                                                                            (br_if $loop
+                                                                                   (i32.lt_u (local.get $i) (local.get $n))
+                                                                                   (block
+                                                                                    (drop (call $s-exp->fasl
+                                                                                                (array.get $Array (local.get $arr) (local.get $i))
+                                                                                                (local.get $out)))
+                                                                                    (local.set $i (i32.add (local.get $i) (i32.const 1)))))))
+                                                                     (else
+                                                                      (unreachable) ;; unsupported type
+                                                                      ))))))))))))))
+               (global.get $void))
 
-                                                                (else (if (ref.test (ref $Vector) (local.get $v))
-                                                                          (then
-                                                                           (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
-                                                                           (call $write-byte (global.get $fasl-vector) (local.get $out))
-                                                                           (local.set $arr (struct.get $Vector $arr (local.get $vec)))
-                                                                           (local.set $n (array.len (local.get $arr)))
-                                                                           (call $fasl:write-u32 (local.get $n) (local.get $out))
-                                                                           (local.set $i (i32.const 0))
-                                                                           (loop $loop
-                                                                                 (br_if $loop
-                                                                                        (i32.lt_u (local.get $i) (local.get $n))
-                                                                                        (block
-                                                                                         (call $s-exp->fasl
-                                                                                               (array.get $Array (local.get $arr) (local.get $i))
-                                                                                               (local.get $out))
-                                                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                                                                         )))))
-                                                                      (else
-                                                                       (unreachable) ;; unsupported type
-                                                                       ))))))))))))))
-
-        (func $fasl:write-u32
-               (param $v i32)
+         (func $s-exp->fasl/immediate
+               (param $i i32)
+               (param $v (ref eq))
                (param $out (ref eq))
-               (result (ref eq))
 
-               ;; write the four bytes of $v in big-endian order
+               (local $b i32)
+
+               ;; Character immediate
+               (if (i32.eq (i32.and (local.get $i) (i32.const ,char-mask)) (i32.const ,char-tag))
+                   (then
+                    (drop (call $write-byte (global.get $fasl-character) (local.get $out)))
+                    (call $fasl:write-u32 (i32.shr_u (local.get $i) (i32.const ,char-shift)) (local.get $out)))
+                   (else
+                    ;; Boolean immediate
+                    (if (i32.eq (i32.and (local.get $i) (i32.const ,boolean-mask)) (i32.const ,boolean-tag))
+                        (then
+                         (local.set $b (i32.shr_u (local.get $i) (i32.const ,boolean-shift)))
+                         (drop (call $write-byte (global.get $fasl-boolean) (local.get $out)))
+                         (drop (call $write-byte (ref.i31 (i32.shl (local.get $b) (i32.const 1))) (local.get $out))))
+                        (else
+                         ;; Null immediate
+                         (if (i32.eq (local.get $i) (i32.const ,empty-value))
+                             (then
+                              (drop (call $write-byte (global.get $fasl-null) (local.get $out))))
+                             (else
+                              ;; Void immediate
+                              (if (i32.eq (local.get $i) (i32.const ,void-value))
+                                  (then (drop (call $write-byte (global.get $fasl-void) (local.get $out))))
+                                  (else
+                                   ;; EOF immediate
+                                   (if (i32.eq (local.get $i) (i32.const ,eof-value))
+                                       (then (drop (call $write-byte (global.get $fasl-eof) (local.get $out))))
+                                       (else (unreachable))))))))))))
+         
+        (func $fasl:write-u32
+              (param $v i32)
+              (param $out (ref eq))
+
+              ;; write the four bytes of $v in big-endian order
+              (drop
                (call $write-byte
                      (ref.i31 (i32.shl (i32.and (i32.shr_u (local.get $v) (i32.const 24)) (i32.const 255)) (i32.const 1)))
-                     (local.get $out))
+                     (local.get $out)))
+              (drop
                (call $write-byte
                      (ref.i31 (i32.shl (i32.and (i32.shr_u (local.get $v) (i32.const 16)) (i32.const 255)) (i32.const 1)))
-                     (local.get $out))
+                     (local.get $out)))
+              (drop
                (call $write-byte
                      (ref.i31 (i32.shl (i32.and (i32.shr_u (local.get $v) (i32.const 8)) (i32.const 255)) (i32.const 1)))
-                     (local.get $out))
+                     (local.get $out)))
+              (drop
                (call $write-byte
                      (ref.i31 (i32.shl (i32.and (local.get $v) (i32.const 255)) (i32.const 1)))
-                     (local.get $out))
-               (global.get $void))
+                     (local.get $out))))
 
         (func $fasl:write-bytes
                (param $b (ref $Bytes))
                (param $out (ref eq))
-               (result (ref eq))
 
                (local $arr (ref $I8Array))
                (local $len i32)
@@ -12323,7 +12327,7 @@
                ;; write length first
                (local.set $arr (struct.get $Bytes $bs (local.get $b)))
                (local.set $len (array.len (local.get $arr)))
-               (drop (call $fasl:write-u32 (local.get $len) (local.get $out)))
+               (call $fasl:write-u32 (local.get $len) (local.get $out))
 
                ;; output each byte
                (local.set $i (i32.const 0))
@@ -12331,42 +12335,39 @@
                       (loop $loop
                             (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
                             (local.set $val (call $i8array-ref (local.get $arr) (local.get $i)))
-                            (call $write-byte
-                                  (ref.i31 (i32.shl (local.get $val) (i32.const 1)))
-                                  (local.get $out))
+                            (drop (call $write-byte
+                                        (ref.i31 (i32.shl (local.get $val) (i32.const 1)))
+                                        (local.get $out)))
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
-               (global.get $void))
+                            (br $loop))))
 
          (func $fasl:write-string
                (param $s (ref $String))
                (param $out (ref eq))
-               (result (ref eq))
 
                (local $bs (ref eq))
+
                (local.set $bs (call $string->bytes/utf-8 (local.get $s) (global.get $false) (global.get $false) (global.get $false)))
                (call $fasl:write-bytes (ref.cast (ref $Bytes) (local.get $bs)) (local.get $out)))
 
          (func $fasl:write-symbol
                (param $sym (ref $Symbol))
                (param $out (ref eq))
-               (result (ref eq))
 
                (call $fasl:write-string (struct.get $Symbol $name (local.get $sym)) (local.get $out)))
 
          (func $fasl:write-f64
                (param $v f64)
                (param $out (ref eq))
-               (result (ref eq))
 
                (local $bits i64)
                (local $hi i32)
                (local $lo i32)
 
                (local.set $bits (i64.reinterpret_f64 (local.get $v)))
-               (local.set $hi (i32.wrap_i64 (i64.shr_u (local.get $bits) (i64.const 32))))
-               (local.set $lo (i32.wrap_i64 (local.get $bits)))
-               (drop (call $fasl:write-u32 (local.get $hi) (local.get $out)))
+               (local.set $hi   (i32.wrap_i64 (i64.shr_u (local.get $bits) (i64.const 32))))
+               (local.set $lo   (i32.wrap_i64 (local.get $bits)))
+               (call $fasl:write-u32 (local.get $hi) (local.get $out))
                (call $fasl:write-u32 (local.get $lo) (local.get $out)))
 
          ;;;
