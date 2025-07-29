@@ -12181,11 +12181,20 @@
          (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
          (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
          
-
          (func $s-exp->fasl
                (param $v   (ref eq))
                (param $out (ref eq)) ;; a StringPort
                (result     (ref eq))
+
+               ; the write-to-port case
+               (call $fasl:s-exp->fasl
+                     (local.get $v) (local.get $out))
+
+               (global.get $void))
+                              
+         (func $fasl:s-exp->fasl
+               (param $v   (ref eq))
+               (param $out (ref eq)) ;; a StringPort
 
                (local $i   i32)
                (local $n   i32)
@@ -12231,12 +12240,12 @@
                                                       (else (if (ref.test (ref $Pair) (local.get $v))
                                                                 (then
                                                                  (drop (call $write-byte (global.get $fasl-pair) (local.get $out)))
-                                                                 (drop (call $s-exp->fasl
-                                                                             (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v)))
-                                                                             (local.get $out)))
-                                                                 (drop (call $s-exp->fasl
-                                                                             (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v)))
-                                                                             (local.get $out))))
+                                                                 (call $fasl:s-exp->fasl
+                                                                       (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v)))
+                                                                       (local.get $out))
+                                                                 (call $fasl:s-exp->fasl
+                                                                       (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v)))
+                                                                       (local.get $out)))
                                                                 (else
                                                                  (if (ref.test (ref $Vector) (local.get $v))
                                                                      (then
@@ -12250,14 +12259,13 @@
                                                                             (br_if $loop
                                                                                    (i32.lt_u (local.get $i) (local.get $n))
                                                                                    (block
-                                                                                    (drop (call $s-exp->fasl
-                                                                                                (array.get $Array (local.get $arr) (local.get $i))
-                                                                                                (local.get $out)))
+                                                                                    (call $fasl:s-exp->fasl
+                                                                                          (array.get $Array (local.get $arr) (local.get $i))
+                                                                                          (local.get $out))
                                                                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))))))
                                                                      (else
                                                                       (unreachable) ;; unsupported type
-                                                                      ))))))))))))))
-               (global.get $void))
+                                                                      )))))))))))))))
 
          (func $s-exp->fasl/immediate
                (param $i i32)
