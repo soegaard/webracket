@@ -12180,10 +12180,45 @@
          (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
 
          
-         (func $s-exp->fasl
-               (param $v   (ref eq))
-               (param $out (ref eq)) ;; a StringPort
-               (result     (ref eq))
+        (func $s-exp->fasl/immediate
+              (param $i i32)
+              (param $v (ref eq))
+              (param $out (ref eq))
+              (result (ref eq))
+
+              (local $b i32)
+
+              ;; Character immediate
+              (if (i32.eq (i32.and (local.get $i) (i32.const ,char-mask)) (i32.const ,char-tag))
+                  (then
+                   (call $write-byte (global.get $fasl-character) (local.get $out))
+                   (call $fasl:write-u32 (i32.shr_u (local.get $i) (i32.const ,char-shift)) (local.get $out)))
+                  (else
+                   ;; Boolean immediate
+                   (if (i32.eq (i32.and (local.get $i) (i32.const ,boolean-mask)) (i32.const ,boolean-tag))
+                       (then
+                        (local.set $b (i32.shr_u (local.get $i) (i32.const ,boolean-shift)))
+                        (call $write-byte (global.get $fasl-boolean) (local.get $out))
+                        (call $write-byte (ref.i31 (i32.shl (local.get $b) (i32.const 1))) (local.get $out)))
+                       (else
+                        ;; Null immediate
+                        (if (i32.eq (local.get $i) (i32.const ,empty-value))
+                            (then (call $write-byte (global.get $fasl-null) (local.get $out)))
+                            (else
+                             ;; Void immediate
+                             (if (i32.eq (local.get $i) (i32.const ,void-value))
+                                 (then (call $write-byte (ref.i31 (i32.const 10)) (local.get $out)))
+                                 (else
+                                  ;; EOF immediate
+                                  (if (i32.eq (local.get $i) (i32.const ,eof-value))
+                                      (then (call $write-byte (ref.i31 (i32.const 11)) (local.get $out)))
+                                      (else (unreachable)))))))))
+              (global.get $void))
+
+        (func $s-exp->fasl
+              (param $v   (ref eq))
+              (param $out (ref eq)) ;; a StringPort
+              (result     (ref eq))
 
                (local $i   i32)
                (local $n   i32)
