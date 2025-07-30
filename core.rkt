@@ -142,8 +142,19 @@
 (provide block)
 
 
-
 ;; 4.10
 (require (only-in racket/base
                   null))
 (provide null)
+
+
+;; 13.10
+
+(require (prefix-in rkt: racket/fasl))
+
+; We simplify s-exp->fasl here in order to avoid keyword functions
+
+(define (s-exp->fasl v [out #f]) (rkt:s-exp->fasl v out))
+(provide s-exp->fasl)
+
+

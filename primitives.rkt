@@ -1,5 +1,6 @@
 #lang racket/base
-(require racket/fixnum)
+(require racket/fixnum
+         racket/fasl)
 
 ;; The primitives are 
 
@@ -122,7 +123,14 @@
  fxmin fxmax
 
  fx->fl
- fl->fx)
+ fl->fx
+
+
+ ;;
+
+ s-exp->fasl
+ 
+ )
 
          
          

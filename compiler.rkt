@@ -281,6 +281,8 @@
 (define-primitives
   ; call/cc ; todo remove - we use it for our test function
 
+  raise-unbound-variable-reference
+  
   ; structures
   make-struct-type
   make-struct-field-accessor 
@@ -399,6 +401,8 @@
   write-byte
   port-next-location
 
+  s-exp->fasl
+  
   make-empty-hasheq ; not in Racket
   make-hasheq 
   hash-ref
@@ -424,6 +428,7 @@
   primitive-result-arity
 
   variable-reference-from-unsafe?
+  variable-reference-constant?
 
 
   ;; 17. Unsafe Operations
@@ -578,7 +583,11 @@
     (wcm s e0 e1 e2)                              => (with-continuation-mark e0 e1 e2)
     (app s e0 e1 ...)                             => (e0 e1 ...)             ; (#%plain-app e0 e1 ...)
     (top s x)                                     => (#%top . x)
-    (variable-reference s)                        => (#%variable-reference)))
+    (variable-reference s vrx)                    => (#%variable-reference vrx))
+  (VariableReferenceId (vrx)
+     x                                            
+     (anonymous s)                                => ()
+     (top s x)                                    => (#%top . x)))
 
 
 ;;; 
@@ -718,7 +727,9 @@
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
         [(#%plain-app e0 e1 ...)                    `(app ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]
         [(#%top . x)                                `(top ,E ,(variable #'x))]
-        [(#%variable-reference)                     `(variable-reference ,E)]
+        [(#%variable-reference)                     `(variable-reference ,E (anonymous ,E))]
+        [(#%variable-reference (#%top . x:id))      `(variable-reference ,E (top ,E ,(variable #'x)))]
+        [(#%variable-reference x:id)                `(variable-reference ,E ,(variable #'x))]
         [_ (displayln E)
            (error 'parse "expected <expression> got: ~a" E)])))
   
@@ -1057,14 +1068,19 @@
     (define (RecBinding* xss es ρ)
       (letv ((xss ρ) (rename** xss ρ))
         (letv ((es) (Expr* es ρ)) ; xss are bound in es
-          (values xss es ρ)))))
+              (values xss es ρ))))
+    ; References to unbound variables within a module leads to an error.
+    ; Outside modules, no errors will be signaled.
+    ; Example: Try (if 1 2 x) in the repl.
+    (define inside-module? (make-parameter #f)))
   
   (TopLevelForm : TopLevelForm (T ρ) -> TopLevelForm (ρ)
     [(topbegin ,s ,t ...)           (letv ((t ρ) (TopLevelForm* t ρ))
                                           (values `(topbegin ,s ,t ...) ρ))]
     [(#%expression ,s ,e)           (letv ((e ρ) (Expr e ρ))
                                           (values `(#%expression ,s ,e) ρ))]
-    [(topmodule ,s ,mn ,mp ,mf ...) (letv ((mf ρ) (ModuleLevelForm* mf ρ))
+    [(topmodule ,s ,mn ,mp ,mf ...) (letv ((mf ρ) (parameterize ([inside-module? #t])
+                                                    (ModuleLevelForm* mf ρ)))
                                           (values `(topmodule ,s ,mn ,mp ,mf ...) ρ))]
     [,g                             (letv ((g ρ) (GeneralTopLevelForm g ρ))
                                           (values `,g ρ))])
@@ -1098,11 +1114,22 @@
                                                       (values `(λ ,s ,f ,e) ρ-orig))))])
   (Expr : Expr (E ρ) -> Expr (ρ)
     [,x                                         (let ([ρx (ρ x)])
-                                                  (unless ρx
-                                                    (raise-syntax-error
-                                                     'α-rename "compiler.rkt: unbound variable"
-                                                     (variable-id x)))
-                                                  (values `,ρx ρ))]
+                                                  (cond
+                                                    [(and (not ρx) (inside-module?))
+                                                     (raise-syntax-error
+                                                      'α-rename "compiler.rkt: unbound variable"
+                                                      (variable-id x))]
+                                                    [(not ρx)
+                                                     ; signal unbound variable at runtime
+                                                     (values `(app ,#'here
+                                                                   ,(variable #'raise-unbound-variable-reference)
+                                                                   ; Note: `datum` has been eliminated at this point,
+                                                                   ;       so a different approach is needed
+                                                                   ; ,`(quote ,#'here  ,(datum #'unbound (variable-id x)))
+                                                                   )
+                                                             ρ)]
+                                                    [else
+                                                     (values `,ρx ρ)]))]
     [,ab                                        (Abstraction ab ρ)]
     [(case-lambda ,s ,ab ...)                   (let ([ρ-orig ρ])
                                                   (let-values ([(ab ρ) (Abstraction* ab ρ)])
@@ -1145,10 +1172,16 @@
                                                   (values `(app ,s ,e0 ,e1 ...) ρ)))]
     ; Note: top-level-variables are looked up by name in the namespace,
     ;       so they can't be renamed.
-    [(top ,s ,x)                              (values `(top ,s ,x) ρ)])
+    [(top ,s ,x)                              (values `(top ,s ,x) ρ)]
+    [(variable-reference ,s ,vrx)             (values E ρ)])
   
   (letv ((T ρ) (TopLevelForm T initial-ρ))
     T))
+
+  ;; (VariableReferenceId (vrx)
+  ;;    x                                            
+  ;;    (anonymous s)                                => ()
+  ;;    (top s x)                                    => (#%top . x)))
 
 
 (module+ test
@@ -1220,7 +1253,7 @@
     [(letrec-values ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
     [(set! ,s ,x ,e)                            (cons x (Expr e xs))]    
     [(top ,s ,x)                                xs]
-    [(variable-reference ,s)                    xs]
+    [(variable-reference ,s ,vrx)               xs]
     [(quote ,s ,d)                              xs]
     [(quote-syntax ,s ,d)                       xs]
     [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
@@ -1483,10 +1516,10 @@
     (+ x
        ab
        cab
-       (quote s d)            => (quote d)
-       (quote-syntax s d)     => (quote-syntax d)
-       (top s x)              => (#%top . x)
-       (variable-reference s) => (variable-reference)))
+       (quote s d)                => (quote d)
+       (quote-syntax s d)         => (quote-syntax d)
+       (top s x)                  => (#%top . x)
+       (variable-reference s vrx) => (variable-reference vrx)))
   ;; Complex Expressions
   ;;   - defer execution to at most one subexpression
   ;;   - may not terminate
@@ -1511,7 +1544,7 @@
      (quote s d)
      (quote-syntax s d)
      (top s x)
-     (variable-reference s)
+     (variable-reference s vrx)
      ; complex
      (if s e0 e1 e2)
      (set! s x e) 
@@ -1637,13 +1670,13 @@
         [(app       ,s ,e0 ,e1 ...)
          (Expr/name e0 (λ (ae0) (Expr*/names e1 (λ (ae1) (k `(app ,s ,ae0 ,ae1 ...))))))]
         ; Atomic expressions
-        [,x                      (k x)]
-        [,ab                     (Abstraction ab k)]
-        [,cab                    (CaseAbstraction cab k)]
-        [(quote ,s ,d)           (with-output-language (LANF AExpr) (k `(quote ,s ,d)))]
-        [(quote-syntax ,s ,d)    (with-output-language (LANF AExpr) (k `(quote-syntax ,s ,d)))]
-        [(top ,s ,x)             (with-output-language (LANF AExpr) (k `(top ,s ,x)))]
-        [(variable-reference ,s) (with-output-language (LANF AExpr) (k `(variable-reference ,s)))]
+        [,x                           (k x)]
+        [,ab                          (Abstraction ab k)]
+        [,cab                         (CaseAbstraction cab k)]
+        [(quote ,s ,d)                (with-output-language (LANF AExpr) (k `(quote ,s ,d)))]
+        [(quote-syntax ,s ,d)         (with-output-language (LANF AExpr) (k `(quote-syntax ,s ,d)))]
+        [(top ,s ,x)                  (with-output-language (LANF AExpr) (k `(top ,s ,x)))]
+        [(variable-reference ,s ,vrx) (with-output-language (LANF AExpr) (k `(variable-reference ,s ,vrx)))]
         [(begin ,s ,e0 ,e1 ...)
          (define (Expr/id e) (Expr e identity))
          (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])
@@ -1821,8 +1854,8 @@
     [(quote-syntax ,s ,d) (values AE empty-set)]
     ; Note: Top-level variables are stored in a namespace.
     ;       In this pass we are only looking for variables that need to be stored in closures.
-    [(top ,s ,x)             (values AE empty-set)]
-    [(variable-reference ,s) (values AE empty-set)])
+    [(top ,s ,x)                  (values AE empty-set)]
+    [(variable-reference ,s ,vrx) (values AE empty-set)]) ; todo 
   (CExpr : CExpr (CE xs) -> CExpr (xs)
     [,ae                                      (AExpr ae xs)]
     [(if  ,s ,[ae0 xs0] ,[e1  xs1] ,[e2 xs2]) (values CE (set-union* (list xs0 xs1 xs2)))]
@@ -2193,9 +2226,9 @@
     ; Note: Top-level variables are stored in a namespace.
     ;       In this pass we are only looking for variables that
     ;       need to be stored in closures.
-    [(top ,s ,x)             #f]
-    [(variable-reference ,s) #f]
-    [(free-ref ,x ,i)        #f])
+    [(top ,s ,x)                  #f]
+    [(variable-reference ,s ,vrx) #f]
+    [(free-ref ,x ,i)             #f])
 
   (CExpr : CExpr (CE) -> * ()
     [,ae                           (AExpr ae)]
@@ -2591,8 +2624,10 @@
      #;`(app ,#'namespace-variable-value (app ,#'string->symbol ',(symbol->string (syntax-e (variable-id x)))))
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
      ]
-    [(variable-reference ,s) `(struct.new $VariableReference 
-                                          (i32.const 0))] ; hash
+    [(variable-reference ,s ,vrx)
+     ; todo: dummy for now
+     `(struct.new $VariableReference 
+                  (i32.const 0))] ; hash
     [(quote-syntax ,s ,d)
      (raise-syntax-error 'generate-code "quote-syntax gone at this point")])
 
@@ -2645,6 +2680,15 @@
     [(primapp ,s ,pr ,ae1 ...) (define sym (syntax->datum (variable-id pr)))
                                (define work
                                  (case sym
+                                   [(s-exp->fasl)
+                                    ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+                                    (define aes (AExpr* ae1))
+                                    (define n   (length aes))
+                                    (when (> n 2) (error 'primapp "too many arguments: ~a" s))
+                                    (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
+                                    (define m (- 2 n))
+                                    (define optionals (make-list m `(global.get $missing)))
+                                    `(call $s-exp->fasl ,@aes ,@optionals)]
                                    [(void)
                                     (define (AE ae)   (AExpr3 ae <effect>))
                                     (define (AE* aes) (map AE aes))
@@ -12184,12 +12228,17 @@
          
          (func $s-exp->fasl
                (param $v   (ref eq))
-               (param $out (ref eq)) ;; a StringPort or #f
+               ; optionals:
+               (param $out (ref eq)) ;; a StringPort or #f (or $missing)              
                (result     (ref eq))
 
                (local $port (ref eq))
                (local $res  (ref eq))
 
+               ; Handle optional arguments
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (global.get $false))))
+               
                (if (result (ref eq))
                    (ref.eq (local.get $out) (global.get $false))
                    (then
@@ -12409,7 +12458,15 @@
                (param  $varref (ref eq))
                (result (ref eq))
                (global.get $true))
-         
+
+         (func $variable-reference-constant?
+               (param $varref (ref eq))
+               (result (ref eq))
+               (global.get $true))  ; todo: simple implementation for now.
+
+         (func $raise-unbound-variable-reference
+               (result (ref eq))
+               (unreachable))
          
          ;; 14.2 Evaluation and compilation
          ;; 14.3 The racket/load language

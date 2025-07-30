@@ -23,6 +23,7 @@
   (namespace-require 'racket/unsafe/ops)
   (namespace-require 'racket/flonum)
   (namespace-require 'racket/fixnum)
+  (namespace-require 'racket/fasl)
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   #;(namespace-require 'racket/base)
   #;(namespace-require 'racket/fixnum)
@@ -42,7 +43,11 @@
     boxed
     unboxed
 
+    s-exp->fasl
+    
     alt-reverse         ; in expansion of for/list
+
+    raise-unbound-variable-reference ; used for unbound variables outside modules
     ))
 
 (define (primitive->description sym-or-primitive)
