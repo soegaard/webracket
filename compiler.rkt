@@ -14757,7 +14757,49 @@
                   '(#t #t #f))))
   (define (test-fasl)
     (list
-     (list (equal? (run '(fasl->s-exp (s-exp->fasl 42))) 42))))
+     ;; fixnums
+     (equal? (run '(fasl->s-exp (s-exp->fasl 42))) 42)
+     (equal? (run '(fasl->s-exp (s-exp->fasl most-positive-fixnum)))
+             most-positive-fixnum)
+     (equal? (run '(fasl->s-exp (s-exp->fasl most-negative-fixnum)))
+             most-negative-fixnum)
+     ;; characters
+     (equal? (run '(fasl->s-exp (s-exp->fasl #\a))) #\a)
+     (equal? (run '(fasl->s-exp (s-exp->fasl #\λ))) #\λ)
+     ;; booleans
+     (equal? (run '(fasl->s-exp (s-exp->fasl #t))) #t)
+     (equal? (run '(fasl->s-exp (s-exp->fasl #f))) #f)
+     ;; symbol
+     (equal? (run '(fasl->s-exp (s-exp->fasl 'hello))) 'hello)
+     ;; strings
+     (equal? (run '(fasl->s-exp (s-exp->fasl "hi"))) "hi")
+     (equal? (run '(fasl->s-exp (s-exp->fasl ""))) "")
+     (equal? (run '(fasl->s-exp (s-exp->fasl "hé"))) "hé")
+     ;; byte strings
+     (equal? (run '(fasl->s-exp (s-exp->fasl (bytes 1 2 3)))) (bytes 1 2 3))
+     (equal? (run '(fasl->s-exp (s-exp->fasl (bytes)))) (bytes))
+     (equal? (run '(fasl->s-exp (s-exp->fasl (bytes 0 255)))) (bytes 0 255))
+     ;; null
+     (equal? (run '(fasl->s-exp (s-exp->fasl '()))) '())
+     ;; pairs
+     (equal? (run '(fasl->s-exp (s-exp->fasl '(1 . 2)))) '(1 . 2))
+     (equal? (run '(fasl->s-exp (s-exp->fasl '(1 2 3)))) '(1 2 3))
+     ;; vectors
+     (equal? (run '(fasl->s-exp (s-exp->fasl #(1 2 3)))) #(1 2 3))
+     (equal? (run '(fasl->s-exp (s-exp->fasl #()))) #())
+     ;; flonums
+     (equal? (run '(fasl->s-exp (s-exp->fasl 3.5))) 3.5)
+     (equal? (run '(fasl->s-exp (s-exp->fasl -2.0))) -2.0)
+     ;; void
+     (equal? (run '(fasl->s-exp (s-exp->fasl (void)))) (void))
+     ;; eof object
+     (equal? (run '(fasl->s-exp (s-exp->fasl (eof)))) (eof))
+     ;; explicit output port
+     (equal? (run '(let ([bs (call-with-output-bytes
+                            (lambda (out)
+                              (s-exp->fasl '(1 2) out)))])
+                     (fasl->s-exp bs)))
+             '(1 2))))
 
   (list "-- Core Constructs --"
         ;; (list "Immediate Values"              (test-immediates))
