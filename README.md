@@ -8,3 +8,10 @@ The WebRacket language is a subset of Racket that compiles to WebAssembly.
 returned instead. Passing any value other than an output port or `#f` results in
 an error. Internally `$s-exp->fasl` delegates to `$fasl:s-exp->fasl` so the same
 serializer is used in both cases.
+
+## fasl->s-exp
+
+`fasl->s-exp` decodes a byte string produced by `s-exp->fasl` and reconstructs
+the original value.  The WebAssembly runtime includes its own decoder
+implementation, while the reference implementation falls back to Racket's
+`racket/fasl` library.

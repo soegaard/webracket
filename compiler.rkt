@@ -402,7 +402,8 @@
   port-next-location
 
   s-exp->fasl
-  
+  fasl->s-exp
+
   make-empty-hasheq ; not in Racket
   make-hasheq 
   hash-ref
@@ -2680,18 +2681,25 @@
     [(primapp ,s ,pr ,ae1 ...) (define sym (syntax->datum (variable-id pr)))
                                (define work
                                  (case sym
-                                   [(s-exp->fasl)
-                                    ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 2) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
-                                    (define m (- 2 n))
-                                    (define optionals (make-list m `(global.get $missing)))
-                                    `(call $s-exp->fasl ,@aes ,@optionals)]
-                                   [(void)
-                                    (define (AE ae)   (AExpr3 ae <effect>))
-                                    (define (AE* aes) (map AE aes))
+                                  [(s-exp->fasl)
+                                   ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+                                   (define aes (AExpr* ae1))
+                                   (define n   (length aes))
+                                   (when (> n 2) (error 'primapp "too many arguments: ~a" s))
+                                   (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
+                                   (define m (- 2 n))
+                                   (define optionals (make-list m `(global.get $missing)))
+                                   `(call $s-exp->fasl ,@aes ,@optionals)]
+                                  [(fasl->s-exp)
+                                   ; exactly one argument
+                                   (define aes (AExpr* ae1))
+                                   (define n   (length aes))
+                                   (when (> n 1) (error 'primapp "too many arguments: ~a" s))
+                                   (when (< n 1) (error 'primapp "too few arguments: ~a" s))
+                                   `(call $fasl->s-exp ,@aes)]
+                                  [(void)
+                                   (define (AE ae)   (AExpr3 ae <effect>))
+                                   (define (AE* aes) (map AE aes))
                                     `(block (result (ref eq))
                                             ,@(AE* ae1)
                                             (global.get $void))]
@@ -12440,6 +12448,244 @@
                (local.set $lo   (i32.wrap_i64 (local.get $bits)))
                (call $fasl:write-u32 (local.get $hi) (local.get $out))
                (call $fasl:write-u32 (local.get $lo) (local.get $out)))
+
+        (func $fasl:read-u32
+               ;; read 4 bytes as big-endian u32
+               (param $arr (ref $I8Array))
+               (param $i   i32)
+               (result i32 i32)
+
+               (local $b0 i32)
+               (local $b1 i32)
+               (local $b2 i32)
+               (local $b3 i32)
+
+               (local.set $b0 (array.get_u $I8Array (local.get $arr) (local.get $i)))
+               (local.set $b1 (array.get_u $I8Array (local.get $arr) (i32.add (local.get $i) (i32.const 1))))
+               (local.set $b2 (array.get_u $I8Array (local.get $arr) (i32.add (local.get $i) (i32.const 2))))
+               (local.set $b3 (array.get_u $I8Array (local.get $arr) (i32.add (local.get $i) (i32.const 3))))
+               (return
+                (i32.or
+                 (i32.shl (local.get $b0) (i32.const 24))
+                 (i32.or
+                  (i32.shl (local.get $b1) (i32.const 16))
+                  (i32.or
+                   (i32.shl (local.get $b2) (i32.const 8))
+                   (local.get $b3))))
+                (i32.add (local.get $i) (i32.const 4))))
+
+        (func $fasl:read-bytes
+               ;; read length-prefixed byte array
+               (param $arr (ref $I8Array))
+               (param $i   i32)
+               (result (ref $Bytes) i32)
+
+               (local $len i32)
+               (local $next i32)
+               (local $data (ref $I8Array))
+
+               (call $fasl:read-u32 (local.get $arr) (local.get $i))
+               (local.set $len) (local.set $next)
+               (local.set $data (call $i8array-copy (local.get $arr)
+                                                   (local.get $next)
+                                                   (i32.add (local.get $next) (local.get $len))))
+               (return
+                (struct.new $Bytes
+                            (i32.const 0)
+                            (i32.const 1)
+                            (local.get $data))
+                (i32.add (local.get $next) (local.get $len))))
+
+        (func $fasl:read-string
+               ;; read bytes and convert to string
+               (param $arr (ref $I8Array))
+               (param $i   i32)
+               (result (ref $String) i32)
+
+               (local $bs (ref $Bytes))
+               (local $next i32)
+
+               (call $fasl:read-bytes (local.get $arr) (local.get $i))
+               (local.set $bs) (local.set $next)
+               (return (call $bytes->string/utf-8/checked (local.get $bs)) (local.get $next)))
+
+        (func $fasl:read-symbol
+               ;; read string and intern symbol
+               (param $arr (ref $I8Array))
+               (param $i   i32)
+               (result (ref $Symbol) i32)
+
+               (local $str (ref $String))
+               (local $next i32)
+
+               (call $fasl:read-string (local.get $arr) (local.get $i))
+               (local.set $str) (local.set $next)
+               (return (call $string->symbol (local.get $str)) (local.get $next)))
+
+        (func $fasl:read-f64
+               ;; read IEEE double
+               (param $arr (ref $I8Array))
+               (param $i   i32)
+               (result (ref $Flonum) i32)
+
+               (local $hi i32)
+               (local $idx i32)
+               (local $lo i32)
+               (local $next i32)
+               (local $bits i64)
+
+               (call $fasl:read-u32 (local.get $arr) (local.get $i))
+               (local.set $hi) (local.set $idx)
+               (call $fasl:read-u32 (local.get $arr) (local.get $idx))
+               (local.set $lo) (local.set $next)
+               (local.set $bits
+                          (i64.or (i64.shl (i64.extend_i32_u (local.get $hi)) (i64.const 32))
+                                  (i64.extend_i32_u (local.get $lo))))
+               (return
+                (struct.new $Flonum
+                            (i32.const 0)
+                            (f64.reinterpret_i64 (local.get $bits)))
+                (local.get $next)))
+
+        (func $fasl:read-s-exp
+               ;; decode one FASL value by tag
+               (param $arr (ref $I8Array))
+               (param $len i32)
+               (param $i   i32)
+               (result (ref eq) i32)
+
+               (local $tag i32)
+               (local.set $tag (array.get_u $I8Array (local.get $arr) (local.get $i)))
+               (local.set $i (i32.add (local.get $i) (i32.const 1)))
+
+               ;; fixnum
+                (if (i32.eq (local.get $tag) (i32.const 0x00))
+                   (then
+                    (local $val i32)
+                    (call $fasl:read-u32 (local.get $arr) (local.get $i))
+                    (local.set $val) (local.set $i)
+                    (return (ref.i31 (i32.shl (local.get $val) (i32.const 1))) (local.get $i)))
+                   (else
+                    ;; character
+                        (if (i32.eq (local.get $tag) (i32.const 0x01))
+                        (then
+                         (local $cp i32)
+                         (call $fasl:read-u32 (local.get $arr) (local.get $i))
+                         (local.set $cp) (local.set $i)
+                         (return
+                          (ref.i31
+                           (i32.or (i32.shl (local.get $cp) (i32.const ,char-shift))
+                                   (i32.const ,char-tag)))
+                          (local.get $i)))
+                        (else
+                         ;; symbol
+                             (if (i32.eq (local.get $tag) (i32.const 0x02))
+                             (then
+                              (local $sym (ref $Symbol))
+                              (call $fasl:read-symbol (local.get $arr) (local.get $i))
+                              (local.set $sym) (local.set $i)
+                              (return (local.get $sym) (local.get $i)))
+                             (else
+                              ;; string
+                                    (if (i32.eq (local.get $tag) (i32.const 0x03))
+                                  (then
+                                   (local $str (ref $String))
+                                   (call $fasl:read-string (local.get $arr) (local.get $i))
+                                   (local.set $str) (local.set $i)
+                                   (return (local.get $str) (local.get $i)))
+                                  (else
+                                   ;; bytes
+                                        (if (i32.eq (local.get $tag) (i32.const 0x04))
+                                       (then
+                                        (local $bs (ref $Bytes))
+                                        (call $fasl:read-bytes (local.get $arr) (local.get $i))
+                                        (local.set $bs) (local.set $i)
+                                        (return (local.get $bs) (local.get $i)))
+                                       (else
+                                        ;; boolean
+                                            (if (i32.eq (local.get $tag) (i32.const 0x05))
+                                            (then
+                                             (local $b i32)
+                                             (local.set $b (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                             (return
+                                              (select (global.get $true) (global.get $false)
+                                                      (i32.ne (local.get $b) (i32.const 0)))
+                                              (local.get $i)))
+                                            (else
+                                             ;; null
+                                                 (if (i32.eq (local.get $tag) (i32.const 0x06))
+                                                 (then (return (global.get $null) (local.get $i)))
+                                                 (else
+                                                  ;; pair
+                                                     (if (i32.eq (local.get $tag) (i32.const 0x07))
+                                                      (then
+                                                       (local $car (ref eq))
+                                                       (call $fasl:read-s-exp (local.get $arr) (local.get $len) (local.get $i))
+                                                       (local.set $car) (local.set $i)
+                                                       (local $cdr (ref eq))
+                                                       (call $fasl:read-s-exp (local.get $arr) (local.get $len) (local.get $i))
+                                                       (local.set $cdr) (local.set $i)
+                                                       (return (call $cons (local.get $car) (local.get $cdr)) (local.get $i)))
+                                                      (else
+                                                       ;; vector
+                                                           (if (i32.eq (local.get $tag) (i32.const 0x08))
+                                                           (then
+                                                            (local $n i32)
+                                                            (call $fasl:read-u32 (local.get $arr) (local.get $i))
+                                                            (local.set $n) (local.set $i)
+                                                            (local $vec (ref $Vector))
+                                                            (local.set $vec (call $make-vector/checked (local.get $n) (global.get $void)))
+                                                            (local $j i32)
+                                                            (local.set $j (i32.const 0))
+                                                            (block $done
+                                                                   (loop $loop
+                                                                         (br_if $done (i32.ge_u (local.get $j) (local.get $n)))
+                                                                         (local $elem (ref eq))
+                                                                         (call $fasl:read-s-exp (local.get $arr) (local.get $len) (local.get $i))
+                                                                         (local.set $elem) (local.set $i)
+                                                                         (call $vector-set!/checked (local.get $vec) (local.get $j) (local.get $elem))
+                                                                         (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                                                                         (br $loop)))
+                                                            (return (local.get $vec) (local.get $i)))
+                                                           (else
+                                                            ;; flonum
+                                                                (if (i32.eq (local.get $tag) (i32.const 0x09))
+                                                                (then
+                                                                 (local $fl (ref $Flonum))
+                                                                 (call $fasl:read-f64 (local.get $arr) (local.get $i))
+                                                                 (local.set $fl) (local.set $i)
+                                                                 (return (local.get $fl) (local.get $i)))
+                                                                (else
+                                                                 ;; void
+                                                                   (if (i32.eq (local.get $tag) (i32.const 0x0a))
+                                                                     (then (return (global.get $void) (local.get $i)))
+                                                                     (else
+                                                                      ;; eof
+                                                                    (if (i32.eq (local.get $tag) (i32.const 0x0b))
+                                                                          (then (return (ref.i31 (i32.const ,eof-value)) (local.get $i)))
+                                                                          (else (unreachable))))))))))))))))))))))
+
+        (func $fasl->s-exp
+               ;; entry point: decode byte string
+               (param $bs (ref eq))
+               (result (ref eq))
+
+               (local $b (ref $Bytes))
+               (local $arr (ref $I8Array))
+               (local $len i32)
+               (local $val (ref eq))
+               (local $i   i32)
+
+               (if (ref.test (ref $Bytes) (local.get $bs))
+                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $bs))))
+                   (else (call $raise-argument-error (local.get $bs)) (unreachable)))
+               (local.set $arr (struct.get $Bytes $bs (local.get $b)))
+               (local.set $len (array.len (local.get $arr)))
+               (local.set $i (i32.const 0))
+               (call $fasl:read-s-exp (local.get $arr) (local.get $len) (local.get $i))
+               (local.set $val) (local.set $i)
+               (local.get $val))
 
          ;;;
          ;;; 14. REFLECTION AND SECURITY

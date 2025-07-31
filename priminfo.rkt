@@ -44,7 +44,8 @@
     unboxed
 
     s-exp->fasl
-    
+    fasl->s-exp
+
     alt-reverse         ; in expansion of for/list
 
     raise-unbound-variable-reference ; used for unbound variables outside modules
