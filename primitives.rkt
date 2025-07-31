@@ -126,11 +126,12 @@
  fl->fx
 
 
- ;;
+;;
 
  s-exp->fasl
- 
- )
+ fasl->s-exp
+
+)
 
          
          

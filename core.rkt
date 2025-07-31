@@ -155,6 +155,15 @@
 ; We simplify s-exp->fasl here in order to avoid keyword functions
 
 (define (s-exp->fasl v [out #f]) (rkt:s-exp->fasl v out))
-(provide s-exp->fasl)
+
+(define (fasl->s-exp bs)
+  (unless (bytes? bs)
+    (raise-argument-error 'fasl->s-exp "bytes?" bs))
+  (define in (open-input-bytes bs))
+  (define v (rkt:fasl->s-exp in))
+  (close-input-port in)
+  v)
+
+(provide s-exp->fasl fasl->s-exp)
 
 
