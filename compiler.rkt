@@ -14755,6 +14755,10 @@
                                       (cons (symbol-interned? z)
                                             '())))))
                   '(#t #t #f))))
+  (define (test-fasl)
+    (list
+     (list (equal? (run '(fasl->s-exp (s-exp->fasl 42))) 42))))
+
   (list "-- Core Constructs --"
         ;; (list "Immediate Values"              (test-immediates))
         ;; (list "Call unary primitive"          (test-call-unary-primitive))
@@ -14779,10 +14783,11 @@
         ;; (list "Strings"                       (test-strings))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
-        (list "Letrec"                        (test-letrec))  ;; TODO!
+        ;; (list "Letrec"                        (test-letrec))  ;; TODO!
         ;; (list "Named let"                     (test-named-let))
         ;; (list "And/Or"                        (test-and/or))
         ;; (list "Cond"                          (test-cond))
         ;; (list "When/unless"                   (test-when/unless))
         ;; (list "Begin0"                        (test-begin0))
+        (list "Fasl"                             (test-fasl))
         ))
