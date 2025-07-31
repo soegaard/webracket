@@ -12232,18 +12232,18 @@
 
          ;; 13.10 Fast-Load Serialization
 
-         (global $fasl-fixnum     (ref i31) (ref.i31 (i32.const 0)))
-         (global $fasl-character  (ref i31) (ref.i31 (i32.const 1)))
-         (global $fasl-symbol     (ref i31) (ref.i31 (i32.const 2)))
-         (global $fasl-string     (ref i31) (ref.i31 (i32.const 3)))
-         (global $fasl-bytes      (ref i31) (ref.i31 (i32.const 4)))
-         (global $fasl-boolean    (ref i31) (ref.i31 (i32.const 5)))
-         (global $fasl-null       (ref i31) (ref.i31 (i32.const 6)))
-         (global $fasl-pair       (ref i31) (ref.i31 (i32.const 7)))
-         (global $fasl-vector     (ref i31) (ref.i31 (i32.const 8)))
-         (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 9)))
-         (global $fasl-void       (ref i31) (ref.i31 (i32.const 10)))
-         (global $fasl-eof        (ref i31) (ref.i31 (i32.const 11)))
+         (global $fasl-fixnum     (ref i31) ,(Imm 0))
+         (global $fasl-character  (ref i31) ,(Imm 1))
+         (global $fasl-symbol     (ref i31) ,(Imm 2))
+         (global $fasl-string     (ref i31) ,(Imm 3))
+         (global $fasl-bytes      (ref i31) ,(Imm 4))
+         (global $fasl-boolean    (ref i31) ,(Imm 5))
+         (global $fasl-null       (ref i31) ,(Imm 6))
+         (global $fasl-pair       (ref i31) ,(Imm 7))
+         (global $fasl-vector     (ref i31) ,(Imm 8))
+         (global $fasl-flonum     (ref i31) ,(Imm 9))
+         (global $fasl-void       (ref i31) ,(Imm 10))
+         (global $fasl-eof        (ref i31) ,(Imm 11))
          
          (func $s-exp->fasl
                (param $v   (ref eq))
@@ -12350,8 +12350,8 @@
                                                                       )))))))))))))))
 
          (func $s-exp->fasl/immediate
-               (param $i i32)
-               (param $v (ref eq))
+               (param $i   i32)
+               (param $v   (ref eq))
                (param $out (ref eq))
 
                (local $b i32)
@@ -12615,7 +12615,8 @@
               (local $fl   (ref $Flonum))
               
               (local.set $tag (array.get_u $I8Array (local.get $arr) (local.get $i)))
-              (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+              (local.set $tag (i32.shl (local.get $tag) (i32.const 1))) ; as fixnum
+              (local.set $i   (i32.add (local.get $i)   (i32.const 1)))
 
               ;; fixnum
               (if (result (ref eq) i32)
