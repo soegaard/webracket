@@ -215,6 +215,17 @@
 (define (wr-fixnum? x)
   (and (number? x)
        (integer? x)
+       (or (wr-signed-fixnum? x)
+           (wr-unsigned-fixnum? x))))
+
+(define (wr-signed-fixnum? x)
+  (and (number? x)
+       (integer? x)
+       (<= s30-min x s30-max)))
+
+(define (wr-unsigned-fixnum? x)
+  (and (number? x)
+       (integer? x)
        (<= u31-min x u31-max)))
 
 (define (wr-number? v)
@@ -2681,7 +2692,7 @@
     [(primapp ,s ,pr ,ae1 ...) (define sym (syntax->datum (variable-id pr)))
                                (define work
                                  (case sym
-                                  [(s-exp->fasl)
+                                   [(s-exp->fasl)
                                    ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
                                    (define aes (AExpr* ae1))
                                    (define n   (length aes))
@@ -14759,10 +14770,8 @@
     (list
      ;; fixnums
      (equal? (run '(fasl->s-exp (s-exp->fasl 42))) 42)
-     (equal? (run '(fasl->s-exp (s-exp->fasl most-positive-fixnum)))
-             most-positive-fixnum)
-     (equal? (run '(fasl->s-exp (s-exp->fasl most-negative-fixnum)))
-             most-negative-fixnum)
+     (equal? (run `(fasl->s-exp (s-exp->fasl ,most-positive-fixnum))) most-positive-fixnum)
+     (equal? (run `(fasl->s-exp (s-exp->fasl ,most-negative-fixnum))) most-negative-fixnum)
      ;; characters
      (equal? (run '(fasl->s-exp (s-exp->fasl #\a))) #\a)
      (equal? (run '(fasl->s-exp (s-exp->fasl #\λ))) #\λ)
@@ -14773,11 +14782,11 @@
      (equal? (run '(fasl->s-exp (s-exp->fasl 'hello))) 'hello)
      ;; strings
      (equal? (run '(fasl->s-exp (s-exp->fasl "hi"))) "hi")
-     (equal? (run '(fasl->s-exp (s-exp->fasl ""))) "")
+     (equal? (run '(fasl->s-exp (s-exp->fasl "")))   "")
      (equal? (run '(fasl->s-exp (s-exp->fasl "hé"))) "hé")
      ;; byte strings
      (equal? (run '(fasl->s-exp (s-exp->fasl (bytes 1 2 3)))) (bytes 1 2 3))
-     (equal? (run '(fasl->s-exp (s-exp->fasl (bytes)))) (bytes))
+     (equal? (run '(fasl->s-exp (s-exp->fasl (bytes))))       (bytes))
      (equal? (run '(fasl->s-exp (s-exp->fasl (bytes 0 255)))) (bytes 0 255))
      ;; null
      (equal? (run '(fasl->s-exp (s-exp->fasl '()))) '())
@@ -14786,9 +14795,9 @@
      (equal? (run '(fasl->s-exp (s-exp->fasl '(1 2 3)))) '(1 2 3))
      ;; vectors
      (equal? (run '(fasl->s-exp (s-exp->fasl #(1 2 3)))) #(1 2 3))
-     (equal? (run '(fasl->s-exp (s-exp->fasl #()))) #())
+     (equal? (run '(fasl->s-exp (s-exp->fasl #())))      #())
      ;; flonums
-     (equal? (run '(fasl->s-exp (s-exp->fasl 3.5))) 3.5)
+     (equal? (run '(fasl->s-exp (s-exp->fasl 3.5)))   3.5)
      (equal? (run '(fasl->s-exp (s-exp->fasl -2.0))) -2.0)
      ;; void
      (equal? (run '(fasl->s-exp (s-exp->fasl (void)))) (void))
