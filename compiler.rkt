@@ -3548,6 +3548,9 @@
     (add-runtime-symbol-constant 'racket)
     (add-runtime-string-constant 'hash-variable-reference  "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix               "#&")
+    (add-runtime-string-constant 'bytes-prefix             "#\"")
+    (add-runtime-string-constant 'backslash-x              "\\x")
+    (add-runtime-string-constant 'double-quote             "\"")
         
     `(module
          ;;;
@@ -13066,10 +13069,10 @@
                ;; --- Case: string ---
                (if (ref.test (ref $String) (local.get $v))
                    (then (return (ref.cast (ref $String) (local.get $v)))))
-               ;; --- Case: bytes ---
-               (if (ref.test (ref $Bytes) (local.get $v))
-                   (then (return (call $bytes->string/utf-8/defaults
-                                       (ref.cast (ref $Bytes) (local.get $v))))))
+                ;; --- Case: bytes ---
+                (if (ref.test (ref $Bytes) (local.get $v))
+                    (then (return (call $format/display:bytes
+                                        (ref.cast (ref $Bytes) (local.get $v))))))
                ;; --- Case: pair ---
                (if (ref.test (ref $Pair) (local.get $v))
                    (then (return (call $format/display:pair
@@ -13216,13 +13219,49 @@
                      (call $growable-array->array (local.get $ga))))
 
 
-         (func $format/display:symbol
-               (param $v (ref eq))
-               (result   (ref $String))
+(func $format/display:symbol
+      (param $v (ref eq))
+      (result   (ref $String))
 
-               (call $format/display
-                     (call $symbol->string
-                           (local.get $v))))
+      (call $format/display
+            (call $symbol->string
+                  (local.get $v))))
+
+        (func $format/display:bytes
+              (param $bs (ref $Bytes))
+              (result   (ref $String))
+
+              (local $arr  (ref $I8Array))
+              (local $len  i32)
+              (local $i    i32)
+              (local $byte i32)
+              (local $hex  (ref $String))
+              (local $out  (ref $GrowableArray))
+
+              ;; Extract raw byte array and its length
+              (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+              (local.set $len (array.len (local.get $arr)))
+              ;; Allocate result buffer (#"" plus \xNN for each byte)
+              (local.set $out
+                         (call $make-growable-array
+                               (i32.add (i32.const 2)
+                                        (i32.mul (local.get $len) (i32.const 4)))))
+              (call $growable-array-add! (local.get $out)
+                                        (global.get $string:bytes-prefix))
+              (local.set $i (i32.const 0))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                           (local.set $byte (call $i8array-ref (local.get $arr) (local.get $i)))
+                           (call $growable-array-add! (local.get $out)
+                                                     (global.get $string:backslash-x))
+                           (local.set $hex (call $make-hex-string (local.get $byte) (i32.const 2)))
+                           (call $growable-array-add! (local.get $out) (local.get $hex))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $loop)))
+              (call $growable-array-add! (local.get $out)
+                                        (global.get $string:double-quote))
+              (call $growable-array-of-strings->string (local.get $out)))
          
          (func $raise-format/display:pair:expected-pair       (unreachable))
 
