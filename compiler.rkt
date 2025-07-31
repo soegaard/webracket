@@ -12221,18 +12221,18 @@
 
          ;; 13.10 Fast-Load Serialization
 
-         (global $fasl-fixnum     (ref i31) (ref.i31 (i32.const 0x00)))
-         (global $fasl-character  (ref i31) (ref.i31 (i32.const 0x01)))
-         (global $fasl-symbol     (ref i31) (ref.i31 (i32.const 0x02)))
-         (global $fasl-string     (ref i31) (ref.i31 (i32.const 0x03)))
-         (global $fasl-bytes      (ref i31) (ref.i31 (i32.const 0x04)))
-         (global $fasl-boolean    (ref i31) (ref.i31 (i32.const 0x05)))
-         (global $fasl-null       (ref i31) (ref.i31 (i32.const 0x06)))
-         (global $fasl-pair       (ref i31) (ref.i31 (i32.const 0x07)))
-         (global $fasl-vector     (ref i31) (ref.i31 (i32.const 0x08)))
-         (global $fasl-flonum     (ref i31) (ref.i31 (i32.const 0x09)))
-         (global $fasl-void       (ref i31) (ref.i31 (i32.const 0x0a)))
-         (global $fasl-eof        (ref i31) (ref.i31 (i32.const 0x0b)))
+         (global $fasl-fixnum     (ref i31) ,(Imm 0))
+         (global $fasl-character  (ref i31) ,(Imm 1))
+         (global $fasl-symbol     (ref i31) ,(Imm 2))
+         (global $fasl-string     (ref i31) ,(Imm 3))
+         (global $fasl-bytes      (ref i31) ,(Imm 4))
+         (global $fasl-boolean    (ref i31) ,(Imm 5))
+         (global $fasl-null       (ref i31) ,(Imm 6))
+         (global $fasl-pair       (ref i31) ,(Imm 7))
+         (global $fasl-vector     (ref i31) ,(Imm 8))
+         (global $fasl-flonum     (ref i31) ,(Imm 9))
+         (global $fasl-void       (ref i31) ,(Imm 10))
+         (global $fasl-eof        (ref i31) ,(Imm 11))
          
          (func $s-exp->fasl
                (param $v   (ref eq))
