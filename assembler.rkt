@@ -1,5 +1,6 @@
 #lang at-exp racket
 (provide run wat->wasm)
+(require "fasl.rkt")
 
 ;; (run [x #f] 
 ;;      #:wat        [out.wat    "out.wat"]
@@ -74,6 +75,78 @@ const wasmBuffer = await fs.readFile("@|out.wasm|");
 var memory = new WebAssembly.Memory({initial:1024});
 
 var output_string = [];
+
+function read_u32(arr, i) {
+  return ((arr[i] << 24) | (arr[i + 1] << 16) |
+          (arr[i + 2] << 8)  | arr[i + 3]) >>> 0;
+}
+
+function fasl_to_js_value(arr, i = 0) {
+  const tag = arr[i++];
+
+  function u32() {
+    const v = read_u32(arr, i);
+    i += 4;
+    return v;
+  }
+
+  function read_bytes() {
+    const len = u32();
+    const b = arr.slice(i, i + len);
+    i += len;
+    return b;
+  }
+
+  function read_string() {
+    const b = read_bytes();
+    return new TextDecoder().decode(b);
+  }
+
+  switch(tag) {
+    case @|fasl-fixnum|:
+      return [u32(), i];
+    case @|fasl-character|:
+      return [String.fromCodePoint(u32()), i];
+    case @|fasl-symbol|:
+      return [Symbol.for(read_string()), i];
+    case @|fasl-string|:
+      return [read_string(), i];
+    case @|fasl-bytes|:
+      return [read_bytes(), i];
+    case @|fasl-boolean|:
+      return [arr[i++] !== 0, i];
+    case @|fasl-null|:
+      return [null, i];
+    case @|fasl-pair|: {
+      let car, cdr;
+      [car, i] = fasl_to_js_value(arr, i);
+      [cdr, i] = fasl_to_js_value(arr, i);
+      return [{tag:'pair', car, cdr}, i];
+    }
+    case @|fasl-vector|: {
+      const n = u32();
+      const vec = new Array(n);
+      for(let j = 0; j < n; j++) {
+        [vec[j], i] = fasl_to_js_value(arr, i);
+      }
+      return [vec, i];
+    }
+    case @|fasl-flonum|: {
+      const hi = u32();
+      const lo = u32();
+      const dv = new DataView(new ArrayBuffer(8));
+      dv.setUint32(0, hi);
+      dv.setUint32(4, lo);
+      return [dv.getFloat64(0), i];
+    }
+    case @|fasl-void|:
+      return [undefined, i];
+    case @|fasl-eof|:
+      return ['<eof>', i];
+    default:
+      throw new Error('bad FASL tag ' + tag);
+  }
+}
 
 var imports = {
     'env': {

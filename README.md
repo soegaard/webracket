@@ -14,4 +14,7 @@ serializer is used in both cases.
 `fasl->s-exp` decodes a byte string produced by `s-exp->fasl` and reconstructs
 the original value.  The WebAssembly runtime includes its own decoder
 implementation, while the reference implementation falls back to Racket's
-`racket/fasl` library.
+`racket/fasl` library. The Node runtime helper `fasl_to_js_value` can
+likewise decode these bytes directly into JavaScript values. Symbols
+are decoded as `Symbol.for` instances and pairs are returned as objects
+`{tag: 'pair', car, cdr}`.
