@@ -14844,6 +14844,8 @@
      (equal? (run '(fasl->s-exp (s-exp->fasl (void)))) (void))
      ;; eof object
      #;(equal? (run '(fasl->s-exp (s-exp->fasl (eof)))) (eof))
+     (equal? (run '(fasl->s-exp (s-exp->fasl (list 11 (vector 22 #\x) 'foo "bar" (list 55)))))
+             (list 11 (vector 22 #\x) 'foo "bar" (list 55)))     
      ;; explicit output port
      ; todo: implement `call-with-output-bytes`
      #;(equal? (run '(let ([bs (call-with-output-bytes
