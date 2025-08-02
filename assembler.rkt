@@ -155,7 +155,12 @@ var imports = {
     'primitives': {
       'console_log': ((x)   => console.log(x)),
       'add':         ((x,y) => x+y),
-      'js_output':   ((x)   => output_string.push(x))        
+      'js_output':   ((x)   => output_string.push(x)),
+      'js_print_fasl': ((start, len) => {
+        const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
+        const [v] = fasl_to_js_value(bytes);
+        console.log(v);
+      })
     }
 };
 

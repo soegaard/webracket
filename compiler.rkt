@@ -3853,6 +3853,9 @@
          (func $js_output
                (import "primitives" "js_output")
                (param i32))
+         (func $js_print_fasl
+               (import "primitives" "js_print_fasl")
+               (param i32) (param i32))
 
          ;; Exceptions
          (func $raise-wrong-number-of-values-received (unreachable))
