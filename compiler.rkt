@@ -442,6 +442,7 @@
   variable-reference-from-unsafe?
   variable-reference-constant?
 
+  js-log
 
   ;; 17. Unsafe Operations
   unsafe-fx+
@@ -10684,6 +10685,18 @@
                             (br $copy)))
                ;; 5. Return total bytes copied
                (local.get $len))
+
+         (func $js_log
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (local $len i32)
+
+               (global.set $result-bytes
+                           (call $s-exp->fasl (local.get $v) (global.get $false)))
+               (local.set $len (call $copy_bytes_to_memory (i32.const 0)))
+               (call $js_print_fasl (i32.const 0) (local.get $len))
+               (global.get $void))
 
          ;;;
          ;;; STRUCTURES

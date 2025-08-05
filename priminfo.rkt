@@ -49,6 +49,7 @@
     alt-reverse         ; in expansion of for/list
 
     raise-unbound-variable-reference ; used for unbound variables outside modules
+    js-log
     ))
 
 (define (primitive->description sym-or-primitive)

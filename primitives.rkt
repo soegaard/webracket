@@ -130,8 +130,12 @@
 
  s-exp->fasl
  fasl->s-exp
+ js_log
 
 )
+
+(define (js_log v)
+  (displayln v))
 
          
          
