@@ -103,8 +103,10 @@ function fasl_to_js_value(arr, i = 0) {
   }
 
   switch(tag) {
-    case @|fasl-fixnum|:
-      return [u32(), i];
+    case @|fasl-fixnum|: {
+      const raw = u32();
+      return [(raw << 1) >> 1, i];
+    }
     case @|fasl-character|:
       return [String.fromCodePoint(u32()), i];
     case @|fasl-symbol|:
