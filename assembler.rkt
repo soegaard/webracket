@@ -105,7 +105,8 @@ function fasl_to_js_value(arr, i = 0) {
   switch(tag) {
     case @|fasl-fixnum|: {
       const raw = u32();
-      return [(raw << 1) >> 1, i];
+      // Sign-extend the 30-bit payload so negative fixnums decode correctly.
+      return [(raw << 2) >> 2, i];
     }
     case @|fasl-character|:
       return [String.fromCodePoint(u32()), i];
