@@ -3553,7 +3553,8 @@
     (add-runtime-string-constant 'bytes-prefix             "#\"")
     (add-runtime-string-constant 'backslash-x              "\\x")
     (add-runtime-string-constant 'double-quote             "\"")
-        
+    (add-runtime-string-constant 'hash-t                   "#t")
+    
     `(module
          ;;;
          ;;; Internal Types
@@ -12905,7 +12906,6 @@
          ;; Note: If you change the string constants, remember to change their
          ;;       lengths below.
          
-         (data $str-true-bytes            "#t")
          (data $str-false-bytes           "#f")
          (data $str-null-bytes            "()")
          (data $str-void-bytes            "#<void>")
@@ -12952,9 +12952,6 @@
                      (call $i8array->immutable-bytes
                            (local.get $arr))))
          
-         (func $str-true (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-true-bytes (i32.const 0) (i32.const 2))))
          (func $str-false (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-false-bytes (i32.const 0) (i32.const 2))))
@@ -13095,7 +13092,7 @@
                    (then (return (call $str-null))))
                ;; --- Case: true ---
                (if (ref.eq (local.get $v) (global.get $true))
-                   (then (return (call $str-true))))
+                   (then (return (ref.cast (ref $String) (global.get $string:hash-t)))))
                ;; --- Case: false ---
                (if (ref.eq (local.get $v) (global.get $false))
                    (then (return (call $str-false))))
