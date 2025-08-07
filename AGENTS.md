@@ -79,6 +79,12 @@ etc.
 
 ---
 
+## 📝 Pull Request Guidelines
+
+- Do not mention testing in PR messages.
+
+---
+
 ## 🔗 References
 
 - [FASL Format](https://docs.racket-lang.org/reference/fasl.html)
