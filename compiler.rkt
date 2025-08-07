@@ -3840,7 +3840,7 @@
                        (field $hash (mut i32))
                        ; todo: add fields
                        )))
-          (type $Extern 
+          (type $External 
             (sub $heap-object
               (struct
                (field $hash (mut i32))
