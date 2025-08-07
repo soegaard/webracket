@@ -3554,6 +3554,43 @@
     (add-runtime-string-constant 'backslash-x              "\\x")
     (add-runtime-string-constant 'double-quote             "\"")
     (add-runtime-string-constant 'hash-t                   "#t")
+    (add-runtime-string-constant 'hash-f                   "#f")
+    (add-runtime-string-constant 'null                     "()")
+    (add-runtime-string-constant 'void                     "#<void>")
+    (add-runtime-string-constant 'undefined                "#<undefined>")
+    (add-runtime-string-constant 'unspecified              "#<unspecified>")
+    (add-runtime-string-constant 'missing                  "#<missing>")
+    (add-runtime-string-constant 'closure                  "#<closure>")
+    (add-runtime-string-constant 'external                 "#<external>")
+    (add-runtime-string-constant 'external-null            "#<external-null>")
+    (add-runtime-string-constant 'empty                    "")
+    (add-runtime-string-constant 'open-paren               "(")
+    (add-runtime-string-constant 'close-paren              ")")
+    (add-runtime-string-constant 'space                    " ")
+    (add-runtime-string-constant 'dot-space                ". ")
+    (add-runtime-string-constant 'space-dot-space          " . ")
+    (add-runtime-string-constant 'vector-prefix            "#(")
+    (add-runtime-string-constant 'values-prefix            "(values")
+    (add-runtime-string-constant 'g                        "g")
+    (add-runtime-string-constant 'struct-type-descriptor   "#<struct-type-descriptor>")
+    (add-runtime-string-constant 'struct-open              "#(struct ")
+    (add-runtime-string-constant 'hash-colon               "#:")
+    (add-runtime-string-constant 'hash-backslash           "#\\\\")
+    (add-runtime-string-constant 'hash-backslash-u         "#\\\\u")
+    (add-runtime-string-constant 'hash-backslash-U         "#\\\\U")
+    (add-runtime-string-constant 'word-newline             "newline")
+    (add-runtime-string-constant 'word-tab                 "tab")
+    (add-runtime-string-constant 'word-return              "return")
+    (add-runtime-string-constant 'word-backspace           "backspace")
+    (add-runtime-string-constant 'word-space               "space")
+    (add-runtime-string-constant 'word-rubout              "rubout")
+    (add-runtime-string-constant 'word-nul                 "nul")
+    (add-runtime-string-constant 'racket/primitive         "racket/primitive")
+    (add-runtime-string-constant 'hash-less-procedure-colon "#<procedure:")
+    (add-runtime-string-constant 'hash-less-primitive-colon "#<primitive:")
+    (add-runtime-string-constant 'unknown                  "unknown")
+    (add-runtime-string-constant 'colon                    ":")
+    (add-runtime-string-constant '->                       ">")
     
     `(module
          ;;;
@@ -10288,7 +10325,7 @@
 
          (func $gensym:0 (result (ref $Symbol))
                ;; Use "g" as default prefix
-               (call $gensym:1 (call $str-g)))
+               (call $gensym:1 (ref.cast (ref $String) (global.get $string:g))))
 
          (func $raise-gensym:bad-base (param $x (ref eq)) (unreachable))
          
@@ -10394,7 +10431,7 @@
 
                (local.set $name   (struct.get $Keyword $str (local.get $kw)))
                
-               (local.set $prefix (call $str-hash-colon)) ;; "#:"
+               (local.set $prefix (ref.cast (ref $String) (global.get $string:hash-colon))) ;; "#:"
                (call $string-append
                      (local.get $prefix) (local.get $name)))
 
@@ -10799,19 +10836,6 @@
                ;; If we fell through the loop, we succeeded
                (i32.const 1))
 
-
-         (data $str-struct-type-descriptor-bytes "#<struct-type-descriptor>")
-         (data $str-struct-open-bytes "#(struct ")
-
-         (func $str-struct-type-descriptor (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-struct-type-descriptor-bytes
-                                     (i32.const 0) (i32.const 27))))        
-         (func $str-struct-open (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-struct-open-bytes
-                                     (i32.const 0) (i32.const 9))))
-
          (func $raise-format/display:struct:expected-struct (unreachable))
          
          (func $format/display:struct
@@ -10839,7 +10863,8 @@
 
                ;; Start output
                (local.set $out (call $make-growable-array (i32.const 8)))
-               (call $growable-array-add! (local.get $out) (call $str-struct-open)) ;; "#(struct "
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String) (global.get $string:struct-open))) ;; "#(struct "
 
                ;; Add name
                (call $growable-array-add! (local.get $out)
@@ -10850,7 +10875,9 @@
                (block $done
                       (loop $loop
                             (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
-                            (call $growable-array-add! (local.get $out) (call $str-space))
+                            (call $growable-array-add! (local.get $out)
+                                                       (ref.cast (ref $String)
+                                                                (global.get $string:space)))
                             (call $growable-array-add! (local.get $out)
                                   (call $format/display
                                         (array.get $Array (local.get $fields) (local.get $i))))
@@ -10858,7 +10885,9 @@
                             (br $loop)))
 
                ;; Close output
-               (call $growable-array-add! (local.get $out) (call $str-close-paren))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:close-paren)))
                (call $growable-array-of-strings->string (local.get $out)))
 
 
@@ -12902,171 +12931,10 @@
          ;;;
          ;;; FORMATTING - DISPLAY MODE
          ;;;
-
-         ;; Note: If you change the string constants, remember to change their
-         ;;       lengths below.
-         
-         (data $str-false-bytes           "#f")
-         (data $str-null-bytes            "()")
-         (data $str-void-bytes            "#<void>")
-         (data $str-undefined-bytes       "#<undefined>")
-         (data $str-unspecified-bytes     "#<unspecified>")
-         (data $str-missing-bytes         "#<missing>")
-         (data $str-closure-bytes         "#<closure>")
-         (data $str-external-bytes        "#<external>")
-         (data $str-external-null-bytes   "#<external-null>")
-         (data $str-empty-bytes           "")
-         (data $str-open-paren-bytes      "(")
-         (data $str-close-paren-bytes     ")")
-         (data $str-space-bytes           " ")
-         (data $str-dot-space-bytes       ". ")
-         (data $str-space-dot-space-bytes " . ")
-         (data $str-vector-prefix-bytes   "#(")
-         (data $str-values-prefix-bytes   "(values")
-         (data $str-g-bytes               "g")
-
-         (data $str-hash-colon-bytes       "#:")
-         (data $str-hash-backslash-bytes   "#\\")
-         (data $str-hash-backslash-u-bytes "#\\u")
-         (data $str-hash-backslash-U-bytes "#\\U")
-         (data $str-word-newline-bytes     "newline")
-         (data $str-word-tab-bytes         "tab")
-         (data $str-word-return-bytes      "return")
-         (data $str-word-backspace-bytes   "backspace")
-         (data $str-word-space-bytes       "space")
-         (data $str-word-rubout-bytes      "rubout")
-         (data $str-word-nul-bytes         "nul")
-         ; realms
-         (data $str-racket-bytes           "racket")
-         (data $str-racket/primitive-bytes "racket/primitive")
-         ; formatting
-         ;; Byte literals
-         (data $str-hash-less-procedure-colon-bytes "#<procedure:")
-         (data $str-hash-less-primitive-colon-bytes "#<primitive:")
-         (data $str-unknown-bytes      "unknown")
-         (data $str-colon-bytes        ":")
-         (data $str->-bytes            ">")
-
          (func $i8array->string (param $arr (ref $I8Array)) (result (ref $String))
                (call $bytes->string/utf-8/checked
                      (call $i8array->immutable-bytes
-                           (local.get $arr))))
-         
-         (func $str-false (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-false-bytes (i32.const 0) (i32.const 2))))
-         (func $str-null (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-null-bytes (i32.const 0) (i32.const 2))))
-         (func $str-void (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-void-bytes (i32.const 0) (i32.const 7))))
-         (func $str-empty (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-empty-bytes (i32.const 0) (i32.const 0))))
-         (func $str-undefined (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-undefined-bytes (i32.const 0) (i32.const 13))))
-         (func $str-unspecified (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-unspecified-bytes (i32.const 0) (i32.const 15))))
-         (func $str-missing (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-missing-bytes (i32.const 0) (i32.const 10))))
-         (func $str-closure (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-closure-bytes (i32.const 0) (i32.const 10))))
-        (func $str-external (result (ref $String))
-              (call $i8array->string
-                    (array.new_data $I8Array $str-external-bytes (i32.const 0) (i32.const 11))))
-        (func $str-external-null (result (ref $String))
-              (call $i8array->string
-                    (array.new_data $I8Array $str-external-null-bytes (i32.const 0) (i32.const 16))))
-         (func $str-open-paren (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-open-paren-bytes (i32.const 0) (i32.const 1))))
-         (func $str-close-paren (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-close-paren-bytes (i32.const 0) (i32.const 1))))
-         (func $str-space (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-space-bytes (i32.const 0) (i32.const 1))))
-         (func $str-dot-space (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-dot-space-bytes (i32.const 0) (i32.const 2))))
-         (func $str-space-dot-space (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-space-dot-space-bytes (i32.const 0) (i32.const 3))))
-         (func $str-vector-prefix (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-vector-prefix-bytes (i32.const 0) (i32.const 2))))
-         (func $str-values-prefix (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-values-prefix-bytes (i32.const 0) (i32.const 7))))
-         (func $str-g (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-g-bytes (i32.const 0) (i32.const 2))))
-
-         (func $str-hash-colon (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-colon-bytes (i32.const 0) (i32.const 2))))
-         (func $str-hash-backslash (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-backslash-bytes (i32.const 0) (i32.const 2))))
-         (func $str-hash-backslash-u (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-backslash-u-bytes (i32.const 0) (i32.const 3))))
-         (func $str-hash-backslash-U (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-backslash-U-bytes (i32.const 0) (i32.const 3))))
-         (func $str-word-newline (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-newline-bytes (i32.const 0) (i32.const 7))))
-         (func $str-word-tab (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-tab-bytes (i32.const 0) (i32.const 3))))
-         (func $str-word-return (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-return-bytes (i32.const 0) (i32.const 6))))
-         (func $str-word-backspace (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-backspace-bytes (i32.const 0) (i32.const 9))))
-         (func $str-word-space (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-space-bytes (i32.const 0) (i32.const 5))))
-         (func $str-word-rubout (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-rubout-bytes (i32.const 0) (i32.const 6))))
-         (func $str-word-nul (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-word-nul-bytes (i32.const 0) (i32.const 3))))
-         ; Realms
-         (func $str-racket (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-racket-bytes (i32.const 0) (i32.const 6))))
-         (func $str-racket/primitive (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-racket/primitive-bytes (i32.const 0) (i32.const 16))))
-
-         ;; Formatting: procedure
-         (func $str-hash-less-procedure-colon
-               (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-less-procedure-colon-bytes (i32.const 0) (i32.const 12))))
-         (func $str-hash-less-primitive-colon
-               (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-hash-less-primitive-colon-bytes (i32.const 0) (i32.const 12))))
-         (func $str-unknown (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-unknown-bytes (i32.const 0) (i32.const 7))))
-         (func $str-colon (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str-colon-bytes (i32.const 0) (i32.const 1))))
-         (func $str-> (result (ref $String))
-               (call $i8array->string
-                     (array.new_data $I8Array $str->-bytes (i32.const 0) (i32.const 1))))
-
+                            (local.get $arr))))
 
          (func $raise-format/display:unknown-datatype (unreachable))
 
@@ -13089,19 +12957,23 @@
                              (then (return (call $number->string (local.get $v) ,(Imm 10)))))))
                ;; --- Case: null ---
                (if (ref.eq (local.get $v) (global.get $null))
-                   (then (return (call $str-null))))
+                   (then (return (ref.cast (ref $String)
+                                            (global.get $string:null)))))
                ;; --- Case: true ---
                (if (ref.eq (local.get $v) (global.get $true))
                    (then (return (ref.cast (ref $String) (global.get $string:hash-t)))))
                ;; --- Case: false ---
                (if (ref.eq (local.get $v) (global.get $false))
-                   (then (return (call $str-false))))
+                   (then (return (ref.cast (ref $String)
+                                            (global.get $string:hash-f)))))
                ;; --- Case: void ---
                (if (ref.eq (local.get $v) (global.get $void))
-                   (then (return (call $str-void))))
+                   (then (return (ref.cast (ref $String)
+                                            (global.get $string:void)))))
                ;; --- Case: missing ---
                (if (ref.eq (local.get $v) (global.get $missing))
-                   (then (return (call $str-missing))))
+                   (then (return (ref.cast (ref $String)
+                                            (global.get $string:missing)))))
                ;; --- Case: closure ---
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
@@ -13188,8 +13060,10 @@
               (result (ref $String))
               (if (result (ref $String))
                   (ref.is_null (struct.get $External $v (local.get $v)))
-                  (then (call $str-external-null))
-                  (else (call $str-external))))
+                  (then (ref.cast (ref $String)
+                                   (global.get $string:external-null)))
+                  (else (ref.cast (ref $String)
+                                   (global.get $string:external)))))
 
          (func $format/display:procedure
                ; #<procedure:name:arity:mask>
@@ -13218,18 +13092,27 @@
                (local.set $mask-str  (call $i32->string                      (local.get $mask)))
                ;; Step 5: build output
                (local.set $ga (call $make-growable-array (i32.const 5)))
-               (call $growable-array-add! (local.get $ga) (call $str-hash-less-procedure-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:hash-less-procedure-colon)))
                (call $growable-array-add!
                      (local.get $ga)
                      (if (result (ref eq))
                          (ref.eq (local.get $name) (global.get $false))
-                         (then (call $str-unknown))
+                         (then (ref.cast (ref $String)
+                                          (global.get $string:unknown)))
                          (else (local.get $name))))
-               (call $growable-array-add! (local.get $ga) (call $str-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:colon)))
                (call $growable-array-add! (local.get $ga) (local.get $arity-str))
-               (call $growable-array-add! (local.get $ga) (call $str-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:colon)))
                (call $growable-array-add! (local.get $ga) (local.get $mask-str))
-               (call $growable-array-add! (local.get $ga) (call $str->))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:->)))
                ;; Step 5: convert to string
                (call $array-of-strings->string
                      (call $growable-array->array
@@ -13262,18 +13145,27 @@
                (local.set $mask-str  (call $i32->string                      (local.get $mask)))
                ;; Step 5: build output
                (local.set $ga (call $make-growable-array (i32.const 5)))
-               (call $growable-array-add! (local.get $ga) (call $str-hash-less-primitive-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:hash-less-primitive-colon)))
                (call $growable-array-add!
                      (local.get $ga)
                      (if (result (ref eq))
                          (ref.eq (local.get $name) (global.get $false))
-                         (then (call $str-unknown))
+                         (then (ref.cast (ref $String)
+                                          (global.get $string:unknown)))
                          (else (call $symbol->string (local.get $name)))))
-               (call $growable-array-add! (local.get $ga) (call $str-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:colon)))
                (call $growable-array-add! (local.get $ga) (local.get $arity-str))
-               (call $growable-array-add! (local.get $ga) (call $str-colon))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:colon)))
                (call $growable-array-add! (local.get $ga) (local.get $mask-str))
-               (call $growable-array-add! (local.get $ga) (call $str->))
+               (call $growable-array-add! (local.get $ga)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:->)))
                ;; Step 6: convert to string
                (call $array-of-strings->string
                      (call $growable-array->array (local.get $ga))))
@@ -13336,7 +13228,9 @@
                ;; Initialize buffers
                (local.set $out   (call $make-growable-array (i32.const 8)))
                (local.set $stack (call $make-growable-array (i32.const 8)))
-               (call $growable-array-add! (local.get $out)   (call $str-open-paren))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:open-paren)))
                (call $growable-array-add! (local.get $stack) (local.get $v))
 
                (block $done
@@ -13354,19 +13248,25 @@
                                  (call $growable-array-add! (local.get $out) (local.get $str))
                                  ;; Handle cdr
                                  (if (ref.test (ref $Pair) (local.get $tail))
-                                     (then (call $growable-array-add! (local.get $out) (call $str-space))
+                                     (then (call $growable-array-add! (local.get $out)
+                                                                       (ref.cast (ref $String)
+                                                                                (global.get $string:space)))
                                            (call $growable-array-add! (local.get $stack) (local.get $tail)))
                                      (else (if (ref.eq (local.get $tail) (global.get $null))
                                                (then) ;; proper list: done
                                                (else  ;; improper list: emit ". cdr"
-                                                (call $growable-array-add! (local.get $out) (call $str-space-dot-space))
+                                                (call $growable-array-add! (local.get $out)
+                                                                         (ref.cast (ref $String)
+                                                                                  (global.get $string:space-dot-space)))
                                                 (local.set $str (call $format/display (local.get $tail)))
                                                 (call $growable-array-add! (local.get $out) (local.get $str)))))))
                                 (else
                                  (call $raise-format/display:pair:expected-pair)
                                  (unreachable)))
                             (br $walk)))
-               (call $growable-array-add! (local.get $out) (call $str-close-paren))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:close-paren)))
                (call $growable-array-of-strings->string (local.get $out)))
 
 
@@ -13386,7 +13286,9 @@
                ;; Allocate result buffer
                (local.set $out (call $make-growable-array (i32.const 8)))
                ;; Emit "#("
-               (call $growable-array-add! (local.get $out) (call $str-vector-prefix))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:vector-prefix)))
                ;; Add formatted elements with spaces
                (local.set $i (i32.const 0))
                (block $done
@@ -13397,10 +13299,14 @@
                             (call $growable-array-add! (local.get $out) (local.get $str))
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (if (i32.lt_u (local.get $i) (local.get $len))
-                                (then (call $growable-array-add! (local.get $out) (call $str-space))))
+                                (then (call $growable-array-add! (local.get $out)
+                                                                   (ref.cast (ref $String)
+                                                                            (global.get $string:space)))))
                             (br $loop)))
                ;; Emit ")"
-               (call $growable-array-add! (local.get $out) (call $str-close-paren))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:close-paren)))
                ;; Combine and return
                (call $growable-array-of-strings->string (local.get $out)))
 
@@ -13439,8 +13345,12 @@
                ;; Allocate result buffer
                (local.set $out (call $make-growable-array (i32.const 8)))
                ;; Emit "(values"
-               (call $growable-array-add! (local.get $out) (call $str-values-prefix))
-               (call $growable-array-add! (local.get $out) (call $str-space))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:values-prefix)))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:space)))
                ;; Add formatted elements with spaces
                (local.set $i (i32.const 0))
                (block $done
@@ -13451,10 +13361,14 @@
                             (call $growable-array-add! (local.get $out) (local.get $str))
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (if (i32.lt_u (local.get $i) (local.get $len))
-                                (then (call $growable-array-add! (local.get $out) (call $str-space))))
+                                (then (call $growable-array-add! (local.get $out)
+                                                                   (ref.cast (ref $String)
+                                                                            (global.get $string:space)))))
                             (br $loop)))
                ;; Emit ")"
-               (call $growable-array-add! (local.get $out) (call $str-close-paren))
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:close-paren)))
                ;; Combine and return
                (call $growable-array-of-strings->string (local.get $out)))
 
@@ -13479,55 +13393,57 @@
                (if (i32.eq (local.get $cp) (i32.const 10))  ;; newline
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-newline)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-newline)))))
                (if (i32.eq (local.get $cp) (i32.const 13))  ;; return
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-return)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-return)))))
                (if (i32.eq (local.get $cp) (i32.const 9))   ;; tab
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-tab)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-tab)))))
                (if (i32.eq (local.get $cp) (i32.const 8))   ;; backspace
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-backspace)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-backspace)))))
                (if (i32.eq (local.get $cp) (i32.const 127)) ;; rubout
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-rubout)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-rubout)))))
                (if (i32.eq (local.get $cp) (i32.const 32))  ;; space
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-space)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-space)))))
                (if (i32.eq (local.get $cp) (i32.const 0))  ;; nul
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash)
-                                (call $str-word-nul)))))
+                                (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                (ref.cast (ref $String) (global.get $string:word-nul)))))
                ;; Printable graphic character
                (if (call $is-graphic (local.get $cp))
                    (then
                     (local.set $s (call $make-string/checked (i32.const 1) (local.get $cp)))
-                    (return (call $string-append (call $str-hash-backslash) (local.get $s)))))
+                    (return (call $string-append
+                                  (ref.cast (ref $String) (global.get $string:hash-backslash))
+                                  (local.get $s)))))
 
                ;; Fallback for non-printable or out-of-range characters
                ;; Fallback: #\uXXXX and #\UXXXXXX
                (if (i32.le_u (local.get $cp) (i32.const 65535))  ;; ≤ 0xFFFF
                    (then (return
                           (call $string-append
-                                (call $str-hash-backslash-u)
+                                (ref.cast (ref $String) (global.get $string:hash-backslash-u))
                                 (call $make-hex-string (local.get $cp) (i32.const 4)))))
                    ;; Else use #\UXXXXXX
                    (else (return
                           (call $string-append
-                                (call $str-hash-backslash-U)
+                                (ref.cast (ref $String) (global.get $string:hash-backslash-U))
                                 (call $make-hex-string (local.get $cp) (i32.const 6))))))
                (unreachable))
 
@@ -14139,9 +14055,13 @@
                      
                      ;; Initialize realm symbols
                      (global.set $the-racket-realm
-                                 (call $string->symbol (call $str-racket)))
+                                 (call $string->symbol
+                                       (ref.cast (ref $String)
+                                                 (global.get $string:racket))))
                      (global.set $the-racket/primitive-realm
-                                 (call $string->symbol (call $str-racket/primitive)))
+                                 (call $string->symbol
+                                       (ref.cast (ref $String)
+                                                 (global.get $string:racket/primitive))))
 
                      ;; Initialize variables holding primitives
                      ,@(initialize-primitives-as-globals)
