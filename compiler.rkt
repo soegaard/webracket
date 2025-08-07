@@ -6343,10 +6343,29 @@
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $false))
                    (then (global.get $true))
-                   (else (global.get $false))))         
-         ;;;
-         ;;; - Characters
-         ;;;
+                   (else (global.get $false))))
+
+        ;;;
+        ;;; - External host values
+        ;;;
+
+        (func $external? (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq))
+                  (ref.test (ref $External) (local.get $v))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        (func $external-null? (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq))
+                  (ref.test (ref $External) (local.get $v))
+                  (then (if (result (ref eq))
+                            (ref.is_null (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
+                            (then (global.get $true))
+                            (else (global.get $false))))
+                  (else (global.get $false))))
+        ;;;
+        ;;; - Characters
+        ;;;
          
          (func $raise-check-char (param $x (ref eq)) (unreachable))
          
