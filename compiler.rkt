@@ -827,7 +827,8 @@
                     (? flonum?)
                     (? boolean?)
                     (? char?)
-                    (? null?))
+                    (? null?)
+                    (? void?))
                 v)
            `(quote ,s ,(datum s v))]
           [(? symbol? sym)  (quoted-symbol! s sym)]
@@ -3575,9 +3576,9 @@
     (add-runtime-string-constant 'struct-type-descriptor   "#<struct-type-descriptor>")
     (add-runtime-string-constant 'struct-open              "#(struct ")
     (add-runtime-string-constant 'hash-colon               "#:")
-    (add-runtime-string-constant 'hash-backslash           "#\\\\")
-    (add-runtime-string-constant 'hash-backslash-u         "#\\\\u")
-    (add-runtime-string-constant 'hash-backslash-U         "#\\\\U")
+    (add-runtime-string-constant 'hash-backslash           "#\\")
+    (add-runtime-string-constant 'hash-backslash-u         "#\\u")
+    (add-runtime-string-constant 'hash-backslash-U         "#\\U")
     (add-runtime-string-constant 'word-newline             "newline")
     (add-runtime-string-constant 'word-tab                 "tab")
     (add-runtime-string-constant 'word-return              "return")
@@ -13372,7 +13373,7 @@
                ;; Combine and return
                (call $growable-array-of-strings->string (local.get $out)))
 
-         ; Note: I think this uses the write conventions instead of display.
+         ; Note: This uses the write conventions instead of display.
          (func $format/display:char
                (param $v (ref eq))
                (result (ref $String))
@@ -14836,8 +14837,8 @@
   (list "-- Core Constructs --"
         ;; (list "Immediate Values"              (test-immediates))
         ;; (list "Call unary primitive"          (test-call-unary-primitive))
-        ;; #;(list "Some characters "            (test-some-characters)) ; slow
-        ;; #;(list "All characters"              (test-all-characters))  ; very slow
+        #;(list "Some characters "            (test-some-characters)) ; slow
+        #;(list "All characters"              (test-all-characters))  ; very slow
         ;; (list "Call binary primitive"         (test-call-binary-primitive))
         ;; (list "Local variables (let)"         (test-let))
         ;; (list "Conditional (if)"              (test-if))
@@ -14854,14 +14855,15 @@
         ;; (list "Boxes"                         (test-boxes))
         ;; (list "Assignments"                   (test-assignments))
         ;; (list "Byte strings"                  (test-bytes))
-        ;; (list "Strings"                       (test-strings))
+        ; (list "Strings"                       (test-strings))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
-        ;; (list "Letrec"                        (test-letrec))  ;; TODO!
+        #; (list "Letrec"                        (test-letrec))  ;; TODO!
+        #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) ; assignment to letrec bound variable
         ;; (list "Named let"                     (test-named-let))
         ;; (list "And/Or"                        (test-and/or))
         ;; (list "Cond"                          (test-cond))
         ;; (list "When/unless"                   (test-when/unless))
         ;; (list "Begin0"                        (test-begin0))
-        (list "Fasl"                             (test-fasl))
+        (list "Fasl"                          (test-fasl))
         ))
