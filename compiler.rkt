@@ -13394,37 +13394,37 @@
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-newline)))))
+                                (ref.cast (ref $String) (global.get $string:word-newline))))))
                (if (i32.eq (local.get $cp) (i32.const 13))  ;; return
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-return)))))
+                                (ref.cast (ref $String) (global.get $string:word-return))))))
                (if (i32.eq (local.get $cp) (i32.const 9))   ;; tab
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-tab)))))
+                                (ref.cast (ref $String) (global.get $string:word-tab))))))
                (if (i32.eq (local.get $cp) (i32.const 8))   ;; backspace
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-backspace)))))
+                                (ref.cast (ref $String) (global.get $string:word-backspace))))))
                (if (i32.eq (local.get $cp) (i32.const 127)) ;; rubout
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-rubout)))))
+                                (ref.cast (ref $String) (global.get $string:word-rubout))))))
                (if (i32.eq (local.get $cp) (i32.const 32))  ;; space
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-space)))))
+                                (ref.cast (ref $String) (global.get $string:word-space))))))
                (if (i32.eq (local.get $cp) (i32.const 0))  ;; nul
                    (then (return
                           (call $string-append
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
-                                (ref.cast (ref $String) (global.get $string:word-nul)))))
+                                (ref.cast (ref $String) (global.get $string:word-nul))))))
                ;; Printable graphic character
                (if (call $is-graphic (local.get $cp))
                    (then
