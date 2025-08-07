@@ -25,7 +25,8 @@
 ;;; Expressions to work on
 ;;;
 
-; If (values) is called in an <effect> context, an empty $Values is pushed to the stack.
+; If (values) is called in an <effect> context, an empty $Values is pushed
+; to the stack.
 ; But the context expects 0 values on the stack. 
 ;     (comp+  #`(let () (let-values ([() (values)]) 3)))
 
@@ -3839,6 +3840,12 @@
                        (field $hash (mut i32))
                        ; todo: add fields
                        )))
+          (type $Extern 
+            (sub $heap-object
+              (struct
+               (field $hash (mut i32))
+               (field $val  (ref null extern)))))
+          
           
           ) ; rec
        
@@ -10686,7 +10693,7 @@
                ;; 5. Return total bytes copied
                (local.get $len))
 
-         (func $js_log
+         (func $js-log
                (param $v (ref eq))
                (result (ref eq))
 
