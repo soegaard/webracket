@@ -3841,10 +3841,10 @@
                        ; todo: add fields
                        )))
           (type $External 
-            (sub $heap-object
+            (sub $Heap
               (struct
                (field $hash (mut i32))
-               (field $val  (ref null extern)))))
+               (field $v    (ref null extern)))))
           
           
           ) ; rec
