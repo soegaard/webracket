@@ -12913,8 +12913,8 @@
          (data $str-unspecified-bytes     "#<unspecified>")
          (data $str-missing-bytes         "#<missing>")
          (data $str-closure-bytes         "#<closure>")
-        (data $str-external-bytes        "#<external>")
-        (data $str-external-null-bytes   "#<external-null>")
+         (data $str-external-bytes        "#<external>")
+         (data $str-external-null-bytes   "#<external-null>")
          (data $str-empty-bytes           "")
          (data $str-open-paren-bytes      "(")
          (data $str-close-paren-bytes     ")")
@@ -12952,52 +12952,52 @@
                      (call $i8array->immutable-bytes
                            (local.get $arr))))
          
-         (func $str-true (export "str-true") (result (ref $String))
+         (func $str-true (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-true-bytes (i32.const 0) (i32.const 2))))
-         (func $str-false (export "str-false") (result (ref $String))
+         (func $str-false (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-false-bytes (i32.const 0) (i32.const 2))))
-         (func $str-null (export "str-null") (result (ref $String))
+         (func $str-null (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-null-bytes (i32.const 0) (i32.const 2))))
-         (func $str-void (export "str-void") (result (ref $String))
+         (func $str-void (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-void-bytes (i32.const 0) (i32.const 7))))
-         (func $str-empty (export "str-empty") (result (ref $String))
+         (func $str-empty (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-empty-bytes (i32.const 0) (i32.const 0))))
-         (func $str-undefined (export "str-undefined") (result (ref $String))
+         (func $str-undefined (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-undefined-bytes (i32.const 0) (i32.const 13))))
-         (func $str-unspecified (export "str-unspecified") (result (ref $String))
+         (func $str-unspecified (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-unspecified-bytes (i32.const 0) (i32.const 15))))
-         (func $str-missing (export "str-missing") (result (ref $String))
+         (func $str-missing (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-missing-bytes (i32.const 0) (i32.const 10))))
-         (func $str-closure (export "str-closure") (result (ref $String))
+         (func $str-closure (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-closure-bytes (i32.const 0) (i32.const 10))))
-        (func $str-external (export "str-external") (result (ref $String))
+        (func $str-external (result (ref $String))
               (call $i8array->string
                     (array.new_data $I8Array $str-external-bytes (i32.const 0) (i32.const 11))))
-        (func $str-external-null (export "str-external-null") (result (ref $String))
+        (func $str-external-null (result (ref $String))
               (call $i8array->string
                     (array.new_data $I8Array $str-external-null-bytes (i32.const 0) (i32.const 16))))
-         (func $str-open-paren (export "str-open-paren") (result (ref $String))
+         (func $str-open-paren (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-open-paren-bytes (i32.const 0) (i32.const 1))))
-         (func $str-close-paren (export "str-close-paren") (result (ref $String))
+         (func $str-close-paren (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-close-paren-bytes (i32.const 0) (i32.const 1))))
-         (func $str-space (export "str-space") (result (ref $String))
+         (func $str-space (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-space-bytes (i32.const 0) (i32.const 1))))
-         (func $str-dot-space (export "str-dot-space") (result (ref $String))
+         (func $str-dot-space (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-dot-space-bytes (i32.const 0) (i32.const 2))))
-         (func $str-space-dot-space (export "str-space-dot-space") (result (ref $String))
+         (func $str-space-dot-space (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-space-dot-space-bytes (i32.const 0) (i32.const 3))))
          (func $str-vector-prefix (result (ref $String))
@@ -13044,10 +13044,10 @@
                (call $i8array->string
                      (array.new_data $I8Array $str-word-nul-bytes (i32.const 0) (i32.const 3))))
          ; Realms
-         (func $str-racket (export "str-racket") (result (ref $String))
+         (func $str-racket (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-racket-bytes (i32.const 0) (i32.const 6))))
-         (func $str-racket/primitive (export "str-racket/primitive") (result (ref $String))
+         (func $str-racket/primitive (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-racket/primitive-bytes (i32.const 0) (i32.const 16))))
 
