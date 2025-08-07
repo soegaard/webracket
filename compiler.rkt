@@ -12913,6 +12913,8 @@
          (data $str-unspecified-bytes     "#<unspecified>")
          (data $str-missing-bytes         "#<missing>")
          (data $str-closure-bytes         "#<closure>")
+        (data $str-external-bytes        "#<external>")
+        (data $str-external-null-bytes   "#<external-null>")
          (data $str-empty-bytes           "")
          (data $str-open-paren-bytes      "(")
          (data $str-close-paren-bytes     ")")
@@ -12977,6 +12979,12 @@
          (func $str-closure (export "str-closure") (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-closure-bytes (i32.const 0) (i32.const 10))))
+        (func $str-external (export "str-external") (result (ref $String))
+              (call $i8array->string
+                    (array.new_data $I8Array $str-external-bytes (i32.const 0) (i32.const 11))))
+        (func $str-external-null (export "str-external-null") (result (ref $String))
+              (call $i8array->string
+                    (array.new_data $I8Array $str-external-null-bytes (i32.const 0) (i32.const 16))))
          (func $str-open-paren (export "str-open-paren") (result (ref $String))
                (call $i8array->string
                      (array.new_data $I8Array $str-open-paren-bytes (i32.const 0) (i32.const 1))))
@@ -13112,7 +13120,7 @@
                ;; --- Case: string ---
                (if (ref.test (ref $String) (local.get $v))
                    (then (return (ref.cast (ref $String) (local.get $v)))))
-                ;; --- Case: bytes ---
+               ;; --- Case: bytes ---
                 (if (ref.test (ref $Bytes) (local.get $v))
                     (then (return (call $format/display:bytes
                                         (ref.cast (ref $Bytes) (local.get $v))))))
@@ -13148,6 +13156,10 @@
                (if (ref.test (ref $Struct) (local.get $v))
                    (then (return (call $format/display:struct
                                        (ref.cast (ref $Struct) (local.get $v))))))
+               ;; --- Case: external ---
+               (if (ref.test (ref $External) (local.get $v))
+                   (then (return (call $format/display:external
+                                       (ref.cast (ref $External) (local.get $v))))))
                ;; --- Case: char ---
                (if (ref.test (ref i31) (local.get $v))
                    (then (local.set $i31 (ref.cast (ref i31) (local.get $v)))
@@ -13173,6 +13185,14 @@
                (result   (ref $String))
                (ref.cast (ref $String)
                          (global.get $string:hash-variable-reference)))
+
+        (func $format/display:external
+              (param $v (ref $External))
+              (result (ref $String))
+              (if (result (ref $String))
+                  (ref.is_null (struct.get $External $v (local.get $v)))
+                  (then (call $str-external-null))
+                  (else (call $str-external))))
 
          (func $format/display:procedure
                ; #<procedure:name:arity:mask>
