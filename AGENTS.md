@@ -35,13 +35,46 @@ Racket primitives** faithfully.
 
 ## 🧱 Representation
 
-### Tagged Values
+### Heap and Array
 
-- **Fixnum**: `(ref i31)` where `lsb = 0` (checked via `ref.test (ref i31)`)
-- **Character**: `(ref i31)` with lower 8 bits = `0x0F`, upper bits contain UTF-21 codepoint
-- **Booleans**: distinct immediate tags for `#t`, `#f`
-- **Void / Null**: special constants using unique immediate tags
-- **Heap Values**: all boxed types are subtypes of `$Heap`
+(type $Array    (array (mut (ref eq))))
+(type $I32Array (array (mut i32)))
+(type $I8Array  (array (mut i8)))
+
+### Boxed Types
+
+(type $Bytes (sub $Heap
+  (struct (field $hash (mut i32))
+          (field $immutable i32)
+          (field $bs (mut (ref $I8Array))))))
+
+(type $String (sub $Heap
+  (struct (field $hash (mut i32))
+          (field $immutable i32)
+          (field $codepoints (mut (ref $I32Array))))))
+
+(type $Pair (sub $Heap
+  (struct (field $hash (mut i32))
+          (field $a (mut (ref eq)))
+          (field $d (mut (ref eq))))))
+
+(type $Vector (sub $Heap
+  (struct (field $hash (mut i32))
+          (field $arr (ref $Array)))))
+
+(type $Flonum (sub $Heap
+  (struct (field $hash (mut i32))
+          (field $v f64))))
+
+
+### Immediates
+
+Characters: (codepoint << char-shift)    | char-tag
+Booleans:   (bit       << boolean-shift) | boolean-tag
+Null:       fixed encoded value.
+Void:       fixed encoded value.
+EOF:        fixed encoded value.
+
 
 ### Core Structs
 
@@ -67,17 +100,23 @@ etc.
 
 ---
 
-## 🧭 Style Rules
+## Coding Style & Conventions
+- Validate first → fail if not valid → proceed.
+- Ref types are always type-checked with ref.test + ref.cast before use.
+- Functions with /checked expect already-validated arguments.
+-  Fixnums: (ref i31) with LSB=0; store/unbox via i31.get_u + shift.
+- Immediates: (ref i31) with LSB=1 + subtag bits (characters, booleans, null, void, eof).
+- Separate locals for:
+  - Tagged fixnum/immediate → x/tag
+  - Unboxed i32 version → plain name (x)
 
-- Always validate `(ref eq)` types before using.
-- Do not mix `ref.test` and `ref.cast` without conditional control.
-- Use named fields, not struct field indices.
-- Use `i31.get_u` + right-shift for fixnums.
-- Avoid recursion in formatting; use explicit stack/array.
-- No hanging parens. Write `(if (...) (then ...) (else ...))` style.
-- Add suffixes like `/checked`, `/fx`, `/i32`, `/unchecked` where helpful.
+- No hanging parentheses — closing )) goes on same line as final expression.
+- Prefer named struct fields over numeric indices.
+- Drop results from calls when unused with (drop (call ...)).
+- Stack discipline: all branches/blocks must leave same number of values.
 
----
+
+--- 
 
 ## 📝 Pull Request Guidelines
 
