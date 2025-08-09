@@ -38,12 +38,13 @@
 ;;;
 
 (define (drive-compilation
-         #:filename     filename
-         #:wat-filename wat-filename
-         #:verbose?     verbose?
-         #:browser?     browser?
-         #:node?        node?
-         #:run-after?   run-after?)
+         #:filename      filename
+         #:wat-filename  wat-filename
+         #:wasm-filename wasm-filename
+         #:verbose?      verbose?
+         #:browser?      browser?
+         #:node?         node?
+         #:run-after?    run-after?)
 
   ; 1. Check that `filename` exists.
   (unless (file-exists? filename)
@@ -67,7 +68,10 @@
   (define out-wat (or wat-filename (path-replace-extension filename ".wat")))
   (write-wat-to-file out-wat wat)
 
-  ; 5. Optionally run the program via Node.js.
+  ; 5. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
+  
+
+  ; 6. Optionally run the program via Node.js.
   (when (and node? run-after?)
     (define out-wasm   (path-replace-extension filename ".wasm"))
     (define runtime-js (path-replace-extension filename ".js"))
