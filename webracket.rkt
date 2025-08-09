@@ -14,7 +14,6 @@
 
 
 (define verbose-mode    (make-parameter #f))
-(define profiling-on    (make-parameter #f))   ; ignored
 (define link-flags      (make-parameter '()))  ; ignored
 (define run-after       (make-parameter #f))
 
@@ -32,8 +31,6 @@
                        (run-after #t)]
    [("-v" "--verbose") "Compile with verbose messages"
                        (verbose-mode #t)]
-   [("-p" "--profile") "Compile with profiling"
-                       (profiling-on #t)]
 
    #:once-any ; only one flag from this group
    [("-b" "--browser") "Generate code for browser."
