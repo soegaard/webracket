@@ -31,7 +31,7 @@
          (only-in racket/pretty     pretty-write)
          (only-in racket/format     ~a)
          (only-in "lang/reader.rkt" read-syntax)
-         (only-in "assembler.rkt" run wat->wasm)
+         (only-in "assembler.rkt"   run wat->wasm runtime)
          "compiler.rkt")
 
 ;;;
@@ -77,7 +77,13 @@
                                       (~a "wat->wasm failed: " (exn-message e))))])
     (wat->wasm wat #:wat out-wat #:wasm out-wasm))
 
-  ; 6. Optionally run the program via Node.js.
+  ; 6. Write the host file (default: "runtime.js")
+  (with-output-to-file host-filename
+    (λ () (displayln
+           (runtime #:out out-wasm #:host (if node? 'node 'browser))))
+    #:exists 'replace)
+
+  ; 7. Optionally run the program via Node.js.
   (when (and node? run-after?)
     (define runtime-js (path-replace-extension filename ".js"))
     (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
