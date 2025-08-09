@@ -17,7 +17,7 @@
 (define verbose-mode    (make-parameter #f))
 (define wat-filename    (make-parameter #f))
 (define wasm-filename   (make-parameter #f))
-(define host-filename   (make-parameter "runtime.js"))
+(define host-filename   (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -39,7 +39,7 @@
                              (wat-filename filename)]
    [("--wasm-file") filename "Filename for the wasm file"
                              (wasm-filename filename)]
-   [("--host-file") filename "Filename for the host file (default: 'runtime.js')"
+   [("--host-file") filename "Filename for the host file"
                              (host-filename filename)]
 
    #:once-any ; only one flag from this group
