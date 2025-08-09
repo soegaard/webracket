@@ -365,8 +365,9 @@
   fx+ fx- fx* 
   fx= fx> fx< fx<= fx>=
   ; fxmin fxmax
-  
-  ; fxquotient fxremainder fxmodulo fxabs
+
+  fxquotient
+  ; fxremainder fxmodulo fxabs
   ; fxand fxior fxxor fxnot fxlshift fxrshift
   ; fxpopcount fxpopcount16 fxpopcount32
   ; fx+/wraparound fx-/wraparound fx*/wraparound fxlshift/wraparound
@@ -374,7 +375,8 @@
 
   ; fx->fl fl->fx
   ; fixnum-for-every-system?
-  
+
+  flonum?
   fl+ fl- fl* fl/
   fl= fl< fl> fl<= fl>=
   
@@ -2621,7 +2623,8 @@
                            (cond
                              ; We keep these for now, to get a more readable output.
                              ; In all likelyhood (Imm '()), (Imm (void)), etc. are better.
-                             [(flonum? v)  `(struct.new $Flonum (i32.const 0) (f64.const ,v))]
+                             [(flonum? v)  (define l (case v [(+nan.0) 'nan] [(-nan.0) '-nan] [else v]))
+                                           `(struct.new $Flonum (i32.const 0) (f64.const ,l))]
                              [(null? v)    '(global.get $null)]
                              [(void? v)    '(global.get $void)]
                              [(eq? v #t)   '(global.get $true)]  
@@ -2871,12 +2874,12 @@
                                            [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
                                            [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
                                       [2 (case sym
-                                           [(+ - *)       `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
-                                           [(fx+ fx- fx*) `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
-                                           [(fl+ fl- fl*) `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                           [(+ - *)                  `(call ,(Prim pr)
+                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                           [(fx+ fx- fx* fxquotient) `(call ,(Prim pr)
+                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
+                                           [(fl+ fl- fl*)            `(call ,(Prim pr)
+                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                                            ; / needs to signal an Racket error if denominator is zero
                                            [else   `(call ,(Prim pr)
                                                           ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
@@ -5705,6 +5708,11 @@
                                  ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
          (func $fx/ (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+               (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
+                                   ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
+
+         (func $fxquotient
+               (param $x (ref eq)) (param $y (ref eq)) (result   (ref eq))               
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
