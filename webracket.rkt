@@ -33,7 +33,7 @@
                             (run-after #t)]
    [("-v" "--verbose")      "Compile with verbose messages"
                             (verbose-mode #t)]
-   [("--wat-file" filename) "Filename for the wat file"
+   [("--wat-file") filename "Filename for the wat file"
                             (wat-filename filename)]
 
    #:once-any ; only one flag from this group
