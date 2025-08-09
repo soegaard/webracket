@@ -30,7 +30,7 @@
          (only-in racket/pretty     pretty-write)
          (only-in racket/format     ~a)
          (only-in "lang/reader.rkt" read-syntax)
-         (only-in "assembler.rkt" run)
+         (only-in "assembler.rkt" run wat->wasm)
          "compiler.rkt")
 
 ;;;
@@ -69,13 +69,19 @@
   (write-wat-to-file out-wat wat)
 
   ; 5. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
-  
+  (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
+  (define ok?
+    (with-handlers ([exn:fail? (λ (e)
+                                 (error 'drive-compilation
+                                        (~a "wat->wasm failed: " (exn-message e))))])
+      (wat->wasm wat #:wat out-wat #:wasm out-wasm)))
+  (unless ok?
+    (error 'drive-compilation "wat->wasm failed"))
 
   ; 6. Optionally run the program via Node.js.
   (when (and node? run-after?)
-    (define out-wasm   (path-replace-extension filename ".wasm"))
     (define runtime-js (path-replace-extension filename ".js"))
-    (run wat #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
+    (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
 
 ;;;
 ;;; READ TOP-LEVEL FORMS FROM FILE 
