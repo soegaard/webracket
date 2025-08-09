@@ -38,11 +38,12 @@
 ;;;
 
 (define (drive-compilation
-         #:filename   filename
-         #:verbose?   verbose?
-         #:browser?   browser?
-         #:node?      node?
-         #:run-after? run-after?)
+         #:filename     filename
+         #:wat-filename wat-filename
+         #:verbose?     verbose?
+         #:browser?     browser?
+         #:node?        node?
+         #:run-after?   run-after?)
 
   ; 1. Check that `filename` exists.
   (unless (file-exists? filename)
@@ -63,12 +64,12 @@
       (comp stx)))
 
   ; 4. Save the resulting WAT module.
-  (define out-wat (path-replace-extension filename ".wat"))
+  (define out-wat (or wat-filename (path-replace-extension filename ".wat")))
   (write-wat-to-file out-wat wat)
 
   ; 5. Optionally run the program via Node.js.
   (when (and node? run-after?)
-    (define out-wasm (path-replace-extension filename ".wasm"))
+    (define out-wasm   (path-replace-extension filename ".wasm"))
     (define runtime-js (path-replace-extension filename ".js"))
     (run wat #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
 

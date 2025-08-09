@@ -13,12 +13,14 @@
 (require "driver.rkt")
 
 
-(define verbose-mode    (make-parameter #f))
-(define link-flags      (make-parameter '()))  ; ignored
 (define run-after       (make-parameter #f))
+(define verbose-mode    (make-parameter #f))
+(define wat-filename    (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
+
+(define link-flags      (make-parameter '()))  ; ignored
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
@@ -27,10 +29,12 @@
    #:program "webracket"
 
    #:once-each ; independent flags
-   [("-r" "--run")     "Run the program after compilation."
-                       (run-after #t)]
-   [("-v" "--verbose") "Compile with verbose messages"
-                       (verbose-mode #t)]
+   [("-r" "--run")          "Run the program after compilation."
+                            (run-after #t)]
+   [("-v" "--verbose")      "Compile with verbose messages"
+                            (verbose-mode #t)]
+   [("--wat-file" filename) "Filename for the wat file"
+                            (wat-filename filename)]
 
    #:once-any ; only one flag from this group
    [("-b" "--browser") "Generate code for browser."
@@ -48,8 +52,9 @@
    (source-filename filename)))
 
 
-(drive-compilation #:filename   (source-filename)
-                   #:verbose?   (verbose-mode)
-                   #:browser?   (browser)
-                   #:node?      (nodejs)
-                   #:run-after? (run-after))
+(drive-compilation #:filename     (source-filename)
+                   #:wat-filename (wat-filename)
+                   #:verbose?     (verbose-mode)
+                   #:browser?     (browser)
+                   #:node?        (nodejs)
+                   #:run-after?   (run-after))
