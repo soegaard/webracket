@@ -25,12 +25,13 @@
 ;;;
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
-         (only-in racket/path       path-only path-replace-extension)
+         (only-in racket/path       path-only)
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/pretty     pretty-write)
+         (only-in racket/format     ~a)
          (only-in "lang/reader.rkt" read-syntax)
-         "compiler.rkt"
-         (only-in "assembler.rkt" run))
+         (only-in "assembler.rkt" run)
+         "compiler.rkt")
 
 ;;;
 ;;; 
@@ -76,16 +77,19 @@
 ;;;
 
 (define (read-top-level-from-from-file filename)
+  (define (read-forms port)
+    (let loop ([forms '()])
+      (define stx (read-syntax filename port))
+      (if (eof-object? stx)
+          (reverse forms)
+          (loop (cons stx forms)))))
   (call-with-input-file filename
     (λ (port)
       (port-count-lines! port)
       (with-module-reading-parameterization
         (λ ()
-          (let loop ([forms '()])
-            (define stx (read-syntax filename port))
-            (if (eof-object? stx)
-                (datum->syntax #f `(begin ,@(reverse forms)))
-                (loop (cons stx forms))))))))
+          (define forms (read-forms port))
+          (datum->syntax #f `(begin ,@forms)))))))
 
 
 ;;;
