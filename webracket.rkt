@@ -44,9 +44,11 @@
 
    #:once-any ; only one flag from this group
    [("-b" "--browser") "Generate code for browser."
+                       (nodejs  #f)
                        (browser #t)]
    [("-n" "--node")    "Generate code for Node.js"
-                       (nodejs #t)]
+                       (browser #f)
+                       (nodejs  #t)]
                           
    #:multi ; can be used multiple times
    [("-l" "--link-flags") lf ; flag takes one argument

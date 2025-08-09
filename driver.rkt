@@ -78,7 +78,10 @@
     (wat->wasm wat #:wat out-wat #:wasm out-wasm))
 
   ; 6. Write the host file (default: "runtime.js")
-  (define out-host (or host-filename (path-replace-extension filename ".js")))
+  (define out-host (or host-filename
+                       (if node?
+                           (path-replace-extension filename ".js")
+                           (path-replace-extension filename ".html"))))
   (with-output-to-file out-host
     (λ () (displayln
            (runtime #:out out-wasm #:host (if node? 'node 'browser))))
