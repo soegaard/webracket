@@ -13,13 +13,15 @@
 (require "driver.rkt")
 
 
-(define verbose-mode   (make-parameter #f))
-(define profiling-on   (make-parameter #f))   ; ignored
-(define link-flags     (make-parameter '()))  ; ignored
-(define run-after      (make-parameter #f))
+(define verbose-mode    (make-parameter #f))
+(define profiling-on    (make-parameter #f))   ; ignored
+(define link-flags      (make-parameter '()))  ; ignored
+(define run-after       (make-parameter #f))
 
-(define browser        (make-parameter #f))
-(define nodejs         (make-parameter #t))   ; default
+(define browser         (make-parameter #f))
+(define nodejs          (make-parameter #t))   ; default
+
+(define source-filename (make-parameter #f))   ; the file to compile
 
 (define file-to-compile
   (command-line
@@ -46,10 +48,10 @@
    
    #:args (filename) ; expect one command-line argument: <filename>
    ; return the argument as a filename to compile
-   filename))
+   (source-filename filename)))
 
 
-(drive-compilation #:filename   filename
+(drive-compilation #:filename   (source-filename)
                    #:verbose?   (verbose-mode)
                    #:browser?   (browser)
                    #:node?      (nodejs)
