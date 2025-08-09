@@ -25,9 +25,12 @@
 ;;;
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
-         (only-in racket/path       path-only)
+         (only-in racket/path       path-only path-replace-extension)
          (only-in racket/file       make-directory* make-temporary-file)
-         (only-in "lang/reader.rkt" read-syntax))
+         (only-in racket/pretty     pretty-write)
+         (only-in "lang/reader.rkt" read-syntax)
+         "compiler.rkt"
+         (only-in "assembler.rkt" run))
 
 ;;;
 ;;; 
@@ -41,20 +44,48 @@
          #:run-after? run-after?)
 
   ; 1. Check that `filename` exists.
-  ; 2. Use `read-top-level-from-from-file` to get a syntax object.
-  ;    - signal error if anything goes wrong
-  ; 3. Call `comp` from `compiler.rkt` to compile the forms.
-  ;    - signal error if anything goes wrong
-  ; 4. Call `write-wat-to-file` to save the compilation result.
-  ; 5. If `node?` and `run-after?` is true, then call `run` from `assembler.rkt`.
-  )
+  (unless (file-exists? filename)
+    (error 'drive-compilation (~a "file not found: " filename)))
+
+  ; 2. Read the top-level forms from `filename`.
+  (define stx
+    (with-handlers ([exn:fail? (λ (e)
+                                 (error 'drive-compilation
+                                        (~a "read failed: " (exn-message e))))])
+      (read-top-level-from-from-file filename)))
+
+  ; 3. Compile the syntax object.
+  (define wat
+    (with-handlers ([exn:fail? (λ (e)
+                                 (error 'drive-compilation
+                                        (~a "compile failed: " (exn-message e))))])
+      (comp stx)))
+
+  ; 4. Save the resulting WAT module.
+  (define out-wat (path-replace-extension filename ".wat"))
+  (write-wat-to-file out-wat wat)
+
+  ; 5. Optionally run the program via Node.js.
+  (when (and node? run-after?)
+    (define out-wasm (path-replace-extension filename ".wasm"))
+    (define runtime-js (path-replace-extension filename ".js"))
+    (run wat #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
 
 ;;;
 ;;; READ TOP-LEVEL FORMS FROM FILE 
 ;;;
 
 (define (read-top-level-from-from-file filename)
-  ...)
+  (call-with-input-file filename
+    (λ (port)
+      (port-count-lines! port)
+      (with-module-reading-parameterization
+        (λ ()
+          (let loop ([forms '()])
+            (define stx (read-syntax filename port))
+            (if (eof-object? stx)
+                (datum->syntax #f `(begin ,@(reverse forms)))
+                (loop (cons stx forms))))))))
 
 
 ;;;
@@ -62,7 +93,9 @@
 ;;;
 
 (define (write-wat-to-file out-filname wat)
-  ...)
+  (with-output-to-file out-filname
+    (λ () (pretty-write wat))
+    #:exists 'replace))
 
 
 ;;;
