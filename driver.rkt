@@ -17,7 +17,8 @@
 ;;; PROVIDES
 ;;;
 
-(provide (all-defined-out))
+(provide drive-compilation
+         (all-defined-out))
 
 
 ;;;
@@ -41,6 +42,7 @@
          #:filename      filename
          #:wat-filename  wat-filename
          #:wasm-filename wasm-filename
+         #:host-filename host-filename ; default: "runtime.js"
          #:verbose?      verbose?
          #:browser?      browser?
          #:node?         node?
@@ -70,13 +72,10 @@
 
   ; 5. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
   (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
-  (define ok?
-    (with-handlers ([exn:fail? (λ (e)
-                                 (error 'drive-compilation
-                                        (~a "wat->wasm failed: " (exn-message e))))])
-      (wat->wasm wat #:wat out-wat #:wasm out-wasm)))
-  (unless ok?
-    (error 'drive-compilation "wat->wasm failed"))
+  (with-handlers ([exn:fail? (λ (e)
+                               (error 'drive-compilation
+                                      (~a "wat->wasm failed: " (exn-message e))))])
+    (wat->wasm wat #:wat out-wat #:wasm out-wasm))
 
   ; 6. Optionally run the program via Node.js.
   (when (and node? run-after?)

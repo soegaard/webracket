@@ -17,6 +17,7 @@
 (define verbose-mode    (make-parameter #f))
 (define wat-filename    (make-parameter #f))
 (define wasm-filename   (make-parameter #f))
+(define host-filename   (make-parameter "runtime.js"))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -34,10 +35,12 @@
                              (run-after #t)]
    [("-v" "--verbose")       "Compile with verbose messages"
                              (verbose-mode #t)]
-   [("--wat-file") filename  "Filename for the wat file"
+   [("--wat-file")  filename "Filename for the wat file"
                              (wat-filename filename)]
    [("--wasm-file") filename "Filename for the wasm file"
                              (wasm-filename filename)]
+   [("--host-file") filename "Filename for the host file (default: 'runtime.js')"
+                             (host-filename filename)]
 
    #:once-any ; only one flag from this group
    [("-b" "--browser") "Generate code for browser."
@@ -58,6 +61,7 @@
 (drive-compilation #:filename      (source-filename)
                    #:wat-filename  (wat-filename)
                    #:wasm-filename (wasm-filename)
+                   #:host-filename (host-filename)
                    #:verbose?      (verbose-mode)
                    #:browser?      (browser)
                    #:node?         (nodejs)
