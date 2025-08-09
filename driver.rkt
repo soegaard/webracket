@@ -1,10 +1,35 @@
 #lang racket/base
+;;;        
+;;; DRIVER 
+;;;        
+
+;; The functions in this module "drive" the compiler so to speak.
+;; The settings given by the user via the command line is set
+;; in parameters in "webracket.rkt".
+;; 
+;; Here we handle the neccessary file operations and call the
+;; appropriate compilation function from "compiler.rkt".
+;;
+;; Any external book keeping in files are done here.
+
+
+;;;
+;;; PROVIDES
+;;;
+
+(provide (all-defined-out))
+
+
+;;;
+;;; DEPENDENCIES
+;;;
+
 (require (only-in syntax/modread with-module-reading-parameterization)
          (only-in racket/path path-only)
          (only-in racket/file
                   make-directory*
-                  make-temporary-file))
-(require (only-in "lang/reader.rkt" read-syntax))
+                  make-temporary-file)
+         (only-in "lang/reader.rkt" read-syntax))
 
 ;;;
 ;;; READ MODULE
@@ -76,21 +101,22 @@
   (with-handlers ([exn:fail:filesystem? void])
     (delete-file temp-filename)))
 
-;;;
-;;;
-;;;
+;;;     
+;;; TEST
+;;;     
 
-; (read-lang-file "test/test.rkt")
+#;(begin
+    (read-lang-file "test/test.rkt")
 
-(require racket/pretty)
+    (require racket/pretty)
 
-#;(pretty-print
- (syntax->datum
-  (read-lang-file "test/test.rkt")))
+    (pretty-print
+     (syntax->datum
+      (read-lang-file "test/test.rkt")))
 
-#;(expand-file "test/test.rkt")
+    (expand-file "test/test.rkt")
 
 
-#;(pretty-print
-   (syntax->datum
-    (expand-file "test/test.rkt")))
+    (pretty-print
+     (syntax->datum
+      (expand-file "test/test.rkt"))))
