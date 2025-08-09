@@ -24,12 +24,46 @@
 ;;; DEPENDENCIES
 ;;;
 
-(require (only-in syntax/modread with-module-reading-parameterization)
-         (only-in racket/path path-only)
-         (only-in racket/file
-                  make-directory*
-                  make-temporary-file)
+(require (only-in syntax/modread    with-module-reading-parameterization)
+         (only-in racket/path       path-only)
+         (only-in racket/file       make-directory* make-temporary-file)
          (only-in "lang/reader.rkt" read-syntax))
+
+;;;
+;;; 
+;;;
+
+(define (drive-compilation
+         #:filename   filename
+         #:verbose?   verbose?
+         #:browser?   browser?
+         #:node?      node?
+         #:run-after? run-after?)
+
+  ; 1. Check that `filename` exists.
+  ; 2. Use `read-top-level-from-from-file` to get a syntax object.
+  ;    - signal error if anything goes wrong
+  ; 3. Call `comp` from `compiler.rkt` to compile the forms.
+  ;    - signal error if anything goes wrong
+  ; 4. Call `write-wat-to-file` to save the compilation result.
+  ; 5. If `node?` and `run-after?` is true, then call `run` from `assembler.rkt`.
+  )
+
+;;;
+;;; READ TOP-LEVEL FORMS FROM FILE 
+;;;
+
+(define (read-top-level-from-from-file filename)
+  ...)
+
+
+;;;
+;;; WRITE WAT TO FILE
+;;;
+
+(define (write-wat-to-file out-filname wat)
+  ...)
+
 
 ;;;
 ;;; READ MODULE
@@ -100,6 +134,9 @@
 
   (with-handlers ([exn:fail:filesystem? void])
     (delete-file temp-filename)))
+
+
+
 
 ;;;     
 ;;; TEST

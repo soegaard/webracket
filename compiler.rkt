@@ -1,5 +1,7 @@
 #lang racket/base
 (module+ test (require rackunit))
+(provide (all-defined-out))
+
 (require "expander.rkt"  ; provides topexpand
          "assembler.rkt"
          "priminfo.rkt"  ; information on Racket primitives
@@ -9,7 +11,6 @@
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
                   index-where append-map make-list rest))
-
 (require
   ; (prefix-in ur- urlang)
   (for-syntax nanopass/base syntax/parse racket/syntax racket/base)
