@@ -2964,11 +2964,13 @@
                     ['<stat>   `(block (local.set ,clos ,(cast (AExpr ae))) ,@varargs (drop ,work))]
                     [_         (error 'internal-app0 "combination impossible")])]
        ['<value>  (match cd
-                    ['<return> `(block (result (ref eq))
+                    ['<return> `(block ,@(if tc '() '((result (ref eq))))
                                        (local.set ,clos ,(cast (AExpr ae)))  ; <--
                                        ,@varargs
-                                       (return ,work))]
-                    ['<expr>   `(block (result (ref eq))
+                                       ,(if tc
+                                            work  ; avoids wrapping `return_call_ref` in a return
+                                            `(return ,work)))]
+                    ['<expr>   `(block (result (ref eq))  ; ,@(if tc '() '((result (ref eq)))) 
                                        (local.set ,clos ,(cast (AExpr ae)))
                                        ,@varargs
                                        ,work)]
@@ -3128,7 +3130,7 @@
 
     [(letrec-values ,s (((,x** ...) ,ce*) ...) ,e)
      #;(displayln (list 'letrec-values (map list x** ce*) e)
-                (current-error-port))
+                  (current-error-port))
 
      ; During the initial parsing we currently use this transform (ish):
      ;    (letrec-values ([(x ...) ce] ...) e)
@@ -3198,7 +3200,7 @@
        `(block ,@(for/list ([x x*] [u u*])
                    (Store! x u))
                ,@(map AllocateClosure ce* x*) 
-               ,@(map FillClosure     ce* x*)
+               ,@(append* (map FillClosure ce* x*))
                ,e))])
      
   (ConvertedAbstraction : ConvertedAbstraction (cab) -> * ()
