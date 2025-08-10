@@ -2964,13 +2964,13 @@
                     ['<stat>   `(block (local.set ,clos ,(cast (AExpr ae))) ,@varargs (drop ,work))]
                     [_         (error 'internal-app0 "combination impossible")])]
        ['<value>  (match cd
-                    ['<return> `(block ,@(if tc '() '((result (ref eq))))
-                                       (local.set ,clos ,(cast (AExpr ae)))  ; <--
+                    ['<return> `(block (result (ref eq)) ; note: also correct in the case of a tail call
+                                       (local.set ,clos ,(cast (AExpr ae)))  
                                        ,@varargs
                                        ,(if tc
                                             work  ; avoids wrapping `return_call_ref` in a return
                                             `(return ,work)))]
-                    ['<expr>   `(block (result (ref eq))  ; ,@(if tc '() '((result (ref eq)))) 
+                    ['<expr>   `(block (result (ref eq))  ; note: also correct in the case of a tail call
                                        (local.set ,clos ,(cast (AExpr ae)))
                                        ,@varargs
                                        ,work)]
@@ -3181,13 +3181,12 @@
        (nanopass-case (LANF+closure ClosureAllocation) ca
          [(closure ,s ,l ,ar ,ae1 ...)
           ; This will be sliced into a `block` so we don't need another one.
-          (append*
-           (for/list ([ae (AExpr* ae1)]
-                      [i  (in-naturals)])
-             `(array.set $Free
-                         (struct.get $Closure $free (ref.cast (ref $Closure) ,(Reference dd)))
-                         (i32.const ,i)
-                         ,ae)))]))
+          (for/list ([ae (AExpr* ae1)]
+                     [i  (in-naturals)])
+            `(array.set $Free
+                        (struct.get $Closure $free (ref.cast (ref $Closure) ,(Reference dd)))
+                        (i32.const ,i)
+                        ,ae))]))
 
      ; declare the `x` as a local variables
      (for ([x* x**])
@@ -14478,7 +14477,7 @@
                   14)))
   (define (test-parameter-passing)
     ; From Aziz' test suite
-    (and  (equal? (run '(let ([f (lambda (x) x)]) (f 12))) 12)
+    (list  (equal? (run '(let ([f (lambda (x) x)]) (f 12))) 12)
           (equal? (run '(let ([f (lambda (x y) (+ x y))]) (f 12 13))) 25)
           (equal? (run '(let ([f (lambda (x)
                                    (let ([g (lambda (x y) (+ x y))])
@@ -14846,35 +14845,35 @@
              '(1 2))))
 
   (list "-- Core Constructs --"
-        ;; (list "Immediate Values"              (test-immediates))
-        ;; (list "Call unary primitive"          (test-call-unary-primitive))
+        (list "Immediate Values"              (test-immediates))
+        (list "Call unary primitive"          (test-call-unary-primitive))
         #;(list "Some characters "            (test-some-characters)) ; slow
         #;(list "All characters"              (test-all-characters))  ; very slow
-        ;; (list "Call binary primitive"         (test-call-binary-primitive))
-        ;; (list "Local variables (let)"         (test-let))
-        ;; (list "Conditional (if)"              (test-if))
-        ;; (list "Sequencing (begin)"            (test-begin))
-        ;; (list "Vectors"                       (test-vectors))
-        ;; (list "Functions"                     (test-function-declarations))
-        ;; (list "Lambda without free variables" (test-lambda/no-free))
-        ;; (list "Lambda - Thunks"               (test-thunks))
-        ;; (list "Lambda - Parameter passing"    (test-parameter-passing))
-        ;; (list "Lambda - Closures"             (test-closures))
-        ;; (list "Lambda"                        (test-lambda))
-        ;; (list "Tail calls"                    (test-tail-calls))
-        ;; (list "Quotations"                    (test-quotations))
-        ;; (list "Boxes"                         (test-boxes))
-        ;; (list "Assignments"                   (test-assignments))
-        ;; (list "Byte strings"                  (test-bytes))
-        ; (list "Strings"                       (test-strings))
+        (list "Call binary primitive"         (test-call-binary-primitive))
+        (list "Local variables (let)"         (test-let))
+        (list "Conditional (if)"              (test-if))
+        (list "Sequencing (begin)"            (test-begin))
+        (list "Vectors"                       (test-vectors))
+        (list "Functions"                     (test-function-declarations))  
+        (list "Lambda without free variables" (test-lambda/no-free))
+        (list "Lambda - Thunks"               (test-thunks))
+        (list "Lambda - Parameter passing"    (test-parameter-passing)) 
+        (list "Lambda - Closures"             (test-closures))          
+        (list "Lambda"                        (test-lambda))
+        (list "Tail calls"                    (test-tail-calls))        
+        (list "Quotations"                    (test-quotations))
+        (list "Boxes"                         (test-boxes))
+        (list "Assignments"                   (test-assignments))      
+        (list "Byte strings"                  (test-bytes))
+        (list "Strings"                       (test-strings))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
         #; (list "Letrec"                        (test-letrec))  ;; TODO!
         #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) ; assignment to letrec bound variable
-        ;; (list "Named let"                     (test-named-let))
-        ;; (list "And/Or"                        (test-and/or))
-        ;; (list "Cond"                          (test-cond))
-        ;; (list "When/unless"                   (test-when/unless))
-        ;; (list "Begin0"                        (test-begin0))
+        (list "Named let"                     (test-named-let))  ; <-
+        (list "And/Or"                        (test-and/or))
+        (list "Cond"                          (test-cond))
+        (list "When/unless"                   (test-when/unless))
+        (list "Begin0"                        (test-begin0))
         (list "Fasl"                          (test-fasl))
         ))
