@@ -50,6 +50,9 @@
 
     raise-unbound-variable-reference ; used for unbound variables outside modules
     js-log
+    js-document-body
+    js-create-text-node
+    js-append-child!
     ))
 
 (define (primitive->description sym-or-primitive)

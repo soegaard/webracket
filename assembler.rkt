@@ -86,6 +86,9 @@ function read_u32(arr, i) {
 }
 
 function fasl_to_js_value(arr, i = 0) {
+  console.log(arr);
+  console.log(i);
+                                       
   const tag = arr[i++];
 
   function u32() {
@@ -424,6 +427,8 @@ function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
 //  }
 // }
 
+// hasDOM gives us a way of determining whether the host is a browser or Node
+const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode === 'function';
 
 var imports = {
     'env': {
@@ -438,6 +443,17 @@ var imports = {
         const [v] = fasl_to_js_value(bytes);
         console.log(v);
       })
+    },
+    document: hasDOM ? {
+        // Browser
+        body:               (()              => document.body),
+        'create-text-node': ((fasl_start)    => document.createTextNode(fasl_to_js_value(new Uint8Array(memory.buffer), fasl_start)[0])),
+        'append-child!':    ((parent, child) => parent.appendChild(child)),
+    }
+    : { // Node
+        body()               { throw new Error('DOM not available in this environment'); },
+        'create-text-node'() { throw new Error('DOM not available in this environment'); },
+        'append-child!'()    { throw new Error('DOM not available in this environment'); },
     }
 };
 

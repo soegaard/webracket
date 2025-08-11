@@ -444,6 +444,9 @@
   variable-reference-constant?
 
   js-log
+  js-document-body     ;; also added in "priminfo.rkt"
+  js-create-text-node  ;; also added in "priminfo.rkt"
+  js-append-child!     ;; also added in "priminfo.rkt"
 
   ;; 17. Unsafe Operations
   unsafe-fx+
@@ -3893,8 +3896,7 @@
               (struct
                (field $hash (mut i32))
                (field $v    (ref null extern)))))
-          
-          
+                    
           ) ; rec
        
 
@@ -3913,6 +3915,87 @@
                (import "primitives" "js_print_fasl")
                (param i32) (param i32))
 
+         ;; FFI related imports
+         (func $js-document-body/imported
+               (import "document" "body")
+               (result externref))
+
+         (func $js-create-text-node/imported
+               (import "document" "create-text-node")
+               (param $start  i32) ; start  of fasl in memory
+               (result externref))
+
+         (func $js-append-child!/imported
+               (import "document" "append-child!")
+               (param $parent externref)
+               (param $child  externref)
+               (result        externref)) ; the appended child
+         
+         (func $raise-expected-string (unreachable))
+
+         ;; (define-foreign make-text-node
+         ;;   "document" "create-text-node"
+         ;;   ;; Parameters: a string
+         ;;   ;; Result: an external reference which may be null
+         ;;   (ref string) -> (ref null extern))
+
+         (func $js-create-text-node
+               (param $s (ref eq))         ;; expects a Racket string
+               (result   (ref eq))         ;; an $External holding the `text` node
+
+               (local $bs   (ref eq))      ;; bytes as (ref $Bytes) but held as (ref eq) for now
+               (local $b    (ref $Bytes))
+               (local $len  i32)
+               (local $eref externref)
+
+               ;; 0) type-check
+               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                   (then (call $raise-expected-string (local.get $s))
+                         (unreachable)))
+               ;; 1) FASL-encode directly to a bytes object (port = #f)
+               (local.set $bs (call $s-exp->fasl (local.get $s) (global.get $false)))
+               ;; 2) copy bytes to linear memory
+               (local.set $b   (ref.cast (ref $Bytes) (local.get $bs)))
+               (local.set $len (call $copy-bytes-to-memory (local.get $b) (i32.const 0)))
+               ;; 3) call JS and wrap the externref
+               (local.set $eref (call $js-create-text-node/imported (i32.const 0)))
+               (struct.new $External (i32.const 0) (local.get $eref)))
+
+         ;; (define-foreign append-child!
+         ;;   "element" "appendChild"
+         ;;   ;; Parameters: two external references which may be null
+         ;;   ;; Result: an external reference which may be null
+         ;;   (ref null extern) (ref null extern) -> (ref null extern))
+
+         ;; Wraps the imported DOM call for use in the runtime
+         (func $js-append-child!
+               (param $parent (ref eq))   ;; expected: (ref $External)
+               (param $child  (ref eq))   ;; expected: (ref $External)
+               (result        (ref eq))
+
+               (local $p  (ref null $External))
+               (local $c  (ref null $External))
+               (local $pe externref)
+               (local $ce externref)
+               (local $re externref)
+
+               ;; 1) Type checks (fail early)
+               (if (i32.eqz (ref.test (ref $External) (local.get $parent)))
+                   (then (call $raise-argument-error (local.get $parent)) (unreachable)))
+               (if (i32.eqz (ref.test (ref $External) (local.get $child)))
+                   (then (call $raise-argument-error (local.get $child)) (unreachable)))
+               ;; Cast after checks
+               (local.set $p (ref.cast (ref $External) (local.get $parent)))
+               (local.set $c (ref.cast (ref $External) (local.get $child)))
+               ;; 2) Extract raw externrefs from boxes
+               (local.set $pe (struct.get $External $v (local.get $p)))
+               (local.set $ce (struct.get $External $v (local.get $c)))
+               ;; 3) Call imported function
+               (local.set $re (call $js-append-child!/imported (local.get $pe) (local.get $ce)))
+               ;; 4) Wrap returned externref in an $External and return it
+               (struct.new $External (i32.const 0) (local.get $re)))
+         
+         
          ;; Exceptions
          (func $raise-wrong-number-of-values-received (unreachable))
          
@@ -9270,7 +9353,6 @@
          ;; The current (June 2005) support for strings in WebAssembly is *very* limited.
          ;; The data segment can be used to embed byte sequences in the source.
          ;; However in order to access the data, one must copy them to the linear memory first.
-
          
          (func $raise-string-buffer-overflow (unreachable))
 
@@ -10768,7 +10850,42 @@
                                        (ref.i31 (i32.shl (local.get $int-pos)  (i32.const 1)))))
                ;; 10. Return void
                (global.get $void))
-         (func $copy_bytes_to_memory
+
+         (func $copy-bytes-to-memory
+               ;; Copy a Racket $Bytes object into linear memory at $ptr.
+               (param $bs-any (ref eq))  ;; source: expected (ref $Bytes)
+               (param $ptr    i32)       ;; destination address in linear memory
+               (result        i32)       ;; number of bytes copied
+
+               (local $bs  (ref $Bytes))
+               (local $arr (ref $I8Array))
+               (local $len i32)
+               (local $i   i32)
+               (local $val i32)
+
+               ;; 1) Type-check: ensure $bs-any is a $Bytes
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bs-any)))
+                   (then (call $raise-expected-bytes (local.get $bs-any))
+                         (unreachable)))
+               (local.set $bs (ref.cast (ref $Bytes) (local.get $bs-any)))
+               ;; 2) Get backing array and its length
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (array.len (local.get $arr)))
+               ;; 3) Copy loop
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $copy
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $val (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                            (i32.store8
+                             (i32.add (local.get $ptr) (local.get $i))
+                             (local.get $val))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $copy)))
+               ;; 4) Return number of bytes copied
+               (local.get $len))
+         
+         #;(func $copy_bytes_to_memory
                (export "copy_bytes_to_memory")
                (param $ptr i32)   ;; destination address in linear memory
                (result i32)       ;; number of bytes copied
@@ -10810,7 +10927,9 @@
 
                (global.set $result-bytes
                            (call $s-exp->fasl (local.get $v) (global.get $false)))
-               (local.set $len (call $copy_bytes_to_memory (i32.const 0)))
+               #;(local.set $len (call $copy_bytes_to_memory (i32.const 0)))
+               (local.set $len (call $copy-bytes-to-memory
+                                     (global.get $result-bytes) (i32.const 0)))               
                (call $js_print_fasl (i32.const 0) (local.get $len))
                (global.get $void))
 
@@ -14064,6 +14183,35 @@
                            (ref.i31 (i32.shl (local.get $i/u) (i32.const 1)))) ;; convert i32 to fixnum
                      (return (local.get $new-vec)))
 
+               ;;;
+               ;;; FFI
+               ;;;
+
+               #;(type $External 
+                       (sub $Heap
+                            (struct
+                              (field $hash (mut i32))
+                              (field $v    (ref null extern)))))
+
+               ;; Moved up to import section
+               #;(func $js_document_body
+                       (import "ffi" "js_document_body")
+                       (result externref))
+               
+               (func $js-document-body
+                     (result (ref eq))
+                     (struct.new $External
+                                 (i32.const 0)
+                                 (call $js-document-body/imported)))
+
+               #;(func $js-make-text-node
+                     (result (ref eq))
+                     (struct.new $External
+                                 (i32.const 0)
+                                 (call $js_make_text_node)))
+               
+
+
                
                ;; Top level `(define-label ...)
                ,@dls 
@@ -14149,8 +14297,9 @@
                                        (global.get $false)   ; ignored
                                        (global.get $zero)    ; start = 0
                                        (global.get $false))) ; end                        
-                     (drop (call $copy_bytes_to_memory (i32.const 0)))
-                     (call $fixnum->i32 (call $bytes-length (global.get $result-bytes))))
+
+                     (call $copy-bytes-to-memory ; copy and return length as i32
+                           (global.get $result-bytes) (i32.const 0)))
 
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
