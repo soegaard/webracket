@@ -33,6 +33,17 @@
 ;;; TODO
 ;;;
 
+; [ ] Input / output port going to the host.
+
+; [ ] case-lambda
+; [ ] Calling conventions for primitives?
+
+; [x] procedure?, procedure-rename, procedure-arity, etc.
+; [ ] call-with-values
+; [x] apply
+; [ ] map
+
+
 ; [x] Use new machinery for runtime string and symbol constants.
 
 ; [x] Inline the `void` primitive.
@@ -83,21 +94,12 @@
 
 ; [ ] use an i32 to hold the arity in $Procedure
 
-; [ ] case-lambda
-; [ ] Calling conventions for primitives?
-
-; [x] procedure?, procedure-rename, procedure-arity, etc.
-; [ ] call-with-values
-; [x] apply
-; [ ] map
 
 ; [x] generating string and symbol constants for use in the runtime
 
 ; [ ] Implement guards for structs.
 
 ; [ ] String ports.
-
-; [ ] Input / output port going to the host.
 
 ; [ ] Parameters.
 
@@ -361,7 +363,7 @@
   fx= fx> fx< fx<= fx>=
   ; fxmin fxmax
 
-  fxquotient
+  fxquotient unsafe-fxquotient
   ; fxremainder fxmodulo fxabs
   ; fxand fxior fxxor fxnot fxlshift fxrshift
   ; fxpopcount fxpopcount16 fxpopcount32
@@ -2869,12 +2871,12 @@
                                            [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
                                            [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
                                       [2 (case sym
-                                           [(+ - *)                  `(call ,(Prim pr)
-                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
-                                           [(fx+ fx- fx* fxquotient) `(call ,(Prim pr)
-                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
-                                           [(fl+ fl- fl*)            `(call ,(Prim pr)
-                                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                           [(+ - *)       `(call ,(Prim pr)
+                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                           [(fx+ fx- fx*) `(call ,(Prim pr)
+                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
+                                           [(fl+ fl- fl*) `(call ,(Prim pr)
+                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                                            ; / needs to signal an Racket error if denominator is zero
                                            [else   `(call ,(Prim pr)
                                                           ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
@@ -5712,10 +5714,49 @@
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
-         (func $fxquotient
+         (func $unsafe-fxquotient
                (param $x (ref eq)) (param $y (ref eq)) (result   (ref eq))               
                (ref.i31 ,(Double `(i32.div_s ,(Half `(i31.get_s (ref.cast i31ref (local.get $x))))
                                              ,(Half `(i31.get_s (ref.cast i31ref (local.get $y))))))))
+
+         (func $raise-division-by-zero (unreachable))
+         
+         (func $fxquotient
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
+
+               (local $xu i32) (local $yu i32)     ;; raw tagged bits
+               (local $xi i32) (local $yi i32)     ;; untagged i32s
+               (local $q  i32)                     ;; quotient
+
+               ;; --- check $x is a fixnum ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $x)))
+                   (then (call $raise-check-fixnum (local.get $x)) (unreachable)))
+               (local.set $xu (i31.get_u (ref.cast (ref i31) (local.get $x))))
+               (if (i32.and (local.get $xu) (i32.const 1))
+                   (then (call $raise-check-fixnum (local.get $x)) (unreachable)))
+               (local.set $xi (i32.shr_s (local.get $xu) (i32.const 1)))
+               ;; --- check $y is a fixnum ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $y)))
+                   (then (call $raise-check-fixnum (local.get $y)) (unreachable)))
+               (local.set $yu (i31.get_u (ref.cast (ref i31) (local.get $y))))
+               (if (i32.and (local.get $yu) (i32.const 1))
+                   (then (call $raise-check-fixnum (local.get $y)) (unreachable)))
+               (local.set $yi (i32.shr_s (local.get $yu) (i32.const 1)))
+               ;; --- divide by zero? ---
+               (if (i32.eqz (local.get $yi))
+                   (then (call $raise-division-by-zero) (unreachable)))
+               ;; --- compute truncating quotient ---
+               (local.set $q (i32.div_s (local.get $xi) (local.get $yi)))
+               ;; --- (optional) fixnum-range check: [-2^29, 2^29-1] ---
+               ;; uncomment if you want to signal overflow instead of wrapping
+               ;; (if (i32.or
+               ;;       (i32.lt_s (local.get $q) (i32.const -536870912)) ;; -2^29
+               ;;       (i32.gt_s (local.get $q) (i32.const  536870911))) ;;  2^29-1
+               ;;     (then (call $raise-fixnum-overflow) (unreachable)))
+               ;; --- re-tag as fixnum ---
+               (ref.i31 (i32.shl (local.get $q) (i32.const 1))))
 
          (func $fx= (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
