@@ -89,7 +89,7 @@
 
   ; 7. Optionally run the program via Node.js.
   (when (and node? run-after?)
-    (define runtime-js host-filename)
+    (define runtime-js out-host)
     (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
 
 ;;;
