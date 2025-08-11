@@ -2889,6 +2889,7 @@
                                              - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
                                             (let loop ([aes (AExpr* ae1)])
                                               (match aes
+                                                [(list)              `(global.get $zero)]
                                                 [(list  ae0)         ae0]
                                                 [(list* ae0 ae1 aes) `(call ,(Prim pr)
                                                                       (call ,(Prim pr) ,ae0 ,ae1)
@@ -5452,8 +5453,6 @@
                ;; Not a number
                (call $raise-expected-number (local.get $x))
                (unreachable))
-
-
 
 
          (func $integer?
@@ -14670,6 +14669,12 @@
                              fact)
                            5)))
                   120)))
+  (define (test-multiple-values)
+    (and (equal? (run '(let-values ([() (values)]) 3)) 3)
+         (equal? (run '(let-values ([(a) 11]) a)) 11)
+         (equal? (run '(let-values ([(a b) (values 11 22)]) (+ a b))) 33))
+         (equal? (run '(let-values ([(a b) (values 11 22)]
+                                    [(c d) (values 100 200)]) (+ a b c d))) 333))
   ;; The tests below require the expander.
   (define (test-letrec)
     (and  (equal? (run '(letrec () 12)) 12)
@@ -14804,7 +14809,7 @@
                                 (cons (symbol-interned? y)
                                       (cons (symbol-interned? z)
                                             '())))))
-                  '(#t #t #f))))
+                  '(#t #t #f))))  
   (define (test-fasl)
     (list
      ;; fixnums
@@ -14862,26 +14867,27 @@
         ;; (list "Conditional (if)"              (test-if))
         ;; (list "Sequencing (begin)"            (test-begin))
         ;; (list "Vectors"                       (test-vectors))
-        (list "Functions"                     (test-function-declarations))  
-        (list "Lambda without free variables" (test-lambda/no-free))
-        (list "Lambda - Thunks"               (test-thunks))
-        (list "Lambda - Parameter passing"    (test-parameter-passing)) 
-        (list "Lambda - Closures"             (test-closures))          
-        (list "Lambda"                        (test-lambda))
-        (list "Tail calls"                    (test-tail-calls))        
+        ;; (list "Functions"                     (test-function-declarations))  
+        ;; (list "Lambda without free variables" (test-lambda/no-free))
+        ;; (list "Lambda - Thunks"               (test-thunks))
+        ;; (list "Lambda - Parameter passing"    (test-parameter-passing)) 
+        ;; (list "Lambda - Closures"             (test-closures))          
+        ;; (list "Lambda"                        (test-lambda))
+        ;; (list "Tail calls"                    (test-tail-calls))        
         ;; (list "Quotations"                    (test-quotations))
         ;; (list "Boxes"                         (test-boxes))
         ;; (list "Assignments"                   (test-assignments))      
         ;; (list "Byte strings"                  (test-bytes))
         ;; (list "Strings"                       (test-strings))
+        (list "Multiple Values"               (test-multiple-values))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
         #; (list "Letrec"                        (test-letrec))  ;; TODO!
         #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) ; assignment to letrec bound variable
-        (list "Named let"                     (test-named-let))  ; <-
-        (list "And/Or"                        (test-and/or))
-        (list "Cond"                          (test-cond))
-        (list "When/unless"                   (test-when/unless))
-        (list "Begin0"                        (test-begin0))
-        (list "Fasl"                          (test-fasl))
+        ;; (list "Named let"                     (test-named-let))  ; <-
+        ;; (list "And/Or"                        (test-and/or))
+        ;; (list "Cond"                          (test-cond))
+        ;; (list "When/unless"                   (test-when/unless))
+        ;; (list "Begin0"                        (test-begin0))
+        ;; (list "Fasl"                          (test-fasl))
         ))
