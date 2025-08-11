@@ -26,11 +26,6 @@
 ;;; Expressions to work on
 ;;;
 
-; If (values) is called in an <effect> context, an empty $Values is pushed
-; to the stack.
-; But the context expects 0 values on the stack. 
-;     (comp+  #`(let () (let-values ([() (values)]) 3)))
-
 ; Invoking a primitive via a $PrimitiveProcedure is not done.
 
 
@@ -38,10 +33,10 @@
 ;;; TODO
 ;;;
 
-; [ ] Use new machinery for runtime string and symbol constants.
+; [x] Use new machinery for runtime string and symbol constants.
 
 ; [x] Inline the `void` primitive.
-; [ ] Implement a `void` function.
+; [x] Implement a `void` function.
 
 ; [x] Implement `equal?`
 ; [ ] Handle cycles in `equal?`
@@ -14672,9 +14667,17 @@
   (define (test-multiple-values)
     (and (equal? (run '(let-values ([() (values)]) 3)) 3)
          (equal? (run '(let-values ([(a) 11]) a)) 11)
-         (equal? (run '(let-values ([(a b) (values 11 22)]) (+ a b))) 33))
+         (equal? (run '(let-values ([(a b) (values 11 22)]) (+ a b))) 33)
          (equal? (run '(let-values ([(a b) (values 11 22)]
-                                    [(c d) (values 100 200)]) (+ a b c d))) 333))
+                                    [(c d) (values 100 200)]) (+ a b c d))) 333)
+         (equal? (run '(let ()
+                         (define (f) (values 11 22))
+                         (let-values ([(a b) (f)]) (+ a b))))  33)
+         (equal? (run '(let ()                         
+                         (let-values ([(a b)
+                                       (if 1 (values 11 22) (values 11 22 33))])
+                           (+ a b))))
+                 33)))
   ;; The tests below require the expander.
   (define (test-letrec)
     (and  (equal? (run '(letrec () 12)) 12)
