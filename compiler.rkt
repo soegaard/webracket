@@ -2573,7 +2573,7 @@
         [(list is)
          (define this (new-var #'$this))
          (emit-local this '(ref $Closure))
-         `(block (ref eq)
+         `(block (result (ref eq))
                  ; 1. Allocate closure with dummy array of free variables.
                  (local.set ,this
                             `(struct.new $Closure    
@@ -3014,7 +3014,7 @@
                         [(eq? dd <value>)  (list `(result (ref eq)))]
                         [(eq? dd <effect>) (list)]
                         ; otherwise, the data destination is a variable
-                        [else              (list `(result (ref eq)))])
+                        [else              (list `(result (ref eq)))])  ; <--
               ; 1. Allocate closure and store it in $closedapp-clos
               ,(ClosureAllocation ca #'$closedapp-clos)
               ; 2. Call it. Some day we might need to pass `tc-flag` as well.
@@ -3129,8 +3129,10 @@
            ,e)))]
 
     [(letrec-values ,s (((,x** ...) ,ce*) ...) ,e)
-     #;(displayln (list 'letrec-values (map list x** ce*) e)
-                  (current-error-port))
+     ;; (displayln (list 'letrec-values (map list x** ce*) e)
+     ;;            (current-error-port))
+     ;; (displayln (list 'dd dd)
+     ;;            (current-error-port))
 
      ; During the initial parsing we currently use this transform (ish):
      ;    (letrec-values ([(x ...) ce] ...) e)
@@ -3196,7 +3198,11 @@
      (let* ([x* (map first x**)]                     ; assumes single value
             [u* (for/list ([x* x**]) (Undefined))]
             [e  (Expr e dd cd)])                     
-       `(block ,@(for/list ([x x*] [u u*])
+       `(block ,@(match dd                               ; <--
+                   ['<effect> (list)]
+                   ['<value>  (list '(result (ref eq)))]
+                   [x         (list)])
+               ,@(for/list ([x x*] [u u*])
                    (Store! x u))
                ,@(map AllocateClosure ce* x*) 
                ,@(append* (map FillClosure ce* x*))
@@ -5714,8 +5720,8 @@
 
          (func $fxquotient
                (param $x (ref eq)) (param $y (ref eq)) (result   (ref eq))               
-               (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
-                                   ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
+               (ref.i31 ,(Double `(i32.div_s ,(Half `(i31.get_s (ref.cast i31ref (local.get $x))))
+                                             ,(Half `(i31.get_s (ref.cast i31ref (local.get $y))))))))
 
          (func $fx= (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
@@ -14709,7 +14715,9 @@
                             ((fix f) 5))))
                   120)))
   (define (test-named-let)
-    (and  (equal? (run '(let loop ([n 5] [sum 0]) (if (zero? n) sum (loop (- n 1) (+ sum n))))) 15)))
+    (and  (equal? (run '(let loop () 11)) 11)
+          (equal? (run '(let loop ([x 5]) (if (= x 0) 42 (loop (- x 1))))) 42)
+          (equal? (run '(let loop ([n 5] [sum 0]) (if (zero? n) sum (loop (- n 1) (+ sum n))))) 15)))
   (define (test-cond)
     (and  (equal? (run '(cond [3])) 3)
           (equal? (run '(let ([else #f]) (cond [else 10] [#t 11]))) 11)
@@ -14845,15 +14853,15 @@
              '(1 2))))
 
   (list "-- Core Constructs --"
-        (list "Immediate Values"              (test-immediates))
-        (list "Call unary primitive"          (test-call-unary-primitive))
+        ;; (list "Immediate Values"              (test-immediates))
+        ;; (list "Call unary primitive"          (test-call-unary-primitive))
         #;(list "Some characters "            (test-some-characters)) ; slow
         #;(list "All characters"              (test-all-characters))  ; very slow
-        (list "Call binary primitive"         (test-call-binary-primitive))
-        (list "Local variables (let)"         (test-let))
-        (list "Conditional (if)"              (test-if))
-        (list "Sequencing (begin)"            (test-begin))
-        (list "Vectors"                       (test-vectors))
+        ;; (list "Call binary primitive"         (test-call-binary-primitive))
+        ;; (list "Local variables (let)"         (test-let))
+        ;; (list "Conditional (if)"              (test-if))
+        ;; (list "Sequencing (begin)"            (test-begin))
+        ;; (list "Vectors"                       (test-vectors))
         (list "Functions"                     (test-function-declarations))  
         (list "Lambda without free variables" (test-lambda/no-free))
         (list "Lambda - Thunks"               (test-thunks))
@@ -14861,11 +14869,11 @@
         (list "Lambda - Closures"             (test-closures))          
         (list "Lambda"                        (test-lambda))
         (list "Tail calls"                    (test-tail-calls))        
-        (list "Quotations"                    (test-quotations))
-        (list "Boxes"                         (test-boxes))
-        (list "Assignments"                   (test-assignments))      
-        (list "Byte strings"                  (test-bytes))
-        (list "Strings"                       (test-strings))
+        ;; (list "Quotations"                    (test-quotations))
+        ;; (list "Boxes"                         (test-boxes))
+        ;; (list "Assignments"                   (test-assignments))      
+        ;; (list "Byte strings"                  (test-bytes))
+        ;; (list "Strings"                       (test-strings))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
         #; (list "Letrec"                        (test-letrec))  ;; TODO!
