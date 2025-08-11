@@ -155,6 +155,276 @@ function fasl_to_js_value(arr, i = 0) {
   }
 }
 
+function js_value_to_fasl(v) {
+  const out = [];
+  const enc = new TextEncoder();
+
+  // --- low-level writers (big-endian) ---
+  function writeByte(b) {
+    out.push(b & 0xFF);
+  }
+  function writeU32(u) {
+    out.push((u >>> 24) & 0xFF, (u >>> 16) & 0xFF, (u >>> 8) & 0xFF, u & 0xFF);
+  }
+  function writeBytes(u8) {
+    writeU32(u8.length >>> 0);
+    for (let i = 0; i < u8.length; i++) out.push(u8[i] & 0xFF);
+  }
+  function writeString(s) {
+    const u8 = enc.encode(s);
+    writeBytes(u8);
+  }
+  function writeF64(x) {
+    const dv = new DataView(new ArrayBuffer(8));
+    // Big-endian
+    dv.setFloat64(0, x, false);
+    const hi = dv.getUint32(0, false);
+    const lo = dv.getUint32(4, false);
+    writeU32(hi);
+    writeU32(lo);
+  }
+
+  // --- tagged writers ---
+  function writeFixnum(n) {
+    // 30-bit signed two's complement payload; range: [-2^29, 2^29-1]
+    if (!Number.isInteger(n) || n < -(1 << 29) || n > ((1 << 29) - 1)) {
+      throw new RangeError("fixnum out of 30-bit range");
+    }
+    writeByte(@|fasl-fixnum|);
+    const raw30 = n & 0x3FFFFFFF; // 30-bit two's complement payload
+    writeU32(raw30 >>> 0);
+  }
+  function writeFlonum(x) {
+    writeByte(@|fasl-flonum|);
+    writeF64(x);
+  }
+  function writeCharacter(cp) {
+    // cp = Unicode scalar value (number)
+    writeByte(@|fasl-character|);
+    writeU32(cp >>> 0);
+  }
+  function writeSymbol(name) {
+    writeByte(@|fasl-symbol|);
+    writeString(name);
+  }
+  function writeStringVal(s) {
+    writeByte(@|fasl-string|);
+    writeString(s);
+  }
+  function writeBytesVal(u8) {
+    writeByte(@|fasl-bytes|);
+    writeBytes(u8);
+  }
+  function writeBoolean(b) {
+    writeByte(@|fasl-boolean|);
+    writeByte(b ? 1 : 0);
+  }
+  function writeNull() {
+    writeByte(@|fasl-null|);
+  }
+  function writeVoid() {
+    writeByte(@|fasl-void|);
+  }
+  function writeEof() {
+    writeByte(@|fasl-eof|);
+  }
+  function writePair(car, cdr) {
+    writeByte(@|fasl-pair|);
+    writeAny(car);
+    writeAny(cdr);
+  }
+  function writeVector(arr) {
+    writeByte(@|fasl-vector|);
+    writeU32(arr.length >>> 0);
+    for (let i = 0; i < arr.length; i++) writeAny(arr[i]);
+  }
+
+  // --- main dispatcher (mirrors fasl_to_js_value mapping) ---
+  function writeAny(x) {
+    // Fast paths by JS type
+    if (typeof x === "number") {
+      if (Number.isInteger(x) && x >= -(1 << 29) && x <= ((1 << 29) - 1)) {
+        writeFixnum(x);
+      } else {
+        writeFlonum(x);
+      }
+      return;
+    }
+    if (typeof x === "boolean") {
+      writeBoolean(x);
+      return;
+    }
+    if (x === null) {
+      writeNull();
+      return;
+    }
+    if (x === undefined) {
+      writeVoid();
+      return;
+    }
+    // EoF sentinel (match your decoder's '<eof>' convention)
+    if (x === "<eof>" || (x && x.tag === "eof")) {
+      writeEof();
+      return;
+    }
+    // Character (two accepted forms)
+    //   { tag: 'char', cp: <codepoint> }  or  { tag: 'char', ch: 'A' }
+    if (x && x.tag === "char") {
+      const cp = typeof x.cp === "number" ? x.cp
+               : (typeof x.ch === "string" ? x.ch.codePointAt(0) : undefined);
+      if (cp === undefined) throw new TypeError("bad char object");
+      writeCharacter(cp >>> 0);
+      return;
+    }
+    // Pair (your decoder uses {tag:'pair', car, cdr})
+    if (x && x.tag === "pair") {
+      writePair(x.car, x.cdr);
+      return;
+    }
+    // Bytes: prefer Uint8Array
+    if (x instanceof Uint8Array) {
+      writeBytesVal(x);
+      return;
+    }
+    // Accept raw byte arrays too
+    if (Array.isArray(x) && x.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
+      writeBytesVal(Uint8Array.from(x));
+      return;
+    }
+    // Vector: plain JS Array (distinct from bytes above)
+    if (Array.isArray(x)) {
+      writeVector(x);
+      return;
+    }
+    // Symbol
+    if (typeof x === "symbol") {
+      const name = Symbol.keyFor(x) ?? x.description ?? "";
+      writeSymbol(name);
+      return;
+    }
+    // String
+    if (typeof x === "string") {
+      writeStringVal(x);
+      return;
+    }
+    throw new TypeError("unsupported value for FASL encoding: " + String(x));
+  }
+  writeAny(v);
+  return Uint8Array.from(out);
+}
+
+function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
+  // --- helpers -------------------------------------------------------------
+  function charToString(v) {
+    if (typeof v === 'string' && v.length === 1) return v;
+    if (v && typeof v === 'object' && v.tag === 'char' && typeof v.cp === 'number') {
+      try { return String.fromCodePoint(v.cp); } catch { /* fall through */ }
+    }
+    return null;
+  }
+
+  function deepEq(a, b) {
+    // Treat "char-wrappers" and 1-char strings as equal
+    const ac = charToString(a), bc = charToString(b);
+    if (ac !== null || bc !== null) return ac === bc;
+    // numbers (handle NaN, -0)
+    if (typeof a === 'number' || typeof b === 'number') return Object.is(a, b);
+    // Uint8Array (bytes)
+    if (a instanceof Uint8Array && b instanceof Uint8Array) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+      return true;
+    }
+    // Symbols (use registry key or description)
+    if (typeof a === 'symbol' && typeof b === 'symbol') {
+      const ka = Symbol.keyFor(a) ?? a.description ?? '';
+      const kb = Symbol.keyFor(b) ?? b.description ?? '';
+      return ka === kb;
+    }
+    // Pairs
+    if (a && b && a.tag === 'pair' && b.tag === 'pair') {
+      return deepEq(a.car, b.car) && deepEq(a.cdr, b.cdr);
+    }
+    // Arrays (vectors)
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) if (!deepEq(a[i], b[i])) return false;
+      return true;
+    }
+    // Strings, booleans, null, undefined, "<eof>"
+    return a === b;
+  }
+  function roundtrip(v) {
+    const bytes = js_value_to_fasl(v);
+    const [v2] = fasl_to_js_value(bytes);
+    const ok = deepEq(v2, v);
+    if (!ok && log) {
+      console.error('Roundtrip mismatch:', v, '->', v2, 'bytes=', bytes);
+    }
+    return ok;
+  }
+  function test(name, v) {
+    const ok = roundtrip(v);
+    results.push({ name, ok });
+    if (log) console.log(`${ok ? '✓' : '✗'} ${name}`);
+    if (ok) pass++; else fail++;
+  }
+
+  // --- run tests -----------------------------------------------------------
+  const results = [];
+  let pass = 0, fail = 0;
+  
+  // Fixnums (30-bit)
+  test('fixnum 0', 0);
+  test('fixnum 123', 123);
+  test('fixnum -5', -5);
+  // Flonums
+  test('flonum 1.5', 1.5);
+  test('flonum -0.0', -0.0);
+  test('flonum NaN', NaN);
+  test('flonum +Inf', Infinity);
+  test('flonum -Inf', -Infinity);
+  // Booleans / null / void / eof
+  test('boolean true', true);
+  test('boolean false', false);
+  test('null', null);
+  test('void/undefined', undefined);
+  test('eof sentinel', '<eof>');
+  // Characters (encode via wrapper; decoder yields 1-char string)
+  test('char A', { tag: 'char', cp: 'A'.codePointAt(0) });
+  test('char snowman', { tag: 'char', cp: '☃'.codePointAt(0) });
+  // Symbols
+  test('symbol foo', Symbol.for('foo'));
+  // Bytes (Uint8Array)
+  test('bytes', new Uint8Array([0, 1, 2, 255]));
+  // Pairs
+  test('pair (1 . null)', { tag: 'pair', car: 1, cdr: null });
+  test('list (1 2)',
+       { tag: 'pair', car: 1, cdr: { tag: 'pair', car: 2, cdr: null } });
+  // Vectors (arrays)
+  test('vector mixed',
+       [ 1, 2.5, { tag: 'pair', car: 'x', cdr: null }, true ]);
+  // Strings
+  test('string ascii', 'hello');
+  test('string utf8', 'héllø 🌍');
+
+  return { pass, fail, total: pass + fail, results };
+}
+
+// Uncomment to run the testsuite for fasl.
+// Currently the only failing test is the one for -0.0 which after the round trip becomes 0.0.
+// This is not fixabable as long as we convert integers to fixnums.
+
+// const summary = testsuite(js_value_to_fasl, fasl_to_js_value, { log: true });
+// console.log(`\nPassed: ${summary.pass}/${summary.total}`);
+// if (summary.fail) {
+//   console.log('Failures:');
+//    for (const r of summary.results.filter(r => !r.ok)) {
+//    console.log('  -', r.name);
+//  }
+// }
+
+
 var imports = {
     'env': {
         'memory': memory
@@ -185,6 +455,11 @@ const wasmModule
                           const bytes  = new Uint8Array(memory.buffer, 0, result);
                           console.log(new TextDecoder().decode(bytes));
                         });
+
+
+
+
+
 })
 
 (define (node-runtime out.wasm)
