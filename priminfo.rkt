@@ -53,6 +53,8 @@
     js-document-body
     js-create-text-node
     js-append-child!
+    js-make-element      
+    js-set-attribute!
     ))
 
 (define (primitive->description sym-or-primitive)

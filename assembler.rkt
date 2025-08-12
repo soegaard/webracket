@@ -86,8 +86,6 @@ function read_u32(arr, i) {
 }
 
 function fasl_to_js_value(arr, i = 0) {
-  console.log(arr);
-  console.log(i);
                                        
   const tag = arr[i++];
 
@@ -430,6 +428,10 @@ function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
 // hasDOM gives us a way of determining whether the host is a browser or Node
 const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode === 'function';
 
+function from_fasl(index) {
+    return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
+}
+
 var imports = {
     'env': {
         'memory': memory
@@ -446,14 +448,18 @@ var imports = {
     },
     document: hasDOM ? {
         // Browser
-        body:               (()              => document.body),
-        'create-text-node': ((fasl_start)    => document.createTextNode(fasl_to_js_value(new Uint8Array(memory.buffer), fasl_start)[0])),
-        'append-child!':    ((parent, child) => parent.appendChild(child)),
+        body:               (()                  => document.body),
+        'create-text-node': ((fasl_start)        => document.createTextNode(from_fasl(fasl_start))),
+        'append-child!':    ((parent, child)     => parent.appendChild(child)),
+        'create-element':   ((local_name)        => document.createElement(from_fasl(local_name))),
+        'set-attribute!':   ((elem, name, value) => elem.setAttribute(from_fasl(name), from_fasl(value))),
     }
     : { // Node
         body()               { throw new Error('DOM not available in this environment'); },
         'create-text-node'() { throw new Error('DOM not available in this environment'); },
         'append-child!'()    { throw new Error('DOM not available in this environment'); },
+        'create-element'()   { throw new Error('DOM not available in this environment'); },
+        'set-attribute!'()   { throw new Error('DOM not available in this environment'); },
     }
 };
 
