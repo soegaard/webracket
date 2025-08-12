@@ -42,7 +42,7 @@
 ; [ ] call-with-values
 ; [x] apply
 ; [ ] map
-
+; [ ] for-each
 
 ; [x] Use new machinery for runtime string and symbol constants.
 
@@ -833,21 +833,25 @@
                     (? boolean?)
                     (? char?)
                     (? null?)
-                    (? void?))
-                v)
-           `(quote ,s ,(datum s v))]
-          [(? symbol? sym)  (quoted-symbol! s sym)]
-          [(? pair? p)      `(app ,h ,(var:cons) ,(loop (car p)) ,(loop (cdr p)))]
-          [(? vector? v)    (let ([vs (map loop (vector->list v))])
-                              `(app ,h ,(var:vector-immutable) ,vs ...))]
-          [(? box? b)        `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]
-          [(? bytes? bs)    (let ([bs (map loop (bytes->list bs))])
-                              `(app ,h ,(var:bytes) ,bs ...))]
-          [(? string? cs)   (let ([cs (loop (string->list cs))])
-                              `(app ,h ,(var:list->string) ,cs))]
-          [(? keyword? kw)  (let ([s (loop (keyword->string kw))])
-                              `(app ,h ,(var:string->keyword) ,s))]
-          [else             (error 'datum->construction-expr "got: ~a" v)]))))
+                    (? void?)
+                    (? number?))) ; a bignum or rational number
+           (if (number? v)
+               (if (not (or (wr-fixnum? v) (flonum? v)))
+                   `(quote ,s ,(datum s (* 1. v))) ; convert to a flonum
+                   `(quote ,s ,(datum s v)))       ; fixnum or flonum
+               `(quote ,s ,(datum s v)))]          ; other literals
+          [(? symbol? sym) (quoted-symbol! s sym)]
+          [(? pair? p)     `(app ,h ,(var:cons) ,(loop (car p)) ,(loop (cdr p)))]
+          [(? vector? v)   (let ([vs (map loop (vector->list v))])
+                             `(app ,h ,(var:vector-immutable) ,vs ...))]
+          [(? box? b)       `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]
+          [(? bytes? bs)   (let ([bs (map loop (bytes->list bs))])
+                             `(app ,h ,(var:bytes) ,bs ...))]
+          [(? string? cs)  (let ([cs (loop (string->list cs))])
+                             `(app ,h ,(var:list->string) ,cs))]
+          [(? keyword? kw) (let ([s (loop (keyword->string kw))])
+                             `(app ,h ,(var:string->keyword) ,s))]
+          [else            (error 'datum->construction-expr "got: ~a" v)]))))
   (Expr : Expr (e) -> Expr ()
     [(quote ,s ,d)
      (datum->construction-expr s (datum-value d))]
@@ -15145,36 +15149,36 @@
              '(1 2))))
 
   (list "-- Core Constructs --"
-        ;; (list "Immediate Values"              (test-immediates))
-        ;; (list "Call unary primitive"          (test-call-unary-primitive))
+        (list "Immediate Values"              (test-immediates))
+        (list "Call unary primitive"          (test-call-unary-primitive))
         #;(list "Some characters "            (test-some-characters)) ; slow
         #;(list "All characters"              (test-all-characters))  ; very slow
-        ;; (list "Call binary primitive"         (test-call-binary-primitive))
-        ;; (list "Local variables (let)"         (test-let))
-        ;; (list "Conditional (if)"              (test-if))
-        ;; (list "Sequencing (begin)"            (test-begin))
-        ;; (list "Vectors"                       (test-vectors))
-        ;; (list "Functions"                     (test-function-declarations))  
-        ;; (list "Lambda without free variables" (test-lambda/no-free))
-        ;; (list "Lambda - Thunks"               (test-thunks))
-        ;; (list "Lambda - Parameter passing"    (test-parameter-passing)) 
-        ;; (list "Lambda - Closures"             (test-closures))          
-        ;; (list "Lambda"                        (test-lambda))
-        ;; (list "Tail calls"                    (test-tail-calls))        
-        ;; (list "Quotations"                    (test-quotations))
-        ;; (list "Boxes"                         (test-boxes))
-        ;; (list "Assignments"                   (test-assignments))      
-        ;; (list "Byte strings"                  (test-bytes))
-        ;; (list "Strings"                       (test-strings))
+        (list "Call binary primitive"         (test-call-binary-primitive))
+        (list "Local variables (let)"         (test-let))
+        (list "Conditional (if)"              (test-if))
+        (list "Sequencing (begin)"            (test-begin))
+        (list "Vectors"                       (test-vectors))
+        (list "Functions"                     (test-function-declarations))  
+        (list "Lambda without free variables" (test-lambda/no-free))
+        (list "Lambda - Thunks"               (test-thunks))
+        (list "Lambda - Parameter passing"    (test-parameter-passing)) 
+        (list "Lambda - Closures"             (test-closures))          
+        (list "Lambda"                        (test-lambda))
+        (list "Tail calls"                    (test-tail-calls))        
+        (list "Quotations"                    (test-quotations))
+        (list "Boxes"                         (test-boxes))
+        (list "Assignments"                   (test-assignments))      
+        (list "Byte strings"                  (test-bytes))
+        (list "Strings"                       (test-strings))
         (list "Multiple Values"               (test-multiple-values))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
         #; (list "Letrec"                        (test-letrec))  ;; TODO!
         #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) ; assignment to letrec bound variable
-        ;; (list "Named let"                     (test-named-let))  ; <-
-        ;; (list "And/Or"                        (test-and/or))
-        ;; (list "Cond"                          (test-cond))
-        ;; (list "When/unless"                   (test-when/unless))
-        ;; (list "Begin0"                        (test-begin0))
-        ;; (list "Fasl"                          (test-fasl))
+        (list "Named let"                     (test-named-let))  ; <-
+        (list "And/Or"                        (test-and/or))
+        (list "Cond"                          (test-cond))
+        (list "When/unless"                   (test-when/unless))
+        (list "Begin0"                        (test-begin0))
+        (list "Fasl"                          (test-fasl))
         ))
