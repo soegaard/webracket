@@ -1072,8 +1072,10 @@
             [else                                    #f]))
     (define (extend ρ original renamed)
       (λ (x) (if (id=? x original) renamed (ρ x))))
-    (define (fresh x ρ [orig-x x])
+    #;(define (fresh x ρ [orig-x x])
       (if (ρ x) (fresh (new-var x) ρ x) x))
+    (define (fresh x ρ [orig-x x])
+      (if (ρ x) (fresh (new-var x) ρ x) (new-var x)))
     (define (rename x ρ)
       (define x* (fresh x ρ))
       (values x* (extend ρ x x*)))
@@ -1083,16 +1085,20 @@
     (define (ModuleLevelForm* xs ρ) (map2* ModuleLevelForm xs ρ))
     (define (Formals*         fs ρ) (map2* Formals fs ρ))
     (define (Abstraction*    abs ρ) (map2* Abstraction abs ρ))
-    ; Expr* : no threading! all e use same env
-    (define (Expr*         es ρ) (map (λ (e) (letv ((e _) (Expr e ρ)) e)) es))    
+    ; (define (Expr*         es ρ) (map (λ (e) (letv ((e _) (Expr e ρ)) e)) es))  ; <--
+    (define (Expr*         es ρ)    (if (null? es)
+                                        (values '() ρ)
+                                        (letv ((e ρ) (Expr (car es) ρ))
+                                          (letv ((es ρ) (Expr* (cdr es) ρ))
+                                            (values (cons e es) ρ)))))
     (define (Binding* xss es ρ)
-      (letv ((es) (Expr* es ρ))  ; xss are not bound in es
+      (letv ((es ρ) (Expr* es ρ))  ; xss are not bound in es
         (letv ((xss ρ) (rename** xss ρ))
           (values xss es ρ))))
     (define (RecBinding* xss es ρ)
       (letv ((xss ρ) (rename** xss ρ))
-        (letv ((es) (Expr* es ρ)) ; xss are bound in es
-              (values xss es ρ))))
+        (letv ((es ρ) (Expr* es ρ)) ; xss are bound in es
+          (values xss es ρ))))
     ; References to unbound variables within a module leads to an error.
     ; Outside modules, no errors will be signaled.
     ; Example: Try (if 1 2 x) in the repl.
@@ -1162,11 +1168,11 @@
                                                   (letv ((e1 ρ) (Expr e1 ρ))
                                                     (letv ((e2 ρ) (Expr e2 ρ))
                                                       (values `(if ,s ,e0 ,e1 ,e2) ρ))))]
-    [(begin  ,s ,e0 ,e1 ...)                    (letv ((e0 _) (Expr e0 ρ))
-                                                  (letv ((e1) (Expr* e1 ρ))
+    [(begin  ,s ,e0 ,e1 ...)                    (letv ((e0 ρ) (Expr e0 ρ))
+                                                  (letv ((e1 ρ) (Expr* e1 ρ))
                                                     (values `(begin ,s ,e0 ,e1 ...) ρ)))]
-    [(begin0 ,s ,e0 ,e1 ...)                    (letv ((e0 _) (Expr e0 ρ))
-                                                  (letv ((e1) (Expr* e1 ρ))
+    [(begin0 ,s ,e0 ,e1 ...)                    (letv ((e0 ρ) (Expr e0 ρ))
+                                                  (letv ((e1 ρ) (Expr* e1 ρ))
                                                     (values `(begin0 ,s ,e0 ,e1 ...) ρ)))]
     [(let-values ,s ([(,x ...) ,e] ...) ,e0)    (let ([ρ-orig ρ]) 
                                                   (letv ((x e ρ) (Binding* x e ρ))
@@ -1191,8 +1197,8 @@
                                                     (letv ((e2 ρ) (Expr e2  ρ))
                                                       (values
                                                        `(wcm ,s ,e0 ,e1 ,e2) ρ))))]
-    [(app ,s ,e0 ,e1 ...)                     (letv ((e0 _) (Expr e0 ρ))
-                                                (letv ((e1) (Expr* e1 ρ))
+    [(app ,s ,e0 ,e1 ...)                     (letv ((e0 ρ) (Expr e0 ρ))
+                                                (letv ((e1 ρ) (Expr* e1 ρ))
                                                   (values `(app ,s ,e0 ,e1 ...) ρ)))]
     ; Note: top-level-variables are looked up by name in the namespace,
     ;       so they can't be renamed.
@@ -1903,7 +1909,7 @@
   (letv ((T xs) (TopLevelForm T (make-id-set)))    
     (unless (set-empty? xs)
       (displayln "\n---\n")
-      (displayln (unparse-LANF T))
+      (pretty-print (unparse-LANF T)) (newline)
       (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))
     (values T ht abs)))
