@@ -2712,24 +2712,24 @@
                                (define work
                                  (case sym
                                    [(s-exp->fasl)
-                                   ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
-                                   (define aes (AExpr* ae1))
-                                   (define n   (length aes))
-                                   (when (> n 2) (error 'primapp "too many arguments: ~a" s))
-                                   (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
-                                   (define m (- 2 n))
-                                   (define optionals (make-list m `(global.get $missing)))
-                                   `(call $s-exp->fasl ,@aes ,@optionals)]
-                                  [(fasl->s-exp)
-                                   ; exactly one argument
-                                   (define aes (AExpr* ae1))
-                                   (define n   (length aes))
-                                   (when (> n 1) (error 'primapp "too many arguments: ~a" s))
-                                   (when (< n 1) (error 'primapp "too few arguments: ~a" s))
-                                   `(call $fasl->s-exp ,@aes)]
-                                  [(void)
-                                   (define (AE ae)   (AExpr3 ae <effect>))
-                                   (define (AE* aes) (map AE aes))
+                                    ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+                                    (define aes (AExpr* ae1))
+                                    (define n   (length aes))
+                                    (when (> n 2) (error 'primapp "too many arguments: ~a" s))
+                                    (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
+                                    (define m (- 2 n))
+                                    (define optionals (make-list m `(global.get $missing)))
+                                    `(call $s-exp->fasl ,@aes ,@optionals)]
+                                   [(fasl->s-exp)
+                                    ; exactly one argument
+                                    (define aes (AExpr* ae1))
+                                    (define n   (length aes))
+                                    (when (> n 1) (error 'primapp "too many arguments: ~a" s))
+                                    (when (< n 1) (error 'primapp "too few arguments: ~a" s))
+                                    `(call $fasl->s-exp ,@aes)]
+                                   [(void)
+                                    (define (AE ae)   (AExpr3 ae <effect>))
+                                    (define (AE* aes) (map AE aes))
                                     `(block (result (ref eq))
                                             ,@(AE* ae1)
                                             (global.get $void))]
@@ -2841,22 +2841,45 @@
                                     ; (define init `(array.new $Bytes (i32.const 0) (i32.const ,n)))
                                     (define $bs  (emit-fresh-local 'quoted-bytes '(ref $Bytes) init))
                                     `(block (result (ref eq))
-                                       ,@(for/list ([ae ae1] [i (in-naturals)])
-                                           `(call $bytes-set!/checked
-                                                  ,(Reference $bs) (i32.const ,i)
-                                                  (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
-                                       ,(Reference $bs))]
+                                            ,@(for/list ([ae ae1] [i (in-naturals)])
+                                                `(call $bytes-set!/checked
+                                                       ,(Reference $bs) (i32.const ,i)
+                                                       (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
+                                            ,(Reference $bs))]
+                                   #;[(string) ; variadic, needs inlining for now
+                                      ; TODO: This assumes all the ae1 ... are characters
+                                      (define n    (length ae1))
+                                      (define init `(array.new $String (i32.const 0) (i32.const ,n)))
+                                      (define $is  (emit-fresh-local 'inlined-string '(ref $String) init))
+                                      `(block (result (ref eq))
+                                              ,@(for/list ([ae ae1] [i (in-naturals)])
+                                                  `(array.set $String ,(Reference $is) (i32.const ,i) 
+                                                              (i32.shr_s (i31.get_s (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
+                                                                         (i32.const 1))))
+                                              ,(Reference $qs))]
+
                                    [(string) ; variadic, needs inlining for now
-                                    ; TODO: This assumes all the ae1 ... are characters
                                     (define n    (length ae1))
-                                    (define init `(array.new $String (i32.const 0) (i32.const ,n)))
-                                    (define $qs  (emit-fresh-local 'quoted-string '(ref $String) init))
+                                    ;; Allocate code-point array and bind to a (ref eq) local.
+                                    (define init `(array.new $I32Array (i32.const 0) (i32.const ,n)))
+                                    (define $a   (emit-fresh-local 'cp-array '(ref eq) init))
+
                                     `(block (result (ref eq))
-                                      ,@(for/list ([ae ae1] [i (in-naturals)])
-                                          `(array.set $String ,(Reference $qs) (i32.const ,i) 
-                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
-                                                                 (i32.const 1))))
-                                      ,(Reference $qs))]
+                                            ;; Fill array: array operand must be (ref $I32Array), so cast from (ref eq).
+                                            ,@(for/list ([ae ae1] [i (in-naturals)])
+                                                `(array.set $I32Array
+                                                            (ref.cast (ref $I32Array) ,(Reference $a))
+                                                            (i32.const ,i)
+                                                            (i32.shr_s
+                                                             (i31.get_s
+                                                              (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
+                                                             (i32.const 1))))
+                                            ;; Return a fresh $String (hash=0, not immutable) wrapping the array.
+                                            (struct.new $String
+                                                        (i32.const 0)
+                                                        (i32.const 0)
+                                                        (ref.cast (ref $I32Array) ,(Reference $a))))]
+                                   
                                    [(vector vector-immutable)
                                     (define n    (length ae1))
                                     ; (define init `(array.new $Vector (ref.i31 (i32.const 0)) (i32.const ,n)))
