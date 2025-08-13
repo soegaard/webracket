@@ -7004,41 +7004,44 @@
                    (else (call $raise-pair-expected (local.get $xs))
                          (unreachable))))
 
+         ;; list-tail/checked: xs is known to be a Pair and i > 0.
+         ;; Returns the result of cdr^i(xs). Works with improper lists:
+         ;; if the i-th cdr is a non-pair, it is returned. If we need to
+         ;; cdr again past a non-pair, raise pair-expected.
          (func $list-tail/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
                (local $v    (ref $Pair))
                (local $k    i32)
-               (local $len  i32)
                (local $next (ref eq))
-               ;; compute length
-               (local.set $len
-                          (call $length/i32 (ref.cast (ref $Pair) (local.get $xs))))
-               ;; bounds check (i > len ⇒ error)
-               (if (i32.gt_u (local.get $i) (local.get $len))
-                   (then (call $raise-bad-list-ref-index
-                               (local.get $xs) (local.get $i) (local.get $len))))
-               ;; traverse k steps
+
                (local.set $v (local.get $xs))
                (local.set $k (local.get $i))
+
                (loop $loop
+                     ;; If no steps remain, return current tail (a Pair value is fine as (ref eq)).
                      (if (i32.eqz (local.get $k))
                          (then (return (local.get $v))))
-                     ;; grab the raw cdr
-                     (local.set $next
-                                (struct.get $Pair $d (local.get $v)))
-                     ;; ensure it's a Pair before casting
-                     (if (ref.test (ref $Pair) (local.get $next))
-                         (then (local.set $v (ref.cast (ref $Pair) (local.get $next))))
-                         (else (call $raise-pair-expected (local.get $next))))
+                     ;; Step once.
+                     (local.set $next (struct.get $Pair $d (local.get $v)))
                      (local.set $k (i32.sub (local.get $k) (i32.const 1)))
-                     (br $loop))
+                     ;; If that single step completed all steps, return whatever we landed on
+                     ;; (pair or not).
+                     (if (i32.eqz (local.get $k))
+                         (then (return (local.get $next))))
+                     ;; Otherwise, we must continue stepping. Ensure next is a Pair.
+                     (if (ref.test (ref $Pair) (local.get $next))
+                         (then
+                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
+                          (br $loop))
+                         (else
+                          (call $raise-pair-expected (local.get $next)))))
                (unreachable))
-
-
+         
          (func $list-tail (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $pair (ref $Pair))
                (local $idx  i32)
+               ;; Initialize non-defaultable local to a safe value.
                (local.set $pair (global.get $dummy-pair))
-               ;; decode and check fixnum index
+               ;; Decode and check fixnum index (i31 with lsb=0).
                (if (ref.test (ref i31) (local.get $i))
                    (then
                     (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
@@ -7046,14 +7049,19 @@
                         (then (call $raise-check-fixnum (local.get $i))))
                     (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
                    (else (call $raise-check-fixnum (local.get $i))))
-               ;; check that xs is a Pair or null
+               ;; (list-tail xs 0) => xs
+               (if (i32.eqz (local.get $idx))
+                   (then (return (local.get $xs))))
+               ;; For idx > 0, xs must be a Pair. Make dominance explicit with `unreachable`.
                (if (ref.test (ref $Pair) (local.get $xs))
                    (then (local.set $pair (ref.cast (ref $Pair) (local.get $xs))))
-                   (else (if (ref.eq (local.get $xs) (global.get $null))
-                             (then (return (global.get $null)))
-                             (else (call $raise-pair-expected (local.get $xs))))))
-               ;; delegate to checked
+                   (else
+                    (call $raise-pair-expected (local.get $xs))
+                    (unreachable)))
+
                (call $list-tail/checked (local.get $pair) (local.get $idx)))
+
+
 
          (func $append (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
                (if (result (ref eq))
