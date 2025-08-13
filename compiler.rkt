@@ -6951,31 +6951,39 @@
                (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
 
          
-         ;; list-ref/checked: takes a proper Pair and unboxed i32 index, raises on out-of-bounds
+         ;; list-ref/checked: takes a Pair and an unboxed i32 index.
+         ;; Works for improper lists as long as the index doesn't step past the last Pair.
          (func $list-ref/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
-               (local $v   (ref $Pair))
-               (local $k   i32)
-               (local $len i32)
-               ;; compute list length
-               (local.set $len
-                          (call $length/i32 (ref.cast (ref $Pair) (local.get $xs))))
-               ;; bounds check: if i ≥ len, raise exception
-               (if (i32.ge_u (local.get $i) (local.get $len))
-                   (then (call $raise-bad-list-ref-index
-                               (local.get $xs) (local.get $i) (local.get $len))))
-               ;; traverse to the i-th element
+               (local $v    (ref $Pair))
+               (local $k    i32)
+               (local $next (ref eq))
+               (local $len  i32)
+
                (local.set $v (local.get $xs))
                (local.set $k (local.get $i))
+
                (loop $loop
+                     ;; If we've reached the desired pair, return its car.
                      (if (i32.eqz (local.get $k))
                          (then (return (struct.get $Pair $a (local.get $v)))))
-                     (local.set $v
-                                (ref.cast (ref $Pair)
-                                          (struct.get $Pair $d (local.get $v))))
-                     (local.set $k (i32.sub (local.get $k) (i32.const 1)))
-                     (br $loop))
-               ;; should never fall through
+                     ;; Otherwise, try to step to the next pair.
+                     (local.set $next (struct.get $Pair $d (local.get $v)))
+                     (if (ref.test (ref $Pair) (local.get $next))
+                         (then
+                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
+                          (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+                          (br $loop))
+                         (else
+                          ;; Ran out of pairs before reaching index: compute length of the
+                          ;; pair-chain we've actually got and raise.
+                          ;; len = steps_so_far + 1 = i - k + 1
+                          (local.set $len
+                                     (i32.add (i32.sub (local.get $i) (local.get $k)) (i32.const 1)))
+                          (call $raise-bad-list-ref-index (local.get $xs) (local.get $i) (local.get $len))
+                          (unreachable))))
+               ;; Should not fall through.
                (unreachable))
+
 
          (func $list-ref (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $idx i32)
