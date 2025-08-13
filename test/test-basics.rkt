@@ -16,7 +16,7 @@
            (equal? (procedure-arity boolean?) 1))
 
       "eqv?"
-      (list (equal? (eqv? 'a 'a) #t)
+      (and (equal? (eqv? 'a 'a) #t)
            (equal? (eqv? 'a 'b) #f)
            (equal? (eqv? 2 2) #t)
            (equal? (eqv? 2 2.0) #f)
@@ -45,5 +45,66 @@
                             (g (lambda () (if (eqv? f g) 'g 'both))))
                      (eqv? f g))
                    #f)
-           (equal? (procedure-arity eqv?) 2)
-      ))
+           (equal? (procedure-arity eqv?) 2))
+
+      "eq?"
+      (and (equal? (eq? 'a 'a)               #t)
+           (equal? (eq? (list 'a) (list 'a)) #f)
+           (equal? (eq? '() '())             #t)
+           (equal? (eq? car car)             #t)
+           (let ((x '(a))) (equal? (eq? x x) #t))
+           (let ((x '#())) (equal? (eq? x x) #t))
+           (let ((x (lambda (x) x)))
+             (equal? (eq? x x) #t))
+           (equal? (procedure-arity eq?) 2))
+
+      "equal?"
+      (and
+       ;; true cases
+       (equal? (equal? 'a 'a) #t)
+       (equal? (equal? '("a") '("a")) #t)
+       (equal? (equal? '(a) '(a)) #t)
+       (equal? (equal? '(a (b) c) '(a (b) c)) #t)
+       (equal? (equal? '("a" ("b") "c") '("a" ("b") "c")) #t)
+       (equal? (equal? "abc" "abc") #t)
+       (equal? (equal? 2 2) #t)
+       (equal? (equal? (make-vector 5 'a) (make-vector 5 'a)) #t)
+       (equal? (equal? (box "a") (box "a")) #t)
+
+       ;; TODO: flvector, fxvector and stencil-vector are not implemented yet
+       ;; (equal? (equal? (make-flvector 5 0.0) (make-flvector 5 0.0)) #t)
+       ;; (equal? (equal? (make-fxvector 5 0) (make-fxvector 5 0)) #t)
+       ;; (equal? (equal? (stencil-vector #b10010 'a 'b)
+       ;;                 (stencil-vector #b10010 'a 'b)) #t)
+       ;; (eq? (equal-hash-code (make-flvector 5 0.0))
+       ;;      (equal-hash-code (make-flvector 5 0.0)))
+       ;; (eq? (equal-hash-code (make-fxvector 5 0))
+       ;;      (equal-hash-code (make-fxvector 5 0)))
+       ;; (eq? (equal-hash-code (stencil-vector #b10010 'a 'b))
+       ;;      (equal-hash-code (stencil-vector #b10010 'a 'b)))
+
+       ;; false cases
+       (equal? (equal? "" (string #\null)) #f)
+       (equal? (equal? 'a "a") #f)
+       (equal? (equal? 'a 'b) #f)
+       (equal? (equal? '(a) '(b)) #f)
+       (equal? (equal? '(a (b) d) '(a (b) c)) #f)
+       (equal? (equal? '(a (b) c) '(d (b) c)) #f)
+       (equal? (equal? '(a (b) c) '(a (d) c)) #f)
+       (equal? (equal? "abc" "abcd") #f)
+       (equal? (equal? "abcd" "abc") #f)
+       (equal? (equal? 2 3) #f)
+       (equal? (equal? 2.0 2) #f)
+       (equal? (equal? (make-vector 5 'b) (make-vector 5 'a)) #f)
+       (equal? (equal? (box "a") (box "b")) #f)
+
+       ;; characters
+       (equal? (equal? #\a #\a)                                   #t)
+       (equal? (equal? (integer->char 1024) (integer->char 1024)) #t)
+       (equal? (equal? (integer->char 1024) (integer->char 1025)) #f)
+
+       ;; arity
+       (equal? (procedure-arity equal?) 2))
+
+
+      )
