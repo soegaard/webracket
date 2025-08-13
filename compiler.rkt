@@ -400,8 +400,8 @@
 
   symbol? symbol=? symbol<?
   string->symbol symbol->string
-  string->uninterned-symbol
-  symbol-interned?
+  string->uninterned-symbol symbol-interned?
+  symbol->immutable-string
   
   string-port?
   ; open-input-bytes
@@ -2434,7 +2434,11 @@
         [(top-variable?    v) 'top]
         [(module-variable? v) 'module]
         [(local-variable?  v) 'local]
-        [else (error 'classify-variable "got: ~a" v)]))
+        [else
+         ;; (displayln (list 'top (map unparse-variable top-vars)))
+         ;; (displayln (list 'mod (map unparse-variable module-vars)))
+         ;; (displayln (list 'loc (map unparse-variable local-vars)))
+         (error 'classify-variable "got: ~a" v)]))
     ;; 2. References to variable according to their type
     (define (Reference v)
       ; reference to non-free variable
@@ -10463,7 +10467,6 @@
 
 
          (func $raise-symbol->string:bad-argument (param $v (ref eq)) (unreachable))
-         
          (func $symbol->string
                (param $v (ref eq))
                (result   (ref eq))
@@ -10485,7 +10488,40 @@
                     (call $raise-symbol->string:bad-argument (local.get $v))))
                (unreachable))
          
-         (func $raise-string->symbol:bad-argument (param $v (ref eq)) (unreachable))
+
+         (func $symbol->immutable-string
+               (param  $v (ref eq))
+               (result (ref eq))
+
+               (local $sym  (ref $Symbol))
+               (local $name (ref $String))
+               (local $src  (ref $I32Array))
+               (local $dst  (ref $I32Array))
+               (local $len  i32)
+
+               (if (ref.test (ref $Symbol) (local.get $v))
+                   (then
+                    (local.set $sym  (ref.cast (ref $Symbol) (local.get $v)))
+                    (local.set $name (struct.get $Symbol $name (local.get $sym)))
+                    ;; Already immutable? Return as-is.
+                    (if (i32.eq (struct.get $String $immutable (local.get $name)) (i32.const 1))
+                        (then (return (local.get $name)))
+                        (else
+                         ;; Copy codepoints with i32array-copy [0, len)
+                         (local.set $src (struct.get $String $codepoints (local.get $name)))
+                         (local.set $len (array.len (local.get $src)))
+                         (local.set $dst (call $i32array-copy
+                                               (local.get $src) (i32.const 0) (local.get $len)))
+                         ;; Build fresh immutable string (hash=0, immutable=1)
+                         (return
+                          (struct.new $String (i32.const 0) (i32.const 1) (local.get $dst))))))
+                   (else
+                    (call $raise-symbol->string:bad-argument (local.get $v))
+                    (unreachable)))
+               (unreachable))
+
+
+         (func $raise-string->symbol:bad-argument (param $v (ref eq)) (unreachable))                  
 
          (func $string->symbol
                (param $v (ref eq))
