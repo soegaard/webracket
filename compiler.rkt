@@ -1058,6 +1058,16 @@
   ; After α-renaming all names are unique so we can check for symbolic equality.
   (eq? (syntax-e (variable-id v1)) (syntax-e (variable-id v2))))
 
+(define α-rename-mode (make-parameter 'full))  ; 'full or 'simple
+
+; 'simple is only used for the existig test cases
+; 'full   is used otherwise
+; In the simple mode, the  first occurence of a variable x in a scope is not renamed.
+; In the full mode, all variables are renamed.
+; In the code generator the variables of a `let-values` all end up as local variables
+; in a `func`. Therefore, all variable names must be unique.
+; In the simple mode, the program (begin (let ([x 1]) x)  (let ([x 2]) x)) fails.
+; Someday, when the test cases are rewritten, we can remove the simple mode.
 
 (define-pass α-rename : LFE2 (T) -> LFE2 ()
   (definitions
@@ -1071,11 +1081,14 @@
             [(primitive? (variable-id x))             x]
             [else                                    #f]))
     (define (extend ρ original renamed)
-      (λ (x) (if (id=? x original) renamed (ρ x))))
-    #;(define (fresh x ρ [orig-x x])
+      (λ (x) (if (id=? x original) renamed (ρ x))))    
+    (define (fresh/simple x ρ [orig-x x])
       (if (ρ x) (fresh (new-var x) ρ x) x))
-    (define (fresh x ρ [orig-x x])
+    (define (fresh/full x ρ [orig-x x])
       (if (ρ x) (fresh (new-var x) ρ x) (new-var x)))
+    (define fresh (case (α-rename-mode)
+                    [(simple) fresh/simple]
+                    [(full)   fresh/full]))
     (define (rename x ρ)
       (define x* (fresh x ρ))
       (values x* (extend ρ x x*)))
@@ -1217,18 +1230,19 @@
 (module+ test
   (let ([test (λ (stx)
                 (reset-counter!)
-                (unparse-all
-                 (unparse-LFE2 (α-rename
-                                (explicit-case-lambda
-                                 (explicit-begin
-                                  (parse (expand-syntax stx))))))))])
+                (parameterize ([α-rename-mode 'simple])
+                  (unparse-all
+                   (unparse-LFE2 (α-rename
+                                  (explicit-case-lambda
+                                   (explicit-begin
+                                    (parse (expand-syntax stx)))))))))])
       (check-equal? (test #'(let ([x 10])
                               (let ([x 1]
                                     [y x])
                                 y)))
                     '(let-values (((x) '10))
                        (let-values (((x.1) '1)
-                                    ((y)   x))
+                                    ((y)    x))
                          y)))
       
       (check-equal? (test #'(let-values ([(x y z) 1] [(a b c) 2])
@@ -1378,14 +1392,15 @@
   (let ()
     (define (test stx)
       (reset-counter!)
-      (unparse-all
-       (unparse-LFE2
-        (assignment-conversion
-         (α-rename
-          (explicit-case-lambda
-           (explicit-begin
-            (parse
-             (expand-syntax stx)))))))))
+      (parameterize ([α-rename-mode 'simple])
+        (unparse-all
+         (unparse-LFE2
+          (assignment-conversion
+           (α-rename
+            (explicit-case-lambda
+             (explicit-begin
+              (parse
+               (expand-syntax stx))))))))))
     (check-equal? (test #'(set! x 1)) '(set-boxed! x '1))
     (check-equal? (test #'(λ (x) (set! x 1) x))
                   '(#%expression
@@ -1496,15 +1511,16 @@
   (let ()
     (define (test stx)
       (reset-counter!)
-      (unparse-all
-       (unparse-LFE3
-        (categorize-applications
-         (assignment-conversion
-          (α-rename
-           (explicit-case-lambda
-            (explicit-begin
-             (parse
-              (expand-syntax stx))))))))))
+      (parameterize ([α-rename-mode 'simple])
+        (unparse-all
+         (unparse-LFE3
+          (categorize-applications
+           (assignment-conversion
+            (α-rename
+             (explicit-case-lambda
+              (explicit-begin
+               (parse
+                (expand-syntax stx)))))))))))
     (check-equal? (test #'(+ 1 2)) '(primapp + '1 '2))
     (check-equal? (test #'(begin (define foo 3)    (foo 1 2)))
                   ; At the top-level the expression is evaluted before
@@ -1752,16 +1768,17 @@
   (let ()
     (define (test stx)
       (reset-counter!)
-      (unparse-all
-       (unparse-LANF
-        (anormalize
-         (categorize-applications
-          (assignment-conversion
-           (α-rename
-            (explicit-case-lambda
-             (explicit-begin
-              (parse
-               (expand-syntax stx)))))))))))
+      (parameterize ([α-rename-mode 'simple])
+        (unparse-all
+         (unparse-LANF
+          (anormalize
+           (categorize-applications
+            (assignment-conversion
+             (α-rename
+              (explicit-case-lambda
+               (explicit-begin
+                (parse
+                 (expand-syntax stx))))))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
     (check-equal? (test #'(+ 2 (* 4 5)))
