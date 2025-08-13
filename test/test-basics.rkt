@@ -263,5 +263,15 @@
               (equal? (symbol->immutable-string 'apple) "apple")
               #;(equal? (immutable? (symbol->immutable-string 'apple)) #t)    ; todo - implement immutable?
               #;(equal? (immutable? (symbol->immutable-string 'box))   #t))))
+
+ (list "symbol<?"
+       (and (equal? (symbol<? 'a 'b)    #t)
+            ;(equal? (symbol<? 'a 'b 'c) #t)  ; todo - make it variadic
+            ;(equal? (symbol<? 'a 'c 'b) #f)
+            (equal? (symbol<? 'a 'aa)   #t)
+            (equal? (symbol<? 'aa 'a)   #f)
+            #;(equal? (procedure-arity symbol<?) 1)))
+
+ 
  
  )

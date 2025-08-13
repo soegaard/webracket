@@ -1,7 +1,8 @@
 #lang racket/base
 (require racket/fixnum
          racket/fasl
-         racket/symbol)
+         racket/symbol
+         (only-in racket/bool symbol=?))
 
 ;; The primitives are 
 
@@ -31,6 +32,15 @@
 
  ;; 4.7 Symbols
  symbol?
+ symbol-interned?
+ ; symbol-unreadable?
+ symbol->string
+ string->symbol
+ string->uninterned-symbol
+ ; gensym
+ symbol<?
+
+ symbol=?  ; from racket/bool
 
  ;; 4.7.1
  symbol->immutable-string
