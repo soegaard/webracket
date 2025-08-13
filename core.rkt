@@ -141,6 +141,9 @@
 (require (only-in racket/block block))
 (provide block)
 
+;; 4.7.1 Additional Symbol Functions
+(require (only-in racket/symbol symbol->immutable-string))
+(provide symbol->immutable-string)
 
 ;; 4.10
 (require (only-in racket/base

@@ -24,6 +24,7 @@
   (namespace-require 'racket/flonum)
   (namespace-require 'racket/fixnum)
   (namespace-require 'racket/fasl)
+  (namespace-require 'racket/symbol)
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   #;(namespace-require 'racket/base)
   #;(namespace-require 'racket/fixnum)

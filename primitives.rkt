@@ -1,6 +1,7 @@
 #lang racket/base
 (require racket/fixnum
-         racket/fasl)
+         racket/fasl
+         racket/symbol)
 
 ;; The primitives are 
 
@@ -28,6 +29,12 @@
  boolean?
  ; immutable?
 
+ ;; 4.7 Symbols
+ symbol?
+
+ ;; 4.7.1
+ symbol->immutable-string
+ 
  ;; 4.10 Pairs and Lists
  pair?
  null?
@@ -66,7 +73,7 @@
  ; member
  ; memw
  ; memv
- ; memq
+ memq
  ; memf
  ; findf
  ; assoc
@@ -80,8 +87,6 @@
  ; cdar
  ; cddr
 
- ;; 4.7 Symbols
- symbol?
 
  ;; 10.2 Exceptions
  raise-argument-error

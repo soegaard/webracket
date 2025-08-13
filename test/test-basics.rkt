@@ -205,4 +205,63 @@
             (equal? (reverse '(a (b c) d (e (f)))) '((e (f)) d (b c) a))
             (equal? (procedure-arity reverse)      1)))
 
+ (list "list-ref"
+       (and (equal? (list-ref '(a b c d) 2)    'c)
+            (equal? (list-ref '(a b c . d) 2)  'c)
+            (equal? (procedure-arity list-ref) 2)))
+
+ (list "list-tail"
+       (and (equal? (list-tail '(a b c d) 2)    '(c d))
+            (equal? (list-tail '(a b c d) 0)    '(a b c d))
+            (equal? (list-tail '(a b c . d) 1)  '(b c . d))
+            (equal? (list-tail 1 0)             1)
+            (equal? (procedure-arity list-tail) 2)))
+
+ (list "memq"
+       (and (equal? (memq 'a '(a b c))   '(a b c))
+            (equal? (memq 'b '(a b c))   '(b c))
+            (equal? (memq 'b '(a b . c)) '(b . c))
+            (equal? (memq 'a '(b c d))   #f)
+
+            #;(equal? (memq  "apple" '( "apple"))         '("apple"))   ; todo - intern literals
+            #;(equal? (memq #"apple" '(#"apple"))         '(#"apple"))  ; todo - intern literals
+
+            (equal? (memq (list->string (string->list "apple"))
+                          '("apple"))
+                    #f)
+            
+            ; todo - this one is peculiar
+            ; (comp+ (equal? (procedure-arity memq) 2)) works
+            ; but not as part in this file
+            #; (equal? (procedure-arity memq) 2)))
+
+ (list "symbol?"
+       (and (equal? (symbol? 'foo)         #t)
+            (equal? (symbol? (car '(a b))) #t)
+            (equal? (symbol? "bar")        #f)
+            (equal? (symbol? 'nil)         #t)
+            (equal? (symbol? '())          #f)
+            (equal? (symbol? #f)           #f)))
+
+ (let ([x (string #\a #\b)]
+       [y (string->symbol (string #\a #\b))])
+   ;; mutate x after creating y
+   (string-set! x 0 #\c)
+   (list "symbol/string interop"
+         (and (equal? x "cb")
+              (equal? (symbol->string y) "ab")
+              (equal? (string->symbol "ab") y)
+              ;; error cases
+              #;(with-handlers ([exn:fail? (λ _ #t)])
+                (string->symbol 10) #f)
+              #;(with-handlers ([exn:fail? (λ _ #t)])
+                (string->symbol 'oops) #f)
+              ;; symbol->string returns fresh strings (not eq?)
+              (equal? (eq? (symbol->string 'apple)
+                           (symbol->string 'apple))
+                      #f)
+              (equal? (symbol->immutable-string 'apple) "apple")
+              #;(equal? (immutable? (symbol->immutable-string 'apple)) #t)    ; todo - implement immutable?
+              #;(equal? (immutable? (symbol->immutable-string 'box))   #t))))
+ 
  )
