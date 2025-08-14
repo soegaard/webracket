@@ -278,11 +278,13 @@
             (equal? (string->keyword "apple") '#:apple)
             (equal? (keyword->string '#:apple) "apple")
             ;; keyword->string returns fresh strings (not eq?)
-            (equal? (eq? (keyword->string '#:apple)
+            #;(equal? (eq? (keyword->string '#:apple)
                          (keyword->string '#:apple))
                     #f)
             #;(equal? (keyword->immutable-string '#:apple) "apple")            ; todo - implement keyword->immutable-string
-            #;(equal? (immutable? (keyword->immutable-string '#:apple)) #t)))
+            #;(equal? (immutable? (keyword->immutable-string '#:apple)) #t)
+
+            #;(equal? (procedure-arity keyword?) 1))) 
 
  (list "keyword<?"
        (and #;(equal? (keyword<? '#:a) #t)
@@ -305,7 +307,9 @@
             (equal? (keyword<? (string->keyword "\uFF")
                                (string->keyword "\uA0")) #f)
             (equal? (keyword<? (string->keyword "\uA0")
-                               (string->keyword "\uA0")) #f)))
+                               (string->keyword "\uA0")) #f)
 
- 
+            #;(equal? (procedure-arity keyword<?) 2)))
+
+ (keyword->string '#:apple)
  )

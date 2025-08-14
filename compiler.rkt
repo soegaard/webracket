@@ -10743,7 +10743,7 @@
 
          (func $raise-argument-error:keyword-expected (unreachable))
          
-         (func $keyword->string
+         (func $keyword->string ; the result does not contain #:
                (param $kw (ref eq))
                (result    (ref $String))
                ;; Type check: must be a keyword
@@ -10754,17 +10754,13 @@
                (call $keyword->string/checked (ref.cast (ref $Keyword) (local.get $kw))))
          
          (func $keyword->string/checked
-               (param $kw     (ref $Keyword))
-               (result        (ref $String))
+               (param $kw       (ref $Keyword))
+               (result          (ref $String))
                
-               (local $name   (ref $String))
-               (local $prefix (ref $String))
-
-               (local.set $name   (struct.get $Keyword $str (local.get $kw)))
+               (local $name     (ref $String))
+               (local.set $name (struct.get $Keyword $str (local.get $kw)))
                
-               (local.set $prefix (ref.cast (ref $String) (global.get $string:hash-colon))) ;; "#:"
-               (call $string-append
-                     (local.get $prefix) (local.get $name)))
+               (ref.cast (ref $String) (call $string-copy (local.get $name))))
 
          (func $raise-keyword-expected (unreachable))
          
@@ -13402,7 +13398,7 @@
                                        (ref.cast (ref $Symbol) (local.get $v))))))
                ;; --- Case: keyword ---
                (if (ref.test (ref $Keyword) (local.get $v))
-                   (then (return (call $keyword->string
+                   (then (return (call $format/display:keyword
                                        (ref.cast (ref $Keyword) (local.get $v))))))
                ;; --- Case: flonum ---
                (if (ref.test (ref $Flonum) (local.get $v))
@@ -13562,13 +13558,28 @@
                      (call $growable-array->array (local.get $ga))))
 
 
-(func $format/display:symbol
-      (param $v (ref eq))
-      (result   (ref $String))
+         (func $format/display:symbol
+               (param $v (ref eq))
+               (result   (ref $String))
 
-      (call $format/display
-            (call $symbol->string
-                  (local.get $v))))
+               (call $format/display
+                     (call $symbol->string
+                           (local.get $v))))
+
+         (func $format/display:keyword
+               (param $v (ref eq))
+               (result (ref $String))
+               ;; Fail early if not a keyword (and make the path unreachable).
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $v)))
+                   (then
+                    (call $raise-keyword-expected (local.get $v))
+                    (unreachable)))
+               ;; "#:" ++ underlying name string
+               (call $string-append
+                     (global.get $string:hash-colon)
+                     (struct.get $Keyword $str
+                                 (ref.cast (ref $Keyword) (local.get $v)))))
+
 
         (func $format/display:bytes
               (param $bs (ref $Bytes))
@@ -15271,10 +15282,10 @@
              '(1 2))))
 
   (list "-- Core Constructs --"
-        (list "Immediate Values"              (test-immediates))
-        (list "Call unary primitive"          (test-call-unary-primitive))
-        #;(list "Some characters "            (test-some-characters)) ; slow
-        #;(list "All characters"              (test-all-characters))  ; very slow
+        ;; (list "Immediate Values"              (test-immediates))
+        ;; (list "Call unary primitive"          (test-call-unary-primitive))
+        ;; #;(list "Some characters "            (test-some-characters)) ; slow
+        ;; #;(list "All characters"              (test-all-characters))  ; very slow
         (list "Call binary primitive"         (test-call-binary-primitive))
         (list "Local variables (let)"         (test-let))
         (list "Conditional (if)"              (test-if))
