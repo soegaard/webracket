@@ -44,6 +44,15 @@
 
  ;; 4.7.1
  symbol->immutable-string
+
+ ;; 4.9 Keywords
+
+ keyword?
+ keyword->string
+ keyword<?
+ ; 4.9.1 Additional Keyword Functions
+ ; symbol->immutable-string  ; from racket/keyword
+ 
  
  ;; 4.10 Pairs and Lists
  pair?

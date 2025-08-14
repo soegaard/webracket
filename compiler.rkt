@@ -428,6 +428,7 @@
   keyword?
   keyword->string
   string->keyword
+  keyword<?
 
   apply
   procedure-rename
@@ -10765,7 +10766,30 @@
                (call $string-append
                      (local.get $prefix) (local.get $name)))
 
+         (func $raise-keyword-expected (unreachable))
          
+         ;; keyword<? : (ref eq) (ref eq) -> (ref eq)  ;; returns #t/#f
+         (func $keyword<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+               (local $s1 (ref $String))
+               (local $s2 (ref $String))
+
+               ;; Type check: both must be keywords (fail early), then convert.
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $a)))
+                   (then (call $raise-keyword-expected (local.get $a))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $b)))
+                   (then (call $raise-keyword-expected (local.get $b))
+                         (unreachable)))
+
+               ;; Extract underlying strings (without "#:").
+               (local.set $s1
+                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $a))))
+               (local.set $s2
+                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $b))))
+
+               ;; Compare using string<? (code-point lexicographic; UTF-8 preserves order)
+               (call $string<? (local.get $s1) (local.get $s2)))
+
          
          ;;;
          ;;; LOCATION

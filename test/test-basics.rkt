@@ -272,6 +272,40 @@
             (equal? (symbol<? 'aa 'a)   #f)
             #;(equal? (procedure-arity symbol<?) 1)))
 
- 
+ (list "keyword?"
+       (and (equal? (keyword? '#:a) #t)
+            (equal? (keyword? 'a) #f)
+            (equal? (string->keyword "apple") '#:apple)
+            (equal? (keyword->string '#:apple) "apple")
+            ;; keyword->string returns fresh strings (not eq?)
+            (equal? (eq? (keyword->string '#:apple)
+                         (keyword->string '#:apple))
+                    #f)
+            #;(equal? (keyword->immutable-string '#:apple) "apple")            ; todo - implement keyword->immutable-string
+            #;(equal? (immutable? (keyword->immutable-string '#:apple)) #t)))
+
+ (list "keyword<?"
+       (and #;(equal? (keyword<? '#:a) #t)
+            (equal? (keyword<? '#:a '#:b) #t)
+            (equal? (keyword<? '#:b '#:b) #f)
+            (equal? (keyword<? '#:b '#:bb) #t)
+            (equal? (keyword<? '#:b '#:) #f)
+            #;(equal? (keyword<? '#:b '#:c '#:d) #t)
+            #;(equal? (keyword<? '#:b '#:c '#:c) #f)
+            (equal? (keyword<? (string->keyword "a")
+                               (string->keyword "\uA0")) #t)
+            (equal? (keyword<? (string->keyword "a")
+                               (string->keyword "\uFF")) #t)
+            (equal? (keyword<? (string->keyword "\uA0")
+                               (string->keyword "a")) #f)
+            (equal? (keyword<? (string->keyword "\uFF")
+                               (string->keyword "a")) #f)
+            (equal? (keyword<? (string->keyword "\uA0")
+                               (string->keyword "\uFF")) #t)
+            (equal? (keyword<? (string->keyword "\uFF")
+                               (string->keyword "\uA0")) #f)
+            (equal? (keyword<? (string->keyword "\uA0")
+                               (string->keyword "\uA0")) #f)))
+
  
  )
