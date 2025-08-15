@@ -271,6 +271,22 @@
                        ; from $Closure
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
+
+          (type $CaseClosure  ; for case-lambda
+                (sub $Closure
+                     (struct
+                       ;; inherited $Procedure fields
+                       (field $hash   (mut i32))
+                       (field $name   (ref eq))
+                       (field $arity  (ref eq))        ;; store (ref $I32Array) here for Racket-style arity
+                       (field $realm  (ref eq))
+                       (field $invoke (ref $ProcedureInvoker))
+                       ;; inherited $Closure fields
+                       (field $code   (ref $ClosureCode))  ;; dispatcher
+                       (field $free   (ref $Free))         ;; can be an empty array
+                       ;; new, typed payload
+                       (field $arities (ref $I32Array))    ;; markers: m>=0 exact m; m<0 at least (-m-1)
+                       (field $arms    (ref $Array)))))    ;; (ref eq) array of arm closures
           
 
           (type $PrimitiveProcedure
@@ -698,6 +714,12 @@
 
          ;; Primitives (as values)
          ,@(declare-primitives-as-globals)
+
+         ;; Closures
+
+         ; Closures with no free variables can share an empty array
+         (global $empty-free (ref $Free)
+                 (array.new $Free (global.get $null) (i32.const 0)))
                                             
          ;; Closure invocation - invoke 
          #;(type $ProcedureInvoker
@@ -872,12 +894,13 @@
          ;;   index 0 : (ref $I32Array)  ; arities per arm
          ;;   index 1 : (ref $Array)     ; arm closures (source order)
          (func $raise-arity-error/case-lambda/arities (unreachable))
+         ;; Dispatcher uses typed $CaseClosure fields: $arities and $arms.
          (func $code:case-lambda-dispatch (type $ClosureCode)
                (param $clos (ref $Closure))
                (param $args (ref $Args))
                (result      (ref eq))
 
-               (local $free     (ref $Free))
+               (local $cclos    (ref $CaseClosure))
                (local $arities  (ref $I32Array))
                (local $arms     (ref $Array))
                (local $argc     i32)
@@ -887,52 +910,38 @@
                (local $out      (ref $Args))
                (local $code     (ref $ClosureCode))
 
-               ;; Unpack captures: arities and arm closures
-               (local.set $free
-                          (struct.get $Closure $free (local.get $clos)))
-               (local.set $arities
-                          (ref.cast (ref $I32Array)
-                                    (array.get $Free (local.get $free) (i32.const 0))))
-               (local.set $arms
-                          (ref.cast (ref $Array)
-                                    (array.get $Free (local.get $free) (i32.const 1))))
-               ;; argc is the number of *user* arguments
+               ; Get arities and arms (closures)
+               (local.set $cclos   (ref.cast (ref $CaseClosure) (local.get $clos)))
+               (local.set $arities (struct.get $CaseClosure $arities (local.get $cclos)))
+               (local.set $arms    (struct.get $CaseClosure $arms    (local.get $cclos)))
+               ; Argument count
                (local.set $argc (array.len (local.get $args)))
-               (local.set $i    (i32.const 0))
+               (local.set $i (i32.const 0))
 
                (loop $scan
-                     (if (i32.ge_u (local.get $i) (array.len (local.get $arities)))
-                         (then
-                          ;; No arm matched → arity error with the arity set.
-                          (call $raise-arity-error/case-lambda/arities
-                                (local.get $argc) (local.get $arities))
-                          (unreachable)))
-
+                     (if (i32.ge_u (local.get $i) (array.len (local.get $arms)))
+                         (then (call $raise-arity-error/case-lambda/arities
+                                     (local.get $argc) (local.get $arities))
+                               (unreachable)))                     
                      (local.set $m
                                 (array.get $I32Array (local.get $arities) (local.get $i)))
-                     ;; Match fixed arm (m >= 0) when argc == m,
-                     ;; or rest arm (m < 0) when argc ≥ -m-1.
                      (if
                       (i32.or
+                       ;; fixed: argc == m
                        (i32.and (i32.ge_s (local.get $m) (i32.const 0))
                                 (i32.eq   (local.get $argc) (local.get $m)))
+                       ;; rest:  argc >= -m - 1
                        (i32.and (i32.lt_s (local.get $m) (i32.const 0))
                                 (i32.ge_u (local.get $argc)
                                           (i32.sub (i32.sub (i32.const 0) (local.get $m))
                                                    (i32.const 1)))))
                       (then
-                       ;; Arm i matches: repack once and tail-call the arm's code.
-                       (local.set $arm
-                                  (ref.cast (ref $Closure)
-                                            (array.get $Array (local.get $arms) (local.get $i))))
-                       (local.set $out
-                                  (call $repack-arguments (local.get $args) (local.get $m)))
-                       (local.set $code
-                                  (struct.get $Closure $code (local.get $arm)))
-                       (return_call_ref $ClosureCode
-                                        (local.get $arm)
-                                        (local.get $out)
-                                        (local.get $code)))
+                       ;; Match → repack once and tail-call arm's *code*
+                       (local.set $arm  (ref.cast (ref $Closure)
+                                                  (array.get $Array (local.get $arms) (local.get $i))))
+                       (local.set $out  (call $repack-arguments (local.get $args) (local.get $m)))
+                       (local.set $code (struct.get $Closure $code (local.get $arm)))
+                       (return_call_ref $ClosureCode (local.get $arm) (local.get $out) (local.get $code)))
                       (else
                        (local.set $i (i32.add (local.get $i) (i32.const 1)))
                        (br $scan))))
@@ -9130,24 +9139,59 @@
          (func $raise-argument-error:procedure-expected (unreachable))
          
          (func $procedure-arity
-               ; TODO: This currently returns the arity as a fixnum.
-               ;       Negative arities should be converted to an arity-at-least struct.
+               ; Wrapper: accepts any value, checks that it’s a procedure, then delegates
+               ; to the checked version that expects (ref $Procedure).
                (param $proc (ref eq))
-               (result (ref eq))
-
-               (local $p (ref $Procedure))
-               (local $arity (ref eq))
-               (local $arity-fx (ref eq))
+               (result      (ref eq))
                ;; 1. Check that $proc is a procedure
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                    (then (call $raise-argument-error:procedure-expected (local.get $proc))
                          (unreachable)))
-               ;; 2. Store in $p
-               (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
-               ;; 3. Extract arity field (can be a fixnum or (arity-at-least n))
-               (local.set $arity (struct.get $Procedure $arity (local.get $p)))
-               ;; 4. Return the arity value as-is (already a fixnum or arity object)
-               (local.get $arity))
+               ;; 2. Delegate to the checked implementation
+               (return_call $procedure-arity/checked
+                            (ref.cast (ref $Procedure) (local.get $proc))))
+
+         (func $procedure-arity/checked
+               ; TODO: If you want Racket-style results, convert any negative marker m to
+               ;       a single (arity-at-least (-m - 1)) object (possibly combined with
+               ;       exact integers). For now we return ALL markers as fixnums, including
+               ;       negatives like -2.
+               (param $p (ref $Procedure))
+               (result (ref eq))
+
+               (local $a    (ref eq))
+               (local $arr  (ref $I32Array))
+               (local $n    i32) (local $i i32) (local $m i32)
+               (local $list (ref eq))
+               (local $fx (ref i31))
+
+               ;; 1. Extract arity field (either a fixnum (ref i31) or an $I32Array of markers)
+               (local.set $a (struct.get $Procedure $arity (local.get $p)))
+               ;; 2. If it’s a single-arity fixnum, return it as-is
+               (if (ref.test (ref i31) (local.get $a))
+                   (then (return (local.get $a))))
+               ;; 3. Otherwise, cast to $I32Array and build a list of ALL markers (incl. negatives)
+               (local.set $arr (ref.cast (ref $I32Array) (local.get $a)))
+               (local.set $n   (array.len (local.get $arr)))
+               (local.set $list (global.get $null))
+               ;;    Iterate right-to-left so that consing preserves original order
+               (local.set $i (i32.sub (local.get $n) (i32.const 1)))
+               (loop $rev
+                     ;; 4. If done, return the accumulated list
+                     (if (i32.lt_s (local.get $i) (i32.const 0))
+                         (then (return (local.get $list))))
+                     ;; 5. Read marker m at index i and cons it as a fixnum (handles m >= 0 and m < 0)
+                     (local.set $m (array.get $I32Array (local.get $arr) (local.get $i)))
+                     (local.set $fx (ref.i31 (i32.shl (local.get $m) (i32.const 1))))
+                     (local.set $list (call $cons (local.get $fx) (local.get $list)))
+                     ;; 6. Decrement i and continue
+                     (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                     (br $rev))
+               (unreachable))
+
+
+
+
          
          (func $procedure-arity-mask
                ; TODO: Only tested with closures.
@@ -9979,6 +10023,10 @@
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
                                        (ref.cast (ref $Procedure) (local.get $v))))))
+               ;; --- Case: case-lambda ---
+               (if (ref.test (ref $CaseClosure) (local.get $v))
+                   (then (return (call $format/display:procedure
+                                       (ref.cast (ref $Procedure) (local.get $v))))))
                ;; --- Case: primitive ---
                (if (ref.test (ref $PrimitiveProcedure) (local.get $v))
                    (then (return (call $format/display:primitive-procedure
@@ -10073,8 +10121,8 @@
 
                (local $p          (ref $Procedure))
                (local $name       (ref eq))         ;; $false or $String
-               (local $arity-fx   (ref eq))         ;; fixnum (i31)
-               (local $arity-str  (ref $String))
+               #;(local $arity-fx   (ref eq))         ;; fixnum (i31)
+               #;(local $arity-str  (ref $String))
                (local $mask       i32)
                (local $mask-str   (ref $String))
                (local $ga         (ref $GrowableArray))
@@ -10085,35 +10133,34 @@
                (local.set $p (ref.cast (ref $Procedure) (local.get $v)))
                ;; Step 2: extract fields
                (local.set $name      (struct.get $Procedure $name (local.get $p)))
-               (local.set $arity-fx  (struct.get $Procedure $arity (local.get $p)))
+               #;(local.set $arity-fx  (struct.get $Procedure $arity (local.get $p)))
                ;; Step 3: convert arity to string
-               (local.set $arity-str (call $number->string (local.get $arity-fx) (global.get $false)))
+               #;(local.set $arity-str (call $number->string (local.get $arity-fx) (global.get $false)))
                ;; Step 4: get mask and convert to string
-               (local.set $mask      (call $procedure-arity-mask/checked/i32 (local.get $p)))
-               (local.set $mask-str  (call $i32->string                      (local.get $mask)))
+               ; (local.set $mask      (call $procedure-arity-mask/checked/i32 (local.get $p)))
+               ; (local.set $mask-str  (call $i32->string                      (local.get $mask)))
                ;; Step 5: build output
                (local.set $ga (call $make-growable-array (i32.const 5)))
                (call $growable-array-add! (local.get $ga)
-                                        (ref.cast (ref $String)
-                                                 (global.get $string:hash-less-procedure-colon)))
-               (call $growable-array-add!
-                     (local.get $ga)
+                     (ref.cast (ref $String)
+                               (global.get $string:hash-less-procedure-colon)))
+               (call $growable-array-add! (local.get $ga)
                      (if (result (ref eq))
                          (ref.eq (local.get $name) (global.get $false))
                          (then (ref.cast (ref $String)
-                                          (global.get $string:unknown)))
+                                         (global.get $string:unknown)))
                          (else (local.get $name))))
+               #;(call $growable-array-add! (local.get $ga)
+                     (ref.cast (ref $String)
+                               (global.get $string:colon)))
+               #;(call $growable-array-add! (local.get $ga) (local.get $arity-str))
+               #;(call $growable-array-add! (local.get $ga)
+                     (ref.cast (ref $String)
+                               (global.get $string:colon)))
+               #;(call $growable-array-add! (local.get $ga) (local.get $mask-str))
                (call $growable-array-add! (local.get $ga)
-                                        (ref.cast (ref $String)
-                                                 (global.get $string:colon)))
-               (call $growable-array-add! (local.get $ga) (local.get $arity-str))
-               (call $growable-array-add! (local.get $ga)
-                                        (ref.cast (ref $String)
-                                                 (global.get $string:colon)))
-               (call $growable-array-add! (local.get $ga) (local.get $mask-str))
-               (call $growable-array-add! (local.get $ga)
-                                        (ref.cast (ref $String)
-                                                 (global.get $string:->)))
+                     (ref.cast (ref $String)
+                               (global.get $string:->)))
                ;; Step 5: convert to string
                (call $array-of-strings->string
                      (call $growable-array->array

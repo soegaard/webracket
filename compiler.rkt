@@ -40,7 +40,7 @@
 
 ; [ ] Input / output port going to the host.
 
-; [ ] case-lambda
+; [x] case-lambda
 ; [ ] Calling conventions for primitives?
 
 ; [x] procedure?, procedure-rename, procedure-arity, etc.
@@ -1274,10 +1274,10 @@
 (define-pass collect-assignable-variables : LFE2 (T) -> * ()
   ;; Assumption: α-conversion has been done
   (definitions
-    (define (TopLevelForm*    Ts  xs)          (map* TopLevelForm    Ts  xs))
-    (define (ModuleLevelForm* Ms  xs)          (map* ModuleLevelForm Ms  xs))
-    (define (Expr*            Es  xs)          (map* Expr            Es  xs))
-    (define (Abstraction*     ABs xs) (append* (map* Abstraction     ABs xs))))
+    (define (TopLevelForm*    Ts  xs)  (map* TopLevelForm    Ts  xs))
+    (define (ModuleLevelForm* Ms  xs)  (map* ModuleLevelForm Ms  xs))
+    (define (Expr*            Es  xs)  (map* Expr            Es  xs))
+    (define (Abstraction*     ABs xs)  (map* Abstraction     ABs xs)))
   (TopLevelForm : TopLevelForm (T xs) -> * (xs)
     [(topbegin ,s ,t ...)           (TopLevelForm* t xs)]
     [(#%expression ,s ,e)           (Expr e xs)]
@@ -2575,53 +2575,35 @@
   (CaseClosureAllocation : CaseClosureAllocation (cca dd) -> * ()
     ; dest = #f, means the cca is in value position
     [(case-closure ,s ,l [,ar ,ca] ...)
-     (define t (or dd (Var (new-var)))) ; reuse dest if possible
-     (displayln ar)
-     ;; (let ([l  (Label l)]
-     ;;       [ca (for/list ([c ca]) (ClosureAllocation c #f))])
-     
-     (let* (#;[lbl  (Label l)]                                  ; (ref $ClosureCode)
-            [arms (for/list ([c ca]) (ClosureAllocation c #f))] ; each => (ref $Closure)
-            [n    (length arms)]
-
-            ;; 1) Allocate and fill the I32 arities vector
-            [ar-init `(array.new $I32Array (i32.const 0) (i32.const ,n))]
-            [$ars     (emit-fresh-local 'case-arities '(ref $I32Array) ar-init)]
-            [set-ars  (for/list ([m ar] [i (in-naturals)])
-                        `(array.set $I32Array ,(Reference $ars) (i32.const ,i)
-                                    (i32.const ,m)))]
-            ;; 2) Allocate and fill the arm-closure array (ref eq)
-            [as-init `(array.new $Array (global.get $null) (i32.const ,n))]
-            [$as      (emit-fresh-local 'case-arms '(ref $Array) as-init)]
-            [set-as   (for/list ([a arms] [i (in-naturals)])
-                        `(array.set $Array ,(Reference $as) (i32.const ,i) ,a))]
-            ;; 3) Build the $Free payload: [arities, arms]
-            [fr-init `(array.new $Free (global.get $null) (i32.const 2))]
-            [$fr     (emit-fresh-local 'case-free '(ref $Free) fr-init)]
-            [set-fr  `((array.set $Free ,(Reference $fr) (i32.const 0)
-                                  (ref.cast (ref eq) ,(Reference $ars)))
-                       (array.set $Free ,(Reference $fr) (i32.const 1)
-                                  (ref.cast (ref eq) ,(Reference $as))))]
-            ;; 4) Choose a single fixnum for $arity field.
-            ;;    If exactly one arm, use that marker.
-            ;;    Otherwise use -1 (“at least 0”) — introspection uses $free.
-            [arity-fx (if (= n 1)
-                          `(ref.i31 (i32.shl (i32.const ,(car ar)) (i32.const 1)))
-                          `(ref.i31 (i32.shl (i32.const -1) (i32.const 1))))]
-            ;; 5) Optional name: use s if you have a (ref eq), else #f.
-            [name-expr '(global.get $false)  #;(if s s '(global.get $false))])
-       `(block (result (ref $Closure))
-               ,@set-ars
-               ,@set-as
-               ,@set-fr
-               (struct.new $Closure
-                           (i32.const 0)                 ;; $hash
-                           ,name-expr                    ;; $name  (#f or $String)
-                           ,arity-fx                     ;; $arity (fixnum marker)
-                           (global.get $false)           ;; $realm
-                           (ref.func $invoke-case-closure)       ;; $invoke: no repack, just call code
-                           (ref.func $code:case-lambda-dispatch) ;; $code: $code:case-lambda-dispatch
-                           ,(Reference $fr))))]          ;; $free: [arities, arms]
+     (let* ([n   (length ca)]
+            ;; arrays
+            [as-init  `(array.new $Array    (global.get $null) (i32.const ,n))]
+            [ars-init `(array.new $I32Array (i32.const 0)      (i32.const ,n))]
+            [$as      (emit-fresh-local 'case-arms    '(ref $Array)    as-init)]
+            [$ars     (emit-fresh-local 'case-arities '(ref $I32Array) ars-init)]
+            ;; fill both arrays in lockstep
+            [fills    (for/list ([m ar] [c ca] [i (in-naturals)])
+                        (define arm (ClosureAllocation c #f)) ; => (ref $Closure)
+                        `(block
+                           (array.set $Array    ,(Reference $as)  (i32.const ,i) ,arm)
+                           (array.set $I32Array ,(Reference $ars) (i32.const ,i) (i32.const ,m))))]
+            ;; name (use #f unless you carry names)
+            [name-expr '(global.get $false)])
+       `(block (result (ref $CaseClosure))
+               ,@fills
+               (struct.new $CaseClosure
+                           (i32.const 0)                                 ;; $hash
+                           ,name-expr                                    ;; $name
+                           ,(if (= (length ar) 1)
+                                `(i32.const ,ar)
+                                `(ref.cast (ref eq) ,(Reference $ars)))  ;; $arity  = precise set
+                           (global.get $false)                           ;; $realm
+                           (ref.func $invoke-case-closure)               ;; $invoke
+                           (ref.func $code:case-lambda-dispatch)         ;; $code (dispatcher)
+                           (global.get $empty-free)                      ;; $free (unused here)
+                           ,(Reference $ars)                             ;; $arities (typed field)
+                           ,(Reference $as))))                           ;; $arms    (typed field)
+     ]                                                                 
     ) ; CaseClosureAllocation
   
   (AExpr3 : AExpr (ae [dd #f]) -> * ()  ; only ca needs dest

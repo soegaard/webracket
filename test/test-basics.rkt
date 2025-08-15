@@ -311,5 +311,18 @@
 
             #;(equal? (procedure-arity keyword<?) 2)))
 
- (keyword->string '#:apple)
+ (list "case-lambda"
+       (list (equal? (procedure? (case-lambda)) #t)
+            (equal? (procedure? (case-lambda [(x) x])) #t)
+            (equal? ((case-lambda [(x) x] [(x y) (list x y)]) 11) 11)
+            (equal? ((case-lambda [(x) x] [(x y) (+ x y)]) 11 22) 33)
+            (equal? ((case-lambda [(x . y) x]) 11 22) 11)
+            (equal? ((case-lambda [(x . y) y]) 11 22) '(22))
+            (equal? (procedure-arity (case-lambda))                      '())
+            (equal? (procedure-arity (case-lambda [(x) x]))              1)
+            (equal? (procedure-arity (case-lambda [(x y) x]))            2)
+            (equal? (procedure-arity (case-lambda [(x . y) x]))         -2)
+            (equal? (procedure-arity (case-lambda [(x) x] [(x y) x]))   '(1 2))
+            (equal? (procedure-arity (case-lambda [(x y) x] [(x) x] ))  '(2 1))
+            (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))))
  )
