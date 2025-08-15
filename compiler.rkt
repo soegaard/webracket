@@ -29,6 +29,10 @@
 
 ; Invoking a primitive via a $PrimitiveProcedure is not done.
 
+; (comp+ #'(let ([f fx+]) (f 11 22)))
+
+; The PrimitiveProcedure has an invoke field.
+; This should be a generic one, but one for each primitive.
 
 ;;;
 ;;; TODO
@@ -71,10 +75,10 @@
 ;     optional number of arguments. Fill in the remaining slots with ... missing?
 ;     Or pass optional arguments in a global variable (caller/callee save)?
 
-; [ ] A reference to an undefined, top-level variable must raise an error.
+; [ ] A reference to an undefined, top-level variable must lookup the variable
+;     in the current namespace.
 ;     Currently the compiler just reports that classify-variable can't
-;     can't find the identifier. Maybe there is a missing case in the
-;     classifying pass?
+;     can't find the identifier. 
 
 ; [x] Flonum as heap object (sigh)
 ; [x] Keywords.
@@ -2572,15 +2576,53 @@
     ; dest = #f, means the cca is in value position
     [(case-closure ,s ,l [,ar ,ca] ...)
      (define t (or dd (Var (new-var)))) ; reuse dest if possible
-     (let ([l  (Label l)]
-           [ca (for/list ([c ca]) (ClosureAllocation c #f))])
-       `(case-closure-allocation "todo" ,l ,t)
-       #;`(app (lambda ()
-                 (body
-                  (var [binding ,t (array '"CLOS" ,#'dispatch-case-lambda
-                                          (array (quote ,ar) ...)
-                                          (array ,ca ...))])
-                  ,t))))])
+     (displayln ar)
+     ;; (let ([l  (Label l)]
+     ;;       [ca (for/list ([c ca]) (ClosureAllocation c #f))])
+     
+     (let* (#;[lbl  (Label l)]                                  ; (ref $ClosureCode)
+            [arms (for/list ([c ca]) (ClosureAllocation c #f))] ; each => (ref $Closure)
+            [n    (length arms)]
+
+            ;; 1) Allocate and fill the I32 arities vector
+            [ar-init `(array.new $I32Array (i32.const 0) (i32.const ,n))]
+            [$ars     (emit-fresh-local 'case-arities '(ref $I32Array) ar-init)]
+            [set-ars  (for/list ([m ar] [i (in-naturals)])
+                        `(array.set $I32Array ,(Reference $ars) (i32.const ,i)
+                                    (i32.const ,m)))]
+            ;; 2) Allocate and fill the arm-closure array (ref eq)
+            [as-init `(array.new $Array (global.get $null) (i32.const ,n))]
+            [$as      (emit-fresh-local 'case-arms '(ref $Array) as-init)]
+            [set-as   (for/list ([a arms] [i (in-naturals)])
+                        `(array.set $Array ,(Reference $as) (i32.const ,i) ,a))]
+            ;; 3) Build the $Free payload: [arities, arms]
+            [fr-init `(array.new $Free (global.get $null) (i32.const 2))]
+            [$fr     (emit-fresh-local 'case-free '(ref $Free) fr-init)]
+            [set-fr  `((array.set $Free ,(Reference $fr) (i32.const 0)
+                                  (ref.cast (ref eq) ,(Reference $ars)))
+                       (array.set $Free ,(Reference $fr) (i32.const 1)
+                                  (ref.cast (ref eq) ,(Reference $as))))]
+            ;; 4) Choose a single fixnum for $arity field.
+            ;;    If exactly one arm, use that marker.
+            ;;    Otherwise use -1 (“at least 0”) — introspection uses $free.
+            [arity-fx (if (= n 1)
+                          `(ref.i31 (i32.shl (i32.const ,(car ar)) (i32.const 1)))
+                          `(ref.i31 (i32.shl (i32.const -1) (i32.const 1))))]
+            ;; 5) Optional name: use s if you have a (ref eq), else #f.
+            [name-expr '(global.get $false)  #;(if s s '(global.get $false))])
+       `(block (result (ref $Closure))
+               ,@set-ars
+               ,@set-as
+               ,@set-fr
+               (struct.new $Closure
+                           (i32.const 0)                 ;; $hash
+                           ,name-expr                    ;; $name  (#f or $String)
+                           ,arity-fx                     ;; $arity (fixnum marker)
+                           (global.get $false)           ;; $realm
+                           (ref.func $invoke-case-closure)       ;; $invoke: no repack, just call code
+                           (ref.func $code:case-lambda-dispatch) ;; $code: $code:case-lambda-dispatch
+                           ,(Reference $fr))))]          ;; $free: [arities, arms]
+    ) ; CaseClosureAllocation
   
   (AExpr3 : AExpr (ae [dd #f]) -> * ()  ; only ca needs dest
     [,x               (if (memq (syntax-e (variable-id x)) primitives)
@@ -2900,6 +2942,8 @@
                                         ['<stat>                `(drop ,work)]
                                         [_ (error)])]
                                      [x  (Store! x work)])]
+
+    ; This version doesn't repack when it invokes a variadic function.
     [(app ,s ,ae ,ae1 ...)
      ; Note: We do not know that type `ae` has.
      ;       We need to check that is an applicable value.
@@ -2907,76 +2951,47 @@
      ; TODO: Only one function application is active at a time, so we can
      ;       reuse the variable, $app-clos,  holding the function to be applied.
 
-     ;;  (type $ClosureCode  (func (param $clos (ref $Closure))
-     ;;                           (param $args (ref $Args))
-     ;;                           (result (ref eq)))))
      (define tc (eq? cd '<return>))
-     (define tc-flag (if tc (Imm #t) (Imm #f))) ; currently not used
 
-     ; Package arguments in an $Args array.
+     ;; Build user-argument vector (no header, no repack)
      (define args `(array.new_fixed $Args ,(length ae1)
-                                    ,@(for/list ([ae ae1])
-                                        (AExpr3 ae <value>))))
+                                    ,@(for/list ([ae ae1]) (AExpr3 ae <value>))))
 
-     ; Variable to hold the closure to be applied
-     (define clos-var (new-var '$app-clos))
-     (define clos (syntax-e (variable-id clos-var)))
-     (emit-local clos '(ref $Closure) '(global.get $dummy-closure)) ; todo: reuse
+     ;; Hold the callee as a (ref $Procedure) 
+     (define proc-var (new-var '$app-proc))
+     (define proc (syntax-e (variable-id proc-var)))
+     (emit-local proc '(ref $Procedure) '(global.get $dummy-closure)) ; really $dummy-procedure
 
-     ; The code of the closure
-     (define code `(struct.get $Closure $code (local.get ,clos)))
+     ;; The dynamic invoker for the procedure
+     (define inv `(struct.get $Procedure $invoke (local.get ,proc)))
 
-     ; If `ae` is a procedure with rest arguments, we convert them
-     ; to a list and pass them as the last argument.
-     (define arity-var (emit-fresh-local 'arity 'i32))
-     (define args-var  (emit-fresh-local 'arity '(ref $Args)))
-     (define varargs
-       (list (Store! arity-var ; convert fixnum arity to i32
-                     `(i32.shr_s (i31.get_s (ref.cast (ref i31)
-                                                      (struct.get $Closure $arity (local.get ,clos))))
-                                 (i32.const 1)))
-             (Store! args-var args)
-             (Store! args-var `(call $repack-arguments
-                                     ,(Reference args-var)
-                                     ,(Reference arity-var)))))
-
-     ; Call the closure. Note that the `code` argument goes last.
+     ;; Tail-call the invoker with raw args
      (define work
        (if tc
-           ; If `tc` is true, we generate `(return (return_call_ref ..))`,
-           ; but that actually works in wasm.
-           `(return_call_ref $ClosureCode (local.get ,clos) ,(Reference args-var) ,code)
-           `(call_ref        $ClosureCode (local.get ,clos) ,(Reference args-var) ,code)))
+           `(return_call_ref $ProcedureInvoker (local.get ,proc) ,args ,inv)
+           `(call_ref        $ProcedureInvoker (local.get ,proc) ,args ,inv)))
 
-     ; TODO: If the cast fails we get a runtime trap.
-     ;       When exceptions are implemented, we need to insert type checks.
-     (define (cast w)
-       ; 1. check that w is applicable
-       ; 2. is it a closure, struct ?
-       `(ref.cast (ref $Closure) ,w))
-     
+     ;; Cast helper (add checks later if you want nice errors)
+     (define (cast w) `(ref.cast (ref $Procedure) ,w))
+
      (match dd
-       ['<effect> (match cd
-                    ['<expr>   `(block (local.set ,clos ,(cast (AExpr ae))) ,@varargs       ,work)] ; should this add (ref eq)?
-                    ['<stat>   `(block (local.set ,clos ,(cast (AExpr ae))) ,@varargs (drop ,work))]
-                    [_         (error 'internal-app0 "combination impossible")])]
-       ['<value>  (match cd
-                    ['<return> `(block (result (ref eq)) ; note: also correct in the case of a tail call
-                                       (local.set ,clos ,(cast (AExpr ae)))  
-                                       ,@varargs
-                                       ,(if tc
-                                            work  ; avoids wrapping `return_call_ref` in a return
-                                            `(return ,work)))]
-                    ['<expr>   `(block (result (ref eq))  ; note: also correct in the case of a tail call
-                                       (local.set ,clos ,(cast (AExpr ae)))
-                                       ,@varargs
-                                       ,work)]
-                    [_         (display (list 'app ce dd cd))
-                               (error 'internal-app1 "not impossible?!")])]
-       [x         `(block 
-                      (local.set ,clos ,(cast (AExpr ae)))
-                      ,@varargs
-                      ,(Store! x work))])]
+       ['<effect>
+        (match cd
+          ['<expr> `(block (local.set ,proc ,(cast (AExpr ae))) ,work)]
+          ['<stat> `(block (local.set ,proc ,(cast (AExpr ae))) (drop ,work))]
+          [_ (error 'internal-app0 "combination impossible")])]
+       ['<value>
+        (match cd
+          ['<return> `(block (result (ref eq))
+                             (local.set ,proc ,(cast (AExpr ae)))
+                             ,(if tc work `(return ,work)))]
+          ['<expr>   `(block (result (ref eq))
+                             (local.set ,proc ,(cast (AExpr ae)))
+                             ,work)]
+          [_ (error 'internal-app1 "not impossible?!")])]
+       [x `(block (local.set ,proc ,(cast (AExpr ae)))
+                  ,(Store! x work))])]
+
     
     [(closedapp ,s ,ca ,ae2 ...)
      ; Note: In a `closedapp` we know that we are applying a closure,

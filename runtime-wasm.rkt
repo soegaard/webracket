@@ -75,7 +75,7 @@
                              (primitive-description-arity desc))) ; arity
                       (global.get $the-racket/primitive-realm)    ; realm
                       ; ,(primitive-description-realm desc)       ; todo
-                      (ref.func $invoke-primitive)
+                      (ref.func $invoke-primitive)                ; todo - this ought to call a specific primitive
                       ; for $PrimitiveProcedure
                       ; (ref.func ,($ pr))
                       ,(Imm #f
@@ -747,6 +747,28 @@
                                 (local.get $args-repacked)
                                 (local.get $code)))
 
+         ;; Invoker for case-lambda closures.
+         ;; - $args is the vector of *user* arguments (no [closure, tail?] header).
+         ;; - Arity checking + repacking are handled by the closure's code
+         ;;   ($code:case-lambda-dispatch), so we just tail-call it.
+         ; Note: In principle we could use $invoke-closure,
+         ;       but that leads to checking the arity multiple times.
+         (func $invoke-case-closure (type $ProcedureInvoker)
+               (param $proc (ref $Procedure))
+               (param $args (ref $Args))
+               (result      (ref eq))
+
+               (local $clos (ref $Closure))
+               (local $code (ref $ClosureCode))
+               ;; Cast and fetch code pointer
+               (local.set $clos (ref.cast (ref $Closure) (local.get $proc)))
+               (local.set $code (struct.get $Closure $code (local.get $clos)))
+               ;; Tail-call the dispatcher
+               (return_call_ref $ClosureCode
+                                (local.get $clos)
+                                (local.get $args)
+                                (local.get $code)))
+
          (func $invoke-primitive
                (type $ProcedureInvoker)
                (param $proc (ref $Procedure))
@@ -839,6 +861,82 @@
                     (return (local.get $args))))
                (unreachable))
 
+
+         
+         
+         ;; Dispatcher for (case-lambda ...) using arities:
+         ;;   m >= 0  ⇒ exactly m args
+         ;;   m <  0  ⇒ at least (-m - 1) args
+         ;;
+         ;; $Free payload captured by the dispatcher closure:
+         ;;   index 0 : (ref $I32Array)  ; arities per arm
+         ;;   index 1 : (ref $Array)     ; arm closures (source order)
+         (func $raise-arity-error/case-lambda/arities (unreachable))
+         (func $code:case-lambda-dispatch (type $ClosureCode)
+               (param $clos (ref $Closure))
+               (param $args (ref $Args))
+               (result      (ref eq))
+
+               (local $free     (ref $Free))
+               (local $arities  (ref $I32Array))
+               (local $arms     (ref $Array))
+               (local $argc     i32)
+               (local $i        i32)
+               (local $m        i32)
+               (local $arm      (ref $Closure))
+               (local $out      (ref $Args))
+               (local $code     (ref $ClosureCode))
+
+               ;; Unpack captures: arities and arm closures
+               (local.set $free
+                          (struct.get $Closure $free (local.get $clos)))
+               (local.set $arities
+                          (ref.cast (ref $I32Array)
+                                    (array.get $Free (local.get $free) (i32.const 0))))
+               (local.set $arms
+                          (ref.cast (ref $Array)
+                                    (array.get $Free (local.get $free) (i32.const 1))))
+               ;; argc is the number of *user* arguments
+               (local.set $argc (array.len (local.get $args)))
+               (local.set $i    (i32.const 0))
+
+               (loop $scan
+                     (if (i32.ge_u (local.get $i) (array.len (local.get $arities)))
+                         (then
+                          ;; No arm matched → arity error with the arity set.
+                          (call $raise-arity-error/case-lambda/arities
+                                (local.get $argc) (local.get $arities))
+                          (unreachable)))
+
+                     (local.set $m
+                                (array.get $I32Array (local.get $arities) (local.get $i)))
+                     ;; Match fixed arm (m >= 0) when argc == m,
+                     ;; or rest arm (m < 0) when argc ≥ -m-1.
+                     (if
+                      (i32.or
+                       (i32.and (i32.ge_s (local.get $m) (i32.const 0))
+                                (i32.eq   (local.get $argc) (local.get $m)))
+                       (i32.and (i32.lt_s (local.get $m) (i32.const 0))
+                                (i32.ge_u (local.get $argc)
+                                          (i32.sub (i32.sub (i32.const 0) (local.get $m))
+                                                   (i32.const 1)))))
+                      (then
+                       ;; Arm i matches: repack once and tail-call the arm's code.
+                       (local.set $arm
+                                  (ref.cast (ref $Closure)
+                                            (array.get $Array (local.get $arms) (local.get $i))))
+                       (local.set $out
+                                  (call $repack-arguments (local.get $args) (local.get $m)))
+                       (local.set $code
+                                  (struct.get $Closure $code (local.get $arm)))
+                       (return_call_ref $ClosureCode
+                                        (local.get $arm)
+                                        (local.get $out)
+                                        (local.get $code)))
+                      (else
+                       (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                       (br $scan))))
+               (unreachable))
 
 
          
@@ -8340,6 +8438,8 @@
                (ref.func $struct-mutator/specialized)
                (ref.func $invoke-struct)
                (ref.func $invoke-primitive)
+               (ref.func $code:case-lambda-dispatch)
+               (ref.func $invoke-case-closure)
                #;(ref.func $struct-constructor/with-guard))
 
          
