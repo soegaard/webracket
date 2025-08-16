@@ -10,7 +10,7 @@
                      [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ])
          ; derived
-         (rename-out [web-define           define]))
+         #;(rename-out [web-define           define]))
 
 
 (require (for-syntax (only-in racket/base
@@ -87,13 +87,14 @@
 
 ;; 3.14. Definitions: define
 ; (require (only-in racket/base define))
-(provide (rename-out [web-define define]))
+#;(provide (rename-out [web-define define]))
+(provide define define-values)
 ; define-values provided from `fully`
 
 ; Restrict define:
 ;  no variadic functions, no keyword arguments
 
-(define-syntax (web-define stx)
+#;(define-syntax (web-define stx)
   (syntax-case stx ()
     [(_define id expr)
      (identifier? #'id)

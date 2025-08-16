@@ -75,10 +75,12 @@
 ;     optional number of arguments. Fill in the remaining slots with ... missing?
 ;     Or pass optional arguments in a global variable (caller/callee save)?
 
-; [ ] A reference to an undefined, top-level variable must lookup the variable
+; [/] A reference to an undefined, top-level variable must lookup the variable
 ;     in the current namespace.
 ;     Currently the compiler just reports that classify-variable can't
-;     can't find the identifier. 
+;     can't find the identifier.
+;     For now, top-level variables are defined as global variables that contain a $Boxed.
+
 
 ; [x] Flonum as heap object (sigh)
 ; [x] Keywords.
@@ -1149,9 +1151,14 @@
   (GeneralTopLevelForm : GeneralTopLevelForm (G ρ) -> GeneralTopLevelForm (ρ)
     [,e                                 (letv ((e ρ) (Expr e ρ))
                                           (values `,e ρ))]
-    [(define-values   ,s (,x ...) ,e)   (letv ((x ρ) (rename* x ρ))
-                                          (letv ((e _) (Expr e ρ))
-                                            (values `(define-values ,s (,x ...) ,e) ρ)))]
+    [(define-values   ,s (,x ...) ,e)   (cond
+                                          [(inside-module?)
+                                           (letv ((x ρ) (rename* x ρ))
+                                                 (letv ((e _) (Expr e ρ))
+                                                       (values `(define-values ,s (,x ...) ,e) ρ)))]
+                                          [else ; top-level variables aren't renamed
+                                           (letv ((e _) (Expr e ρ))
+                                                 (values `(define-values ,s (,x ...) ,e) ρ))])]
     [(define-syntaxes ,s (,x ...) ,e)   (error)])
   
   (Formals : Formals (F ρ) -> Formals (ρ)
@@ -2319,6 +2326,7 @@
   ; Convert to set
   (define sets (map (λ (xs) (apply make-id-set xs))
                     (list top mod loc)))
+  (displayln sets)
   (values (first  sets)
           (second sets)
           (third  sets)))
@@ -2637,7 +2645,7 @@
                              [(char? v)    (Imm v)]
                              [else         `',v]))])]
     [(top ,s ,x)
-     ; Note: This is a quick hack until namespaces are implemented.
+     ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
      ;       Note that if x is present in a top-level define-values
      ;       then (top x) will become x anyway.
      ; Note: What is missing here: is error handling for an undefined top-level-variable.
@@ -3313,41 +3321,21 @@
     [,e                           (Expr e dd <stat>)]
     [(#%require     ,s ,rrs ...)  `'"ignored #%require"]
     [(define-values ,s (,x ...)   ,e)
+     #;(displayln `(define-values ,s (,x ...)   ,e))
      (match x
        ['()       (Expr e <effect> <stat>)]
-       [(list x0) (cond
-                    ; Until we implement namespaces, top-level variables are
-                    ; stored as boxed global variables.
-                    #;[(top-variable? x0) #;`(block ,(Expr e x0 <stat>)
-                                                  ,(Store! x0 `(call $boxed ,(Reference x0))))
-                                          (Store! x0 (Expr e x0 <stat>))]
-                    
-                    
-                    [else               (Expr e x0 <stat>)])]
-       [_
-        (displayln `(define-values ,s (,x ...)   ,e))
-        (error 'generate-code "todo x")])]
-
-     ; Top Level     
-     ;   Global variables outside modules.
-     ;   Eventually, they need to stored in a namespace.
-     ;   For now, we use a global WebAssembly variable.
-     ; Elsewhere, we have declared the variable as global using:
-     ;  `(global ,x0 (ref eq) ,(Fixnum 0))  
-
-     #;(match (map Var x)
-       [(list x0) ; single value is the common case
-        `(block (var ,x0) ,(Expr e x0 <stat>))]
-       [(list x0 x1 ...)
-        (define x* (cons x0 x1))
-        `(block (var ,x0 ,x1 ...)
-                ,(Expr e x0)    ; reuse x0 to store values
-                ,(for/list ([i (in-range (length x*) 0 -1)]
-                            [x (reverse x*)])
-                   `(:= ,x (ref ,x0 ',i)))
-                ...)]
-       ['() (error 'generate-code "TODO define-values of no values")])
-
+       ; Until we implement namespaces, top-level variables are
+       ; stored as boxed global variables.
+       [(list x0) (Expr e x0 <stat>)]                  
+       [(list x ...)  (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $false)))
+                      `(block
+                        ,(Expr e vals <stat>)
+                        ,@(for/list ([x0 x] [i (in-naturals)])
+                            `(global.set ,($$ (variable-id x0))
+                                         (array.get $Values
+                                                    (ref.cast (ref $Values)
+                                                              (local.get ,($$ (variable-id vals))))
+                                                    (i32.const ,i)))))])]
     [(define-syntaxes ,s (,x ...) ,e)
      (error 'generate-code "TODO define-syntaxes")])
 

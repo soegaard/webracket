@@ -179,6 +179,7 @@
     (add-runtime-string-constant 'unknown                   "unknown")
     (add-runtime-string-constant 'colon                     ":")
     (add-runtime-string-constant '->                        ">")
+    (add-runtime-string-constant 'hash-less-boxed-colon     "#<boxed:")
     
     `(module
          ;;;
@@ -10131,7 +10132,9 @@
                ;; These shouldn't leak to the outside, but nice to know if it happens.
                ;; --- Case: boxed --- (shouldn't happen)
                (if (ref.test (ref $Boxed) (local.get $v))
-                   (then (call $raise-format/display:got-boxed)))
+                   #;(then (call $raise-format/display:got-boxed))
+                   (then (return (call $format/display:boxed
+                                       (ref.cast (ref $Boxed) (local.get $v))))))
                ;; --- Fallback ---
                (call $raise-format/display:unknown-datatype)
                (unreachable))
@@ -10437,6 +10440,35 @@
                ;; Combine and return
                (call $growable-array-of-strings->string (local.get $out)))
 
+         ; Note: the `boxed` is internal to the compiler, so the following
+         ;       is strictly for debug purposes
+         (func $format/display:boxed
+               (param $b (ref $Boxed))
+               (result   (ref $String))
+
+               (local $val     (ref eq))
+               (local $val-str (ref $String))
+               (local $out     (ref $GrowableArray))
+
+               ;; Extract value
+               (local.set $val (struct.get $Boxed $v (local.get $b)))
+               ;; Format the value
+               (local.set $val-str (call $format/display (local.get $val)))
+               ;; Allocate a growable array
+               (local.set $out (call $make-growable-array (i32.const 3)))
+               ;; Append "#<boxed:"
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String)
+                               (global.get $string:hash-less-boxed-colon)))
+               ;; Append formatted value
+               (call $growable-array-add! (local.get $out) (local.get $val-str))
+               ;; Append closing ">"
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String)
+                               (global.get $string:->)))
+               ;; Combine and return
+               (call $growable-array-of-strings->string (local.get $out)))
+         
          (func $format/display:box
                (param $b (ref $Box))
                (result   (ref $String))
