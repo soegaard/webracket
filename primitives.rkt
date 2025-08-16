@@ -149,6 +149,14 @@
  fx->fl
  fl->fx
 
+ ;; 14.1 Namespaces
+
+ namespace?
+ make-empty-namespace
+ namespace-variable-value
+ namespace-set-variable-value!
+ namespace-undefine-variable!
+ ; namespace-has-key?
 
 ;;
 

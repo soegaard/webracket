@@ -469,6 +469,13 @@
   unsafe-vector*-length
   unsafe-vector*-set!
 
+  namespace?
+  make-empty-namespace
+  namespace-variable-value
+  namespace-set-variable-value!
+  namespace-undefine-variable!
+  ; namespace-has-key?
+  
   ;; support for `for`
   ; The functions below will be removed, when `webracket` implements `for`
   ; grow-vector
@@ -2628,8 +2635,6 @@
                              [(eq? v #f)   '(global.get $false)]
                              [(fixnum? v)  (Imm v)]
                              [(char? v)    (Imm v)]
-                             #;[(symbol? v)  `(call $string->symbol  ',(~a v))]      ; todo
-                             #;[(keyword? v) `(call $string->keyword ',(~a (keyword->string v)))] ; todo
                              [else         `',v]))])]
     [(top ,s ,x)
      ; Note: This is a quick hack until namespaces are implemented.
@@ -3315,10 +3320,13 @@
                     ; stored as boxed global variables.
                     #;[(top-variable? x0) #;`(block ,(Expr e x0 <stat>)
                                                   ,(Store! x0 `(call $boxed ,(Reference x0))))
-                                        (Store! x0 (Expr e x0 <stat>))]
+                                          (Store! x0 (Expr e x0 <stat>))]
+                    
+                    
                     [else               (Expr e x0 <stat>)])]
        [_
-        (error 'generate-code "todo")])]
+        (displayln `(define-values ,s (,x ...)   ,e))
+        (error 'generate-code "todo x")])]
 
      ; Top Level     
      ;   Global variables outside modules.

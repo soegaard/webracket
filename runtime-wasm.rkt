@@ -484,7 +484,25 @@
             (sub $Heap
               (struct
                (field $hash (mut i32))
-               (field $v    (ref null extern)))))
+                (field $v    (ref null extern)))))
+
+          ;; (Placeholder) module registry
+          (type $ModuleRegistry
+                (sub $Heap
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $table (mut (ref $Array))))))
+
+          ;; Namespace now maps Symbol → Boxed via a single hasheq/mutable table
+          (type $Namespace
+                (sub $Heap
+                     (struct
+                       (field $hash       (mut i32))
+                       (field $name       (ref eq))                   ;; #f or $String
+                       (field $base-phase i32)
+                       (field $table      (mut (ref $HashEqMutable))) ;; hasheq: Symbol → Boxed
+                       (field $modules    (mut (ref $ModuleRegistry)))
+                       (field $protect    (mut i32)))))
                     
           ) ; rec
        
@@ -712,6 +730,13 @@
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
 
+         ;; Module Registry
+         (global $empty-module-registry (ref $ModuleRegistry)
+                 (struct.new $ModuleRegistry
+                             (i32.const 0)
+                             (array.new $Array (global.get $null) (i32.const 0))))
+
+         
          ;; Primitives (as values)
          ,@(declare-primitives-as-globals)
 
@@ -11075,6 +11100,177 @@
                            (ref.i31 (i32.shl (local.get $i/u) (i32.const 1)))) ;; convert i32 to fixnum
                      (return (local.get $new-vec)))
 
+               ;;;
+               ;;; 14. REFLECTION AND SECURITY
+               ;;;
+
+               ;; 14.1 Namespaces
+
+               (func $make-empty-namespace (result (ref $Namespace))
+                     (struct.new $Namespace
+                                 (i32.const 0)                         ;; $hash
+                                 (global.get $false)                   ;; $name
+                                 (i32.const 0)                         ;; $base-phase
+                                 (call $make-empty-hasheq)             ;; $table
+                                 (global.get $empty-module-registry)   ;; $modules
+                                 (i32.const 0)))                       ;; $protect
+
+               (func $raise-undefined-top (unreachable))
+               (func $raise-argument-error:namespace-expected (unreachable))
+
+               (func $namespace-variable-value
+                     (param $ns  (ref eq))
+                     (param $sym (ref eq))
+                     (result     (ref eq))
+                     ;; 1) Check that $ns is a namespace
+                     (if (i32.eqz (ref.test (ref $Namespace) (local.get $ns)))
+                         (then (call $raise-argument-error:namespace-expected (local.get $ns))
+                               (unreachable)))
+                     ;; 2) Check that $sym is a symbol
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                         (then (call $raise-check-symbol (local.get $sym))
+                               (unreachable)))
+                     ;; 3) Delegate to the checked implementation
+                     (call $namespace-variable-value/checked
+                           (ref.cast (ref $Namespace) (local.get $ns))
+                           (ref.cast (ref $Symbol)    (local.get $sym))))
+               
+               (func $namespace-variable-value/checked
+                     (param $ns  (ref $Namespace))
+                     (param $sym (ref $Symbol))
+                     (result     (ref eq))
+
+                     (local $tab (ref $HashEqMutable))
+                     (local $got (ref eq))
+                     (local $box (ref $Boxed))
+
+                     (local.set $tab (struct.get $Namespace $table (local.get $ns)))
+                     (local.set $got
+                                (call $hasheq-ref
+                                      (ref.cast (ref eq) (local.get $tab))
+                                      (local.get $sym)
+                                      (global.get $false)))
+                     ;; Fail early if the binding is missing or not a $Boxed.
+                     (if (i32.eqz (ref.test (ref $Boxed) (local.get $got)))
+                         (then (call $raise-undefined-top (local.get $sym))
+                               (unreachable)))
+                     ;; Cast and return the boxed value.
+                     (local.set $box (ref.cast (ref $Boxed) (local.get $got)))
+                     (struct.get $Boxed $v (local.get $box)))
+
+
+               (func $namespace-set-variable-value!
+                     (param $ns  (ref eq))
+                     (param $sym (ref eq))
+                     (param $val (ref eq))
+                     (result     (ref eq))
+                     ;; 1) Check that $ns is a namespace
+                     (if (i32.eqz (ref.test (ref $Namespace) (local.get $ns)))
+                         (then (call $raise-argument-error:namespace-expected (local.get $ns))
+                               (unreachable)))
+                     ;; 2) Check that $sym is a symbol
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                         (then (call $raise-check-symbol (local.get $sym))
+                               (unreachable)))
+                     ;; 3) Delegate to the checked implementation
+                     (call $namespace-set-variable-value!/checked
+                           (ref.cast (ref $Namespace) (local.get $ns))
+                           (ref.cast (ref $Symbol)    (local.get $sym))
+                           (local.get $val)))
+               
+               (func $namespace-set-variable-value!/checked
+                     ;; Racket semantics: set OR define
+                     ;; If `sym` is bound   => mutate the existing $Boxed.
+                     ;; If `sym` is unbound => install a fresh $Boxed with `val`.
+                     (param $ns  (ref $Namespace))
+                     (param $sym (ref $Symbol))
+                     (param $val (ref eq))
+                     (result     (ref eq))
+
+                     (local $tab (ref $HashEqMutable))
+                     (local $got (ref eq))
+                     (local $box (ref $Boxed))
+
+                     (local.set $tab (struct.get $Namespace $table (local.get $ns)))
+                     (local.set $got
+                                (call $hasheq-ref
+                                      (ref.cast (ref eq) (local.get $tab))
+                                      (local.get $sym)
+                                      (global.get $false)))
+
+                     (if (ref.test (ref $Boxed) (local.get $got))
+                         (then
+                          ;; Binding exists => mutate in place
+                          (local.set $box (ref.cast (ref $Boxed) (local.get $got)))
+                          (struct.set $Boxed $v (local.get $box) (local.get $val))
+                          (return (global.get $void)))
+                         (else
+                          ;; Binding missing => create and insert new box
+                          (local.set $box (struct.new $Boxed (local.get $val)))
+                          (call $hasheq-set!/mutable/checked
+                                (local.get $tab)
+                                (local.get $sym)
+                                (ref.cast (ref eq) (local.get $box)))
+                          (return (global.get $void))))
+                     (unreachable))
+
+               (func $namespace-undefine-variable!
+                     (param $ns  (ref eq))
+                     (param $sym (ref eq))
+                     (result     (ref eq))
+                     ;; 1) Check that $ns is a namespace
+                     (if (i32.eqz (ref.test (ref $Namespace) (local.get $ns)))
+                         (then (call $raise-argument-error:namespace-expected (local.get $ns))
+                               (unreachable)))
+                     ;; 2) Check that $sym is a symbol
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                         (then (call $raise-check-symbol (local.get $sym))
+                               (unreachable)))
+                     ;; 3) Delegate to the checked implementation
+                     (call $namespace-undefine-variable!/checked
+                           (ref.cast (ref $Namespace) (local.get $ns))
+                           (ref.cast (ref $Symbol)    (local.get $sym))))
+
+               (func $namespace-undefine-variable!/checked
+                     (param $ns  (ref $Namespace))
+                     (param $sym (ref $Symbol))
+                     (result     (ref eq))
+
+                     (local $tab (ref $HashEqMutable))
+                     
+                     (local.set $tab (struct.get $Namespace $table (local.get $ns)))
+                      ; returns void
+                     (call $hash-remove!/mutable (local.get $tab) (local.get $sym)))
+
+
+               (func $namespace-has-key?
+                     (param $ns  (ref eq))
+                     (param $sym (ref eq))
+                     (result     (ref eq))
+                     ;; 1) Check that $ns is a namespace
+                     (if (i32.eqz (ref.test (ref $Namespace) (local.get $ns)))
+                         (then (call $raise-argument-error:namespace-expected (local.get $ns))
+                               (unreachable)))
+                     ;; 2) Check that $sym is a symbol
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                         (then (call $raise-check-symbol (local.get $sym))
+                               (unreachable)))
+                     ;; 3) Delegate to the checked implementation
+                     (call $namespace-has-key?/checked
+                           (ref.cast (ref $Namespace) (local.get $ns))
+                           (ref.cast (ref $Symbol)    (local.get $sym))))
+               
+               (func $namespace-has-key?/checked
+                     (param $ns  (ref $Namespace))
+                     (param $sym (ref $Symbol))
+                     (result     (ref eq))
+
+                     (local $tab (ref $HashEqMutable))
+
+                     (local.set $tab (struct.get $Namespace $table (local.get $ns)))
+                     (call $hash-has-key? (ref.cast (ref eq) (local.get $tab)) (local.get $sym)))
+
+               
                ;;;
                ;;; FFI
                ;;;

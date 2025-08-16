@@ -7,7 +7,7 @@
          ; core
          (rename-out [#%plain-module-begin #%module-begin]
                      [#%plain-app          #%app]
-                     [#%plain-lambda       lambda]
+                     [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ])
          ; derived
          (rename-out [web-define           define]))
@@ -168,5 +168,7 @@
   v)
 
 (provide s-exp->fasl fasl->s-exp)
+
+
 
 
