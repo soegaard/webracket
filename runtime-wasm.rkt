@@ -149,6 +149,8 @@
     (add-runtime-string-constant 'closure                  "#<closure>")
     (add-runtime-string-constant 'external                 "#<external>")
     (add-runtime-string-constant 'external-null            "#<external-null>")
+    (add-runtime-string-constant 'namespace               "#<namespace>")
+    (add-runtime-string-constant 'hash-less-namespace-colon "#<namespace:")
     (add-runtime-string-constant 'empty                    "")
     (add-runtime-string-constant 'open-paren               "(")
     (add-runtime-string-constant 'close-paren              ")")
@@ -10110,6 +10112,10 @@
                          (if (i32.eq (i32.and (local.get $n) (i32.const ,char-mask))
                                      (i32.const ,char-tag))
                              (then (return (call $format/display:char (local.get $v)))))))
+               ;; --- Case: namespace ---
+               (if (ref.test (ref $Namespace) (local.get $v))
+                   (then (return (call $format/display:namespace
+                                       (ref.cast (ref $Namespace) (local.get $v))))))
                ;; --- Case: variable-reference ---
                (if (ref.test (ref $VariableReference) (local.get $v))
                    (then (return (call $format/display:variable-reference
@@ -10128,6 +10134,32 @@
                (result   (ref $String))
                (ref.cast (ref $String)
                          (global.get $string:hash-variable-reference)))
+
+        (func $format/display:namespace
+              (param $ns (ref $Namespace))
+              (result (ref $String))
+
+              (local $name (ref eq))
+              (local $out  (ref $GrowableArray))
+
+              ;; Extract namespace name
+              (local.set $name (struct.get $Namespace $name (local.get $ns)))
+              ;; If no name, return constant
+              (if (result (ref $String))
+                  (ref.eq (local.get $name) (global.get $false))
+                  (then (ref.cast (ref $String)
+                                  (global.get $string:namespace)))
+                  (else ;; Build "#<namespace:NAME>"
+                        (local.set $out (call $make-growable-array (i32.const 3)))
+                        (call $growable-array-add! (local.get $out)
+                              (ref.cast (ref $String)
+                                        (global.get $string:hash-less-namespace-colon)))
+                        (call $growable-array-add! (local.get $out)
+                              (ref.cast (ref $String) (local.get $name)))
+                        (call $growable-array-add! (local.get $out)
+                              (ref.cast (ref $String)
+                                        (global.get $string:->)))
+                        (call $growable-array-of-strings->string (local.get $out)))))
 
         (func $format/display:external
               (param $v (ref $External))
