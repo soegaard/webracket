@@ -471,7 +471,7 @@
 
   namespace?
   make-empty-namespace
-  namespace-variable-value
+  namespace-variable-value-simple ; ns sym -> value
   namespace-set-variable-value!
   namespace-undefine-variable!
   ; namespace-has-key?

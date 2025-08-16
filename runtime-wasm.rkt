@@ -11150,7 +11150,7 @@
                (func $raise-undefined-top (unreachable))
                (func $raise-argument-error:namespace-expected (unreachable))
 
-               (func $namespace-variable-value
+               (func $namespace-variable-value-simple
                      (param $ns  (ref eq))
                      (param $sym (ref eq))
                      (result     (ref eq))

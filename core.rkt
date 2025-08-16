@@ -169,6 +169,13 @@
 
 (provide s-exp->fasl fasl->s-exp)
 
+;; 14. 10
+
+(provide namespace-variable-value-simple)
+
+(define (namespace-variable-value-simple ns sym)
+  (namespace-variable-value-simple sym #t #f ns))
+
 
 
 
