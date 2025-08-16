@@ -738,6 +738,9 @@
                              (i32.const 0)
                              (array.new $Array (global.get $null) (i32.const 0))))
 
+         ;; Namespaces
+         (global $top-level-namespace (mut (ref null $Namespace)) (ref.null $Namespace))
+
          
          ;; Primitives (as values)
          ,@(declare-primitives-as-globals)
@@ -1040,7 +1043,7 @@
          
          
          ;; Return value (for a module)
-         (global ,result (mut (ref eq)) ,(Undefined))
+         (global ,result (mut (ref eq)) (global.get $void))
         
          ;; Variables defined at the top-level
          ,@top-level-variable-declarations
@@ -10046,6 +10049,10 @@
                (if (ref.eq (local.get $v) (global.get $missing))
                    (then (return (ref.cast (ref $String)
                                             (global.get $string:missing)))))
+               ;; --- Case: undefined ---
+               (if (ref.eq (local.get $v) (global.get $undefined))
+                   (then (return (ref.cast (ref $String)
+                                            (global.get $string:undefined)))))
                ;; --- Case: closure ---
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
@@ -11394,6 +11401,9 @@
                            `(global.set ,(TopVar v)
                                         (struct.new $Boxed
                                                     (global.get ,(TopVar v))))))
+
+                     ;; Initialize the top-level namespace
+                     (global.set $top-level-namespace (call $make-empty-namespace))
                      
                      
                      ; Initialize local variables
