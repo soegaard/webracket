@@ -2326,7 +2326,7 @@
   ; Convert to set
   (define sets (map (λ (xs) (apply make-id-set xs))
                     (list top mod loc)))
-  (displayln sets)
+  #;(displayln sets)
   (values (first  sets)
           (second sets)
           (third  sets)))
