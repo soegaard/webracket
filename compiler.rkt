@@ -337,7 +337,8 @@
   append ; two arguments
   reverse memq
   alt-reverse ; used in expansion of for/list
-
+  map
+  
   void?
   make-void  ; zero arguments
   void
@@ -3554,6 +3555,18 @@
     [(datum? x)    (datum-value x)]
     
     [else          x]))
+
+(define (strip* x)
+  ; (displayln x)
+  (cond
+    [(variable? x)   (syntax-e (variable-id x))]
+    [(pair? x)       (cons (strip* (car x))
+                           (strip* (cdr x)))]
+    [(null? x)      '()]
+    [(syntax? x)    (syntax-e x)]
+    [(datum? x)     (datum-value x)]
+    
+    [else           x]))
 
 (define (run-expr stx)
   (define out 
