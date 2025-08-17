@@ -71,10 +71,10 @@
  append
  reverse
 
- ; map
+ map
  ; andmap
  ; ormap
- ; for-each
+ for-each
  ; foldl
  ; foldr
 

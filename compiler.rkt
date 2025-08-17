@@ -337,7 +337,7 @@
   append ; two arguments
   reverse memq
   alt-reverse ; used in expansion of for/list
-  map
+  map for-each
   
   void?
   make-void  ; zero arguments
@@ -2836,6 +2836,34 @@
                                                        (i32.const 0)
                                                        ,(AExpr (first aes))
                                                        ,(loop (rest aes)))))]
+                                   [(map)   ; variadic, at least two arguments
+                                    (define n (length ae1))
+                                    (when (< n 2) (error 'primapp "too few arguments: ~a" s))
+                                    (define proc (AExpr  (first ae1)))
+                                    (define aes  (AExpr* (rest  ae1)))
+                                    (define xss                                      
+                                      (let loop ([aes aes])
+                                        (if (null? aes)
+                                            `(global.get $null)
+                                            `(struct.new $Pair
+                                                         (i32.const 0)
+                                                         ,(first aes)
+                                                         ,(loop (rest aes))))))
+                                    `(call $map ,proc ,xss)]
+                                   [(for-each)   ; variadic, at least two arguments
+                                    (define n (length ae1))
+                                    (when (< n 2) (error 'primapp "too few arguments: ~a" s))
+                                    (define proc (AExpr  (first ae1)))
+                                    (define aes  (AExpr* (rest  ae1)))
+                                    (define xss                                      
+                                      (let loop ([aes aes])
+                                        (if (null? aes)
+                                            `(global.get $null)
+                                            `(struct.new $Pair
+                                                         (i32.const 0)
+                                                         ,(first aes)
+                                                         ,(loop (rest aes))))))
+                                    `(call $for-each ,proc ,xss)]
                                    [(values) ; variadic
                                     (define n   (length ae1))
                                     (define aes (AExpr* ae1))
