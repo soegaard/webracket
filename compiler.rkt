@@ -38,6 +38,8 @@
 ;;; TODO
 ;;;
 
+; [ ] Modules!
+
 ; [ ] Input / output port going to the host.
 
 ; [x] case-lambda
@@ -112,7 +114,6 @@
 
 ; [ ] Synchronize primitives between compiler and the `webracket` language.
 
-; [ ] Modules!
 
 ; [ ] Hash tables
 ; [x] - mutable hasheq tables
@@ -1097,7 +1098,11 @@
             [(primitive? (variable-id x))             x]
             [else                                    #f]))
     (define (extend ρ original renamed)
-      (λ (x) (if (id=? x original) renamed (ρ x))))    
+      (λ (x) (if (id=? x original) renamed (ρ x))))
+    (define (extend-map-to-self* ρ xs)
+      (if (null? xs)
+          ρ
+          (extend-map-to-self* (extend ρ (car xs) (car xs)) (cdr xs))))
     (define (fresh/simple x ρ [orig-x x])
       (if (ρ x) (fresh (new-var x) ρ x) x))
     (define (fresh/full x ρ [orig-x x])
@@ -1156,9 +1161,13 @@
                                            (letv ((x ρ) (rename* x ρ))
                                                  (letv ((e _) (Expr e ρ))
                                                        (values `(define-values ,s (,x ...) ,e) ρ)))]
-                                          [else ; top-level variables aren't renamed
+                                          [else
+                                           ; top-level variables aren't renamed
+                                           ; but in order to see that they are defined,
+                                           ; they must map to themselves. 
                                            (letv ((e _) (Expr e ρ))
-                                                 (values `(define-values ,s (,x ...) ,e) ρ))])]
+                                                 (let ((ρ (extend-map-to-self* ρ x)))
+                                                   (values `(define-values ,s (,x ...) ,e) ρ)))])]
     [(define-syntaxes ,s (,x ...) ,e)   (error)])
   
   (Formals : Formals (F ρ) -> Formals (ρ)
@@ -1183,6 +1192,7 @@
                                                      (raise-syntax-error
                                                       'α-rename "compiler.rkt: unbound variable"
                                                       (variable-id x))]
+                                                    
                                                     [(not ρx)
                                                      ; signal unbound variable at runtime
                                                      (values `(app ,#'here
@@ -2326,7 +2336,7 @@
   ; Convert to set
   (define sets (map (λ (xs) (apply make-id-set xs))
                     (list top mod loc)))
-  #;(displayln sets)
+  ; (displayln sets)
   (values (first  sets)
           (second sets)
           (third  sets)))

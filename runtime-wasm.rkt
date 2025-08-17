@@ -2168,9 +2168,41 @@
 
 
          ;;;
-         ;;; Numbers
+         ;;; 4.3 Numbers
          ;;;
 
+         ;; https://docs.racket-lang.org/reference/numbers.html
+
+         ;;; 4.3.1 Number Types
+
+         ;; https://docs.racket-lang.org/reference/number-types.html
+
+         ;; [ ] number?
+         ;; [ ] complex?
+         ;; [ ] real?
+         ;; [ ] rational?
+         ;; [x] integer?
+         ;; [x] exact-integer?
+         ;; [x] exact-nonnegative-integer?
+         ;; [x] exact-positive-integer?
+         ;; [ ] inexact-real?
+         ;; [ ] fixnum?
+         ;; [ ] flonum?
+         ;; [ ] double-flonum?
+         ;; [ ] single-flonum?
+         ;; [ ] single-flonum-available?
+         ;; [x] zero?
+         ;; [x] positive?
+         ;; [x] negative?
+         ;; [ ] even?
+         ;; [ ] odd?
+         ;; [x] exact?
+         ;; [ ] inexact?
+         ;; [ ] inexact->exact
+         ;; [ ] exact->inexact
+         ;; [ ] real->single-flonum
+         ;; [ ] real->double-flonum
+         
          (func $exact?
                ;; A number is exact if it's a fixnum: a ref i31 with LSB = 0
                (param $z (ref eq))
@@ -2369,6 +2401,43 @@
                ;; Not a number
                (return (global.get $false)))
 
+         ;; 4.3.2 Generic Numerics
+         ;;     https://docs.racket-lang.org/reference/generic-numbers.html
+
+         ;; 4.3.2.1 Arithmetic
+         ;;   https://docs.racket-lang.org/reference/generic-numbers.html#%28part._.Arithmetic%29
+
+         ;; [/] +
+         ;; [/] -
+         ;; [/] *
+         ;; [/] /
+         ;; TODO  The functions + - * / currently uses 2 arguments. Make them variadic.
+         
+         ;; [ ] quotient
+         ;; TODO  Implement `quotient` using `fxquotient`.
+         
+         ;; [ ] remainder
+         ;; [ ] quotient/remainder
+         ;; [ ] modulo
+         ;; TODO  Implement `remainder`, quotient/remainder` and `modulo`.
+         
+         ;; [x] add1
+         ;; [x] sub1
+
+         ;; [ ] abs
+         ;; [ ] max
+         ;; [ ] min
+         ;; [ ] gcd
+         ;; [ ] lcm
+         ;; [ ] round
+         ;; [ ] floor
+         ;; [ ] ceiling
+         ;; [ ] truncate
+         ;; [ ] numerator
+         ;; [ ] denominator
+         ;; [ ] rationalize
+         ;; TODO  Implement arithmetic functions.
+         
          (func $add1
                (param $v (ref eq))
                (result   (ref eq))
@@ -2550,8 +2619,10 @@
 
          
          ;;;
-         ;;;  Fixnums
+         ;;;  4.3.4 Fixnums
          ;;;
+
+         ;; https://docs.racket-lang.org/reference/fixnums.html
 
          (func $raise-not-fixnum (param $x (ref eq)) (unreachable))
 
@@ -2678,8 +2749,10 @@
                (unreachable))
 
          ;;;
-         ;;; Floating Point Numbers
+         ;;; 4.3.3 Floating Point Numbers
          ;;;
+
+         ;; https://docs.racket-lang.org/reference/flonums.html
 
          (func $i32->flonum (param $n i32) (result (ref $Flonum))
                (struct.new $Flonum
@@ -3289,17 +3362,26 @@
                      ,(Imm #\0)))
          
          ;;;
-         ;;;  - Void
+         ;;;  4.21 Void
          ;;;
+
+         ;; https://docs.racket-lang.org/reference/void.html
+         
          (func $void? (param $v (ref eq))  (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $void))
                    (then (global.get $true))
                    (else (global.get $false))))
+         
          (func $make-void (result (ref eq)) ; no arguments
                (return (global.get $void)))
 
-         ;;  - Boolean
+         ;;;
+         ;;; 4.2 Booleans
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/booleans.html
+         
          ; todo: Benchmark the two implementations of $boolean? below
          (func $boolean? (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
@@ -3344,1034 +3426,656 @@
                             (then (global.get $true))
                             (else (global.get $false))))
                   (else (global.get $false))))
+
         ;;;
-        ;;; - Characters
+        ;;; 4.3 Byte Strings
         ;;;
+
+        ;; https://docs.racket-lang.org/reference/bytestrings.html
+
+         (func $raise-byte-out-of-range   (param $x (ref eq)) (unreachable))
+         (func $raise-check-bytes         (param $x (ref eq)) (unreachable))
+         (func $raise-check-byte          (param $x (ref eq)) (unreachable))
+         (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq)) (unreachable))         
+         (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
          
-         (func $raise-check-char (param $x (ref eq)) (unreachable))
-         
-         (func $char? (param $v (ref eq)) (result (ref eq))
-               (local $i31 (ref i31))
-               ; Is $v an immediate?
-               (if (i32.eqz (ref.test (ref i31) (local.get $v)))
-                   (then (return (global.get $false))))               
-               (local.set $i31 (ref.cast (ref i31) (local.get $v)))
-               ; Is it a character?
-               (if (result (ref eq))
-                   (i32.eq (i32.and (i31.get_s (local.get $i31)) (i32.const ,char-mask))
-                           (i32.const ,char-tag))
+         (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
+               (local $len i32)
+               (local $val i32)
+               ;; Decode and check $k as fixnum
+               (if (ref.test (ref i31) (local.get $k))
+                   (then (local.set $len (i31.get_u (ref.cast (ref i31) (local.get $k))))
+                         (if (i32.eqz (i32.and (local.get $len) (i32.const 1)))
+                             (then (local.set $len (i32.shr_u (local.get $len) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $k))
+                                   (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $k))
+                         (unreachable)))
+               ;; Decode and check $b as fixnum in range [0, 255]
+               (if (ref.test (ref i31) (local.get $b))
+                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
+                         (if (i32.eqz (i32.and (local.get $val) (i32.const 1)))
+                             (then (local.set $val (i32.shr_u (local.get $val) (i32.const 1)))
+                                   (if (i32.gt_u (local.get $val) (i32.const 255))
+                                       (then (call $raise-byte-out-of-range (local.get $b))
+                                             (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $b))
+                                   (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $b))
+                         (unreachable)))
+               ;; Construct mutable bytes object
+               (struct.new $Bytes
+                           (i32.const 0)  ;; hash
+                           (i32.const 0)  ;; immutable = false
+                           (call $i8make-array (local.get $len) (local.get $val))))
+                  
+         (func $bytes-length (param $a (ref eq)) (result (ref eq))
+               (local $bs  (ref null $Bytes))
+               (local $arr (ref $I8Array))
+               (local $len i32)
+               ;; Check that $a is a byte string
+               (if (ref.test (ref $Bytes) (local.get $a))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $a))))
+                   (else (call $raise-check-bytes (local.get $a))
+                         (unreachable)))
+               ;; Get the backing array and compute length
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+               ;; Convert to fixnum and return
+               (ref.i31 (i32.shl (local.get $len) (i32.const 1))))
+
+         (func $bytes? (param $a (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Bytes) (local.get $a))
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         (func $raise-expected-bytes (unreachable))
 
-         (func $char=? (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (call $char? (local.get $c1))
-                           (global.get $true))
-                   (then (return_call $eq? (local.get $c1) (local.get $c2)))
-                   (else (global.get $false))))
+         (func $bytes=?
+               (param $v1 (ref eq))
+               (param $v2 (ref eq))
+               (result    (ref eq))
 
-         (func $char->integer (param $c (ref eq)) (result (ref eq))
-               (local $i31   (ref i31))
-               (local $c/tag i32)
-               (local $cp    i32)
-               ;; Check if $c is an i31
-               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-               (local.set $c/tag (i31.get_u (local.get $i31)))
-               ;; Check character tag
-               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
-                           (i32.const ,char-tag))
-                   (then (call $raise-check-char (local.get $c))))
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v1)))
+                   (then (call $raise-expected-bytes (local.get $v1)) (unreachable)))
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v2)))
+                   (then (call $raise-expected-bytes (local.get $v2)) (unreachable)))
 
-               ;; Extract codepoint and return as fixnum
-               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-               (ref.i31 (i32.shl (local.get $cp) (i32.const 1))))
+               (call $bytes=?/checked
+                     (ref.cast (ref $Bytes) (local.get $v1))
+                     (ref.cast (ref $Bytes) (local.get $v2))))
 
-         (func $char->integer/i32 (param $c (ref eq)) (result i32)
-               (local $raw i32)
-               ;; Check that $c is an i31
-               (if (ref.test (ref i31) (local.get $c))
-                   (then
-                    ;; Extract the raw bits
-                    (local.set $raw (i31.get_u (ref.cast (ref i31) (local.get $c))))
-                    ;; Verify the tag is 0x0F
-                    (if (i32.eq (i32.and (local.get $raw) (i32.const ,char-mask)) (i32.const ,char-tag))
-                        (then
-                         ;; Return the codepoint: raw >> 8
-                         (return (i32.shr_u (local.get $raw) (i32.const ,char-shift))))
-                        (else
-                         (call $raise-check-char (local.get $c)))))
-                   (else
-                    (call $raise-check-char (local.get $c))))
-               (unreachable))
+         (func $bytes=?/checked
+               (param $b1 (ref $Bytes))
+               (param $b2 (ref $Bytes))
+               (result    (ref eq))
 
-         (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
-               (local $i31   (ref i31))
-               (local $c/tag i32)
-               (local $cp    i32)
-               ;; Type check
-               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-               (local.set $c/tag (i31.get_u (local.get $i31)))
-               ;; Decode codepoint
-               (if (i32.ne (i32.and (local.get $c/tag)
-                                    (i32.const ,char-mask))
-                           (i32.const ,char-tag))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-               ;; Delegate
-               (call $char-whitespace?/ucs (local.get $cp)))
-         
-         (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+               (local $a1   (ref $I8Array))
+               (local $a2   (ref $I8Array))
+               (local $len1 i32)
+               (local $len2 i32)
+               (local $i    i32)
+               (local $v1   i32)
+               (local $v2   i32)
+
+               ;; Fast path: same reference
+               (if (ref.eq (local.get $b1) (local.get $b2))
                    (then (return (global.get $true))))
-               ;; U+0009..000D: tab, newline, vtab, formfeed, return
-               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
-                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
-                             (then (return (global.get $true))))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
-                   (then (return (global.get $true))))
-               ;; U+2000–U+200A
-               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
-                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
-                             (then (return (global.get $true))))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
-                   (then (return (global.get $true))))
-               (global.get $false))
-
-         (func $raise-invalid-codepoint (unreachable))
-         
-         (func $integer->char
-               (param $k (ref eq))
-               (result   (ref eq))
-               
-               (local $k/i32 i32)
-               ;; Fail early if not a fixnum
-               (if (i32.eqz (ref.test (ref i31) (local.get $k)))
-                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
-               ;; Unpack fixnum (must have LSB = 0)
-               (local.set $k/i32 (i31.get_u (ref.cast (ref i31) (local.get $k))))
-               (if (i32.and (local.get $k/i32) (i32.const 1))
-                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
-               (local.set $k/i32 (i32.shr_u (local.get $k/i32) (i32.const 1)))
-               ;; Check allowed Unicode code point range:
-               ;;   [0, 0xD7FF] or [0xE000, 0x10FFFF]
-               (if (i32.or (i32.and (i32.ge_u (local.get $k/i32) (i32.const #xD800))
-                                    (i32.le_u (local.get $k/i32) (i32.const #xDFFF)))
-                           (i32.gt_u (local.get $k/i32) (i32.const #x10FFFF)))
-                   (then (call $raise-invalid-codepoint (local.get $k)) (unreachable)))
-               ;; TODO: Shared character object for 0 <= k < 256
-               ;; (if needed, insert lookup here)
-               ;; Pack as character: (k << (char-shift - 1)) | char-tag
-               (ref.i31 (i32.or (i32.shl (local.get $k/i32) 
-                                         (i32.const ,char-shift))
-                                (i32.const ,char-tag))))
-         
-         
-         ;;  - Boxed (for assignable variables)
-         (func $boxed (param $v (ref eq))  (result (ref eq)) 
-               (struct.new $Boxed (local.get $v)))
-         (func $unboxed (param $b (ref eq))  (result (ref eq))
-               (struct.get $Boxed $v
-                           (block $ok (result (ref $Boxed))
-                             (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
-                             (unreachable))))
-         (func $set-boxed!
-               ; todo: make this return no values
-               ;       problem: set-boxed! is currently wrapped by drop in
-               ;                the code generator. Add an rule that avoids
-               ;                the drop for set-boxed!.
-               (param $b (ref eq)) (param $v (ref eq))
-               (result (ref eq))
-               ; 1. Cast $b into a (ref $Box)
-               (local $B (ref $Boxed))                
-               (local.set $B
-                          (block $ok (result (ref $Boxed))
-                                 (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
-                                 (return (global.get $error))))
-               ; 2. Set the contents
-               (struct.set $Boxed $v (local.get $B) (local.get $v))
-               ; 3. Return `void`
-               (global.get $void))
-
-         ;;  - Boxes (for the Racket data type `box`)
-         (func $box (param $v (ref eq))  (result (ref eq)) 
-               (struct.new $Box (i32.const 0) (local.get $v)))
-         (func $unbox (param $b (ref eq))  (result (ref eq))
-               (struct.get $Box $v
-                           (block $ok (result (ref $Box))
-                             (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
-                             (return (global.get $error)))))
-         (func $set-box! ; todo: should this invalidate the hash code?
-               (param $b (ref eq)) (param $v (ref eq))
-               (result (ref eq))
-               ; 1. Cast $b into a (ref $Box)
-               (local $B (ref $Box))                
-               (local.set $B
-                          (block $ok (result (ref $Box))
-                                 (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
-                                 (return (global.get $error))))
-               ; 2. Set the contents
-               (struct.set $Box $v (local.get $B) (local.get $v))
-               ; 3. Return `void`
-               (global.get $void))
-
-         ;;;
-         ;;; - Pairs and lists
-         ;;;
-
-         (global $dummy-pair (ref $Pair)
-                 (struct.new $Pair
-                             (i32.const 0)           ;; hash = 0
-                             (global.get $false)      ;; a = null
-                             (global.get $false)))    ;; d = null
-         
-         ;; Pair related exceptions         
-         (func $raise-pair-expected (param $x (ref eq)) (unreachable))
-         (func $raise-bad-list-ref-index
-               (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
-               (unreachable))
-         (func $pair? (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         (func $null? (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         (func $cons (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
-               (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
-
-         (func $car (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
-                   (then (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))))
-                   (else (call $raise-pair-expected (local.get $v))
-                         (unreachable))))
-
-         (func $cdr (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
-                   (then (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))))
-                   (else (call $raise-pair-expected (local.get $v))
-                         (unreachable))))
-
-
-         (func $list? (param $v (ref eq)) (result (ref eq))
-               (block $exit (result (ref eq))
+               ;; Extract arrays and lengths
+               (local.set $a1   (struct.get $Bytes $bs (local.get $b1)))
+               (local.set $a2   (struct.get $Bytes $bs (local.get $b2)))
+               (local.set $len1 (array.len (local.get $a1)))
+               (local.set $len2 (array.len (local.get $a2)))
+               ;; Length mismatch → not equal
+               (if (i32.ne (local.get $len1) (local.get $len2))
+                   (then (return (global.get $false))))
+               ;; Compare bytes one-by-one
+               (local.set $i (i32.const 0))
+               (block $done
                       (loop $loop
-                            (if (ref.eq (local.get $v) (global.get $null))
-                                (then (return (global.get $true))))
-                            (if (ref.test (ref $Pair) (local.get $v))
-                                (then
-                                 (local.set $v
-                                            (struct.get $Pair $d
-                                                        (ref.cast (ref $Pair) (local.get $v))))
-                                 (br $loop))
-                                (else (return (global.get $false)))))
-                      ;; fallthrough: not a proper list
-                      (global.get $false)))
-
-         (func $length/i32 (param $xs (ref eq)) (result i32)
-               (local $i i32)
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $count
-                            ;; if we've reached null, return the count so far
-                            (if (ref.eq (local.get $xs) (global.get $null))
-                                (then (return (local.get $i))))
-                            ;; else, must be a pair: follow its cdr
-                            (if (ref.test (ref $Pair) (local.get $xs))
-                                (then (local.set $xs
-                                                 (struct.get $Pair $d
-                                                             (ref.cast (ref $Pair) (local.get $xs)))))
-                                ;; neither null nor pair: error
-                                (else (call $raise-pair-expected (local.get $xs))))
-                            ;; increment and repeat
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len1)))
+                            ;; Load byte i (as sign-extended i32)
+                            (local.set $v1 (i32.extend8_s (array.get_u $I8Array (local.get $a1) (local.get $i))))
+                            (local.set $v2 (i32.extend8_s (array.get_u $I8Array (local.get $a2) (local.get $i))))
+                            ;; Compare
+                            (if (i32.ne (local.get $v1) (local.get $v2))
+                                (then (return (global.get $false))))
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $count)))
-               ;; fall-through just returns the current count
-               (local.get $i))
-
-         (func $length (param $xs (ref eq)) (result (ref eq))
-               (local $i i32)
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $count
-                            (if (ref.eq (local.get $xs) (global.get $null))
-                                (then (br $done)))
-                            (if (ref.test (ref $Pair) (local.get $xs))
-                                (then (local.set $xs
-                                                 (struct.get $Pair $d
-                                                             (ref.cast (ref $Pair) (local.get $xs)))))
-                                (else (call $raise-pair-expected (local.get $xs))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $count)))
-               (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+                            (br $loop)))
+               ;; All bytes match
+               (global.get $true))
 
          
-         ;; list-ref/checked: takes a Pair and an unboxed i32 index.
-         ;; Works for improper lists as long as the index doesn't step past the last Pair.
-         (func $list-ref/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
-               (local $v    (ref $Pair))
-               (local $k    i32)
-               (local $next (ref eq))
-               (local $len  i32)
-
-               (local.set $v (local.get $xs))
-               (local.set $k (local.get $i))
-
-               (loop $loop
-                     ;; If we've reached the desired pair, return its car.
-                     (if (i32.eqz (local.get $k))
-                         (then (return (struct.get $Pair $a (local.get $v)))))
-                     ;; Otherwise, try to step to the next pair.
-                     (local.set $next (struct.get $Pair $d (local.get $v)))
-                     (if (ref.test (ref $Pair) (local.get $next))
-                         (then
-                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
-                          (local.set $k (i32.sub (local.get $k) (i32.const 1)))
-                          (br $loop))
-                         (else
-                          ;; Ran out of pairs before reaching index: compute length of the
-                          ;; pair-chain we've actually got and raise.
-                          ;; len = steps_so_far + 1 = i - k + 1
-                          (local.set $len
-                                     (i32.add (i32.sub (local.get $i) (local.get $k)) (i32.const 1)))
-                          (call $raise-bad-list-ref-index (local.get $xs) (local.get $i) (local.get $len))
-                          (unreachable))))
-               ;; Should not fall through.
-               (unreachable))
-
-
-         (func $list-ref (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $byte? (param $v (ref eq)) (result (ref eq))
+               (local $i i32)
+               (if (result (ref eq)) (ref.test (ref i31) (local.get $v))
+                   (then (local.set $i (i31.get_u (ref.cast (ref i31) (local.get $v))))
+                         (if (result (ref eq)) 
+                             ;; Check: is even (fixnum) and in range 0–255
+                             (i32.and 
+                              (i32.eqz (i32.and (local.get $i) (i32.const 1)))       ;; even tag bit = 0
+                              (i32.le_u (i32.shr_u (local.get $i) (i32.const 1))     ;; untagged value
+                                        (i32.const 255)))
+                             (then (global.get $true))
+                             (else (global.get $false))))
+                   (else (global.get $false))))
+         
+         (func $bytes-ref (param $a (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $b   (ref null $Bytes))
+               (local $arr (ref $I8Array))
                (local $idx i32)
-               ;; Decode & check fixnum index
+               (local $v   i32)
+               ;; 1. Check that $a is a byte string
+               (if (ref.test (ref $Bytes) (local.get $a))
+                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $a))))
+                   (else (call $raise-check-bytes (local.get $a))))
+               ;; 2. Decode and check that $i is a fixnum
                (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $idx
-                                    (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
-                             (then (call $raise-check-fixnum (local.get $i))))
-                         (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                   (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
+                             (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)) )))
                    (else (call $raise-check-fixnum (local.get $i))))
-               ;; Check & dispatch on Pair
-               (if (result (ref eq))
-                   (ref.test (ref $Pair) (local.get $xs))
-                   (then (call $list-ref/checked
-                               (ref.cast (ref $Pair) (local.get $xs))
-                               (local.get $idx)))
-                   (else (call $raise-pair-expected (local.get $xs))
-                         (unreachable))))
-
-         ;; list-tail/checked: xs is known to be a Pair and i > 0.
-         ;; Returns the result of cdr^i(xs). Works with improper lists:
-         ;; if the i-th cdr is a non-pair, it is returned. If we need to
-         ;; cdr again past a non-pair, raise pair-expected.
-         (func $list-tail/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
-               (local $v    (ref $Pair))
-               (local $k    i32)
-               (local $next (ref eq))
-
-               (local.set $v (local.get $xs))
-               (local.set $k (local.get $i))
-
-               (loop $loop
-                     ;; If no steps remain, return current tail (a Pair value is fine as (ref eq)).
-                     (if (i32.eqz (local.get $k))
-                         (then (return (local.get $v))))
-                     ;; Step once.
-                     (local.set $next (struct.get $Pair $d (local.get $v)))
-                     (local.set $k (i32.sub (local.get $k) (i32.const 1)))
-                     ;; If that single step completed all steps, return whatever we landed on
-                     ;; (pair or not).
-                     (if (i32.eqz (local.get $k))
-                         (then (return (local.get $next))))
-                     ;; Otherwise, we must continue stepping. Ensure next is a Pair.
-                     (if (ref.test (ref $Pair) (local.get $next))
-                         (then
-                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
-                          (br $loop))
-                         (else
-                          (call $raise-pair-expected (local.get $next)))))
+               ;; 3. Get byte array and bounds-check
+               (local.set $arr (struct.get $Bytes $bs (local.get $b)))
+               (if (i32.lt_u (local.get $idx) (array.len (local.get $arr)))
+                   (then
+                    ;; 4. Read and box byte
+                    (local.set $v (call $i8array-ref (local.get $arr) (local.get $idx)))
+                    (return (ref.i31 (i32.shl (local.get $v) (i32.const 1)))))
+                   (else
+                    (call $raise-bad-bytes-ref-index (local.get $a) (local.get $i))))
                (unreachable))
-         
-         (func $list-tail (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $pair (ref $Pair))
-               (local $idx  i32)
-               ;; Initialize non-defaultable local to a safe value.
-               (local.set $pair (global.get $dummy-pair))
-               ;; Decode and check fixnum index (i31 with lsb=0).
+
+         (func $bytes-set! (param $a (ref eq)) (param $i (ref eq)) (param $v (ref eq)) (result (ref eq))
+               (local $b   (ref null $Bytes))
+               (local $arr (ref $I8Array))
+               (local $idx i32)
+               (local $bv  i32)
+               ;; 1. Check that $a is a byte string
+               (if (ref.test (ref $Bytes) (local.get $a))
+                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $a))))
+                   (else (call $raise-check-bytes (local.get $a))))
+               ;; 2. Decode and check fixnum index $i
                (if (ref.test (ref i31) (local.get $i))
                    (then
                     (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                    (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
-                        (then (call $raise-check-fixnum (local.get $i))))
-                    (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               ;; (list-tail xs 0) => xs
-               (if (i32.eqz (local.get $idx))
-                   (then (return (local.get $xs))))
-               ;; For idx > 0, xs must be a Pair. Make dominance explicit with `unreachable`.
-               (if (ref.test (ref $Pair) (local.get $xs))
-                   (then (local.set $pair (ref.cast (ref $Pair) (local.get $xs))))
-                   (else
-                    (call $raise-pair-expected (local.get $xs))
-                    (unreachable)))
-
-               (call $list-tail/checked (local.get $pair) (local.get $idx)))
-
-
-
-         (func $append (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $xs) (global.get $null))
-                   (then (local.get $ys))  ; "the last list is used directly in the output"
-                   (else (if (result (ref eq))
-                             (ref.test (ref $Pair) (local.get $xs))
-                             (then
-                              (struct.new $Pair (i32.const 0)
-                                          (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
-                                          (call $append
-                                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))
-                                                (local.get $ys))))
-                             (else (call $raise-pair-expected (local.get $xs))
-                                   (unreachable))))))
-
-         (func $reverse (param $xs (ref eq)) (result (ref eq))
-               (local $acc (ref eq))
-               (local.set $acc (global.get $null))
-               (block $done
-                      (loop $rev
-                            (if (ref.eq (local.get $xs) (global.get $null))
-                                (then (return (local.get $acc))))
-                            (if (ref.test (ref $Pair) (local.get $xs))
-                                (then
-                                 (local.set $acc
-                                            (struct.new $Pair (i32.const 0)
-                                                        (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
-                                                        (local.get $acc)))
-                                 (local.set $xs
-                                            (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
-                                (else (call $raise-pair-expected (local.get $xs))))
-                            (br $rev)))
-               (unreachable))
-
-         ; The original `alt-reverse` is defined `racket/private/reverse.rkt` and checks
-         ; whether it is used in a module compiled in unsafe mode. If so, it skips
-         ; the check that the input is a list.
-         ; Here, for now, we simply have a copy of $reverse.
-         ; Note: `alt-reverse` is used in the expansion of `for/list` loops.
-         (func $alt-reverse (param $xs (ref eq)) (result (ref eq))
-               (local $acc (ref eq))
-               (local.set $acc (global.get $null))
-               (block $done
-                      (loop $rev
-                            (if (ref.eq (local.get $xs) (global.get $null))
-                                (then (return (local.get $acc))))
-                            (if (ref.test (ref $Pair) (local.get $xs))
-                                (then
-                                 (local.set $acc
-                                            (struct.new $Pair (i32.const 0)
-                                                        (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
-                                                        (local.get $acc)))
-                                 (local.set $xs
-                                            (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
-                                (else (call $raise-pair-expected (local.get $xs))))
-                            (br $rev)))
-               (unreachable))
-         
-         (func $memq (param $needle (ref eq)) (param $xs (ref eq)) (result (ref eq))
-               (loop $search
-                     ;; 1) end-of-list? => not found
-                     (if (ref.eq (local.get $xs) (global.get $null))
-                         (then (return (global.get $false))))
-                     ;; 2) must be a Pair
-                     (if (ref.test (ref $Pair) (local.get $xs))
-                         (then
-                          ;; compare needle to (car xs)
-                          (if (ref.eq (local.get $needle)
-                                      (struct.get $Pair $a
-                                                  (ref.cast (ref $Pair) (local.get $xs))))
-                              (then (return (local.get $xs)))    ;; found: return sublist
-                              ;; else: fall through to step 3
-                              ))
-                         (else (call $raise-pair-expected (local.get $xs))))
-                     ;; 3) advance to cdr
-                     (local.set $xs
-                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs))))
-                     (br $search))
-               (unreachable))
-
-
-         (func $make-list
-               (param $n-raw (ref eq))    ;; fixnum
-               (param $v     (ref eq))    ;; value to repeat
-               (result       (ref eq))
-
-               (local $n i32)
-
-               ;; Check and unwrap fixnum
-               (if (i32.or
-                    (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
-                    (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1))
-                            (i32.const 0)))
-                   (then (call $raise-argument-error (local.get $n-raw)))) ;; customize this if needed
-               (local.set $n (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
-               (call $make-list/checked (local.get $n) (local.get $v)))
-
-         (func $make-list/checked
-               (param $n i32)             ;; number of elements
-               (param $v (ref eq))        ;; value to repeat
-               (result (ref eq))          ;; proper list
-
-               (local $i i32)
-               (local $acc (ref eq))
-               
-               (local.set $i   (i32.const 0))
-               (local.set $acc (global.get $null))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
-                            (local.set $acc
-                                       (struct.new $Pair
-                                                   (i32.const 0)
-                                                   (local.get $v)
-                                                   (local.get $acc)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
-               (local.get $acc))
-
-
-
-         (func $raise-argument-error  (param $x (ref eq)) (unreachable))
-         (func $raise-expected-fixnum (param $x (ref eq)) (unreachable))
-         
-         (func $list-from-range
-               (param $start-raw (ref eq))   ;; inclusive, fixnum
-               (param $end-raw   (ref eq))   ;; exclusive, fixnum
-               (result (ref eq))
-
-               (local $start-i31 (ref i31))
-               (local $end-i31   (ref i31))
-               (local $start     i32)
-               (local $end       i32)
-
-               ;; Check and unwrap start
-               (if (i32.eqz (ref.test (ref i31) (local.get $start-raw)))
-                   (then (call $raise-expected-fixnum (local.get $start-raw))))
-               (local.set $start-i31 (ref.cast (ref i31) (local.get $start-raw)))
-               (local.set $start (i32.shr_u (i31.get_u (local.get $start-i31)) (i32.const 1)))
-               ;; Check and unwrap end
-               (if (i32.eqz (ref.test (ref i31) (local.get $end-raw)))
-                   (then (call $raise-expected-fixnum (local.get $end-raw))))
-               (local.set $end-i31 (ref.cast (ref i31) (local.get $end-raw)))
-               (local.set $end (i32.shr_u (i31.get_u (local.get $end-i31)) (i32.const 1)))
-               ;; Delegate
-               (call $list-from-range/checked (local.get $start) (local.get $end)))
-
-         (func $list-from-range/checked
-               (param $start i32)  ;; inclusive
-               (param $end   i32)  ;; exclusive
-               (result (ref eq))   ;; proper list of fixnums
-
-               (local $i   i32)
-               (local $lst (ref eq))  ;; initially null
-
-               ;; Start from end and build backwards
-               (local.set $i   (local.get $end))
-               (local.set $lst (global.get $null))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.le_s (local.get $i) (local.get $start)))
-                            ;; Decrement i
-                            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
-                            ;; Prepend (ref.i31 (i32.shl $i 1)) as fixnum
-                            (local.set $lst
-                                       (struct.new $Pair
-                                                   (i32.const 0)  ;; hash
-                                                   (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
-                                                   (local.get $lst)))
-                            (br $loop)))
-               (local.get $lst))
-
-
-
-
-         ;; - Vectors
-         ;; (type $Vector (sub $Heap
-         ;;                      (struct
-         ;;                        (field $hash (mut i32))
-         ;;                        (field (ref $Array))))))
-
-         ; The global $dummy-vector is needed when a non-nullable local variable needs
-         ; initialization to a default.
-         (global $dummy-array (ref $Array) (array.new $Array (global.get $false) (i32.const 0)))         
-         (global $dummy-vector (ref $Vector)
-                 (struct.new $Vector
-                             (i32.const 0)          ;; hash
-                             (global.get $dummy-array)))
-
-         ;; Vector related exceptions
-         (func $raise-check-vector (param $x (ref eq)) (unreachable))
-         (func $raise-check-fixnum (param $x (ref eq)) (unreachable))
-         (func $raise-bad-vector-ref-index
-               (param $v (ref $Vector)) (param $i i32) (param $len i32)
-               (unreachable))
-         (func $raise-bad-vector-copy-range
-               (param (ref $Vector)) (param i32) (param (ref $Vector)) (param i32) (param i32)
-               (unreachable))
-         (func $raise-bad-vector-take-index
-               (param (ref $Vector)) (param i32) (param i32)
-               (unreachable))
-
-
-         (func $raise-make-vector:bad-length (unreachable))
-         
-
-         (func $make-vector
-               (param $k-fx   (ref eq))  ;; fixnum
-               (param $val    (ref eq))  ;; optional, defaults to 0
-               (result        (ref eq))
-
-               (local $k i32)
-               (local $v (ref eq))  ;; possibly rewritten value
-               ;; --- Type check for fixnum ---
-               (if (i32.eqz (ref.test (ref i31) (local.get $k-fx)))
-                   (then (call $raise-make-vector:bad-length)))
-               ;; --- Decode fixnum to i32 ---
-               (local.set $k (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $k-fx)))
-                                        (i32.const 1)))
-               ;; --- Substitute default value if missing ---
-               (local.set $v (if (result (ref eq))
-                                 (ref.eq (local.get $val) (global.get $missing))
-                                 (then (global.get $zero))
-                                 (else (local.get $val))))
-               ;; --- Delegate to checked version ---
-               (call $make-vector/checked (local.get $k) (local.get $v)))
-
-         (func $make-vector/checked
-               (param $k   i32)        ;; number of elements
-               (param $val (ref eq))   ;; initial value
-               (result     (ref $Vector))
-
-               (local $arr (ref $Array))
-               ;; Create the array
-               (local.set $arr (array.new $Array (local.get $val) (local.get $k)))
-               ;; Construct and return the vector
-               (struct.new $Vector
-                           (i32.const 0)    ;; hash = 0
-                           (local.get $arr)))
-
-         
-         (func $vector-length (param $v (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (if (result (ref eq))
-                   (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
-                         (ref.i31
-                          (i32.shl
-                           (array.len
-                            (struct.get $Vector $arr (local.get $vec)))
-                           (i32.const 1))))
-                   (else (call $raise-check-vector (local.get $v))
-                         (unreachable))))
-
-
-         (func $vector-length/i32 (param $v (ref eq)) (result i32)
-               (local $vec (ref $Vector))
-               (if (result i32)
-                   (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
-                         (array.len (struct.get $Vector $arr (local.get $vec))))
-                   (else (call $raise-check-vector (local.get $v))
-                         (unreachable))))
-
-         (func $vector-length/checked/i32 (param $v (ref $Vector)) (result i32)
-               (array.len (struct.get $Vector $arr (local.get $v))))
-
-         (func $vector?/i32 (param $a (ref eq)) (result i32)
-               (ref.test (ref $Vector) (local.get $a)))
-
-         (func $vector? (param $a (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $Vector) (local.get $a))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         
-         (func $vector-ref/checked
-               (param $a (ref $Vector)) (param $i i32)
-               (result (ref eq))
-               (local $len i32)
-               ;; get length
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $a))))
-               ;; bounds check
-               (if (result (ref eq))
-                   (i32.lt_u (local.get $i) (local.get $len))
-                   (then (array.get $Array
-                                    (struct.get $Vector $arr (local.get $a))
-                                    (local.get $i)))
-                   (else (call $raise-bad-vector-ref-index
-                               (local.get $a) (local.get $i) (local.get $len))
-                         (unreachable))))
-
-         (func $vector-ref
-               (param $v (ref eq)) (param $i (ref eq))
-               (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $idx i32)
-               (local $len i32)
-               ;; Initialize vec to dummy to satisfy non-nullable default requirement
-               (local.set $vec (global.get $dummy-vector))
-               ;; Check that $v is a vector
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               ;; Check that $i is an i31 and decode fixnum
-               (if (ref.test (ref i31) (local.get $i))
-                   (then
-                    (local.set $idx
-                               (i31.get_u (ref.cast (ref i31) (local.get $i))))
                     (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
                         (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
                         (else (call $raise-check-fixnum (local.get $i)))))
                    (else (call $raise-check-fixnum (local.get $i))))
-               ;; Get array length
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               ;; Bounds check
-               (if (result (ref eq))
-                   (i32.lt_u (local.get $idx) (local.get $len))
-                   (then (return
-                          (array.get $Array
-                                     (struct.get $Vector $arr (local.get $vec))
-                                     (local.get $idx))))
-                   (else (call $raise-bad-vector-ref-index
-                               (local.get $vec) (local.get $idx) (local.get $len))
-                         (unreachable))))
+               ;; 3. Decode and check fixnum byte value $v
+               (if (ref.test (ref i31) (local.get $v))
+                   (then
+                    (local.set $bv (i31.get_u (ref.cast (ref i31) (local.get $v))))
+                    (if (i32.eqz (i32.and (local.get $bv) (i32.const 1)))
+                        (then
+                         (local.set $bv (i32.shr_u (local.get $bv) (i32.const 1)))
+                         (if (i32.gt_u (local.get $bv) (i32.const 255))
+                             (then (call $raise-check-byte (local.get $v)))))
+                        (else (call $raise-check-byte (local.get $v)))))
+                   (else (call $raise-check-byte (local.get $v))))
+               ;; 4. Bounds check and set byte
+               (local.set $arr (struct.get $Bytes $bs (local.get $b)))
+               (if (i32.lt_u (local.get $idx) (call $i8array-length (local.get $arr)))
+                   (then (call $i8array-set! (local.get $arr) (local.get $idx) (local.get $bv))
+                         (return (global.get $void)))
+                   (else (call $raise-bad-bytes-ref-index (local.get $a) (local.get $i))))
+               (unreachable))
 
+         (func $bytes-set!/checked (param $a (ref $Bytes)) (param $i i32) (param $b i32)
+               ; unsafe 
+               (local $arr (ref $I8Array))
+               (local.set $arr (struct.get $Bytes $bs (local.get $a)))
+               (call $i8array-set! (local.get $arr) (local.get $i) (local.get $b)))
 
-         (func $vector-set!/checked
-               (param $vec (ref $Vector)) (param $i i32) (param $val (ref eq))
-               (local $len i32)
-
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               (if (i32.lt_u (local.get $i) (local.get $len))
-                   (then (array.set $Array
-                                    (struct.get $Vector $arr (local.get $vec))
-                                    (local.get $i)
-                                    (local.get $val)))
-                   (else (call $raise-bad-vector-ref-index
-                               (local.get $vec) (local.get $i) (local.get $len))
-                         (unreachable))))
-
-         (func $vector-set!
-               (param $v (ref eq)) (param $i (ref eq)) (param $val (ref eq))
+         (func $subbytes
+               (param $b     (ref eq))   ;; input byte string
+               (param $start (ref eq))   ;; start index
+               (param $end   (ref eq))   ;; end index
                (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $idx i32)
-               (local $len i32)
-               ;; Initialize $vec with dummy to satisfy non-nullable restriction
-               (local.set $vec (global.get $dummy-vector))
-               ;; 1. Check $v is a vector
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               ;; 2. Check $i is a fixnum
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $idx
-                                    (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
-                             (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               ;; 3. Get length
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               ;; 4. Bounds check and set
-               (if (result (ref eq))
-                   (i32.lt_u (local.get $idx) (local.get $len))
-                   (then (array.set $Array
-                                    (struct.get $Vector $arr (local.get $vec))
-                                    (local.get $idx)
-                                    (local.get $val))
-                         (global.get $void))
-                   (else (call $raise-bad-vector-ref-index
-                               (local.get $vec) (local.get $idx) (local.get $len))
-                         (unreachable))))
+               
+               (local $bs   (ref null $Bytes))
+               (local $arr  (ref $I8Array))
+               (local $from i32)
+               (local $to   i32)
+               (local $len  i32)
+               ;; Check that $b is a byte string
+               (if (ref.test (ref $Bytes) (local.get $b))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $b))))
+                   (else (call $raise-check-bytes (local.get $b)) (unreachable)))
 
-         (func $vector-fill! (param $v (ref eq)) (param $x (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local.set $vec (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               (call $array-fill! (struct.get $Vector $arr (local.get $vec)) (local.get $x))
-               (global.get $void))
-
-         (func $vector-copy!
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+               ;; Decode and validate fixnum $start
+               (if (ref.test (ref i31) (local.get $start))
+                   (then
+                    (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                    (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                        (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                        (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $start)) (unreachable)))
+               ;; Decode and validate fixnum $end
+               (if (ref.test (ref i31) (local.get $end))
+                   (then
+                    (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                    (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                        (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                        (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $end)) (unreachable)))
+               ;; Bounds check: 0 <= from <= to <= len
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-bytes-range (local.get $b) (local.get $from) (local.get $to)) (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $b) (local.get $from) (local.get $to)) (unreachable)))
+               ;; Copy the subarray
+               (struct.new $Bytes
+                           (i32.const 0)
+                           (i32.const 0)
+                           (call $i8array-copy (local.get $arr) (local.get $from) (local.get $to))))
+         
+         (func $bytes-copy!
                (param $dest       (ref eq))
-               (param $dest-start (ref eq))   ;; fixnum
+               (param $dest-start (ref eq))
                (param $src        (ref eq))
-               (param $src-start  (ref eq))   ;; fixnum or $missing, default: 0)
-               (param $src-end    (ref eq))   ;; fixnum or $missing, default: (vector-length src)
-               (result            (ref eq))
-               
-               (local $d       (ref $Vector))
-               (local $s       (ref $Vector))
-               (local $ds      i32)
-               (local $ss      i32)
-               (local $se      i32)
-               (local $src-len i32)
+               (param $src-start  (ref eq))
+               (param $src-end    (ref eq))
+               (result (ref eq))
 
-               ;; --- Validate $dest ---
-               (if (i32.eqz (ref.test (ref $Vector) (local.get $dest)))
-                   (then (call $raise-check-vector (local.get $dest))))
-               ;; --- Validate $src ---
-               (if (i32.eqz (ref.test (ref $Vector) (local.get $src)))
-                   (then (call $raise-check-vector (local.get $src))))
-               ;; --- Validate $dest-start ---
-               (if (i32.eqz (ref.test (ref i31) (local.get $dest-start)))
-                   (then (call $raise-check-fixnum (local.get $dest-start))))
-               (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
-                            (i32.const 1))
-                   (then (call $raise-check-fixnum (local.get $dest-start))))
-               ;; --- Validate $src-start ---
-               (if (i32.eqz (ref.eq (local.get $src-start) (global.get $missing)))
-                   (then (if (i32.eqz (ref.test (ref i31) (local.get $src-start)))
-                             (then (call $raise-check-fixnum (local.get $src-start))))
-                         (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-start)))
-                                      (i32.const 1))
-                        (then (call $raise-check-fixnum (local.get $src-start))))))
-               ;; --- Validate $src-end ---
-               (if (i32.eqz (ref.eq (local.get $src-end) (global.get $missing)))
-                   (then (if (i32.eqz (ref.test (ref i31) (local.get $src-end)))
-                             (then (call $raise-check-fixnum (local.get $src-end))))
-                         (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-end)))
-                                      (i32.const 1))
-                             (then (call $raise-check-fixnum (local.get $src-end))))))
-               ;; --- Cast and decode after validation ---
-               (local.set $d  (ref.cast (ref $Vector) (local.get $dest)))
-               (local.set $s  (ref.cast (ref $Vector) (local.get $src)))
-               (local.set $ds (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
-                                         (i32.const 1)))
-               
-               (local.set $src-len (array.len (struct.get $Vector $arr (local.get $s))))
-
-               (if (ref.eq (local.get $src-start) (global.get $missing))
-                   (then (local.set $ss (i32.const 0)))
-                   (else (local.set $ss (i32.shr_u (i31.get_u (ref.cast (ref i31)
-                                                                        (local.get $src-start)))
-                                                   (i32.const 1)))))
-               
-               (if (ref.eq (local.get $src-end) (global.get $missing))
-                   (then (local.set $se (local.get $src-len)))
-                   (else (local.set $se (i32.shr_u (i31.get_u (ref.cast (ref i31)
-                                                                        (local.get $src-end)))
-                                                   (i32.const 1)))))
-               ;; --- Delegate to checked copy ---
-               (call $vector-copy!/checked (local.get $d) (local.get $ds)
-                     (local.get $s) (local.get $ss)
-                     (local.get $se)))
-
-         (func $vector-copy!/checked
-               (param $dest (ref $Vector)) (param $ds i32)
-               (param $src  (ref $Vector)) (param $ss i32) (param $se i32)               
+               (local $d    (ref null $Bytes))
+               (local $s    (ref null $Bytes))
+               (local $darr (ref $I8Array))
+               (local $sarr (ref $I8Array))
+               (local $di   i32)
+               (local $si   i32)
+               (local $ei   i32)
+               ;; check $dest
+               (if (ref.test (ref $Bytes) (local.get $dest))
+                   (then (local.set $d (ref.cast (ref $Bytes) (local.get $dest))))
+                   (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
+               ;; check $src
+               (if (ref.test (ref $Bytes) (local.get $src))
+                   (then (local.set $s (ref.cast (ref $Bytes) (local.get $src))))
+                   (else (call $raise-check-bytes (local.get $src)) (unreachable)))
+               ;; decode $dest-start
+               (if (ref.test (ref i31) (local.get $dest-start))
+                   (then (local.set $di (i31.get_u (ref.cast (ref i31) (local.get $dest-start))))
+                         (if (i32.eqz (i32.and (local.get $di) (i32.const 1)))
+                             (then (local.set $di (i32.shr_u (local.get $di) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable)))
+               ;; decode $src-start
+               (if (ref.test (ref i31) (local.get $src-start))
+                   (then (local.set $si (i31.get_u (ref.cast (ref i31) (local.get $src-start))))
+                         (if (i32.eqz (i32.and (local.get $si) (i32.const 1)))
+                             (then (local.set $si (i32.shr_u (local.get $si) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $src-start)) (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $src-start)) (unreachable)))
+               ;; decode $src-end
+               (if (ref.test (ref i31) (local.get $src-end))
+                   (then (local.set $ei (i31.get_u (ref.cast (ref i31) (local.get $src-end))))
+                         (if (i32.eqz (i32.and (local.get $ei) (i32.const 1)))
+                             (then (local.set $ei (i32.shr_u (local.get $ei) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $src-end)) (unreachable))))
+                   (else (call $raise-check-fixnum (local.get $src-end)) (unreachable)))
+               ;; get byte arrays
+               (local.set $darr (struct.get $Bytes $bs (local.get $d)))
+               (local.set $sarr (struct.get $Bytes $bs (local.get $s)))
+               ;; copy bytes
+               (drop (call $i8array-copy!/error
+                           (local.get $darr)
+                           (local.get $di)
+                           (local.get $sarr)
+                           (local.get $si)
+                           (local.get $ei)))
+               (global.get $void))
+         
+         (func $bytes-copy
+               (param $src (ref eq))
+               (result (ref eq))
+               (local $b  (ref null $Bytes))
+               (local $a  (ref $I8Array))
+               (local $a2 (ref $I8Array))
+               ;; Check that $src is a byte string
+               (if (ref.test (ref $Bytes) (local.get $src))
+                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $src))))
+                   (else (call $raise-check-bytes (local.get $src)) (unreachable)))
+               ;; Extract and copy the underlying I8Array
+               (local.set $a  (struct.get $Bytes $bs (local.get $b)))
+               (local.set $a2 (call $i8array-copy (local.get $a) (i32.const 0) (call $i8array-length (local.get $a))))
+               ;; Return a new mutable Bytes struct
+               (struct.new $Bytes
+                           (i32.const 0)          ;; hash
+                           (i32.const 0)          ;; immutable = false
+                           (local.get $a2)))
+         
+         (func $bytes-fill!
+               (param $dest (ref eq))
+               (param $b (ref eq))
                (result (ref eq))
                
-               (local $src-len i32)
-               (local $dest-len i32)
-               (local.set $src-len  (array.len (struct.get $Vector $arr (local.get $src))))
-               (local.set $dest-len (array.len (struct.get $Vector $arr (local.get $dest))))               
-               (if (i32.or
-                    (i32.or (i32.gt_u (local.get $ss) (local.get $src-len))
-                            (i32.gt_u (local.get $se) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $ds) (i32.sub (local.get $se) (local.get $ss))) (local.get $dest-len)))
-                   (then (call $raise-bad-vector-copy-range
-                               (local.get $dest) (local.get $ds)
-                               (local.get $src) (local.get $ss) (local.get $se))
-                         (unreachable)))
-
-               (call $array-copy!
-                     (struct.get $Vector $arr (local.get $dest)) (local.get $ds)
-                     (struct.get $Vector $arr (local.get $src))  (local.get $ss) (local.get $se))
+               (local $bs  (ref null $Bytes))
+               (local $arr (ref $I8Array))
+               (local $val i32)
+               ;; Check that dest is a byte string
+               (if (ref.test (ref $Bytes) (local.get $dest))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $dest))))
+                   (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
+               ;; Check that b is a valid fixnum byte (0–255)
+               (if (ref.test (ref i31) (local.get $b))
+                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
+                         (if (i32.ge_u (local.get $val) (i32.const 256))
+                             (then (call $raise-check-byte (local.get $b)) (unreachable))))
+                   (else (call $raise-check-byte (local.get $b)) (unreachable)))
+               ;; Fill the byte array
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (call $i8array-fill! (local.get $arr) (local.get $val))
+               ;; Return void
                (global.get $void))
 
-         (func $vector-empty? (param $v (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $len i32)
-               (if (result (ref eq))
-                   (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
-                         (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-                         (if (result (ref eq))
-                             (i32.eqz (local.get $len))
-                             (then (global.get $true))
-                             (else (global.get $false))))
-                   (else (call $raise-check-vector (local.get $v))
-                         (unreachable))))
-
-         (func $vector-append (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
-               (local $va (ref $Vector))
-               (local $vb (ref $Vector))
-               (local.set $va (global.get $dummy-vector))
-               (local.set $vb (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $a))
-                   (then (local.set $va (ref.cast (ref $Vector) (local.get $a))))
-                   (else (call $raise-check-vector (local.get $a))))
-               (if (ref.test (ref $Vector) (local.get $b))
-                   (then (local.set $vb (ref.cast (ref $Vector) (local.get $b))))
-                   (else (call $raise-check-vector (local.get $b))))
-
-               (struct.new $Vector (i32.const 0)
-                           (call $array-append
-                                 (struct.get $Vector $arr (local.get $va))
-                                 (struct.get $Vector $arr (local.get $vb)))))
-
-         (func $vector-take (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $ix i32)
-               (local $len i32)
-               (local.set $vec (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
-                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               (if (i32.gt_u (local.get $ix) (local.get $len))
-                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
-                         (unreachable)))
-               (struct.new $Vector (i32.const 0)
-                           (call $array-take (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
-
-         (func $vector-drop (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $ix i32)
-               (local $len i32)
-               (local.set $vec (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
-                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               (if (i32.gt_u (local.get $ix) (local.get $len))
-                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
-                         (unreachable)))
-               (struct.new $Vector (i32.const 0)
-                           (call $array-drop (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
-
-         (func $vector-drop-right (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $ix i32)
-               (local $len i32)
-               (local.set $vec (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
-                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
-               (if (i32.gt_u (local.get $ix) (local.get $len))
-                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
-                         (unreachable)))
-               (struct.new $Vector (i32.const 0)
-                           (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
-
-         (func $vector-split-at (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local $ix  i32)
-               (local $len i32)
-               (local $res (ref $Array))
-
-               ; 1. Check $v is a vector
-               (local.set $vec (global.get $dummy-vector))
-               (if (ref.test (ref $Vector) (local.get $v))
-                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
-                   (else (call $raise-check-vector (local.get $v))))
-               ; 2. Check $i is a fixnum 
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
-                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)))))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               ; 3. Range check
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))              
-               (if (i32.gt_u (local.get $ix) (local.get $len))
-                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
-                         (unreachable)))
-               ; 4. Split the vector
-               (local.set $res (call $array-split-at (struct.get $Vector $arr (local.get $vec)) (local.get $ix)))
-               (struct.new $Vector (i32.const 0) (local.get $res)))
-         
-
-         (func $raise-expected-vector (unreachable))
-         
-         (func $vector->list
-               (param $v (ref eq))
+         (func $bytes-append
+               (param $b1 (ref eq))
+               (param $b2 (ref eq))
                (result (ref eq))
-               (if (i32.eqz (ref.test (ref $Vector) (local.get $v)))
-                   (then (call $raise-expected-vector (local.get $v)) (unreachable)))
-               (call $vector->list/checked (ref.cast (ref $Vector) (local.get $v))))
 
-         (func $vector->list/checked
-               (param $v (ref $Vector))
-               (result   (ref eq))
+               (local $bs1 (ref null $Bytes))
+               (local $bs2 (ref null $Bytes))
+               (local $a1  (ref $I8Array))
+               (local $a2  (ref $I8Array))
+               (local $new (ref $I8Array))
+               ;; Check both arguments are byte strings
+               (if (ref.test (ref $Bytes) (local.get $b1))
+                   (then (local.set $bs1 (ref.cast (ref $Bytes) (local.get $b1))))
+                   (else (call $raise-check-bytes (local.get $b1)) (unreachable)))
+               (if (ref.test (ref $Bytes) (local.get $b2))
+                   (then (local.set $bs2 (ref.cast (ref $Bytes) (local.get $b2))))
+                   (else (call $raise-check-bytes (local.get $b2)) (unreachable)))
+               ;; Extract the underlying arrays
+               (local.set $a1 (struct.get $Bytes $bs (local.get $bs1)))
+               (local.set $a2 (struct.get $Bytes $bs (local.get $bs2)))
+               ;; Call append function on the I8Arrays
+               (local.set $new (call $i8array-append (local.get $a1) (local.get $a2)))
+               ;; Wrap in new mutable Bytes struct
+               (struct.new $Bytes
+                           (i32.const 0) ;; hash
+                           (i32.const 0) ;; mutable
+                           (local.get $new)))
 
-               (local $arr (ref $Array))
-               (local $i   i32)         ;; current index (starts from len - 1 and decrements)
-               (local $x   (ref eq))
-               (local $xs  (ref eq))
-               ;; Extract backing array and initialize
-               (local.set $arr (struct.get $Vector $arr (local.get $v)))
-               (local.set $i   (i32.sub (array.len (local.get $arr)) (i32.const 1)))
-               (local.set $xs  (global.get $null))
-               ;; Loop backwards
+         (func $bytes->list
+               (param $bstr (ref eq))
+               (result (ref eq))
+               (local $bs   (ref null $Bytes))
+               (local $arr  (ref $I8Array))
+               (local $len  i32)
+               (local $i    i32)
+               (local $val  i32)
+               (local $acc  (ref eq))
+               ;; Check input is a byte string
+               (if (ref.test (ref $Bytes) (local.get $bstr))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
+                   (else (call $raise-check-bytes (local.get $bstr)) (unreachable)))
+               ;; Extract underlying byte array
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               ;; Get its length
+               (local.set $len (call $i8array-length (local.get $arr)))
+               ;; Build list in reverse
+               (local.set $i (i32.sub (local.get $len) (i32.const 1)))
+               (local.set $acc (global.get $null))
                (block $done
                       (loop $loop
                             (br_if $done (i32.lt_s (local.get $i) (i32.const 0)))
-                            (local.set $x (array.get $Array (local.get $arr) (local.get $i)))
-                            (local.set $xs (struct.new $Pair
-                                                       (i32.const 0)
-                                                       (local.get $x)
-                                                       (local.get $xs)))
+                            (local.set $val (call $i8array-ref (local.get $arr) (local.get $i)))
+                            (local.set $acc
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (ref.i31 (i32.shl (local.get $val) (i32.const 1))) ;; encode fixnum
+                                                   (local.get $acc)))
                             (local.set $i (i32.sub (local.get $i) (i32.const 1)))
                             (br $loop)))
-               (return (local.get $xs)))
+               (local.get $acc))
+
+         (func $list->bytes
+               (param $xs (ref eq))
+               (result (ref eq))
+
+               (local $bs   (ref $Bytes))
+               (local $arr  (ref $I8Array))
+               (local $i    i32)
+               (local $len  i32)
+               (local $x    (ref eq))
+               (local $v    i32)
+               ;; Step 1: Compute length of list
+               (local.set $len (call $length/i32 (local.get $xs)))
+               ;; Step 2: Allocate mutable byte array of length $len
+               (local.set $arr (call $i8make-array (local.get $len) (i32.const 0)))
+               ;; Step 3: Allocate mutable Bytes struct
+               (local.set $bs  (struct.new $Bytes
+                                           (i32.const 0)
+                                           (i32.const 0)
+                                           (local.get $arr)))
+               ;; Step 4: Iterate through list and populate byte array
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (if (ref.test (ref $Pair) (local.get $xs))
+                                (then
+                                 (local.set $x (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs))))
+                                 (if (ref.test (ref i31) (local.get $x))
+                                     (then
+                                      (local.set $v (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                                      (if (i32.eqz (i32.and (local.get $v) (i32.const 1)))
+                                          (then
+                                           (local.set $v (i32.shr_u (local.get $v) (i32.const 1)))
+                                           (if (i32.lt_u (local.get $v) (i32.const 256))
+                                               (then
+                                                (call $i8array-set! (local.get $arr) (local.get $i) (local.get $v))
+                                                (local.set $i (i32.add (local.get $i) (i32.const 1))))
+                                               (else
+                                                (call $raise-byte-out-of-range (local.get $x))
+                                                (unreachable))))
+                                          (else
+                                           (call $raise-check-fixnum (local.get $x))
+                                           (unreachable))))
+                                     (else
+                                      (call $raise-check-fixnum (local.get $x))
+                                      (unreachable)))
+                                 (local.set $xs (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
+                                (else
+                                 (call $raise-pair-expected (local.get $xs))
+                                 (unreachable)))
+                            (br $loop)))
+               ;; Step 5: Return the byte string struct
+               (local.get $bs))
 
 
+         (func $raise-bytes->string/utf-8                  (unreachable))
+         (func $raise-bytes->string/utf-8:invalid-err-char (unreachable))
+         
+         (func $bytes->string/utf-8
+               (param $bstr      (ref eq))
+               (param $err-char  (ref eq))
+               (param $start-raw (ref eq))
+               (param $end-raw   (ref eq))
+               (result (ref $String))
+
+               (local $bs               (ref null $Bytes))
+               (local $start            i32)
+               (local $end              i32)
+               (local $use-err-char     i32)
+               (local $decoded-err-char i32)
+
+               ;; Cast input to $Bytes
+               (if (ref.test (ref $Bytes) (local.get $bstr))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
+                   (else (call $raise-bytes->string/utf-8)))
+               ;; Decode start
+               (if (ref.eq (local.get $start-raw) (global.get $false))
+                   (then (local.set $start (i32.const 0)))
+                   (else
+                    (if (ref.test (ref i31) (local.get $start-raw))
+                        (then (local.set $start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
+                        (else (call $raise-bytes->string/utf-8)))))
+               ;; Decode end
+               (if (ref.eq (local.get $end-raw) (global.get $false))
+                   (then (local.set $end (array.len (struct.get $Bytes $bs (local.get $bs)))))
+                   (else
+                    (if (ref.test (ref i31) (local.get $end-raw))
+                        (then (local.set $end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
+                        (else (call $raise-bytes->string/utf-8)))))
+               ;; Decode err-char
+               (if (ref.eq (local.get $err-char) (global.get $false))
+                   (then (local.set $use-err-char     (i32.const 0))  ; don't use err-char
+                         (local.set $decoded-err-char (i32.const 0))) 
+                   (else (if (ref.test (ref i31) (local.get $err-char))
+                             (then (local.set $use-err-char (i32.const 1))
+                                   (local.set $decoded-err-char
+                                              (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $err-char)))
+                                                         (i32.const 1))))
+                             (else (call $raise-bytes->string/utf-8:invalid-err-char)))))               
+               ;; Delegate to implementation
+               (call $bytes->string/utf-8:work
+                     (ref.as_non_null (local.get $bs))
+                     (local.get $use-err-char)
+                     (local.get $decoded-err-char)
+                     (local.get $start)
+                     (local.get $end)))
+
+         (func $bytes->string/utf-8/defaults
+               (param $bs (ref $Bytes))
+               (result (ref $String))
+               (call $bytes->string/utf-8
+                     (local.get $bs)
+                     (global.get $false)   ;; err-char = #f
+                     (global.get $false)   ;; start = #f → 0
+                     (global.get $false))) ;; end = #f → full length
+
+         (func $bytes->string/utf-8/checked
+               (param $bs (ref $Bytes))
+               (result (ref $String))
+               (local $end i32)
+               (local.set $end (array.len (struct.get $Bytes $bs (local.get $bs))))
+               (call $bytes->string/utf-8:work
+                     (local.get $bs)
+                     (i32.const 0)   ;; use-err-char? = false
+                     (i32.const 0)   ;; err-char = dummy
+                     (i32.const 0)   ;; start
+                     (local.get $end)))
+
+         (func $bytes->string/utf-8:work
+               (param $bs           (ref $Bytes))
+               (param $use-err-char i32)
+               (param $err-char     i32)
+               (param $start        i32)
+               (param $end          i32)
+               (result              (ref $String))
+
+               (local $buf  (ref $I32GrowableArray))
+               (local $arr  (ref $I8Array))
+               (local $i    i32)
+               (local $byte i32)
+               (local $need i32)
+               (local $acc  i32)
+               (local $b2   i32)
+               (local $cp   i32)
+
+               ;; Get underlying I8Array from Bytes
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               ;; Allocate buffer for codepoints
+               (local.set $buf (call $make-i32growable-array (i32.const 16)))
+               ;; Start decoding loop
+               (local.set $i (local.get $start))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $end)))
+                            (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                            ;; ASCII fast path
+                            (if (i32.lt_u (local.get $byte) (i32.const 128))
+                                (then
+                                 (call $i32growable-array-add! (local.get $buf) (local.get $byte))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop)))
+                            ;; Determine UTF-8 sequence size and initial accumulator
+                            (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
+                            (local.set $acc) (local.set $need)
+                            ;; Invalid lead byte
+                            (if (i32.lt_s (local.get $need) (i32.const 0))
+                                (then
+                                 (if (i32.eqz (local.get $use-err-char))
+                                     (then (call $raise-bytes->string/utf-8))
+                                     (else
+                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
+                                      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                      (br $loop)))))
+                            ;; Not enough bytes left
+                            (if (i32.gt_u (i32.add (local.get $i) (local.get $need)) (local.get $end))
+                                (then
+                                 (if (i32.eqz (local.get $use-err-char))
+                                     (then (call $raise-bytes->string/utf-8))
+                                     (else
+                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
+                                      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                      (br $loop)))))
+                            ;; Decode continuation bytes
+                            (local.set $cp (local.get $acc))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1))) ;; skip lead byte
+                            (block $cont-fail
+                                   (loop $cont-loop
+                                         (br_if $cont-fail (i32.eqz (local.get $need)))
+                                         (local.set $b2 (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                                         (if (i32.and
+                                              (i32.ge_u (local.get $b2) (i32.const 128))
+                                              (i32.lt_u (local.get $b2) (i32.const 192)))
+                                             (then
+                                              (local.set $cp
+                                                         (i32.or
+                                                          (i32.shl (local.get $cp) (i32.const 6))
+                                                          (i32.and (local.get $b2) (i32.const 0x3F))))
+                                              (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                              (local.set $need (i32.sub (local.get $need) (i32.const 1)))
+                                              (br $cont-loop)))))
+                            ;; If we didn't finish the sequence, it's invalid
+                            (if (i32.ne (local.get $need) (i32.const 0))
+                                (then
+                                 (if (i32.eqz (local.get $use-err-char))
+                                     (then (call $raise-bytes->string/utf-8))
+                                     (else
+                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
+                                      (br $loop)))))
+                            ;; Valid sequence
+                            (call $i32growable-array-add! (local.get $buf) (local.get $cp))
+                            (br $loop)))
+               ;; Convert buffer to immutable string
+               (call $i32growable-array->immutable-string (local.get $buf)))
+
+
+         (func $bytes->string/utf-8:determine-utf-8-sequence ; returns two i32s
+               ; This function determines how many continuation bytes are needed for
+               ; a given UTF-8 lead byte, and extracts the initial bits for the code point accumulator.
+               (param $lead i32)
+               (result i32  i32) ;; (need acc) or (-1 -1) if invalid
+
+               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xC0))
+                            (i32.lt_u (local.get $lead) (i32.const 0xE0)))
+                   (then (return (i32.const 1) (i32.and (local.get $lead) (i32.const 0x1F)))))
+               
+               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xE0))
+                            (i32.lt_u (local.get $lead) (i32.const 0xF0)))
+                   (then (return (i32.const 2) (i32.and (local.get $lead) (i32.const 0x0F)))))
+               
+               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xF0))
+                            (i32.lt_u (local.get $lead) (i32.const 0xF8)))
+                   (then (return (i32.const 3) (i32.and (local.get $lead) (i32.const 0x07)))))
+               
+               ;; Not a valid lead byte
+               (return (i32.const -1) (i32.const -1)))
 
          
-         ;;;
-         ;;; Strings
-         ;;;
+        ;;;
+        ;;; 4.4 Strings
+        ;;;
+
+        ;; https://docs.racket-lang.org/reference/strings.html
 
          (func $raise-check-string         (param $x (ref eq))                      (unreachable))
          (func $raise-bad-string-index     (param $x (ref eq)) (param $i (ref eq))  (unreachable))
@@ -5509,646 +5213,1414 @@
                                        (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))
                (unreachable))
          
+
          ;;;
-         ;;; Byte Strings
+         ;;; 4.6 Characters
          ;;;
 
-         (func $raise-byte-out-of-range   (param $x (ref eq)) (unreachable))
-         (func $raise-check-bytes         (param $x (ref eq)) (unreachable))
-         (func $raise-check-byte          (param $x (ref eq)) (unreachable))
-         (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq)) (unreachable))         
-         (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
+         ;; https://docs.racket-lang.org/reference/characters.html
          
-         (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
-               (local $len i32)
-               (local $val i32)
-               ;; Decode and check $k as fixnum
-               (if (ref.test (ref i31) (local.get $k))
-                   (then (local.set $len (i31.get_u (ref.cast (ref i31) (local.get $k))))
-                         (if (i32.eqz (i32.and (local.get $len) (i32.const 1)))
-                             (then (local.set $len (i32.shr_u (local.get $len) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $k))
-                                   (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $k))
-                         (unreachable)))
-               ;; Decode and check $b as fixnum in range [0, 255]
-               (if (ref.test (ref i31) (local.get $b))
-                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
-                         (if (i32.eqz (i32.and (local.get $val) (i32.const 1)))
-                             (then (local.set $val (i32.shr_u (local.get $val) (i32.const 1)))
-                                   (if (i32.gt_u (local.get $val) (i32.const 255))
-                                       (then (call $raise-byte-out-of-range (local.get $b))
-                                             (unreachable))))
-                             (else (call $raise-check-fixnum (local.get $b))
-                                   (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $b))
-                         (unreachable)))
-               ;; Construct mutable bytes object
-               (struct.new $Bytes
-                           (i32.const 0)  ;; hash
-                           (i32.const 0)  ;; immutable = false
-                           (call $i8make-array (local.get $len) (local.get $val))))
-                  
-         (func $bytes-length (param $a (ref eq)) (result (ref eq))
-               (local $bs  (ref null $Bytes))
-               (local $arr (ref $I8Array))
-               (local $len i32)
-               ;; Check that $a is a byte string
-               (if (ref.test (ref $Bytes) (local.get $a))
-                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $a))))
-                   (else (call $raise-check-bytes (local.get $a))
-                         (unreachable)))
-               ;; Get the backing array and compute length
-               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-               (local.set $len (call $i8array-length (local.get $arr)))
-               ;; Convert to fixnum and return
-               (ref.i31 (i32.shl (local.get $len) (i32.const 1))))
-
-         (func $bytes? (param $a (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Bytes) (local.get $a))
+         (func $raise-check-char (param $x (ref eq)) (unreachable))
+         
+         (func $char? (param $v (ref eq)) (result (ref eq))
+               (local $i31 (ref i31))
+               ; Is $v an immediate?
+               (if (i32.eqz (ref.test (ref i31) (local.get $v)))
+                   (then (return (global.get $false))))               
+               (local.set $i31 (ref.cast (ref i31) (local.get $v)))
+               ; Is it a character?
+               (if (result (ref eq))
+                   (i32.eq (i32.and (i31.get_s (local.get $i31)) (i32.const ,char-mask))
+                           (i32.const ,char-tag))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $raise-expected-bytes (unreachable))
 
-         (func $bytes=?
-               (param $v1 (ref eq))
-               (param $v2 (ref eq))
-               (result    (ref eq))
-
-               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v1)))
-                   (then (call $raise-expected-bytes (local.get $v1)) (unreachable)))
-               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v2)))
-                   (then (call $raise-expected-bytes (local.get $v2)) (unreachable)))
-
-               (call $bytes=?/checked
-                     (ref.cast (ref $Bytes) (local.get $v1))
-                     (ref.cast (ref $Bytes) (local.get $v2))))
-
-         (func $bytes=?/checked
-               (param $b1 (ref $Bytes))
-               (param $b2 (ref $Bytes))
-               (result    (ref eq))
-
-               (local $a1   (ref $I8Array))
-               (local $a2   (ref $I8Array))
-               (local $len1 i32)
-               (local $len2 i32)
-               (local $i    i32)
-               (local $v1   i32)
-               (local $v2   i32)
-
-               ;; Fast path: same reference
-               (if (ref.eq (local.get $b1) (local.get $b2))
-                   (then (return (global.get $true))))
-               ;; Extract arrays and lengths
-               (local.set $a1   (struct.get $Bytes $bs (local.get $b1)))
-               (local.set $a2   (struct.get $Bytes $bs (local.get $b2)))
-               (local.set $len1 (array.len (local.get $a1)))
-               (local.set $len2 (array.len (local.get $a2)))
-               ;; Length mismatch → not equal
-               (if (i32.ne (local.get $len1) (local.get $len2))
-                   (then (return (global.get $false))))
-               ;; Compare bytes one-by-one
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $len1)))
-                            ;; Load byte i (as sign-extended i32)
-                            (local.set $v1 (i32.extend8_s (array.get_u $I8Array (local.get $a1) (local.get $i))))
-                            (local.set $v2 (i32.extend8_s (array.get_u $I8Array (local.get $a2) (local.get $i))))
-                            ;; Compare
-                            (if (i32.ne (local.get $v1) (local.get $v2))
-                                (then (return (global.get $false))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
-               ;; All bytes match
-               (global.get $true))
-
-         
-         (func $byte? (param $v (ref eq)) (result (ref eq))
-               (local $i i32)
-               (if (result (ref eq)) (ref.test (ref i31) (local.get $v))
-                   (then (local.set $i (i31.get_u (ref.cast (ref i31) (local.get $v))))
-                         (if (result (ref eq)) 
-                             ;; Check: is even (fixnum) and in range 0–255
-                             (i32.and 
-                              (i32.eqz (i32.and (local.get $i) (i32.const 1)))       ;; even tag bit = 0
-                              (i32.le_u (i32.shr_u (local.get $i) (i32.const 1))     ;; untagged value
-                                        (i32.const 255)))
-                             (then (global.get $true))
-                             (else (global.get $false))))
+         (func $char=? (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $char? (local.get $c1))
+                           (global.get $true))
+                   (then (return_call $eq? (local.get $c1) (local.get $c2)))
                    (else (global.get $false))))
-         
-         (func $bytes-ref (param $a (ref eq)) (param $i (ref eq)) (result (ref eq))
-               (local $b   (ref null $Bytes))
-               (local $arr (ref $I8Array))
-               (local $idx i32)
-               (local $v   i32)
-               ;; 1. Check that $a is a byte string
-               (if (ref.test (ref $Bytes) (local.get $a))
-                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $a))))
-                   (else (call $raise-check-bytes (local.get $a))))
-               ;; 2. Decode and check that $i is a fixnum
-               (if (ref.test (ref i31) (local.get $i))
-                   (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                         (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
-                             (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $i)) )))
-                   (else (call $raise-check-fixnum (local.get $i))))
-               ;; 3. Get byte array and bounds-check
-               (local.set $arr (struct.get $Bytes $bs (local.get $b)))
-               (if (i32.lt_u (local.get $idx) (array.len (local.get $arr)))
+
+         (func $char->integer (param $c (ref eq)) (result (ref eq))
+               (local $i31   (ref i31))
+               (local $c/tag i32)
+               (local $cp    i32)
+               ;; Check if $c is an i31
+               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                   (then (call $raise-check-char (local.get $c))))
+               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+               (local.set $c/tag (i31.get_u (local.get $i31)))
+               ;; Check character tag
+               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                           (i32.const ,char-tag))
+                   (then (call $raise-check-char (local.get $c))))
+
+               ;; Extract codepoint and return as fixnum
+               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+               (ref.i31 (i32.shl (local.get $cp) (i32.const 1))))
+
+         (func $char->integer/i32 (param $c (ref eq)) (result i32)
+               (local $raw i32)
+               ;; Check that $c is an i31
+               (if (ref.test (ref i31) (local.get $c))
                    (then
-                    ;; 4. Read and box byte
-                    (local.set $v (call $i8array-ref (local.get $arr) (local.get $idx)))
-                    (return (ref.i31 (i32.shl (local.get $v) (i32.const 1)))))
+                    ;; Extract the raw bits
+                    (local.set $raw (i31.get_u (ref.cast (ref i31) (local.get $c))))
+                    ;; Verify the tag is 0x0F
+                    (if (i32.eq (i32.and (local.get $raw) (i32.const ,char-mask)) (i32.const ,char-tag))
+                        (then
+                         ;; Return the codepoint: raw >> 8
+                         (return (i32.shr_u (local.get $raw) (i32.const ,char-shift))))
+                        (else
+                         (call $raise-check-char (local.get $c)))))
                    (else
-                    (call $raise-bad-bytes-ref-index (local.get $a) (local.get $i))))
+                    (call $raise-check-char (local.get $c))))
                (unreachable))
 
-         (func $bytes-set! (param $a (ref eq)) (param $i (ref eq)) (param $v (ref eq)) (result (ref eq))
-               (local $b   (ref null $Bytes))
-               (local $arr (ref $I8Array))
+         (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
+               (local $i31   (ref i31))
+               (local $c/tag i32)
+               (local $cp    i32)
+               ;; Type check
+               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                   (then (call $raise-check-char (local.get $c))))
+               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+               (local.set $c/tag (i31.get_u (local.get $i31)))
+               ;; Decode codepoint
+               (if (i32.ne (i32.and (local.get $c/tag)
+                                    (i32.const ,char-mask))
+                           (i32.const ,char-tag))
+                   (then (call $raise-check-char (local.get $c))))
+               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+               ;; Delegate
+               (call $char-whitespace?/ucs (local.get $cp)))
+         
+         (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+                   (then (return (global.get $true))))
+               ;; U+0009..000D: tab, newline, vtab, formfeed, return
+               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
+                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
+                             (then (return (global.get $true))))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
+                   (then (return (global.get $true))))
+               ;; U+2000–U+200A
+               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
+                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
+                             (then (return (global.get $true))))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
+                   (then (return (global.get $true))))
+               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
+                   (then (return (global.get $true))))
+               (global.get $false))
+
+         (func $raise-invalid-codepoint (unreachable))
+         
+         (func $integer->char
+               (param $k (ref eq))
+               (result   (ref eq))
+               
+               (local $k/i32 i32)
+               ;; Fail early if not a fixnum
+               (if (i32.eqz (ref.test (ref i31) (local.get $k)))
+                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
+               ;; Unpack fixnum (must have LSB = 0)
+               (local.set $k/i32 (i31.get_u (ref.cast (ref i31) (local.get $k))))
+               (if (i32.and (local.get $k/i32) (i32.const 1))
+                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
+               (local.set $k/i32 (i32.shr_u (local.get $k/i32) (i32.const 1)))
+               ;; Check allowed Unicode code point range:
+               ;;   [0, 0xD7FF] or [0xE000, 0x10FFFF]
+               (if (i32.or (i32.and (i32.ge_u (local.get $k/i32) (i32.const #xD800))
+                                    (i32.le_u (local.get $k/i32) (i32.const #xDFFF)))
+                           (i32.gt_u (local.get $k/i32) (i32.const #x10FFFF)))
+                   (then (call $raise-invalid-codepoint (local.get $k)) (unreachable)))
+               ;; TODO: Shared character object for 0 <= k < 256
+               ;; (if needed, insert lookup here)
+               ;; Pack as character: (k << (char-shift - 1)) | char-tag
+               (ref.i31 (i32.or (i32.shl (local.get $k/i32) 
+                                         (i32.const ,char-shift))
+                                (i32.const ,char-tag))))
+
+
+         ;;;
+         ;;; 4.7 SYMBOLS
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/symbols.html
+
+         ;; (type $Symbol
+         ;;       (sub $Heap
+         ;;            (struct
+         ;;              (field $hash          (mut i32))         ;; cached hash                 
+         ;;              (field $name          (ref $String))     ;; symbol name (string)        
+         ;;              (field $property-list (mut (ref eq))))))  ;; user-defined properties    
+
+
+         (func $symbol? (param $x (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Symbol) (local.get $x))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
+         (func $symbol=?
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $symbol=?/i32 (param $a (ref eq)) (param $b (ref eq)) (result i32)
+               (ref.eq (local.get $a) (local.get $b)))
+
+
+         (func $raise-symbol->string:bad-argument (param $v (ref eq)) (unreachable))
+         (func $symbol->string
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $sym (ref $Symbol))
+               (local $name (ref $String))
+
+               ;; Check that input is a symbol
+               (if (ref.test (ref $Symbol) (local.get $v))
+                   (then
+                    ;; Cast to $Symbol
+                    (local.set $sym (ref.cast (ref $Symbol) (local.get $v)))
+                    ;; Extract name field
+                    (local.set $name (struct.get $Symbol $name (local.get $sym)))
+                    ;; Return a fresh mutable copy
+                    (return (call $string-copy (local.get $name))))
+                   (else
+                    ;; Not a symbol, raise error
+                    (call $raise-symbol->string:bad-argument (local.get $v))))
+               (unreachable))
+         
+
+         (func $symbol->immutable-string
+               (param  $v (ref eq))
+               (result (ref eq))
+
+               (local $sym  (ref $Symbol))
+               (local $name (ref $String))
+               (local $src  (ref $I32Array))
+               (local $dst  (ref $I32Array))
+               (local $len  i32)
+
+               (if (ref.test (ref $Symbol) (local.get $v))
+                   (then
+                    (local.set $sym  (ref.cast (ref $Symbol) (local.get $v)))
+                    (local.set $name (struct.get $Symbol $name (local.get $sym)))
+                    ;; Already immutable? Return as-is.
+                    (if (i32.eq (struct.get $String $immutable (local.get $name)) (i32.const 1))
+                        (then (return (local.get $name)))
+                        (else
+                         ;; Copy codepoints with i32array-copy [0, len)
+                         (local.set $src (struct.get $String $codepoints (local.get $name)))
+                         (local.set $len (array.len (local.get $src)))
+                         (local.set $dst (call $i32array-copy
+                                               (local.get $src) (i32.const 0) (local.get $len)))
+                         ;; Build fresh immutable string (hash=0, immutable=1)
+                         (return
+                          (struct.new $String (i32.const 0) (i32.const 1) (local.get $dst))))))
+                   (else
+                    (call $raise-symbol->string:bad-argument (local.get $v))
+                    (unreachable)))
+               (unreachable))
+
+
+         (func $raise-string->symbol:bad-argument (param $v (ref eq)) (unreachable))                  
+
+         (func $string->symbol
+               (param $v (ref eq))
+               (result   (ref $Symbol))
+               
+               (if (ref.test (ref $String) (local.get $v))
+                   (then (return
+                          (call $string->symbol/checked
+                                (ref.cast (ref $String) (local.get $v)))))
+                   (else (call $raise-string->symbol:bad-argument (local.get $v))))
+               (unreachable))
+
+         (func $string->symbol/checked
+               (param $str (ref $String))
+               (result     (ref $Symbol))
+
+               (local $existing (ref eq))
+               (local $sym      (ref $Symbol))
+               ;; Look up the string in the symbol table
+               (local.set $existing (call $symbol-table-find
+                                          (ref.as_non_null (global.get $the-symbol-table))
+                                          (local.get $str)))
+               ;; If found, return it (cast to (ref $Symbol))
+               (if (ref.test (ref $Symbol) (local.get $existing))
+                   (then (return (ref.cast (ref $Symbol) (local.get $existing)))))
+               ;; Otherwise, construct a new interned symbol
+               (local.set $sym (struct.new $Symbol
+                                           (i32.const 0)        ;; hash = 0 (not computed)
+                                           (local.get $str)     ;; name
+                                           (global.get $null))) ;; empty property list
+               ;; Insert it into the symbol table
+               (call $symbol-table-insert
+                     (ref.as_non_null (global.get $the-symbol-table))
+                     (local.get $str)
+                     (local.get $sym))
+               ;; Return the new symbol
+               (local.get $sym))
+
+         (func $raise-string->uninterned-symbol:bad-argument (param $v (ref eq)) (unreachable))
+
+         (func $string->uninterned-symbol
+               (param $v (ref eq))
+               (result (ref $Symbol))
+
+               (if (ref.test (ref $String) (local.get $v))
+                   (then (return
+                          (call $string->uninterned-symbol/checked
+                                (ref.cast (ref $String) (local.get $v)))))
+                   (else (call $raise-string->uninterned-symbol:bad-argument (local.get $v))))
+               (unreachable))
+
+         (func $string->uninterned-symbol/checked
+               (param $str (ref $String))
+               (result     (ref $Symbol))
+
+               (struct.new $Symbol
+                           (i32.const 0)            ;; hash = 0 (deferred)
+                           (local.get $str)         ;; name
+                           (global.get $null)))     ;; empty property list
+
+         (func $symbol-interned?
+               (param $sym (ref eq))
+               (result     (ref eq))
+
+               (local $str   (ref $String))
+               (local $found (ref eq))
+
+               ;; Check that it's a symbol
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-check-symbol (local.get $sym))))
+               (local.set $str   (struct.get $Symbol $name (ref.cast (ref $Symbol)   (local.get $sym))))
+               (local.set $found (call $symbol-table-find
+                                       (ref.as_non_null (global.get $the-symbol-table)) (local.get $str)))
+               ;; If found symbol == input symbol => interned
+               (if (result (ref eq)) (ref.eq (local.get $found) (local.get $sym))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $raise-check-symbol (param $x (ref eq)) (unreachable))
+         
+         (func $symbol<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+               (local $s1 (ref $String))
+               (local $s2 (ref $String))
+
+               ;; Type check: both must be symbols
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $a)))
+                   (then (call $raise-check-symbol (local.get $a))))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $b)))
+                   (then (call $raise-check-symbol (local.get $b))))
+               ;; Extract names
+               (local.set $s1 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $a))))
+               (local.set $s2 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $b))))
+               ;; Compare using string<?
+               (call $string<? (local.get $s1) (local.get $s2)))
+
+         (global $gensym-counter (mut i32) (i32.const 0))
+
+         (func $make-gensym-name
+               (param $prefix (ref $String))
+               (result        (ref $String))
+
+               (local $n     i32)
+               (local $n-str (ref $String))
+               ;; Get current counter
+               (local.set $n (global.get $gensym-counter))
+               ;; Increment counter
+               (global.set $gensym-counter (i32.add (local.get $n) (i32.const 1)))
+               ;; Convert number to fixnum
+               (local.set $n-str
+                          (call $number->string (ref.i31 (local.get $n)) ,(Imm 10)))
+               ;; Append prefix and number string
+               (ref.cast (ref $String)
+                         (call $string-append (local.get $prefix) (local.get $n-str))))
+
+         (func $gensym:0 (result (ref $Symbol))
+               ;; Use "g" as default prefix
+               (call $gensym:1 (ref.cast (ref $String) (global.get $string:g))))
+
+         (func $raise-gensym:bad-base (param $x (ref eq)) (unreachable))
+         
+         (func $gensym:1 (param $base (ref eq)) (result (ref $Symbol))
+               (local $prefix (ref null $String))
+               (local $name   (ref $String))
+
+               ;; Convert symbol -> string if needed
+               (if (ref.test (ref $Symbol) (local.get $base))
+                   (then
+                    (local.set $prefix
+                               (struct.get $Symbol $name
+                                           (ref.cast (ref $Symbol) (local.get $base)))))
+                   (else
+                    (if (ref.test (ref $String) (local.get $base))
+                        (then (local.set $prefix
+                                         (ref.cast (ref $String) (local.get $base))))
+                        (else (call $raise-gensym:bad-base (local.get $base))
+                              (unreachable)))))
+               ;; Generate name string
+               (local.set $name (call $make-gensym-name (ref.as_non_null (local.get $prefix))))
+               ;; Return new uninterned symbol
+               (struct.new $Symbol
+                           (i32.const 0)        ;; hash = 0
+                           (local.get $name)    ;; name
+                           (global.get $null))) ;; empty property list
+         
+         ;;;
+         ;;; 4.8 REGULAR EXPRESSIONS
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/regexp.html
+
+         ;; TODO - Implement regular expressions.
+
+         ;;;
+         ;;; 4.9 KEYWORDS
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/keywords.html
+         
+         ;; Keywords are interned using `the-keywords-table` which maps strings (without #:)
+         ;; to keywords.
+
+         (func $keyword?/i32
+               (param $v (ref eq))
+               (result i32)
+               (ref.test (ref $Keyword) (local.get $v)))
+
+         (func $keyword?
+               (param $v (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Keyword) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
+         (func $string->keyword
+               (param $str (ref eq))
+               (result (ref $Keyword))
+               ;; Type check: must be a string
+               (if (i32.eqz (ref.test (ref $String) (local.get $str)))
+                   (then (call $raise-argument-error:string-expected (local.get $str))
+                         (unreachable)))
+               ;; Cast and delegate
+               (call $string->keyword/checked (ref.cast (ref $String) (local.get $str))))
+                       
+               
+         (func $string->keyword/checked
+               (param $str (ref $String))
+               (result     (ref $Keyword))
+
+               (local $existing (ref eq))
+               (local $kw       (ref $Keyword))
+               ;; Look up in table
+               (local.set $existing (call $symbol-table-find 
+                                          (ref.as_non_null (global.get $the-keyword-table))
+                                          (local.get $str)))
+               (if (result (ref $Keyword))
+                   (ref.eq (local.get $existing) (global.get $missing))
+                   (then
+                    ;; Not found – allocate and intern new keyword
+                    (local.set $kw (struct.new $Keyword
+                                               (i32.const 0) ;; hash will be assigned later
+                                               (local.get $str)))
+                    (call $symbol-table-insert
+                          (ref.as_non_null (global.get $the-keyword-table))
+                          (local.get $str)
+                          (local.get $kw))
+                    (local.get $kw))
+                   (else
+                    (ref.cast (ref $Keyword)
+                              (local.get $existing)))))
+
+         (func $raise-argument-error:keyword-expected (unreachable))
+         
+         (func $keyword->string ; the result does not contain #:
+               (param $kw (ref eq))
+               (result    (ref $String))
+               ;; Type check: must be a keyword
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $kw)))
+                   (then (call $raise-argument-error:keyword-expected (local.get $kw))
+                         (unreachable)))
+               ;; Cast and delegate
+               (call $keyword->string/checked (ref.cast (ref $Keyword) (local.get $kw))))
+         
+         (func $keyword->string/checked
+               (param $kw       (ref $Keyword))
+               (result          (ref $String))
+               
+               (local $name     (ref $String))
+               (local.set $name (struct.get $Keyword $str (local.get $kw)))
+               
+               (ref.cast (ref $String) (call $string-copy (local.get $name))))
+
+         (func $raise-keyword-expected (unreachable))
+         
+         ;; keyword<? : (ref eq) (ref eq) -> (ref eq)  ;; returns #t/#f
+         (func $keyword<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+               (local $s1 (ref $String))
+               (local $s2 (ref $String))
+
+               ;; Type check: both must be keywords (fail early), then convert.
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $a)))
+                   (then (call $raise-keyword-expected (local.get $a))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $b)))
+                   (then (call $raise-keyword-expected (local.get $b))
+                         (unreachable)))
+
+               ;; Extract underlying strings (without "#:").
+               (local.set $s1
+                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $a))))
+               (local.set $s2
+                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $b))))
+
+               ;; Compare using string<? (code-point lexicographic; UTF-8 preserves order)
+               (call $string<? (local.get $s1) (local.get $s2)))
+
+         
+         ;;;
+         ;;; 4.10 Pairs and lists
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/pairs.html
+         
+         (global $dummy-pair (ref $Pair)
+                 (struct.new $Pair
+                             (i32.const 0)            ;; hash = 0
+                             (global.get $false)      ;; a = null
+                             (global.get $false)))    ;; d = null
+         
+         ;; Pair related exceptions         
+         (func $raise-pair-expected (param $x (ref eq)) (unreachable))
+         (func $raise-bad-list-ref-index
+               (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
+               (unreachable))
+         (func $pair? (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $null? (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $cons (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
+               (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
+
+         (func $car (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
+                   (then (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))))
+                   (else (call $raise-pair-expected (local.get $v))
+                         (unreachable))))
+
+         (func $cdr (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
+                   (then (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))))
+                   (else (call $raise-pair-expected (local.get $v))
+                         (unreachable))))
+
+
+         (func $list? (param $v (ref eq)) (result (ref eq))
+               (block $exit (result (ref eq))
+                      (loop $loop
+                            (if (ref.eq (local.get $v) (global.get $null))
+                                (then (return (global.get $true))))
+                            (if (ref.test (ref $Pair) (local.get $v))
+                                (then
+                                 (local.set $v
+                                            (struct.get $Pair $d
+                                                        (ref.cast (ref $Pair) (local.get $v))))
+                                 (br $loop))
+                                (else (return (global.get $false)))))
+                      ;; fallthrough: not a proper list
+                      (global.get $false)))
+
+         (func $length/i32 (param $xs (ref eq)) (result i32)
+               (local $i i32)
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $count
+                            ;; if we've reached null, return the count so far
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (return (local.get $i))))
+                            ;; else, must be a pair: follow its cdr
+                            (if (ref.test (ref $Pair) (local.get $xs))
+                                (then (local.set $xs
+                                                 (struct.get $Pair $d
+                                                             (ref.cast (ref $Pair) (local.get $xs)))))
+                                ;; neither null nor pair: error
+                                (else (call $raise-pair-expected (local.get $xs))))
+                            ;; increment and repeat
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $count)))
+               ;; fall-through just returns the current count
+               (local.get $i))
+
+         (func $length (param $xs (ref eq)) (result (ref eq))
+               (local $i i32)
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $count
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (br $done)))
+                            (if (ref.test (ref $Pair) (local.get $xs))
+                                (then (local.set $xs
+                                                 (struct.get $Pair $d
+                                                             (ref.cast (ref $Pair) (local.get $xs)))))
+                                (else (call $raise-pair-expected (local.get $xs))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $count)))
+               (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+
+         
+         ;; list-ref/checked: takes a Pair and an unboxed i32 index.
+         ;; Works for improper lists as long as the index doesn't step past the last Pair.
+         (func $list-ref/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
+               (local $v    (ref $Pair))
+               (local $k    i32)
+               (local $next (ref eq))
+               (local $len  i32)
+
+               (local.set $v (local.get $xs))
+               (local.set $k (local.get $i))
+
+               (loop $loop
+                     ;; If we've reached the desired pair, return its car.
+                     (if (i32.eqz (local.get $k))
+                         (then (return (struct.get $Pair $a (local.get $v)))))
+                     ;; Otherwise, try to step to the next pair.
+                     (local.set $next (struct.get $Pair $d (local.get $v)))
+                     (if (ref.test (ref $Pair) (local.get $next))
+                         (then
+                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
+                          (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+                          (br $loop))
+                         (else
+                          ;; Ran out of pairs before reaching index: compute length of the
+                          ;; pair-chain we've actually got and raise.
+                          ;; len = steps_so_far + 1 = i - k + 1
+                          (local.set $len
+                                     (i32.add (i32.sub (local.get $i) (local.get $k)) (i32.const 1)))
+                          (call $raise-bad-list-ref-index (local.get $xs) (local.get $i) (local.get $len))
+                          (unreachable))))
+               ;; Should not fall through.
+               (unreachable))
+
+
+         (func $list-ref (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $idx i32)
-               (local $bv  i32)
-               ;; 1. Check that $a is a byte string
-               (if (ref.test (ref $Bytes) (local.get $a))
-                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $a))))
-                   (else (call $raise-check-bytes (local.get $a))))
-               ;; 2. Decode and check fixnum index $i
+               ;; Decode & check fixnum index
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $idx
+                                    (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
+                             (then (call $raise-check-fixnum (local.get $i))))
+                         (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               ;; Check & dispatch on Pair
+               (if (result (ref eq))
+                   (ref.test (ref $Pair) (local.get $xs))
+                   (then (call $list-ref/checked
+                               (ref.cast (ref $Pair) (local.get $xs))
+                               (local.get $idx)))
+                   (else (call $raise-pair-expected (local.get $xs))
+                         (unreachable))))
+
+         ;; list-tail/checked: xs is known to be a Pair and i > 0.
+         ;; Returns the result of cdr^i(xs). Works with improper lists:
+         ;; if the i-th cdr is a non-pair, it is returned. If we need to
+         ;; cdr again past a non-pair, raise pair-expected.
+         (func $list-tail/checked (param $xs (ref $Pair)) (param $i i32) (result (ref eq))
+               (local $v    (ref $Pair))
+               (local $k    i32)
+               (local $next (ref eq))
+
+               (local.set $v (local.get $xs))
+               (local.set $k (local.get $i))
+
+               (loop $loop
+                     ;; If no steps remain, return current tail (a Pair value is fine as (ref eq)).
+                     (if (i32.eqz (local.get $k))
+                         (then (return (local.get $v))))
+                     ;; Step once.
+                     (local.set $next (struct.get $Pair $d (local.get $v)))
+                     (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+                     ;; If that single step completed all steps, return whatever we landed on
+                     ;; (pair or not).
+                     (if (i32.eqz (local.get $k))
+                         (then (return (local.get $next))))
+                     ;; Otherwise, we must continue stepping. Ensure next is a Pair.
+                     (if (ref.test (ref $Pair) (local.get $next))
+                         (then
+                          (local.set $v (ref.cast (ref $Pair) (local.get $next)))
+                          (br $loop))
+                         (else
+                          (call $raise-pair-expected (local.get $next)))))
+               (unreachable))
+         
+         (func $list-tail (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $pair (ref $Pair))
+               (local $idx  i32)
+               ;; Initialize non-defaultable local to a safe value.
+               (local.set $pair (global.get $dummy-pair))
+               ;; Decode and check fixnum index (i31 with lsb=0).
                (if (ref.test (ref i31) (local.get $i))
                    (then
                     (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                    (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
+                        (then (call $raise-check-fixnum (local.get $i))))
+                    (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               ;; (list-tail xs 0) => xs
+               (if (i32.eqz (local.get $idx))
+                   (then (return (local.get $xs))))
+               ;; For idx > 0, xs must be a Pair. Make dominance explicit with `unreachable`.
+               (if (ref.test (ref $Pair) (local.get $xs))
+                   (then (local.set $pair (ref.cast (ref $Pair) (local.get $xs))))
+                   (else
+                    (call $raise-pair-expected (local.get $xs))
+                    (unreachable)))
+
+               (call $list-tail/checked (local.get $pair) (local.get $idx)))
+
+
+
+         (func $append (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $xs) (global.get $null))
+                   (then (local.get $ys))  ; "the last list is used directly in the output"
+                   (else (if (result (ref eq))
+                             (ref.test (ref $Pair) (local.get $xs))
+                             (then
+                              (struct.new $Pair (i32.const 0)
+                                          (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
+                                          (call $append
+                                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))
+                                                (local.get $ys))))
+                             (else (call $raise-pair-expected (local.get $xs))
+                                   (unreachable))))))
+
+         (func $reverse (param $xs (ref eq)) (result (ref eq))
+               (local $acc (ref eq))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $rev
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (return (local.get $acc))))
+                            (if (ref.test (ref $Pair) (local.get $xs))
+                                (then
+                                 (local.set $acc
+                                            (struct.new $Pair (i32.const 0)
+                                                        (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
+                                                        (local.get $acc)))
+                                 (local.set $xs
+                                            (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
+                                (else (call $raise-pair-expected (local.get $xs))))
+                            (br $rev)))
+               (unreachable))
+
+         ; The original `alt-reverse` is defined `racket/private/reverse.rkt` and checks
+         ; whether it is used in a module compiled in unsafe mode. If so, it skips
+         ; the check that the input is a list.
+         ; Here, for now, we simply have a copy of $reverse.
+         ; Note: `alt-reverse` is used in the expansion of `for/list` loops.
+         (func $alt-reverse (param $xs (ref eq)) (result (ref eq))
+               (local $acc (ref eq))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $rev
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (return (local.get $acc))))
+                            (if (ref.test (ref $Pair) (local.get $xs))
+                                (then
+                                 (local.set $acc
+                                            (struct.new $Pair (i32.const 0)
+                                                        (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
+                                                        (local.get $acc)))
+                                 (local.set $xs
+                                            (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
+                                (else (call $raise-pair-expected (local.get $xs))))
+                            (br $rev)))
+               (unreachable))
+         
+         (func $memq (param $needle (ref eq)) (param $xs (ref eq)) (result (ref eq))
+               (loop $search
+                     ;; 1) end-of-list? => not found
+                     (if (ref.eq (local.get $xs) (global.get $null))
+                         (then (return (global.get $false))))
+                     ;; 2) must be a Pair
+                     (if (ref.test (ref $Pair) (local.get $xs))
+                         (then
+                          ;; compare needle to (car xs)
+                          (if (ref.eq (local.get $needle)
+                                      (struct.get $Pair $a
+                                                  (ref.cast (ref $Pair) (local.get $xs))))
+                              (then (return (local.get $xs)))    ;; found: return sublist
+                              ;; else: fall through to step 3
+                              ))
+                         (else (call $raise-pair-expected (local.get $xs))))
+                     ;; 3) advance to cdr
+                     (local.set $xs
+                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs))))
+                     (br $search))
+               (unreachable))
+
+
+         (func $make-list
+               (param $n-raw (ref eq))    ;; fixnum
+               (param $v     (ref eq))    ;; value to repeat
+               (result       (ref eq))
+
+               (local $n i32)
+
+               ;; Check and unwrap fixnum
+               (if (i32.or
+                    (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
+                    (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1))
+                            (i32.const 0)))
+                   (then (call $raise-argument-error (local.get $n-raw)))) ;; customize this if needed
+               (local.set $n (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
+               (call $make-list/checked (local.get $n) (local.get $v)))
+
+         (func $make-list/checked
+               (param $n i32)             ;; number of elements
+               (param $v (ref eq))        ;; value to repeat
+               (result (ref eq))          ;; proper list
+
+               (local $i i32)
+               (local $acc (ref eq))
+               
+               (local.set $i   (i32.const 0))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (local.set $acc
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (local.get $v)
+                                                   (local.get $acc)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (local.get $acc))
+
+
+
+         (func $raise-argument-error  (param $x (ref eq)) (unreachable))
+         (func $raise-expected-fixnum (param $x (ref eq)) (unreachable))
+         
+         (func $list-from-range
+               (param $start-raw (ref eq))   ;; inclusive, fixnum
+               (param $end-raw   (ref eq))   ;; exclusive, fixnum
+               (result (ref eq))
+
+               (local $start-i31 (ref i31))
+               (local $end-i31   (ref i31))
+               (local $start     i32)
+               (local $end       i32)
+
+               ;; Check and unwrap start
+               (if (i32.eqz (ref.test (ref i31) (local.get $start-raw)))
+                   (then (call $raise-expected-fixnum (local.get $start-raw))))
+               (local.set $start-i31 (ref.cast (ref i31) (local.get $start-raw)))
+               (local.set $start (i32.shr_u (i31.get_u (local.get $start-i31)) (i32.const 1)))
+               ;; Check and unwrap end
+               (if (i32.eqz (ref.test (ref i31) (local.get $end-raw)))
+                   (then (call $raise-expected-fixnum (local.get $end-raw))))
+               (local.set $end-i31 (ref.cast (ref i31) (local.get $end-raw)))
+               (local.set $end (i32.shr_u (i31.get_u (local.get $end-i31)) (i32.const 1)))
+               ;; Delegate
+               (call $list-from-range/checked (local.get $start) (local.get $end)))
+
+         (func $list-from-range/checked
+               (param $start i32)  ;; inclusive
+               (param $end   i32)  ;; exclusive
+               (result (ref eq))   ;; proper list of fixnums
+
+               (local $i   i32)
+               (local $lst (ref eq))  ;; initially null
+
+               ;; Start from end and build backwards
+               (local.set $i   (local.get $end))
+               (local.set $lst (global.get $null))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.le_s (local.get $i) (local.get $start)))
+                            ;; Decrement i
+                            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                            ;; Prepend (ref.i31 (i32.shl $i 1)) as fixnum
+                            (local.set $lst
+                                       (struct.new $Pair
+                                                   (i32.const 0)  ;; hash
+                                                   (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                                   (local.get $lst)))
+                            (br $loop)))
+               (local.get $lst))
+
+
+         ;; ;; (define map ...)
+         ;; (global $proc:map (ref $Procedure)
+         ;;         (struct.new $Procedure
+         ;;                     (i32.const 0)                         ;; hash
+         ;;                     (ref.cast (ref eq) (global.get $string:map)) ;; name (optional)
+         ;;                     (ref.i31 (i32.shl (i32.const -3) (i32.const 1))) ;; arity: at least 2
+         ;;                     (global.get $false)                   ;; realm
+         ;;                     (ref.func $map-prim)))                ;; invoke
+
+         ;;;
+         ;;; 4.11 Mutable Pairs and lists
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/mpairs.html
+
+         ;; TODO - Implement mutable pairs and lists.
+         
+         ;;;
+         ;;; 4.12 Vectors
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/vectors.html
+         
+         ;; (type $Vector (sub $Heap
+         ;;                      (struct
+         ;;                        (field $hash (mut i32))
+         ;;                        (field (ref $Array))))))
+
+         ; The global $dummy-vector is needed when a non-nullable local variable needs
+         ; initialization to a default.
+         (global $dummy-array (ref $Array) (array.new $Array (global.get $false) (i32.const 0)))         
+         (global $dummy-vector (ref $Vector)
+                 (struct.new $Vector
+                             (i32.const 0)          ;; hash
+                             (global.get $dummy-array)))
+
+         ;; Vector related exceptions
+         (func $raise-check-vector (param $x (ref eq)) (unreachable))
+         (func $raise-check-fixnum (param $x (ref eq)) (unreachable))
+         (func $raise-bad-vector-ref-index
+               (param $v (ref $Vector)) (param $i i32) (param $len i32)
+               (unreachable))
+         (func $raise-bad-vector-copy-range
+               (param (ref $Vector)) (param i32) (param (ref $Vector)) (param i32) (param i32)
+               (unreachable))
+         (func $raise-bad-vector-take-index
+               (param (ref $Vector)) (param i32) (param i32)
+               (unreachable))
+
+
+         (func $raise-make-vector:bad-length (unreachable))
+         
+
+         (func $make-vector
+               (param $k-fx   (ref eq))  ;; fixnum
+               (param $val    (ref eq))  ;; optional, defaults to 0
+               (result        (ref eq))
+
+               (local $k i32)
+               (local $v (ref eq))  ;; possibly rewritten value
+               ;; --- Type check for fixnum ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $k-fx)))
+                   (then (call $raise-make-vector:bad-length)))
+               ;; --- Decode fixnum to i32 ---
+               (local.set $k (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $k-fx)))
+                                        (i32.const 1)))
+               ;; --- Substitute default value if missing ---
+               (local.set $v (if (result (ref eq))
+                                 (ref.eq (local.get $val) (global.get $missing))
+                                 (then (global.get $zero))
+                                 (else (local.get $val))))
+               ;; --- Delegate to checked version ---
+               (call $make-vector/checked (local.get $k) (local.get $v)))
+
+         (func $make-vector/checked
+               (param $k   i32)        ;; number of elements
+               (param $val (ref eq))   ;; initial value
+               (result     (ref $Vector))
+
+               (local $arr (ref $Array))
+               ;; Create the array
+               (local.set $arr (array.new $Array (local.get $val) (local.get $k)))
+               ;; Construct and return the vector
+               (struct.new $Vector
+                           (i32.const 0)    ;; hash = 0
+                           (local.get $arr)))
+
+         
+         (func $vector-length (param $v (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (if (result (ref eq))
+                   (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                         (ref.i31
+                          (i32.shl
+                           (array.len
+                            (struct.get $Vector $arr (local.get $vec)))
+                           (i32.const 1))))
+                   (else (call $raise-check-vector (local.get $v))
+                         (unreachable))))
+
+
+         (func $vector-length/i32 (param $v (ref eq)) (result i32)
+               (local $vec (ref $Vector))
+               (if (result i32)
+                   (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                         (array.len (struct.get $Vector $arr (local.get $vec))))
+                   (else (call $raise-check-vector (local.get $v))
+                         (unreachable))))
+
+         (func $vector-length/checked/i32 (param $v (ref $Vector)) (result i32)
+               (array.len (struct.get $Vector $arr (local.get $v))))
+
+         (func $vector?/i32 (param $a (ref eq)) (result i32)
+               (ref.test (ref $Vector) (local.get $a)))
+
+         (func $vector? (param $a (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Vector) (local.get $a))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         
+         (func $vector-ref/checked
+               (param $a (ref $Vector)) (param $i i32)
+               (result (ref eq))
+               (local $len i32)
+               ;; get length
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $a))))
+               ;; bounds check
+               (if (result (ref eq))
+                   (i32.lt_u (local.get $i) (local.get $len))
+                   (then (array.get $Array
+                                    (struct.get $Vector $arr (local.get $a))
+                                    (local.get $i)))
+                   (else (call $raise-bad-vector-ref-index
+                               (local.get $a) (local.get $i) (local.get $len))
+                         (unreachable))))
+
+         (func $vector-ref
+               (param $v (ref eq)) (param $i (ref eq))
+               (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $idx i32)
+               (local $len i32)
+               ;; Initialize vec to dummy to satisfy non-nullable default requirement
+               (local.set $vec (global.get $dummy-vector))
+               ;; Check that $v is a vector
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               ;; Check that $i is an i31 and decode fixnum
+               (if (ref.test (ref i31) (local.get $i))
+                   (then
+                    (local.set $idx
+                               (i31.get_u (ref.cast (ref i31) (local.get $i))))
                     (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
                         (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
                         (else (call $raise-check-fixnum (local.get $i)))))
                    (else (call $raise-check-fixnum (local.get $i))))
-               ;; 3. Decode and check fixnum byte value $v
-               (if (ref.test (ref i31) (local.get $v))
-                   (then
-                    (local.set $bv (i31.get_u (ref.cast (ref i31) (local.get $v))))
-                    (if (i32.eqz (i32.and (local.get $bv) (i32.const 1)))
-                        (then
-                         (local.set $bv (i32.shr_u (local.get $bv) (i32.const 1)))
-                         (if (i32.gt_u (local.get $bv) (i32.const 255))
-                             (then (call $raise-check-byte (local.get $v)))))
-                        (else (call $raise-check-byte (local.get $v)))))
-                   (else (call $raise-check-byte (local.get $v))))
-               ;; 4. Bounds check and set byte
-               (local.set $arr (struct.get $Bytes $bs (local.get $b)))
-               (if (i32.lt_u (local.get $idx) (call $i8array-length (local.get $arr)))
-                   (then (call $i8array-set! (local.get $arr) (local.get $idx) (local.get $bv))
-                         (return (global.get $void)))
-                   (else (call $raise-bad-bytes-ref-index (local.get $a) (local.get $i))))
-               (unreachable))
+               ;; Get array length
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               ;; Bounds check
+               (if (result (ref eq))
+                   (i32.lt_u (local.get $idx) (local.get $len))
+                   (then (return
+                          (array.get $Array
+                                     (struct.get $Vector $arr (local.get $vec))
+                                     (local.get $idx))))
+                   (else (call $raise-bad-vector-ref-index
+                               (local.get $vec) (local.get $idx) (local.get $len))
+                         (unreachable))))
 
-         (func $bytes-set!/checked (param $a (ref $Bytes)) (param $i i32) (param $b i32)
-               ; unsafe 
-               (local $arr (ref $I8Array))
-               (local.set $arr (struct.get $Bytes $bs (local.get $a)))
-               (call $i8array-set! (local.get $arr) (local.get $i) (local.get $b)))
 
-         (func $subbytes
-               (param $b     (ref eq))   ;; input byte string
-               (param $start (ref eq))   ;; start index
-               (param $end   (ref eq))   ;; end index
+         (func $vector-set!/checked
+               (param $vec (ref $Vector)) (param $i i32) (param $val (ref eq))
+               (local $len i32)
+
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.lt_u (local.get $i) (local.get $len))
+                   (then (array.set $Array
+                                    (struct.get $Vector $arr (local.get $vec))
+                                    (local.get $i)
+                                    (local.get $val)))
+                   (else (call $raise-bad-vector-ref-index
+                               (local.get $vec) (local.get $i) (local.get $len))
+                         (unreachable))))
+
+         (func $vector-set!
+               (param $v (ref eq)) (param $i (ref eq)) (param $val (ref eq))
                (result (ref eq))
-               
-               (local $bs   (ref null $Bytes))
-               (local $arr  (ref $I8Array))
-               (local $from i32)
-               (local $to   i32)
-               (local $len  i32)
-               ;; Check that $b is a byte string
-               (if (ref.test (ref $Bytes) (local.get $b))
-                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $b))))
-                   (else (call $raise-check-bytes (local.get $b)) (unreachable)))
+               (local $vec (ref $Vector))
+               (local $idx i32)
+               (local $len i32)
+               ;; Initialize $vec with dummy to satisfy non-nullable restriction
+               (local.set $vec (global.get $dummy-vector))
+               ;; 1. Check $v is a vector
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               ;; 2. Check $i is a fixnum
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $idx
+                                    (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $idx) (i32.const 1)))
+                             (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               ;; 3. Get length
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               ;; 4. Bounds check and set
+               (if (result (ref eq))
+                   (i32.lt_u (local.get $idx) (local.get $len))
+                   (then (array.set $Array
+                                    (struct.get $Vector $arr (local.get $vec))
+                                    (local.get $idx)
+                                    (local.get $val))
+                         (global.get $void))
+                   (else (call $raise-bad-vector-ref-index
+                               (local.get $vec) (local.get $idx) (local.get $len))
+                         (unreachable))))
 
-               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-               (local.set $len (call $i8array-length (local.get $arr)))
-               ;; Decode and validate fixnum $start
-               (if (ref.test (ref i31) (local.get $start))
-                   (then
-                    (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
-                    (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
-                        (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
-                        (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $start)) (unreachable)))
-               ;; Decode and validate fixnum $end
-               (if (ref.test (ref i31) (local.get $end))
-                   (then
-                    (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
-                    (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
-                        (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
-                        (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $end)) (unreachable)))
-               ;; Bounds check: 0 <= from <= to <= len
-               (if (i32.gt_u (local.get $from) (local.get $to))
-                   (then (call $raise-bad-bytes-range (local.get $b) (local.get $from) (local.get $to)) (unreachable)))
-               (if (i32.gt_u (local.get $to) (local.get $len))
-                   (then (call $raise-bad-bytes-range (local.get $b) (local.get $from) (local.get $to)) (unreachable)))
-               ;; Copy the subarray
-               (struct.new $Bytes
-                           (i32.const 0)
-                           (i32.const 0)
-                           (call $i8array-copy (local.get $arr) (local.get $from) (local.get $to))))
-         
-         (func $bytes-copy!
+         (func $vector-fill! (param $v (ref eq)) (param $x (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (call $array-fill! (struct.get $Vector $arr (local.get $vec)) (local.get $x))
+               (global.get $void))
+
+         (func $vector-copy!
                (param $dest       (ref eq))
-               (param $dest-start (ref eq))
+               (param $dest-start (ref eq))   ;; fixnum
                (param $src        (ref eq))
-               (param $src-start  (ref eq))
-               (param $src-end    (ref eq))
-               (result (ref eq))
+               (param $src-start  (ref eq))   ;; fixnum or $missing, default: 0)
+               (param $src-end    (ref eq))   ;; fixnum or $missing, default: (vector-length src)
+               (result            (ref eq))
+               
+               (local $d       (ref $Vector))
+               (local $s       (ref $Vector))
+               (local $ds      i32)
+               (local $ss      i32)
+               (local $se      i32)
+               (local $src-len i32)
 
-               (local $d    (ref null $Bytes))
-               (local $s    (ref null $Bytes))
-               (local $darr (ref $I8Array))
-               (local $sarr (ref $I8Array))
-               (local $di   i32)
-               (local $si   i32)
-               (local $ei   i32)
-               ;; check $dest
-               (if (ref.test (ref $Bytes) (local.get $dest))
-                   (then (local.set $d (ref.cast (ref $Bytes) (local.get $dest))))
-                   (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
-               ;; check $src
-               (if (ref.test (ref $Bytes) (local.get $src))
-                   (then (local.set $s (ref.cast (ref $Bytes) (local.get $src))))
-                   (else (call $raise-check-bytes (local.get $src)) (unreachable)))
-               ;; decode $dest-start
-               (if (ref.test (ref i31) (local.get $dest-start))
-                   (then (local.set $di (i31.get_u (ref.cast (ref i31) (local.get $dest-start))))
-                         (if (i32.eqz (i32.and (local.get $di) (i32.const 1)))
-                             (then (local.set $di (i32.shr_u (local.get $di) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable)))
-               ;; decode $src-start
-               (if (ref.test (ref i31) (local.get $src-start))
-                   (then (local.set $si (i31.get_u (ref.cast (ref i31) (local.get $src-start))))
-                         (if (i32.eqz (i32.and (local.get $si) (i32.const 1)))
-                             (then (local.set $si (i32.shr_u (local.get $si) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $src-start)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $src-start)) (unreachable)))
-               ;; decode $src-end
-               (if (ref.test (ref i31) (local.get $src-end))
-                   (then (local.set $ei (i31.get_u (ref.cast (ref i31) (local.get $src-end))))
-                         (if (i32.eqz (i32.and (local.get $ei) (i32.const 1)))
-                             (then (local.set $ei (i32.shr_u (local.get $ei) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $src-end)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $src-end)) (unreachable)))
-               ;; get byte arrays
-               (local.set $darr (struct.get $Bytes $bs (local.get $d)))
-               (local.set $sarr (struct.get $Bytes $bs (local.get $s)))
-               ;; copy bytes
-               (drop (call $i8array-copy!/error
-                           (local.get $darr)
-                           (local.get $di)
-                           (local.get $sarr)
-                           (local.get $si)
-                           (local.get $ei)))
-               (global.get $void))
-         
-         (func $bytes-copy
-               (param $src (ref eq))
-               (result (ref eq))
-               (local $b  (ref null $Bytes))
-               (local $a  (ref $I8Array))
-               (local $a2 (ref $I8Array))
-               ;; Check that $src is a byte string
-               (if (ref.test (ref $Bytes) (local.get $src))
-                   (then (local.set $b (ref.cast (ref $Bytes) (local.get $src))))
-                   (else (call $raise-check-bytes (local.get $src)) (unreachable)))
-               ;; Extract and copy the underlying I8Array
-               (local.set $a  (struct.get $Bytes $bs (local.get $b)))
-               (local.set $a2 (call $i8array-copy (local.get $a) (i32.const 0) (call $i8array-length (local.get $a))))
-               ;; Return a new mutable Bytes struct
-               (struct.new $Bytes
-                           (i32.const 0)          ;; hash
-                           (i32.const 0)          ;; immutable = false
-                           (local.get $a2)))
-         
-         (func $bytes-fill!
-               (param $dest (ref eq))
-               (param $b (ref eq))
+               ;; --- Validate $dest ---
+               (if (i32.eqz (ref.test (ref $Vector) (local.get $dest)))
+                   (then (call $raise-check-vector (local.get $dest))))
+               ;; --- Validate $src ---
+               (if (i32.eqz (ref.test (ref $Vector) (local.get $src)))
+                   (then (call $raise-check-vector (local.get $src))))
+               ;; --- Validate $dest-start ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $dest-start)))
+                   (then (call $raise-check-fixnum (local.get $dest-start))))
+               (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
+                            (i32.const 1))
+                   (then (call $raise-check-fixnum (local.get $dest-start))))
+               ;; --- Validate $src-start ---
+               (if (i32.eqz (ref.eq (local.get $src-start) (global.get $missing)))
+                   (then (if (i32.eqz (ref.test (ref i31) (local.get $src-start)))
+                             (then (call $raise-check-fixnum (local.get $src-start))))
+                         (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-start)))
+                                      (i32.const 1))
+                        (then (call $raise-check-fixnum (local.get $src-start))))))
+               ;; --- Validate $src-end ---
+               (if (i32.eqz (ref.eq (local.get $src-end) (global.get $missing)))
+                   (then (if (i32.eqz (ref.test (ref i31) (local.get $src-end)))
+                             (then (call $raise-check-fixnum (local.get $src-end))))
+                         (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-end)))
+                                      (i32.const 1))
+                             (then (call $raise-check-fixnum (local.get $src-end))))))
+               ;; --- Cast and decode after validation ---
+               (local.set $d  (ref.cast (ref $Vector) (local.get $dest)))
+               (local.set $s  (ref.cast (ref $Vector) (local.get $src)))
+               (local.set $ds (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
+                                         (i32.const 1)))
+               
+               (local.set $src-len (array.len (struct.get $Vector $arr (local.get $s))))
+
+               (if (ref.eq (local.get $src-start) (global.get $missing))
+                   (then (local.set $ss (i32.const 0)))
+                   (else (local.set $ss (i32.shr_u (i31.get_u (ref.cast (ref i31)
+                                                                        (local.get $src-start)))
+                                                   (i32.const 1)))))
+               
+               (if (ref.eq (local.get $src-end) (global.get $missing))
+                   (then (local.set $se (local.get $src-len)))
+                   (else (local.set $se (i32.shr_u (i31.get_u (ref.cast (ref i31)
+                                                                        (local.get $src-end)))
+                                                   (i32.const 1)))))
+               ;; --- Delegate to checked copy ---
+               (call $vector-copy!/checked (local.get $d) (local.get $ds)
+                     (local.get $s) (local.get $ss)
+                     (local.get $se)))
+
+         (func $vector-copy!/checked
+               (param $dest (ref $Vector)) (param $ds i32)
+               (param $src  (ref $Vector)) (param $ss i32) (param $se i32)               
                (result (ref eq))
                
-               (local $bs  (ref null $Bytes))
-               (local $arr (ref $I8Array))
-               (local $val i32)
-               ;; Check that dest is a byte string
-               (if (ref.test (ref $Bytes) (local.get $dest))
-                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $dest))))
-                   (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
-               ;; Check that b is a valid fixnum byte (0–255)
-               (if (ref.test (ref i31) (local.get $b))
-                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
-                         (if (i32.ge_u (local.get $val) (i32.const 256))
-                             (then (call $raise-check-byte (local.get $b)) (unreachable))))
-                   (else (call $raise-check-byte (local.get $b)) (unreachable)))
-               ;; Fill the byte array
-               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-               (call $i8array-fill! (local.get $arr) (local.get $val))
-               ;; Return void
+               (local $src-len i32)
+               (local $dest-len i32)
+               (local.set $src-len  (array.len (struct.get $Vector $arr (local.get $src))))
+               (local.set $dest-len (array.len (struct.get $Vector $arr (local.get $dest))))               
+               (if (i32.or
+                    (i32.or (i32.gt_u (local.get $ss) (local.get $src-len))
+                            (i32.gt_u (local.get $se) (local.get $src-len)))
+                    (i32.gt_u (i32.add (local.get $ds) (i32.sub (local.get $se) (local.get $ss))) (local.get $dest-len)))
+                   (then (call $raise-bad-vector-copy-range
+                               (local.get $dest) (local.get $ds)
+                               (local.get $src) (local.get $ss) (local.get $se))
+                         (unreachable)))
+
+               (call $array-copy!
+                     (struct.get $Vector $arr (local.get $dest)) (local.get $ds)
+                     (struct.get $Vector $arr (local.get $src))  (local.get $ss) (local.get $se))
                (global.get $void))
 
-         (func $bytes-append
-               (param $b1 (ref eq))
-               (param $b2 (ref eq))
-               (result (ref eq))
+         (func $vector-empty? (param $v (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $len i32)
+               (if (result (ref eq))
+                   (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                         (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+                         (if (result (ref eq))
+                             (i32.eqz (local.get $len))
+                             (then (global.get $true))
+                             (else (global.get $false))))
+                   (else (call $raise-check-vector (local.get $v))
+                         (unreachable))))
 
-               (local $bs1 (ref null $Bytes))
-               (local $bs2 (ref null $Bytes))
-               (local $a1  (ref $I8Array))
-               (local $a2  (ref $I8Array))
-               (local $new (ref $I8Array))
-               ;; Check both arguments are byte strings
-               (if (ref.test (ref $Bytes) (local.get $b1))
-                   (then (local.set $bs1 (ref.cast (ref $Bytes) (local.get $b1))))
-                   (else (call $raise-check-bytes (local.get $b1)) (unreachable)))
-               (if (ref.test (ref $Bytes) (local.get $b2))
-                   (then (local.set $bs2 (ref.cast (ref $Bytes) (local.get $b2))))
-                   (else (call $raise-check-bytes (local.get $b2)) (unreachable)))
-               ;; Extract the underlying arrays
-               (local.set $a1 (struct.get $Bytes $bs (local.get $bs1)))
-               (local.set $a2 (struct.get $Bytes $bs (local.get $bs2)))
-               ;; Call append function on the I8Arrays
-               (local.set $new (call $i8array-append (local.get $a1) (local.get $a2)))
-               ;; Wrap in new mutable Bytes struct
-               (struct.new $Bytes
-                           (i32.const 0) ;; hash
-                           (i32.const 0) ;; mutable
-                           (local.get $new)))
+         (func $vector-append (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+               (local $va (ref $Vector))
+               (local $vb (ref $Vector))
+               (local.set $va (global.get $dummy-vector))
+               (local.set $vb (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $a))
+                   (then (local.set $va (ref.cast (ref $Vector) (local.get $a))))
+                   (else (call $raise-check-vector (local.get $a))))
+               (if (ref.test (ref $Vector) (local.get $b))
+                   (then (local.set $vb (ref.cast (ref $Vector) (local.get $b))))
+                   (else (call $raise-check-vector (local.get $b))))
 
-         (func $bytes->list
-               (param $bstr (ref eq))
+               (struct.new $Vector (i32.const 0)
+                           (call $array-append
+                                 (struct.get $Vector $arr (local.get $va))
+                                 (struct.get $Vector $arr (local.get $vb)))))
+
+         (func $vector-take (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $ix i32)
+               (local $len i32)
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
+                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.gt_u (local.get $ix) (local.get $len))
+                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
+                         (unreachable)))
+               (struct.new $Vector (i32.const 0)
+                           (call $array-take (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
+
+         (func $vector-drop (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $ix i32)
+               (local $len i32)
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
+                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.gt_u (local.get $ix) (local.get $len))
+                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
+                         (unreachable)))
+               (struct.new $Vector (i32.const 0)
+                           (call $array-drop (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
+
+         (func $vector-drop-right (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $ix i32)
+               (local $len i32)
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
+                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.gt_u (local.get $ix) (local.get $len))
+                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
+                         (unreachable)))
+               (struct.new $Vector (i32.const 0)
+                           (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
+
+         (func $vector-split-at (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+               (local $vec (ref $Vector))
+               (local $ix  i32)
+               (local $len i32)
+               (local $res (ref $Array))
+
+               ; 1. Check $v is a vector
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               ; 2. Check $i is a fixnum 
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
+                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               ; 3. Range check
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))              
+               (if (i32.gt_u (local.get $ix) (local.get $len))
+                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
+                         (unreachable)))
+               ; 4. Split the vector
+               (local.set $res (call $array-split-at (struct.get $Vector $arr (local.get $vec)) (local.get $ix)))
+               (struct.new $Vector (i32.const 0) (local.get $res)))
+         
+
+         (func $raise-expected-vector (unreachable))
+         
+         (func $vector->list
+               (param $v (ref eq))
                (result (ref eq))
-               (local $bs   (ref null $Bytes))
-               (local $arr  (ref $I8Array))
-               (local $len  i32)
-               (local $i    i32)
-               (local $val  i32)
-               (local $acc  (ref eq))
-               ;; Check input is a byte string
-               (if (ref.test (ref $Bytes) (local.get $bstr))
-                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
-                   (else (call $raise-check-bytes (local.get $bstr)) (unreachable)))
-               ;; Extract underlying byte array
-               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-               ;; Get its length
-               (local.set $len (call $i8array-length (local.get $arr)))
-               ;; Build list in reverse
-               (local.set $i (i32.sub (local.get $len) (i32.const 1)))
-               (local.set $acc (global.get $null))
+               (if (i32.eqz (ref.test (ref $Vector) (local.get $v)))
+                   (then (call $raise-expected-vector (local.get $v)) (unreachable)))
+               (call $vector->list/checked (ref.cast (ref $Vector) (local.get $v))))
+
+         (func $vector->list/checked
+               (param $v (ref $Vector))
+               (result   (ref eq))
+
+               (local $arr (ref $Array))
+               (local $i   i32)         ;; current index (starts from len - 1 and decrements)
+               (local $x   (ref eq))
+               (local $xs  (ref eq))
+               ;; Extract backing array and initialize
+               (local.set $arr (struct.get $Vector $arr (local.get $v)))
+               (local.set $i   (i32.sub (array.len (local.get $arr)) (i32.const 1)))
+               (local.set $xs  (global.get $null))
+               ;; Loop backwards
                (block $done
                       (loop $loop
                             (br_if $done (i32.lt_s (local.get $i) (i32.const 0)))
-                            (local.set $val (call $i8array-ref (local.get $arr) (local.get $i)))
-                            (local.set $acc
-                                       (struct.new $Pair
-                                                   (i32.const 0)
-                                                   (ref.i31 (i32.shl (local.get $val) (i32.const 1))) ;; encode fixnum
-                                                   (local.get $acc)))
+                            (local.set $x (array.get $Array (local.get $arr) (local.get $i)))
+                            (local.set $xs (struct.new $Pair
+                                                       (i32.const 0)
+                                                       (local.get $x)
+                                                       (local.get $xs)))
                             (local.set $i (i32.sub (local.get $i) (i32.const 1)))
                             (br $loop)))
-               (local.get $acc))
+               (return (local.get $xs)))
 
-         (func $list->bytes
-               (param $xs (ref eq))
-               (result (ref eq))
+         ;;;
+         ;;; Boxed (for assignable variables)
+         ;;;
 
-               (local $bs   (ref $Bytes))
-               (local $arr  (ref $I8Array))
-               (local $i    i32)
-               (local $len  i32)
-               (local $x    (ref eq))
-               (local $v    i32)
-               ;; Step 1: Compute length of list
-               (local.set $len (call $length/i32 (local.get $xs)))
-               ;; Step 2: Allocate mutable byte array of length $len
-               (local.set $arr (call $i8make-array (local.get $len) (i32.const 0)))
-               ;; Step 3: Allocate mutable Bytes struct
-               (local.set $bs  (struct.new $Bytes
-                                           (i32.const 0)
-                                           (i32.const 0)
-                                           (local.get $arr)))
-               ;; Step 4: Iterate through list and populate byte array
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $loop
-                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
-                            (if (ref.test (ref $Pair) (local.get $xs))
-                                (then
-                                 (local.set $x (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs))))
-                                 (if (ref.test (ref i31) (local.get $x))
-                                     (then
-                                      (local.set $v (i31.get_u (ref.cast (ref i31) (local.get $x))))
-                                      (if (i32.eqz (i32.and (local.get $v) (i32.const 1)))
-                                          (then
-                                           (local.set $v (i32.shr_u (local.get $v) (i32.const 1)))
-                                           (if (i32.lt_u (local.get $v) (i32.const 256))
-                                               (then
-                                                (call $i8array-set! (local.get $arr) (local.get $i) (local.get $v))
-                                                (local.set $i (i32.add (local.get $i) (i32.const 1))))
-                                               (else
-                                                (call $raise-byte-out-of-range (local.get $x))
-                                                (unreachable))))
-                                          (else
-                                           (call $raise-check-fixnum (local.get $x))
-                                           (unreachable))))
-                                     (else
-                                      (call $raise-check-fixnum (local.get $x))
-                                      (unreachable)))
-                                 (local.set $xs (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))))
-                                (else
-                                 (call $raise-pair-expected (local.get $xs))
-                                 (unreachable)))
-                            (br $loop)))
-               ;; Step 5: Return the byte string struct
-               (local.get $bs))
-
-
-         (func $raise-bytes->string/utf-8                  (unreachable))
-         (func $raise-bytes->string/utf-8:invalid-err-char (unreachable))
+         ;; We used `boxed`, `set-boxed!` and `unboxed` for assignable variables.
+         ;; These "boxes" are not the same as the Racket datatype `box`.
+         ;; See next section.
          
-         (func $bytes->string/utf-8
-               (param $bstr      (ref eq))
-               (param $err-char  (ref eq))
-               (param $start-raw (ref eq))
-               (param $end-raw   (ref eq))
-               (result (ref $String))
+         (func $boxed (param $v (ref eq))  (result (ref eq)) 
+               (struct.new $Boxed (local.get $v)))
 
-               (local $bs               (ref null $Bytes))
-               (local $start            i32)
-               (local $end              i32)
-               (local $use-err-char     i32)
-               (local $decoded-err-char i32)
+         (func $unboxed (param $b (ref eq))  (result (ref eq))
+               (struct.get $Boxed $v
+                           (block $ok (result (ref $Boxed))
+                             (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
+                             (unreachable))))
 
-               ;; Cast input to $Bytes
-               (if (ref.test (ref $Bytes) (local.get $bstr))
-                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
-                   (else (call $raise-bytes->string/utf-8)))
-               ;; Decode start
-               (if (ref.eq (local.get $start-raw) (global.get $false))
-                   (then (local.set $start (i32.const 0)))
-                   (else
-                    (if (ref.test (ref i31) (local.get $start-raw))
-                        (then (local.set $start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
-                        (else (call $raise-bytes->string/utf-8)))))
-               ;; Decode end
-               (if (ref.eq (local.get $end-raw) (global.get $false))
-                   (then (local.set $end (array.len (struct.get $Bytes $bs (local.get $bs)))))
-                   (else
-                    (if (ref.test (ref i31) (local.get $end-raw))
-                        (then (local.set $end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
-                        (else (call $raise-bytes->string/utf-8)))))
-               ;; Decode err-char
-               (if (ref.eq (local.get $err-char) (global.get $false))
-                   (then (local.set $use-err-char     (i32.const 0))  ; don't use err-char
-                         (local.set $decoded-err-char (i32.const 0))) 
-                   (else (if (ref.test (ref i31) (local.get $err-char))
-                             (then (local.set $use-err-char (i32.const 1))
-                                   (local.set $decoded-err-char
-                                              (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $err-char)))
-                                                         (i32.const 1))))
-                             (else (call $raise-bytes->string/utf-8:invalid-err-char)))))               
-               ;; Delegate to implementation
-               (call $bytes->string/utf-8:work
-                     (ref.as_non_null (local.get $bs))
-                     (local.get $use-err-char)
-                     (local.get $decoded-err-char)
-                     (local.get $start)
-                     (local.get $end)))
+         (func $set-boxed!
+               ; todo: make this return no values
+               ;       problem: set-boxed! is currently wrapped by drop in
+               ;                the code generator. Add an rule that avoids
+               ;                the drop for set-boxed!.
+               (param $b (ref eq)) (param $v (ref eq))
+               (result (ref eq))
+               ; 1. Cast $b into a (ref $Box)
+               (local $B (ref $Boxed))                
+               (local.set $B
+                          (block $ok (result (ref $Boxed))
+                                 (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
+                                 (return (global.get $error))))
+               ; 2. Set the contents
+               (struct.set $Boxed $v (local.get $B) (local.get $v))
+               ; 3. Return `void`
+               (global.get $void))
 
-         (func $bytes->string/utf-8/defaults
-               (param $bs (ref $Bytes))
-               (result (ref $String))
-               (call $bytes->string/utf-8
-                     (local.get $bs)
-                     (global.get $false)   ;; err-char = #f
-                     (global.get $false)   ;; start = #f → 0
-                     (global.get $false))) ;; end = #f → full length
+         ;;;
+         ;;; 4.14 Boxes
+         ;;;
 
-         (func $bytes->string/utf-8/checked
-               (param $bs (ref $Bytes))
-               (result (ref $String))
-               (local $end i32)
-               (local.set $end (array.len (struct.get $Bytes $bs (local.get $bs))))
-               (call $bytes->string/utf-8:work
-                     (local.get $bs)
-                     (i32.const 0)   ;; use-err-char? = false
-                     (i32.const 0)   ;; err-char = dummy
-                     (i32.const 0)   ;; start
-                     (local.get $end)))
+         ;; https://docs.racket-lang.org/reference/boxes.html
 
-         (func $bytes->string/utf-8:work
-               (param $bs           (ref $Bytes))
-               (param $use-err-char i32)
-               (param $err-char     i32)
-               (param $start        i32)
-               (param $end          i32)
-               (result              (ref $String))
+         ;; This section implements the Racket data type `box`.
+         (func $box (param $v (ref eq))  (result (ref eq)) 
+               (struct.new $Box (i32.const 0) (local.get $v)))
+         (func $unbox (param $b (ref eq))  (result (ref eq))
+               (struct.get $Box $v
+                           (block $ok (result (ref $Box))
+                             (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
+                             (return (global.get $error)))))
+         (func $set-box! ; todo: should this invalidate the hash code?
+               (param $b (ref eq)) (param $v (ref eq))
+               (result (ref eq))
+               ; 1. Cast $b into a (ref $Box)
+               (local $B (ref $Box))                
+               (local.set $B
+                          (block $ok (result (ref $Box))
+                                 (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
+                                 (return (global.get $error))))
+               ; 2. Set the contents
+               (struct.set $Box $v (local.get $B) (local.get $v))
+               ; 3. Return `void`
+               (global.get $void))
 
-               (local $buf  (ref $I32GrowableArray))
-               (local $arr  (ref $I8Array))
-               (local $i    i32)
-               (local $byte i32)
-               (local $need i32)
-               (local $acc  i32)
-               (local $b2   i32)
-               (local $cp   i32)
-
-               ;; Get underlying I8Array from Bytes
-               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-               ;; Allocate buffer for codepoints
-               (local.set $buf (call $make-i32growable-array (i32.const 16)))
-               ;; Start decoding loop
-               (local.set $i (local.get $start))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $end)))
-                            (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $i)))
-                            ;; ASCII fast path
-                            (if (i32.lt_u (local.get $byte) (i32.const 128))
-                                (then
-                                 (call $i32growable-array-add! (local.get $buf) (local.get $byte))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $loop)))
-                            ;; Determine UTF-8 sequence size and initial accumulator
-                            (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
-                            (local.set $acc) (local.set $need)
-                            ;; Invalid lead byte
-                            (if (i32.lt_s (local.get $need) (i32.const 0))
-                                (then
-                                 (if (i32.eqz (local.get $use-err-char))
-                                     (then (call $raise-bytes->string/utf-8))
-                                     (else
-                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
-                                      (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                      (br $loop)))))
-                            ;; Not enough bytes left
-                            (if (i32.gt_u (i32.add (local.get $i) (local.get $need)) (local.get $end))
-                                (then
-                                 (if (i32.eqz (local.get $use-err-char))
-                                     (then (call $raise-bytes->string/utf-8))
-                                     (else
-                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
-                                      (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                      (br $loop)))))
-                            ;; Decode continuation bytes
-                            (local.set $cp (local.get $acc))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1))) ;; skip lead byte
-                            (block $cont-fail
-                                   (loop $cont-loop
-                                         (br_if $cont-fail (i32.eqz (local.get $need)))
-                                         (local.set $b2 (array.get_u $I8Array (local.get $arr) (local.get $i)))
-                                         (if (i32.and
-                                              (i32.ge_u (local.get $b2) (i32.const 128))
-                                              (i32.lt_u (local.get $b2) (i32.const 192)))
-                                             (then
-                                              (local.set $cp
-                                                         (i32.or
-                                                          (i32.shl (local.get $cp) (i32.const 6))
-                                                          (i32.and (local.get $b2) (i32.const 0x3F))))
-                                              (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                              (local.set $need (i32.sub (local.get $need) (i32.const 1)))
-                                              (br $cont-loop)))))
-                            ;; If we didn't finish the sequence, it's invalid
-                            (if (i32.ne (local.get $need) (i32.const 0))
-                                (then
-                                 (if (i32.eqz (local.get $use-err-char))
-                                     (then (call $raise-bytes->string/utf-8))
-                                     (else
-                                      (call $i32growable-array-add! (local.get $buf) (local.get $err-char))
-                                      (br $loop)))))
-                            ;; Valid sequence
-                            (call $i32growable-array-add! (local.get $buf) (local.get $cp))
-                            (br $loop)))
-               ;; Convert buffer to immutable string
-               (call $i32growable-array->immutable-string (local.get $buf)))
-
-
-         (func $bytes->string/utf-8:determine-utf-8-sequence ; returns two i32s
-               ; This function determines how many continuation bytes are needed for
-               ; a given UTF-8 lead byte, and extracts the initial bits for the code point accumulator.
-               (param $lead i32)
-               (result i32  i32) ;; (need acc) or (-1 -1) if invalid
-
-               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xC0))
-                            (i32.lt_u (local.get $lead) (i32.const 0xE0)))
-                   (then (return (i32.const 1) (i32.and (local.get $lead) (i32.const 0x1F)))))
-               
-               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xE0))
-                            (i32.lt_u (local.get $lead) (i32.const 0xF0)))
-                   (then (return (i32.const 2) (i32.and (local.get $lead) (i32.const 0x0F)))))
-               
-               (if (i32.and (i32.ge_u (local.get $lead) (i32.const 0xF0))
-                            (i32.lt_u (local.get $lead) (i32.const 0xF8)))
-                   (then (return (i32.const 3) (i32.and (local.get $lead) (i32.const 0x07)))))
-               
-               ;; Not a valid lead byte
-               (return (i32.const -1) (i32.const -1)))
+         
+         
 
          ;;;
          ;;; Memory Map
@@ -7107,336 +7579,7 @@
                     (local.get $hash))))
 
 
-         ;;;
-         ;;; SYMBOLS
-         ;;;
 
-         ;; (type $Symbol
-         ;;       (sub $Heap
-         ;;            (struct
-         ;;              (field $hash          (mut i32))         ;; cached hash                 
-         ;;              (field $name          (ref $String))     ;; symbol name (string)        
-         ;;              (field $property-list (mut (ref eq))))))  ;; user-defined properties    
-
-
-         (func $symbol? (param $x (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Symbol) (local.get $x))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-         
-         (func $symbol=?
-               (param $a (ref eq)) (param $b (ref eq))
-               (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $a) (local.get $b))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         (func $symbol=?/i32 (param $a (ref eq)) (param $b (ref eq)) (result i32)
-               (ref.eq (local.get $a) (local.get $b)))
-
-
-         (func $raise-symbol->string:bad-argument (param $v (ref eq)) (unreachable))
-         (func $symbol->string
-               (param $v (ref eq))
-               (result   (ref eq))
-
-               (local $sym (ref $Symbol))
-               (local $name (ref $String))
-
-               ;; Check that input is a symbol
-               (if (ref.test (ref $Symbol) (local.get $v))
-                   (then
-                    ;; Cast to $Symbol
-                    (local.set $sym (ref.cast (ref $Symbol) (local.get $v)))
-                    ;; Extract name field
-                    (local.set $name (struct.get $Symbol $name (local.get $sym)))
-                    ;; Return a fresh mutable copy
-                    (return (call $string-copy (local.get $name))))
-                   (else
-                    ;; Not a symbol, raise error
-                    (call $raise-symbol->string:bad-argument (local.get $v))))
-               (unreachable))
-         
-
-         (func $symbol->immutable-string
-               (param  $v (ref eq))
-               (result (ref eq))
-
-               (local $sym  (ref $Symbol))
-               (local $name (ref $String))
-               (local $src  (ref $I32Array))
-               (local $dst  (ref $I32Array))
-               (local $len  i32)
-
-               (if (ref.test (ref $Symbol) (local.get $v))
-                   (then
-                    (local.set $sym  (ref.cast (ref $Symbol) (local.get $v)))
-                    (local.set $name (struct.get $Symbol $name (local.get $sym)))
-                    ;; Already immutable? Return as-is.
-                    (if (i32.eq (struct.get $String $immutable (local.get $name)) (i32.const 1))
-                        (then (return (local.get $name)))
-                        (else
-                         ;; Copy codepoints with i32array-copy [0, len)
-                         (local.set $src (struct.get $String $codepoints (local.get $name)))
-                         (local.set $len (array.len (local.get $src)))
-                         (local.set $dst (call $i32array-copy
-                                               (local.get $src) (i32.const 0) (local.get $len)))
-                         ;; Build fresh immutable string (hash=0, immutable=1)
-                         (return
-                          (struct.new $String (i32.const 0) (i32.const 1) (local.get $dst))))))
-                   (else
-                    (call $raise-symbol->string:bad-argument (local.get $v))
-                    (unreachable)))
-               (unreachable))
-
-
-         (func $raise-string->symbol:bad-argument (param $v (ref eq)) (unreachable))                  
-
-         (func $string->symbol
-               (param $v (ref eq))
-               (result   (ref $Symbol))
-               
-               (if (ref.test (ref $String) (local.get $v))
-                   (then (return
-                          (call $string->symbol/checked
-                                (ref.cast (ref $String) (local.get $v)))))
-                   (else (call $raise-string->symbol:bad-argument (local.get $v))))
-               (unreachable))
-
-         (func $string->symbol/checked
-               (param $str (ref $String))
-               (result     (ref $Symbol))
-
-               (local $existing (ref eq))
-               (local $sym      (ref $Symbol))
-               ;; Look up the string in the symbol table
-               (local.set $existing (call $symbol-table-find
-                                          (ref.as_non_null (global.get $the-symbol-table))
-                                          (local.get $str)))
-               ;; If found, return it (cast to (ref $Symbol))
-               (if (ref.test (ref $Symbol) (local.get $existing))
-                   (then (return (ref.cast (ref $Symbol) (local.get $existing)))))
-               ;; Otherwise, construct a new interned symbol
-               (local.set $sym (struct.new $Symbol
-                                           (i32.const 0)        ;; hash = 0 (not computed)
-                                           (local.get $str)     ;; name
-                                           (global.get $null))) ;; empty property list
-               ;; Insert it into the symbol table
-               (call $symbol-table-insert
-                     (ref.as_non_null (global.get $the-symbol-table))
-                     (local.get $str)
-                     (local.get $sym))
-               ;; Return the new symbol
-               (local.get $sym))
-
-         (func $raise-string->uninterned-symbol:bad-argument (param $v (ref eq)) (unreachable))
-
-         (func $string->uninterned-symbol
-               (param $v (ref eq))
-               (result (ref $Symbol))
-
-               (if (ref.test (ref $String) (local.get $v))
-                   (then (return
-                          (call $string->uninterned-symbol/checked
-                                (ref.cast (ref $String) (local.get $v)))))
-                   (else (call $raise-string->uninterned-symbol:bad-argument (local.get $v))))
-               (unreachable))
-
-         (func $string->uninterned-symbol/checked
-               (param $str (ref $String))
-               (result     (ref $Symbol))
-
-               (struct.new $Symbol
-                           (i32.const 0)            ;; hash = 0 (deferred)
-                           (local.get $str)         ;; name
-                           (global.get $null)))     ;; empty property list
-
-         (func $symbol-interned?
-               (param $sym (ref eq))
-               (result     (ref eq))
-
-               (local $str   (ref $String))
-               (local $found (ref eq))
-
-               ;; Check that it's a symbol
-               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
-                   (then (call $raise-check-symbol (local.get $sym))))
-               (local.set $str   (struct.get $Symbol $name (ref.cast (ref $Symbol)   (local.get $sym))))
-               (local.set $found (call $symbol-table-find
-                                       (ref.as_non_null (global.get $the-symbol-table)) (local.get $str)))
-               ;; If found symbol == input symbol => interned
-               (if (result (ref eq)) (ref.eq (local.get $found) (local.get $sym))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         (func $raise-check-symbol (param $x (ref eq)) (unreachable))
-         
-         (func $symbol<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
-               (local $s1 (ref $String))
-               (local $s2 (ref $String))
-
-               ;; Type check: both must be symbols
-               (if (i32.eqz (ref.test (ref $Symbol) (local.get $a)))
-                   (then (call $raise-check-symbol (local.get $a))))
-               (if (i32.eqz (ref.test (ref $Symbol) (local.get $b)))
-                   (then (call $raise-check-symbol (local.get $b))))
-               ;; Extract names
-               (local.set $s1 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $a))))
-               (local.set $s2 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $b))))
-               ;; Compare using string<?
-               (call $string<? (local.get $s1) (local.get $s2)))
-
-         (global $gensym-counter (mut i32) (i32.const 0))
-
-         (func $make-gensym-name
-               (param $prefix (ref $String))
-               (result        (ref $String))
-
-               (local $n     i32)
-               (local $n-str (ref $String))
-               ;; Get current counter
-               (local.set $n (global.get $gensym-counter))
-               ;; Increment counter
-               (global.set $gensym-counter (i32.add (local.get $n) (i32.const 1)))
-               ;; Convert number to fixnum
-               (local.set $n-str
-                          (call $number->string (ref.i31 (local.get $n)) ,(Imm 10)))
-               ;; Append prefix and number string
-               (ref.cast (ref $String)
-                         (call $string-append (local.get $prefix) (local.get $n-str))))
-
-         (func $gensym:0 (result (ref $Symbol))
-               ;; Use "g" as default prefix
-               (call $gensym:1 (ref.cast (ref $String) (global.get $string:g))))
-
-         (func $raise-gensym:bad-base (param $x (ref eq)) (unreachable))
-         
-         (func $gensym:1 (param $base (ref eq)) (result (ref $Symbol))
-               (local $prefix (ref null $String))
-               (local $name   (ref $String))
-
-               ;; Convert symbol -> string if needed
-               (if (ref.test (ref $Symbol) (local.get $base))
-                   (then
-                    (local.set $prefix
-                               (struct.get $Symbol $name
-                                           (ref.cast (ref $Symbol) (local.get $base)))))
-                   (else
-                    (if (ref.test (ref $String) (local.get $base))
-                        (then (local.set $prefix
-                                         (ref.cast (ref $String) (local.get $base))))
-                        (else (call $raise-gensym:bad-base (local.get $base))
-                              (unreachable)))))
-               ;; Generate name string
-               (local.set $name (call $make-gensym-name (ref.as_non_null (local.get $prefix))))
-               ;; Return new uninterned symbol
-               (struct.new $Symbol
-                           (i32.const 0)        ;; hash = 0
-                           (local.get $name)    ;; name
-                           (global.get $null))) ;; empty property list
-
-         ;;;
-         ;;; KEYWORDS
-         ;;;
-
-         ;; Keywords are interned using `the-keywords-table` which maps strings (without #:)
-         ;; to keywords.
-
-         (func $keyword?/i32
-               (param $v (ref eq))
-               (result i32)
-               (ref.test (ref $Keyword) (local.get $v)))
-
-         (func $keyword?
-               (param $v (ref eq))
-               (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $Keyword) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-         
-         (func $string->keyword
-               (param $str (ref eq))
-               (result (ref $Keyword))
-               ;; Type check: must be a string
-               (if (i32.eqz (ref.test (ref $String) (local.get $str)))
-                   (then (call $raise-argument-error:string-expected (local.get $str))
-                         (unreachable)))
-               ;; Cast and delegate
-               (call $string->keyword/checked (ref.cast (ref $String) (local.get $str))))
-                       
-               
-         (func $string->keyword/checked
-               (param $str (ref $String))
-               (result     (ref $Keyword))
-
-               (local $existing (ref eq))
-               (local $kw       (ref $Keyword))
-               ;; Look up in table
-               (local.set $existing (call $symbol-table-find 
-                                          (ref.as_non_null (global.get $the-keyword-table))
-                                          (local.get $str)))
-               (if (result (ref $Keyword))
-                   (ref.eq (local.get $existing) (global.get $missing))
-                   (then
-                    ;; Not found – allocate and intern new keyword
-                    (local.set $kw (struct.new $Keyword
-                                               (i32.const 0) ;; hash will be assigned later
-                                               (local.get $str)))
-                    (call $symbol-table-insert
-                          (ref.as_non_null (global.get $the-keyword-table))
-                          (local.get $str)
-                          (local.get $kw))
-                    (local.get $kw))
-                   (else
-                    (ref.cast (ref $Keyword)
-                              (local.get $existing)))))
-
-         (func $raise-argument-error:keyword-expected (unreachable))
-         
-         (func $keyword->string ; the result does not contain #:
-               (param $kw (ref eq))
-               (result    (ref $String))
-               ;; Type check: must be a keyword
-               (if (i32.eqz (ref.test (ref $Keyword) (local.get $kw)))
-                   (then (call $raise-argument-error:keyword-expected (local.get $kw))
-                         (unreachable)))
-               ;; Cast and delegate
-               (call $keyword->string/checked (ref.cast (ref $Keyword) (local.get $kw))))
-         
-         (func $keyword->string/checked
-               (param $kw       (ref $Keyword))
-               (result          (ref $String))
-               
-               (local $name     (ref $String))
-               (local.set $name (struct.get $Keyword $str (local.get $kw)))
-               
-               (ref.cast (ref $String) (call $string-copy (local.get $name))))
-
-         (func $raise-keyword-expected (unreachable))
-         
-         ;; keyword<? : (ref eq) (ref eq) -> (ref eq)  ;; returns #t/#f
-         (func $keyword<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
-               (local $s1 (ref $String))
-               (local $s2 (ref $String))
-
-               ;; Type check: both must be keywords (fail early), then convert.
-               (if (i32.eqz (ref.test (ref $Keyword) (local.get $a)))
-                   (then (call $raise-keyword-expected (local.get $a))
-                         (unreachable)))
-               (if (i32.eqz (ref.test (ref $Keyword) (local.get $b)))
-                   (then (call $raise-keyword-expected (local.get $b))
-                         (unreachable)))
-
-               ;; Extract underlying strings (without "#:").
-               (local.set $s1
-                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $a))))
-               (local.set $s2
-                          (struct.get $Keyword $str (ref.cast (ref $Keyword) (local.get $b))))
-
-               ;; Compare using string<? (code-point lexicographic; UTF-8 preserves order)
-               (call $string<? (local.get $s1) (local.get $s2)))
 
          
          ;;;

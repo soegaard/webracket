@@ -8,9 +8,7 @@
          (rename-out [#%plain-module-begin #%module-begin]
                      [#%plain-app          #%app]
                      [lambda lambda] ; [#%plain-lambda       lambda]
-                     [#%plain-lambda       λ])
-         ; derived
-         #;(rename-out [web-define           define]))
+                     [#%plain-lambda       λ]))
 
 
 (require (for-syntax (only-in racket/base
@@ -87,23 +85,8 @@
 
 ;; 3.14. Definitions: define
 ; (require (only-in racket/base define))
-#;(provide (rename-out [web-define define]))
 (provide define define-values)
 ; define-values provided from `fully`
-
-; Restrict define:
-;  no variadic functions, no keyword arguments
-
-#;(define-syntax (web-define stx)
-  (syntax-case stx ()
-    [(_define id expr)
-     (identifier? #'id)
-     (syntax/loc stx
-       (define-values (id) expr))]
-    [(_define (head id ...) body0 body ...)
-     (syntax/loc stx
-       (define-values (head)
-         (λ (id ...) body0 body ...)))]))
 
 ;; 3.15 Sequencing: begin, begin0
 ;;   Provided form `fully`.
