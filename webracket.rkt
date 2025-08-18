@@ -23,6 +23,7 @@
 (define nodejs          (make-parameter #t))   ; default
 
 (define link-flags      (make-parameter '()))  ; ignored
+(define ffi-files       (make-parameter '()))  ; list of filenames for .ffi files
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
@@ -54,6 +55,11 @@
    [("-l" "--link-flags") lf ; flag takes one argument
                           "Add a flag <lf> for the linker"
                           (link-flags (cons lf (link-flags)))]
+
+   #:multi ; can be used multiple times
+   [("--ffi") ffi-file
+              "Add .ffi file"
+              (ffi-files (cons ffi-file (ffi-files)))]
    
    #:args (filename) ; expect one command-line argument: <filename>
    ; return the argument as a filename to compile
@@ -67,4 +73,5 @@
                    #:verbose?      (verbose-mode)
                    #:browser?      (browser)
                    #:node?         (nodejs)
-                   #:run-after?    (run-after))
+                   #:run-after?    (run-after)
+                   #:ffi-files     (ffi-files))

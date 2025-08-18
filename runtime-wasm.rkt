@@ -3,7 +3,8 @@
 
 (require "wasm-utils.rkt"
          "immediates.rkt"
-         "priminfo.rkt")
+         "priminfo.rkt"
+         "parameters.rkt")
 
 (define (generate-runtime
            dls tms entry-body result
@@ -506,7 +507,17 @@
                        (field $table      (mut (ref $HashEqMutable))) ;; hasheq: Symbol → Boxed
                        (field $modules    (mut (ref $ModuleRegistry)))
                        (field $protect    (mut i32)))))
-                    
+
+          ;; A builder that accumulates arguments to be serialized for the host.
+          (type $FaslBuilder
+                (sub $Heap
+                     (struct
+                       (field $hash     (mut i32))               ;; lazy, start at 0
+                       (field $strings  (ref $GrowableArray))    ;; growable of (ref $String)
+                       (field $values   (ref $GrowableArray))))) ;; growable of (ref eq)
+          
+          
+          
           ) ; rec
        
 
@@ -536,131 +547,14 @@
                (import "document" "body")
                (result externref))
 
-         (func $js-create-text-node/imported
-               (import "document" "create-text-node")
-               (param $start  i32) ; start  of fasl (for string) in memory
-               (result externref))
-
-         (func $js-append-child!/imported
-               (import "document" "append-child!")
-               (param $parent externref)
-               (param $child  externref)
-               (result        externref)) ; the appended child
-
-         (func $js-make-element/imported
-               (import "document" "create-element")
-               (param $start  i32) ; start of fasl (for string) in memory
-               (result externref))
-
-         (func $js-set-attribute!/imported
-               (import "document" "set-attribute!")
-               (param $obj            externref)
-               (param $property-start i32)  ; start of fasl (for string) in memory
-               (param $value-start    i32)) ; start of fasl in memory
-
+         ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
          (func $raise-expected-string (unreachable))
 
-         ;; (define-foreign create-text-node
-         ;;   "document" "create-text-node"
-         ;;   ;; Parameters: a string
-         ;;   ;; Result: an external reference which may be null
-         ;;   (ref string) -> (ref null extern))
+         (func $raise-unexpected-argument (unreachable))
 
-         (func $js-create-text-node
-               (param $s (ref eq))         ;; expects a Racket string
-               (result   (ref eq))         ;; an $External holding the `text` node
-
-               (local $bs   (ref eq))      ;; bytes as (ref $Bytes) but held as (ref eq) for now
-               (local $b    (ref $Bytes))
-               (local $len  i32)
-               (local $eref externref)
-
-               ;; 0) type-check
-               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
-                   (then (call $raise-expected-string (local.get $s))
-                         (unreachable)))
-               ;; 1) FASL-encode directly to a bytes object (port = #f)
-               (local.set $bs (call $s-exp->fasl (local.get $s) (global.get $false)))
-               ;; 2) copy bytes to linear memory
-               (local.set $b   (ref.cast (ref $Bytes) (local.get $bs)))
-               (local.set $len (call $copy-bytes-to-memory (local.get $b) (i32.const 0)))
-               ;; 3) call JS and wrap the externref
-               (local.set $eref (call $js-create-text-node/imported (i32.const 0)))
-               (struct.new $External (i32.const 0) (local.get $eref)))
-
-
-         #;(define-foreign make-element
-             "document" "createElement"
-             (ref string) -> (ref null extern))
-
-         (func $js-make-element
-               (param $tag (ref eq))          ;; Racket string
-               (result (ref eq))              ;; $External wrapping created element
-
-               (local $bs   (ref eq))         ;; FASL bytes as (ref $Bytes) but held as (ref eq)
-               (local $b    (ref $Bytes))
-               (local $len  i32)
-               (local $eref externref)
-
-               ;; Type-check: must be a Racket string
-               (if (i32.eqz (ref.test (ref $String) (local.get $tag)))
-                   (then (call $raise-expected-string (local.get $tag)) (unreachable)))
-               ;; FASL-encode directly to bytes (port = #f)
-               (local.set $bs (call $s-exp->fasl (local.get $tag) (global.get $false)))
-               (local.set $b  (ref.cast (ref $Bytes) (local.get $bs)))
-               ;; Copy FASL bytes to linear memory at 0
-               (local.set $len (call $copy-bytes-to-memory (local.get $b) (i32.const 0)))
-               ;; Call imported JS function and wrap result
-               (local.set $eref (call $js-make-element/imported (i32.const 0)))
-               (struct.new $External
-                           (i32.const 0)
-                           (local.get $eref)))
-
-         #;(define-foreign set-attribute!
-             "element" "setAttribute"
-             (ref null extern) (ref string) (ref string) -> none)
-
-         (func $js-set-attribute!
-               (param $elem  (ref eq))        ;; $External element
-               (param $name  (ref eq))        ;; Racket string
-               (param $value (ref eq))        ;; Racket value 
-               (result (ref eq))              ;; return void
-
-               (local $e          (ref null $External))
-               (local $eref       externref)
-               (local $name-bs    (ref eq))
-               (local $name-b     (ref $Bytes))
-               (local $name-len   i32)
-               (local $value-bs   (ref eq))
-               (local $value-b    (ref $Bytes))
-               (local $value-len  i32)
-
-               ;; Type-checks
-               (if (i32.eqz (ref.test (ref $External) (local.get $elem)))
-                   (then (call $raise-argument-error (local.get $elem)) (unreachable)))
-               (if (i32.eqz (ref.test (ref $String) (local.get $name)))
-                   (then (call $raise-expected-string (local.get $name)) (unreachable)))
-               (if (i32.eqz (ref.test (ref $String) (local.get $value)))
-                   (then (call $raise-expected-string (local.get $value)) (unreachable)))
-               ;; Extract externref from $External
-               (local.set $e    (ref.cast (ref $External) (local.get $elem)))
-               (local.set $eref (struct.get $External $v (local.get $e)))
-               ;; FASL-encode name and value
-               (local.set $name-bs  (call $s-exp->fasl (local.get $name)  (global.get $false)))
-               (local.set $value-bs (call $s-exp->fasl (local.get $value) (global.get $false)))
-               (local.set $name-b   (ref.cast (ref $Bytes) (local.get $name-bs)))
-               (local.set $value-b  (ref.cast (ref $Bytes) (local.get $value-bs)))
-               ;; Copy name at 0, value right after it
-               (local.set $name-len  (call $copy-bytes-to-memory (local.get $name-b)  (i32.const 0)))
-               (local.set $value-len (call $copy-bytes-to-memory (local.get $value-b) (local.get $name-len)))
-               ;; Call imported JS side
-               (call $js-set-attribute!/imported
-                     (local.get $eref)
-                     (i32.const 0)
-                     (local.get $name-len))
-               ;; Return void
-               (global.get $void))
+         ,@(current-ffi-funcs-wat) 
+         
 
          
          ;; (define-foreign append-child!
@@ -670,7 +564,7 @@
          ;;   (ref null extern) (ref null extern) -> (ref null extern))
 
          ;; Wraps the imported DOM call for use in the runtime
-         (func $js-append-child!
+         #;(func $js-append-child!
                (param $parent (ref eq))   ;; expected: (ref $External)
                (param $child  (ref eq))   ;; expected: (ref $External)
                (result        (ref eq))
@@ -683,9 +577,11 @@
 
                ;; 1) Type checks (fail early)
                (if (i32.eqz (ref.test (ref $External) (local.get $parent)))
-                   (then (call $raise-argument-error (local.get $parent)) (unreachable)))
+                   (then (call $raise-argument-error (local.get $parent))
+                         (unreachable)))
                (if (i32.eqz (ref.test (ref $External) (local.get $child)))
-                   (then (call $raise-argument-error (local.get $child)) (unreachable)))
+                   (then (call $raise-argument-error (local.get $child))
+                         (unreachable)))
                ;; Cast after checks
                (local.set $p (ref.cast (ref $External) (local.get $parent)))
                (local.set $c (ref.cast (ref $External) (local.get $child)))
@@ -693,7 +589,8 @@
                (local.set $pe (struct.get $External $v (local.get $p)))
                (local.set $ce (struct.get $External $v (local.get $c)))
                ;; 3) Call imported function
-               (local.set $re (call $js-append-child!/imported (local.get $pe) (local.get $ce)))
+               (local.set $re (call $js-append-child!/imported
+                                    (local.get $pe) (local.get $ce)))
                ;; 4) Wrap returned externref in an $External and return it
                (struct.new $External (i32.const 0) (local.get $re)))
          
@@ -8186,9 +8083,13 @@
                (block $done
                       (loop $copy
                             ;; if i >= len, break
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (br_if $done
+                                   (i32.ge_u (local.get $i) (local.get $len)))
                             ;; val = arr[i]
-                            (local.set $val (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                            (local.set $val
+                                       (array.get_u $I8Array
+                                                    (local.get $arr)
+                                                    (local.get $i)))
                             ;; memory[ptr + i] = val
                             (i32.store8 (i32.add (local.get $ptr) (local.get $i))
                                         (local.get $val))
@@ -8206,10 +8107,10 @@
                (local $len i32)
 
                (global.set $result-bytes
-                           (call $s-exp->fasl (local.get $v) (global.get $false)))
+                          (call $s-exp->fasl (local.get $v) (global.get $false)))
                #;(local.set $len (call $copy_bytes_to_memory (i32.const 0)))
                (local.set $len (call $copy-bytes-to-memory
-                                     (global.get $result-bytes) (i32.const 0)))               
+                                    (global.get $result-bytes) (i32.const 0)))
                (call $js_print_fasl (i32.const 0) (local.get $len))
                (global.get $void))
 
