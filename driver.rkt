@@ -32,7 +32,12 @@
          (only-in racket/format     ~a)
          (only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
-         "compiler.rkt")
+         (only-in racket/list       append*)
+         (only-in "parameters.rkt"  current-ffi-foreigns
+                                    current-ffi-imports-wat
+                                    current-ffi-funcs-wat)
+         "compiler.rkt"
+         "define-foreign.rkt")
 
 ;;;
 ;;; 
@@ -46,8 +51,32 @@
          #:verbose?      verbose?
          #:browser?      browser?
          #:node?         node?
-         #:run-after?    run-after?)
+         #:run-after?    run-after?
+         #:ffi-files     ffi-files) ; list of file paths for .ffi files
+  
+  ; 0. Handle ffi-files
+  (for ([ffi-filename ffi-files])
+    (unless (file-exists? ffi-filename)
+      (error 'drive-compilation (~a "ffi file not found: " ffi-filename))))
 
+  (define ffi-foreigns  '()) ; list of `foreign` structures
+  (define ffi-imports   '()) ; list of wat
+  (define ffi-funcs     '()) ; list of wat
+  (for ([ffi-filename ffi-files])
+    (define fs (ffi-file->foreigns ffi-filename))
+    (define ims   (map foreign->import fs))
+    (define prims (map foreign->primitive fs))
+    (set! ffi-foreigns (cons fs    ffi-foreigns))
+    (set! ffi-imports  (cons ims   ffi-imports))
+    (set! ffi-funcs    (cons prims ffi-funcs)))
+  (set! ffi-foreigns (append* (reverse ffi-foreigns)))
+  (set! ffi-imports  (append* (reverse ffi-imports)))
+  (set! ffi-funcs    (append* (reverse ffi-funcs)))
+
+  (current-ffi-foreigns    ffi-foreigns)
+  (current-ffi-imports-wat ffi-imports)
+  (current-ffi-funcs-wat   ffi-funcs)
+  
   ; 1. Check that `filename` exists.
   (unless (file-exists? filename)
     (error 'drive-compilation (~a "file not found: " filename)))

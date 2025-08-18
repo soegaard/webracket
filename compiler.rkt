@@ -2,16 +2,19 @@
 (module+ test (require rackunit))
 (provide (all-defined-out))
 
-(require "expander.rkt"      ; provides topexpand
+(require "expander.rkt"       ; provides topexpand
          "assembler.rkt"
-         "priminfo.rkt"      ; information on Racket primitives
-         "runtime-wasm.rkt"  ;
+         "priminfo.rkt"       ; information on Racket primitives
+         "runtime-wasm.rkt"   ;
+         "define-foreign.rkt"
+         "parameters.rkt"
          nanopass/base
          racket/match
          racket/port 
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
-                  index-where append-map make-list rest))
+                              index-where append-map make-list rest)
+         (only-in racket/set  list->set))
 (require
   ; (prefix-in ur- urlang)
   (for-syntax nanopass/base syntax/parse racket/syntax racket/base)
@@ -22,6 +25,34 @@
   ; (rename-in racket/match [match Match])
   ; (only-in srfi/1 list-index)cha
   '#%paramz) ; contains the identifier parameterization-key
+
+;;; todo - just for testing
+
+  ;; (define ffi-files '("dom.ffi"))
+  ;; (for ([ffi-filename ffi-files])
+  ;;   (unless (file-exists? ffi-filename)
+  ;;     (error 'drive-compilation (~a "ffi file not found: " ffi-filename))))
+
+  ;; (define ffi-foreigns  '()) ; list of `foreign` structures
+  ;; (define ffi-imports   '()) ; list of wat
+  ;; (define ffi-funcs     '()) ; list of wat
+  ;; (for ([ffi-filename ffi-files])
+  ;;   (define fs (ffi-file->foreigns ffi-filename))
+  ;;   (define ims   (map foreign->import fs))
+  ;;   (define prims (map foreign->primitive fs))
+  ;;   (set! ffi-foreigns (cons fs    ffi-foreigns))
+  ;;   (set! ffi-imports  (cons ims   ffi-imports))
+  ;;   (set! ffi-funcs    (cons prims ffi-funcs)))
+  ;; (set! ffi-foreigns (append* (reverse ffi-foreigns)))
+  ;; (set! ffi-imports  (append* (reverse ffi-imports)))
+  ;; (set! ffi-funcs    (append* (reverse ffi-funcs)))
+
+  ;; (current-ffi-foreigns    ffi-foreigns)
+  ;; (current-ffi-imports-wat ffi-imports)
+  ;; (current-ffi-funcs-wat   ffi-funcs)
+
+;; --- done for testing section
+
 
 ;;;
 ;;; Expressions to work on
@@ -40,6 +71,13 @@
 
 ; [ ] Modules!
 
+; [ ] Keyword arguments
+;     [ ] struct:keyword-procedure/arity-error
+;     [ ] prop:named-keyword-procedure
+;     [ ] missing-kw
+;     [ ] null
+
+
 ; [ ] Input / output port going to the host.
 
 ; [x] case-lambda
@@ -48,8 +86,8 @@
 ; [x] procedure?, procedure-rename, procedure-arity, etc.
 ; [ ] call-with-values
 ; [x] apply
-; [ ] map
-; [ ] for-each
+; [x] map
+; [x] for-each
 
 ; [x] Use new machinery for runtime string and symbol constants.
 
@@ -86,6 +124,8 @@
 
 ; [x] Flonum as heap object (sigh)
 ; [x] Keywords.
+
+
 
 ; [x] Closures: rest arguments and arity check
 ; [x] Closures: $invoke-closure needs to do an arity check
@@ -256,12 +296,12 @@
 ;; For some primitives we have need an easy way to construct a
 ;; variable reference to the primitive.
 
-(define primitives '())
+(define primitives '())  ; includes the ffi-primitives
+
 
 ;; Most primitives are either primitives or procedures in standard Racket.
 ;; We can therefore use reflection to lookup information about arities,
 ;; names, realms etc.
-
 
 (define-syntax (define-primitive stx)
   (syntax-parse stx
@@ -283,6 +323,8 @@
        (begin
          (define-primitive name)
          ...))]))
+
+
 
 #;(type $PrimitiveProcedure
       (sub $Procedure
@@ -456,10 +498,10 @@
 
   js-log
   js-document-body     ;; also added in "priminfo.rkt"
-  js-create-text-node  ;; also added in "priminfo.rkt"
-  js-append-child!     ;; also added in "priminfo.rkt"
-  js-make-element      ;; also added in "priminfo.rkt"
-  js-set-attribute!    ;; also added in "priminfo.rkt"
+  ; js-append-child!     ;; also added in "priminfo.rkt"
+  ; js-make-element      ;; also added in "priminfo.rkt"
+  ; js-create-text-node  ;; dom.ffi also added in "priminfo.rkt"
+  ; js-set-attribute!    ;; dom.ffi also added in "priminfo.rkt"
 
   ;; 17. Unsafe Operations
   unsafe-fx+
@@ -486,6 +528,26 @@
   ; shrink-vector  
   )
 
+;;;
+;;; FFI Primitives
+;;;
+
+(define ffi-primitives '()) ; list of symbols
+
+(define (define-ffi-primitive name)
+  ; 1. There is no `var:name` since `var:name` is only used
+  ;    in "compiler.rkt" to generate code.
+  (set!     primitives (cons name     primitives))
+  (set! ffi-primitives (cons name ffi-primitives)))
+
+;; Primitives declared using ffi-files.
+
+(define (define-ffi-primitives names)
+  (for-each define-ffi-primitive names))
+
+(define (reset-ffi-primitives)
+  ; called by `parse` before parsing begins
+  (define-ffi-primitives (foreigns->primitive-names (current-ffi-foreigns))))
 
 #; (require (for-syntax (only-in urlang urmodule-name->exports)))
 
@@ -638,6 +700,7 @@
 
 (define-pass parse : * (stx) -> LFE ()
   (definitions
+    (reset-ffi-primitives)
     (define (Datum E d)                (datum E (syntax->datum d)))
     (define (Expr* es)                 (map Expr              (stx->list es)))
     (define (Expr** ess)               (map Expr*             (stx->list ess)))
@@ -1196,6 +1259,7 @@
                                                     
                                                     [(not ρx)
                                                      ; signal unbound variable at runtime
+                                                     (displayln (list 'WARNING "unbound?" x))
                                                      (values `(app ,#'here
                                                                    ,(variable #'raise-unbound-variable-reference)
                                                                    ; Note: `datum` has been eliminated at this point,
@@ -2444,34 +2508,39 @@
     (define (top-variable? v)    (set-in? v top-vars))    ; boxed
     (define (module-variable? v) (set-in? v module-vars))
     (define (local-variable? v)  (set-in? v local-vars))
-    (define (classify-variable v)
+    (define (ffi-variable? v)    (set-in? (syntax-e (variable-id v))
+                                          ffi-primitives))
+    (define (classify v)
       (cond
         [(top-variable?    v) 'top]
         [(module-variable? v) 'module]
         [(local-variable?  v) 'local]
+        [(ffi-variable? v)    'ffi]
         [else
          ;; (displayln (list 'top (map unparse-variable top-vars)))
          ;; (displayln (list 'mod (map unparse-variable module-vars)))
          ;; (displayln (list 'loc (map unparse-variable local-vars)))
-         (error 'classify-variable "got: ~a" v)]))
+         (error 'classify "got: ~a" v)]))
     ;; 2. References to variable according to their type
     (define (Reference v)
       ; reference to non-free variable
       ;   global refers to a Web Assembly global variable
-      (case (classify-variable v)
+      (case (classify v)
         [(top)        `(global.get ,(TopVar v))]   ; unboxed
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
         [(global)     `(global.get ,(syntax-e v))]
+        [(ffi)        'TODO]
         [else (error 'Reference "got: ~a" v)]))
     ;; 3. Variables assignments according to type.
     (define (Store! v e)
       (cond
         [(variable? v)
-         (case (classify-variable v)
+         (case (classify v)
            [(top)    `(global.set ,(TopVar    v) ,e)]
            [(local)  `(local.set  ,(LocalVar  v) ,e)]
            [(module) `(module.set ,(ModuleVar v) ,e)]
+           [(ffi)        'TODO]
            [else (error 'Store! "got: ~a" v)])]
         [(identifier? v)
          ; (displayln (list 'Store! v))
@@ -2621,7 +2690,7 @@
                            (i32.const 0)                                 ;; $hash
                            ,name-expr                                    ;; $name
                            ,(if (= (length ar) 1)
-                                `(i32.const ,ar)
+                                (Imm (car ar))
                                 `(ref.cast (ref eq) ,(Reference $ars)))  ;; $arity  = precise set
                            (global.get $false)                           ;; $realm
                            (ref.func $invoke-case-closure)               ;; $invoke

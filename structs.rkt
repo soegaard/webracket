@@ -9,3 +9,13 @@
 
 ; See "compiler.rkt"
 (struct variable (id) #:transparent)
+
+
+(struct foreign (racket-name    ; the Racket primitive, we are defining (symbol)
+                 module-name    ; name of imported module
+                 host-name      ; name in the imported module
+                 argument-types ; list of argument types
+                 result-types   ; list of result types
+                 )
+  #:transparent)
+
