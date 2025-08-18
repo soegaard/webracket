@@ -90,7 +90,7 @@
 
   ; 3. Compile the syntax object.
   (define wat
-    (with-handlers ([exn:fail? (λ (e)
+    (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "compile failed: " (exn-message e))))])
       (comp stx)))

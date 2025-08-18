@@ -26,7 +26,7 @@
   ; (only-in srfi/1 list-index)cha
   '#%paramz) ; contains the identifier parameterization-key
 
-;;; todo - just for testing
+;;; todo - just for testing FFI
 
   ;; (define ffi-files '("dom.ffi"))
   ;; (for ([ffi-filename ffi-files])
@@ -51,7 +51,7 @@
   ;; (current-ffi-imports-wat ffi-imports)
   ;; (current-ffi-funcs-wat   ffi-funcs)
 
-;; --- done for testing section
+;; --- done for testing FFI section
 
 
 ;;;
@@ -288,6 +288,24 @@
 
 (define datum:undefined (datum #f #f)) ; TODO: make the undefined value a datum
 
+;;;
+;;; CONSTANTS
+;;;
+
+(define constants '(null       ; '() racket/base
+                    undefined  ;     racket/undefined
+                    empty      ; '() racket/list
+                    true       ;     racket/bool (not racket/base)
+                    false))    ;     racket/bool (not racket/base)
+
+(define (constant-value c)
+  (case c
+    [(null empty) '()]
+    [(true)       #t]
+    [(false)      #f]
+    [(undefined)  datum:undefined]
+    [else         (error 'constant-value "got: ~a" c)]))
+  
 
 ;;;
 ;;; PRIMITIVES
@@ -679,8 +697,8 @@
     (top s x)                                     => (#%top . x)
     (variable-reference s vrx)                    => (#%variable-reference vrx))
   (VariableReferenceId (vrx)
-     x                                            
-     (anonymous s)                                => ()
+     (non-top s x)                                => (non-top x)
+     (anonymous s)                                => (anonymous)
      (top s x)                                    => (#%top . x)))
 
 
@@ -1253,15 +1271,24 @@
                                                       (variable-id x))]
                                                     
                                                     [(not ρx)
-                                                     ; signal unbound variable at runtime
-                                                     (displayln (list 'WARNING "unbound?" x))
-                                                     (values `(app ,#'here
-                                                                   ,(variable #'raise-unbound-variable-reference)
-                                                                   ; Note: `datum` has been eliminated at this point,
-                                                                   ;       so a different approach is needed
-                                                                   ; ,`(quote ,#'here  ,(datum #'unbound (variable-id x)))
-                                                                   )
-                                                             ρ)]
+                                                     (unless (variable? x)
+                                                       (error 'here "got ~a" x))
+                                                     (define s (syntax-e (variable-id x)))
+                                                     (cond
+                                                       [(memq s constants)
+                                                        (values `(quote ,(variable-id x)
+                                                                        ,(datum (variable-id x) (constant-value s)))
+                                                                ρ)]
+                                                       [else
+                                                        ; signal unbound variable at runtime
+                                                        (displayln (list 'WARNING "unbound?" x))
+                                                        (values `(app ,#'here
+                                                                      ,(variable #'raise-unbound-variable-reference)
+                                                                      ; Note: `datum` has been eliminated at this point,
+                                                                      ;       so a different approach is needed
+                                                                      ; ,`(quote ,#'here  ,(datum #'unbound (variable-id x)))
+                                                                      )
+                                                                ρ)])]
                                                     [else
                                                      (values `,ρx ρ)]))]
     [,ab                                        (Abstraction ab ρ)]
@@ -1813,7 +1840,13 @@
         [(quote ,s ,d)                (with-output-language (LANF AExpr) (k `(quote ,s ,d)))]
         [(quote-syntax ,s ,d)         (with-output-language (LANF AExpr) (k `(quote-syntax ,s ,d)))]
         [(top ,s ,x)                  (with-output-language (LANF AExpr) (k `(top ,s ,x)))]
-        [(variable-reference ,s ,vrx) (with-output-language (LANF AExpr) (k `(variable-reference ,s ,vrx)))]
+
+        [(variable-reference ,s (anonymous ,s0))   (with-output-language (LANF AExpr) 
+                                                      (k `(variable-reference ,s (anonymous ,s0))))]
+        [(variable-reference ,s (non-top ,s0 ,x))  (with-output-language (LANF AExpr) 
+                                                      (k `(variable-reference ,s (non-top ,s0 ,x))))]
+        [(variable-reference ,s (top ,s0 ,x))      (with-output-language (LANF AExpr) 
+                                                     (k `(variable-reference ,s (top ,s0 ,x))))]
         [(begin ,s ,e0 ,e1 ...)
          (define (Expr/id e) (Expr e identity))
          (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])
@@ -3693,7 +3726,9 @@
             (explicit-begin
              (convert-quotations
               (parse
-               (topexpand stx))))))))))))))
+               (let ([t (topexpand stx)])
+                 (displayln (pretty-print (syntax->datum t)))
+                 t))))))))))))))
 
 (define (comp- stx)
   (reset-counter!)
