@@ -6,6 +6,13 @@
 ;; that work with the DOM.
 
 ;;;
+;;; WebRacket Helpers
+;;;
+
+
+
+
+;;;
 ;;; Document
 ;;;
 
@@ -13,6 +20,11 @@
 ;                                                              
 ;     https://developer.mozilla.org/en-US/docs/Web/API/Document
 ;                                                               
+
+(define-foreign js-document-body
+  #:module "document"
+  #:name   "body"
+  (-> () (extern)))
 
 
 (define-foreign js-create-text-node

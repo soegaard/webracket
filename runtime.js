@@ -375,14 +375,14 @@ var imports = {
     },
     document: hasDOM ? {
         // Browser
-        body:               (()                  => document.body),
+        'body':             (()                  => document.body),
         'create-text-node': ((fasl_start)        => document.createTextNode(from_fasl(fasl_start))),
         'append-child!':    ((parent, child)     => parent.appendChild(child)),
         'create-element':   ((local_name)        => document.createElement(from_fasl(local_name))),
         'set-attribute!':   ((elem, name, value) => elem.setAttribute(from_fasl(name), from_fasl(value))),
     }
     : { // Node
-        body()               { throw new Error('DOM not available in this environment'); },
+        'body'()             { throw new Error('DOM not available in this environment'); },
         'create-text-node'() { throw new Error('DOM not available in this environment'); },
         'append-child!'()    { throw new Error('DOM not available in this environment'); },
         'create-element'()   { throw new Error('DOM not available in this environment'); },

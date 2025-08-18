@@ -497,11 +497,6 @@
   variable-reference-constant?
 
   js-log
-  js-document-body     ;; also added in "priminfo.rkt"
-  ; js-append-child!     ;; also added in "priminfo.rkt"
-  ; js-make-element      ;; also added in "priminfo.rkt"
-  ; js-create-text-node  ;; dom.ffi also added in "priminfo.rkt"
-  ; js-set-attribute!    ;; dom.ffi also added in "priminfo.rkt"
 
   ;; 17. Unsafe Operations
   unsafe-fx+

@@ -543,9 +543,9 @@
                (param i32) (param i32))
 
          ;; FFI related imports
-         (func $js-document-body/imported
-               (import "document" "body")
-               (result externref))
+         #;(func $js-document-body/imported
+                 (import "document" "body")
+                 (result externref))
 
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -554,45 +554,6 @@
          (func $raise-unexpected-argument (unreachable))
 
          ,@(current-ffi-funcs-wat) 
-         
-
-         
-         ;; (define-foreign append-child!
-         ;;   "element" "appendChild"
-         ;;   ;; Parameters: two external references which may be null
-         ;;   ;; Result: an external reference which may be null
-         ;;   (ref null extern) (ref null extern) -> (ref null extern))
-
-         ;; Wraps the imported DOM call for use in the runtime
-         #;(func $js-append-child!
-               (param $parent (ref eq))   ;; expected: (ref $External)
-               (param $child  (ref eq))   ;; expected: (ref $External)
-               (result        (ref eq))
-
-               (local $p  (ref null $External))
-               (local $c  (ref null $External))
-               (local $pe externref)
-               (local $ce externref)
-               (local $re externref)
-
-               ;; 1) Type checks (fail early)
-               (if (i32.eqz (ref.test (ref $External) (local.get $parent)))
-                   (then (call $raise-argument-error (local.get $parent))
-                         (unreachable)))
-               (if (i32.eqz (ref.test (ref $External) (local.get $child)))
-                   (then (call $raise-argument-error (local.get $child))
-                         (unreachable)))
-               ;; Cast after checks
-               (local.set $p (ref.cast (ref $External) (local.get $parent)))
-               (local.set $c (ref.cast (ref $External) (local.get $child)))
-               ;; 2) Extract raw externrefs from boxes
-               (local.set $pe (struct.get $External $v (local.get $p)))
-               (local.set $ce (struct.get $External $v (local.get $c)))
-               ;; 3) Call imported function
-               (local.set $re (call $js-append-child!/imported
-                                    (local.get $pe) (local.get $ce)))
-               ;; 4) Wrap returned externref in an $External and return it
-               (struct.new $External (i32.const 0) (local.get $re)))
          
          
          ;; Exceptions
@@ -8028,6 +7989,24 @@
                ;; 10. Return void
                (global.get $void))
 
+         ;;;
+         ;;; FFI Helpers
+         ;;;
+
+         (func $js-log
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (local $len i32)
+
+               (global.set $result-bytes
+                           (call $s-exp->fasl (local.get $v) (global.get $false)))
+               #;(local.set $len (call $copy_bytes_to_memory (i32.const 0)))
+               (local.set $len (call $copy-bytes-to-memory
+                                     (global.get $result-bytes) (i32.const 0)))
+               (call $js_print_fasl (i32.const 0) (local.get $len))
+               (global.get $void))
+         
          (func $copy-bytes-to-memory
                ;; Copy a Racket $Bytes object into linear memory at $ptr.
                (param $bs-any (ref eq))  ;; source: expected (ref $Bytes)
@@ -8100,19 +8079,6 @@
                ;; 5. Return total bytes copied
                (local.get $len))
 
-         (func $js-log
-               (param $v (ref eq))
-               (result (ref eq))
-
-               (local $len i32)
-
-               (global.set $result-bytes
-                          (call $s-exp->fasl (local.get $v) (global.get $false)))
-               #;(local.set $len (call $copy_bytes_to_memory (i32.const 0)))
-               (local.set $len (call $copy-bytes-to-memory
-                                    (global.get $result-bytes) (i32.const 0)))
-               (call $js_print_fasl (i32.const 0) (local.get $len))
-               (global.get $void))
 
          ;;;
          ;;; STRUCTURES
@@ -11670,7 +11636,7 @@
                        (import "ffi" "js_document_body")
                        (result externref))
                
-               (func $js-document-body
+               #;(func $js-document-body
                      (result (ref eq))
                      (struct.new $External
                                  (i32.const 0)

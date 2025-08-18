@@ -33,6 +33,8 @@
   )
 
 
+
+
 (define not-primitives-in-racket
   '(make-empty-hasheq
     string-trim-left
@@ -53,17 +55,29 @@
     
     raise-unbound-variable-reference ; used for unbound variables outside modules
     js-log
-    js-document-body
-    js-create-text-node
-    js-append-child!
-    js-make-element      
-    js-set-attribute!
     ))
+
+
+(require "parameters.rkt"
+         "define-foreign.rkt")
+
+(define ffi-primitives
+  ; cache informations
+  (let ([syms   '()]
+        [old-fs #f])
+    (λ ()
+      (define fs (current-ffi-foreigns))    
+      (cond
+        [(eq? fs old-fs) syms]
+        [else            (set! old-fs fs)
+                         (set! syms (foreigns->primitive-names fs))
+                         syms]))))
 
 (define (primitive->description sym-or-primitive)
   (cond
     [(and (symbol? sym-or-primitive)
-          (member sym-or-primitive not-primitives-in-racket))
+          (or (member sym-or-primitive not-primitives-in-racket)
+              (member sym-or-primitive (ffi-primitives))))
      #f]
     [else
      (define x (if (primitive? sym-or-primitive)
