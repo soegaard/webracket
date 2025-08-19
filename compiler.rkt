@@ -292,6 +292,9 @@
 ;;; CONSTANTS
 ;;;
 
+; See also this list:
+;    https://gist.github.com/jesboat/1859af07d6d7b8521bf40b59a551fd79
+
 (define constants '(null       ; '() racket/base
                     undefined  ;     racket/undefined
                     empty      ; '() racket/list
