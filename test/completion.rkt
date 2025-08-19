@@ -56,18 +56,24 @@
 
 (define (percent->color pct)
   (define hue (inexact->exact (round (* 120 pct))))
-  (format "hsl(~a,100%,50%)" hue))
+  (string-append "hsl(" (string-append (number->string hue) ",100%,50%)")))
+
 
 (define (make-gauge pct)
-  (define color (percent->color pct))
-  (define width (format "~a%%" (round (* 100 pct))))
+  (define color       (percent->color pct))
+  (define pct-str     (number->string (round (* 100 pct))))
+  (define width       (string-append pct-str "%"))
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
         (div (@ (style "background:#ddd;width:100px;height:10px;"))
-             (div (@ (style ,(format "height:100%;width:~a;background:~a;" width color)))))
-        (span ,(format "~a%%" (round (* 100 pct))))))
+             (div (@ (style ,(string-append 
+                              (string-append (string-append "height:100%;width:" width)
+                                             (string-append ";background:" color))
+                              "~;")))
+                  (span ,(string-append pct-str "%"))))))
 
 (define (primitive-li sym)
-  (define checked? (member sym implemented-primitives))
+  (define checked? (memq sym implemented-primitives))
+  ; (define checked? #t) ; TODO TODO TODO
   `(li
      (label
        (input (@ (type "checkbox") (disabled "")
@@ -77,8 +83,13 @@
 (define (section->sxml section)
   (match section
     [(list title primitives)
-     (define implemented (filter (lambda (p) (member p implemented-primitives))
-                                 primitives))
+     #;(define implemented (filter (lambda (p) (memq p implemented-primitives))
+                                   primitives))
+     (define implemented
+       (for/list ([p (in-list primitives)]
+                  #:when (memq p implemented-primitives))
+         p))
+         
      (define pct (if (null? primitives)
                      0
                      (/ (length implemented) (length primitives))))
@@ -86,6 +97,7 @@
         (h2 ,title)
         ,(make-gauge pct)
         (ul ,@(map primitive-li primitives)))]))
+
 
 (define page
   `(div
