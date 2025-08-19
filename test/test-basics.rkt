@@ -217,11 +217,15 @@
             (equal? (procedure-arity list-ref) 2)))
 
  (list "list-tail"
-       (and (equal? (list-tail '(a b c d) 2)    '(c d))
-            (equal? (list-tail '(a b c d) 0)    '(a b c d))
-            (equal? (list-tail '(a b c . d) 1)  '(b c . d))
-            (equal? (list-tail 1 0)             1)
-            (equal? (procedure-arity list-tail) 2)))
+ (and (equal? (list-tail '(a b c d) 2)    '(c d))
+      (equal? (list-tail '(a b c d) 0)    '(a b c d))
+      (equal? (list-tail '(a b c . d) 1)  '(b c . d))
+      (equal? (list-tail 1 0)             1)
+      (equal? (procedure-arity list-tail) 2)))
+
+(list "list*"
+      (and (equal? (list* 1 2 3) (cons 1 (cons 2 3)))
+           (equal? (list* 1 2 (list 3 4)) '(1 2 3 4))))
 
  (list "memq"
        (and (equal? (memq 'a '(a b c))   '(a b c))
