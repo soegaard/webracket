@@ -361,7 +361,7 @@
                                           (i32.const 1)))]
                   ['f64
                    `(local.set ,(import-index i)
-                               (struct.get $Flonum $v (local.get ,(local-index i))))]                  
+                               (struct.get $Flonum $v (local.get ,(local-index i))))]
                   ['string
                    ;; 1) FASL-encode directly to a bytes object (port = #f)
                    ;; 2) Copy bytes to linear memory at $fasl-index
@@ -412,7 +412,7 @@
                   (ref.i31 (i32.shl (local.get $results) (i32.const 1))))]
                [(list 'f64) ; to flonum
                 `(return
-                  (struct.new $Flonum (local.get $results)))]
+                  (struct.new $Flonum (i32.const 0) (local.get $results)))]
                [(list 'string) ; a string is returned as an index into linear memory
                 `(return
                   (call $linear-memory->string (local.get $results)))]
