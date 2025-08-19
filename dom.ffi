@@ -33,6 +33,231 @@
   #:name   "create-text-node"
   (-> (string) (extern)))
 
+(define-foreign js-adopt-node
+  #:module "document"
+  #:name   "adopt-node"
+  (-> (extern) (extern)))
+
+(define-foreign js-caret-range-from-point
+  #:module "document"
+  #:name   "caret-range-from-point"
+  (-> (f64 f64) (extern)))
+
+(define-foreign js-capture-events
+  #:module "document"
+  #:name   "capture-events"
+  (-> () ()))
+
+(define-foreign js-clear
+  #:module "document"
+  #:name   "clear"
+  (-> () ()))
+
+(define-foreign js-close
+  #:module "document"
+  #:name   "close"
+  (-> () ()))
+
+(define-foreign js-create-attribute
+  #:module "document"
+  #:name   "create-attribute"
+  (-> (string) (extern)))
+
+(define-foreign js-create-attribute-ns
+  #:module "document"
+  #:name   "create-attribute-ns"
+  (-> (string string) (extern)))
+
+(define-foreign js-create-cdata-section
+  #:module "document"
+  #:name   "create-cdata-section"
+  (-> (string) (extern)))
+
+(define-foreign js-create-comment
+  #:module "document"
+  #:name   "create-comment"
+  (-> (string) (extern)))
+
+(define-foreign js-create-document-fragment
+  #:module "document"
+  #:name   "create-document-fragment"
+  (-> () (extern)))
+
+(define-foreign js-create-element-ns
+  #:module "document"
+  #:name   "create-element-ns"
+  (-> (string string) (extern)))
+
+(define-foreign js-create-event
+  #:module "document"
+  #:name   "create-event"
+  (-> (string) (extern)))
+
+(define-foreign js-create-expression
+  #:module "document"
+  #:name   "create-expression"
+  (-> (string extern) (extern)))
+
+(define-foreign js-create-ns-resolver
+  #:module "document"
+  #:name   "create-ns-resolver"
+  (-> (extern) (extern)))
+
+(define-foreign js-create-node-iterator
+  #:module "document"
+  #:name   "create-node-iterator"
+  (-> (extern u32 extern) (extern)))
+
+(define-foreign js-create-processing-instruction
+  #:module "document"
+  #:name   "create-processing-instruction"
+  (-> (string string) (extern)))
+
+(define-foreign js-create-range
+  #:module "document"
+  #:name   "create-range"
+  (-> () (extern)))
+
+(define-foreign js-create-tree-walker
+  #:module "document"
+  #:name   "create-tree-walker"
+  (-> (extern u32 extern) (extern)))
+
+(define-foreign js-element-from-point
+  #:module "document"
+  #:name   "element-from-point"
+  (-> (f64 f64) (extern)))
+
+(define-foreign js-elements-from-point
+  #:module "document"
+  #:name   "elements-from-point"
+  (-> (f64 f64) (extern)))
+
+(define-foreign js-enable-style-sheets-for-set
+  #:module "document"
+  #:name   "enable-style-sheets-for-set"
+  (-> (string) ()))
+
+(define-foreign js-evaluate
+  #:module "document"
+  #:name   "evaluate"
+  (-> (string extern extern i32 extern) (extern)))
+
+(define-foreign js-exec-command
+  #:module "document"
+  #:name   "exec-command"
+  (-> (string i32 string) (i32)))
+
+(define-foreign js-exit-fullscreen
+  #:module "document"
+  #:name   "exit-fullscreen"
+  (-> () (extern)))
+
+(define-foreign js-exit-picture-in-picture
+  #:module "document"
+  #:name   "exit-picture-in-picture"
+  (-> () (extern)))
+
+(define-foreign js-exit-pointer-lock
+  #:module "document"
+  #:name   "exit-pointer-lock"
+  (-> () ()))
+
+(define-foreign js-get-element-by-id
+  #:module "document"
+  #:name   "get-element-by-id"
+  (-> (string) (extern)))
+
+(define-foreign js-get-elements-by-class-name
+  #:module "document"
+  #:name   "get-elements-by-class-name"
+  (-> (string) (extern)))
+
+(define-foreign js-get-elements-by-name
+  #:module "document"
+  #:name   "get-elements-by-name"
+  (-> (string) (extern)))
+
+(define-foreign js-get-elements-by-tag-name
+  #:module "document"
+  #:name   "get-elements-by-tag-name"
+  (-> (string) (extern)))
+
+(define-foreign js-get-elements-by-tag-name-ns
+  #:module "document"
+  #:name   "get-elements-by-tag-name-ns"
+  (-> (string string) (extern)))
+
+(define-foreign js-get-selection
+  #:module "document"
+  #:name   "get-selection"
+  (-> () (extern)))
+
+(define-foreign js-has-focus
+  #:module "document"
+  #:name   "has-focus"
+  (-> () (i32)))
+
+(define-foreign js-import-node
+  #:module "document"
+  #:name   "import-node"
+  (-> (extern i32) (extern)))
+
+(define-foreign js-open
+  #:module "document"
+  #:name   "open"
+  (-> () (extern)))
+
+(define-foreign js-query-command-enabled
+  #:module "document"
+  #:name   "query-command-enabled"
+  (-> (string) (i32)))
+
+(define-foreign js-query-command-indeterm
+  #:module "document"
+  #:name   "query-command-indeterm"
+  (-> (string) (i32)))
+
+(define-foreign js-query-command-state
+  #:module "document"
+  #:name   "query-command-state"
+  (-> (string) (i32)))
+
+(define-foreign js-query-command-supported
+  #:module "document"
+  #:name   "query-command-supported"
+  (-> (string) (i32)))
+
+(define-foreign js-query-command-value
+  #:module "document"
+  #:name   "query-command-value"
+  (-> (string) (extern)))
+
+(define-foreign js-query-selector
+  #:module "document"
+  #:name   "query-selector"
+  (-> (string) (extern)))
+
+(define-foreign js-query-selector-all
+  #:module "document"
+  #:name   "query-selector-all"
+  (-> (string) (extern)))
+
+(define-foreign js-release-events
+  #:module "document"
+  #:name   "release-events"
+  (-> () ()))
+
+(define-foreign js-write
+  #:module "document"
+  #:name   "write"
+  (-> (string) ()))
+
+(define-foreign js-writeln
+  #:module "document"
+  #:name   "writeln"
+  (-> (string) ()))
+
 
 ;;;
 ;;; Element
