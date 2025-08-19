@@ -486,16 +486,18 @@ var imports = {
         'has-focus':                (()                               => document.hasFocus() ? 1 : 0),
         'import-node':              ((node, deep)                     => document.importNode(node, !!deep)),
         'open':                     (()                               => document.open()),
-        'query-command-enabled':    ((cmd)                            => document.queryCommandEnabled(from_fasl(cmd)) ? 1 : 0),
-        'query-command-indeterm':   ((cmd)                            => document.queryCommandIndeterm(from_fasl(cmd)) ? 1 : 0),
-        'query-command-state':      ((cmd)                            => document.queryCommandState(from_fasl(cmd)) ? 1 : 0),
-        'query-command-supported':  ((cmd)                            => document.queryCommandSupported(from_fasl(cmd)) ? 1 : 0),
-        'query-command-value':      ((cmd)                            => document.queryCommandValue(from_fasl(cmd))),
+        // Deprecated:
+        // 'query-command-enabled':    ((cmd)                            => document.queryCommandEnabled(from_fasl(cmd)) ? 1 : 0),
+        // 'query-command-indeterm':   ((cmd)                            => document.queryCommandIndeterm(from_fasl(cmd)) ? 1 : 0),
+        // 'query-command-state':      ((cmd)                            => document.queryCommandState(from_fasl(cmd)) ? 1 : 0),
+        // 'query-command-supported':  ((cmd)                            => document.queryCommandSupported(from_fasl(cmd)) ? 1 : 0),
+        // 'query-command-value':      ((cmd)                            => document.queryCommandValue(from_fasl(cmd))),
         'query-selector':           ((sel)                            => document.querySelector(from_fasl(sel))),
         'query-selector-all':       ((sel)                            => document.querySelectorAll(from_fasl(sel))),
         'release-events':           (()                               => document.releaseEvents()),
-        'write':                    ((text)                           => document.write(from_fasl(text))),
-        'writeln':                  ((text)                           => document.writeln(from_fasl(text))),
+        // Deprecated
+        // 'write':                    ((text)                           => document.write(from_fasl(text))),
+        // 'writeln':                  ((text)                           => document.writeln(from_fasl(text))),
     }
     : { // Node
         'body'()                     { throw new Error('DOM not available in this environment'); },

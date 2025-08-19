@@ -1,6 +1,6 @@
 (define sxml
   '(section
-    (h1 (@ (style "color: blue")) "Hello #racket !")
+    (h1 (@ (style "color: blue")) "Hello #racket !!!!")
     (p "Test: calling JavaScript from WebRacket")
     (small "Made with WebRacket")))
 

@@ -38,18 +38,19 @@
   #:name   "adopt-node"
   (-> (extern) (extern)))
 
-; TODO
-#;(define-foreign js-caret-range-from-point
+(define-foreign js-caret-range-from-point
   #:module "document"
   #:name   "caret-range-from-point"
   (-> (f64 f64) (extern)))
 
-(define-foreign js-capture-events
+; Deprecated
+#;(define-foreign js-capture-events
   #:module "document"
   #:name   "capture-events"
   (-> () ()))
 
-(define-foreign js-clear
+; Deprecated
+#;(define-foreign js-clear
   #:module "document"
   #:name   "clear"
   (-> () ()))
@@ -89,7 +90,8 @@
   #:name   "create-element-ns"
   (-> (string string) (extern)))
 
-(define-foreign js-create-event
+; Deprecated
+#;(define-foreign js-create-event
   #:module "document"
   #:name   "create-event"
   (-> (string) (extern)))
@@ -99,16 +101,16 @@
   #:name   "create-expression"
   (-> (string extern) (extern)))
 
-(define-foreign js-create-ns-resolver
+; Deprecated
+#;(define-foreign js-create-ns-resolver
   #:module "document"
   #:name   "create-ns-resolver"
   (-> (extern) (extern)))
 
-; TODO
-#;(define-foreign js-create-node-iterator
+(define-foreign js-create-node-iterator
   #:module "document"
   #:name   "create-node-iterator"
-  (-> (extern i32 extern) (extern)))  ; was u32  (it's a bitmask)
+  (-> (extern u32 extern) (extern)))  ; was u32  (it's a bitmask)
 
 (define-foreign js-create-processing-instruction
   #:module "document"
@@ -120,35 +122,33 @@
   #:name   "create-range"
   (-> () (extern)))
 
-; TODO
-#;(define-foreign js-create-tree-walker
+(define-foreign js-create-tree-walker
   #:module "document"
   #:name   "create-tree-walker"
-  (-> (extern i32 extern) (extern)))  ; was u32
+  (-> (extern u32 extern) (extern)))
 
-; TODO check f64
-#;(define-foreign js-element-from-point
+(define-foreign js-element-from-point
   #:module "document"
   #:name   "element-from-point"
   (-> (f64 f64) (extern)))
 
-; TODO
-#;(define-foreign js-elements-from-point
+(define-foreign js-elements-from-point
   #:module "document"
   #:name   "elements-from-point"
   (-> (f64 f64) (extern)))
 
+; Deprecated
 (define-foreign js-enable-style-sheets-for-set
   #:module "document"
   #:name   "enable-style-sheets-for-set"
   (-> (string) ()))
 
-; TODO check i32
-#;(define-foreign js-evaluate
+(define-foreign js-evaluate
   #:module "document"
   #:name   "evaluate"
   (-> (string extern extern i32 extern) (extern)))
 
+; Deprecated
 #;(define-foreign js-exec-command
   #:module "document"
   #:name   "exec-command"
@@ -199,12 +199,12 @@
   #:name   "get-selection"
   (-> () (extern)))
 
-#;(define-foreign js-has-focus
+(define-foreign js-has-focus
   #:module "document"
   #:name   "has-focus"
   (-> () (i32)))
 
-#;(define-foreign js-import-node
+(define-foreign js-import-node
   #:module "document"
   #:name   "import-node"
   (-> (extern i32) (extern)))
@@ -214,27 +214,32 @@
   #:name   "open"
   (-> () (extern)))
 
-;; (define-foreign js-query-command-enabled
-;;   #:module "document"
-;;   #:name   "query-command-enabled"
-;;   (-> (string) (i32)))
+; Deprecated
+#;(define-foreign js-query-command-enabled
+  #:module "document"
+  #:name   "query-command-enabled"
+  (-> (string) (i32)))
 
-;; (define-foreign js-query-command-indeterm
-;;   #:module "document"
-;;   #:name   "query-command-indeterm"
-;;   (-> (string) (i32)))
+; Deprecated
+#;(define-foreign js-query-command-indeterm
+  #:module "document"
+  #:name   "query-command-indeterm"
+  (-> (string) (i32)))
 
-;; (define-foreign js-query-command-state
-;;   #:module "document"
-;;   #:name   "query-command-state"
-;;   (-> (string) (i32)))
+; Deprecated 
+#;(define-foreign js-query-command-state
+  #:module "document"
+  #:name   "query-command-state"
+  (-> (string) (i32)))
 
-;; (define-foreign js-query-command-supported
-;;   #:module "document"
-;;   #:name   "query-command-supported"
-;;   (-> (string) (i32)))
+; Deprecated
+#;(define-foreign js-query-command-supported
+  #:module "document"
+  #:name   "query-command-supported"
+  (-> (string) (i32)))
 
-(define-foreign js-query-command-value
+; Deprecated
+#;(define-foreign js-query-command-value
   #:module "document"
   #:name   "query-command-value"
   (-> (string) (extern)))
@@ -254,12 +259,14 @@
   #:name   "release-events"
   (-> () ()))
 
-(define-foreign js-write
+; Deprecated
+#;(define-foreign js-write
   #:module "document"
   #:name   "write"
   (-> (string) ()))
 
-(define-foreign js-writeln
+; Deprecated
+#;(define-foreign js-writeln
   #:module "document"
   #:name   "writeln"
   (-> (string) ()))

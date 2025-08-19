@@ -104,9 +104,12 @@
 ;; 3.18 Iterations and comprehensions
 (require (only-in racket/base
                   for for/list for/vector
-                  in-list in-vector))
+                  in-list in-vector
+                  in-range in-naturals
+                  ))
 (provide for for/list for/vector
-         in-list in-vector)
+         in-list in-vector
+         in-range in-naturals)
 
 ;; 3.19 Continuations marks
 ;; (require (only-in racket/base with-continuation-mark))

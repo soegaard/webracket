@@ -214,7 +214,7 @@
     [(value)  'i32]         ; index into linear memory
     [(extern) 'externref]
     [(i32)    'i32]
-    [(u32)    'u32]
+    [(u32)    'i32]
     [(f64)    'f64]
     [else
      (error 'argument-type->wasm-import-parameter
@@ -231,7 +231,7 @@
               [(value)  'i32]         ; index into linear memory
               [(extern) 'externref]
               [(i32)    'i32]
-              [(u32)    'u32]
+              [(u32)    'i32]
               [(f64)    'f64]
               [else
                (error 'result-type->wasm-import-result
@@ -278,7 +278,6 @@
             ;; Result
             (result (ref eq))              ;; todo - just one return value for now
 
-
             ;; Locals
             
             ;;   - each argument will be type checked and converted
@@ -302,9 +301,11 @@
                     (local $b          (ref $Bytes))  ;; casted bytes
                     (local $len        i32))          ;; length just copied
                   '())
-            ;; - a local to hold the results
-            (local $results externref)
-
+            ;; - a local to hold the results (only if one is expected)
+            ,@(match result-types
+                [(list t)
+                 `((local $results ,(argument-type->wasm-import-parameter t)))]
+                [_ '()])
             
             ;; 0. Type check - fail early
             ,@(for/list ([t argument-types] [i (in-naturals)])
@@ -320,19 +321,14 @@
                 (match t
                   ['i32 ; signed
                    `(local.set ,(local-index i)
-                               (i32.shr_s
-                                (i31.get_s (ref.cast (ref i31) (local.get ,(param-index i))))
-                                (i32.const 1)))]
+                               (ref.cast (ref i31) (local.get ,(param-index i))))]
                   ['u32 ; unsigned
                    `(local.set ,(local-index i)
-                               (i32.shr_u
-                                (i31.get_u (ref.cast (ref i31) (local.get ,(param-index i))))
-                                (i32.const 1)))]
+                               (ref.cast (ref i31) (local.get ,(param-index i))))]
                   ['f64
                    `(local.set ,(local-index i)
-                               (struct.get $Flonum $v
-                                           (ref.cast (ref $Flonum)
-                                                     (local.get ,(param-index i)))))]
+                               (ref.cast (ref $Flonum)
+                                                     (local.get ,(param-index i))))]
                   ['string
                    `(local.set ,(local-index i)
                                (ref.cast (ref $String)
@@ -353,9 +349,19 @@
             
             ,@(for/list ([t argument-types] [i (in-naturals)])
                 (match t
-                  [(or 'i32 'u32 'f64)
+                  ['i32
                    ;; pass-through primitives
-                   `(local.set ,(import-index i) (local.get ,(local-index i)))]
+                   `(local.set ,(import-index i)
+                               (i32.shr_s (i31.get_s (local.get ,(local-index i)))
+                                          (i32.const 1)))]
+                  ['u32
+                   ;; pass-through primitives
+                   `(local.set ,(import-index i)
+                               (i32.shr_u (i31.get_u (local.get ,(local-index i)))
+                                          (i32.const 1)))]
+                  ['f64
+                   `(local.set ,(import-index i)
+                               (struct.get $Flonum $v (local.get ,(local-index i))))]                  
                   ['string
                    ;; 1) FASL-encode directly to a bytes object (port = #f)
                    ;; 2) Copy bytes to linear memory at $fasl-index
@@ -400,24 +406,17 @@
             ,(match result-types
                [(list 'i32) ; to fixnum
                 `(return
-                  (ref.i31
-                   (i32.shl
-                    (ref.cast (ref i31) (local.get $results))
-                    (i32.const 1))))]
+                  (ref.i31 (i32.shl (local.get $results) (i32.const 1))))]
                [(list 'u32) ; to fixnum
                 `(return
-                  (ref.i31
-                   (i32.shl
-                    (ref.cast (ref i31) (local.get $results))
-                    (i32.const 1))))]
+                  (ref.i31 (i32.shl (local.get $results) (i32.const 1))))]
                [(list 'f64) ; to flonum
                 `(return
-                  (struct.new $Flonum
-                              (ref.cast f64 (local.get $results))))]
-               [(list 'string) ; todo - a string is returned as an index into linear memory
+                  (struct.new $Flonum (local.get $results)))]
+               [(list 'string) ; a string is returned as an index into linear memory
                 `(return
                   (call $linear-memory->string (local.get $results)))]
-               [(list 'value) ; todo - a value is returned as an index into linear memory
+               [(list 'value) ; a value is returned as an index into linear memory
                 `(return
                   (call $linear-memory->value (local.get $results)))]
                [(list 'extern) ; wrap externref in our External box
