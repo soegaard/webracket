@@ -1,5 +1,3 @@
-#lang racket
-
 (define (add-children elem children)
   (for ([child (in-list children)])
     (js-append-child! elem (sxml->dom child))))
@@ -66,7 +64,7 @@
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
         (div (@ (style "background:#ddd;width:100px;height:10px;"))
              (div (@ (style ,(format "height:100%;width:~a;background:~a;" width color)))))
-        (span ,(format "~a%%" (round (* 100 pct)))))
+        (span ,(format "~a%%" (round (* 100 pct))))))
 
 (define (primitive-li sym)
   (define checked? (member sym implemented-primitives))
