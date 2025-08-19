@@ -3044,6 +3044,7 @@
                                            [(fl-)      `(call ,(Prim pr) (global.get $flzero) ,(AExpr (first ae1)))]
                                            [(fx/)      `(call ,(Prim pr) (global.get $one)    ,(AExpr (first ae1)))]
                                            [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
+                                           [(list*)    (AExpr (first ae1))]
                                            [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
                                       [2 (case sym
                                            [(+ - *)       `(call ,(Prim pr)
@@ -3056,7 +3057,7 @@
                                            [else   `(call ,(Prim pr)
                                                           ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
                                       [_ (case sym
-                                           [(+ fx+ fl+ 
+                                           [(+ fx+ fl+
                                              * fx* fl*
                                              - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
                                             (let loop ([aes (AExpr* ae1)])
@@ -3066,6 +3067,12 @@
                                                 [(list* ae0 ae1 aes) `(call ,(Prim pr)
                                                                       (call ,(Prim pr) ,ae0 ,ae1)
                                                                       ,(loop aes))]))]
+                                           [(list*)
+                                            (let loop ([aes (AExpr* ae1)])
+                                              (match aes
+                                                [(list v)            v]
+                                                [(list v1 v2)       `(call ,(Prim pr) ,v1 ,v2)]
+                                                [(list* v0 v1 vs)   `(call ,(Prim pr) ,v0 ,(loop (cons v1 vs))) ]))]
                                            [else
                                             `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
                                    (match dd

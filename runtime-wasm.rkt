@@ -5710,6 +5710,9 @@
          (func $cons (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
 
+         (func $list* (param $a (ref eq)) (param $tail (ref eq)) (result (ref eq))
+               (struct.new $Pair (i32.const 0) (local.get $a) (local.get $tail)))
+
          (func $car (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
                    (then (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))))
