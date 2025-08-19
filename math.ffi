@@ -1,0 +1,184 @@
+;;; 
+;;; Math
+;;;
+
+;; This file declares various JavaScript functions
+;; that work with the Math object.
+
+;; See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+
+(define-foreign js-math-abs
+  #:module "math"
+  #:name   "abs"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-acos
+  #:module "math"
+  #:name   "acos"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-acosh
+  #:module "math"
+  #:name   "acosh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-asin
+  #:module "math"
+  #:name   "asin"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-asinh
+  #:module "math"
+  #:name   "asinh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-atan
+  #:module "math"
+  #:name   "atan"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-atan2
+  #:module "math"
+  #:name   "atan2"
+  (-> (f64 f64) (f64)))
+
+(define-foreign js-math-atanh
+  #:module "math"
+  #:name   "atanh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-cbrt
+  #:module "math"
+  #:name   "cbrt"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-ceil
+  #:module "math"
+  #:name   "ceil"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-clz32
+  #:module "math"
+  #:name   "clz32"
+  (-> (u32) (u32)))
+
+(define-foreign js-math-cos
+  #:module "math"
+  #:name   "cos"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-cosh
+  #:module "math"
+  #:name   "cosh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-exp
+  #:module "math"
+  #:name   "exp"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-expm1
+  #:module "math"
+  #:name   "expm1"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-floor
+  #:module "math"
+  #:name   "floor"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-fround
+  #:module "math"
+  #:name   "fround"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-hypot
+  #:module "math"
+  #:name   "hypot"
+  (-> (f64 f64) (f64)))
+
+(define-foreign js-math-imul
+  #:module "math"
+  #:name   "imul"
+  (-> (i32 i32) (i32)))
+
+(define-foreign js-math-log
+  #:module "math"
+  #:name   "log"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-log10
+  #:module "math"
+  #:name   "log10"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-log1p
+  #:module "math"
+  #:name   "log1p"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-log2
+  #:module "math"
+  #:name   "log2"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-max
+  #:module "math"
+  #:name   "max"
+  (-> (f64 f64) (f64)))
+
+(define-foreign js-math-min
+  #:module "math"
+  #:name   "min"
+  (-> (f64 f64) (f64)))
+
+(define-foreign js-math-pow
+  #:module "math"
+  #:name   "pow"
+  (-> (f64 f64) (f64)))
+
+(define-foreign js-math-random
+  #:module "math"
+  #:name   "random"
+  (-> () (f64)))
+
+(define-foreign js-math-round
+  #:module "math"
+  #:name   "round"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-sign
+  #:module "math"
+  #:name   "sign"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-sin
+  #:module "math"
+  #:name   "sin"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-sinh
+  #:module "math"
+  #:name   "sinh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-sqrt
+  #:module "math"
+  #:name   "sqrt"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-tan
+  #:module "math"
+  #:name   "tan"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-tanh
+  #:module "math"
+  #:name   "tanh"
+  (-> (f64) (f64)))
+
+(define-foreign js-math-trunc
+  #:module "math"
+  #:name   "trunc"
+  (-> (f64) (f64)))
+
