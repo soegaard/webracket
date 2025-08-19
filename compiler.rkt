@@ -3727,7 +3727,7 @@
              (convert-quotations
               (parse
                (let ([t (topexpand stx)])
-                 #;(displayln (pretty-print (syntax->datum t)))
+                 ; (displayln (pretty-print (syntax->datum t)))
                  t))))))))))))))
 
 (define (comp- stx)

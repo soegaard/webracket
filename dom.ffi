@@ -23,15 +23,16 @@
   #:name   "body"
   (-> () (extern)))
 
+(define-foreign js-create-element
+  #:module "document"
+  #:name   "create-element"
+  (-> (string) (extern)))
+
 (define-foreign js-create-text-node
   #:module "document"
   #:name   "create-text-node"
   (-> (string) (extern)))
 
-(define-foreign js-create-element
-  #:module "document"
-  #:name   "create-element"
-  (-> (string) (extern)))
 
 ;;;
 ;;; Element
@@ -41,10 +42,6 @@
 ;                                                              
 ;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
 ;                                                              
-(define-foreign js-set-attribute!
-  #:module "document"
-  #:name   "set-attribute!"
-  (-> (extern string string) ()))
 
 (define-foreign js-append-child!
   #:module "element"
@@ -52,4 +49,10 @@
   ;; Parameters: two external references which may be null
   ;; Result: an external reference which may be null
   (-> (extern extern) (extern)))
+
+(define-foreign js-set-attribute!
+  #:module "element"
+  #:name   "set-attribute!"
+  (-> (extern string string) ()))
+
 
