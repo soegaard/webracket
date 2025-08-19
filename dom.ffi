@@ -293,4 +293,251 @@
   #:name   "set-attribute!"
   (-> (extern string string) ()))
 
+(define-foreign js-after!
+  #:module "element"
+  #:name   "after!"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-animate
+  #:module "element"
+  #:name   "animate"
+  ;; The options argument is optional.
+  (-> (extern extern extern) (extern)))
+
+(define-foreign js-append!
+  #:module "element"
+  #:name   "append!"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-attach-shadow!
+  #:module "element"
+  #:name   "attach-shadow!"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-before!
+  #:module "element"
+  #:name   "before!"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-closest
+  #:module "element"
+  #:name   "closest"
+  (-> (extern string) (extern)))
+
+(define-foreign js-computed-style-map
+  #:module "element"
+  #:name   "computed-style-map"
+  (-> (extern) (extern)))
+
+(define-foreign js-get-animations
+  #:module "element"
+  #:name   "get-animations"
+  (-> (extern) (extern)))
+
+(define-foreign js-get-attribute
+  #:module "element"
+  #:name   "get-attribute"
+  (-> (extern string) (extern)))
+
+(define-foreign js-get-attribute-ns
+  #:module "element"
+  #:name   "get-attribute-ns"
+  (-> (extern string string) (extern)))
+
+(define-foreign js-get-attribute-names
+  #:module "element"
+  #:name   "get-attribute-names"
+  (-> (extern) (extern)))
+
+(define-foreign js-get-attribute-node
+  #:module "element"
+  #:name   "get-attribute-node"
+  (-> (extern string) (extern)))
+
+(define-foreign js-get-attribute-node-ns
+  #:module "element"
+  #:name   "get-attribute-node-ns"
+  (-> (extern string string) (extern)))
+
+(define-foreign js-get-bounding-client-rect
+  #:module "element"
+  #:name   "get-bounding-client-rect"
+  (-> (extern) (extern)))
+
+(define-foreign js-get-client-rects
+  #:module "element"
+  #:name   "get-client-rects"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-get-elements-by-class-name
+  #:module "element"
+  #:name   "get-elements-by-class-name"
+  (-> (extern string) (extern)))
+
+(define-foreign js-element-get-elements-by-tag-name
+  #:module "element"
+  #:name   "get-elements-by-tag-name"
+  (-> (extern string) (extern)))
+
+(define-foreign js-element-get-elements-by-tag-name-ns
+  #:module "element"
+  #:name   "get-elements-by-tag-name-ns"
+  (-> (extern string string) (extern)))
+
+(define-foreign js-has-attribute
+  #:module "element"
+  #:name   "has-attribute"
+  (-> (extern string) (i32)))
+
+(define-foreign js-has-attribute-ns
+  #:module "element"
+  #:name   "has-attribute-ns"
+  (-> (extern string string) (i32)))
+
+(define-foreign js-has-attributes
+  #:module "element"
+  #:name   "has-attributes"
+  (-> (extern) (i32)))
+
+(define-foreign js-has-pointer-capture
+  #:module "element"
+  #:name   "has-pointer-capture"
+  (-> (extern i32) (i32)))
+
+(define-foreign js-insert-adjacent-element!
+  #:module "element"
+  #:name   "insert-adjacent-element!"
+  (-> (extern string extern) (extern)))
+
+(define-foreign js-insert-adjacent-html!
+  #:module "element"
+  #:name   "insert-adjacent-html!"
+  (-> (extern string string) ()))
+
+(define-foreign js-insert-adjacent-text!
+  #:module "element"
+  #:name   "insert-adjacent-text!"
+  (-> (extern string string) ()))
+
+(define-foreign js-matches
+  #:module "element"
+  #:name   "matches"
+  (-> (extern string) (i32)))
+
+(define-foreign js-prepend!
+  #:module "element"
+  #:name   "prepend!"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-element-query-selector
+  #:module "element"
+  #:name   "query-selector"
+  (-> (extern string) (extern)))
+
+(define-foreign js-element-query-selector-all
+  #:module "element"
+  #:name   "query-selector-all"
+  (-> (extern string) (extern)))
+
+(define-foreign js-release-pointer-capture!
+  #:module "element"
+  #:name   "release-pointer-capture!"
+  (-> (extern i32) ()))
+
+(define-foreign js-remove!
+  #:module "element"
+  #:name   "remove!"
+  (-> (extern) ()))
+
+(define-foreign js-remove-attribute!
+  #:module "element"
+  #:name   "remove-attribute!"
+  (-> (extern string) ()))
+
+(define-foreign js-remove-attribute-ns!
+  #:module "element"
+  #:name   "remove-attribute-ns!"
+  (-> (extern string string) ()))
+
+(define-foreign js-remove-attribute-node!
+  #:module "element"
+  #:name   "remove-attribute-node!"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-replace-children!
+  #:module "element"
+  #:name   "replace-children!"
+  ;; Variadic in JavaScript; this version handles a single node.
+  (-> (extern extern) ()))
+
+(define-foreign js-replace-with!
+  #:module "element"
+  #:name   "replace-with!"
+  ;; Variadic in JavaScript; this version handles a single node.
+  (-> (extern extern) ()))
+
+(define-foreign js-request-fullscreen
+  #:module "element"
+  #:name   "request-fullscreen"
+  (-> (extern) (extern)))
+
+(define-foreign js-request-pointer-lock
+  #:module "element"
+  #:name   "request-pointer-lock"
+  (-> (extern) ()))
+
+(define-foreign js-scroll!
+  #:module "element"
+  #:name   "scroll!"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-scroll-by!
+  #:module "element"
+  #:name   "scroll-by!"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-scroll-into-view!
+  #:module "element"
+  #:name   "scroll-into-view!"
+  ;; Only the boolean argument variant is supported.
+  (-> (extern i32) ()))
+
+(define-foreign js-scroll-to!
+  #:module "element"
+  #:name   "scroll-to!"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-set-attribute-ns!
+  #:module "element"
+  #:name   "set-attribute-ns!"
+  (-> (extern string string string) ()))
+
+(define-foreign js-set-attribute-node!
+  #:module "element"
+  #:name   "set-attribute-node!"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-set-attribute-node-ns!
+  #:module "element"
+  #:name   "set-attribute-node-ns!"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-set-pointer-capture!
+  #:module "element"
+  #:name   "set-pointer-capture!"
+  (-> (extern i32) ()))
+
+(define-foreign js-toggle-attribute!
+  #:module "element"
+  #:name   "toggle-attribute!"
+  ;; The force argument is optional; pass 0/1. Undefined not supported.
+  (-> (extern string i32) (i32)))
+
 
