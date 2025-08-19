@@ -543,17 +543,12 @@
                (param i32) (param i32))
 
          ;; FFI related imports
-         #;(func $js-document-body/imported
-                 (import "document" "body")
-                 (result externref))
-
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
-         (func $raise-expected-string (unreachable))
-
+         (func $raise-expected-string     (unreachable))
          (func $raise-unexpected-argument (unreachable))
 
-         ,@(current-ffi-funcs-wat) 
+         ,@(current-ffi-funcs-wat)   ; generated from "driver.rkt" in "define-foreign.rkt"
          
          
          ;; Exceptions

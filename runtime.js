@@ -373,25 +373,26 @@ var imports = {
         console.log(v);
       })
     },
-    document: hasDOM ? {
-        // Browser
+    'document': hasDOM ? {
+        // Document
         'body':             (()                  => document.body),
         'create-text-node': ((fasl_start)        => document.createTextNode(from_fasl(fasl_start))),
         'create-element':   ((local_name)        => document.createElement(from_fasl(local_name))),
+        // Element
+        'set-attribute!':   ((elem, name, value) => elem.setAttribute(from_fasl(name), from_fasl(value))),        
     }
     : { // Node
         'body'()             { throw new Error('DOM not available in this environment'); },
         'create-text-node'() { throw new Error('DOM not available in this environment'); },
         'create-element'()   { throw new Error('DOM not available in this environment'); },
-    },
-    element: hasDOM ? {
-        'append-child!':    ((parent, child)     => parent.appendChild(child)),
-        'set-attribute!':   ((elem, name, value) => elem.setAttribute(from_fasl(name), from_fasl(value))),
-    }
-    : { // Node
-        'append-child!'()    { throw new Error('DOM not available in this environment'); },
         'set-attribute!'()   { throw new Error('DOM not available in this environment'); },
+    },
+    'element': hasDOM ? {
+        'append-child!':    ((parent, child)     => parent.appendChild(child)),
+    } : {
+        'append-child!'()    { throw new Error('DOM not available in this environment'); },
     }
+
 };
 
 const wasmModule
@@ -408,8 +409,3 @@ const wasmModule
                           const bytes  = new Uint8Array(memory.buffer, 0, result);
                           console.log(new TextDecoder().decode(bytes));
                         });
-
-
-
-
-

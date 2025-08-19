@@ -23,7 +23,6 @@
   #:name   "body"
   (-> () (extern)))
 
-
 (define-foreign js-create-text-node
   #:module "document"
   #:name   "create-text-node"
@@ -43,7 +42,7 @@
 ;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
 ;                                                              
 (define-foreign js-set-attribute!
-  #:module "element"
+  #:module "document"
   #:name   "set-attribute!"
   (-> (extern string string) ()))
 
