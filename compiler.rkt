@@ -401,6 +401,7 @@
   reverse memq
   alt-reverse ; used in expansion of for/list
   map for-each
+  list*
   
   void?
   make-void  ; zero arguments
