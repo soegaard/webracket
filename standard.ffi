@@ -1,0 +1,481 @@
+;;;
+;;; Standard
+;;;
+
+;; This file declares standard JavaScript global properties,
+;; functions, and objects.
+
+;; See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+
+;;;
+;;; Value properties
+;;;
+
+(define-foreign js-global-this
+  #:module "standard"
+  #:name   "global-this"
+  (-> () (extern)))
+
+(define-foreign js-infinity
+  #:module "standard"
+  #:name   "infinity"
+  (-> () (f64)))
+
+(define-foreign js-nan
+  #:module "standard"
+  #:name   "nan"
+  (-> () (f64)))
+
+(define-foreign js-undefined
+  #:module "standard"
+  #:name   "undefined"
+  (-> () (extern)))
+
+;;;
+;;; Function properties
+;;;
+
+(define-foreign js-eval
+  #:module "standard"
+  #:name   "eval"
+  (-> (string) (extern)))
+
+(define-foreign js-is-finite
+  #:module "standard"
+  #:name   "is-finite"
+  (-> (f64) (i32)))
+
+(define-foreign js-is-nan
+  #:module "standard"
+  #:name   "is-nan"
+  (-> (f64) (i32)))
+
+(define-foreign js-parse-float
+  #:module "standard"
+  #:name   "parse-float"
+  (-> (string) (f64)))
+
+(define-foreign js-parse-int
+  #:module "standard"
+  #:name   "parse-int"
+  (-> (string) (f64)))
+
+(define-foreign js-decode-uri
+  #:module "standard"
+  #:name   "decode-uri"
+  (-> (string) (extern)))
+
+(define-foreign js-decode-uri-component
+  #:module "standard"
+  #:name   "decode-uri-component"
+  (-> (string) (extern)))
+
+(define-foreign js-encode-uri
+  #:module "standard"
+  #:name   "encode-uri"
+  (-> (string) (extern)))
+
+(define-foreign js-encode-uri-component
+  #:module "standard"
+  #:name   "encode-uri-component"
+  (-> (string) (extern)))
+
+(define-foreign js-escape
+  #:module "standard"
+  #:name   "escape"
+  (-> (string) (extern)))
+
+(define-foreign js-unescape
+  #:module "standard"
+  #:name   "unescape"
+  (-> (string) (extern)))
+
+;;;
+;;; Fundamental objects
+;;;
+
+(define-foreign js-object
+  #:module "standard"
+  #:name   "object"
+  (-> () (extern)))
+
+(define-foreign js-function
+  #:module "standard"
+  #:name   "function"
+  (-> () (extern)))
+
+(define-foreign js-boolean
+  #:module "standard"
+  #:name   "boolean"
+  (-> () (extern)))
+
+(define-foreign js-symbol
+  #:module "standard"
+  #:name   "symbol"
+  (-> () (extern)))
+
+;;;
+;;; Error objects
+;;;
+
+(define-foreign js-error
+  #:module "standard"
+  #:name   "error"
+  (-> () (extern)))
+
+(define-foreign js-aggregate-error
+  #:module "standard"
+  #:name   "aggregate-error"
+  (-> () (extern)))
+
+(define-foreign js-eval-error
+  #:module "standard"
+  #:name   "eval-error"
+  (-> () (extern)))
+
+(define-foreign js-range-error
+  #:module "standard"
+  #:name   "range-error"
+  (-> () (extern)))
+
+(define-foreign js-reference-error
+  #:module "standard"
+  #:name   "reference-error"
+  (-> () (extern)))
+
+(define-foreign js-suppressed-error
+  #:module "standard"
+  #:name   "suppressed-error"
+  (-> () (extern)))
+
+(define-foreign js-syntax-error
+  #:module "standard"
+  #:name   "syntax-error"
+  (-> () (extern)))
+
+(define-foreign js-type-error
+  #:module "standard"
+  #:name   "type-error"
+  (-> () (extern)))
+
+(define-foreign js-uri-error
+  #:module "standard"
+  #:name   "uri-error"
+  (-> () (extern)))
+
+(define-foreign js-internal-error
+  #:module "standard"
+  #:name   "internal-error"
+  (-> () (extern)))
+
+;;;
+;;; Numbers and dates
+;;;
+
+(define-foreign js-number
+  #:module "standard"
+  #:name   "number"
+  (-> () (extern)))
+
+(define-foreign js-bigint
+  #:module "standard"
+  #:name   "bigint"
+  (-> () (extern)))
+
+(define-foreign js-math
+  #:module "standard"
+  #:name   "math"
+  (-> () (extern)))
+
+(define-foreign js-date
+  #:module "standard"
+  #:name   "date"
+  (-> () (extern)))
+
+(define-foreign js-temporal
+  #:module "standard"
+  #:name   "temporal"
+  (-> () (extern)))
+
+;;;
+;;; Text processing
+;;;
+
+(define-foreign js-string
+  #:module "standard"
+  #:name   "string"
+  (-> () (extern)))
+
+(define-foreign js-reg-exp
+  #:module "standard"
+  #:name   "reg-exp"
+  (-> () (extern)))
+
+;;;
+;;; Indexed collections
+;;;
+
+(define-foreign js-array
+  #:module "standard"
+  #:name   "array"
+  (-> () (extern)))
+
+(define-foreign js-typed-array
+  #:module "standard"
+  #:name   "typed-array"
+  (-> () (extern)))
+
+(define-foreign js-int8-array
+  #:module "standard"
+  #:name   "int8-array"
+  (-> () (extern)))
+
+(define-foreign js-uint8-array
+  #:module "standard"
+  #:name   "uint8-array"
+  (-> () (extern)))
+
+(define-foreign js-uint8-clamped-array
+  #:module "standard"
+  #:name   "uint8-clamped-array"
+  (-> () (extern)))
+
+(define-foreign js-int16-array
+  #:module "standard"
+  #:name   "int16-array"
+  (-> () (extern)))
+
+(define-foreign js-uint16-array
+  #:module "standard"
+  #:name   "uint16-array"
+  (-> () (extern)))
+
+(define-foreign js-int32-array
+  #:module "standard"
+  #:name   "int32-array"
+  (-> () (extern)))
+
+(define-foreign js-uint32-array
+  #:module "standard"
+  #:name   "uint32-array"
+  (-> () (extern)))
+
+(define-foreign js-bigint64-array
+  #:module "standard"
+  #:name   "bigint64-array"
+  (-> () (extern)))
+
+(define-foreign js-biguint64-array
+  #:module "standard"
+  #:name   "biguint64-array"
+  (-> () (extern)))
+
+(define-foreign js-float16-array
+  #:module "standard"
+  #:name   "float16-array"
+  (-> () (extern)))
+
+(define-foreign js-float32-array
+  #:module "standard"
+  #:name   "float32-array"
+  (-> () (extern)))
+
+(define-foreign js-float64-array
+  #:module "standard"
+  #:name   "float64-array"
+  (-> () (extern)))
+
+;;;
+;;; Keyed collections
+;;;
+
+(define-foreign js-map
+  #:module "standard"
+  #:name   "map"
+  (-> () (extern)))
+
+(define-foreign js-set
+  #:module "standard"
+  #:name   "set"
+  (-> () (extern)))
+
+(define-foreign js-weak-map
+  #:module "standard"
+  #:name   "weak-map"
+  (-> () (extern)))
+
+(define-foreign js-weak-set
+  #:module "standard"
+  #:name   "weak-set"
+  (-> () (extern)))
+
+;;;
+;;; Structured data
+;;;
+
+(define-foreign js-array-buffer
+  #:module "standard"
+  #:name   "array-buffer"
+  (-> () (extern)))
+
+(define-foreign js-shared-array-buffer
+  #:module "standard"
+  #:name   "shared-array-buffer"
+  (-> () (extern)))
+
+(define-foreign js-data-view
+  #:module "standard"
+  #:name   "data-view"
+  (-> () (extern)))
+
+(define-foreign js-atomics
+  #:module "standard"
+  #:name   "atomics"
+  (-> () (extern)))
+
+(define-foreign js-json
+  #:module "standard"
+  #:name   "json"
+  (-> () (extern)))
+
+;;;
+;;; Managing memory
+;;;
+
+(define-foreign js-weak-ref
+  #:module "standard"
+  #:name   "weak-ref"
+  (-> () (extern)))
+
+(define-foreign js-finalization-registry
+  #:module "standard"
+  #:name   "finalization-registry"
+  (-> () (extern)))
+
+;;;
+;;; Control abstraction objects
+;;;
+
+(define-foreign js-iterator
+  #:module "standard"
+  #:name   "iterator"
+  (-> () (extern)))
+
+(define-foreign js-async-iterator
+  #:module "standard"
+  #:name   "async-iterator"
+  (-> () (extern)))
+
+(define-foreign js-promise
+  #:module "standard"
+  #:name   "promise"
+  (-> () (extern)))
+
+(define-foreign js-generator-function
+  #:module "standard"
+  #:name   "generator-function"
+  (-> () (extern)))
+
+(define-foreign js-async-generator-function
+  #:module "standard"
+  #:name   "async-generator-function"
+  (-> () (extern)))
+
+(define-foreign js-generator
+  #:module "standard"
+  #:name   "generator"
+  (-> () (extern)))
+
+(define-foreign js-async-generator
+  #:module "standard"
+  #:name   "async-generator"
+  (-> () (extern)))
+
+(define-foreign js-async-function
+  #:module "standard"
+  #:name   "async-function"
+  (-> () (extern)))
+
+(define-foreign js-disposable-stack
+  #:module "standard"
+  #:name   "disposable-stack"
+  (-> () (extern)))
+
+(define-foreign js-async-disposable-stack
+  #:module "standard"
+  #:name   "async-disposable-stack"
+  (-> () (extern)))
+
+;;;
+;;; Reflection
+;;;
+
+(define-foreign js-reflect
+  #:module "standard"
+  #:name   "reflect"
+  (-> () (extern)))
+
+(define-foreign js-proxy
+  #:module "standard"
+  #:name   "proxy"
+  (-> () (extern)))
+
+;;;
+;;; Internationalization
+;;;
+
+(define-foreign js-intl
+  #:module "standard"
+  #:name   "intl"
+  (-> () (extern)))
+
+(define-foreign js-intl-collator
+  #:module "standard"
+  #:name   "intl-collator"
+  (-> () (extern)))
+
+(define-foreign js-intl-date-time-format
+  #:module "standard"
+  #:name   "intl-date-time-format"
+  (-> () (extern)))
+
+(define-foreign js-intl-display-names
+  #:module "standard"
+  #:name   "intl-display-names"
+  (-> () (extern)))
+
+(define-foreign js-intl-duration-format
+  #:module "standard"
+  #:name   "intl-duration-format"
+  (-> () (extern)))
+
+(define-foreign js-intl-list-format
+  #:module "standard"
+  #:name   "intl-list-format"
+  (-> () (extern)))
+
+(define-foreign js-intl-locale
+  #:module "standard"
+  #:name   "intl-locale"
+  (-> () (extern)))
+
+(define-foreign js-intl-number-format
+  #:module "standard"
+  #:name   "intl-number-format"
+  (-> () (extern)))
+
+(define-foreign js-intl-plural-rules
+  #:module "standard"
+  #:name   "intl-plural-rules"
+  (-> () (extern)))
+
+(define-foreign js-intl-relative-time-format
+  #:module "standard"
+  #:name   "intl-relative-time-format"
+  (-> () (extern)))
+
+(define-foreign js-intl-segmenter
+  #:module "standard"
+  #:name   "intl-segmenter"
+  (-> () (extern)))
+
