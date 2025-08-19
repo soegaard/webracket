@@ -400,13 +400,13 @@
             ,(match result-types
                [(list 'i32) ; to fixnum
                 `(return
-                  (i31.new
+                  (ref.i31
                    (i32.shl
                     (ref.cast (ref i31) (local.get $results))
                     (i32.const 1))))]
                [(list 'u32) ; to fixnum
                 `(return
-                  (i31.new
+                  (ref.i31
                    (i32.shl
                     (ref.cast (ref i31) (local.get $results))
                     (i32.const 1))))]

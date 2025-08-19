@@ -38,7 +38,8 @@
   #:name   "adopt-node"
   (-> (extern) (extern)))
 
-(define-foreign js-caret-range-from-point
+; TODO
+#;(define-foreign js-caret-range-from-point
   #:module "document"
   #:name   "caret-range-from-point"
   (-> (f64 f64) (extern)))
@@ -103,10 +104,11 @@
   #:name   "create-ns-resolver"
   (-> (extern) (extern)))
 
-(define-foreign js-create-node-iterator
+; TODO
+#;(define-foreign js-create-node-iterator
   #:module "document"
   #:name   "create-node-iterator"
-  (-> (extern u32 extern) (extern)))
+  (-> (extern i32 extern) (extern)))  ; was u32  (it's a bitmask)
 
 (define-foreign js-create-processing-instruction
   #:module "document"
@@ -118,17 +120,20 @@
   #:name   "create-range"
   (-> () (extern)))
 
-(define-foreign js-create-tree-walker
+; TODO
+#;(define-foreign js-create-tree-walker
   #:module "document"
   #:name   "create-tree-walker"
-  (-> (extern u32 extern) (extern)))
+  (-> (extern i32 extern) (extern)))  ; was u32
 
-(define-foreign js-element-from-point
+; TODO check f64
+#;(define-foreign js-element-from-point
   #:module "document"
   #:name   "element-from-point"
   (-> (f64 f64) (extern)))
 
-(define-foreign js-elements-from-point
+; TODO
+#;(define-foreign js-elements-from-point
   #:module "document"
   #:name   "elements-from-point"
   (-> (f64 f64) (extern)))
@@ -138,12 +143,13 @@
   #:name   "enable-style-sheets-for-set"
   (-> (string) ()))
 
-(define-foreign js-evaluate
+; TODO check i32
+#;(define-foreign js-evaluate
   #:module "document"
   #:name   "evaluate"
   (-> (string extern extern i32 extern) (extern)))
 
-(define-foreign js-exec-command
+#;(define-foreign js-exec-command
   #:module "document"
   #:name   "exec-command"
   (-> (string i32 string) (i32)))
@@ -193,12 +199,12 @@
   #:name   "get-selection"
   (-> () (extern)))
 
-(define-foreign js-has-focus
+#;(define-foreign js-has-focus
   #:module "document"
   #:name   "has-focus"
   (-> () (i32)))
 
-(define-foreign js-import-node
+#;(define-foreign js-import-node
   #:module "document"
   #:name   "import-node"
   (-> (extern i32) (extern)))
@@ -208,25 +214,25 @@
   #:name   "open"
   (-> () (extern)))
 
-(define-foreign js-query-command-enabled
-  #:module "document"
-  #:name   "query-command-enabled"
-  (-> (string) (i32)))
+;; (define-foreign js-query-command-enabled
+;;   #:module "document"
+;;   #:name   "query-command-enabled"
+;;   (-> (string) (i32)))
 
-(define-foreign js-query-command-indeterm
-  #:module "document"
-  #:name   "query-command-indeterm"
-  (-> (string) (i32)))
+;; (define-foreign js-query-command-indeterm
+;;   #:module "document"
+;;   #:name   "query-command-indeterm"
+;;   (-> (string) (i32)))
 
-(define-foreign js-query-command-state
-  #:module "document"
-  #:name   "query-command-state"
-  (-> (string) (i32)))
+;; (define-foreign js-query-command-state
+;;   #:module "document"
+;;   #:name   "query-command-state"
+;;   (-> (string) (i32)))
 
-(define-foreign js-query-command-supported
-  #:module "document"
-  #:name   "query-command-supported"
-  (-> (string) (i32)))
+;; (define-foreign js-query-command-supported
+;;   #:module "document"
+;;   #:name   "query-command-supported"
+;;   (-> (string) (i32)))
 
 (define-foreign js-query-command-value
   #:module "document"
