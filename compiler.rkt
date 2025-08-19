@@ -429,10 +429,10 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
-  
-  
+  inexact->exact round
+
   fixnum? fxzero?
-  fx+ fx- fx* 
+  fx+ fx- fx*
   fx= fx> fx< fx<= fx>=
   ; fxmin fxmax
 
@@ -448,7 +448,7 @@
 
   flonum?
   fl+ fl- fl* fl/
-  fl= fl< fl> fl<= fl>=
+  fl= fl< fl> fl<= fl>= flround
   
   byte?
 
