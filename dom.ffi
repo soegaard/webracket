@@ -29,14 +29,7 @@
   #:name   "create-text-node"
   (-> (string) (extern)))
 
-(define-foreign js-append-child!
-  #:module "document" ; should be put in "element"
-  #:name   "append-child!"
-  ;; Parameters: two external references which may be null
-  ;; Result: an external reference which may be null
-  (-> (extern extern) (extern)))
-
-(define-foreign js-make-element
+(define-foreign js-create-element
   #:module "document"
   #:name   "create-element"
   (-> (string) (extern)))
@@ -50,7 +43,14 @@
 ;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
 ;                                                              
 (define-foreign js-set-attribute!
-  #:module "document"
+  #:module "element"
   #:name   "set-attribute!"
   (-> (extern string string) ()))
+
+(define-foreign js-append-child!
+  #:module "element"
+  #:name   "append-child!"
+  ;; Parameters: two external references which may be null
+  ;; Result: an external reference which may be null
+  (-> (extern extern) (extern)))
 

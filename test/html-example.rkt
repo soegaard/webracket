@@ -23,13 +23,13 @@
     ; a tree 
     [(list tag (list '@ attrs ...) children ...)
      ;; Create a new element with the given tag.
-     (define elem (js-make-element (symbol->string tag)))
+     (define elem (js-create-element (symbol->string tag)))
      (set-elem-attributes elem attrs)
      (add-children elem children)
      elem]
     [(list tag children ...)
      ;; Create a new element with the given tag.
-     (define elem (js-make-element (symbol->string tag)))
+     (define elem (js-create-element (symbol->string tag)))
      (add-children elem children)
      elem]))
      
