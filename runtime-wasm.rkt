@@ -2949,12 +2949,30 @@
                (local $n     i32)
                (local $max   i32)
                (local $i31   (ref i31))
-               ;; Step 1: Check that $z is a fixnum and extract signed i32
+               ;; Step 1: Check if $z is a fixnum or flonum
                (if (ref.test (ref i31) (local.get $z))
                    (then (local.set $n (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $z)))
                                                   (i32.const 1))))
-                   (else (call $raise-number->string-bad-input)))
-               ;; Step 2: Handle radix
+                   (else
+                    (if (ref.test (ref $Flonum) (local.get $z))
+                        (then
+                         ;; Handle optional radix for flonum (must be 10 or #f)
+                         (if (ref.eq (local.get $radix-raw) (global.get $false))
+                             (then (return (call $flonum->string
+                                                  (ref.cast (ref $Flonum) (local.get $z)))))
+                             (else
+                              (if (ref.test (ref i31) (local.get $radix-raw))
+                                  (then
+                                   (local.set $radix
+                                              (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $radix-raw)))
+                                                         (i32.const 1)))
+                                   (if (i32.eq (local.get $radix) (i32.const 10))
+                                       (then (return (call $flonum->string
+                                                            (ref.cast (ref $Flonum) (local.get $z)))))
+                                       (else (call $raise-number->string-bad-radix))))
+                                  (else (call $raise-number->string-bad-radix))))))
+                        (else (call $raise-number->string-bad-input)))))
+               ;; Step 2: Handle radix for fixnums
                (if (ref.eq (local.get $radix-raw) (global.get $false))
                    (then (local.set $radix (i32.const 10))) ;; default = 10
                    (else (if (ref.test (ref i31) (local.get $radix-raw))
@@ -3225,6 +3243,32 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $append-loop)))
                (call $i32growable-array->string (local.get $g)))
+
+         (func $flonum->string
+               (param $f (ref $Flonum))
+               (result (ref $String))
+
+               (local $s   (ref $String))
+               (local $len i32)
+               (local $ch  i32)
+
+               ;; Convert to decimal string and trim trailing zeros
+               (local.set $s
+                          (call $string-trim-right
+                                (call $f64->string
+                                      (struct.get $Flonum $v (local.get $f)))
+                                ,(Imm #\0)))
+               (local.set $len (call $string-length/checked/i32 (local.get $s)))
+               (local.set $ch
+                          (call $string-ref/checked/i32
+                                (local.get $s)
+                                (i32.sub (local.get $len) (i32.const 1))))
+               (if (result (ref $String))
+                   (i32.eq (local.get $ch) (i32.const 46)) ;; '.'
+                   (then (call $string-append
+                                (local.get $s)
+                                (call $codepoint->string (i32.const 48)))) ;; '0'
+                   (else (local.get $s))))
 
          (func $i32->string
                (param $n   i32)
