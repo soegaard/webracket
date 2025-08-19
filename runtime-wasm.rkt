@@ -2051,7 +2051,7 @@
          ;; [ ] odd?
          ;; [x] exact?
          ;; [ ] inexact?
-         ;; [ ] inexact->exact
+         ;; [x] inexact->exact
          ;; [ ] exact->inexact
          ;; [ ] real->single-flonum
          ;; [ ] real->double-flonum
@@ -2131,10 +2131,48 @@
 
 
 
-         
-         (func $zero?
-               (param $x (ref eq))
-               (result   (ref eq))
+
+        (func $inexact->exact
+              (param $z (ref eq))
+              (result   (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+              (local $i32 i32)
+
+              ;; If z is a fixnum, ensure LSB = 0 and return it
+              (if (ref.test (ref i31) (local.get $z))
+                  (then
+                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $z))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then (return (local.get $z))))))
+
+              ;; If z is a flonum, convert to fixnum if finite and integral
+              (if (ref.test (ref $Flonum) (local.get $z))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $z)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (if (f64.ne (local.get $f64) (local.get $f64))
+                       (then (call $raise-expected-number (local.get $z)) (unreachable)))
+                   (if (f64.eq (local.get $f64) (f64.const +inf))
+                       (then (call $raise-expected-number (local.get $z)) (unreachable)))
+                   (if (f64.eq (local.get $f64) (f64.const -inf))
+                       (then (call $raise-expected-number (local.get $z)) (unreachable)))
+                   (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                       (then
+                        (local.set $i32 (i32.trunc_f64_s (local.get $f64)))
+                        (return (ref.i31 (i32.shl (local.get $i32) (i32.const 1)))))
+                       (else (call $raise-expected-number (local.get $z)) (unreachable)))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $z))
+              (unreachable))
+
+
+        (func $zero?
+              (param $x (ref eq))
+              (result   (ref eq))
 
                (local $x/fx i32)
                (local $x/fl (ref $Flonum))
@@ -2282,7 +2320,7 @@
          ;; [ ] min
          ;; [ ] gcd
          ;; [ ] lcm
-         ;; [ ] round
+         ;; [x] round
          ;; [ ] floor
          ;; [ ] ceiling
          ;; [ ] truncate
@@ -2343,6 +2381,36 @@
                (call $raise-expected-number (local.get $v))
                (unreachable))
 
+
+        (func $round
+              (param $x (ref eq))
+              (result   (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+
+              ;; If x is a fixnum, ensure LSB = 0 and return it
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then (return (local.get $x)))
+                       (else (call $raise-expected-number (local.get $x))
+                             (unreachable)))))
+
+              ;; If x is a flonum, round using ties-to-even
+              (if (ref.test (ref $Flonum) (local.get $x))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (return (struct.new $Flonum
+                                       (i32.const 0)
+                                       (f64.nearest (local.get $f64))))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $x))
+              (unreachable))
 
          (func $raise-expected-number (unreachable))
 
@@ -2738,6 +2806,22 @@
                            (i32.const 0)
                            (f64.div (local.get $x/f64) (local.get $y/f64))))
 
+
+        (func $flround
+              (param $a (ref eq))
+              (result (ref eq))
+
+              ;; Type check
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $a))
+                        (unreachable)))
+
+              ;; Compute and box result
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (f64.nearest
+                           (struct.get $Flonum $v
+                                       (ref.cast (ref $Flonum) (local.get $a))))) )
 
          ,@(let ()
              (define (fl-cmp flname flcmp)

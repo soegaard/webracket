@@ -1,5 +1,6 @@
 #lang racket/base
-(require racket/fixnum
+ (require racket/fixnum
+         racket/flonum
          racket/fasl
          racket/symbol
          (only-in racket/bool symbol=?))
@@ -148,6 +149,8 @@
 
  fx->fl
  fl->fx
+
+ inexact->exact round flround
 
  ;; 14.1 Namespaces
 
