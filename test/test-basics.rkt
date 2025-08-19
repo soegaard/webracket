@@ -107,6 +107,12 @@
         ;; arity
         (equal? (procedure-arity equal?) 2)))
 
+ (list "number->string"
+       (and (equal? (number->string 42) "42")
+            (equal? (number->string 16 16) "10")
+            (equal? (number->string 1.25) "1.25")
+            (equal? (number->string 1.0) "1.0")))
+
  ; todo - implement equal-always?
  #;"equal-always?"
  #;(and (equal? (equal-always? 'a 'a) #t)
