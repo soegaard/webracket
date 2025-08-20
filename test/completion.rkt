@@ -1170,13 +1170,26 @@
   (string-append "https://docs.racket-lang.org/reference/data.html?q="
                  (symbol->string sym)))
 
+;;; Gauge component: renders a flex container with a gradient-filled bar
+;;; showing the percentage. The unfilled portion is covered with a grey
+;;; overlay so the gradient corresponds to the entire gauge, not just the
+;;; filled width.
 (define (make-gauge pct)
-  (define pct-str (number->string (round (* 100 pct))))
-  (define width   (string-append pct-str "%"))
+  (define pct-num (round (* 100 pct)))
+  (define pct-str (number->string pct-num))
+  (define remaining-str (number->string (- 100 pct-num)))
+  (define container-style
+    (string-append "position:relative;"
+                   "background:linear-gradient(to right, red, green);"
+                   "width:200px;height:20px;"
+                   "border:1px solid #000;"))
+  (define overlay-style
+    (string-append "position:absolute;top:0;right:0;height:100%;width:"
+                   remaining-str
+                   "%;background:#ddd;"))
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
-        (div (@ (style "background:#ddd;width:100px;height:10px;"))
-             (div (@ (style ,(string-append (string-append "height:100%;width:" width)
-                                            ";background:linear-gradient(to right, red, green);")))))
+        (div (@ (style ,container-style))
+             (div (@ (style ,overlay-style))))
         (span ,(string-append pct-str "%"))))
 
 (define (primitive-li sym)
