@@ -10,6 +10,24 @@
 ;; (define (js-log x)
 ;;   (displayln x))
 
+(define (string-find s contained)
+  (define s-len (string-length s))
+  (define c-len (string-length contained))
+  (cond
+    [(= c-len 0) 0]
+    [(< s-len c-len) #f]
+    [else
+     (let loop ([i 0] [limit (- s-len c-len)])
+       (if (> i limit)
+           #f
+           (if (string=? (substring s i (+ i c-len)) contained)
+               i
+               (loop (+ i 1) limit))))]))
+
+(js-log (string-find "foo bar baz" "bar"))
+(js-log (string-find "foo bar baz" "bat"))
+
+
 (define (add-children elem children)
   (for ([child (in-list children)])
     (js-append-child! elem (sxml->dom child))))
@@ -35,6 +53,7 @@
      (define elem (js-create-element (symbol->string tag)))
      (add-children elem children)
      elem]))
+
 
 (define datatypes-primitives
   '(
