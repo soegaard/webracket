@@ -3036,6 +3036,7 @@
                                            [(fl+ fl-)  '(global.get $flzero)]
                                            [(* fx*)    '(global.get $one)]
                                            [(fl*)      '(global.get $flone)]
+                                           [(string-append) '(global.get $string:empty)]
                                            [else       `(call ,(Prim pr))])]
                                       [1 (case sym
                                            [(  +   *)  (AExpr (first ae1))]
@@ -3046,17 +3047,19 @@
                                            [(fx/)      `(call ,(Prim pr) (global.get $one)    ,(AExpr (first ae1)))]
                                            [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
                                            [(list*)    (AExpr (first ae1))]
+                                           [(string-append) `(call $string-copy ,(AExpr (first ae1)))]
                                            [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
                                       [2 (case sym
                                            [(+ - *)       `(call ,(Prim pr)
                                                                  ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                                            [(fx+ fx- fx*) `(call ,(Prim pr)
                                                                  ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
-                                           [(fl+ fl- fl*) `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
-                                           ; / needs to signal an Racket error if denominator is zero
-                                           [else   `(call ,(Prim pr)
-                                                          ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
+                                            [(fl+ fl- fl*) `(call ,(Prim pr)
+                                                                  ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                            [(string-append) `(call $string-append/2 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                            ; / needs to signal an Racket error if denominator is zero
+                                            [else   `(call ,(Prim pr)
+                                                           ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
                                       [_ (case sym
                                            [(+ fx+ fl+
                                              * fx* fl*
@@ -3074,6 +3077,13 @@
                                                 [(list v)            v]
                                                 [(list v1 v2)       `(call ,(Prim pr) ,v1 ,v2)]
                                                 [(list* v0 v1 vs)   `(call ,(Prim pr) ,v0 ,(loop (cons v1 vs))) ]))]
+                                           [(string-append)
+                                            (let loop ([aes (AExpr* ae1)])
+                                              (match aes
+                                                [(list)            '(global.get $string:empty)]
+                                                [(list v)          `(call $string-copy ,v)]
+                                                [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
+                                                [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
                                            [else
                                             `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
                                    (match dd
