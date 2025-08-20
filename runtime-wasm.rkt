@@ -4649,7 +4649,7 @@
 
                ;; pattern length zero -> copy string
                (if (i32.eq (local.get $len-pat) (i32.const 0))
-                   (then (return (call $string-copy (local.get $s)))))
+                   (then (return (call $string-copy (local.get $str)))))
 
                ;; prepare builder
                (local.set $out (call $make-i32growable-array (local.get $len-src)))

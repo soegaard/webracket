@@ -471,7 +471,7 @@
   string? string=? string<?
   make-string string-ref string-set! string-length substring string-copy!
   string-copy string-fill! string-append string->list list->string
-  string-replace string->bytes/utf-8
+  string->bytes/utf-8
 
   string-trim-left   ; not in Racket
   string-trim-right  ; not in Racket
