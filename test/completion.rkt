@@ -1194,10 +1194,10 @@
 
 (define (primitive-li sym)
   (define checked? (memq sym implemented-primitives))
+  (define box (if checked? "☑" "☐"))
   `(li
      (label
-       (input (@ (type "checkbox") (disabled "")
-                 ,@(if checked? '((checked "")) '())))
+       (span ,box)
        (a (@ (href ,(primitive-url sym))) ,(symbol->string sym)))))
 
 (define (section->sxml section)
