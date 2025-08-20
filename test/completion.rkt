@@ -59,27 +59,27 @@
       hash-code-combine-unordered*
       prop:equal+hash
     )
-    ;; (booleans
-    ;;   boolean=?
-    ;;   boolean?
-    ;;   false
-    ;;   false?
-    ;;   immutable-box?
-    ;;   immutable-bytes?
-    ;;   immutable-hash?
-    ;;   immutable-string?
-    ;;   immutable-vector?
-    ;;   immutable?
-    ;;   mutable-box?
-    ;;   mutable-bytes?
-    ;;   mutable-hash?
-    ;;   mutable-string?
-    ;;   mutable-vector?
-    ;;   not
-    ;;   symbol=?
-    ;;   true
-    ;;   xor
-    ;; )
+    (booleans
+      boolean=?
+      boolean?
+      false
+      false?
+      immutable-box?
+      immutable-bytes?
+      immutable-hash?
+      immutable-string?
+      immutable-vector?
+      immutable?
+      mutable-box?
+      mutable-bytes?
+      mutable-hash?
+      mutable-string?
+      mutable-vector?
+      not
+      symbol=?
+      true
+      xor
+    )
     ;; (numbers
     ;;   *
     ;;   +
@@ -198,103 +198,103 @@
     ;;   vector->pseudo-random-generator!
     ;;   zero?
     ;; )
-    ;; (strings
-    ;;   build-string
-    ;;   list->string
-    ;;   make-string
-    ;;   non-empty-string?
-    ;;   string
-    ;;   string->immutable-string
-    ;;   string->list
-    ;;   string-append
-    ;;   string-append*
-    ;;   string-append-immutable
-    ;;   string-ci<=?
-    ;;   string-ci<?
-    ;;   string-ci=?
-    ;;   string-ci>=?
-    ;;   string-ci>?
-    ;;   string-contains?
-    ;;   string-copy
-    ;;   string-copy!
-    ;;   string-downcase
-    ;;   string-fill!
-    ;;   string-find
-    ;;   string-foldcase
-    ;;   string-grapheme-count
-    ;;   string-grapheme-span
-    ;;   string-join
-    ;;   string-length
-    ;;   string-locale-ci<?
-    ;;   string-locale-ci=?
-    ;;   string-locale-ci>?
-    ;;   string-locale-downcase
-    ;;   string-locale-upcase
-    ;;   string-locale<?
-    ;;   string-locale=?
-    ;;   string-locale>?
-    ;;   string-normalize-nfc
-    ;;   string-normalize-nfd
-    ;;   string-normalize-nfkc
-    ;;   string-normalize-nfkd
-    ;;   string-normalize-spaces
-    ;;   string-prefix?
-    ;;   string-ref
-    ;;   string-replace
-    ;;   string-set!
-    ;;   string-split
-    ;;   string-suffix?
-    ;;   string-titlecase
-    ;;   string-trim
-    ;;   string-upcase
-    ;;   string<=?
-    ;;   string<?
-    ;;   string=?
-    ;;   string>=?
-    ;;   string>?
-    ;;   string?
-    ;;   substring
-    ;; )
-    ;; (bytes
-    ;;   byte?
-    ;;   bytes
-    ;;   bytes->immutable-bytes
-    ;;   bytes->list
-    ;;   bytes->string/latin-1
-    ;;   bytes->string/locale
-    ;;   bytes->string/utf-8
-    ;;   bytes-append
-    ;;   bytes-append*
-    ;;   bytes-close-converter
-    ;;   bytes-convert
-    ;;   bytes-convert-end
-    ;;   bytes-converter?
-    ;;   bytes-copy
-    ;;   bytes-copy!
-    ;;   bytes-fill!
-    ;;   bytes-join
-    ;;   bytes-length
-    ;;   bytes-open-converter
-    ;;   bytes-ref
-    ;;   bytes-set!
-    ;;   bytes-utf-8-index
-    ;;   bytes-utf-8-length
-    ;;   bytes-utf-8-ref
-    ;;   bytes<?
-    ;;   bytes=?
-    ;;   bytes>?
-    ;;   bytes?
-    ;;   list->bytes
-    ;;   locale-string-encoding
-    ;;   make-bytes
-    ;;   make-shared-bytes
-    ;;   shared-bytes
-    ;;   string->bytes/latin-1
-    ;;   string->bytes/locale
-    ;;   string->bytes/utf-8
-    ;;   string-utf-8-length
-    ;;   subbytes
-    ;; )
+    (strings
+      build-string
+      list->string
+      make-string
+      non-empty-string?
+      string
+      string->immutable-string
+      string->list
+      string-append
+      string-append*
+      string-append-immutable
+      string-ci<=?
+      string-ci<?
+      string-ci=?
+      string-ci>=?
+      string-ci>?
+      string-contains?
+      string-copy
+      string-copy!
+      string-downcase
+      string-fill!
+      string-find
+      string-foldcase
+      string-grapheme-count
+      string-grapheme-span
+      string-join
+      string-length
+      string-locale-ci<?
+      string-locale-ci=?
+      string-locale-ci>?
+      string-locale-downcase
+      string-locale-upcase
+      string-locale<?
+      string-locale=?
+      string-locale>?
+      string-normalize-nfc
+      string-normalize-nfd
+      string-normalize-nfkc
+      string-normalize-nfkd
+      string-normalize-spaces
+      string-prefix?
+      string-ref
+      string-replace
+      string-set!
+      string-split
+      string-suffix?
+      string-titlecase
+      string-trim
+      string-upcase
+      string<=?
+      string<?
+      string=?
+      string>=?
+      string>?
+      string?
+      substring
+    )
+    (bytes
+      byte?
+      bytes
+      bytes->immutable-bytes
+      bytes->list
+      bytes->string/latin-1
+      bytes->string/locale
+      bytes->string/utf-8
+      bytes-append
+      bytes-append*
+      bytes-close-converter
+      bytes-convert
+      bytes-convert-end
+      bytes-converter?
+      bytes-copy
+      bytes-copy!
+      bytes-fill!
+      bytes-join
+      bytes-length
+      bytes-open-converter
+      bytes-ref
+      bytes-set!
+      bytes-utf-8-index
+      bytes-utf-8-length
+      bytes-utf-8-ref
+      bytes<?
+      bytes=?
+      bytes>?
+      bytes?
+      list->bytes
+      locale-string-encoding
+      make-bytes
+      make-shared-bytes
+      shared-bytes
+      string->bytes/latin-1
+      string->bytes/locale
+      string->bytes/utf-8
+      string-utf-8-length
+      subbytes
+    )
     ;; (chars
     ;;   char->integer
     ;;   char-alphabetic?
@@ -331,18 +331,18 @@
     ;;   integer->char
     ;;   make-known-char-range-list
     ;;   )
-    ;; (symbols
-    ;;   gensym
-    ;;   string->symbol
-    ;;   string->uninterned-symbol
-    ;;   string->unreadable-symbol
-    ;;   symbol->immutable-string
-    ;;   symbol->string
-    ;;   symbol-interned?
-    ;;   symbol-unreadable?
-    ;;   symbol<?
-    ;;   symbol?
-    ;;   )
+    (symbols
+      gensym
+      string->symbol
+      string->uninterned-symbol
+      string->unreadable-symbol
+      symbol->immutable-string
+      symbol->string
+      symbol-interned?
+      symbol-unreadable?
+      symbol<?
+      symbol?
+      )
     ;; (regexps
     ;;   byte-pregexp?
     ;;   byte-regexp?
@@ -371,106 +371,106 @@
     ;;   regexp-try-match
     ;;   regexp?
     ;; )
-    ;; (keywords
-    ;;   keyword->immutable-string
-    ;;   keyword->string
-    ;;   keyword<?
-    ;;   keyword?
-    ;;   string->keyword
-    ;; )
-    ;; (pairs
-    ;;   add-between
-    ;;   andmap
-    ;;   append-map
-    ;;   argmax
-    ;;   argmin
-    ;;   build-list
-    ;;   car
-    ;;   cartesian-product
-    ;;   cdr
-    ;;   check-duplicates
-    ;;   cons?
-    ;;   count
-    ;;   drop-common-prefix
-    ;;   eighth
-    ;;   eleventh
-    ;;   empty
-    ;;   empty?
-    ;;   fifteenth
-    ;;   fifth
-    ;;   filter
-    ;;   filter-map
-    ;;   filter-not
-    ;;   first
-    ;;   flatten
-    ;;   foldl
-    ;;   foldr
-    ;;   for-each
-    ;;   fourteenth
-    ;;   fourth
-    ;;   group-by
-    ;;   hash-placeholder?
-    ;;   in-permutations
-    ;;   inclusive-range
-    ;;   index-of
-    ;;   index-where
-    ;;   indexes-of
-    ;;   indexes-where
-    ;;   last
-    ;;   last-pair
-    ;;   length
-    ;;   list
-    ;;   list-prefix?
-    ;;   list-set
-    ;;   list-update
-    ;;   list?
-    ;;   make-hash-placeholder
-    ;;   make-hashalw-placeholder
-    ;;   make-hasheq-placeholder
-    ;;   make-hasheqv-placeholder
-    ;;   make-list
-    ;;   make-placeholder
-    ;;   make-reader-graph
-    ;;   map
-    ;;   ninth
-    ;;   null
-    ;;   null?
-    ;;   ormap
-    ;;   pair?
-    ;;   partition
-    ;;   permutations
-    ;;   placeholder-get
-    ;;   placeholder-set!
-    ;;   placeholder?
-    ;;   remf
-    ;;   remf*
-    ;;   remove
-    ;;   remove*
-    ;;   remove-duplicates
-    ;;   remq
-    ;;   remq*
-    ;;   remv
-    ;;   remv*
-    ;;   remw
-    ;;   remw*
-    ;;   rest
-    ;;   reverse
-    ;;   running-foldl
-    ;;   running-foldr
-    ;;   second
-    ;;   seventh
-    ;;   shuffle
-    ;;   sixth
-    ;;   slice-by
-    ;;   sort
-    ;;   split-common-prefix
-    ;;   take-common-prefix
-    ;;   tenth
-    ;;   third
-    ;;   thirteenth
-    ;;   twelfth
-    ;;   windows
-    ;; )
+    (keywords
+      keyword->immutable-string
+      keyword->string
+      keyword<?
+      keyword?
+      string->keyword
+    )
+    (pairs
+      add-between
+      andmap
+      append-map
+      argmax
+      argmin
+      build-list
+      car
+      cartesian-product
+      cdr
+      check-duplicates
+      cons?
+      count
+      drop-common-prefix
+      eighth
+      eleventh
+      empty
+      empty?
+      fifteenth
+      fifth
+      filter
+      filter-map
+      filter-not
+      first
+      flatten
+      foldl
+      foldr
+      for-each
+      fourteenth
+      fourth
+      group-by
+      hash-placeholder?
+      in-permutations
+      inclusive-range
+      index-of
+      index-where
+      indexes-of
+      indexes-where
+      last
+      last-pair
+      length
+      list
+      list-prefix?
+      list-set
+      list-update
+      list?
+      make-hash-placeholder
+      make-hashalw-placeholder
+      make-hasheq-placeholder
+      make-hasheqv-placeholder
+      make-list
+      make-placeholder
+      make-reader-graph
+      map
+      ninth
+      null
+      null?
+      ormap
+      pair?
+      partition
+      permutations
+      placeholder-get
+      placeholder-set!
+      placeholder?
+      remf
+      remf*
+      remove
+      remove*
+      remove-duplicates
+      remq
+      remq*
+      remv
+      remv*
+      remw
+      remw*
+      rest
+      reverse
+      running-foldl
+      running-foldr
+      second
+      seventh
+      shuffle
+      sixth
+      slice-by
+      sort
+      split-common-prefix
+      take-common-prefix
+      tenth
+      third
+      thirteenth
+      twelfth
+      windows
+    )
     ;; (mpairs
     ;;   mcar
     ;;   mcdr
@@ -479,54 +479,54 @@
     ;;   set-mcar!
     ;;   set-mcdr!
     ;; )
-    ;; (vectors
-    ;;   build-vector
-    ;;   list->vector
-    ;;   make-vector
-    ;;   vector
-    ;;   vector*-append
-    ;;   vector*-copy
-    ;;   vector*-extend
-    ;;   vector*-length
-    ;;   vector*-ref
-    ;;   vector*-set!
-    ;;   vector*-set/copy
-    ;;   vector->immutable-vector
-    ;;   vector->list
-    ;;   vector->values
-    ;;   vector-append
-    ;;   vector-argmax
-    ;;   vector-argmin
-    ;;   vector-cas!
-    ;;   vector-copy
-    ;;   vector-copy!
-    ;;   vector-count
-    ;;   vector-drop
-    ;;   vector-drop-right
-    ;;   vector-empty?
-    ;;   vector-extend
-    ;;   vector-fill!
-    ;;   vector-filter
-    ;;   vector-filter-not
-    ;;   vector-immutable
-    ;;   vector-length
-    ;;   vector-map
-    ;;   vector-map!
-    ;;   vector-member
-    ;;   vector-memq
-    ;;   vector-memv
-    ;;   vector-ref
-    ;;   vector-set!
-    ;;   vector-set*!
-    ;;   vector-set/copy
-    ;;   vector-sort
-    ;;   vector-sort!
-    ;;   vector-split-at
-    ;;   vector-split-at-right
-    ;;   vector-take
-    ;;   vector-take-right
-    ;;   vector?
-    ;; )
+    (vectors
+      build-vector
+      list->vector
+      make-vector
+      vector
+      vector*-append
+      vector*-copy
+      vector*-extend
+      vector*-length
+      vector*-ref
+      vector*-set!
+      vector*-set/copy
+      vector->immutable-vector
+      vector->list
+      vector->values
+      vector-append
+      vector-argmax
+      vector-argmin
+      vector-cas!
+      vector-copy
+      vector-copy!
+      vector-count
+      vector-drop
+      vector-drop-right
+      vector-empty?
+      vector-extend
+      vector-fill!
+      vector-filter
+      vector-filter-not
+      vector-immutable
+      vector-length
+      vector-map
+      vector-map!
+      vector-member
+      vector-memq
+      vector-memv
+      vector-ref
+      vector-set!
+      vector-set*!
+      vector-set/copy
+      vector-sort
+      vector-sort!
+      vector-split-at
+      vector-split-at-right
+      vector-take
+      vector-take-right
+      vector?
+    )
     ;; (stencil-vectors
     ;;   stencil-vector
     ;;   stencil-vector-length
@@ -537,16 +537,16 @@
     ;;   stencil-vector-update
     ;;   stencil-vector?
     ;; )
-    ;; (boxes
-    ;;   box
-    ;;   box-cas!
-    ;;   box-immutable
-    ;;   box?
-    ;;   set-box!
-    ;;   set-box*!
-    ;;   unbox
-    ;;   unbox*
-    ;; )
+    (boxes
+      box
+      box-cas!
+      box-immutable
+      box?
+      set-box!
+      set-box*!
+      unbox
+      unbox*
+    )
     ;; (hashes
     ;;   hash
     ;;   hash->list
@@ -903,52 +903,52 @@
     ;;   weak-seteq
     ;;   weak-seteqv
     ;; )
-    ;; (procedures
-    ;;   apply
-    ;;   arity-includes?
-    ;;   arity=?
-    ;;   checked-procedure-check-and-extract
-    ;;   compose
-    ;;   compose1
-    ;;   conjoin
-    ;;   const
-    ;;   const*
-    ;;   disjoin
-    ;;   identity
-    ;;   keyword-apply
-    ;;   make-keyword-procedure
-    ;;   negate
-    ;;   normalize-arity
-    ;;   normalized-arity?
-    ;;   primitive-closure?
-    ;;   primitive-result-arity
-    ;;   primitive?
-    ;;   procedure->method
-    ;;   procedure-arity
-    ;;   procedure-arity-includes?
-    ;;   procedure-arity-mask
-    ;;   procedure-arity?
-    ;;   procedure-closure-contents-eq?
-    ;;   procedure-extract-target
-    ;;   procedure-keywords
-    ;;   procedure-realm
-    ;;   procedure-reduce-arity
-    ;;   procedure-reduce-arity-mask
-    ;;   procedure-reduce-keyword-arity
-    ;;   procedure-reduce-keyword-arity-mask
-    ;;   procedure-rename
-    ;;   procedure-result-arity
-    ;;   procedure-specialize
-    ;;   procedure-struct-type?
-    ;;   procedure?
-    ;;   prop:arity-string
-    ;;   prop:checked-procedure
-    ;;   prop:procedure
-    ;; )
-    ;; (void
-    ;;   void
-    ;;   void?
-    ;; )
+    (procedures
+      apply
+      arity-includes?
+      arity=?
+      checked-procedure-check-and-extract
+      compose
+      compose1
+      conjoin
+      const
+      const*
+      disjoin
+      identity
+      keyword-apply
+      make-keyword-procedure
+      negate
+      normalize-arity
+      normalized-arity?
+      primitive-closure?
+      primitive-result-arity
+      primitive?
+      procedure->method
+      procedure-arity
+      procedure-arity-includes?
+      procedure-arity-mask
+      procedure-arity?
+      procedure-closure-contents-eq?
+      procedure-extract-target
+      procedure-keywords
+      procedure-realm
+      procedure-reduce-arity
+      procedure-reduce-arity-mask
+      procedure-reduce-keyword-arity
+      procedure-reduce-keyword-arity-mask
+      procedure-rename
+      procedure-result-arity
+      procedure-specialize
+      procedure-struct-type?
+      procedure?
+      prop:arity-string
+      prop:checked-procedure
+      prop:procedure
+    )
+    (void
+      void
+      void?
+    )
     ;; (undefined
     ;;   undefined
     ;; )
