@@ -233,6 +233,10 @@
       (and (equal? (list* 1 2 3) (cons 1 (cons 2 3)))
            (equal? (list* 1 2 (list 3 4)) '(1 2 3 4))))
 
+(list "filter"
+      (and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
+           (equal? (filter positive? '()) '())))
+
  (list "memq"
        (and (equal? (memq 'a '(a b c))   '(a b c))
             (equal? (memq 'b '(a b c))   '(b c))

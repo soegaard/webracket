@@ -79,7 +79,7 @@
  ; foldl
  ; foldr
 
- ; filter
+ filter
  ; remove
  ; remq
  ; remv
