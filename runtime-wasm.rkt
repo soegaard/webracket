@@ -4548,8 +4548,8 @@
                ;; Single argument -> copy to ensure fresh mutable string
                (if (i32.eq (local.get $n) (i32.const 1))
                    (then (if (ref.eq (local.get $acc) (global.get $string:empty))
-                             (return (global.get $string:empty))
-                             (return (call $string-copy (local.get $acc))))))
+                             (then (return (global.get $string:empty)))
+                             (else (return (call $string-copy (local.get $acc)))))))
 
                ;; Combine remaining arguments
                (local.set $i (i32.const 1))
