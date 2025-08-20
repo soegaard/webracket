@@ -2942,6 +2942,18 @@
                                                        (i32.const 0)
                                                        ,(AExpr (first aes))
                                                        ,(loop (rest aes)))))]
+                                   [(string-append) ; variadic, at least zero arguments
+                                    (define n   (length ae1))
+                                    (define aes (AExpr* ae1))
+                                    (define xs                                      
+                                      (let loop ([aes aes])
+                                        (if (null? aes)
+                                            `(global.get $null)
+                                            `(struct.new $Pair
+                                                         (i32.const 0)
+                                                         ,(first aes)
+                                                         ,(loop (rest aes))))))
+                                    `(call $string-append ,xs)]                                    
                                    [(map)   ; variadic, at least two arguments
                                     (define n (length ae1))
                                     (when (< n 2) (error 'primapp "too few arguments: ~a" s))
