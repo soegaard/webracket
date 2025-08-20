@@ -406,6 +406,7 @@
   alt-reverse ; used in expansion of for/list
   map for-each
   list*
+  filter
   
   void?
   make-void  ; zero arguments
