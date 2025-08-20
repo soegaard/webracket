@@ -16,8 +16,8 @@
   (string-find/index s contained 0))
 
 ;; Replace occurrences of from with to in str; all? controls replacing all occurrences.
-(define (string-replace str from to #;[all? #t])
-  (define all? #t)
+(define (string-replace str from to [all? #t])
+  ; (define all? #t)
   (define pat-len (string-length from))
   (define str-len (string-length str))
 
@@ -34,6 +34,13 @@
                  (string-append acc2 (substring str next str-len))))
            (string-append acc (substring str start str-len))))]))
 
+
+(define (format fmt . args)
+  (let loop ([s fmt] [args args])
+    (if (null? args)
+        s
+        (loop (string-replace s "~a" (car args) #f)
+              (cdr args)))))
 
 (define (add-children elem children)
   ; (js-log 'add-children)
