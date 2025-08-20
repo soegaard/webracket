@@ -2208,10 +2208,11 @@
                ;; If x is a fixnum, check if it's > 0
                (if (ref.test (ref i31) (local.get $x))
                    (then
-                    (local.set $x/fx (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                    (local.set $x/fx (i31.get_s (ref.cast (ref i31) (local.get $x))))
                     (if (i32.eqz (i32.and (local.get $x/fx) (i32.const 1))) ;; lsb = 0?
                         (then
-                         (if (i32.gt_s (i32.shr_u (local.get $x/fx) (i32.const 1)) (i32.const 0))
+                         (if (i32.gt_s (i32.shr_s (local.get $x/fx) (i32.const 1))
+                                       (i32.const 0))
                              (then (return (global.get $true)))
                              (else (return (global.get $false)))))
                         (else (call $raise-expected-number (local.get $x)) (unreachable)))))
@@ -2238,10 +2239,10 @@
                ;; If x is a fixnum, check if it's < 0
                (if (ref.test (ref i31) (local.get $x))
                    (then
-                    (local.set $x/fx (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                    (local.set $x/fx (i31.get_s (ref.cast (ref i31) (local.get $x))))
                     (if (i32.eqz (i32.and (local.get $x/fx) (i32.const 1))) ;; lsb = 0?
                         (then
-                         (if (i32.lt_s (i32.shr_u (local.get $x/fx) (i32.const 1)) (i32.const 0))
+                         (if (i32.lt_s (i32.shr_s (local.get $x/fx) (i32.const 1)) (i32.const 0))
                              (then (return (global.get $true)))
                              (else (return (global.get $false)))))
                         (else (call $raise-expected-number (local.get $x)) (unreachable)))))
