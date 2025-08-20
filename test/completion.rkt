@@ -1,31 +1,38 @@
-;; #lang racket
-;; (define (js-append-child! elem child)
-;;   (list elem child))
-;; (define (js-set-attribute! elem name value)
-;;   (list elem name value))
-;; (define (js-create-element tag)
-;;   tag)
-;; (define (js-create-text-node exp)
-;;   exp)
-;; (define (js-log x)
-;;   (displayln x))
+(define (string-find/index s contained start)
+  (define s-len (string-length s))
+  (define c-len (string-length contained))
+  (cond
+    [(= c-len 0) start]
+    [(< s-len c-len) #f]
+    [else
+     (let loop ([i start] [limit (- s-len c-len)])
+       (cond
+         [(> i limit) #f]
+         [(string=? (substring s i (+ i c-len)) contained) i]
+         [else (loop (add1 i) limit)]))]))
 
-;; (define (string-find s contained)
-;;   (define s-len (string-length s))
-;;   (define c-len (string-length contained))
-;;   (cond
-;;     [(= c-len 0) 0]
-;;     [(< s-len c-len) #f]
-;;     [else
-;;      (let loop ([i 0] [limit (- s-len c-len)])
-;;        (if (> i limit)
-;;            #f
-;;            (if (string=? (substring s i (+ i c-len)) contained)
-;;                i
-;;                (loop (+ i 1) limit))))]))
+;; Simple wrapper starting at index 0
+(define (string-find s contained)
+  (string-find/index s contained 0))
 
-;; (js-log (string-find "foo bar baz" "bar"))
-;; (js-log (string-find "foo bar baz" "bat"))
+;; Replace occurrences of from with to in str; all? controls replacing all occurrences.
+(define (string-replace str from to #;[all? #t])
+  (define all? #t)
+  (define pat-len (string-length from))
+  (define str-len (string-length str))
+
+  (cond
+    [(zero? pat-len) (string-copy str)]
+    [else
+     (let loop ([start 0] [acc ""])
+       (define pos (string-find/index str from start))
+       (if pos
+           (let* ([next (+ pos pat-len)]
+                  [acc2 (string-append acc (substring str start pos) to)])
+             (if all?
+                 (loop next acc2)
+                 (string-append acc2 (substring str next str-len))))
+           (string-append acc (substring str start str-len))))]))
 
 
 (define (add-children elem children)
