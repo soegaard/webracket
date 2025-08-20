@@ -4552,7 +4552,7 @@
                              (else (return (call $string-copy (local.get $acc)))))))
 
                ;; Step to remaining arguments
-               (local.set $xs   (struct.get $Pair $d (local.get $node)))
+               (local.set $xs (struct.get $Pair $d (local.get $node)))
 
                ;; Two arguments -> delegate to $string-append/2
                (if (i32.eq (local.get $n) (i32.const 2))
@@ -4560,27 +4560,25 @@
                                        (local.get $acc)
                                        (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))))))
 
-
-
                ;; Combine remaining arguments
                (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                (local.set $acc  (call $string-append/2
                                       (local.get $acc)
                                       (struct.get $Pair $a (local.get $node))))
-               
                (local.set $xs   (struct.get $Pair $d (local.get $node)))
+
                (block $done
                       (loop $loop
-                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
                             (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                             (local.set $acc  (call $string-append/2
                                                    (local.get $acc)
                                                    (struct.get $Pair $a (local.get $node))))
                             (local.set $xs   (struct.get $Pair $d (local.get $node)))
-                            
                             (br $loop)))
 
                (local.get $acc))
+
 
          (func $string->list (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))
@@ -5533,14 +5531,17 @@
                (ref.eq (local.get $a) (local.get $b)))
 
 
-         (func $raise-symbol->string:bad-argument (param $v (ref eq)) (unreachable))
+         (func $raise-symbol->string:bad-argument (param $v (ref eq))
+               (call $js-log (local.get $v))
+               (unreachable))
+         
          (func $symbol->string
                (param $v (ref eq))
                (result   (ref eq))
 
                (local $sym (ref $Symbol))
                (local $name (ref $String))
-
+               
                ;; Check that input is a symbol
                (if (ref.test (ref $Symbol) (local.get $v))
                    (then
