@@ -4527,8 +4527,6 @@
                                                              (struct.get $String $codepoints (local.get $str2)))))))
 
          (func $string-append
-               (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
                (param $args (ref $Args))
                (result (ref eq))
 
