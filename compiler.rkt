@@ -295,11 +295,14 @@
 ; See also this list:
 ;    https://gist.github.com/jesboat/1859af07d6d7b8521bf40b59a551fd79
 
+(require (only-in racket/math pi))
+
 (define constants '(null       ; '() racket/base
                     undefined  ;     racket/undefined
                     empty      ; '() racket/list
                     true       ;     racket/bool (not racket/base)
-                    false))    ;     racket/bool (not racket/base)
+                    false      ;     racket/bool (not racket/base)
+                    pi))       ;     racket/math
 
 (define (constant-value c)
   (case c
@@ -307,6 +310,7 @@
     [(true)       #t]
     [(false)      #f]
     [(undefined)  datum:undefined]
+    [(pi)         pi]
     [else         (error 'constant-value "got: ~a" c)]))
   
 

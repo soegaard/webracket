@@ -30,6 +30,15 @@
      (syntax/loc stx
        (#%plain-lambda formals body0 body ...))]))
 
+;; Constants
+
+
+(provide null undefined empty true false pi eof)
+(require (only-in racket/base       null eof)
+         (only-in racket/undefined  undefined)
+         (only-in racket/bool       true false)
+         (only-in racket/list       empty)
+         (only-in racket/math       pi))
 
 
 ;; Note: When bootstrapping we need implementations
