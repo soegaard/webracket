@@ -4530,19 +4530,20 @@
                (param $xs (ref eq))  ; expects a list of strings
                (result (ref eq))
 
-               (local $n   i32)
-               (local $i   i32)
-               (local $acc (ref eq))
+               (local $n    i32)
+               (local $node (ref eq))
+               (local $acc  (ref eq))
 
                ;; Determine number of arguments
-               (local.set $n (call $length (local.get $xs)))
+               (local.set $n (call $length/i32 (local.get $xs)))
 
                ;; Zero arguments -> existing empty string
-               (if (i32.eq (local.get $n) (global.get $zero))
+               (if (i32.eqz (local.get $n))
                    (then (return (global.get $string:empty))))
 
-               ;; At least one argument
-               (local.set $acc (array.get $Args (local.get $args) (i32.const 0)))
+               ;; Extract first argument
+               (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+               (local.set $acc (struct.get $Pair $a (local.get $node)))
 
                ;; Single argument -> copy to ensure fresh mutable string
                (if (i32.eq (local.get $n) (i32.const 1))
@@ -4550,16 +4551,31 @@
                              (then (return (global.get $string:empty)))
                              (else (return (call $string-copy (local.get $acc)))))))
 
+               ;; Step to remaining arguments
+               (local.set $node (struct.get $Pair $d (local.get $node)))
+
+               ;; Two arguments -> delegate to $string-append/2
+               (if (i32.eq (local.get $n) (i32.const 2))
+                   (then (return (call $string-append/2
+                                       (local.get $acc)
+                                       (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $node)))))))
+
                ;; Combine remaining arguments
-               (local.set $i (i32.const 1))
+               (local.set $acc
+                          (call $string-append/2
+                                (local.get $acc)
+                                (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $node)))))
+               (local.set $node
+                          (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $node))))
                (block $done
                       (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
                             (local.set $acc
                                        (call $string-append/2
                                              (local.get $acc)
-                                             (array.get $Args (local.get $args) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                             (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $node)))))
+                            (local.set $node
+                                       (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $node))))
                             (br $loop)))
 
                (local.get $acc))
