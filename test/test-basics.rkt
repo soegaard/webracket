@@ -119,6 +119,10 @@
             (equal? (string-append "A" "B") "AB")
             (equal? (string-append "A" "B" "C") "ABC")))
 
+ (list "string-replace"
+       (and (equal? (string-replace "foo bar baz" "bar" "blah") "foo blah baz")
+            (equal? (string-replace "foo foo" "foo" "bar" #f) "bar foo")))
+
  ; todo - implement equal-always?
  #;"equal-always?"
  #;(and (equal? (equal-always? 'a 'a) #t)

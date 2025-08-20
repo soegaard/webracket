@@ -471,7 +471,7 @@
   string? string=? string<?
   make-string string-ref string-set! string-length substring string-copy!
   string-copy string-fill! string-append string->list list->string
-  string->bytes/utf-8
+  string-replace string->bytes/utf-8
 
   string-trim-left   ; not in Racket
   string-trim-right  ; not in Racket
@@ -3065,6 +3065,14 @@
                                             ; / needs to signal an Racket error if denominator is zero
                                             [else   `(call ,(Prim pr)
                                                            ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
+                                      [3 (case sym
+                                           [(string-replace)
+                                            `(call $string-replace
+                                                   ,(AExpr (list-ref ae1 0))
+                                                   ,(AExpr (list-ref ae1 1))
+                                                   ,(AExpr (list-ref ae1 2))
+                                                   ,(Imm #t))]
+                                           [else `(call ,(Prim pr) ,@(AExpr* ae1))])]
                                       [_ (case sym
                                            [(+ fx+ fl+
                                              * fx* fl*
