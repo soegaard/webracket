@@ -1175,7 +1175,7 @@
   (define width   (string-append pct-str "%"))
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
         (div (@ (style "background:#ddd;width:100px;height:10px;"))
-             (div (@ (style ,(string-append "height:100%;width:" width
+             (div (@ (style ,(string-append (string-append "height:100%;width:" width)
                                             ";background:linear-gradient(to right, red, green);")))))
         (span ,(string-append pct-str "%"))))
 
