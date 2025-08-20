@@ -4708,7 +4708,7 @@
                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                                         (br $copy-loop2)))
                                            (br $done))
-                                          (else (br $loop))))))))
+                                          (else (br $loop))))))))))
 
                (call $i32growable-array->string (local.get $out)))
 
