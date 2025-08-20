@@ -4527,7 +4527,7 @@
                                                              (struct.get $String $codepoints (local.get $str2)))))))
 
          (func $string-append
-               (param $args (ref $Args))
+               (param $xs (ref eq))  ; expects a list of strings
                (result (ref eq))
 
                (local $n   i32)
@@ -4535,10 +4535,10 @@
                (local $acc (ref eq))
 
                ;; Determine number of arguments
-               (local.set $n (array.len (local.get $args)))
+               (local.set $n (call $length (local.get $xs)))
 
                ;; Zero arguments -> existing empty string
-               (if (i32.eq (local.get $n) (i32.const 0))
+               (if (i32.eq (local.get $n) (global.get $zero))
                    (then (return (global.get $string:empty))))
 
                ;; At least one argument
