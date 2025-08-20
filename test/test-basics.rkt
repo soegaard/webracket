@@ -113,6 +113,12 @@
             (equal? (number->string 1.25) "1.25")
             (equal? (number->string 1.0) "1.0")))
 
+ (list "string-append"
+       (and (equal? (string-append) "")
+            (equal? (string-append "A") "A")
+            (equal? (string-append "A" "B") "AB")
+            (equal? (string-append "A" "B" "C") "ABC")))
+
  ; todo - implement equal-always?
  #;"equal-always?"
  #;(and (equal? (equal-always? 'a 'a) #t)

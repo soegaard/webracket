@@ -3070,15 +3070,15 @@
                (local.set $s-int  (call $i32->string       (local.get $int)))
                (local.set $s-frac (call $i32->string/pad6  (local.get $frac)))
                ;; --- Join int . frac ---
-               (local.set $s-int (call $string-append
-                                       (call $string-append
+               (local.set $s-int (call $string-append/2
+                                       (call $string-append/2
                                              (local.get $s-int)
                                              (local.get $dot))
-                                       (local.get $s-frac)))
+                                      (local.get $s-frac)))
                ;; --- Add minus sign if needed ---
                (if (result (ref $String))
                    (local.get $neg)
-                   (then (call $string-append (local.get $minus) (local.get $s-int)))
+                   (then (call $string-append/2 (local.get $minus) (local.get $s-int)))
                    (else (local.get $s-int))))
          
          (func $i32->string/pad6
@@ -3265,7 +3265,7 @@
                                 (i32.sub (local.get $len) (i32.const 1))))
                (if (result (ref $String))
                    (i32.eq (local.get $ch) (i32.const 46)) ;; '.'
-                   (then (call $string-append
+                   (then (call $string-append/2
                                 (local.get $s)
                                 (call $codepoint->string (i32.const 48)))) ;; '0'
                    (else (local.get $s))))
@@ -4438,7 +4438,7 @@
                (global.get $void))
 
 
-         (func $string-append (param $s1 (ref eq)) (param $s2 (ref eq)) (result (ref $String))
+         (func $string-append/2 (param $s1 (ref eq)) (param $s2 (ref eq)) (result (ref $String))
                (local $str1 (ref null $String))
                (local $str2 (ref null $String))
                (if (ref.test (ref $String) (local.get $s1))
@@ -4519,11 +4519,51 @@
                            (call $i32array-copy
                                  (call $i32array-append
                                        (struct.get $String $codepoints (local.get $str1))
-                                       (struct.get $String $codepoints (local.get $str2)))
-                                 (i32.const 0)
-                                 (call $i32array-length (call $i32array-append
-                                                              (struct.get $String $codepoints (local.get $str1))
-                                                              (struct.get $String $codepoints (local.get $str2)))))))
+                                      (struct.get $String $codepoints (local.get $str2)))
+                                (i32.const 0)
+                                (call $i32array-length (call $i32array-append
+                                                             (struct.get $String $codepoints (local.get $str1))
+                                                             (struct.get $String $codepoints (local.get $str2)))))))
+
+         (func $string-append
+               (type $ProcedureInvoker)
+               (param $proc (ref $Procedure))
+               (param $args (ref $Args))
+               (result (ref eq))
+
+               (local $n   i32)
+               (local $i   i32)
+               (local $acc (ref eq))
+
+               ;; Determine number of arguments
+               (local.set $n (array.len (local.get $args)))
+
+               ;; Zero arguments -> existing empty string
+               (if (i32.eq (local.get $n) (i32.const 0))
+                   (then (return (global.get $string:empty))))
+
+               ;; At least one argument
+               (local.set $acc (array.get $Args (local.get $args) (i32.const 0)))
+
+               ;; Single argument -> copy to ensure fresh mutable string
+               (if (i32.eq (local.get $n) (i32.const 1))
+                   (then (if (ref.eq (local.get $acc) (global.get $string:empty))
+                             (return (global.get $string:empty))
+                             (return (call $string-copy (local.get $acc))))))
+
+               ;; Combine remaining arguments
+               (local.set $i (i32.const 1))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (local.set $acc
+                                       (call $string-append/2
+                                             (local.get $acc)
+                                             (array.get $Args (local.get $args) (local.get $i))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               (local.get $acc))
 
          (func $string->list (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))
@@ -5535,7 +5575,7 @@
                           (call $number->string (ref.i31 (local.get $n)) ,(Imm 10)))
                ;; Append prefix and number string
                (ref.cast (ref $String)
-                         (call $string-append (local.get $prefix) (local.get $n-str))))
+                         (call $string-append/2 (local.get $prefix) (local.get $n-str))))
 
          (func $gensym:0 (result (ref $Symbol))
                ;; Use "g" as default prefix
@@ -10708,7 +10748,7 @@
                     (call $raise-keyword-expected (local.get $v))
                     (unreachable)))
                ;; "#:" ++ underlying name string
-               (call $string-append
+               (call $string-append/2
                      (global.get $string:hash-colon)
                      (struct.get $Keyword $str
                                  (ref.cast (ref $Keyword) (local.get $v)))))
@@ -10956,44 +10996,44 @@
                ;; Special character names
                (if (i32.eq (local.get $cp) (i32.const 10))  ;; newline
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-newline))))))
                (if (i32.eq (local.get $cp) (i32.const 13))  ;; return
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-return))))))
                (if (i32.eq (local.get $cp) (i32.const 9))   ;; tab
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-tab))))))
                (if (i32.eq (local.get $cp) (i32.const 8))   ;; backspace
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-backspace))))))
                (if (i32.eq (local.get $cp) (i32.const 127)) ;; rubout
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-rubout))))))
                (if (i32.eq (local.get $cp) (i32.const 32))  ;; space
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-space))))))
                (if (i32.eq (local.get $cp) (i32.const 0))  ;; nul
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash))
                                 (ref.cast (ref $String) (global.get $string:word-nul))))))
                ;; Printable graphic character
                (if (call $is-graphic (local.get $cp))
                    (then
                     (local.set $s (call $make-string/checked (i32.const 1) (local.get $cp)))
-                    (return (call $string-append
+                    (return (call $string-append/2
                                   (ref.cast (ref $String) (global.get $string:hash-backslash))
                                   (local.get $s)))))
 
@@ -11001,12 +11041,12 @@
                ;; Fallback: #\uXXXX and #\UXXXXXX
                (if (i32.le_u (local.get $cp) (i32.const 65535))  ;; ≤ 0xFFFF
                    (then (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash-u))
                                 (call $make-hex-string (local.get $cp) (i32.const 4)))))
                    ;; Else use #\UXXXXXX
                    (else (return
-                          (call $string-append
+                          (call $string-append/2
                                 (ref.cast (ref $String) (global.get $string:hash-backslash-U))
                                 (call $make-hex-string (local.get $cp) (i32.const 6))))))
                (unreachable))
@@ -11037,7 +11077,7 @@
                    (then (return (local.get $raw))))
                ;; Step 4: Make padding string of '0's and append
                (return
-                (call $string-append
+                (call $string-append/2
                       (call $make-string/checked (local.get $pad) (i32.const 48)) ;; 48 = '0'
                       (local.get $raw))))
 
