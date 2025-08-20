@@ -10,49 +10,55 @@
 ;; (define (js-log x)
 ;;   (displayln x))
 
-(define (string-find s contained)
-  (define s-len (string-length s))
-  (define c-len (string-length contained))
-  (cond
-    [(= c-len 0) 0]
-    [(< s-len c-len) #f]
-    [else
-     (let loop ([i 0] [limit (- s-len c-len)])
-       (if (> i limit)
-           #f
-           (if (string=? (substring s i (+ i c-len)) contained)
-               i
-               (loop (+ i 1) limit))))]))
+;; (define (string-find s contained)
+;;   (define s-len (string-length s))
+;;   (define c-len (string-length contained))
+;;   (cond
+;;     [(= c-len 0) 0]
+;;     [(< s-len c-len) #f]
+;;     [else
+;;      (let loop ([i 0] [limit (- s-len c-len)])
+;;        (if (> i limit)
+;;            #f
+;;            (if (string=? (substring s i (+ i c-len)) contained)
+;;                i
+;;                (loop (+ i 1) limit))))]))
 
-(js-log (string-find "foo bar baz" "bar"))
-(js-log (string-find "foo bar baz" "bat"))
+;; (js-log (string-find "foo bar baz" "bar"))
+;; (js-log (string-find "foo bar baz" "bat"))
 
 
 (define (add-children elem children)
+  ; (js-log 'add-children)
   (for ([child (in-list children)])
     (js-append-child! elem (sxml->dom child))))
 
 (define (set-elem-attributes elem attrs)
+  ; (js-log 'set-elem-attributes)
   (for ([attr (in-list attrs)])
     (match attr
       [(list name value)
        (js-set-attribute! elem (symbol->string name) value)])))
 
 (define (sxml->dom exp)
+  ; (js-log 'sxml->dom)
   (match exp
     [(? string? s)
      (js-create-text-node exp)]
-    [(list tag (list '@ attrs ...) children ...)
+    [(list (? symbol? tag) (list '@ attrs ...) children ...)
      ;; Create a new element with the given tag.
      (define elem (js-create-element (symbol->string tag)))
      (set-elem-attributes elem attrs)
      (add-children elem children)
      elem]
-    [(list tag children ...)
+    [(list (? symbol? tag) children ...)
      ;; Create a new element with the given tag.
      (define elem (js-create-element (symbol->string tag)))
      (add-children elem children)
-     elem]))
+     elem]
+    [_
+     (js-log exp)
+     (js-log "huh!?!")]))
 
 
 (define datatypes-primitives
@@ -78,7 +84,7 @@
       hash-code-combine-unordered*
       prop:equal+hash
     )
-    (booleans
+    #;(booleans
       boolean=?
       boolean?
       false
@@ -217,7 +223,7 @@
     ;;   vector->pseudo-random-generator!
     ;;   zero?
     ;; )
-    (strings
+    #;(strings
       build-string
       list->string
       make-string
@@ -274,7 +280,7 @@
       string?
       substring
     )
-    (bytes
+    #;(bytes
       byte?
       bytes
       bytes->immutable-bytes
@@ -397,7 +403,7 @@
       keyword?
       string->keyword
     )
-    (pairs
+    #;(pairs
       add-between
       andmap
       append-map
@@ -498,7 +504,7 @@
     ;;   set-mcar!
     ;;   set-mcdr!
     ;; )
-    (vectors
+    #;(vectors
       build-vector
       list->vector
       make-vector
@@ -922,7 +928,7 @@
     ;;   weak-seteq
     ;;   weak-seteqv
     ;; )
-    (procedures
+    #;(procedures
       apply
       arity-includes?
       arity=?
@@ -1185,41 +1191,48 @@
 
 ; (js-log sections)
 
-(define (primitive-url sym)
-  (string-append "https://docs.racket-lang.org/reference/data.html?q="
-                 (symbol->string sym)))
 
 ;;; Gauge component: renders a flex container with a gradient-filled bar
 ;;; showing the percentage. The unfilled portion is covered with a grey
 ;;; overlay so the gradient corresponds to the entire gauge, not just the
 ;;; filled width.
 (define (make-gauge pct)
-  (define pct-num (round (* 100 pct)))
-  (define pct-str (number->string pct-num))
+  ; (js-log 'make-gauge)  
+  (define pct-num       (round (* 100 pct)))
+  (define pct-str       (number->string pct-num))
   (define remaining-str (number->string (- 100 pct-num)))
-  (define container-style
+  (define container-style 
     (string-append "position:relative;"
                    "background:linear-gradient(to right, red, green);"
                    "width:200px;height:20px;"
                    "border:1px solid #000;"))
-  (define overlay-style
+  (define overlay-style 
     (string-append "position:absolute;top:0;right:0;height:100%;width:"
                    remaining-str
                    "%;background:#ddd;"))
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
         (div (@ (style ,container-style))
              (div (@ (style ,overlay-style))))
-        (span ,(string-append pct-str "%"))))
+        (span (@ (style "font-size: 3em;"))
+              ,(string-append pct-str "%")))
+  )
 
-(define (primitive-li sym)
+(define (primitive-url sym)
+  (string-append "https://docs.racket-lang.org/reference/data.html?q="
+                 (symbol->string sym)))
+
+(define (primitive-li sym)  
   (define checked? (memq sym implemented-primitives))
-  (define box (if checked? "☑" "☐"))
+  (define box      (if checked? "☑" "☐"))
+  (define str      (symbol->string sym))
   `(li
      (label
        (span ,box)
-       (a (@ (href ,(primitive-url sym))) ,(symbol->string sym)))))
+       (a (@ (href ,(primitive-url sym)))
+          ,str))))
 
 (define (section->sxml section)
+  ; (js-log 'section->sxml)
   (match section
     [(list title primitives)
      #;(define implemented (filter (lambda (p) (memq p implemented-primitives))
@@ -1233,14 +1246,16 @@
                      0
                      (/ (length implemented) (length primitives))))
      `(section
-        (h2 ,title)
-        ,(make-gauge pct)
+       (h2 ,title)
+       ,(make-gauge pct)
         (ul ,@(map primitive-li primitives)))]))
 
 
+(define sections (map section->sxml sections))
+
 (define page
-  `(div
-     (h1 "Progress: Datatype Primitives")
-     ,@(map section->sxml sections)))
+  `(div (h1 "Progress: Datatype Primitives")
+        ""
+        ,@sections))
 
 (js-append-child! (js-document-body) (sxml->dom page))
