@@ -35,6 +35,13 @@
            (string-append acc (substring str start str-len))))]))
 
 
+(define (format fmt . args)
+  (let loop ([s fmt] [args args])
+    (if (null? args)
+        s
+        (loop (string-replace s "~a" (car args)) (cdr args)))))
+
+
 (define (add-children elem children)
   ; (js-log 'add-children)
   (for ([child (in-list children)])
