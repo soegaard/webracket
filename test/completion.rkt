@@ -1231,7 +1231,7 @@
        (a (@ (href ,(primitive-url sym)))
           ,str))))
 
-(define (section->sxml section)
+(define (section->sxml section idx)
   ; (js-log 'section->sxml)
   (match section
     [(list title primitives)
@@ -1241,17 +1241,34 @@
        (for/list ([p (in-list primitives)]
                   #:when (memq p implemented-primitives))
          p))
-         
+
      (define pct (if (null? primitives)
                      0
                      (/ (length implemented) (length primitives))))
+
+     (define list-id (format "sec-~a-list" idx))
+     (define tri-id  (format "sec-~a-tri" idx))
+     (define toggle-script
+       (format "var ul=document.getElementById('~a');var tri=document.getElementById('~a');if(ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}else{ul.style.display='none';tri.textContent='\\u25B6';}" list-id tri-id))
+
      `(section
-       (h2 ,title)
        ,(make-gauge pct)
-        (ul ,@(map primitive-li primitives)))]))
+       (h2
+        (span (@ (id ,tri-id)
+                  (style "cursor:pointer;")
+                  (onclick ,toggle-script))
+               "▶")
+         " "
+         ,title)
+       (ul (@ (id ,list-id)
+              (style "display:none;"))
+           ,@(map primitive-li primitives)))]))
 
 
-(define sections (map section->sxml sections))
+(define sections
+  (for/list ([s (in-list sections)]
+             [i (in-naturals)])
+    (section->sxml s i)))
 
 (define page
   `(div (h1 "Progress: Datatype Primitives")
