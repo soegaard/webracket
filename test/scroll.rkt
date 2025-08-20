@@ -1,9 +1,3 @@
-(define sxml
-  '(section
-    (h1 (@ (style "color: blue")) "Hello #racket !!!!")
-    (p "Test: calling JavaScript from WebRacket")
-    (small "Made with WebRacket")))
-
 (define (add-children elem children)
   (for ([child (in-list children)])
     (js-append-child! elem (sxml->dom child))))
@@ -30,20 +24,19 @@
      (add-children elem children)
      elem]))
 
-(js-append-child! (js-document-body) (sxml->dom sxml))
-
-(js-log (vector "hello"))
 
 ;; Clear previous content and set black background
 (js-eval "document.body.innerHTML='';")
-(js-set-attribute! (js-document-body) "style"
-                   "background-color: black; margin:0; overflow:hidden;")
+(js-set-attribute! (js-document-body)
+                   "style" "background-color: black; margin:0; overflow:hidden;")
 
 ;; Add CSS for scrolling text
 (define style-element (js-create-element "style"))
+
 (js-append-child! style-element
   (js-create-text-node
    "@keyframes scroll-left {0% { left: 100%; } 100% { left: -100%; }}\n#scroll-text { position: fixed; top: 50%; left: 100%; transform: translateY(-50%); white-space: nowrap; color: white; font-size: 24px; animation: scroll-left 10s linear infinite; }"))
+
 (js-append-child! (js-document-body) style-element)
 
 ;; Create scrolling text element
