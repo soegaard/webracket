@@ -1170,22 +1170,14 @@
   (string-append "https://docs.racket-lang.org/reference/data.html?q="
                  (symbol->string sym)))
 
-(define (percent->color pct)
-  (define hue (inexact->exact (round (* 120 pct))))
-  (string-append "hsl(" (string-append (number->string hue) ",100%,50%)")))
-
-
 (define (make-gauge pct)
-  (define color       (percent->color pct))
-  (define pct-str     (number->string (round (* 100 pct))))
-  (define width       (string-append pct-str "%"))
+  (define pct-str (number->string (round (* 100 pct))))
+  (define width   (string-append pct-str "%"))
   `(div (@ (style "display:flex;align-items:center;gap:8px;"))
         (div (@ (style "background:#ddd;width:100px;height:10px;"))
-             (div (@ (style ,(string-append 
-                              (string-append (string-append "height:100%;width:" width)
-                                             (string-append ";background:" color))
-                              "~;")))
-                  (span ,(string-append pct-str "%"))))))
+             (div (@ (style ,(string-append "height:100%;width:" width
+                                            ";background:linear-gradient(to right, red, green);")))))
+        (span ,(string-append pct-str "%"))))
 
 (define (primitive-li sym)
   (define checked? (memq sym implemented-primitives))
