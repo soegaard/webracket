@@ -1,6 +1,6 @@
 (define sxml
   '(section
-    (h1 (@ (style "color: blue")) "Hello #racket !!!!")
+    (h1 (@ (style "color: blue")) "Hello #racket !!!!!")
     (p "Test: calling JavaScript from WebRacket")
     (small "Made with WebRacket")))
 
@@ -36,3 +36,10 @@
 (js-append-child! (js-document-body) (sxml->dom sxml))
 
 (js-log (vector "hello"))
+
+(js-log (js-math-abs -3.))
+(define pi (* 4. (js-math-atan 1.)))
+(js-log (js-math-tan (/ pi 4.)))
+(js-log (js-infinity))
+
+
