@@ -1194,7 +1194,6 @@
 
 (define (primitive-li sym)
   (define checked? (memq sym implemented-primitives))
-  ; (define checked? #t) ; TODO TODO TODO
   `(li
      (label
        (input (@ (type "checkbox") (disabled "")
