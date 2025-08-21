@@ -177,125 +177,125 @@
       prop:equal+hash
     )
     
-    ;; (numbers
-    ;;   *
-    ;;   +
-    ;;   <
-    ;;   <=
-    ;;   =
-    ;;   >
-    ;;   >=
-    ;;   abs
-    ;;   acos
-    ;;   add1
-    ;;   angle
-    ;;   arithmetic-shift
-    ;;   asin
-    ;;   bitwise-and
-    ;;   bitwise-bit-field
-    ;;   bitwise-bit-set?
-    ;;   bitwise-first-bit-set
-    ;;   bitwise-ior
-    ;;   bitwise-not
-    ;;   bitwise-xor
-    ;;   ceiling
-    ;;   complex?
-    ;;   conjugate
-    ;;   cos
-    ;;   cosh
-    ;;   crypto-random-bytes
-    ;;   degrees->radians
-    ;;   denominator
-    ;;   double-flonum?
-    ;;   even?
-    ;;   exact->inexact
-    ;;   exact-ceiling
-    ;;   exact-floor
-    ;;   exact-integer?
-    ;;   exact-nonnegative-integer?
-    ;;   exact-positive-integer?
-    ;;   exact-round
-    ;;   exact-truncate
-    ;;   exact?
-    ;;   exp
-    ;;   expt
-    ;;   fixnum?
-    ;;   floating-point-bytes->real
-    ;;   flonum?
-    ;;   floor
-    ;;   gcd
-    ;;   imag-part
-    ;;   inexact->exact
-    ;;   inexact-real?
-    ;;   inexact?
-    ;;   infinite?
-    ;;   integer->integer-bytes
-    ;;   integer-bytes->integer
-    ;;   integer-length
-    ;;   integer-sqrt
-    ;;   integer-sqrt/remainder
-    ;;   integer?
-    ;;   lcm
-    ;;   log
-    ;;   magnitude
-    ;;   make-polar
-    ;;   make-pseudo-random-generator
-    ;;   make-rectangular
-    ;;   max
-    ;;   min
-    ;;   modulo
-    ;;   nan?
-    ;;   natural?
-    ;;   negative-integer?
-    ;;   negative?
-    ;;   nonnegative-integer?
-    ;;   nonpositive-integer?
-    ;;   number->string
-    ;;   number?
-    ;;   numerator
-    ;;   odd?
-    ;;   order-of-magnitude
-    ;;   pi
-    ;;   pi.f
-    ;;   positive-integer?
-    ;;   positive?
-    ;;   pseudo-random-generator->vector
-    ;;   pseudo-random-generator-vector?
-    ;;   pseudo-random-generator?
-    ;;   quotient
-    ;;   quotient/remainder
-    ;;   radians->degrees
-    ;;   random-ref
-    ;;   random-sample
-    ;;   random-seed
-    ;;   rational?
-    ;;   rationalize
-    ;;   real->decimal-string
-    ;;   real->double-flonum
-    ;;   real->floating-point-bytes
-    ;;   real->single-flonum
-    ;;   real-part
-    ;;   real?
-    ;;   remainder
-    ;;   round
-    ;;   sgn
-    ;;   sin
-    ;;   single-flonum-available?
-    ;;   single-flonum?
-    ;;   sinh
-    ;;   sqr
-    ;;   sqrt
-    ;;   string->number
-    ;;   sub1
-    ;;   system-big-endian?
-    ;;   tan
-    ;;   tanh
-    ;;   truncate
-    ;;   vector->pseudo-random-generator
-    ;;   vector->pseudo-random-generator!
-    ;;   zero?
-    ;; )
-    #;(strings
+    (numbers
+      *
+      +
+      <
+      <=
+      =
+      >
+      >=
+      abs
+      acos
+      add1
+      angle
+      arithmetic-shift
+      asin
+      bitwise-and
+      bitwise-bit-field
+      bitwise-bit-set?
+      bitwise-first-bit-set
+      bitwise-ior
+      bitwise-not
+      bitwise-xor
+      ceiling
+      complex?
+      conjugate
+      cos
+      cosh
+      crypto-random-bytes
+      degrees->radians
+      denominator
+      double-flonum?
+      even?
+      exact->inexact
+      exact-ceiling
+      exact-floor
+      exact-integer?
+      exact-nonnegative-integer?
+      exact-positive-integer?
+      exact-round
+      exact-truncate
+      exact?
+      exp
+      expt
+      fixnum?
+      floating-point-bytes->real
+      flonum?
+      floor
+      gcd
+      imag-part
+      inexact->exact
+      inexact-real?
+      inexact?
+      infinite?
+      integer->integer-bytes
+      integer-bytes->integer
+      integer-length
+      integer-sqrt
+      integer-sqrt/remainder
+      integer?
+      lcm
+      log
+      magnitude
+      make-polar
+      make-pseudo-random-generator
+      make-rectangular
+      max
+      min
+      modulo
+      nan?
+      natural?
+      negative-integer?
+      negative?
+      nonnegative-integer?
+      nonpositive-integer?
+      number->string
+      number?
+      numerator
+      odd?
+      order-of-magnitude
+      pi
+      pi.f
+      positive-integer?
+      positive?
+      pseudo-random-generator->vector
+      pseudo-random-generator-vector?
+      pseudo-random-generator?
+      quotient
+      quotient/remainder
+      radians->degrees
+      random-ref
+      random-sample
+      random-seed
+      rational?
+      rationalize
+      real->decimal-string
+      real->double-flonum
+      real->floating-point-bytes
+      real->single-flonum
+      real-part
+      real?
+      remainder
+      round
+      sgn
+      sin
+      single-flonum-available?
+      single-flonum?
+      sinh
+      sqr
+      sqrt
+      string->number
+      sub1
+      system-big-endian?
+      tan
+      tanh
+      truncate
+      vector->pseudo-random-generator
+      vector->pseudo-random-generator!
+      zero?
+    )
+    (strings
       build-string
       list->string
       make-string
@@ -353,42 +353,42 @@
       substring
     )
     
-    ;; (chars
-    ;;   char->integer
-    ;;   char-alphabetic?
-    ;;   char-blank?
-    ;;   char-ci<=?
-    ;;   char-ci<?
-    ;;   char-ci=?
-    ;;   char-ci>=?
-    ;;   char-ci>?
-    ;;   char-downcase
-    ;;   char-extended-pictographic?
-    ;;   char-foldcase
-    ;;   char-general-category
-    ;;   char-grapheme-break-property
-    ;;   char-grapheme-step
-    ;;   char-graphic?
-    ;;   char-iso-control?
-    ;;   char-lower-case?
-    ;;   char-numeric?
-    ;;   char-punctuation?
-    ;;   char-symbolic?
-    ;;   char-title-case?
-    ;;   char-titlecase
-    ;;   char-upcase
-    ;;   char-upper-case?
-    ;;   char-utf-8-length
-    ;;   char-whitespace?
-    ;;   char<=?
-    ;;   char<?
-    ;;   char=?
-    ;;   char>=?
-    ;;   char>?
-    ;;   char?
-    ;;   integer->char
-    ;;   make-known-char-range-list
-    ;;   )
+    (chars
+      char->integer
+      char-alphabetic?
+      char-blank?
+      char-ci<=?
+      char-ci<?
+      char-ci=?
+      char-ci>=?
+      char-ci>?
+      char-downcase
+      char-extended-pictographic?
+      char-foldcase
+      char-general-category
+      char-grapheme-break-property
+      char-grapheme-step
+      char-graphic?
+      char-iso-control?
+      char-lower-case?
+      char-numeric?
+      char-punctuation?
+      char-symbolic?
+      char-title-case?
+      char-titlecase
+      char-upcase
+      char-upper-case?
+      char-utf-8-length
+      char-whitespace?
+      char<=?
+      char<?
+      char=?
+      char>=?
+      char>?
+      char?
+      integer->char
+      make-known-char-range-list
+      )
     (symbols
       gensym
       string->symbol
@@ -401,34 +401,34 @@
       symbol<?
       symbol?
       )
-    ;; (regexps
-    ;;   byte-pregexp?
-    ;;   byte-regexp?
-    ;;   pregexp?
-    ;;   regexp-capture-group-count
-    ;;   regexp-match
-    ;;   regexp-match*
-    ;;   regexp-match-exact?
-    ;;   regexp-match-peek
-    ;;   regexp-match-peek-immediate
-    ;;   regexp-match-peek-positions
-    ;;   regexp-match-peek-positions*
-    ;;   regexp-match-peek-positions-immediate
-    ;;   regexp-match-peek-positions-immediate/end
-    ;;   regexp-match-peek-positions/end
-    ;;   regexp-match-positions
-    ;;   regexp-match-positions*
-    ;;   regexp-match-positions/end
-    ;;   regexp-match/end
-    ;;   regexp-match?
-    ;;   regexp-max-lookbehind
-    ;;   regexp-replace
-    ;;   regexp-replace*
-    ;;   regexp-replaces
-    ;;   regexp-split
-    ;;   regexp-try-match
-    ;;   regexp?
-    ;; )
+    (regexps
+      byte-pregexp?
+      byte-regexp?
+      pregexp?
+      regexp-capture-group-count
+      regexp-match
+      regexp-match*
+      regexp-match-exact?
+      regexp-match-peek
+      regexp-match-peek-immediate
+      regexp-match-peek-positions
+      regexp-match-peek-positions*
+      regexp-match-peek-positions-immediate
+      regexp-match-peek-positions-immediate/end
+      regexp-match-peek-positions/end
+      regexp-match-positions
+      regexp-match-positions*
+      regexp-match-positions/end
+      regexp-match/end
+      regexp-match?
+      regexp-max-lookbehind
+      regexp-replace
+      regexp-replace*
+      regexp-replaces
+      regexp-split
+      regexp-try-match
+      regexp?
+    )
     (keywords
       keyword->immutable-string
       keyword->string
@@ -585,16 +585,16 @@
       vector-take-right
       vector?
     )
-    ;; (stencil-vectors
-    ;;   stencil-vector
-    ;;   stencil-vector-length
-    ;;   stencil-vector-mask
-    ;;   stencil-vector-mask-width
-    ;;   stencil-vector-ref
-    ;;   stencil-vector-set!
-    ;;   stencil-vector-update
-    ;;   stencil-vector?
-    ;; )
+    (stencil-vectors
+      stencil-vector
+      stencil-vector-length
+      stencil-vector-mask
+      stencil-vector-mask-width
+      stencil-vector-ref
+      stencil-vector-set!
+      stencil-vector-update
+      stencil-vector?
+    )
     (boxes
       box
       box-cas!
@@ -605,363 +605,363 @@
       unbox
       unbox*
     )
-    ;; (hashes
-    ;;   hash
-    ;;   hash->list
-    ;;   hash-clear
-    ;;   hash-clear!
-    ;;   hash-copy
-    ;;   hash-copy-clear
-    ;;   hash-count
-    ;;   hash-empty?
-    ;;   hash-ephemeron?
-    ;;   hash-eq?
-    ;;   hash-equal-always?
-    ;;   hash-equal?
-    ;;   hash-eqv?
-    ;;   hash-filter
-    ;;   hash-filter-keys
-    ;;   hash-filter-values
-    ;;   hash-for-each
-    ;;   hash-has-key?
-    ;;   hash-intersect
-    ;;   hash-iterate-first
-    ;;   hash-iterate-key
-    ;;   hash-iterate-key+value
-    ;;   hash-iterate-next
-    ;;   hash-iterate-pair
-    ;;   hash-iterate-value
-    ;;   hash-keys
-    ;;   hash-keys-subset?
-    ;;   hash-map
-    ;;   hash-map/copy
-    ;;   hash-ref
-    ;;   hash-ref!
-    ;;   hash-ref-key
-    ;;   hash-remove
-    ;;   hash-remove!
-    ;;   hash-set
-    ;;   hash-set!
-    ;;   hash-set*
-    ;;   hash-set*!
-    ;;   hash-strong?
-    ;;   hash-union
-    ;;   hash-union!
-    ;;   hash-update
-    ;;   hash-update!
-    ;;   hash-values
-    ;;   hash-weak?
-    ;;   hash?
-    ;;   hashalw
-    ;;   hasheq
-    ;;   hasheqv
-    ;;   make-ephemeron-hash
-    ;;   make-ephemeron-hashalw
-    ;;   make-ephemeron-hasheq
-    ;;   make-ephemeron-hasheqv
-    ;;   make-hash
-    ;;   make-hashalw
-    ;;   make-hasheq
-    ;;   make-hasheqv
-    ;;   make-immutable-hash
-    ;;   make-immutable-hashalw
-    ;;   make-immutable-hasheq
-    ;;   make-immutable-hasheqv
-    ;;   make-weak-hash
-    ;;   make-weak-hashalw
-    ;;   make-weak-hasheq
-    ;;   make-weak-hasheqv
-    ;; )
-    ;; (treelists
-    ;;   chaperone-mutable-treelist
-    ;;   chaperone-treelist
-    ;;   empty-treelist
-    ;;   impersonate-mutable-treelist
-    ;;   in-mutable-treelist
-    ;;   in-treelist
-    ;;   list->mutable-treelist
-    ;;   list->treelist
-    ;;   make-mutable-treelist
-    ;;   make-treelist
-    ;;   mutable-treelist
-    ;;   mutable-treelist->list
-    ;;   mutable-treelist->vector
-    ;;   mutable-treelist-add!
-    ;;   mutable-treelist-append!
-    ;;   mutable-treelist-cons!
-    ;;   mutable-treelist-copy
-    ;;   mutable-treelist-delete!
-    ;;   mutable-treelist-drop!
-    ;;   mutable-treelist-drop-right!
-    ;;   mutable-treelist-empty?
-    ;;   mutable-treelist-find
-    ;;   mutable-treelist-first
-    ;;   mutable-treelist-for-each
-    ;;   mutable-treelist-insert!
-    ;;   mutable-treelist-last
-    ;;   mutable-treelist-length
-    ;;   mutable-treelist-map!
-    ;;   mutable-treelist-member?
-    ;;   mutable-treelist-prepend!
-    ;;   mutable-treelist-ref
-    ;;   mutable-treelist-reverse!
-    ;;   mutable-treelist-set!
-    ;;   mutable-treelist-snapshot
-    ;;   mutable-treelist-sort!
-    ;;   mutable-treelist-sublist!
-    ;;   mutable-treelist-take!
-    ;;   mutable-treelist-take-right!
-    ;;   mutable-treelist?
-    ;;   sequence->treelist
-    ;;   treelist
-    ;;   treelist->list
-    ;;   treelist->vector
-    ;;   treelist-add
-    ;;   treelist-append
-    ;;   treelist-append*
-    ;;   treelist-chaperone-state
-    ;;   treelist-cons
-    ;;   treelist-copy
-    ;;   treelist-delete
-    ;;   treelist-drop
-    ;;   treelist-drop-right
-    ;;   treelist-empty?
-    ;;   treelist-filter
-    ;;   treelist-find
-    ;;   treelist-first
-    ;;   treelist-flatten
-    ;;   treelist-for-each
-    ;;   treelist-index-of
-    ;;   treelist-insert
-    ;;   treelist-last
-    ;;   treelist-length
-    ;;   treelist-map
-    ;;   treelist-member?
-    ;;   treelist-ref
-    ;;   treelist-rest
-    ;;   treelist-reverse
-    ;;   treelist-set
-    ;;   treelist-sort
-    ;;   treelist-sublist
-    ;;   treelist-take
-    ;;   treelist-take-right
-    ;;   treelist?
-    ;;   vector->mutable-treelist
-    ;;   vector->treelist
-    ;; )
-    ;; (sequences
-    ;;   empty-sequence
-    ;;   empty-stream
-    ;;   gen:stream
-    ;;   generator-state
-    ;;   generator?
-    ;;   in-bytes
-    ;;   in-bytes-lines
-    ;;   in-cycle
-    ;;   in-directory
-    ;;   in-ephemeron-hash
-    ;;   in-ephemeron-hash-keys
-    ;;   in-ephemeron-hash-pairs
-    ;;   in-ephemeron-hash-values
-    ;;   in-immutable-hash
-    ;;   in-immutable-hash-keys
-    ;;   in-immutable-hash-pairs
-    ;;   in-immutable-hash-values
-    ;;   in-inclusive-range
-    ;;   in-indexed
-    ;;   in-input-port-bytes
-    ;;   in-input-port-chars
-    ;;   in-lines
-    ;;   in-list
-    ;;   in-mlist
-    ;;   in-mutable-hash
-    ;;   in-mutable-hash-keys
-    ;;   in-mutable-hash-pairs
-    ;;   in-mutable-hash-values
-    ;;   in-naturals
-    ;;   in-parallel
-    ;;   in-port
-    ;;   in-sequences
-    ;;   in-slice
-    ;;   in-stream
-    ;;   in-string
-    ;;   in-syntax
-    ;;   in-value
-    ;;   in-values*-sequence
-    ;;   in-values-sequence
-    ;;   in-vector
-    ;;   in-weak-hash
-    ;;   in-weak-hash-keys
-    ;;   in-weak-hash-pairs
-    ;;   in-weak-hash-values
-    ;;   initiate-sequence
-    ;;   make-do-sequence
-    ;;   prop:sequence
-    ;;   prop:stream
-    ;;   sequence->generator
-    ;;   sequence->list
-    ;;   sequence->repeated-generator
-    ;;   sequence->stream
-    ;;   sequence-add-between
-    ;;   sequence-andmap
-    ;;   sequence-append
-    ;;   sequence-count
-    ;;   sequence-filter
-    ;;   sequence-fold
-    ;;   sequence-for-each
-    ;;   sequence-generate
-    ;;   sequence-generate*
-    ;;   sequence-length
-    ;;   sequence-map
-    ;;   sequence-ormap
-    ;;   sequence-ref
-    ;;   sequence-tail
-    ;;   sequence/c
-    ;;   sequence?
-    ;;   stop-after
-    ;;   stop-before
-    ;;   stream->list
-    ;;   stream-add-between
-    ;;   stream-andmap
-    ;;   stream-append
-    ;;   stream-count
-    ;;   stream-empty?
-    ;;   stream-filter
-    ;;   stream-first
-    ;;   stream-fold
-    ;;   stream-for-each
-    ;;   stream-force
-    ;;   stream-length
-    ;;   stream-map
-    ;;   stream-ormap
-    ;;   stream-ref
-    ;;   stream-rest
-    ;;   stream-tail
-    ;;   stream-take
-    ;;   stream/c
-    ;;   stream?
-    ;;   yield
-    ;; )
-    ;; (dicts
-    ;;   dict->list
-    ;;   dict-can-functional-set?
-    ;;   dict-can-remove-keys?
-    ;;   dict-clear
-    ;;   dict-clear!
-    ;;   dict-copy
-    ;;   dict-count
-    ;;   dict-empty?
-    ;;   dict-for-each
-    ;;   dict-has-key?
-    ;;   dict-implements/c
-    ;;   dict-implements?
-    ;;   dict-iter-contract
-    ;;   dict-iterate-first
-    ;;   dict-iterate-key
-    ;;   dict-iterate-next
-    ;;   dict-iterate-value
-    ;;   dict-key-contract
-    ;;   dict-keys
-    ;;   dict-map
-    ;;   dict-map/copy
-    ;;   dict-mutable?
-    ;;   dict-ref
-    ;;   dict-ref!
-    ;;   dict-remove
-    ;;   dict-remove!
-    ;;   dict-set
-    ;;   dict-set!
-    ;;   dict-set*
-    ;;   dict-set*!
-    ;;   dict-update
-    ;;   dict-update!
-    ;;   dict-value-contract
-    ;;   dict-values
-    ;;   dict?
-    ;;   in-dict
-    ;;   in-dict-keys
-    ;;   in-dict-pairs
-    ;;   in-dict-values
-    ;;   make-custom-hash
-    ;;   make-custom-hash-types
-    ;;   make-immutable-custom-hash
-    ;;   make-weak-custom-hash
-    ;;   prop:dict
-    ;;   prop:dict/contract
-    ;; )
-    ;; (sets
-    ;;   chaperone-hash-set
-    ;;   generic-set?
-    ;;   impersonate-hash-set
-    ;;   in-immutable-set
-    ;;   in-mutable-set
-    ;;   in-set
-    ;;   in-weak-set
-    ;;   list->mutable-set
-    ;;   list->mutable-setalw
-    ;;   list->mutable-seteq
-    ;;   list->mutable-seteqv
-    ;;   list->set
-    ;;   list->setalw
-    ;;   list->seteq
-    ;;   list->seteqv
-    ;;   list->weak-set
-    ;;   list->weak-setalw
-    ;;   list->weak-seteq
-    ;;   list->weak-seteqv
-    ;;   make-custom-set-types
-    ;;   mutable-set
-    ;;   mutable-setalw
-    ;;   mutable-seteq
-    ;;   mutable-seteqv
-    ;;   proper-subset?
-    ;;   set
-    ;;   set->list
-    ;;   set->stream
-    ;;   set-add
-    ;;   set-add!
-    ;;   set-clear
-    ;;   set-clear!
-    ;;   set-copy
-    ;;   set-copy-clear
-    ;;   set-count
-    ;;   set-empty?
-    ;;   set-eq?
-    ;;   set-equal-always?
-    ;;   set-equal?
-    ;;   set-eqv?
-    ;;   set-first
-    ;;   set-for-each
-    ;;   set-implements/c
-    ;;   set-implements?
-    ;;   set-intersect
-    ;;   set-intersect!
-    ;;   set-map
-    ;;   set-member?
-    ;;   set-mutable?
-    ;;   set-remove
-    ;;   set-remove!
-    ;;   set-rest
-    ;;   set-subtract
-    ;;   set-subtract!
-    ;;   set-symmetric-difference
-    ;;   set-symmetric-difference!
-    ;;   set-union
-    ;;   set-union!
-    ;;   set-weak?
-    ;;   set/c
-    ;;   set=?
-    ;;   set?
-    ;;   setalw
-    ;;   seteq
-    ;;   seteqv
-    ;;   subset?
-    ;;   weak-set
-    ;;   weak-setalw
-    ;;   weak-seteq
-    ;;   weak-seteqv
-    ;; )
-    #;(procedures
+    (hashes
+      hash
+      hash->list
+      hash-clear
+      hash-clear!
+      hash-copy
+      hash-copy-clear
+      hash-count
+      hash-empty?
+      hash-ephemeron?
+      hash-eq?
+      hash-equal-always?
+      hash-equal?
+      hash-eqv?
+      hash-filter
+      hash-filter-keys
+      hash-filter-values
+      hash-for-each
+      hash-has-key?
+      hash-intersect
+      hash-iterate-first
+      hash-iterate-key
+      hash-iterate-key+value
+      hash-iterate-next
+      hash-iterate-pair
+      hash-iterate-value
+      hash-keys
+      hash-keys-subset?
+      hash-map
+      hash-map/copy
+      hash-ref
+      hash-ref!
+      hash-ref-key
+      hash-remove
+      hash-remove!
+      hash-set
+      hash-set!
+      hash-set*
+      hash-set*!
+      hash-strong?
+      hash-union
+      hash-union!
+      hash-update
+      hash-update!
+      hash-values
+      hash-weak?
+      hash?
+      hashalw
+      hasheq
+      hasheqv
+      make-ephemeron-hash
+      make-ephemeron-hashalw
+      make-ephemeron-hasheq
+      make-ephemeron-hasheqv
+      make-hash
+      make-hashalw
+      make-hasheq
+      make-hasheqv
+      make-immutable-hash
+      make-immutable-hashalw
+      make-immutable-hasheq
+      make-immutable-hasheqv
+      make-weak-hash
+      make-weak-hashalw
+      make-weak-hasheq
+      make-weak-hasheqv
+    )
+    (treelists
+      chaperone-mutable-treelist
+      chaperone-treelist
+      empty-treelist
+      impersonate-mutable-treelist
+      in-mutable-treelist
+      in-treelist
+      list->mutable-treelist
+      list->treelist
+      make-mutable-treelist
+      make-treelist
+      mutable-treelist
+      mutable-treelist->list
+      mutable-treelist->vector
+      mutable-treelist-add!
+      mutable-treelist-append!
+      mutable-treelist-cons!
+      mutable-treelist-copy
+      mutable-treelist-delete!
+      mutable-treelist-drop!
+      mutable-treelist-drop-right!
+      mutable-treelist-empty?
+      mutable-treelist-find
+      mutable-treelist-first
+      mutable-treelist-for-each
+      mutable-treelist-insert!
+      mutable-treelist-last
+      mutable-treelist-length
+      mutable-treelist-map!
+      mutable-treelist-member?
+      mutable-treelist-prepend!
+      mutable-treelist-ref
+      mutable-treelist-reverse!
+      mutable-treelist-set!
+      mutable-treelist-snapshot
+      mutable-treelist-sort!
+      mutable-treelist-sublist!
+      mutable-treelist-take!
+      mutable-treelist-take-right!
+      mutable-treelist?
+      sequence->treelist
+      treelist
+      treelist->list
+      treelist->vector
+      treelist-add
+      treelist-append
+      treelist-append*
+      treelist-chaperone-state
+      treelist-cons
+      treelist-copy
+      treelist-delete
+      treelist-drop
+      treelist-drop-right
+      treelist-empty?
+      treelist-filter
+      treelist-find
+      treelist-first
+      treelist-flatten
+      treelist-for-each
+      treelist-index-of
+      treelist-insert
+      treelist-last
+      treelist-length
+      treelist-map
+      treelist-member?
+      treelist-ref
+      treelist-rest
+      treelist-reverse
+      treelist-set
+      treelist-sort
+      treelist-sublist
+      treelist-take
+      treelist-take-right
+      treelist?
+      vector->mutable-treelist
+      vector->treelist
+    )
+    (sequences
+      empty-sequence
+      empty-stream
+      gen:stream
+      generator-state
+      generator?
+      in-bytes
+      in-bytes-lines
+      in-cycle
+      in-directory
+      in-ephemeron-hash
+      in-ephemeron-hash-keys
+      in-ephemeron-hash-pairs
+      in-ephemeron-hash-values
+      in-immutable-hash
+      in-immutable-hash-keys
+      in-immutable-hash-pairs
+      in-immutable-hash-values
+      in-inclusive-range
+      in-indexed
+      in-input-port-bytes
+      in-input-port-chars
+      in-lines
+      in-list
+      in-mlist
+      in-mutable-hash
+      in-mutable-hash-keys
+      in-mutable-hash-pairs
+      in-mutable-hash-values
+      in-naturals
+      in-parallel
+      in-port
+      in-sequences
+      in-slice
+      in-stream
+      in-string
+      in-syntax
+      in-value
+      in-values*-sequence
+      in-values-sequence
+      in-vector
+      in-weak-hash
+      in-weak-hash-keys
+      in-weak-hash-pairs
+      in-weak-hash-values
+      initiate-sequence
+      make-do-sequence
+      prop:sequence
+      prop:stream
+      sequence->generator
+      sequence->list
+      sequence->repeated-generator
+      sequence->stream
+      sequence-add-between
+      sequence-andmap
+      sequence-append
+      sequence-count
+      sequence-filter
+      sequence-fold
+      sequence-for-each
+      sequence-generate
+      sequence-generate*
+      sequence-length
+      sequence-map
+      sequence-ormap
+      sequence-ref
+      sequence-tail
+      sequence/c
+      sequence?
+      stop-after
+      stop-before
+      stream->list
+      stream-add-between
+      stream-andmap
+      stream-append
+      stream-count
+      stream-empty?
+      stream-filter
+      stream-first
+      stream-fold
+      stream-for-each
+      stream-force
+      stream-length
+      stream-map
+      stream-ormap
+      stream-ref
+      stream-rest
+      stream-tail
+      stream-take
+      stream/c
+      stream?
+      yield
+    )
+    (dicts
+      dict->list
+      dict-can-functional-set?
+      dict-can-remove-keys?
+      dict-clear
+      dict-clear!
+      dict-copy
+      dict-count
+      dict-empty?
+      dict-for-each
+      dict-has-key?
+      dict-implements/c
+      dict-implements?
+      dict-iter-contract
+      dict-iterate-first
+      dict-iterate-key
+      dict-iterate-next
+      dict-iterate-value
+      dict-key-contract
+      dict-keys
+      dict-map
+      dict-map/copy
+      dict-mutable?
+      dict-ref
+      dict-ref!
+      dict-remove
+      dict-remove!
+      dict-set
+      dict-set!
+      dict-set*
+      dict-set*!
+      dict-update
+      dict-update!
+      dict-value-contract
+      dict-values
+      dict?
+      in-dict
+      in-dict-keys
+      in-dict-pairs
+      in-dict-values
+      make-custom-hash
+      make-custom-hash-types
+      make-immutable-custom-hash
+      make-weak-custom-hash
+      prop:dict
+      prop:dict/contract
+    )
+    (sets
+      chaperone-hash-set
+      generic-set?
+      impersonate-hash-set
+      in-immutable-set
+      in-mutable-set
+      in-set
+      in-weak-set
+      list->mutable-set
+      list->mutable-setalw
+      list->mutable-seteq
+      list->mutable-seteqv
+      list->set
+      list->setalw
+      list->seteq
+      list->seteqv
+      list->weak-set
+      list->weak-setalw
+      list->weak-seteq
+      list->weak-seteqv
+      make-custom-set-types
+      mutable-set
+      mutable-setalw
+      mutable-seteq
+      mutable-seteqv
+      proper-subset?
+      set
+      set->list
+      set->stream
+      set-add
+      set-add!
+      set-clear
+      set-clear!
+      set-copy
+      set-copy-clear
+      set-count
+      set-empty?
+      set-eq?
+      set-equal-always?
+      set-equal?
+      set-eqv?
+      set-first
+      set-for-each
+      set-implements/c
+      set-implements?
+      set-intersect
+      set-intersect!
+      set-map
+      set-member?
+      set-mutable?
+      set-remove
+      set-remove!
+      set-rest
+      set-subtract
+      set-subtract!
+      set-symmetric-difference
+      set-symmetric-difference!
+      set-union
+      set-union!
+      set-weak?
+      set/c
+      set=?
+      set?
+      setalw
+      seteq
+      seteqv
+      subset?
+      weak-set
+      weak-setalw
+      weak-seteq
+      weak-seteqv
+    )
+    (procedures
       apply
       arity-includes?
       arity=?
@@ -1007,9 +1007,9 @@
       void
       void?
     )
-    ;; (undefined
-    ;;   undefined
-    ;; )
+    (undefined
+      undefined
+    )
   ))
   
 

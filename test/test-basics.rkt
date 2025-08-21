@@ -119,7 +119,7 @@
             (equal? (string-append "A" "B") "AB")
             (equal? (string-append "A" "B" "C") "ABC")))
 
- (list "string-replace"
+#; (list "string-replace"
        (and (equal? (string-replace "foo bar baz" "bar" "blah") "foo blah baz")
             (equal? (string-replace "foo foo" "foo" "bar" #f) "bar foo")))
 

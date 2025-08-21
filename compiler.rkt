@@ -724,7 +724,7 @@
 (define-pass parse : * (stx) -> LFE ()
   (definitions
     (reset-ffi-primitives)
-    (reset-string-constants)
+    (reset-runtime-constants)
     (define (Datum E d)                (datum E (syntax->datum d)))
     (define (Expr* es)                 (map Expr              (stx->list es)))
     (define (Expr** ess)               (map Expr*             (stx->list ess)))
@@ -917,7 +917,7 @@
     (define symbols-ht (make-hasheq))
     (define (add-quotation! define-form)
       (set! quotation-defines (cons define-form quotation-defines)))
-    (define (quoted-symbol! s sym)
+    #;(define (quoted-symbol! s sym)
       (match (hash-ref symbols-ht sym #f)
         [#f (let ([id (new-var #'_quote)] [str (symbol->string sym)])
               (with-output-language (LFE GeneralTopLevelForm)
@@ -928,7 +928,6 @@
                          ,(datum->construction-expr s str)))))
               id)]
         [id id]))
-    (define quoted-string-counter 0)
     (define (datum->construction-expr s v)
       (define (loop v) (datum->construction-expr s v))
       (with-output-language (LFE Expr)
@@ -948,7 +947,7 @@
                `(quote ,s ,(datum s v)))]          ; other literals
           [(? string? cs)  `(quote ,s ,(datum s v))]
           [(? bytes?  bs)  `(quote ,s ,(datum s v))]
-          [(? symbol? sym) (quoted-symbol! s sym)]
+          [(? symbol? sym) `(quote ,s ,(datum s v))]
           [(? pair? p)     `(app ,h ,(var:cons) ,(loop (car p)) ,(loop (cdr p)))]
           [(? vector? v)   (let ([vs (map loop (vector->list v))])
                              `(app ,h ,(var:vector-immutable) ,vs ...))]
@@ -2538,12 +2537,31 @@
 ;   2. We prefix all program identifiers with $$.
 ;   3. The compiler is free to control all identifiers that begin with a single $.
 
-; a symbol `name` turns into "$string:name" and "$bytes:name"
+; a symbol `name` turns into "$string:name"
 (define string-constants '())  ; (list (list name string) ...)
 (define (add-string-constant name string)
   (set! string-constants (cons (list name string) string-constants)))
 (define (reset-string-constants)  ; called in parse
   (set! string-constants '()))
+
+; a symbol `name` turns into "$bytes:name"
+(define bytes-constants '())  ; (list (list name bytes) ...)
+(define (add-bytes-constant name bytes)
+  (set! bytes-constants (cons (list name bytes) bytes-constants)))
+(define (reset-bytes-constants)  ; called in parse
+  (set! bytes-constants '()))
+
+(define symbol-constants '())  ; (list (list name symbol) ...)
+(define (add-symbol-constant name symbol)
+  (set! symbol-constants (cons (list name symbol) symbol-constants)))
+(define (reset-symbol-constants)  ; called in parse
+  (set! symbol-constants '()))
+
+(define (reset-runtime-constants)
+  (reset-string-constants)
+  (reset-bytes-constants)
+  (reset-symbol-constants))
+  
 
 (define-pass generate-code : LANF+closure (T) -> * ()
   (definitions
@@ -2632,9 +2650,28 @@
     (define (add-quoted-string string)
       (define name (string->symbol (~a "quoted-string" quoted-string-counter)))
       (set! quoted-string-counter (+ quoted-string-counter 1))
-      (displayln quoted-string-counter)
       (add-string-constant name string)
       name)
+    ;; quoted bytes
+    (define quoted-bytes-counter 0)
+    (define (add-quoted-bytes bytes)
+      (define name (string->symbol (~a "quoted-bytes" quoted-bytes-counter)))
+      (set! quoted-bytes-counter (+ quoted-bytes-counter 1))
+      (add-bytes-constant name bytes)
+      name)
+    ;; quoted symbols
+    (define quoted-symbol-counter 0)
+    (define quoted-symbols-ht (make-hasheq))
+    (define (add-quoted-symbol symbol)
+      (cond
+        [(hash-ref quoted-symbols-ht symbol #f)
+         => values]
+        [else
+         (define name (string->symbol (~a "quoted-symbol" quoted-symbol-counter)))
+         (hash-set! quoted-symbols-ht symbol name)
+         (set! quoted-symbol-counter (+ quoted-symbol-counter 1))         
+         (add-symbol-constant name symbol)
+         name]))
     )
 
   (ClosureAllocation : ClosureAllocation (ca dd) -> * ()
@@ -2779,9 +2816,12 @@
                              [(string? v)  (define name         (add-quoted-string v))
                                            (define $string:name (string->symbol (~a "$string:" name)))
                                            `(global.get ,$string:name)]
-                             [(bytes? v)   (define name         (add-quoted-string v))
-                                           (define $bytes:name (string->symbol (~a "$string:" name)))
+                             [(bytes? v)   (define name         (add-quoted-bytes v))
+                                           (define $bytes:name  (string->symbol (~a "$bytes:" name)))
                                            `(global.get ,$bytes:name)]
+                             [(symbol? v)  (define name         (add-quoted-symbol v))
+                                           (define $symbol:name (string->symbol (~a "$symbol:" name)))
+                                           `(global.get ,$symbol:name)]
                              [else         `',v]))])]
     [(top ,s ,x)
      ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
@@ -3650,7 +3690,9 @@
    entry-locals                     ; variables that are local to $entry
    ; general
    primitives                       ; primitives (list of symbols)
-   string-constants                 ; (list (list name string) ...) 
+   string-constants                 ; (list (list name string) ...)
+   bytes-constants                  ; (list (list name bytes) ...)
+   symbol-constants                 ; (list (list name symbol) ...)
    )
   )
 

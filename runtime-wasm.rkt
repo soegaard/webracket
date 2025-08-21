@@ -1,7 +1,8 @@
 #lang racket
 (provide generate-runtime)
 
-(require "wasm-utils.rkt"
+(require "wasm-data.rkt"
+         "wasm-utils.rkt"
          "immediates.rkt"
          "priminfo.rkt"
          "parameters.rkt")
@@ -16,7 +17,9 @@
            entry-locals           
            ; general information
            primitives       ; list of symbols
-           string-constants ; (list (list name string) ...) 
+           string-constants ; (list (list name string) ...)
+           bytes-constants  ; (list (list name bytes)  ...)
+           symbol-constants ; (list (list name symbol) ....)
            )
   (let* () ; an wasm identifier
     (let* ()
@@ -95,51 +98,94 @@
     (define (declare-runtime-string-constants)
       (append*
        (for/list ([ns (reverse runtime-string-constants)])
-         (define name         (first ns))
-         (define string       (second ns))
-         (define $bytes:name  (string->symbol (~a "$" "bytes:"  name)))
-         (define $string:name (string->symbol (~a "$" "string:" name)))
-         (list `(data   ,$bytes:name ,(~a string))
+         (define name              (first ns))
+         (define string            (second ns))
+         (define $string-data:name (string->symbol (~a "$" "string-data:"  name)))
+         (define $string:name      (string->symbol (~a "$" "string:"       name)))
+         (list `(data   ,$string-data:name ,string
+                        ; ,(let ([s (format "~s" string)]) (substring s 1 (- (string-length s) 1)))
+                        )
                `(global ,$string:name (mut (ref eq)) ,(Imm #f))))))
     (define (initialize-runtime-string-constants)
       (for/list ([ns (reverse runtime-string-constants)])
-        (define name         (first ns))
-        (define string       (second ns))
-        (define $bytes:name  (string->symbol (~a "$" "bytes:"  name)))
-        (define $string:name (string->symbol (~a "$" "string:" name)))
-        (define n            (cond [(string? string) (string-length string)]
-                                   [(bytes?  string) (bytes-length string)]))
+        (define name              (first ns))
+        (define string            (second ns))
+        (define $string-data:name (string->symbol (~a "$" "string-data:"  name)))
+        (define $string:name      (string->symbol (~a "$" "string:"       name)))
+        (define n                 (string-length string))
         `(global.set ,$string:name
                      (call $i8array->string
-                           (array.new_data $I8Array ,$bytes:name
+                           (array.new_data $I8Array ,$string-data:name
                                            (i32.const 0) (i32.const ,n))))))
 
+    ;; Bytes constants used in the runtime
+    ;;  `bytes-constants holds the constants passed by `generate-code` in `compiler.rkt`
+    (define runtime-bytes-constants bytes-constants)
+    (define (add-runtime-bytes-constant name bytes)
+      (set! runtime-bytes-constants
+            (cons (list name bytes) runtime-bytes-constants)))
+    (define (declare-runtime-bytes-constants)
+      (append*
+       (for/list ([ns (reverse runtime-bytes-constants)])
+         (define name             (first ns))
+         (define bytes            (second ns))
+         (define $bytes-data:name (string->symbol (~a "$" "bytes-data:" name)))
+         (define $bytes:name      (string->symbol (~a "$" "bytes:"  name)))
+         (list `(data ,$bytes-data:name ,(wasm-data bytes))
+               `(global ,$bytes:name (mut (ref eq)) ,(Imm #f))))))
+    (define (initialize-runtime-bytes-constants)
+      (for/list ([ns (reverse runtime-bytes-constants)])
+        (define name             (first ns))
+        (define bytes            (second ns))
+        (define $bytes-data:name (string->symbol (~a "$" "bytes-data:" name)))
+        (define $bytes:name      (string->symbol (~a "$" "bytes:"      name)))
+        (define n                (bytes-length bytes))
+        `(global.set ,$bytes:name
+                     (call $i8array->bytes
+                           (array.new_data $I8Array ,$bytes-data:name
+                                           (i32.const 0) (i32.const ,n))))))
+    
     ;; Symbol constants used in the runtime
-    (define runtime-symbol-constants '())
+    ;;  `symbol-constants holds the constants passed by `generate-code`
+    ;; in `compiler.rkt`
+    (define runtime-symbol-constants symbol-constants)
+    (define runtime-symbols-ht (make-hasheq))
     (define (add-runtime-symbol-constant symbol)
-      (define name symbol)
-      (add-runtime-string-constant name (~a symbol))
-      (set! runtime-symbol-constants
-            (cons (list name symbol) runtime-symbol-constants)))
+      (cond
+        [(hash-ref runtime-symbols-ht symbol #f)
+         => values]
+        [else
+         (define name symbol)
+         (set! runtime-symbol-constants
+               (cons (list name symbol) runtime-symbol-constants))]))
     (define (declare-runtime-symbol-constants)
-      (for/list ([ns (reverse runtime-symbol-constants)])
-        (define name         (first ns))
-        (define symbol       (second ns))
-        (define $symbol:name (string->symbol (~a "$" "symbol:" name)))
-        (add-runtime-string-constant name (symbol->string symbol))
-        `(global ,$symbol:name (mut (ref eq)) ,(Imm #f))))
+      (append*
+       (for/list ([ns (reverse runtime-symbol-constants)])
+         (define name                (first ns))
+         (define symbol              (second ns))
+         (define string              (symbol->string symbol))
+         (define $symbol-data:name   (string->symbol (~a "$" "symbol-data:"   name)))
+         (define $symbol:name        (string->symbol (~a "$" "symbol:"        name)))
+         (list `(data   ,$symbol-data:name                  ,string)
+               `(global ,$symbol:name (mut (ref eq))        ,(Imm #f))))))
+    
     (define (initialize-runtime-symbol-constants)
       (for/list ([ns (reverse runtime-symbol-constants)])
         (define name         (first ns))
         (define symbol       (second ns))
-        (define $string:name (string->symbol (~a "$" "string:" name)))
-        (define $symbol:name (string->symbol (~a "$" "symbol:" name)))        
+        (define $symbol-data:name   (string->symbol (~a "$" "symbol-data:"   name)))
+        (define $symbol:name        (string->symbol (~a "$" "symbol:"        name)))
+        (define n                   (string-length (~a symbol)))
         `(global.set ,$symbol:name
                      (call $string->symbol
-                           (global.get ,$string:name)))))
+                           (call $i8array->string
+                                 (array.new_data $I8Array ,$symbol-data:name
+                                                 (i32.const 0) (i32.const ,n)))))))
 
     ;; String and symbol constants used in the runtime
     (add-runtime-symbol-constant 'racket)
+    (add-runtime-symbol-constant 'racket/primitive)
+    
     (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                "#&")
     (add-runtime-string-constant 'bytes-prefix              "#\"")
@@ -179,7 +225,6 @@
     (add-runtime-string-constant 'word-space                "space")
     (add-runtime-string-constant 'word-rubout               "rubout")
     (add-runtime-string-constant 'word-nul                  "nul")
-    (add-runtime-string-constant 'racket/primitive          "racket/primitive")
     (add-runtime-string-constant 'hash-less-procedure-colon "#<procedure:")
     (add-runtime-string-constant 'hash-less-primitive-colon "#<primitive:")
     (add-runtime-string-constant 'unknown                   "unknown")
@@ -584,6 +629,8 @@
 
          ;; String constants used in the runtime
          ,@(declare-runtime-string-constants)
+         ;; Bytes constants used in the runtime
+         ,@(declare-runtime-bytes-constants)
          ;; Symbol constants used in the runtime
          ,@(declare-runtime-symbol-constants)
          
@@ -12078,21 +12125,24 @@
 
                      ;; Initialize string constants used in the runtime
                      ,@(initialize-runtime-string-constants)
-
+                     ;; Initialize bytes constants used in the runtime
+                     ,@(initialize-runtime-bytes-constants)
                      ;; Initialize symbol constants used in the runtime
                      ,@(initialize-runtime-symbol-constants)
                      
-                     ;; Initialize realm symbols
-                     (global.set $the-racket-realm
-                                 (call $string->symbol
-                                       (ref.cast (ref $String)
-                                                 (global.get $string:racket))))
-                     (global.set $the-racket/primitive-realm
-                                 (call $string->symbol
-                                       (ref.cast
-                                        (ref $String)
-                                        (global.get $string:racket/primitive))))
-
+                     ;; ;; Initialize realm symbols
+                     ;; (global.set $the-racket-realm
+                     ;;             (call $string->symbol
+                     ;;                   (ref.cast (ref $String)
+                     ;;                             (global.get $string:racket))))
+                     ;; (global.set $the-racket/primitive-realm
+                     ;;             (call $string->symbol
+                     ;;                   (ref.cast
+                     ;;                    (ref $String)
+                     ;;                    (global.get $string:racket/primitive))))
+                     (global.set $the-racket-realm           (global.get $symbol:racket))
+                     (global.set $the-racket/primitive-realm (global.get $symbol:racket/primitive))
+                     
                      ;; Initialize variables holding primitives
                      ,@(initialize-primitives-as-globals)
                      
