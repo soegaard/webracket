@@ -6,6 +6,8 @@
          "priminfo.rkt"
          "parameters.rkt")
 
+; See the end of `generate-code` in `compiler.rkt` for an
+; explanation of the arguments.
 (define (generate-runtime
            dls tms entry-body result
            ; program specific
