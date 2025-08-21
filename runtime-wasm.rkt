@@ -5816,11 +5816,42 @@
          (func $keyword->string/checked
                (param $kw       (ref $Keyword))
                (result          (ref $String))
-               
+
                (local $name     (ref $String))
                (local.set $name (struct.get $Keyword $str (local.get $kw)))
-               
+
                (ref.cast (ref $String) (call $string-copy (local.get $name))))
+
+         (func $keyword->immutable-string
+               (param $kw (ref eq))
+               (result    (ref $String))
+               ;; Type check: must be a keyword
+               (if (i32.eqz (ref.test (ref $Keyword) (local.get $kw)))
+                   (then (call $raise-argument-error:keyword-expected (local.get $kw))
+                         (unreachable)))
+               ;; Cast and delegate
+               (call $keyword->immutable-string/checked (ref.cast (ref $Keyword) (local.get $kw))))
+
+         (func $keyword->immutable-string/checked
+               (param $kw (ref $Keyword))
+               (result    (ref $String))
+
+               (local $name (ref $String))
+               (local $src  (ref $I32Array))
+               (local $dst  (ref $I32Array))
+               (local $len  i32)
+
+               (local.set $name (struct.get $Keyword $str (local.get $kw)))
+
+               (if (result (ref $String))
+                   (i32.eq (struct.get $String $immutable (local.get $name)) (i32.const 1))
+                   (then (local.get $name))
+                   (else
+                    (local.set $src (struct.get $String $codepoints (local.get $name)))
+                    (local.set $len (array.len (local.get $src)))
+                    (local.set $dst (call $i32array-copy
+                                              (local.get $src) (i32.const 0) (local.get $len)))
+                    (struct.new $String (i32.const 0) (i32.const 1) (local.get $dst)))))
 
          (func $raise-keyword-expected (unreachable))
          

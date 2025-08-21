@@ -307,7 +307,7 @@
             #;(equal? (eq? (keyword->string '#:apple)
                          (keyword->string '#:apple))
                     #f)
-            #;(equal? (keyword->immutable-string '#:apple) "apple")            ; todo - implement keyword->immutable-string
+            (equal? (keyword->immutable-string '#:apple) "apple")
             #;(equal? (immutable? (keyword->immutable-string '#:apple)) #t)
 
             #;(equal? (procedure-arity keyword?) 1))) 
