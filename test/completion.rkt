@@ -94,6 +94,67 @@
 
 (define datatypes-primitives
   '(
+    (booleans
+      boolean=?
+      boolean?
+      false
+      false?
+      immutable-box?
+      immutable-bytes?
+      immutable-hash?
+      immutable-string?
+      immutable-vector?
+      immutable?
+      mutable-box?
+      mutable-bytes?
+      mutable-hash?
+      mutable-string?
+      mutable-vector?
+      not
+      symbol=?
+      true
+      xor
+      )
+    (bytes
+      byte?
+      bytes
+      bytes->immutable-bytes
+      bytes->list
+      bytes->string/latin-1
+      bytes->string/locale
+      bytes->string/utf-8
+      bytes-append
+      bytes-append*
+      bytes-close-converter
+      bytes-convert
+      bytes-convert-end
+      bytes-converter?
+      bytes-copy
+      bytes-copy!
+      bytes-fill!
+      bytes-join
+      bytes-length
+      bytes-open-converter
+      bytes-ref
+      bytes-set!
+      bytes-utf-8-index
+      bytes-utf-8-length
+      bytes-utf-8-ref
+      bytes<?
+      bytes=?
+      bytes>?
+      bytes?
+      list->bytes
+      locale-string-encoding
+      make-bytes
+      make-shared-bytes
+      shared-bytes
+      string->bytes/latin-1
+      string->bytes/locale
+      string->bytes/utf-8
+      string-utf-8-length
+      subbytes
+    )
     (equality
       eq-hash-code
       eq?
@@ -115,27 +176,7 @@
       hash-code-combine-unordered*
       prop:equal+hash
     )
-    #;(booleans
-      boolean=?
-      boolean?
-      false
-      false?
-      immutable-box?
-      immutable-bytes?
-      immutable-hash?
-      immutable-string?
-      immutable-vector?
-      immutable?
-      mutable-box?
-      mutable-bytes?
-      mutable-hash?
-      mutable-string?
-      mutable-vector?
-      not
-      symbol=?
-      true
-      xor
-    )
+    
     ;; (numbers
     ;;   *
     ;;   +
@@ -311,46 +352,7 @@
       string?
       substring
     )
-    #;(bytes
-      byte?
-      bytes
-      bytes->immutable-bytes
-      bytes->list
-      bytes->string/latin-1
-      bytes->string/locale
-      bytes->string/utf-8
-      bytes-append
-      bytes-append*
-      bytes-close-converter
-      bytes-convert
-      bytes-convert-end
-      bytes-converter?
-      bytes-copy
-      bytes-copy!
-      bytes-fill!
-      bytes-join
-      bytes-length
-      bytes-open-converter
-      bytes-ref
-      bytes-set!
-      bytes-utf-8-index
-      bytes-utf-8-length
-      bytes-utf-8-ref
-      bytes<?
-      bytes=?
-      bytes>?
-      bytes?
-      list->bytes
-      locale-string-encoding
-      make-bytes
-      make-shared-bytes
-      shared-bytes
-      string->bytes/latin-1
-      string->bytes/locale
-      string->bytes/utf-8
-      string-utf-8-length
-      subbytes
-    )
+    
     ;; (chars
     ;;   char->integer
     ;;   char-alphabetic?
@@ -434,7 +436,7 @@
       keyword?
       string->keyword
     )
-    #;(pairs
+    (pairs
       add-between
       andmap
       append-map
@@ -527,15 +529,15 @@
       twelfth
       windows
     )
-    ;; (mpairs
-    ;;   mcar
-    ;;   mcdr
-    ;;   mcons
-    ;;   mpair?
-    ;;   set-mcar!
-    ;;   set-mcdr!
-    ;; )
-    #;(vectors
+    (mpairs
+      mcar
+      mcdr
+      mcons
+      mpair?
+      set-mcar!
+      set-mcdr!
+    )
+    (vectors
       build-vector
       list->vector
       make-vector
@@ -1018,203 +1020,208 @@
 (define (symbol->title s)
   (symbol->string s))
 
+(define implemented-constants
+  '(null undefined empty true false pi))
+
+
 (define implemented-primitives
-  '(namespace-undefine-variable!
-    namespace-set-variable-value!
-    namespace-variable-value-simple
-    make-empty-namespace
-    namespace?
-    unsafe-vector*-set!
-    unsafe-vector*-length
-    unsafe-cdr
-    unsafe-car
-    unsafe-fx<
-    unsafe-fx=
-    unsafe-fl/
-    unsafe-fx+
-    js-log
-    variable-reference-constant?
-    variable-reference-from-unsafe?
-    primitive-result-arity
-    primitive-closure?
-    primitive?
-    procedure-arity-includes?
-    procedure-arity-mask
-    procedure-arity
-    procedure?
-    procedure-rename
-    apply
-    keyword<?
-    string->keyword
-    keyword->string
-    keyword?
-    eq-hash-code
-    hash-has-key?
-    hash-clear!
-    hash-remove!
-    hash-set!
-    hash-ref
-    make-hasheq
-    make-empty-hasheq
-    fasl->s-exp
-    s-exp->fasl
-    port-next-location
-    write-byte
-    get-output-bytes
-    open-output-bytes
-    string-port?
-    symbol->immutable-string
-    symbol-interned?
-    string->uninterned-symbol
-    symbol->string
-    string->symbol
-    symbol<?
-    symbol=?
-    symbol?
-    string-drop
-    string-trim-right
-    string-trim-left
-    string->bytes/utf-8
-    list->string
-    string->list
-    string-append
-    string-fill!
-    string-copy
-    string-copy!
-    substring
-    string-length
-    string-set!
-    string-ref
-    make-string
-    string<?
-    string=?
-    string?
-    bytes=?
-    list->bytes
-    bytes->list
-    bytes-append
-    bytes-fill!
-    bytes-copy
-    bytes-copy!
-    subbytes
-    bytes-length
-    bytes-set!
-    bytes-ref
-    make-bytes
-    bytes?
-    vector->list
-    vector-split-at
-    vector-drop-right
-    vector-drop
-    vector-take
-    vector-empty?
-    vector-copy!
-    vector-fill!
-    vector-length
-    vector-set!
-    vector-ref
-    make-vector
-    vector?
-    vector
-    byte?
-    flround
-    fl>=
-    fl<=
-    fl>
-    fl<
-    fl=
-    fl/
-    fl*
-    fl-
-    fl+
-    flonum?
-    unsafe-fxquotient
-    fxquotient
-    fx>=
-    fx<=
-    fx<
-    fx>
-    fx=
-    fx*
-    fx-
-    fx+
-    fxzero?
-    fixnum?
-    round
-    inexact->exact
-    exact-positive-integer?
-    exact-nonnegative-integer?
-    exact-integer?
-    exact?
-    integer?
-    sub1
-    add1
-    negative?
-    positive?
-    zero?
-    >=
-    <=
-    >
-    <
-    =
-    /
-    *
-    -
-    +
-    number->string
-    equal?
-    eqv?
-    eq?
-    char-whitespace?
-    integer->char
-    char->integer
-    char=?
-    char?
-    not
-    boolean?
-    void
-    make-void
-    void?
-    list*
-    for-each
-    map
-    alt-reverse
-    memq
-    reverse
-    append
-    list-tail
-    list-ref
-    length
-    list?
-    list
-    cdr
-    car
-    cons
-    null?
-    pair?
-    string
-    bytes
-    vector-immutable
-    set-box!
-    unbox
-    box
-    set-boxed!
-    unboxed
-    boxed
-    box-immutable
-    values
-    current-inspector
-    struct-type?
-    struct?
-    struct-mutator-procedure?
-    struct-accessor-procedure?
-    struct-predicate-procedure?
-    struct-constructor-procedure?
-    make-struct-field-mutator
-    make-struct-field-accessor
-    make-struct-type
-    raise-unbound-variable-reference)
-  )
+  (append implemented-constants
+          '(keyword->immutable-string
+            namespace-undefine-variable!
+            namespace-set-variable-value!
+            namespace-variable-value-simple
+            make-empty-namespace
+            namespace?
+            unsafe-vector*-set!
+            unsafe-vector*-length
+            unsafe-cdr
+            unsafe-car
+            unsafe-fx<
+            unsafe-fx=
+            unsafe-fl/
+            unsafe-fx+
+            js-log
+            variable-reference-constant?
+            variable-reference-from-unsafe?
+            primitive-result-arity
+            primitive-closure?
+            primitive?
+            procedure-arity-includes?
+            procedure-arity-mask
+            procedure-arity
+            procedure?
+            procedure-rename
+            apply
+            keyword<?
+            string->keyword
+            keyword->string
+            keyword?
+            eq-hash-code
+            hash-has-key?
+            hash-clear!
+            hash-remove!
+            hash-set!
+            hash-ref
+            make-hasheq
+            make-empty-hasheq
+            fasl->s-exp
+            s-exp->fasl
+            port-next-location
+            write-byte
+            get-output-bytes
+            open-output-bytes
+            string-port?
+            symbol->immutable-string
+            symbol-interned?
+            string->uninterned-symbol
+            symbol->string
+            string->symbol
+            symbol<?
+            symbol=?
+            symbol?
+            string-drop
+            string-trim-right
+            string-trim-left
+            string->bytes/utf-8
+            list->string
+            string->list
+            string-append
+            string-fill!
+            string-copy
+            string-copy!
+            substring
+            string-length
+            string-set!
+            string-ref
+            make-string
+            string<?
+            string=?
+            string?
+            bytes=?
+            list->bytes
+            bytes->list
+            bytes-append
+            bytes-fill!
+            bytes-copy
+            bytes-copy!
+            subbytes
+            bytes-length
+            bytes-set!
+            bytes-ref
+            make-bytes
+            bytes?
+            vector->list
+            vector-split-at
+            vector-drop-right
+            vector-drop
+            vector-take
+            vector-empty?
+            vector-copy!
+            vector-fill!
+            vector-length
+            vector-set!
+            vector-ref
+            make-vector
+            vector?
+            vector
+            byte?
+            flround
+            fl>=
+            fl<=
+            fl>
+            fl<
+            fl=
+            fl/
+            fl*
+            fl-
+            fl+
+            flonum?
+            unsafe-fxquotient
+            fxquotient
+            fx>=
+            fx<=
+            fx<
+            fx>
+            fx=
+            fx*
+            fx-
+            fx+
+            fxzero?
+            fixnum?
+            round
+            inexact->exact
+            exact-positive-integer?
+            exact-nonnegative-integer?
+            exact-integer?
+            exact?
+            integer?
+            sub1
+            add1
+            negative?
+            positive?
+            zero?
+            >=
+            <=
+            >
+            <
+            =
+            /
+            *
+            -
+            +
+            number->string
+            equal?
+            eqv?
+            eq?
+            char-whitespace?
+            integer->char
+            char->integer
+            char=?
+            char?
+            not
+            boolean?
+            void
+            make-void
+            void?
+            list*
+            for-each
+            map
+            alt-reverse
+            memq
+            reverse
+            append
+            list-tail
+            list-ref
+            length
+            list?
+            list
+            cdr
+            car
+            cons
+            null?
+            pair?
+            string
+            bytes
+            vector-immutable
+            set-box!
+            unbox
+            box
+            set-boxed!
+            unboxed
+            boxed
+            box-immutable
+            values
+            current-inspector
+            struct-type?
+            struct?
+            struct-mutator-procedure?
+            struct-accessor-procedure?
+            struct-predicate-procedure?
+            struct-constructor-procedure?
+            make-struct-field-mutator
+            make-struct-field-accessor
+            make-struct-type
+            raise-unbound-variable-reference)))
 
 (define sections
   (for/list ([entry (in-list datatypes-primitives)])
@@ -1227,9 +1234,9 @@
 ;;; showing the percentage. The unfilled portion is covered with a grey
 ;;; overlay so the gradient corresponds to the entire gauge, not just the
 ;;; filled width.
-(define (make-gauge pct)
+(define (make-gauge pct title)
   ; (js-log 'make-gauge)  
-  (define pct-num       (round (* 100 pct)))
+  (define pct-num       (inexact->exact (round (* 100 pct))))
   (define pct-str       (number->string pct-num))
   (define remaining-str (number->string (- 100 pct-num)))
   (define container-style 
@@ -1241,11 +1248,14 @@
     (string-append "position:absolute;top:0;right:0;height:100%;width:"
                    remaining-str
                    "%;background:#ddd;"))
-  `(div (@ (style "display:flex;align-items:center;gap:8px;"))
-        (div (@ (style ,container-style))
-             (div (@ (style ,overlay-style))))
-        (span (@ (style "font-size: 3em;"))
-              ,(string-append pct-str "%")))
+  `(span (@ (style "display:flex;align-items:center;gap:8px;"))
+         (span (@ (style "width:5em;"))
+               ,title)
+         (span (@ (style ,container-style))
+               (span (@ (style ,overlay-style))))
+         " "
+         (span (@ (style "font-size: 2em;width:3em;text-align:right;"))
+               ,(string-append pct-str "%")))
   )
 
 (define (primitive-url sym)
@@ -1283,26 +1293,23 @@
      (define toggle-script
        (format (string-append "var ul=document.getElementById('~a');"
                               "var tri=document.getElementById('~a');"
-                              "if(ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}"
+                              "if(  ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}"
                               "else{ul.style.display='none';tri.textContent='\\u25B6';}")
                list-id tri-id))
 
      
      (js-log tri-id)
      
-     `(section
-       ,(make-gauge pct)
-       (h2
-        (span (@ (id      ,tri-id)
-                  (style   "cursor:pointer;")
-                  (onclick ,toggle-script))
-              "▶")
-        " "
-         ,title)
-       (ul (@ (id ,list-id)
-              (style "display:none;"))
-           " "
-           ,@(map primitive-li (sort-symbols primitives))))]))
+     `(section              
+       (div (h2 ,(make-gauge pct title))
+            (span (@ (id      ,tri-id)
+                     (onclick ,toggle-script)
+                     (style   "cursor:pointer;"))
+                  "▶")
+            (ul (@ (id    ,list-id)
+                   (style "display:none;"))
+                ,@(map primitive-li (sort-symbols primitives)))
+            (hr)))]))
 
 
 (define sections
@@ -1311,7 +1318,7 @@
     (section->sxml s i)))
 
 (define page
-  `(div (h1 "Progress: Datatype Primitives")
+  `(div (h1 "Progress: Datatype Functions and Constants")
         ""
         ,@sections))
 
