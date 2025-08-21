@@ -1,9 +1,10 @@
 #lang racket/base
- (require racket/fixnum
+(require racket/fixnum
          racket/flonum
          racket/fasl
          racket/symbol
-         (only-in racket/bool symbol=?))
+         (only-in racket/bool symbol=?)
+         (only-in racket/keyword keyword->immutable-string))
 
 ;; The primitives are 
 

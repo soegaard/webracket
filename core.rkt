@@ -141,6 +141,10 @@
 (require (only-in racket/symbol symbol->immutable-string))
 (provide symbol->immutable-string)
 
+;; 4.9.1 Additional Keyword Functions
+(require (only-in racket/keyword keyword->immutable-string))
+(provide keyword->immutable-string)
+
 ;; 4.10
 (require (only-in racket/base
                   null))

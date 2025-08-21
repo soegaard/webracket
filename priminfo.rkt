@@ -25,6 +25,7 @@
   (namespace-require 'racket/fixnum)
   (namespace-require 'racket/fasl)
   (namespace-require 'racket/symbol)
+  (namespace-require 'racket/keyword)            ; keyword->immutable-string
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   #;(namespace-require 'racket/base)
   #;(namespace-require 'racket/fixnum)
