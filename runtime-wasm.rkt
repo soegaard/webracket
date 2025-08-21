@@ -15,7 +15,8 @@
            top-level-variable-declarations
            entry-locals           
            ; general information
-           primitives  ; list of symbols
+           primitives       ; list of symbols
+           string-constants ; (list (list name string) ...) 
            )
   (let* () ; an wasm identifier
     (let* ()
@@ -86,7 +87,8 @@
                                (primitive-description-result-arity desc)))))))
 
     ;; String constants used in the runtime
-    (define runtime-string-constants '())
+    ;;  `string-constants holds the constants passed by `generate-code` in `compiler.rkt`
+    (define runtime-string-constants string-constants)
     (define (add-runtime-string-constant name string)
       (set! runtime-string-constants
             (cons (list name string) runtime-string-constants)))
@@ -105,7 +107,8 @@
         (define string       (second ns))
         (define $bytes:name  (string->symbol (~a "$" "bytes:"  name)))
         (define $string:name (string->symbol (~a "$" "string:" name)))
-        (define n            (string-length string))
+        (define n            (cond [(string? string) (string-length string)]
+                                   [(bytes?  string) (bytes-length string)]))
         `(global.set ,$string:name
                      (call $i8array->string
                            (array.new_data $I8Array ,$bytes:name

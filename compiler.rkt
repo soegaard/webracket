@@ -724,6 +724,7 @@
 (define-pass parse : * (stx) -> LFE ()
   (definitions
     (reset-ffi-primitives)
+    (reset-string-constants)
     (define (Datum E d)                (datum E (syntax->datum d)))
     (define (Expr* es)                 (map Expr              (stx->list es)))
     (define (Expr** ess)               (map Expr*             (stx->list ess)))
@@ -927,6 +928,7 @@
                          ,(datum->construction-expr s str)))))
               id)]
         [id id]))
+    (define quoted-string-counter 0)
     (define (datum->construction-expr s v)
       (define (loop v) (datum->construction-expr s v))
       (with-output-language (LFE Expr)
@@ -937,22 +939,20 @@
                     (? boolean?)
                     (? char?)
                     (? null?)
-                    (? void?)
+                    (? void?)                    
                     (? number?))) ; a bignum or rational number
            (if (number? v)
                (if (not (or (wr-fixnum? v) (flonum? v)))
                    `(quote ,s ,(datum s (* 1. v))) ; convert to a flonum
                    `(quote ,s ,(datum s v)))       ; fixnum or flonum
                `(quote ,s ,(datum s v)))]          ; other literals
+          [(? string? cs)  `(quote ,s ,(datum s v))]
+          [(? bytes?  bs)  `(quote ,s ,(datum s v))]
           [(? symbol? sym) (quoted-symbol! s sym)]
           [(? pair? p)     `(app ,h ,(var:cons) ,(loop (car p)) ,(loop (cdr p)))]
           [(? vector? v)   (let ([vs (map loop (vector->list v))])
                              `(app ,h ,(var:vector-immutable) ,vs ...))]
-          [(? box? b)       `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]
-          [(? bytes? bs)   (let ([bs (map loop (bytes->list bs))])
-                             `(app ,h ,(var:bytes) ,bs ...))]
-          [(? string? cs)  (let ([cs (loop (string->list cs))])
-                             `(app ,h ,(var:list->string) ,cs))]
+          [(? box? b)       `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]          
           [(? keyword? kw) (let ([s (loop (keyword->string kw))])
                              `(app ,h ,(var:string->keyword) ,s))]
           [else            (error 'datum->construction-expr "got: ~a" v)]))))
@@ -2538,6 +2538,13 @@
 ;   2. We prefix all program identifiers with $$.
 ;   3. The compiler is free to control all identifiers that begin with a single $.
 
+; a symbol `name` turns into "$string:name" and "$bytes:name"
+(define string-constants '())  ; (list (list name string) ...)
+(define (add-string-constant name string)
+  (set! string-constants (cons (list name string) string-constants)))
+(define (reset-string-constants)  ; called in parse
+  (set! string-constants '()))
+
 (define-pass generate-code : LANF+closure (T) -> * ()
   (definitions
     ;; 1. Classify variables
@@ -2620,6 +2627,14 @@
       (emit-local v type init)
       (set! local-vars (set-add local-vars v))
       v)
+    ;; quoted strings
+    (define quoted-string-counter 0)
+    (define (add-quoted-string string)
+      (define name (string->symbol (~a "quoted-string" quoted-string-counter)))
+      (set! quoted-string-counter (+ quoted-string-counter 1))
+      (displayln quoted-string-counter)
+      (add-string-constant name string)
+      name)
     )
 
   (ClosureAllocation : ClosureAllocation (ca dd) -> * ()
@@ -2761,6 +2776,12 @@
                              [(eq? v #f)   '(global.get $false)]
                              [(fixnum? v)  (Imm v)]
                              [(char? v)    (Imm v)]
+                             [(string? v)  (define name         (add-quoted-string v))
+                                           (define $string:name (string->symbol (~a "$string:" name)))
+                                           `(global.get ,$string:name)]
+                             [(bytes? v)   (define name         (add-quoted-string v))
+                                           (define $bytes:name (string->symbol (~a "$string:" name)))
+                                           `(global.get ,$bytes:name)]
                              [else         `',v]))])]
     [(top ,s ,x)
      ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
@@ -3629,6 +3650,7 @@
    entry-locals                     ; variables that are local to $entry
    ; general
    primitives                       ; primitives (list of symbols)
+   string-constants                 ; (list (list name string) ...) 
    )
   )
 
