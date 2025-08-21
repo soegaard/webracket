@@ -37,10 +37,24 @@
 
 (define (format fmt . args)
   (let loop ([s fmt] [args args])
-    (if (null? args)
-        s
-        (loop (string-replace s "~a" (car args) #f)
-              (cdr args)))))
+    (cond
+      [(null? args) s]
+      [else (define a (car args))
+            (when (fixnum? a) (set! a (number->string a)))
+            (when (symbol? a) (set! a (symbol->string a)))
+            (loop (string-replace s "~a" a #f)
+                  (cdr args))])))
+
+(define (sort-symbols syms)
+  (define (insert sym lst)
+    (if (null? lst)
+        (cons sym '())
+        (if (symbol<? sym (car lst))
+            (cons sym lst)
+            (cons (car lst) (insert sym (cdr lst))))))
+  (if (null? syms)
+      '()
+      (insert (car syms) (sort-symbols (cdr syms)))))
 
 (define (add-children elem children)
   ; (js-log 'add-children)
@@ -52,14 +66,17 @@
   (for ([attr (in-list attrs)])
     (match attr
       [(list name value)
-       (js-set-attribute! elem (symbol->string name) value)])))
+       (js-set-attribute! elem (symbol->string name) value)]
+      [_
+       (js-log "set-elem-attributes: attrs malformed, got:")
+       (js-log attrs)])))
 
 (define (sxml->dom exp)
   ; (js-log 'sxml->dom)
   (match exp
     [(? string? s)
      (js-create-text-node exp)]
-    [(list (? symbol? tag) (list '@ attrs ...) children ...)
+    [(list (? symbol? tag) (list '@ attrs ...) children ...)     
      ;; Create a new element with the given tag.
      (define elem (js-create-element (symbol->string tag)))
      (set-elem-attributes elem attrs)
@@ -1261,22 +1278,31 @@
                      (/ (length implemented) (length primitives))))
 
      (define list-id (format "sec-~a-list" idx))
-     (define tri-id  (format "sec-~a-tri" idx))
+     (define tri-id  (format "sec-~a-tri"  idx))
+     
      (define toggle-script
-       (format "var ul=document.getElementById('~a');var tri=document.getElementById('~a');if(ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}else{ul.style.display='none';tri.textContent='\\u25B6';}" list-id tri-id))
+       (format (string-append "var ul=document.getElementById('~a');"
+                              "var tri=document.getElementById('~a');"
+                              "if(ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}"
+                              "else{ul.style.display='none';tri.textContent='\\u25B6';}")
+               list-id tri-id))
 
+     
+     (js-log tri-id)
+     
      `(section
        ,(make-gauge pct)
        (h2
-        (span (@ (id ,tri-id)
-                  (style "cursor:pointer;")
+        (span (@ (id      ,tri-id)
+                  (style   "cursor:pointer;")
                   (onclick ,toggle-script))
-               "▶")
-         " "
+              "▶")
+        " "
          ,title)
        (ul (@ (id ,list-id)
               (style "display:none;"))
-           ,@(map primitive-li primitives)))]))
+           " "
+           ,@(map primitive-li (sort-symbols primitives))))]))
 
 
 (define sections
