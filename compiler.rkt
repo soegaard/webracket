@@ -506,6 +506,7 @@
 
   keyword?
   keyword->string
+  keyword->immutable-string
   string->keyword
   keyword<?
 
