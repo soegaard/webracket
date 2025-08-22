@@ -187,7 +187,7 @@
     (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                "#&")
     (add-runtime-string-constant 'bytes-prefix              "#\"")
-    (add-runtime-string-constant 'backslash                "\\")
+    (add-runtime-string-constant 'backslash                 "\\")
     (add-runtime-string-constant 'backslash-x               "\\x")
     (add-runtime-string-constant 'double-quote              "\"")
     (add-runtime-string-constant 'hash-t                    "#t")
@@ -11025,66 +11025,92 @@
                                  (ref.cast (ref $Keyword) (local.get $v)))))
 
 
-        (func $format/display:bytes
-              (param $bs (ref $Bytes))
-              (result   (ref $String))
+         (func $format/display:bytes
+               (param $bs (ref $Bytes))
+               (result    (ref $String))
 
-              (local $arr  (ref $I8Array))
-              (local $len  i32)
-              (local $i    i32)
-              (local $byte i32)
-              (local $esc  i32)
-              (local $s    (ref $String))
-              (local $out  (ref $GrowableArray))
+               (local $arr  (ref $I8Array))
+               (local $len  i32)
+               (local $i    i32)
+               (local $byte i32)
+               (local $esc  i32)
+               (local $s    (ref $String))
+               (local $out  (ref $GrowableArray))
 
-              ;; Extract raw byte array and its length
-              (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
-              (local.set $len (array.len (local.get $arr)))
-              ;; Allocate result buffer (#"" plus escapes for each byte)
-              (local.set $out
-                         (call $make-growable-array
-                               (i32.add (i32.const 2)
-                                        (i32.mul (local.get $len) (i32.const 4)))))
-              (call $growable-array-add! (local.get $out)
-                                        (global.get $string:bytes-prefix))
-              (local.set $i (i32.const 0))
-              (block $done
-                     (loop $loop
-                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                           (local.set $byte (call $i8array-ref (local.get $arr) (local.get $i)))
-                           (if (i32.and
-                                (i32.le_u (local.get $byte) (i32.const 127))
-                                (i32.or (call $is-graphic (local.get $byte))
-                                        (call $is-blank   (local.get $byte))))
-                               (then
-                                (if (i32.eq (local.get $byte) (i32.const 92))
-                                    (then
-                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
-                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash)))
-                                    (else
-                                     (if (i32.eq (local.get $byte) (i32.const 34))
-                                         (then
-                                          (call $growable-array-add! (local.get $out) (global.get $string:backslash))
-                                          (call $growable-array-add! (local.get $out) (global.get $string:double-quote)))
-                                         (else
-                                          (local.set $s (call $make-string/checked (i32.const 1) (local.get $byte)))
-                                          (call $growable-array-add! (local.get $out) (local.get $s))))))
-                               (else
-                                (local.set $esc (call $get-special-escape (local.get $byte)))
-                                (if (i32.ne (local.get $esc) (i32.const 0))
-                                    (then
-                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
-                                     (local.set $s (call $make-string/checked (i32.const 1) (local.get $esc)))
-                                     (call $growable-array-add! (local.get $out) (local.get $s)))
-                                    (else
-                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
-                                     (local.set $s (call $make-oct-string (local.get $byte)))
-                                     (call $growable-array-add! (local.get $out) (local.get $s))))))
-                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                           (br $loop)))
-              (call $growable-array-add! (local.get $out)
-                                        (global.get $string:double-quote))
-              (call $growable-array-of-strings->string (local.get $out)))
+               ;; Extract raw byte array and its length
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (array.len (local.get $arr)))
+
+               ;; Allocate result buffer.
+               ;;   Format is #"<content>", so we need 2 chars for the quotes, plus worst-case
+               ;;   room to escape *every* byte (e.g., "\ooo" or "\n"), hence len * 4 slack.
+               (local.set $out
+                          (call $make-growable-array
+                                (i32.add (i32.const 2)
+                                         (i32.mul (local.get $len) (i32.const 4)))))
+
+               ;; Emit the bytes display prefix:  #"
+               (call $growable-array-add! (local.get $out)
+                     (global.get $string:bytes-prefix))
+
+               ;; Iterate bytes and append escaped fragments
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+
+                            ;; Read next byte as unsigned 0..255 (kept in i32)
+                            (local.set $byte (call $i8array-ref (local.get $arr) (local.get $i)))
+
+                            ;; If ASCII (<= 127) and graphic or blank, emit directly (with escapings for \" and \\).
+                            ;; Otherwise, try a named special escape (e.g., \n, \t); if none, fall back to octal.
+                            (if (i32.and
+                                 (i32.le_u (local.get $byte) (i32.const 127))
+                                 (i32.or (call $is-graphic (local.get $byte))
+                                         (call $is-blank   (local.get $byte))))
+                                (then
+                                 ;; Handle the two ASCII characters that must be escaped inside quotes:
+                                 ;;   92 = '\' backslash, 34 = '"' double quote
+                                 (if (i32.eq (local.get $byte) (i32.const 92))       ;; '\'
+                                     (then
+                                      ;; Emit "\\" to represent a single backslash
+                                      (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                      (call $growable-array-add! (local.get $out) (global.get $string:backslash)))
+                                     (else
+                                      (if (i32.eq (local.get $byte) (i32.const 34)) ;; '"'
+                                          (then
+                                           ;; Emit \" to include a literal quote inside the string
+                                           (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                           (call $growable-array-add! (local.get $out) (global.get $string:double-quote)))
+                                          (else
+                                           ;; Safe printable ASCII → emit 1-char string directly
+                                           (local.set $s (call $make-string/checked (i32.const 1) (local.get $byte)))
+                                           (call $growable-array-add! (local.get $out) (local.get $s)))))))
+                                (else
+                                  ;; Non-printable or non-ASCII:
+                                  ;; Try special escapes first (returns 0 if none, else codepoint of escaped letter).
+                                  (local.set $esc (call $get-special-escape (local.get $byte)))
+                                  (if (i32.ne (local.get $esc) (i32.const 0))
+                                      (then
+                                       ;; Emit backslash + special escape letter (e.g., "\n")
+                                       (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                       (local.set $s (call $make-string/checked (i32.const 1) (local.get $esc)))
+                                       (call $growable-array-add! (local.get $out) (local.get $s)))
+                                      (else
+                                       ;; Fallback: octal escape like "\ooo"
+                                       (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                       (local.set $s (call $make-oct-string (local.get $byte)))
+                                       (call $growable-array-add! (local.get $out) (local.get $s))))))
+
+                            ;; Advance to next byte
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; Close the display with a trailing quote and materialize the final string
+               (call $growable-array-add! (local.get $out)
+                     (global.get $string:double-quote))
+               (call $growable-array-of-strings->string (local.get $out)))
+
          
          (func $raise-format/display:pair:expected-pair       (unreachable))
 
