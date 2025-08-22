@@ -1039,8 +1039,7 @@
 
 (define implemented-primitives
   (append implemented-constants
-          '(keyword->immutable-string
-            namespace-undefine-variable!
+          '(namespace-undefine-variable!
             namespace-set-variable-value!
             namespace-variable-value-simple
             make-empty-namespace
@@ -1067,6 +1066,7 @@
             apply
             keyword<?
             string->keyword
+            keyword->immutable-string
             keyword->string
             keyword?
             eq-hash-code
@@ -1113,6 +1113,7 @@
             bytes=?
             list->bytes
             bytes->list
+            bytes->immutable-bytes
             bytes-append
             bytes-fill!
             bytes-copy
@@ -1196,6 +1197,7 @@
             void
             make-void
             void?
+            filter
             list*
             for-each
             map
@@ -1234,7 +1236,8 @@
             make-struct-field-mutator
             make-struct-field-accessor
             make-struct-type
-            raise-unbound-variable-reference)))
+            raise-unbound-variable-reference)
+          ))
 
 (define sections
   (for/list ([entry (in-list datatypes-primitives)])
