@@ -407,7 +407,8 @@
   map for-each
   list*
   filter
-  
+  make-list
+
   void?
   make-void  ; zero arguments
   void
