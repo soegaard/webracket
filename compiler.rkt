@@ -468,15 +468,18 @@
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes bytes->list list->bytes bytes=?
   bytes->string/utf-8
-  
+
   string? string=? string<?
   make-string string-ref string-set! string-length substring string-copy!
   string-copy string-fill! string-append string->list list->string
-  string->bytes/utf-8
+  string->bytes/utf-8 string->immutable-string string-replace
 
+  string-take        ; not in Racket
+  string-take-right  ; not in Racket
+  string-drop        ; not in Racket
+  string-drop-right  ; not in Racket
   string-trim-left   ; not in Racket
   string-trim-right  ; not in Racket
-  string-drop        ; not in Racket
 
   symbol? symbol=? symbol<?
   string->symbol symbol->string
