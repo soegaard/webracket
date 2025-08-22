@@ -466,7 +466,7 @@
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes bytes->list list->bytes bytes=?
-
+  bytes->string/utf-8
   
   string? string=? string<?
   make-string string-ref string-set! string-length substring string-copy!
