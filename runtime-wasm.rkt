@@ -187,6 +187,7 @@
     (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                "#&")
     (add-runtime-string-constant 'bytes-prefix              "#\"")
+    (add-runtime-string-constant 'backslash                "\\")
     (add-runtime-string-constant 'backslash-x               "\\x")
     (add-runtime-string-constant 'double-quote              "\"")
     (add-runtime-string-constant 'hash-t                    "#t")
@@ -11032,13 +11033,14 @@
               (local $len  i32)
               (local $i    i32)
               (local $byte i32)
-              (local $hex  (ref $String))
+              (local $esc  i32)
+              (local $s    (ref $String))
               (local $out  (ref $GrowableArray))
 
               ;; Extract raw byte array and its length
               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
               (local.set $len (array.len (local.get $arr)))
-              ;; Allocate result buffer (#"" plus \xNN for each byte)
+              ;; Allocate result buffer (#"" plus escapes for each byte)
               (local.set $out
                          (call $make-growable-array
                                (i32.add (i32.const 2)
@@ -11050,10 +11052,34 @@
                      (loop $loop
                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
                            (local.set $byte (call $i8array-ref (local.get $arr) (local.get $i)))
-                           (call $growable-array-add! (local.get $out)
-                                                     (global.get $string:backslash-x))
-                           (local.set $hex (call $make-hex-string (local.get $byte) (i32.const 2)))
-                           (call $growable-array-add! (local.get $out) (local.get $hex))
+                           (if (i32.and
+                                (i32.le_u (local.get $byte) (i32.const 127))
+                                (i32.or (call $is-graphic (local.get $byte))
+                                        (call $is-blank   (local.get $byte))))
+                               (then
+                                (if (i32.eq (local.get $byte) (i32.const 92))
+                                    (then
+                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash)))
+                                    (else
+                                     (if (i32.eq (local.get $byte) (i32.const 34))
+                                         (then
+                                          (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                          (call $growable-array-add! (local.get $out) (global.get $string:double-quote)))
+                                         (else
+                                          (local.set $s (call $make-string/checked (i32.const 1) (local.get $byte)))
+                                          (call $growable-array-add! (local.get $out) (local.get $s))))))
+                               (else
+                                (local.set $esc (call $get-special-escape (local.get $byte)))
+                                (if (i32.ne (local.get $esc) (i32.const 0))
+                                    (then
+                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                     (local.set $s (call $make-string/checked (i32.const 1) (local.get $esc)))
+                                     (call $growable-array-add! (local.get $out) (local.get $s)))
+                                    (else
+                                     (call $growable-array-add! (local.get $out) (global.get $string:backslash))
+                                     (local.set $s (call $make-oct-string (local.get $byte)))
+                                     (call $growable-array-add! (local.get $out) (local.get $s))))))
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
                            (br $loop)))
               (call $growable-array-add! (local.get $out)
@@ -11321,10 +11347,18 @@
                                 (call $make-hex-string (local.get $cp) (i32.const 6))))))
                (unreachable))
 
-         (func $make-hex-string
-               (param $n      i32)    ;; input number
-               (param $digits i32)    ;; minimum number of hex digits
-               (result        (ref $String))
+        (func $make-oct-string
+              (param $n i32)
+              (result (ref $String))
+              (call $number->string:convert
+                    (local.get $n)
+                    (i32.const 8)
+                    (i32.const 3)))
+
+        (func $make-hex-string
+              (param $n      i32)    ;; input number
+              (param $digits i32)    ;; minimum number of hex digits
+              (result        (ref $String))
 
                (local $raw (ref $String))
                (local $len i32)
