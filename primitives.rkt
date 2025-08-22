@@ -3,6 +3,7 @@
          racket/flonum
          racket/fasl
          racket/symbol
+         racket/list
          (only-in racket/bool symbol=?)
          (only-in racket/keyword keyword->immutable-string))
 
@@ -65,7 +66,7 @@
  list?
  list
  list*
- make-list
+ make-list     ; racket/list
  ; build-list
 
  length

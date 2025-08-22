@@ -346,7 +346,7 @@
             #;(equal? (procedure-arity keyword<?) 2)))
 
  (list "case-lambda"
-       (list (equal? (procedure? (case-lambda)) #t)
+       (and (equal? (procedure? (case-lambda)) #t)
             (equal? (procedure? (case-lambda [(x) x])) #t)
             (equal? ((case-lambda [(x) x] [(x y) (list x y)]) 11) 11)
             (equal? ((case-lambda [(x) x] [(x y) (+ x y)]) 11 22) 33)
