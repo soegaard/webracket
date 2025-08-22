@@ -1039,7 +1039,8 @@
 
 (define implemented-primitives
   (append implemented-constants
-          '(namespace-undefine-variable!
+          '(bytes->string/utf-8
+            namespace-undefine-variable!
             namespace-set-variable-value!
             namespace-variable-value-simple
             make-empty-namespace
