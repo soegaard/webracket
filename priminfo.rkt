@@ -41,6 +41,11 @@
     string-trim-left
     string-trim-right
     string-drop         ; srfi 13
+    string-drop-right   ; srfi 13
+    string-take         ; srfi 13
+    string-take-right   ; srfi 13
+    string-replace      ; srfi 13
+    string->immutable-string
     make-void
     
     set-boxed!          ; assignment boxes
