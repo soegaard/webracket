@@ -1,3 +1,16 @@
+;;;
+;;; Completion of functions in Data Structure chapter
+;;;
+
+; time racket -l errortrace -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
+; racket -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
+
+; This program displays a web-page with a section for each section in
+; the Data Structure chapter in the reference.
+; Each section shows a gauge with the percentage completed.
+; A drop down triangle reveals a list of functions in the chapter.
+; Each function is linked to its documentation.
+
 (define (string-find/index s contained start)
   (define s-len (string-length s))
   (define c-len (string-length contained))
