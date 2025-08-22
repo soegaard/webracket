@@ -102,9 +102,7 @@
          (define string            (second ns))
          (define $string-data:name (string->symbol (~a "$" "string-data:"  name)))
          (define $string:name      (string->symbol (~a "$" "string:"       name)))
-         (list `(data   ,$string-data:name ,string
-                        ; ,(let ([s (format "~s" string)]) (substring s 1 (- (string-length s) 1)))
-                        )
+         (list `(data   ,$string-data:name ,(wasm-data (string->bytes/utf-8 string)))
                `(global ,$string:name (mut (ref eq)) ,(Imm #f))))))
     (define (initialize-runtime-string-constants)
       (for/list ([ns (reverse runtime-string-constants)])
@@ -112,7 +110,7 @@
         (define string            (second ns))
         (define $string-data:name (string->symbol (~a "$" "string-data:"  name)))
         (define $string:name      (string->symbol (~a "$" "string:"       name)))
-        (define n                 (string-length string))
+        (define n                 (bytes-length (string->bytes/utf-8 string)))
         `(global.set ,$string:name
                      (call $i8array->string
                            (array.new_data $I8Array ,$string-data:name

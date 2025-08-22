@@ -12,6 +12,10 @@
 ;; Wrapping a byte string in the `wasm-data` struct,
 ;; creates a value that prints correctly.
 
+;; Grammar:
+;;   https://wasm-dsl.github.io/spectec/core/text/values.html#text-string
+
+
 (require racket/pretty)
 
 ;; format-byte : byte? -> string?
@@ -32,7 +36,7 @@
     [(92) "\\\\"]                     ; backslash
     [else
      (cond
-       [(and (<= 32 b) (<= b 126) (not (member b '(34 39 92))))
+       [(and (<= 32 b) (<= b 126) (not (member b '(34 39 92)))) ; '(#\" #\' #\\)
         (string (integer->char b))]   ; printable ASCII => itself
        [else
         (hex-escape b)])]))           ; everything else => \xx
@@ -42,13 +46,19 @@
   ; mode : ; #t = write, #f = display, 0/1 = print
   (case mode
     [(0 1 #t #f)
-     (write-string
-      (string-append "\""
-                     (string-append*
-                      (for/list ([b bytes])
-                        (format-byte b)))
-                     "\"")
-      port)]
+     (define str
+       (cond
+         [(bytes? bytes)   (string-append*
+                            (for/list ([b bytes])
+                              (format-byte b)))]
+         #;[(string? bytes)  (string-append*
+                            (for/list ([c bytes])
+                              (define b (char->integer c))
+                              (cond
+                                [(< b 256) (format-byte b)]
+                                [else      (string-append "\\u{" (string b) "}")])))]
+         [else (error 'data-print "got: ~a" bytes)]))
+     (write-string (string-append "\"" str "\"") port)]
     [else
      (write-string "huh?" port)])
   (void))
@@ -65,3 +75,6 @@
 
 ;; (data-print #"bar" (current-output-port) #t)
 ;; (pretty-write (wasm-data #"hé"))
+;; (data-print "bar" (current-output-port) #t)
+#;(data-print "hé" (current-output-port) #t)
+
