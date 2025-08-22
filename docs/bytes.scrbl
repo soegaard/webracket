@@ -62,7 +62,9 @@ positions are initialized with the given @racket[b]s.
 
 @examples[
 (bytes->immutable-bytes (bytes 65 65 65))
-(define b (bytes->immutable-bytes (make-bytes 5 65)))
+(define m (make-bytes 5 65))
+(eq? (bytes->immutable-bytes m) m)
+(define b (bytes->immutable-bytes m))
 (bytes->immutable-bytes b)
 (eq? (bytes->immutable-bytes b) b)
 ]}

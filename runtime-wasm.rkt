@@ -3497,11 +3497,38 @@
                    (else (call $raise-check-fixnum (local.get $b))
                          (unreachable)))
                ;; Construct mutable bytes object
+                (struct.new $Bytes
+                            (i32.const 0)  ;; hash
+                            (i32.const 0)  ;; immutable = false
+                            (call $i8make-array (local.get $len) (local.get $val))))
+
+         (func $make-dummy-bytes (result (ref $Bytes))
                (struct.new $Bytes
-                           (i32.const 0)  ;; hash
-                           (i32.const 0)  ;; immutable = false
-                           (call $i8make-array (local.get $len) (local.get $val))))
-                  
+                           (i32.const 0)  ;; hash = 0
+                           (i32.const 0)  ;; mutable
+                           (call $i8make-array (i32.const 0) (i32.const 0))))
+
+         (func $bytes->immutable-bytes (param $b (ref eq)) (result (ref eq))
+               (local $bs (ref $Bytes))
+               (local.set $bs (call $make-dummy-bytes))
+               ;; 1. Check that b is a byte string
+               (if (ref.test (ref $Bytes) (local.get $b))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $b))))
+                   (else (call $raise-check-bytes (local.get $b))
+                         (unreachable)))
+               ;; 2. If already immutable, return it directly
+               (if (result (ref eq))
+                   (i32.eq (struct.get $Bytes $immutable (local.get $bs)) (i32.const 1))
+                   (then (local.get $bs))
+                   (else
+                    (struct.new $Bytes
+                                (struct.get $Bytes $hash (local.get $bs))  ;; inherit hash
+                                (i32.const 1)                                ;; immutable
+                                (call $i8array-copy
+                                      (struct.get $Bytes $bs (local.get $bs))
+                                      (i32.const 0)
+                                      (call $i8array-length (struct.get $Bytes $bs (local.get $bs))))))))
+
          (func $bytes-length (param $a (ref eq)) (result (ref eq))
                (local $bs  (ref null $Bytes))
                (local $arr (ref $I8Array))

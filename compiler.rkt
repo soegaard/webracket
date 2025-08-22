@@ -465,7 +465,7 @@
   vector->list
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
-  bytes-copy bytes-fill! bytes-append bytes->list list->bytes bytes=?
+  bytes-copy bytes-fill! bytes-append bytes->immutable-bytes bytes->list list->bytes bytes=?
 
   
   string? string=? string<?

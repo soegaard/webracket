@@ -119,6 +119,14 @@
             (equal? (string-append "A" "B") "AB")
             (equal? (string-append "A" "B" "C") "ABC")))
 
+ (list "bytes->immutable-bytes"
+       (let* ([m (bytes 65 66 67)]
+              [i (bytes->immutable-bytes m)]
+              [i2 (bytes->immutable-bytes i)])
+         (and (equal? i m)
+              (not (eq? i m))
+              (eq? i2 i))))
+
 #; (list "string-replace"
        (and (equal? (string-replace "foo bar baz" "bar" "blah") "foo blah baz")
             (equal? (string-replace "foo foo" "foo" "bar" #f) "bar foo")))
