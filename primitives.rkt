@@ -65,6 +65,7 @@
  list?
  list
  list*
+ make-list
  ; build-list
 
  length
