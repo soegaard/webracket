@@ -415,7 +415,7 @@
   boolean? not
 
   char?
-  char=? ; two arguments
+  char=?           ; variadic
   char->integer
   integer->char
   char-whitespace?
@@ -2999,6 +2999,24 @@
                                     (define m (- 5 n))
                                     (define falses (make-list m (Imm #f)))
                                     `(call $make-struct-field-mutator ,@aes ,@falses)]
+                                   [(char=?) ; variadic, at least one argument
+                                    (define n   (length ae1))
+                                    (when (< n 1) (error 'primapp "too few arguments: ~a" s))
+                                    (define aes (AExpr* ae1))
+                                    (case n
+                                      [(1) `(global.get $true)]
+                                      [(2) `(call $char=?/2 ,@aes)]
+                                      [else
+                                       (define c0 (first aes))
+                                       (define xs
+                                         (let loop ([aes (rest aes)])
+                                           (if (null? aes)
+                                               `(global.get $null)
+                                               `(struct.new $Pair
+                                                            (i32.const 0)
+                                                            ,(first aes)
+                                                            ,(loop (rest aes))))))
+                                       `(call $char=? ,c0 ,xs)])]
                                    [(list)   ; variadic
                                     (let loop ([aes ae1])
                                       (if (null? aes)
@@ -3956,8 +3974,11 @@
           (equal? (run '(>= 2 3)) #f)
           (equal? (run '(>= 4 3)) #t)
           (equal? (run '(>= 3 3)) #t)
+          (equal? (run '(char=? #\a)) #t)
           (equal? (run '(char=? #\a #\a)) #t)
           (equal? (run '(char=? #\a #\b)) #f)
+          (equal? (run '(char=? #\a #\a #\a)) #t)
+          (equal? (run '(char=? #\a #\b #\a)) #f)
           ;; TODO: implement these
           ;; (equal? (run '(char<? #\a #\b)) #t)
           ;; (equal? (run '(char<? #\b #\a)) #f)
