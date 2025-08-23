@@ -380,7 +380,6 @@
   struct?
   struct-type?
 
-  ; null                     ; todo
   current-inspector          ; todo
   
   values                     
@@ -3067,18 +3066,6 @@
                                                        ,(Reference $bs) (i32.const ,i)
                                                        (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
                                             ,(Reference $bs))]
-                                   #;[(string) ; variadic, needs inlining for now
-                                      ; TODO: This assumes all the ae1 ... are characters
-                                      (define n    (length ae1))
-                                      (define init `(array.new $String (i32.const 0) (i32.const ,n)))
-                                      (define $is  (emit-fresh-local 'inlined-string '(ref $String) init))
-                                      `(block (result (ref eq))
-                                              ,@(for/list ([ae ae1] [i (in-naturals)])
-                                                  `(array.set $String ,(Reference $is) (i32.const ,i) 
-                                                              (i32.shr_s (i31.get_s (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
-                                                                         (i32.const 1))))
-                                              ,(Reference $qs))]
-
                                    [(string) ; variadic, needs inlining for now
                                     (define n    (length ae1))
                                     ;; Allocate code-point array and bind to a (ref eq) local.
@@ -3380,10 +3367,8 @@
            ,e)))]
 
     [(letrec-values ,s (((,x** ...) ,ce*) ...) ,e)
-     ;; (displayln (list 'letrec-values (map list x** ce*) e)
-     ;;            (current-error-port))
-     ;; (displayln (list 'dd dd)
-     ;;            (current-error-port))
+     ;; (displayln (list 'letrec-values (map list x** ce*) e) (current-error-port))
+     ;; (displayln (list 'dd dd)                              (current-error-port))
 
      ; During the initial parsing we currently use this transform (ish):
      ;    (letrec-values ([(x ...) ce] ...) e)
