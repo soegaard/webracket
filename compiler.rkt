@@ -415,6 +415,7 @@
   boolean? not
 
   char?
+  char=?           ; variadic
   char<?           ; variadic
   char<=?          ; variadic
   char>?           ; variadic
