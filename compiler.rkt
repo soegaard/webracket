@@ -421,6 +421,9 @@
   char>=?          ; variadic
   char->integer
   integer->char
+  char-downcase
+  char-foldcase
+  char-titlecase
   char-upcase
   char-whitespace?
   

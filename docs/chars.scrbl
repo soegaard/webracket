@@ -321,9 +321,9 @@ Like @racket[char-upcase], but for the Unicode downcase mapping.
 Like @racket[char-upcase], but for the Unicode titlecase mapping.
 
 @mz-examples[
-(char-upcase #\a)
-(char-upcase #\u03BB)
-(char-upcase #\space)
+(char-titlecase #\a)
+(char-titlecase #\u03BB)
+(char-titlecase #\space)
 ]}
 
 @defproc[(char-foldcase [char char?]) char?]{
