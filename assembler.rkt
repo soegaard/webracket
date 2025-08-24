@@ -621,6 +621,7 @@ var imports = {
         'set-direction!':         ((ctx, dir) => { ctx.direction = from_fasl(dir); }),
         'fill-style':             (ctx => ctx.fillStyle),
         'set-fill-style!':        ((ctx, style) => { ctx.fillStyle = style; }),
+        'set-fill-style!/string': ((ctx, style) => { ctx.fillStyle = from_fasl(style); }),
         'filter':                 (ctx => ctx.filter),
         'set-filter!':            ((ctx, filter) => { ctx.filter = from_fasl(filter); }),
         'font':                   (ctx => ctx.font),
