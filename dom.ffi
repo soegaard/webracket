@@ -615,10 +615,17 @@
   #:name   "fill-style"
   (-> (extern) (extern)))
 
+; todo - the fillStyle can be either
+;        a string, an CanvasGradient object or an CanvasPattern object.
 (define-foreign js-set-canvas2d-fill-style!
   #:module "canvas-rendering-context-2d"
   #:name   "set-fill-style!"
   (-> (extern extern) ()))
+
+(define-foreign js-set-canvas2d-fill-style!/string
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-fill-style!/string"
+  (-> (extern string) ()))
 
 (define-foreign js-canvas2d-filter
   #:module "canvas-rendering-context-2d"
