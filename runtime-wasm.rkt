@@ -5494,15 +5494,15 @@
                              (else (global.get $false)))
                         `(return_call $eq? (local.get $c1) (local.get $c2)))))
 
-         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
-                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))])
-             ; variadic version
-             `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
-                    (local $node  (ref $Pair))
-                    (local $ch    (ref eq))
-                    ;; Validate the first argument
-                    (if (ref.eq (call $char? (local.get $c0)) (global.get $false))
-                        (then (call $raise-check-char (local.get $c0))))
+        ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
+                     [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))])
+            ; variadic version
+            `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
+                   (local $node  (ref $Pair))
+                   (local $ch    (ref eq))
+                   ;; Validate the first argument
+                   (if (ref.eq (call $char? (local.get $c0)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c0))))
                     (block $done
                            (loop $loop
                                  (br_if $done (ref.eq (local.get $cs) (global.get $null)))
@@ -5515,8 +5515,64 @@
                                              (global.get $false))
                                      (then (return (global.get $false))))
                                  (local.set $cs (struct.get $Pair $d (local.get $node)))
-                                 (br $loop)))
-                    (global.get $true)))
+                                (br $loop)))
+                   (global.get $true)))
+
+        ,@(for/list ([$cmp   (in-list '($char-ci=?   $char-ci<?   $char-ci<=?   $char-ci>?   $char-ci>=?))]
+                     [$cmp/2 (in-list '($char-ci=?/2 $char-ci<?/2 $char-ci<=?/2 $char-ci>?/2 $char-ci>=?/2))]
+                     [inst   (in-list '(#f i32.lt_u i32.le_u i32.gt_u i32.ge_u))])
+            ; binary case-insensitive version
+            `(func ,$cmp/2 (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
+                   (local $cp1 i32)
+                   (local $cp2 i32)
+                   (local $fc1 i32)
+                   (local $fc2 i32)
+                   ;; Ensure both arguments are characters
+                   (if (ref.eq (call $char? (local.get $c1)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c1))))
+                   (if (ref.eq (call $char? (local.get $c2)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c2))))
+                   ;; Extract codepoints
+                   (local.set $cp1 (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $c1)))
+                                             (i32.const ,char-shift)))
+                   (local.set $cp2 (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $c2)))
+                                             (i32.const ,char-shift)))
+                   ;; Foldcase codepoints
+                   (local.set $fc1 (call $char-foldcase/ucs (local.get $cp1)))
+                   (local.set $fc2 (call $char-foldcase/ucs (local.get $cp2)))
+                   ,(if inst
+                        `(if (result (ref eq))
+                             (,inst (local.get $fc1) (local.get $fc2))
+                             (then (global.get $true))
+                             (else (global.get $false)))
+                        `(if (result (ref eq))
+                             (i32.eq (local.get $fc1) (local.get $fc2))
+                             (then (global.get $true))
+                             (else (global.get $false))))))
+
+        ,@(for/list ([$cmp   (in-list '($char-ci=?   $char-ci<?   $char-ci<=?   $char-ci>?   $char-ci>=?))]
+                     [$cmp/2 (in-list '($char-ci=?/2 $char-ci<?/2 $char-ci<=?/2 $char-ci>?/2 $char-ci>=?/2))])
+            ; variadic case-insensitive version
+            `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
+                   (local $node  (ref $Pair))
+                   (local $ch    (ref eq))
+                   ;; Validate the first argument
+                   (if (ref.eq (call $char? (local.get $c0)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c0))))
+                   (block $done
+                          (loop $loop
+                                (br_if $done (ref.eq (local.get $cs) (global.get $null)))
+                                (local.set $node (ref.cast (ref $Pair) (local.get $cs)))
+                                (local.set $ch   (struct.get $Pair $a (local.get $node)))
+                                ;; Validate each subsequent argument
+                                (if (ref.eq (call $char? (local.get $ch)) (global.get $false))
+                                    (then (call $raise-check-char (local.get $ch))))
+                                (if (ref.eq (call ,$cmp/2 (local.get $c0) (local.get $ch))
+                                            (global.get $false))
+                                    (then (return (global.get $false))))
+                                (local.set $cs (struct.get $Pair $d (local.get $node)))
+                                (br $loop)))
+                   (global.get $true)))
 
          (func $char->integer (param $c (ref eq)) (result (ref eq))
                (local $i31   (ref i31))
@@ -5620,6 +5676,8 @@
               (ref.i31 (i32.or (i32.shl (local.get $cp2) (i32.const ,char-shift))
                                (i32.const ,char-tag))))
 
+        ;; Note: JavaScript doesn't have a unicode aware `casefold` so instead
+        ;        toLower is used. This is not 100% correct.
         (func $char-foldcase (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)

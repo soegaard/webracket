@@ -132,11 +132,31 @@
             (equal? (procedure-arity char-titlecase) 1)))
 
  (list "char-foldcase"
-       (and (equal? (char-foldcase #\A) #\a)
+       (list (equal? (char-foldcase #\A) #\a)
             (equal? (char-foldcase #\u03A3) #\u03c3)
             (equal? (char-foldcase #\u03c2) #\u03c3)
             (equal? (char-foldcase #\space) #\space)
             (equal? (procedure-arity char-foldcase) 1)))
+
+ (list "char-ci=?"
+       (and (equal? (char-ci=? #\A #\a) #t)
+            (equal? (char-ci=? #\A #\B) #f)))
+
+ (list "char-ci<?"
+       (and (equal? (char-ci<? #\A #\b) #t)
+            (equal? (char-ci<? #\b #\A) #f)))
+
+ (list "char-ci<=?"
+       (and (equal? (char-ci<=? #\A #\a) #t)
+            (equal? (char-ci<=? #\b #\A) #f)))
+
+ (list "char-ci>?"
+       (and (equal? (char-ci>? #\B #\a) #t)
+            (equal? (char-ci>? #\A #\b) #f)))
+
+ (list "char-ci>=?"
+       (and (equal? (char-ci>=? #\A #\a) #t)
+            (equal? (char-ci>=? #\a #\B) #f)))
 
  (list "string-append"
        (and (equal? (string-append) "")

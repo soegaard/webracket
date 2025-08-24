@@ -414,6 +414,8 @@
 
   boolean? not
 
+
+  ;; CHARACTERS
   char?
   char->integer
   integer->char
@@ -428,14 +430,14 @@
   char-foldcase
   char-titlecase
   char-upcase
+  ; char comparisons using conversions
+  char-ci=?           ; variadic
+  char-ci<?           ; variadic
+  char-ci<=?          ; variadic
+  char-ci>?           ; variadic
+  char-ci>=?          ; variadic
   ; char predicates
   char-whitespace?
-  ; char comparisons using conversions
-  ;; char-ci=?           ; variadic
-  ;; char-ci<?           ; variadic
-  ;; char-ci<=?          ; variadic
-  ;; char-ci>?           ; variadic
-  ;; char-ci>=?          ; variadic
   
   eq?
   eqv?
@@ -3016,7 +3018,8 @@
                                     (define m (- 5 n))
                                     (define falses (make-list m (Imm #f)))
                                     `(call $make-struct-field-mutator ,@aes ,@falses)]
-                                   [(char=? char<? char<=? char>? char>=?)
+                                   [(char=? char<? char<=? char>? char>=?
+                                     char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
                                     ; variadic, at least one argument
                                     (define who    sym)
                                     (define n      (length ae1))

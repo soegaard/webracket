@@ -462,7 +462,9 @@ var imports = {
         return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
       }),
       'char_foldcase': ((cp) => {
-        const s = String.fromCodePoint(cp).toLocaleLowerCase();
+        // Note: JavaScript doesn't have builtin unicode aware fold case (year 2025).
+        //       For now, we will just use lowercase.                  
+        const s = String.fromCodePoint(cp).toLowerCase();
         const arr = Array.from(s);
         return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
       })
