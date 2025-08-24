@@ -607,6 +607,17 @@
                (import "primitives" "char_foldcase")
                (param i32) (result i32))
 
+         ;; Math functions
+         (func $js-math-sin
+               (import "math" "sin")
+               (param f64) (result f64))
+         (func $js-math-cos
+               (import "math" "cos")
+               (param f64) (result f64))
+         (func $js-math-tan
+               (import "math" "tan")
+               (param f64) (result f64))
+
          ;; FFI related imports
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -2885,11 +2896,58 @@
                         (unreachable)))
 
               ;; Compute and box result
-              (struct.new $Flonum
-                          (i32.const 0)
+         (struct.new $Flonum
+                         (i32.const 0)
                           (f64.nearest
                            (struct.get $Flonum $v
                                        (ref.cast (ref $Flonum) (local.get $a))))) )
+
+        (func $flsin
+              (param $a (ref eq))
+              (result (ref eq))
+
+              (local $a/fl (ref $Flonum))
+              (local $a/f64 f64)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $a))
+                        (unreachable)))
+              ;; Extract and compute
+              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (call $js-math-sin (local.get $a/f64))))
+
+        (func $flcos
+              (param $a (ref eq))
+              (result (ref eq))
+
+              (local $a/fl (ref $Flonum))
+              (local $a/f64 f64)
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $a))
+                        (unreachable)))
+              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (call $js-math-cos (local.get $a/f64))))
+
+        (func $fltan
+              (param $a (ref eq))
+              (result (ref eq))
+
+              (local $a/fl (ref $Flonum))
+              (local $a/f64 f64)
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $a))
+                        (unreachable)))
+              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (call $js-math-tan (local.get $a/f64))))
 
          ,@(let ()
              (define (fl-cmp flname flcmp)
