@@ -426,7 +426,13 @@
   char-titlecase
   char-upcase
   char-whitespace?
-  
+
+  char-ci=?
+  char-ci<?
+  char-ci<=?
+  char-ci>?
+  char-ci>=?
+
   eq?
   eqv?
   equal?
@@ -3006,7 +3012,8 @@
                                     (define m (- 5 n))
                                     (define falses (make-list m (Imm #f)))
                                     `(call $make-struct-field-mutator ,@aes ,@falses)]
-                                   [(char=? char<? char<=? char>? char>=?)
+                                   [(char=? char<? char<=? char>? char>=?
+                                     char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
                                     ; variadic, at least one argument
                                     (define who    sym)
                                     (define n      (length ae1))
