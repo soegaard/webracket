@@ -1193,12 +1193,22 @@
             eqv?
             eq?
             char-whitespace?
-            integer->char
-            char->integer
+            char-ci>=?
+            char-ci>?
+            char-ci<=?
+            char-ci<?
+            char-ci=?
+            char-upcase
+            char-titlecase
+            char-foldcase
+            char-downcase
             char>=?
             char>?
             char<=?
             char<?
+            char=?
+            integer->char
+            char->integer
             char?
             not
             boolean?
@@ -1246,6 +1256,7 @@
             make-struct-field-accessor
             make-struct-type
             raise-unbound-variable-reference)
+
           ))
 
 (define sections
@@ -1284,7 +1295,7 @@
   )
 
 (define (primitive-url sym)
-  (string-append "https://docs.racket-lang.org/reference/data.html?q="
+  (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
 (define (primitive-li sym)  
