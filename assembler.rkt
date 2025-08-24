@@ -592,6 +592,28 @@ var imports = {
         'tanh':   ((x)       => Math.tanh(x)),
         'trunc':  ((x)       => Math.trunc(x))
     },
+    // Canvas
+    'canvas': hasDOM ? {
+        'capture-stream':             ((canvas, rate)                 => canvas.captureStream(rate)),
+        'get-context':                ((canvas, type, opts)           => canvas.getContext(from_fasl(type), opts)),
+        'height':                     ((canvas)                       => canvas.height),
+        'set-height!':                ((canvas, h)                    => { canvas.height = h; }),
+        'to-blob':                    ((canvas, cb, type, quality)    => canvas.toBlob(cb, from_fasl(type), quality)),
+        'to-data-url':                ((canvas, type, quality)        => canvas.toDataURL(from_fasl(type), quality)),
+        'transfer-control-to-offscreen': ((canvas)                   => canvas.transferControlToOffscreen()),
+        'width':                      ((canvas)                       => canvas.width),
+        'set-width!':                 ((canvas, w)                    => { canvas.width = w; })
+    } : {
+        'capture-stream'()             { throw new Error('DOM not available in this environment'); },
+        'get-context'()                { throw new Error('DOM not available in this environment'); },
+        'height'()                     { throw new Error('DOM not available in this environment'); },
+        'set-height!'()                { throw new Error('DOM not available in this environment'); },
+        'to-blob'()                    { throw new Error('DOM not available in this environment'); },
+        'to-data-url'()                { throw new Error('DOM not available in this environment'); },
+        'transfer-control-to-offscreen'() { throw new Error('DOM not available in this environment'); },
+        'width'()                      { throw new Error('DOM not available in this environment'); },
+        'set-width!'()                 { throw new Error('DOM not available in this environment'); }
+    },
     // Document
     'document': hasDOM ? {
         'body':                     (()                               => document.body),
