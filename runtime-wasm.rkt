@@ -5460,6 +5460,9 @@
          ;; https://docs.racket-lang.org/reference/characters.html
          
          (func $raise-check-char (param $x (ref eq)) (unreachable))
+         (func $raise-invalid-codepoint (unreachable))
+
+         ;; 4.6.1 Characters and Scalar Values
          
          (func $char? (param $v (ref eq)) (result (ref eq))
                (local $i31 (ref i31))
@@ -5473,6 +5476,70 @@
                            (i32.const ,char-tag))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         (func $char->integer (param $c (ref eq)) (result (ref eq))
+               (local $i31   (ref i31))
+               (local $c/tag i32)
+               (local $cp    i32)
+               ;; Check if $c is an i31
+               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                   (then (call $raise-check-char (local.get $c))))
+               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+               (local.set $c/tag (i31.get_u (local.get $i31)))
+               ;; Check character tag
+               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                           (i32.const ,char-tag))
+                   (then (call $raise-check-char (local.get $c))))
+
+               ;; Extract codepoint and return as fixnum
+               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+               (ref.i31 (i32.shl (local.get $cp) (i32.const 1))))
+
+         (func $char->integer/i32 (param $c (ref eq)) (result i32)
+               (local $raw i32)
+               ;; Check that $c is an i31
+               (if (ref.test (ref i31) (local.get $c))
+                   (then
+                    ;; Extract the raw bits
+                    (local.set $raw (i31.get_u (ref.cast (ref i31) (local.get $c))))
+                    ;; Verify the tag is 0x0F
+                    (if (i32.eq (i32.and (local.get $raw) (i32.const ,char-mask)) (i32.const ,char-tag))
+                        (then
+                         ;; Return the codepoint: raw >> 8
+                         (return (i32.shr_u (local.get $raw) (i32.const ,char-shift))))
+                        (else
+                         (call $raise-check-char (local.get $c)))))
+                   (else
+                    (call $raise-check-char (local.get $c))))
+               (unreachable))
+
+         (func $integer->char
+               (param $k (ref eq))
+               (result   (ref eq))
+               
+               (local $k/i32 i32)
+               ;; Fail early if not a fixnum
+               (if (i32.eqz (ref.test (ref i31) (local.get $k)))
+                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
+               ;; Unpack fixnum (must have LSB = 0)
+               (local.set $k/i32 (i31.get_u (ref.cast (ref i31) (local.get $k))))
+               (if (i32.and (local.get $k/i32) (i32.const 1))
+                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
+               (local.set $k/i32 (i32.shr_u (local.get $k/i32) (i32.const 1)))
+               ;; Check allowed Unicode code point range:
+               ;;   [0, 0xD7FF] or [0xE000, 0x10FFFF]
+               (if (i32.or (i32.and (i32.ge_u (local.get $k/i32) (i32.const #xD800))
+                                    (i32.le_u (local.get $k/i32) (i32.const #xDFFF)))
+                           (i32.gt_u (local.get $k/i32) (i32.const #x10FFFF)))
+                   (then (call $raise-invalid-codepoint (local.get $k)) (unreachable)))
+               ;; TODO: Shared character object for 0 <= k < 256
+               ;; (if needed, insert lookup here)
+               ;; Pack as character: (k << (char-shift - 1)) | char-tag
+               (ref.i31 (i32.or (i32.shl (local.get $k/i32) 
+                                         (i32.const ,char-shift))
+                                (i32.const ,char-tag))))
+
+         ;; 4.6.2 Character Comparisons
 
         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))]
@@ -5574,41 +5641,56 @@
                                 (br $loop)))
                    (global.get $true)))
 
-         (func $char->integer (param $c (ref eq)) (result (ref eq))
-               (local $i31   (ref i31))
-               (local $c/tag i32)
-               (local $cp    i32)
-               ;; Check if $c is an i31
-               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-               (local.set $c/tag (i31.get_u (local.get $i31)))
-               ;; Check character tag
-               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
-                           (i32.const ,char-tag))
-                   (then (call $raise-check-char (local.get $c))))
+        ;; 4.6.3 Classifications
 
-               ;; Extract codepoint and return as fixnum
-               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-               (ref.i31 (i32.shl (local.get $cp) (i32.const 1))))
+        (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate
+              (call $char-whitespace?/ucs (local.get $cp)))
+        
+        (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+                  (then (return (global.get $true))))
+              ;; U+0009..000D: tab, newline, vtab, formfeed, return
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
+                  (then (return (global.get $true))))
+              ;; U+2000–U+200A
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
+                  (then (return (global.get $true))))
+              (global.get $false))
 
-         (func $char->integer/i32 (param $c (ref eq)) (result i32)
-               (local $raw i32)
-               ;; Check that $c is an i31
-               (if (ref.test (ref i31) (local.get $c))
-                   (then
-                    ;; Extract the raw bits
-                    (local.set $raw (i31.get_u (ref.cast (ref i31) (local.get $c))))
-                    ;; Verify the tag is 0x0F
-                    (if (i32.eq (i32.and (local.get $raw) (i32.const ,char-mask)) (i32.const ,char-tag))
-                        (then
-                         ;; Return the codepoint: raw >> 8
-                         (return (i32.shr_u (local.get $raw) (i32.const ,char-shift))))
-                        (else
-                         (call $raise-check-char (local.get $c)))))
-                   (else
-                    (call $raise-check-char (local.get $c))))
-               (unreachable))
+        ;; 4.6.4 Character Conversions
 
         (func $char-upcase (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
@@ -5700,81 +5782,10 @@
               (ref.i31 (i32.or (i32.shl (local.get $cp2) (i32.const ,char-shift))
                                (i32.const ,char-tag))))
 
-        (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
-              (local $i31   (ref i31))
-              (local $c/tag i32)
-              (local $cp    i32)
-               ;; Type check
-               (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-               (local.set $c/tag (i31.get_u (local.get $i31)))
-               ;; Decode codepoint
-               (if (i32.ne (i32.and (local.get $c/tag)
-                                    (i32.const ,char-mask))
-                           (i32.const ,char-tag))
-                   (then (call $raise-check-char (local.get $c))))
-               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-               ;; Delegate
-               (call $char-whitespace?/ucs (local.get $cp)))
-         
-         (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
-                   (then (return (global.get $true))))
-               ;; U+0009..000D: tab, newline, vtab, formfeed, return
-               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
-                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
-                             (then (return (global.get $true))))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
-                   (then (return (global.get $true))))
-               ;; U+2000–U+200A
-               (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
-                   (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
-                             (then (return (global.get $true))))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
-                   (then (return (global.get $true))))
-               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
-                   (then (return (global.get $true))))
-               (global.get $false))
+        ;; 4.6.5 Character Grapheme-Cluster Streaming
 
-         (func $raise-invalid-codepoint (unreachable))
-         
-         (func $integer->char
-               (param $k (ref eq))
-               (result   (ref eq))
-               
-               (local $k/i32 i32)
-               ;; Fail early if not a fixnum
-               (if (i32.eqz (ref.test (ref i31) (local.get $k)))
-                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
-               ;; Unpack fixnum (must have LSB = 0)
-               (local.set $k/i32 (i31.get_u (ref.cast (ref i31) (local.get $k))))
-               (if (i32.and (local.get $k/i32) (i32.const 1))
-                   (then (call $raise-expected-fixnum (local.get $k)) (unreachable)))
-               (local.set $k/i32 (i32.shr_u (local.get $k/i32) (i32.const 1)))
-               ;; Check allowed Unicode code point range:
-               ;;   [0, 0xD7FF] or [0xE000, 0x10FFFF]
-               (if (i32.or (i32.and (i32.ge_u (local.get $k/i32) (i32.const #xD800))
-                                    (i32.le_u (local.get $k/i32) (i32.const #xDFFF)))
-                           (i32.gt_u (local.get $k/i32) (i32.const #x10FFFF)))
-                   (then (call $raise-invalid-codepoint (local.get $k)) (unreachable)))
-               ;; TODO: Shared character object for 0 <= k < 256
-               ;; (if needed, insert lookup here)
-               ;; Pack as character: (k << (char-shift - 1)) | char-tag
-               (ref.i31 (i32.or (i32.shl (local.get $k/i32) 
-                                         (i32.const ,char-shift))
-                                (i32.const ,char-tag))))
-
+        ;; todo  char-grapheme-step
+        
 
          ;;;
          ;;; 4.7 SYMBOLS
