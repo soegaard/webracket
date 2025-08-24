@@ -1039,8 +1039,7 @@
 
 (define implemented-primitives
   (append implemented-constants
-          '(bytes->string/utf-8
-            namespace-undefine-variable!
+          '(namespace-undefine-variable!
             namespace-set-variable-value!
             namespace-variable-value-simple
             make-empty-namespace
@@ -1093,9 +1092,13 @@
             symbol<?
             symbol=?
             symbol?
-            string-drop
             string-trim-right
             string-trim-left
+            string-drop-right
+            string-drop
+            string-take-right
+            string-take
+            string->immutable-string
             string->bytes/utf-8
             list->string
             string->list
@@ -1111,6 +1114,7 @@
             string<?
             string=?
             string?
+            bytes->string/utf-8
             bytes=?
             list->bytes
             bytes->list
@@ -1191,13 +1195,17 @@
             char-whitespace?
             integer->char
             char->integer
-            char=?
+            char>=?
+            char>?
+            char<=?
+            char<?
             char?
             not
             boolean?
             void
             make-void
             void?
+            make-list
             filter
             list*
             for-each
