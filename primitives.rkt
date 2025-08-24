@@ -33,6 +33,9 @@
  boolean?
  ; immutable?
 
+ ;; 4.3 Characters
+ char-upcase
+
  ;; 4.7 Symbols
  symbol?
  symbol-interned?

@@ -421,6 +421,7 @@
   char>=?          ; variadic
   char->integer
   integer->char
+  char-upcase
   char-whitespace?
   
   eq?

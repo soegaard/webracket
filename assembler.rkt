@@ -444,6 +444,11 @@ var imports = {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
         const [v] = fasl_to_js_value(bytes);
         console.log(v);
+      }),
+      'char_upcase': ((cp) => {
+        const s = String.fromCodePoint(cp).toUpperCase();
+        const arr = Array.from(s);
+        return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
       })
     },
     'standard': {

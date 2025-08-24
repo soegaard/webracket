@@ -591,6 +591,10 @@
                (import "primitives" "js_print_fasl")
                (param i32) (param i32))
 
+         (func $char-upcase/ucs
+               (import "primitives" "char_upcase")
+               (param i32) (result i32))
+
          ;; FFI related imports
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -5537,6 +5541,28 @@
                    (else
                     (call $raise-check-char (local.get $c))))
                (unreachable))
+
+        (func $char-upcase (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              (local $cp2   i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Call host to compute upcase mapping
+              (local.set $cp2 (call $char-upcase/ucs (local.get $cp)))
+              ;; Return tagged character
+              (ref.i31 (i32.or (i32.shl (local.get $cp2) (i32.const ,char-shift))
+                               (i32.const ,char-tag))))
 
          (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
                (local $i31   (ref i31))
