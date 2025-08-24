@@ -159,7 +159,7 @@ char-upcase
  fx->fl
  fl->fx
 
- inexact->exact round flround
+ inexact->exact round flround flsin flcos fltan
 
  ;; 14.1 Namespaces
 

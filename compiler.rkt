@@ -473,8 +473,8 @@
 
   flonum?
   fl+ fl- fl* fl/
-  fl= fl< fl> fl<= fl>= flround
-  
+  fl= fl< fl> fl<= fl>= flround flsin flcos fltan
+
   byte?
 
   vector  ; not first order yet, rewritten to (list->vector ...)

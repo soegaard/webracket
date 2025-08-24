@@ -1145,6 +1145,9 @@
             vector
             byte?
             flround
+            flsin
+            flcos
+            fltan
             fl>=
             fl<=
             fl>
