@@ -5458,20 +5458,25 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
-                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))]
-                      [cmp    (in-list '($eq?      $todo?    $todo?     $todo?    $todo?))])
-             ; binary version
-             `(func ,$cmp/2 (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
-                    ;; Ensure both arguments are characters
-                    (if (ref.eq (call $char? (local.get $c1)) (global.get $false))
-                        (then (call $raise-check-char (local.get $c1))))
-                    (if (ref.eq (call $char? (local.get $c2)) (global.get $false))
-                        (then (call $raise-check-char (local.get $c2))))
-                    (case $cmp
-                      [($char=?) (return_call $eq? (local.get $c1) (local.get $c2))]
-                      todo
-                      [else (error 'runtime-wasm "unexpected, got: ~a" $cmp)])))
+        ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
+                     [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))]
+                     [inst   (in-list '(#f i32.lt_u i32.le_u i32.gt_u i32.ge_u))])
+            ; binary version
+            `(func ,$cmp/2 (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
+                   ;; Ensure both arguments are characters
+                   (if (ref.eq (call $char? (local.get $c1)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c1))))
+                   (if (ref.eq (call $char? (local.get $c2)) (global.get $false))
+                       (then (call $raise-check-char (local.get $c2))))
+                   ,(if inst
+                        `(if (result (ref eq))
+                             (,inst (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $c1)))
+                                            (i32.const ,char-shift))
+                                   (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $c2)))
+                                            (i32.const ,char-shift)))
+                             (then (global.get $true))
+                             (else (global.get $false)))
+                        `(return_call $eq? (local.get $c1) (local.get $c2)))))
 
          ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
                       [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))])
