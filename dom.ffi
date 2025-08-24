@@ -592,3 +592,534 @@
   (-> (extern u32) ()))
 
 
+;;; CanvasRenderingContext2D
+;;; https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+
+(define-foreign js-canvas2d-canvas
+  #:module "canvas-rendering-context-2d"
+  #:name   "canvas"
+  (-> (extern) (extern)))
+
+(define-foreign js-canvas2d-direction
+  #:module "canvas-rendering-context-2d"
+  #:name   "direction"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-direction!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-direction!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-fill-style
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-style"
+  (-> (extern) (extern)))
+
+(define-foreign js-set-canvas2d-fill-style!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-fill-style!"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-filter
+  #:module "canvas-rendering-context-2d"
+  #:name   "filter"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-filter!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-filter!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font
+  #:module "canvas-rendering-context-2d"
+  #:name   "font"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-global-alpha
+  #:module "canvas-rendering-context-2d"
+  #:name   "global-alpha"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-global-alpha!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-global-alpha!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-global-composite-operation
+  #:module "canvas-rendering-context-2d"
+  #:name   "global-composite-operation"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-global-composite-operation!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-global-composite-operation!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-image-smoothing-enabled
+  #:module "canvas-rendering-context-2d"
+  #:name   "image-smoothing-enabled"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-canvas2d-image-smoothing-enabled!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-image-smoothing-enabled!"
+  (-> (extern i32) ()))
+
+(define-foreign js-canvas2d-image-smoothing-quality
+  #:module "canvas-rendering-context-2d"
+  #:name   "image-smoothing-quality"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-image-smoothing-quality!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-image-smoothing-quality!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-cap
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-cap"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-line-cap!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-cap!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-dash-offset
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-dash-offset"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-line-dash-offset!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-dash-offset!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-line-join
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-join"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-line-join!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-join!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-width
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-width"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-line-width!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-width!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-miter-limit
+  #:module "canvas-rendering-context-2d"
+  #:name   "miter-limit"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-miter-limit!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-miter-limit!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-blur
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-blur"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-blur!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-blur!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-color
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-color"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-shadow-color!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-color!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-shadow-offset-x
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-offset-x"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-offset-x!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-offset-x!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-offset-y
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-offset-y"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-offset-y!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-offset-y!"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-stroke-style
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-style"
+  (-> (extern) (extern)))
+
+(define-foreign js-set-canvas2d-stroke-style!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-stroke-style!"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-text-align
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-align"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-align!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-align!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-text-baseline
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-baseline"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-baseline!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-baseline!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-text-rendering
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-rendering"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-rendering!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-rendering!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-kerning
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-kerning"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-kerning!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-kerning!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-stretch
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-stretch"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-stretch!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-stretch!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-caps
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-caps"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-caps!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-caps!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-ligatures
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-ligatures"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-ligatures!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-ligatures!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-numeric
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-numeric"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-numeric!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-numeric!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-letter-spacing
+  #:module "canvas-rendering-context-2d"
+  #:name   "letter-spacing"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-letter-spacing!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-letter-spacing!"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-word-spacing
+  #:module "canvas-rendering-context-2d"
+  #:name   "word-spacing"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-word-spacing!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-word-spacing!"
+  (-> (extern string) ()))
+
+;; Methods
+
+(define-foreign js-canvas2d-arc
+  #:module "canvas-rendering-context-2d"
+  #:name   "arc"
+  (-> (extern f64 f64 f64 f64 f64 i32) ()))
+
+(define-foreign js-canvas2d-arc-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "arc-to"
+  (-> (extern f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-begin-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "begin-path"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-bezier-curve-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "bezier-curve-to"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-clear-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "clear-rect"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-clip
+  #:module "canvas-rendering-context-2d"
+  #:name   "clip"
+  (-> (extern extern string) ()))
+
+(define-foreign js-canvas2d-close-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "close-path"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-create-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-image-data"
+  (-> (extern f64 f64) (extern)))
+
+(define-foreign js-canvas2d-create-image-data-from
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-image-data-from"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-canvas2d-create-linear-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-linear-gradient"
+  (-> (extern f64 f64 f64 f64) (extern)))
+
+(define-foreign js-canvas2d-create-pattern
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-pattern"
+  (-> (extern extern string) (extern)))
+
+(define-foreign js-canvas2d-create-radial-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-radial-gradient"
+  (-> (extern f64 f64 f64 f64 f64 f64) (extern)))
+
+(define-foreign js-canvas2d-create-conic-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-conic-gradient"
+  (-> (extern f64 f64 f64) (extern)))
+
+(define-foreign js-canvas2d-draw-focus-if-needed!
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-focus-if-needed!"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-draw-focus-if-needed-path!
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-focus-if-needed-path!"
+  (-> (extern extern extern) ()))
+
+(define-foreign js-canvas2d-draw-image
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image"
+  (-> (extern extern f64 f64) ()))
+
+(define-foreign js-canvas2d-draw-image-5
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image-5"
+  (-> (extern extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-draw-image-9
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image-9"
+  (-> (extern extern f64 f64 f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-ellipse
+  #:module "canvas-rendering-context-2d"
+  #:name   "ellipse"
+  (-> (extern f64 f64 f64 f64 f64 f64 f64 i32) ()))
+
+(define-foreign js-canvas2d-fill
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill"
+  (-> (extern extern string) ()))
+
+(define-foreign js-canvas2d-fill-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-rect"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-fill-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-text"
+  (-> (extern string f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-get-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-image-data"
+  (-> (extern f64 f64 f64 f64 extern) (extern)))
+
+(define-foreign js-canvas2d-get-line-dash
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-line-dash"
+  (-> (extern) (extern)))
+
+(define-foreign js-canvas2d-get-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-transform"
+  (-> (extern) (extern)))
+
+(define-foreign js-canvas2d-is-point-in-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "is-point-in-path"
+  (-> (extern extern f64 f64 string) (i32)))
+
+(define-foreign js-canvas2d-is-point-in-stroke
+  #:module "canvas-rendering-context-2d"
+  #:name   "is-point-in-stroke"
+  (-> (extern extern f64 f64) (i32)))
+
+(define-foreign js-canvas2d-line-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-to"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-measure-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "measure-text"
+  (-> (extern string) (extern)))
+
+(define-foreign js-canvas2d-move-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "move-to"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-put-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "put-image-data"
+  (-> (extern extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-quadratic-curve-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "quadratic-curve-to"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "rect"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-reset
+  #:module "canvas-rendering-context-2d"
+  #:name   "reset"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-reset-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "reset-transform"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-restore
+  #:module "canvas-rendering-context-2d"
+  #:name   "restore"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-rotate
+  #:module "canvas-rendering-context-2d"
+  #:name   "rotate"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-round-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "round-rect"
+  (-> (extern f64 f64 f64 f64 extern) ()))
+
+(define-foreign js-canvas2d-save
+  #:module "canvas-rendering-context-2d"
+  #:name   "save"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-scale
+  #:module "canvas-rendering-context-2d"
+  #:name   "scale"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-set-line-dash
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-dash"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-set-transform!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-transform!"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-set-transform-matrix!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-transform-matrix!"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-stroke
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-stroke-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-rect"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-stroke-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-text"
+  (-> (extern string f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "transform"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-translate
+  #:module "canvas-rendering-context-2d"
+  #:name   "translate"
+  (-> (extern f64 f64) ()))
+
+
