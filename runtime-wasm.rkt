@@ -10830,6 +10830,63 @@
                     (else (unreachable))))))))))))))))))))))))))
 
 
+        (func $copy-memory-to-i8array (export "copy-memory-to-i8array")
+              (param $start i32)
+              (result (ref $I8Array) i32)
+
+              (local $mem-bytes i32)
+              (local $len       i32)
+              (local $arr       (ref $I8Array))
+              (local $i         i32)
+              (local $end       i32)
+              (local $res       (ref $I8Array))
+
+              (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536)))
+              (local.set $len (i32.sub (local.get $mem-bytes) (local.get $start)))
+              (local.set $arr (array.new_default $I8Array (local.get $len)))
+              (local.set $i (i32.const 0))
+              (block $done
+                     (loop $copy
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                           (array.set $I8Array (local.get $arr) (local.get $i)
+                                      (i32.load8_u
+                                       (i32.add (local.get $start) (local.get $i))))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $copy)))
+
+              (call $fasl:read-s-exp (local.get $arr) (local.get $len) (i32.const 0))
+              (local.set $end) (drop)
+
+              (local.set $res (call $i8array-copy (local.get $arr) (i32.const 0) (local.get $end)))
+              (return (local.get $res) (i32.add (local.get $start) (local.get $end))))
+
+        (func $linear-memory->value (export "linear-memory->value")
+              (param $start i32)
+              (result (ref eq))
+
+              (local $arr (ref $I8Array))
+              (local $len i32)
+              (local $val (ref eq))
+
+              (call $copy-memory-to-i8array (local.get $start))
+              (local.set $len) (local.set $arr)
+              (call $fasl:read-s-exp (local.get $arr) (local.get $len) (i32.const 0))
+              (local.set $len) (local.set $val)
+              (local.get $val))
+
+        (func $linear-memory->string (export "linear-memory->string")
+              (param $start i32)
+              (result (ref eq))
+
+              (local $v (ref eq))
+
+              (local.set $v (call $linear-memory->value (local.get $start)))
+              (if (i32.eqz (ref.test (ref $String) (local.get $v)))
+                  (then (call $raise-expected-string)
+                        (unreachable)))
+              (return (ref.cast (ref $String) (local.get $v))))
+
+
          ;;;
          ;;; 14. REFLECTION AND SECURITY
          ;;;
