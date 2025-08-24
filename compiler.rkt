@@ -415,7 +415,10 @@
   boolean? not
 
   char?
-  char=?           ; variadic
+  char<?           ; variadic
+  char<=?          ; variadic
+  char>?           ; variadic
+  char>=?          ; variadic
   char->integer
   integer->char
   char-whitespace?
