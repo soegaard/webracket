@@ -4156,22 +4156,11 @@
          (func $raise-check-string         (param $x (ref eq))                      (unreachable))
          (func $raise-bad-string-index     (param $x (ref eq)) (param $i (ref eq))  (unreachable))
          (func $raise-bad-string-index/i32 (param $x (ref eq)) (param $i i32)       (unreachable))
+         (func $raise-string-length:bad-argument (unreachable))
          
          (func $raise-string-index-out-of-bounds/i32 (param $x (ref eq)) (param $i i32) (param $n i32)
                (unreachable))
-                  
-         (func $string? (param $s (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $String) (local.get $s))
-                   (then (global.get $true))
-                   (else (global.get $false))))
 
-         ;; Constructors
-
-         (func $raise-make-string:bad-length       (unreachable))
-         (func $raise-make-string:bad-char         (unreachable))
-         (func $raise-argument-error:char-expected (unreachable))
-         
          ; for single character strings
          (func $codepoint->string
                (param  $ch i32)                    ;; Unicode scalar value
@@ -4195,8 +4184,51 @@
                            (i32.const 1)       ;; immutable
                            (local.get $cp)))
 
+         (func $i32array->string (param $arr (ref $I32Array)) (result (ref $String))
+               ;; Constructs a $String from an I32Array of codepoints.
+               ;; Assumes the string is mutable and un-hashed (hash = 0).
+               (struct.new $String
+                           (i32.const 0)            ;; hash = 0
+                           (i32.const 0)            ;; mutable 
+                           (local.get $arr)))       ;; codepoints
+
+         (func $i32array->immutable-string (param $arr (ref $I32Array)) (result (ref $String))
+               ;; Constructs a $String from an I32Array of codepoints.
+               ;; Assumes the string is immutable and un-hashed (hash = 0).
+               (struct.new $String
+                           (i32.const 0)            ;; hash = 0
+                           (i32.const 1)            ;; immutable
+                           (local.get $arr)))       ;; codepoints
+
+         (func $i32growable-array->string (param $g (ref $I32GrowableArray)) (result (ref $String))
+               (call $i32array->string
+                     (call $i32growable-array->array (local.get $g))))
+
+         (func $i32growable-array->immutable-string (param $g (ref $I32GrowableArray)) (result (ref $String))
+               (call $i32array->immutable-string
+                     (call $i32growable-array->array (local.get $g))))
+
+         (func $make-dummy-string (result (ref $String))
+               (struct.new $String
+                           (i32.const 0)  ;; hash = 0
+                           (i32.const 0)  ;; mutable
+                           (call $i32array-make (i32.const 0) (i32.const 0))))
+
          
+         ;; 4.4.1 String Constructors, Selectors, and Mutators
          
+         (func $string? (param $s (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $String) (local.get $s))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         ;; Constructors
+
+         (func $raise-make-string:bad-length       (unreachable))
+         (func $raise-make-string:bad-char         (unreachable))
+         (func $raise-argument-error:char-expected (unreachable))
+                  
          (func $make-string
                (param $n-raw  (ref eq))    ;; fixnum
                (param $ch-raw (ref eq))    ;; immediate character
@@ -4248,37 +4280,6 @@
                            (i32.const 0)     ;; hash = 0
                            (i32.const 1)     ;; immutable
                            (local.get $arr)))
-
-
-         (func $i32array->string (param $arr (ref $I32Array)) (result (ref $String))
-               ;; Constructs a $String from an I32Array of codepoints.
-               ;; Assumes the string is mutable and un-hashed (hash = 0).
-               (struct.new $String
-                           (i32.const 0)            ;; hash = 0
-                           (i32.const 0)            ;; mutable 
-                           (local.get $arr)))       ;; codepoints
-
-         (func $i32array->immutable-string (param $arr (ref $I32Array)) (result (ref $String))
-               ;; Constructs a $String from an I32Array of codepoints.
-               ;; Assumes the string is immutable and un-hashed (hash = 0).
-               (struct.new $String
-                           (i32.const 0)            ;; hash = 0
-                           (i32.const 1)            ;; immutable
-                           (local.get $arr)))       ;; codepoints
-
-         (func $i32growable-array->string (param $g (ref $I32GrowableArray)) (result (ref $String))
-               (call $i32array->string
-                     (call $i32growable-array->array (local.get $g))))
-
-         (func $i32growable-array->immutable-string (param $g (ref $I32GrowableArray)) (result (ref $String))
-               (call $i32array->immutable-string
-                     (call $i32growable-array->array (local.get $g))))
-
-         (func $make-dummy-string (result (ref $String))
-               (struct.new $String
-                           (i32.const 0)  ;; hash = 0
-                           (i32.const 0)  ;; mutable
-                           (call $i32array-make (i32.const 0) (i32.const 0))))
          
          (func $string->immutable-string (param $s (ref eq)) (result (ref eq))
                (local $str (ref $String))
@@ -4302,8 +4303,6 @@
                                       (struct.get $String $codepoints (local.get $str))
                                       (i32.const 0)
                                       (call $i32array-length (struct.get $String $codepoints (local.get $str))))))))
-
-         (func $raise-string-length:bad-argument (unreachable))
          
          (func $string-length
                (param $s-raw (ref eq))
@@ -4361,9 +4360,7 @@
                              (call $string-length/checked/i32 (local.get $str)))
                    (then (call $string-ref/checked (local.get $str) (local.get $idx)))
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))
-                         (unreachable))))
-
-         
+                         (unreachable))))         
 
          (func $string-ref/checked   ; unsafe: no bounds check
                (param $str (ref $String))
@@ -4549,77 +4546,6 @@
                                  (struct.get $String $codepoints (local.get $str1))
                                  (struct.get $String $codepoints (local.get $str2)))))
 
-         (func $list->string (param $xs (ref eq)) (result (ref eq))
-               (local $len   i32)
-               (local $str   (ref $String))
-               (local $arr   (ref $I32Array))
-               (local $i     i32)
-               (local $node  (ref eq))
-               (local $chimm (ref eq))
-               (local $cp    i32)
-               ;; 1. Compute list length (will raise if not proper list)
-               (local.set $len (call $length/i32 (local.get $xs)))
-               ;; 2. Create new mutable string
-               (local.set $str
-                          (struct.new $String
-                                      (i32.const 0)  ;; hash
-                                      (i32.const 0)  ;; immutable = false
-                                      (call $i32array-make (local.get $len) (i32.const 0))))
-               ;; 3. Grab codepoint array once
-               (local.set $arr (struct.get $String $codepoints (local.get $str)))
-               ;; 4. Fill from list directly
-               (local.set $i (i32.const 0))
-               (local.set $node (local.get $xs))
-               (block $done
-                      (loop $fill
-                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
-                            ;; Check node is a pair
-                            (if (ref.test (ref $Pair) (local.get $node))
-                                (then
-                                 ;; extract car
-                                 (local.set $chimm (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $node))))
-                                 ;; decode and validate character
-                                 (local.set $cp (i31.get_u (ref.cast (ref i31) (local.get $chimm))))
-                                 (if (i32.ne (i32.and (local.get $cp) (i32.const ,char-mask)) (i32.const ,char-tag))
-                                     (then (call $raise-check-char (local.get $chimm))
-                                           (unreachable)))
-                                 ;; extract codepoint
-                                 (local.set $cp (i32.shr_u (local.get $cp) (i32.const 8)))
-                                 ;; write codepoint
-                                 (call $i32array-set! (local.get $arr) (local.get $i) (local.get $cp))
-                                 ;; advance
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (local.set $node (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $node)))))
-                                (else
-                                 (call $raise-pair-expected (local.get $node))
-                                 (unreachable)))
-                            (br $fill)))
-               ;; 5. Return string
-               (local.get $str))
-         
-         (func $string-append-immutable (param $s1 (ref eq)) (param $s2 (ref eq)) (result (ref eq))
-               (local $str1 (ref null $String))
-               (local $str2 (ref null $String))
-               ;; check strings
-               (if (ref.test (ref $String) (local.get $s1))
-                   (then (local.set $str1 (ref.cast (ref $String) (local.get $s1))))
-                   (else (call $raise-check-string (local.get $s1))))
-               (if (ref.test (ref $String) (local.get $s2))
-                   (then (local.set $str2 (ref.cast (ref $String) (local.get $s2))))
-                   (else (call $raise-check-string (local.get $s2))))
-               ;; create immutable
-               (struct.new $String
-                           (i32.const 0)
-                           (i32.const 1)
-                           (call $i32array-copy
-                                 (call $i32array-append
-                                       (struct.get $String $codepoints (local.get $str1))
-                                      (struct.get $String $codepoints (local.get $str2)))
-                                (i32.const 0)
-                                (call $i32array-length (call $i32array-append
-                                                             (struct.get $String $codepoints (local.get $str1))
-                                                             (struct.get $String $codepoints (local.get $str2)))))))
-
          (func $string-append
                (param $xs (ref eq))  ; expects a list of strings
                (result (ref eq))
@@ -4673,7 +4599,29 @@
 
                (local.get $acc))
 
-
+         (func $string-append-immutable (param $s1 (ref eq)) (param $s2 (ref eq)) (result (ref eq))
+               (local $str1 (ref null $String))
+               (local $str2 (ref null $String))
+               ;; check strings
+               (if (ref.test (ref $String) (local.get $s1))
+                   (then (local.set $str1 (ref.cast (ref $String) (local.get $s1))))
+                   (else (call $raise-check-string (local.get $s1))))
+               (if (ref.test (ref $String) (local.get $s2))
+                   (then (local.set $str2 (ref.cast (ref $String) (local.get $s2))))
+                   (else (call $raise-check-string (local.get $s2))))
+               ;; create immutable
+               (struct.new $String
+                           (i32.const 0)
+                           (i32.const 1)
+                           (call $i32array-copy
+                                 (call $i32array-append
+                                       (struct.get $String $codepoints (local.get $str1))
+                                       (struct.get $String $codepoints (local.get $str2)))
+                                 (i32.const 0)
+                                 (call $i32array-length (call $i32array-append
+                                                              (struct.get $String $codepoints (local.get $str1))
+                                                              (struct.get $String $codepoints (local.get $str2)))))))
+         
          (func $string->list (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))
                (local $arr   (ref $I32Array))
@@ -4695,8 +4643,8 @@
                    (else (local.set $i   (i32.sub (local.get $len) (i32.const 1))) ; from end
                          (local.set $cp  (call $i32array-ref (local.get $arr) (local.get $i)))
                          (local.set $res (struct.new $Pair (i32.const 0)
-                                             (ref.i31 (i32.or (i32.shl (local.get $cp) (i32.const 8)) (i32.const ,char-tag)))
-                                             (global.get $null)))
+                                                     (ref.i31 (i32.or (i32.shl (local.get $cp) (i32.const 8)) (i32.const ,char-tag)))
+                                                     (global.get $null)))
                          (local.set $i   (i32.sub (local.get $i) (i32.const 1)))
                          (block $done
                                 (loop $build
@@ -4711,7 +4659,55 @@
                                       (br $build)))
                          (local.get $res))))
 
-         (func $string-replace
+         (func $list->string (param $xs (ref eq)) (result (ref eq))
+               (local $len   i32)
+               (local $str   (ref $String))
+               (local $arr   (ref $I32Array))
+               (local $i     i32)
+               (local $node  (ref eq))
+               (local $chimm (ref eq))
+               (local $cp    i32)
+               ;; 1. Compute list length (will raise if not proper list)
+               (local.set $len (call $length/i32 (local.get $xs)))
+               ;; 2. Create new mutable string
+               (local.set $str
+                          (struct.new $String
+                                      (i32.const 0)  ;; hash
+                                      (i32.const 0)  ;; immutable = false
+                                      (call $i32array-make (local.get $len) (i32.const 0))))
+               ;; 3. Grab codepoint array once
+               (local.set $arr (struct.get $String $codepoints (local.get $str)))
+               ;; 4. Fill from list directly
+               (local.set $i (i32.const 0))
+               (local.set $node (local.get $xs))
+               (block $done
+                      (loop $fill
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            ;; Check node is a pair
+                            (if (ref.test (ref $Pair) (local.get $node))
+                                (then
+                                 ;; extract car
+                                 (local.set $chimm (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $node))))
+                                 ;; decode and validate character
+                                 (local.set $cp (i31.get_u (ref.cast (ref i31) (local.get $chimm))))
+                                 (if (i32.ne (i32.and (local.get $cp) (i32.const ,char-mask)) (i32.const ,char-tag))
+                                     (then (call $raise-check-char (local.get $chimm))
+                                           (unreachable)))
+                                 ;; extract codepoint
+                                 (local.set $cp (i32.shr_u (local.get $cp) (i32.const 8)))
+                                 ;; write codepoint
+                                 (call $i32array-set! (local.get $arr) (local.get $i) (local.get $cp))
+                                 ;; advance
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (local.set $node (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $node)))))
+                                (else
+                                 (call $raise-pair-expected (local.get $node))
+                                 (unreachable)))
+                            (br $fill)))
+               ;; 5. Return string
+               (local.get $str))         
+
+         #;(func $string-replace
                (param $s    (ref eq))
                (param $from (ref eq))
                (param $to   (ref eq))
@@ -4819,6 +4815,100 @@
                                           (else (br $loop))))))))))
 
                (call $i32growable-array->string (local.get $out)))
+         
+
+         ;; 4.4.2 String Comparisons
+         
+         (func $string=?
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string=?/i32 (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string=?/i32
+               (param $a-raw (ref eq)) (param $b-raw (ref eq))
+               (result i32)
+
+               (local $a (ref $String))
+               (local $b (ref $String))
+               ;; Check types
+               (if (i32.eqz (ref.test (ref $String) (local.get $a-raw)))
+                   (then (return (i32.const 0))))
+               (if (i32.eqz (ref.test (ref $String) (local.get $b-raw)))
+                   (then (return (i32.const 0))))
+               ;; Cast and delegate
+               (local.set $a (ref.cast (ref $String) (local.get $a-raw)))
+               (local.set $b (ref.cast (ref $String) (local.get $b-raw)))
+               (return_call $string=?/i32/checked (local.get $a) (local.get $b)))
+         
+         (func $string=?/i32/checked
+               (param $a (ref $String)) (param $b (ref $String))
+               (result i32)
+
+               (return_call $i32array-equal?
+                            (struct.get $String $codepoints (local.get $a))
+                            (struct.get $String $codepoints (local.get $b))))
+
+         (func $string<?
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string</i32 (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
+          (func $string</i32
+               (param $a-raw (ref eq)) (param $b-raw (ref eq))
+               (result i32)
+
+               (local $a (ref $String))
+               (local $b (ref $String))
+
+               ;; Check types
+               (if (i32.eqz (ref.test (ref $String) (local.get $a-raw)))
+                   (then (return (i32.const 0))))
+               (if (i32.eqz (ref.test (ref $String) (local.get $b-raw)))
+                   (then (return (i32.const 0))))
+               ;; Cast and delegate
+               (local.set $a (ref.cast (ref $String) (local.get $a-raw)))
+               (local.set $b (ref.cast (ref $String) (local.get $b-raw)))
+               (return_call $string</i32/checked (local.get $a) (local.get $b)))
+
+         (func $string</i32/checked
+               (param $a (ref $String)) (param $b (ref $String))
+               (result i32)
+
+               (local $arr-a (ref $I32Array))
+               (local $arr-b (ref $I32Array))
+               (local $len-a i32)
+               (local $len-b i32)
+               (local $i i32)
+               (local $cp-a i32)
+               (local $cp-b i32)
+
+               (local.set $arr-a (struct.get $String $codepoints (local.get $a)))
+               (local.set $arr-b (struct.get $String $codepoints (local.get $b)))
+               (local.set $len-a (array.len (local.get $arr-a)))
+               (local.set $len-b (array.len (local.get $arr-b)))
+               (local.set $i (i32.const 0))
+
+               (block $exit
+                      (loop $loop
+                            (br_if $exit (i32.ge_u (local.get $i) (local.get $len-a)))
+                            (br_if $exit (i32.ge_u (local.get $i) (local.get $len-b)))
+                            (local.set $cp-a (array.get $I32Array (local.get $arr-a) (local.get $i)))
+                            (local.set $cp-b (array.get $I32Array (local.get $arr-b) (local.get $i)))
+                            (if (i32.lt_u (local.get $cp-a) (local.get $cp-b))
+                                (then (return (i32.const 1))))
+                            (if (i32.gt_u (local.get $cp-a) (local.get $cp-b))
+                                (then (return (i32.const 0))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; If one is a prefix of the other
+               (return (i32.lt_u (local.get $len-a) (local.get $len-b))))
+
+         
+         ;;; 
 
          (func $raise-invalid-utf8-input (param $bad (ref eq)) (result (ref eq)) (unreachable))
 
@@ -5017,93 +5107,7 @@
                ;; --- Invalidate destination hash ---
                (struct.set $String $hash (local.get $dst) (i32.const 0)))
 
-         (func $string=?
-               (param $a (ref eq)) (param $b (ref eq))
-               (result (ref eq))
-               (if (result (ref eq)) (call $string=?/i32 (local.get $a) (local.get $b))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
-         (func $string=?/i32
-               (param $a-raw (ref eq)) (param $b-raw (ref eq))
-               (result i32)
-
-               (local $a (ref $String))
-               (local $b (ref $String))
-               ;; Check types
-               (if (i32.eqz (ref.test (ref $String) (local.get $a-raw)))
-                   (then (return (i32.const 0))))
-               (if (i32.eqz (ref.test (ref $String) (local.get $b-raw)))
-                   (then (return (i32.const 0))))
-               ;; Cast and delegate
-               (local.set $a (ref.cast (ref $String) (local.get $a-raw)))
-               (local.set $b (ref.cast (ref $String) (local.get $b-raw)))
-               (return_call $string=?/i32/checked (local.get $a) (local.get $b)))
          
-         (func $string=?/i32/checked
-               (param $a (ref $String)) (param $b (ref $String))
-               (result i32)
-
-               (return_call $i32array-equal?
-                            (struct.get $String $codepoints (local.get $a))
-                            (struct.get $String $codepoints (local.get $b))))
-
-         (func $string<?
-               (param $a (ref eq)) (param $b (ref eq))
-               (result (ref eq))
-               (if (result (ref eq)) (call $string</i32 (local.get $a) (local.get $b))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-         
-          (func $string</i32
-               (param $a-raw (ref eq)) (param $b-raw (ref eq))
-               (result i32)
-
-               (local $a (ref $String))
-               (local $b (ref $String))
-
-               ;; Check types
-               (if (i32.eqz (ref.test (ref $String) (local.get $a-raw)))
-                   (then (return (i32.const 0))))
-               (if (i32.eqz (ref.test (ref $String) (local.get $b-raw)))
-                   (then (return (i32.const 0))))
-               ;; Cast and delegate
-               (local.set $a (ref.cast (ref $String) (local.get $a-raw)))
-               (local.set $b (ref.cast (ref $String) (local.get $b-raw)))
-               (return_call $string</i32/checked (local.get $a) (local.get $b)))
-
-         (func $string</i32/checked
-               (param $a (ref $String)) (param $b (ref $String))
-               (result i32)
-
-               (local $arr-a (ref $I32Array))
-               (local $arr-b (ref $I32Array))
-               (local $len-a i32)
-               (local $len-b i32)
-               (local $i i32)
-               (local $cp-a i32)
-               (local $cp-b i32)
-
-               (local.set $arr-a (struct.get $String $codepoints (local.get $a)))
-               (local.set $arr-b (struct.get $String $codepoints (local.get $b)))
-               (local.set $len-a (array.len (local.get $arr-a)))
-               (local.set $len-b (array.len (local.get $arr-b)))
-               (local.set $i (i32.const 0))
-
-               (block $exit
-                      (loop $loop
-                            (br_if $exit (i32.ge_u (local.get $i) (local.get $len-a)))
-                            (br_if $exit (i32.ge_u (local.get $i) (local.get $len-b)))
-                            (local.set $cp-a (array.get $I32Array (local.get $arr-a) (local.get $i)))
-                            (local.set $cp-b (array.get $I32Array (local.get $arr-b) (local.get $i)))
-                            (if (i32.lt_u (local.get $cp-a) (local.get $cp-b))
-                                (then (return (i32.const 1))))
-                            (if (i32.gt_u (local.get $cp-a) (local.get $cp-b))
-                                (then (return (i32.const 0))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
-               ;; If one is a prefix of the other
-               (return (i32.lt_u (local.get $len-a) (local.get $len-b))))
          
          (func $array-of-strings->string
                (param $arr (ref $Array))
