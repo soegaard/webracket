@@ -540,4 +540,55 @@
   ;; The force argument is optional; pass 0/1. Undefined not supported.
   (-> (extern string i32) (i32)))
 
+;;;
+;;; Canvas
+;;;
+
+; https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement
+
+(define-foreign js-canvas-capture-stream
+  #:module "canvas"
+  #:name   "capture-stream"
+  (-> (extern f64) (extern)))
+
+(define-foreign js-canvas-get-context
+  #:module "canvas"
+  #:name   "get-context"
+  (-> (extern string extern) (extern)))
+
+(define-foreign js-canvas-height
+  #:module "canvas"
+  #:name   "height"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-canvas-height!
+  #:module "canvas"
+  #:name   "set-height!"
+  (-> (extern u32) ()))
+
+(define-foreign js-canvas-to-blob
+  #:module "canvas"
+  #:name   "to-blob"
+  (-> (extern extern string f64) ()))
+
+(define-foreign js-canvas-to-data-url
+  #:module "canvas"
+  #:name   "to-data-url"
+  (-> (extern string f64) (string)))
+
+(define-foreign js-canvas-transfer-control-to-offscreen
+  #:module "canvas"
+  #:name   "transfer-control-to-offscreen"
+  (-> (extern) (extern)))
+
+(define-foreign js-canvas-width
+  #:module "canvas"
+  #:name   "width"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-canvas-width!
+  #:module "canvas"
+  #:name   "set-width!"
+  (-> (extern u32) ()))
+
 
