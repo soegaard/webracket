@@ -444,6 +444,27 @@ var imports = {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
         const [v] = fasl_to_js_value(bytes);
         console.log(v);
+      }),
+      'char_upcase': ((cp) => {
+        const s = String.fromCodePoint(cp).toUpperCase();
+        const arr = Array.from(s);
+        return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
+      }),
+      'char_downcase': ((cp) => {
+        const s = String.fromCodePoint(cp).toLowerCase();
+        const arr = Array.from(s);
+        return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
+      }),
+      'char_titlecase': ((cp) => {
+        const lower = String.fromCodePoint(cp).toLocaleLowerCase();
+        const title = lower.charAt(0).toLocaleUpperCase() + lower.slice(1);
+        const arr = Array.from(title);
+        return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
+      }),
+      'char_foldcase': ((cp) => {
+        const s = String.fromCodePoint(cp).toLocaleLowerCase();
+        const arr = Array.from(s);
+        return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
       })
     },
     'standard': {
