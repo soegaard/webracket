@@ -2999,13 +2999,17 @@
                                     (define m (- 5 n))
                                     (define falses (make-list m (Imm #f)))
                                     `(call $make-struct-field-mutator ,@aes ,@falses)]
-                                   [(char=?) ; variadic, at least one argument
-                                    (define n   (length ae1))
-                                    (when (< n 1) (error 'primapp "too few arguments: ~a" s))
-                                    (define aes (AExpr* ae1))
+                                   [(char=? char<? char<=? char>? char>=?)
+                                    ; variadic, at least one argument
+                                    (define who    sym)
+                                    (define n      (length ae1))
+                                    (when (< n 1)  (error 'primapp "too few arguments: ~a" s))
+                                    (define aes    (AExpr* ae1))
+                                    (define $cmp   ($ sym))
+                                    (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
                                     (case n
-                                      [(1) `(global.get $true)]
-                                      [(2) `(call $char=?/2 ,@aes)]
+                                      [(1) `(call ,$cmp   ,(first aes) (global.get $null))] ; type checks 1st argument
+                                      [(2) `(call ,$cmp/2 ,@aes)]
                                       [else
                                        (define c0 (first aes))
                                        (define xs
@@ -3016,7 +3020,7 @@
                                                             (i32.const 0)
                                                             ,(first aes)
                                                             ,(loop (rest aes))))))
-                                       `(call $char=? ,c0 ,xs)])]
+                                       `(call ,$cmp ,c0 ,xs)])]
                                    [(list)   ; variadic
                                     (let loop ([aes ae1])
                                       (if (null? aes)
@@ -4465,7 +4469,7 @@
   (list "-- Core Constructs --"
         ;; (list "Immediate Values"              (test-immediates))
         ;; (list "Call unary primitive"          (test-call-unary-primitive))
-        ;; #;(list "Some characters "            (test-some-characters)) ; slow
+        ;; (list "Some characters "            (test-some-characters)) ; slow
         ;; #;(list "All characters"              (test-all-characters))  ; very slow
         (list "Call binary primitive"         (test-call-binary-primitive))
         (list "Local variables (let)"         (test-let))

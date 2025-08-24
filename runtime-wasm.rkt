@@ -5458,38 +5458,44 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
+                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))]
+                      [cmp    (in-list '($eq?      $todo?    $todo?     $todo?    $todo?))])
+             ; binary version
+             `(func ,$cmp/2 (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
+                    ;; Ensure both arguments are characters
+                    (if (ref.eq (call $char? (local.get $c1)) (global.get $false))
+                        (then (call $raise-check-char (local.get $c1))))
+                    (if (ref.eq (call $char? (local.get $c2)) (global.get $false))
+                        (then (call $raise-check-char (local.get $c2))))
+                    (case $cmp
+                      [($char=?) (return_call $eq? (local.get $c1) (local.get $c2))]
+                      todo
+                      [else (error 'runtime-wasm "unexpected, got: ~a" $cmp)])))
 
-        (func $char=?/2 (param $c1 (ref eq)) (param $c2 (ref eq)) (result (ref eq))
-              ;; Ensure both arguments are characters
-              (if (ref.eq (call $char? (local.get $c1)) (global.get $false))
-                  (then (call $raise-check-char (local.get $c1))))
-              (if (ref.eq (call $char? (local.get $c2)) (global.get $false))
-                  (then (call $raise-check-char (local.get $c2))))
-              (return_call $eq? (local.get $c1) (local.get $c2)))
-
-        (func $char=? (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
-              (local $node  (ref $Pair))
-              (local $ch    (ref eq))
-
-              ;; Validate the first argument
-              (if (ref.eq (call $char? (local.get $c0)) (global.get $false))
-                  (then (call $raise-check-char (local.get $c0))))
-
-              (block $done
-                     (loop $loop
-                           (br_if $done (ref.eq (local.get $cs) (global.get $null)))
-                           (local.set $node (ref.cast (ref $Pair) (local.get $cs)))
-                           (local.set $ch   (struct.get $Pair $a (local.get $node)))
-                           ;; Validate each subsequent argument
-                           (if (ref.eq (call $char? (local.get $ch)) (global.get $false))
-                               (then (call $raise-check-char (local.get $ch))))
-                           (if (ref.eq (call $char=?/2 (local.get $c0) (local.get $ch))
-                                       (global.get $false))
-                               (then (return (global.get $false))))
-                           (local.set $cs (struct.get $Pair $d (local.get $node)))
-                           (br $loop)))
-
-              (global.get $true))
+         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
+                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))])
+             ; variadic version
+             `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
+                    (local $node  (ref $Pair))
+                    (local $ch    (ref eq))
+                    ;; Validate the first argument
+                    (if (ref.eq (call $char? (local.get $c0)) (global.get $false))
+                        (then (call $raise-check-char (local.get $c0))))
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (ref.eq (local.get $cs) (global.get $null)))
+                                 (local.set $node (ref.cast (ref $Pair) (local.get $cs)))
+                                 (local.set $ch   (struct.get $Pair $a (local.get $node)))
+                                 ;; Validate each subsequent argument
+                                 (if (ref.eq (call $char? (local.get $ch)) (global.get $false))
+                                     (then (call $raise-check-char (local.get $ch))))
+                                 (if (ref.eq (call ,$cmp/2 (local.get $c0) (local.get $ch))
+                                             (global.get $false))
+                                     (then (return (global.get $false))))
+                                 (local.set $cs (struct.get $Pair $d (local.get $node)))
+                                 (br $loop)))
+                    (global.get $true)))
 
          (func $char->integer (param $c (ref eq)) (result (ref eq))
                (local $i31   (ref i31))
