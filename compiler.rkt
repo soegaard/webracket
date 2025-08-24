@@ -415,18 +415,27 @@
   boolean? not
 
   char?
+  char->integer
+  integer->char
+  ; comparisons
   char=?           ; variadic
   char<?           ; variadic
   char<=?          ; variadic
   char>?           ; variadic
   char>=?          ; variadic
-  char->integer
-  integer->char
+  ; char conversion
   char-downcase
   char-foldcase
   char-titlecase
   char-upcase
+  ; char predicates
   char-whitespace?
+  ; char comparisons using conversions
+  ;; char-ci=?           ; variadic
+  ;; char-ci<?           ; variadic
+  ;; char-ci<=?          ; variadic
+  ;; char-ci>?           ; variadic
+  ;; char-ci>=?          ; variadic
   
   eq?
   eqv?
