@@ -113,6 +113,31 @@
             (equal? (number->string 1.25) "1.25")
             (equal? (number->string 1.0) "1.0")))
 
+ (list "char-upcase"
+       (and (equal? (char-upcase #\a) #\A)
+            (equal? (char-upcase #\u03BB) #\u039B)
+            (equal? (char-upcase #\space) #\space)
+            (equal? (procedure-arity char-upcase) 1)))
+
+ (list "char-downcase"
+       (and (equal? (char-downcase #\A) #\a)
+            (equal? (char-downcase #\u039B) #\u03BB)
+            (equal? (char-downcase #\space) #\space)
+            (equal? (procedure-arity char-downcase) 1)))
+
+ (list "char-titlecase"
+       (and (equal? (char-titlecase #\a) #\A)
+            (equal? (char-titlecase #\u03BB) #\u039B)
+            (equal? (char-titlecase #\space) #\space)
+            (equal? (procedure-arity char-titlecase) 1)))
+
+ (list "char-foldcase"
+       (and (equal? (char-foldcase #\A) #\a)
+            (equal? (char-foldcase #\u03A3) #\u03c3)
+            (equal? (char-foldcase #\u03c2) #\u03c3)
+            (equal? (char-foldcase #\space) #\space)
+            (equal? (procedure-arity char-foldcase) 1)))
+
  (list "string-append"
        (and (equal? (string-append) "")
             (equal? (string-append "A") "A")
