@@ -10,6 +10,465 @@
 ;;;
 
 ;;;
+;;; Window
+;;;
+; The various functions in this section are documented here:
+;   https://developer.mozilla.org/en-US/docs/Web/API/Window
+
+;; Properties
+(define-foreign js-window-window
+  #:module "window"
+  #:name   "window"
+  (-> () (extern)))
+
+(define-foreign js-window-self
+  #:module "window"
+  #:name   "self"
+  (-> () (extern)))
+
+(define-foreign js-window-document
+  #:module "window"
+  #:name   "document"
+  (-> () (extern)))
+
+(define-foreign js-window-name
+  #:module "window"
+  #:name   "name"
+  (-> () (string)))
+
+(define-foreign js-set-window-name!
+  #:module "window"
+  #:name   "set-name!"
+  (-> (string) ()))
+
+(define-foreign js-window-location
+  #:module "window"
+  #:name   "location"
+  (-> () (extern)))
+
+(define-foreign js-set-window-location!
+  #:module "window"
+  #:name   "set-location!"
+  ;; Accept string or location object.
+  (-> (value) ()))
+
+(define-foreign js-window-custom-elements
+  #:module "window"
+  #:name   "custom-elements"
+  (-> () (extern)))
+
+(define-foreign js-window-history
+  #:module "window"
+  #:name   "history"
+  (-> () (extern)))
+
+(define-foreign js-window-locationbar
+  #:module "window"
+  #:name   "locationbar"
+  (-> () (extern)))
+
+(define-foreign js-window-menubar
+  #:module "window"
+  #:name   "menubar"
+  (-> () (extern)))
+
+(define-foreign js-window-personalbar
+  #:module "window"
+  #:name   "personalbar"
+  (-> () (extern)))
+
+(define-foreign js-window-scrollbars
+  #:module "window"
+  #:name   "scrollbars"
+  (-> () (extern)))
+
+(define-foreign js-window-statusbar
+  #:module "window"
+  #:name   "statusbar"
+  (-> () (extern)))
+
+(define-foreign js-window-toolbar
+  #:module "window"
+  #:name   "toolbar"
+  (-> () (extern)))
+
+(define-foreign js-window-status
+  #:module "window"
+  #:name   "status"
+  (-> () (string)))
+
+(define-foreign js-set-window-status!
+  #:module "window"
+  #:name   "set-status!"
+  (-> (string) ()))
+
+(define-foreign js-window-closed
+  #:module "window"
+  #:name   "closed"
+  (-> () (i32)))
+
+(define-foreign js-window-frames
+  #:module "window"
+  #:name   "frames"
+  (-> () (extern)))
+
+(define-foreign js-window-length
+  #:module "window"
+  #:name   "length"
+  (-> () (u32)))
+
+(define-foreign js-window-opener
+  #:module "window"
+  #:name   "opener"
+  (-> () (extern)))
+
+(define-foreign js-set-window-opener!
+  #:module "window"
+  #:name   "set-opener!"
+  (-> (extern) ()))
+
+(define-foreign js-window-parent
+  #:module "window"
+  #:name   "parent"
+  (-> () (extern)))
+
+(define-foreign js-window-top
+  #:module "window"
+  #:name   "top"
+  (-> () (extern)))
+
+(define-foreign js-window-visual-viewport
+  #:module "window"
+  #:name   "visual-viewport"
+  (-> () (extern)))
+
+(define-foreign js-window-navigator
+  #:module "window"
+  #:name   "navigator"
+  (-> () (extern)))
+
+(define-foreign js-window-origin
+  #:module "window"
+  #:name   "origin"
+  (-> () (string)))
+
+(define-foreign js-window-crypto
+  #:module "window"
+  #:name   "crypto"
+  (-> () (extern)))
+
+(define-foreign js-window-device-pixel-ratio
+  #:module "window"
+  #:name   "device-pixel-ratio"
+  (-> () (f64)))
+
+(define-foreign js-window-event
+  #:module "window"
+  #:name   "event"
+  (-> () (extern)))
+
+(define-foreign js-window-frame-element
+  #:module "window"
+  #:name   "frame-element"
+  (-> () (extern)))
+
+(define-foreign js-window-inner-height
+  #:module "window"
+  #:name   "inner-height"
+  (-> () (f64)))
+
+(define-foreign js-window-inner-width
+  #:module "window"
+  #:name   "inner-width"
+  (-> () (f64)))
+
+(define-foreign js-window-outer-height
+  #:module "window"
+  #:name   "outer-height"
+  (-> () (f64)))
+
+(define-foreign js-window-outer-width
+  #:module "window"
+  #:name   "outer-width"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-x
+  #:module "window"
+  #:name   "screen-x"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-y
+  #:module "window"
+  #:name   "screen-y"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-left
+  #:module "window"
+  #:name   "screen-left"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-top
+  #:module "window"
+  #:name   "screen-top"
+  (-> () (f64)))
+
+(define-foreign js-window-page-x-offset
+  #:module "window"
+  #:name   "page-x-offset"
+  (-> () (f64)))
+
+(define-foreign js-window-page-y-offset
+  #:module "window"
+  #:name   "page-y-offset"
+  (-> () (f64)))
+
+(define-foreign js-window-scroll-x
+  #:module "window"
+  #:name   "scroll-x"
+  (-> () (f64)))
+
+(define-foreign js-window-scroll-y
+  #:module "window"
+  #:name   "scroll-y"
+  (-> () (f64)))
+
+(define-foreign js-window-screen
+  #:module "window"
+  #:name   "screen"
+  (-> () (extern)))
+
+(define-foreign js-window-local-storage
+  #:module "window"
+  #:name   "local-storage"
+  (-> () (extern)))
+
+(define-foreign js-window-session-storage
+  #:module "window"
+  #:name   "session-storage"
+  (-> () (extern)))
+
+(define-foreign js-window-performance
+  #:module "window"
+  #:name   "performance"
+  (-> () (extern)))
+
+(define-foreign js-window-indexed-db
+  #:module "window"
+  #:name   "indexed-db"
+  (-> () (extern)))
+
+(define-foreign js-window-is-secure-context
+  #:module "window"
+  #:name   "is-secure-context"
+  (-> () (i32)))
+
+(define-foreign js-window-cross-origin-isolated
+  #:module "window"
+  #:name   "cross-origin-isolated"
+  (-> () (i32)))
+
+(define-foreign js-window-caches
+  #:module "window"
+  #:name   "caches"
+  (-> () (extern)))
+
+(define-foreign js-window-speech-synthesis
+  #:module "window"
+  #:name   "speech-synthesis"
+  (-> () (extern)))
+
+(define-foreign js-window-style-media
+  #:module "window"
+  #:name   "style-media"
+  (-> () (extern)))
+
+;; Methods
+
+(define-foreign js-window-alert
+  #:module "window"
+  #:name   "alert"
+  (-> (string) ()))
+
+(define-foreign js-window-atob
+  #:module "window"
+  #:name   "atob"
+  (-> (string) (string)))
+
+(define-foreign js-window-btoa
+  #:module "window"
+  #:name   "btoa"
+  (-> (string) (string)))
+
+(define-foreign js-window-blur
+  #:module "window"
+  #:name   "blur"
+  (-> () ()))
+
+(define-foreign js-window-cancel-animation-frame
+  #:module "window"
+  #:name   "cancel-animation-frame"
+  (-> (u32) ()))
+
+(define-foreign js-window-cancel-idle-callback
+  #:module "window"
+  #:name   "cancel-idle-callback"
+  (-> (u32) ()))
+
+(define-foreign js-window-clear-interval
+  #:module "window"
+  #:name   "clear-interval"
+  (-> (u32) ()))
+
+(define-foreign js-window-clear-timeout
+  #:module "window"
+  #:name   "clear-timeout"
+  (-> (u32) ()))
+
+(define-foreign js-window-close
+  #:module "window"
+  #:name   "close"
+  (-> () ()))
+
+(define-foreign js-window-confirm
+  #:module "window"
+  #:name   "confirm"
+  (-> (string) (i32)))
+
+(define-foreign js-window-create-image-bitmap
+  #:module "window"
+  #:name   "create-image-bitmap"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (extern value value value value value) (extern)))
+
+(define-foreign js-window-fetch
+  #:module "window"
+  #:name   "fetch"
+  ;; Pass `(void)` for missing init
+  (-> (value value) (extern)))
+
+(define-foreign js-window-focus
+  #:module "window"
+  #:name   "focus"
+  (-> () ()))
+
+(define-foreign js-window-get-computed-style
+  #:module "window"
+  #:name   "get-computed-style"
+  (-> (extern value) (extern)))
+
+(define-foreign js-window-get-selection
+  #:module "window"
+  #:name   "get-selection"
+  (-> () (extern)))
+
+(define-foreign js-window-match-media
+  #:module "window"
+  #:name   "match-media"
+  (-> (string) (extern)))
+
+(define-foreign js-window-move-by
+  #:module "window"
+  #:name   "move-by"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-move-to
+  #:module "window"
+  #:name   "move-to"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-open
+  #:module "window"
+  #:name   "open"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (string value value value) (extern)))
+
+(define-foreign js-window-post-message
+  #:module "window"
+  #:name   "post-message"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (value string value) ()))
+
+(define-foreign js-window-print
+  #:module "window"
+  #:name   "print"
+  (-> () ()))
+
+(define-foreign js-window-prompt
+  #:module "window"
+  #:name   "prompt"
+  ;; Pass `(void)` for missing default value.
+  (-> (string value) (value)))
+
+(define-foreign js-window-request-animation-frame
+  #:module "window"
+  #:name   "request-animation-frame"
+  (-> (extern) (u32)))
+
+(define-foreign js-window-request-idle-callback
+  #:module "window"
+  #:name   "request-idle-callback"
+  ;; Pass `(void)` for missing options.
+  (-> (extern value) (u32)))
+
+(define-foreign js-window-resize-by
+  #:module "window"
+  #:name   "resize-by"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-resize-to
+  #:module "window"
+  #:name   "resize-to"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-scroll
+  #:module "window"
+  #:name   "scroll"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-scroll-by
+  #:module "window"
+  #:name   "scroll-by"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-scroll-to
+  #:module "window"
+  #:name   "scroll-to"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-set-interval
+  #:module "window"
+  #:name   "set-interval"
+  (-> (extern f64) (u32)))
+
+(define-foreign js-window-set-timeout
+  #:module "window"
+  #:name   "set-timeout"
+  (-> (extern f64) (u32)))
+
+(define-foreign js-window-stop
+  #:module "window"
+  #:name   "stop"
+  (-> () ()))
+
+(define-foreign js-window-structured-clone
+  #:module "window"
+  #:name   "structured-clone"
+  ;; Pass `(void)` for missing options.
+  (-> (value value) (value)))
+
+(define-foreign js-window-queue-microtask
+  #:module "window"
+  #:name   "queue-microtask"
+  (-> (extern) ()))
+
+(define-foreign js-window-report-error
+  #:module "window"
+  #:name   "report-error"
+  (-> (value) ()))
+
 ;;; Document
 ;;;
 
