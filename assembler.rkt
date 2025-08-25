@@ -693,7 +693,20 @@ var imports = {
         'draw-image-5': ((ctx, img, dx, dy, dw, dh) => ctx.drawImage(img, dx, dy, dw, dh)),
         'draw-image-9': ((ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)),
         'ellipse': ((ctx, x, y, rx, ry, rot, sa, ea, ccw) => ctx.ellipse(x, y, rx, ry, rot, sa, ea, !!ccw)),
-        'fill': ((ctx, path, rule) => ctx.fill(path, from_fasl(rule))),
+        'fill': ((ctx, path, rule) => {
+          // `(void)` from Racket arrives as `undefined` in JS.
+          const p = (path === undefined) ? undefined : path;
+          const r = (rule === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            ctx.fill();
+          } else if (p === undefined) {
+            ctx.fill(from_fasl(r));
+          } else if (r === undefined) {
+            ctx.fill(p);
+          } else {
+            ctx.fill(p, from_fasl(r));
+          }
+        }),
         'fill-rect': ((ctx, x, y, w, h) => ctx.fillRect(x, y, w, h)),
         'fill-text': ((ctx, text, x, y, mw) => ctx.fillText(from_fasl(text), x, y, mw)),
         'get-image-data': ((ctx, sx, sy, sw, sh, opts) => ctx.getImageData(sx, sy, sw, sh, opts)),

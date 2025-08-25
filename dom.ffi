@@ -980,6 +980,7 @@
 (define-foreign js-canvas2d-fill
   #:module "canvas-rendering-context-2d"
   #:name   "fill"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
   #;(-> (extern) ())
   #;(-> (extern value) ())       ; path
   #;(-> (extern value) ())       ; fillRule
