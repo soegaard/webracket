@@ -694,9 +694,9 @@ var imports = {
         'draw-image-9': ((ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)),
         'ellipse': ((ctx, x, y, rx, ry, rot, sa, ea, ccw) => ctx.ellipse(x, y, rx, ry, rot, sa, ea, !!ccw)),
         'fill': ((ctx, path, rule) => {
-          // `(void)` from Racket arrives as `undefined` in JS.
-          const p = (path === undefined) ? undefined : path;
-          const r = (rule === undefined) ? undefined : rule;
+          // `(void)` is decoded as `undefined`
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
           if (p === undefined && r === undefined) {
             ctx.fill();
           } else if (p === undefined) {
