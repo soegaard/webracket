@@ -24,7 +24,7 @@
     (js-canvas2d-line-to ctx x2 y2)
     (set! rot (+ rot step)))
   (js-canvas2d-close-path ctx)
-  (js-canvas2d-fill ctx "nonzero" (void)) ; void becomes undefined
+  (js-canvas2d-fill ctx (void) "nonzero") ; void becomes undefined
   (js-canvas2d-stroke ctx))
 
 (draw-star ctx 150. 150. 5 100. 40.)
