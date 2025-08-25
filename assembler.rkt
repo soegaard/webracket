@@ -813,6 +813,176 @@ var imports = {
         'transform': ((ctx, a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f)),
         'translate': ((ctx, x, y) => ctx.translate(x, y)),
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    // Window
+    'window': hasDOM ? {
+        'window':               (() => window),
+        'self':                 (() => self),
+        'document':             (() => document),
+        'name':                 (() => window.name),
+        'set-name!':            (n => { window.name = from_fasl(n); }),
+        'location':             (() => window.location),
+        'set-location!':        (loc => { window.location = from_fasl(loc); }),
+        'custom-elements':      (() => window.customElements),
+        'history':              (() => window.history),
+        'locationbar':          (() => window.locationbar),
+        'menubar':              (() => window.menubar),
+        'personalbar':          (() => window.personalbar),
+        'scrollbars':           (() => window.scrollbars),
+        'statusbar':            (() => window.statusbar),
+        'toolbar':              (() => window.toolbar),
+        'status':               (() => window.status),
+        'set-status!':          (s => { window.status = from_fasl(s); }),
+        'closed':               (() => window.closed ? 1 : 0),
+        'frames':               (() => window.frames),
+        'length':               (() => window.length),
+        'opener':               (() => window.opener),
+        'set-opener!':          (o => { window.opener = o; }),
+        'parent':               (() => window.parent),
+        'top':                  (() => window.top),
+        'visual-viewport':      (() => window.visualViewport),
+        'navigator':            (() => window.navigator),
+        'origin':               (() => window.origin),
+        'crypto':               (() => window.crypto),
+        'device-pixel-ratio':   (() => window.devicePixelRatio),
+        'event':                (() => window.event),
+        'frame-element':        (() => window.frameElement),
+        'inner-height':         (() => window.innerHeight),
+        'inner-width':          (() => window.innerWidth),
+        'outer-height':         (() => window.outerHeight),
+        'outer-width':          (() => window.outerWidth),
+        'screen-x':             (() => window.screenX),
+        'screen-y':             (() => window.screenY),
+        'screen-left':          (() => window.screenLeft),
+        'screen-top':           (() => window.screenTop),
+        'page-x-offset':        (() => window.pageXOffset),
+        'page-y-offset':        (() => window.pageYOffset),
+        'scroll-x':             (() => window.scrollX),
+        'scroll-y':             (() => window.scrollY),
+        'screen':               (() => window.screen),
+        'local-storage':        (() => window.localStorage),
+        'session-storage':      (() => window.sessionStorage),
+        'performance':          (() => window.performance),
+        'indexed-db':           (() => window.indexedDB),
+        'is-secure-context':    (() => window.isSecureContext ? 1 : 0),
+        'cross-origin-isolated':(() => window.crossOriginIsolated ? 1 : 0),
+        'caches':               (() => window.caches),
+        'speech-synthesis':     (() => window.speechSynthesis),
+        'style-media':          (() => window.styleMedia),
+        'alert':                (msg => window.alert(from_fasl(msg))),
+        'atob':                 (s => window.atob(from_fasl(s))),
+        'btoa':                 (s => window.btoa(from_fasl(s))),
+        'blur':                 (() => window.blur()),
+        'cancel-animation-frame': (id => window.cancelAnimationFrame(id)),
+        'cancel-idle-callback': (id => window.cancelIdleCallback(id)),
+        'clear-interval':       (id => window.clearInterval(id)),
+        'clear-timeout':        (id => window.clearTimeout(id)),
+        'close':                (() => window.close()),
+        'confirm':              (msg => window.confirm(from_fasl(msg)) ? 1 : 0),
+        'create-image-bitmap':  ((image, sx, sy, sw, sh, opts) => {
+            const Sx = from_fasl(sx);
+            const Sy = from_fasl(sy);
+            const Sw = from_fasl(sw);
+            const Sh = from_fasl(sh);
+            const o  = from_fasl(opts);
+            if (Sx === undefined) {
+                return window.createImageBitmap(image);
+            } else if (o === undefined) {
+                return window.createImageBitmap(image, Sx, Sy, Sw, Sh);
+            } else {
+                return window.createImageBitmap(image, Sx, Sy, Sw, Sh, o);
+            }
+        }),
+        'fetch': ((input, init) => {
+            const i = from_fasl(init);
+            if (i === undefined) {
+                return fetch(input);
+            } else {
+                return fetch(input, i);
+            }
+        }),
+        'focus':                (() => window.focus()),
+        'get-computed-style':   ((elt, pseudo) => {
+            const p = from_fasl(pseudo);
+            return window.getComputedStyle(elt, p);
+        }),
+        'get-selection':        (() => window.getSelection()),
+        'match-media':          (q => window.matchMedia(from_fasl(q))),
+        'move-by':              ((x, y) => window.moveBy(x, y)),
+        'move-to':              ((x, y) => window.moveTo(x, y)),
+        'open':                 ((url, target, features, replace) => {
+            const u = from_fasl(url);
+            const t = from_fasl(target);
+            const f = from_fasl(features);
+            const r = from_fasl(replace);
+            if (t === undefined && f === undefined && r === undefined) {
+                return window.open(u);
+            } else if (f === undefined && r === undefined) {
+                return window.open(u, t);
+            } else if (r === undefined) {
+                return window.open(u, t, f);
+            } else {
+                return window.open(u, t, f, r);
+            }
+        }),
+        'post-message':        ((msg, target, transfer) => {
+            const t = from_fasl(transfer);
+            if (t === undefined) {
+                window.postMessage(from_fasl(msg), from_fasl(target));
+            } else {
+                window.postMessage(from_fasl(msg), from_fasl(target), t);
+            }
+        }),
+        'print':               (() => window.print()),
+        'prompt':              ((msg, def) => window.prompt(from_fasl(msg), from_fasl(def))),
+        'request-animation-frame': (cb => window.requestAnimationFrame(cb)),
+        'request-idle-callback': ((cb, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                return window.requestIdleCallback(cb);
+            } else {
+                return window.requestIdleCallback(cb, o);
+            }
+        }),
+        'resize-by':           ((x, y) => window.resizeBy(x, y)),
+        'resize-to':           ((w, h) => window.resizeTo(w, h)),
+        'scroll':              ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scroll(x, y);
+            } else {
+                window.scroll(o);
+            }
+        }),
+        'scroll-by':           ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scrollBy(x, y);
+            } else {
+                window.scrollBy(o);
+            }
+        }),
+        'scroll-to':           ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scrollTo(x, y);
+            } else {
+                window.scrollTo(o);
+            }
+        }),
+        'set-interval':        ((handler, delay) => window.setInterval(handler, delay)),
+        'set-timeout':         ((handler, delay) => window.setTimeout(handler, delay)),
+        'stop':                (() => window.stop()),
+        'structured-clone':    ((value, options) => {
+            const o = from_fasl(options);
+            if (o === undefined) {
+                return window.structuredClone(from_fasl(value));
+            } else {
+                return window.structuredClone(from_fasl(value), o);
+            }
+        }),
+        'queue-microtask':     (cb => window.queueMicrotask(cb)),
+        'report-error':        (err => window.reportError(err))
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Document
     'document': hasDOM ? {
         'body':                     (()                               => document.body),
