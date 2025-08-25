@@ -582,7 +582,7 @@ var imports = {
         'max':    ((x, y)    => Math.max(x, y)),
         'min':    ((x, y)    => Math.min(x, y)),
         'pow':    ((x, y)    => Math.pow(x, y)),
-        'random': (()         => Math.random()),
+        'random': (()        => Math.random()),
         'round':  ((x)       => Math.round(x)),
         'sign':   ((x)       => Math.sign(x)),
         'sin':    ((x)       => Math.sin(x)),
@@ -604,15 +604,15 @@ var imports = {
         'width':                         ((canvas)                       => canvas.width),
         'set-width!':                    ((canvas, w)                    => { canvas.width = w; })
     } : {
-        'capture-stream'()             { throw new Error('DOM not available in this environment'); },
-        'get-context'()                { throw new Error('DOM not available in this environment'); },
-        'height'()                     { throw new Error('DOM not available in this environment'); },
-        'set-height!'()                { throw new Error('DOM not available in this environment'); },
-        'to-blob'()                    { throw new Error('DOM not available in this environment'); },
-        'to-data-url'()                { throw new Error('DOM not available in this environment'); },
+        'capture-stream'()                { throw new Error('DOM not available in this environment'); },
+        'get-context'()                   { throw new Error('DOM not available in this environment'); },
+        'height'()                        { throw new Error('DOM not available in this environment'); },
+        'set-height!'()                   { throw new Error('DOM not available in this environment'); },
+        'to-blob'()                       { throw new Error('DOM not available in this environment'); },
+        'to-data-url'()                   { throw new Error('DOM not available in this environment'); },
         'transfer-control-to-offscreen'() { throw new Error('DOM not available in this environment'); },
-        'width'()                      { throw new Error('DOM not available in this environment'); },
-        'set-width!'()                 { throw new Error('DOM not available in this environment'); }
+        'width'()                         { throw new Error('DOM not available in this environment'); },
+        'set-width!'()                    { throw new Error('DOM not available in this environment'); }
     },
     // CanvasRenderingContext2D
     'canvas-rendering-context-2d': hasDOM ? {
@@ -620,8 +620,7 @@ var imports = {
         'direction':              (ctx => ctx.direction),
         'set-direction!':         ((ctx, dir) => { ctx.direction = from_fasl(dir); }),
         'fill-style':             (ctx => ctx.fillStyle),
-        'set-fill-style!':        ((ctx, style) => { ctx.fillStyle = style; }),
-        'set-fill-style!/string': ((ctx, style) => { ctx.fillStyle = from_fasl(style); }),
+        'set-fill-style!':        ((ctx, style) => { ctx.fillStyle = from_fasl(style); }),
         'filter':                 (ctx => ctx.filter),
         'set-filter!':            ((ctx, filter) => { ctx.filter = from_fasl(filter); }),
         'font':                   (ctx => ctx.font),
