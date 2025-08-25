@@ -679,7 +679,20 @@ var imports = {
         'begin-path': (ctx => ctx.beginPath()),
         'bezier-curve-to': ((ctx, cp1x, cp1y, cp2x, cp2y, x, y) => ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y)),
         'clear-rect': ((ctx, x, y, w, h) => ctx.clearRect(x, y, w, h)),
-        'clip': ((ctx, path, rule) => ctx.clip(path, from_fasl(rule))),
+        'clip': ((ctx, path, rule) => {
+          // `(void)` is decoded as `undefined`
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            ctx.clip();
+          } else if (p === undefined) {
+            ctx.clip(from_fasl(r));
+          } else if (r === undefined) {
+            ctx.clip(p);
+          } else {
+            ctx.clip(p, from_fasl(r));
+          }
+        }),
         'close-path': (ctx => ctx.closePath()),
         'create-image-data': ((ctx, sw, sh) => ctx.createImageData(sw, sh)),
         'create-image-data-from': ((ctx, data) => ctx.createImageData(data)),
@@ -708,32 +721,95 @@ var imports = {
           }
         }),
         'fill-rect': ((ctx, x, y, w, h) => ctx.fillRect(x, y, w, h)),
-        'fill-text': ((ctx, text, x, y, mw) => ctx.fillText(from_fasl(text), x, y, mw)),
-        'get-image-data': ((ctx, sx, sy, sw, sh, opts) => ctx.getImageData(sx, sy, sw, sh, opts)),
+        'fill-text': ((ctx, text, x, y, mw) => {
+          const m = from_fasl(mw);
+          if (m === undefined) {
+            ctx.fillText(from_fasl(text), x, y);
+          } else {
+            ctx.fillText(from_fasl(text), x, y, m);
+          }
+        }),
+        'get-image-data': ((ctx, sx, sy, sw, sh, opts) => {
+          const o = from_fasl(opts);
+          if (o === undefined) {
+            return ctx.getImageData(sx, sy, sw, sh);
+          } else {
+            return ctx.getImageData(sx, sy, sw, sh, o);
+          }
+        }),
         'get-line-dash': (ctx => ctx.getLineDash()),
         'get-transform': (ctx => ctx.getTransform()),
-        'is-point-in-path': ((ctx, path, x, y, rule) => ctx.isPointInPath(path, x, y, from_fasl(rule)) ? 1 : 0),
-        'is-point-in-stroke': ((ctx, path, x, y) => ctx.isPointInStroke(path, x, y) ? 1 : 0),
+        'is-point-in-path': ((ctx, path, x, y, rule) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            return ctx.isPointInPath(x, y) ? 1 : 0;
+          } else if (p === undefined) {
+            return ctx.isPointInPath(x, y, from_fasl(r)) ? 1 : 0;
+          } else if (r === undefined) {
+            return ctx.isPointInPath(p, x, y) ? 1 : 0;
+          } else {
+            return ctx.isPointInPath(p, x, y, from_fasl(r)) ? 1 : 0;
+          }
+        }),
+        'is-point-in-stroke': ((ctx, path, x, y) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          if (p === undefined) {
+            return ctx.isPointInStroke(x, y) ? 1 : 0;
+          } else {
+            return ctx.isPointInStroke(p, x, y) ? 1 : 0;
+          }
+        }),
         'line-to': ((ctx, x, y) => ctx.lineTo(x, y)),
         'measure-text': ((ctx, text) => ctx.measureText(from_fasl(text))),
         'move-to': ((ctx, x, y) => ctx.moveTo(x, y)),
-        'put-image-data': ((ctx, data, dx, dy, dirtyX, dirtyY, dirtyW, dirtyH) => ctx.putImageData(data, dx, dy, dirtyX, dirtyY, dirtyW, dirtyH)),
+        'put-image-data': ((ctx, data, dx, dy, dirtyX, dirtyY, dirtyW, dirtyH) => {
+          const dX = from_fasl(dirtyX);
+          const dY = from_fasl(dirtyY);
+          const dW = from_fasl(dirtyW);
+          const dH = from_fasl(dirtyH);
+          if (dX === undefined && dY === undefined && dW === undefined && dH === undefined) {
+            ctx.putImageData(data, dx, dy);
+          } else {
+            ctx.putImageData(data, dx, dy, dX, dY, dW, dH);
+          }
+        }),
         'quadratic-curve-to': ((ctx, cpx, cpy, x, y) => ctx.quadraticCurveTo(cpx, cpy, x, y)),
         'rect': ((ctx, x, y, w, h) => ctx.rect(x, y, w, h)),
         'reset': (ctx => ctx.reset()),
         'reset-transform': (ctx => ctx.resetTransform()),
         'restore': (ctx => ctx.restore()),
         'rotate': ((ctx, angle) => ctx.rotate(angle)),
-        'round-rect': ((ctx, x, y, w, h, r) => ctx.roundRect(x, y, w, h, r)),
+        'round-rect': ((ctx, x, y, w, h, r) => {
+          const rad = from_fasl(r);
+          if (rad === undefined) {
+            ctx.roundRect(x, y, w, h);
+          } else {
+            ctx.roundRect(x, y, w, h, rad);
+          }
+        }),
         'save': (ctx => ctx.save()),
         'scale': ((ctx, x, y) => ctx.scale(x, y)),
         'set-line-dash': ((ctx, arr) => ctx.setLineDash(arr)),
         'set-transform!': ((ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f)),
         'set-transform-matrix!': ((ctx, m) => ctx.setTransform(m)),
-        'stroke': ((ctx) => ctx.stroke()),
-        'stroke2': ((ctx, path) => ctx.stroke(path)),
+        'stroke': ((ctx, path) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          if (p === undefined) {
+            ctx.stroke();
+          } else {
+            ctx.stroke(p);
+          }
+        }),
         'stroke-rect': ((ctx, x, y, w, h) => ctx.strokeRect(x, y, w, h)),
-        'stroke-text': ((ctx, text, x, y, mw) => ctx.strokeText(from_fasl(text), x, y, mw)),
+        'stroke-text': ((ctx, text, x, y, mw) => {
+          const m = from_fasl(mw);
+          if (m === undefined) {
+            ctx.strokeText(from_fasl(text), x, y);
+          } else {
+            ctx.strokeText(from_fasl(text), x, y, m);
+          }
+        }),
         'transform': ((ctx, a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f)),
         'translate': ((ctx, x, y) => ctx.translate(x, y)),
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
