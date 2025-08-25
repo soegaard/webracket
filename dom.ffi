@@ -729,6 +729,91 @@
   #:module "document"
   #:name   "writeln"
   (-> (string) ()))
+ 
+
+;;; Event
+;;;
+; The various functions in this section are documented here:
+;
+;     https://developer.mozilla.org/en-US/docs/Web/API/Event
+;
+(define-foreign js-event-new
+  #:module "event"
+  #:name   "new"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (string value) (extern)))
+
+;; Properties
+(define-foreign js-event-type
+  #:module "event"
+  #:name   "type"
+  (-> (extern) (string)))
+
+(define-foreign js-event-target
+  #:module "event"
+  #:name   "target"
+  (-> (extern) (extern)))
+
+(define-foreign js-event-current-target
+  #:module "event"
+  #:name   "current-target"
+  (-> (extern) (extern)))
+
+(define-foreign js-event-event-phase
+  #:module "event"
+  #:name   "event-phase"
+  (-> (extern) (u32)))
+
+(define-foreign js-event-bubbles
+  #:module "event"
+  #:name   "bubbles"
+  (-> (extern) (i32)))
+
+(define-foreign js-event-cancelable
+  #:module "event"
+  #:name   "cancelable"
+  (-> (extern) (i32)))
+
+(define-foreign js-event-default-prevented
+  #:module "event"
+  #:name   "default-prevented"
+  (-> (extern) (i32)))
+
+(define-foreign js-event-composed
+  #:module "event"
+  #:name   "composed"
+  (-> (extern) (i32)))
+
+(define-foreign js-event-is-trusted
+  #:module "event"
+  #:name   "is-trusted"
+  (-> (extern) (i32)))
+
+(define-foreign js-event-time-stamp
+  #:module "event"
+  #:name   "time-stamp"
+  (-> (extern) (f64)))
+
+;; Methods
+(define-foreign js-event-composed-path
+  #:module "event"
+  #:name   "composed-path"
+  (-> (extern) (extern)))
+
+(define-foreign js-event-prevent-default
+  #:module "event"
+  #:name   "prevent-default"
+  (-> (extern) ()))
+
+(define-foreign js-event-stop-propagation
+  #:module "event"
+  #:name   "stop-propagation"
+  (-> (extern) ()))
+
+(define-foreign js-event-stop-immediate-propagation
+  #:module "event"
+  #:name   "stop-immediate-propagation"
+  (-> (extern) ()))
 
 
 ;;;
