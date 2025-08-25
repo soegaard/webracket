@@ -1136,3 +1136,190 @@
   (-> (extern f64 f64) ()))
 
 
+;;; HTMLImageElement
+;;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image
+
+(define-foreign js-image-new
+  #:module "image"
+  #:name   "new"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (value value) (extern)))
+
+;; Properties
+(define-foreign js-image-alt
+  #:module "image"
+  #:name   "alt"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-alt!
+  #:module "image"
+  #:name   "set-alt!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-src
+  #:module "image"
+  #:name   "src"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-src!
+  #:module "image"
+  #:name   "set-src!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-srcset
+  #:module "image"
+  #:name   "srcset"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-srcset!
+  #:module "image"
+  #:name   "set-srcset!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-sizes
+  #:module "image"
+  #:name   "sizes"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-sizes!
+  #:module "image"
+  #:name   "set-sizes!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-cross-origin
+  #:module "image"
+  #:name   "cross-origin"
+  (-> (extern) (value)))
+
+(define-foreign js-set-image-cross-origin!
+  #:module "image"
+  #:name   "set-cross-origin!"
+  (-> (extern value) ()))
+
+(define-foreign js-image-use-map
+  #:module "image"
+  #:name   "use-map"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-use-map!
+  #:module "image"
+  #:name   "set-use-map!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-is-map
+  #:module "image"
+  #:name   "is-map"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-image-is-map!
+  #:module "image"
+  #:name   "set-is-map!"
+  (-> (extern i32) ()))
+
+(define-foreign js-image-width
+  #:module "image"
+  #:name   "width"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-image-width!
+  #:module "image"
+  #:name   "set-width!"
+  (-> (extern u32) ()))
+
+(define-foreign js-image-height
+  #:module "image"
+  #:name   "height"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-image-height!
+  #:module "image"
+  #:name   "set-height!"
+  (-> (extern u32) ()))
+
+(define-foreign js-image-natural-width
+  #:module "image"
+  #:name   "natural-width"
+  (-> (extern) (u32)))
+
+(define-foreign js-image-natural-height
+  #:module "image"
+  #:name   "natural-height"
+  (-> (extern) (u32)))
+
+(define-foreign js-image-complete
+  #:module "image"
+  #:name   "complete"
+  (-> (extern) (i32)))
+
+(define-foreign js-image-current-src
+  #:module "image"
+  #:name   "current-src"
+  (-> (extern) (string)))
+
+(define-foreign js-image-decoding
+  #:module "image"
+  #:name   "decoding"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-decoding!
+  #:module "image"
+  #:name   "set-decoding!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-fetch-priority
+  #:module "image"
+  #:name   "fetch-priority"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-fetch-priority!
+  #:module "image"
+  #:name   "set-fetch-priority!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-loading
+  #:module "image"
+  #:name   "loading"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-loading!
+  #:module "image"
+  #:name   "set-loading!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-referrer-policy
+  #:module "image"
+  #:name   "referrer-policy"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-referrer-policy!
+  #:module "image"
+  #:name   "set-referrer-policy!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-name
+  #:module "image"
+  #:name   "name"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-name!
+  #:module "image"
+  #:name   "set-name!"
+  (-> (extern string) ()))
+
+(define-foreign js-image-x
+  #:module "image"
+  #:name   "x"
+  (-> (extern) (i32)))
+
+(define-foreign js-image-y
+  #:module "image"
+  #:name   "y"
+  (-> (extern) (i32)))
+
+;; Methods
+(define-foreign js-image-decode
+  #:module "image"
+  #:name   "decode"
+  (-> (extern) (extern)))
+
+
