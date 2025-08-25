@@ -910,7 +910,8 @@
 (define-foreign js-canvas2d-clip
   #:module "canvas-rendering-context-2d"
   #:name   "clip"
-  (-> (extern extern string) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value value) ()))
 
 (define-foreign js-canvas2d-close-path
   #:module "canvas-rendering-context-2d"
@@ -994,12 +995,14 @@
 (define-foreign js-canvas2d-fill-text
   #:module "canvas-rendering-context-2d"
   #:name   "fill-text"
-  (-> (extern string f64 f64 f64) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string f64 f64 value) ()))
 
 (define-foreign js-canvas2d-get-image-data
   #:module "canvas-rendering-context-2d"
   #:name   "get-image-data"
-  (-> (extern f64 f64 f64 f64 extern) (extern)))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern f64 f64 f64 f64 value) (extern)))
 
 (define-foreign js-canvas2d-get-line-dash
   #:module "canvas-rendering-context-2d"
@@ -1014,12 +1017,14 @@
 (define-foreign js-canvas2d-is-point-in-path
   #:module "canvas-rendering-context-2d"
   #:name   "is-point-in-path"
-  (-> (extern extern f64 f64 string) (i32)))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value f64 f64 value) (i32)))
 
 (define-foreign js-canvas2d-is-point-in-stroke
   #:module "canvas-rendering-context-2d"
   #:name   "is-point-in-stroke"
-  (-> (extern extern f64 f64) (i32)))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value f64 f64) (i32)))
 
 (define-foreign js-canvas2d-line-to
   #:module "canvas-rendering-context-2d"
@@ -1039,7 +1044,8 @@
 (define-foreign js-canvas2d-put-image-data
   #:module "canvas-rendering-context-2d"
   #:name   "put-image-data"
-  (-> (extern extern f64 f64 f64 f64 f64 f64) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern extern f64 f64 value value value value) ()))
 
 (define-foreign js-canvas2d-quadratic-curve-to
   #:module "canvas-rendering-context-2d"
@@ -1074,7 +1080,8 @@
 (define-foreign js-canvas2d-round-rect
   #:module "canvas-rendering-context-2d"
   #:name   "round-rect"
-  (-> (extern f64 f64 f64 f64 extern) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern f64 f64 f64 f64 value) ()))
 
 (define-foreign js-canvas2d-save
   #:module "canvas-rendering-context-2d"
@@ -1104,7 +1111,8 @@
 (define-foreign js-canvas2d-stroke
   #:module "canvas-rendering-context-2d"
   #:name   "stroke"
-  (-> (extern #;extern) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value) ()))
 
 (define-foreign js-canvas2d-stroke-rect
   #:module "canvas-rendering-context-2d"
@@ -1114,7 +1122,8 @@
 (define-foreign js-canvas2d-stroke-text
   #:module "canvas-rendering-context-2d"
   #:name   "stroke-text"
-  (-> (extern string f64 f64 f64) ()))
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string f64 f64 value) ()))
 
 (define-foreign js-canvas2d-transform
   #:module "canvas-rendering-context-2d"
