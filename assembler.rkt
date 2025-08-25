@@ -1309,6 +1309,48 @@ var imports = {
         'y'() { throw new Error('DOM not available in this environment'); },
         'decode'() { throw new Error('DOM not available in this environment'); }
     },
+    // Event
+    'event': hasDOM ? {
+        'new': ((type, init) => {
+            const t = from_fasl(type);
+            const i = from_fasl(init);
+            if (i === undefined) {
+                return new Event(t);
+            } else {
+                return new Event(t, i);
+            }
+        }),
+        'type': (evt => evt.type),
+        'target': (evt => evt.target),
+        'current-target': (evt => evt.currentTarget),
+        'event-phase': (evt => evt.eventPhase),
+        'bubbles': (evt => evt.bubbles ? 1 : 0),
+        'cancelable': (evt => evt.cancelable ? 1 : 0),
+        'default-prevented': (evt => evt.defaultPrevented ? 1 : 0),
+        'composed': (evt => evt.composed ? 1 : 0),
+        'is-trusted': (evt => evt.isTrusted ? 1 : 0),
+        'time-stamp': (evt => evt.timeStamp),
+        'composed-path': (evt => evt.composedPath()),
+        'prevent-default': (evt => evt.preventDefault()),
+        'stop-propagation': (evt => evt.stopPropagation()),
+        'stop-immediate-propagation': (evt => evt.stopImmediatePropagation())
+    } : {
+        'new'() { throw new Error('DOM not available in this environment'); },
+        'type'() { throw new Error('DOM not available in this environment'); },
+        'target'() { throw new Error('DOM not available in this environment'); },
+        'current-target'() { throw new Error('DOM not available in this environment'); },
+        'event-phase'() { throw new Error('DOM not available in this environment'); },
+        'bubbles'() { throw new Error('DOM not available in this environment'); },
+        'cancelable'() { throw new Error('DOM not available in this environment'); },
+        'default-prevented'() { throw new Error('DOM not available in this environment'); },
+        'composed'() { throw new Error('DOM not available in this environment'); },
+        'is-trusted'() { throw new Error('DOM not available in this environment'); },
+        'time-stamp'() { throw new Error('DOM not available in this environment'); },
+        'composed-path'() { throw new Error('DOM not available in this environment'); },
+        'prevent-default'() { throw new Error('DOM not available in this environment'); },
+        'stop-propagation'() { throw new Error('DOM not available in this environment'); },
+        'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
+    },
     // Element
     'element': hasDOM ? {
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
