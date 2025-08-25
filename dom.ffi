@@ -1136,6 +1136,304 @@
   (-> (extern f64 f64) ()))
 
 
+
+;;; HTMLMediaElement
+;;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
+
+;; Properties
+(define-foreign js-media-audio-tracks
+  #:module "media"
+  #:name   "audio-tracks"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-autoplay
+  #:module "media"
+  #:name   "autoplay"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-autoplay!
+  #:module "media"
+  #:name   "set-autoplay!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-buffered
+  #:module "media"
+  #:name   "buffered"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-controls
+  #:module "media"
+  #:name   "controls"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-controls!
+  #:module "media"
+  #:name   "set-controls!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-controls-list
+  #:module "media"
+  #:name   "controls-list"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-cross-origin
+  #:module "media"
+  #:name   "cross-origin"
+  (-> (extern) (value)))
+
+(define-foreign js-set-media-cross-origin!
+  #:module "media"
+  #:name   "set-cross-origin!"
+  (-> (extern value) ()))
+
+(define-foreign js-media-current-src
+  #:module "media"
+  #:name   "current-src"
+  (-> (extern) (string)))
+
+(define-foreign js-media-current-time
+  #:module "media"
+  #:name   "current-time"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-current-time!
+  #:module "media"
+  #:name   "set-current-time!"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-default-muted
+  #:module "media"
+  #:name   "default-muted"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-default-muted!
+  #:module "media"
+  #:name   "set-default-muted!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-default-playback-rate
+  #:module "media"
+  #:name   "default-playback-rate"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-default-playback-rate!
+  #:module "media"
+  #:name   "set-default-playback-rate!"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-disable-remote-playback
+  #:module "media"
+  #:name   "disable-remote-playback"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-disable-remote-playback!
+  #:module "media"
+  #:name   "set-disable-remote-playback!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-duration
+  #:module "media"
+  #:name   "duration"
+  (-> (extern) (f64)))
+
+(define-foreign js-media-ended
+  #:module "media"
+  #:name   "ended"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-error
+  #:module "media"
+  #:name   "error"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-loop
+  #:module "media"
+  #:name   "loop"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-loop!
+  #:module "media"
+  #:name   "set-loop!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-media-keys
+  #:module "media"
+  #:name   "media-keys"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-media-group
+  #:module "media"
+  #:name   "media-group"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-media-group!
+  #:module "media"
+  #:name   "set-media-group!"
+  (-> (extern string) ()))
+
+(define-foreign js-media-muted
+  #:module "media"
+  #:name   "muted"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-muted!
+  #:module "media"
+  #:name   "set-muted!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-network-state
+  #:module "media"
+  #:name   "network-state"
+  (-> (extern) (u32)))
+
+(define-foreign js-media-paused
+  #:module "media"
+  #:name   "paused"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-playback-rate
+  #:module "media"
+  #:name   "playback-rate"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-playback-rate!
+  #:module "media"
+  #:name   "set-playback-rate!"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-played
+  #:module "media"
+  #:name   "played"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-preload
+  #:module "media"
+  #:name   "preload"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-preload!
+  #:module "media"
+  #:name   "set-preload!"
+  (-> (extern string) ()))
+
+(define-foreign js-media-preserves-pitch
+  #:module "media"
+  #:name   "preserves-pitch"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-preserves-pitch!
+  #:module "media"
+  #:name   "set-preserves-pitch!"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-ready-state
+  #:module "media"
+  #:name   "ready-state"
+  (-> (extern) (u32)))
+
+(define-foreign js-media-seekable
+  #:module "media"
+  #:name   "seekable"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-seeking
+  #:module "media"
+  #:name   "seeking"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-sink-id
+  #:module "media"
+  #:name   "sink-id"
+  (-> (extern) (string)))
+
+(define-foreign js-media-src
+  #:module "media"
+  #:name   "src"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-src!
+  #:module "media"
+  #:name   "set-src!"
+  (-> (extern string) ()))
+
+(define-foreign js-media-src-object
+  #:module "media"
+  #:name   "src-object"
+  (-> (extern) (extern)))
+
+(define-foreign js-set-media-src-object!
+  #:module "media"
+  #:name   "set-src-object!"
+  (-> (extern extern) ()))
+
+(define-foreign js-media-text-tracks
+  #:module "media"
+  #:name   "text-tracks"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-video-tracks
+  #:module "media"
+  #:name   "video-tracks"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-volume
+  #:module "media"
+  #:name   "volume"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-volume!
+  #:module "media"
+  #:name   "set-volume!"
+  (-> (extern f64) ()))
+
+;; Methods
+(define-foreign js-media-add-text-track!
+  #:module "media"
+  #:name   "add-text-track!"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string value value) (extern)))
+
+(define-foreign js-media-can-play-type
+  #:module "media"
+  #:name   "can-play-type"
+  (-> (extern string) (string)))
+
+(define-foreign js-media-capture-stream
+  #:module "media"
+  #:name   "capture-stream"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value) (extern)))
+
+(define-foreign js-media-fast-seek!
+  #:module "media"
+  #:name   "fast-seek!"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-load!
+  #:module "media"
+  #:name   "load!"
+  (-> (extern) ()))
+
+(define-foreign js-media-pause
+  #:module "media"
+  #:name   "pause"
+  (-> (extern) ()))
+
+(define-foreign js-media-play
+  #:module "media"
+  #:name   "play"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-set-media-keys!
+  #:module "media"
+  #:name   "set-media-keys!"
+  (-> (extern extern) (extern)))
+
+(define-foreign js-media-set-sink-id!
+  #:module "media"
+  #:name   "set-sink-id!"
+  (-> (extern string) (extern)))
+
 ;;; HTMLImageElement
 ;;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image
 
