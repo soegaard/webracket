@@ -916,6 +916,92 @@ var imports = {
         'write'()                    { throw new Error('DOM not available in this environment'); },
         'writeln'()                  { throw new Error('DOM not available in this environment'); },
     },
+    // Image
+    'image': hasDOM ? {
+        'new': ((width, height) => {
+            const w = from_fasl(width);
+            const h = from_fasl(height);
+            if (w === undefined && h === undefined) {
+                return new Image();
+            } else if (h === undefined) {
+                return new Image(w);
+            } else {
+                return new Image(w, h);
+            }
+        }),
+        'alt': (img => img.alt),
+        'set-alt!': ((img, alt) => { img.alt = from_fasl(alt); }),
+        'src': (img => img.src),
+        'set-src!': ((img, src) => { img.src = from_fasl(src); }),
+        'srcset': (img => img.srcset),
+        'set-srcset!': ((img, s) => { img.srcset = from_fasl(s); }),
+        'sizes': (img => img.sizes),
+        'set-sizes!': ((img, s) => { img.sizes = from_fasl(s); }),
+        'cross-origin': (img => img.crossOrigin),
+        'set-cross-origin!': ((img, o) => { img.crossOrigin = from_fasl(o); }),
+        'use-map': (img => img.useMap),
+        'set-use-map!': ((img, m) => { img.useMap = from_fasl(m); }),
+        'is-map': (img => img.isMap ? 1 : 0),
+        'set-is-map!': ((img, flag) => { img.isMap = !!flag; }),
+        'width': (img => img.width),
+        'set-width!': ((img, w) => { img.width = w; }),
+        'height': (img => img.height),
+        'set-height!': ((img, h) => { img.height = h; }),
+        'natural-width': (img => img.naturalWidth),
+        'natural-height': (img => img.naturalHeight),
+        'complete': (img => img.complete ? 1 : 0),
+        'current-src': (img => img.currentSrc),
+        'decoding': (img => img.decoding),
+        'set-decoding!': ((img, d) => { img.decoding = from_fasl(d); }),
+        'fetch-priority': (img => img.fetchPriority),
+        'set-fetch-priority!': ((img, p) => { img.fetchPriority = from_fasl(p); }),
+        'loading': (img => img.loading),
+        'set-loading!': ((img, l) => { img.loading = from_fasl(l); }),
+        'referrer-policy': (img => img.referrerPolicy),
+        'set-referrer-policy!': ((img, p) => { img.referrerPolicy = from_fasl(p); }),
+        'name': (img => img.name),
+        'set-name!': ((img, n) => { img.name = from_fasl(n); }),
+        'x': (img => img.x),
+        'y': (img => img.y),
+        'decode': (img => img.decode())
+    } : {
+        'new'() { throw new Error('DOM not available in this environment'); },
+        'alt'() { throw new Error('DOM not available in this environment'); },
+        'set-alt!'() { throw new Error('DOM not available in this environment'); },
+        'src'() { throw new Error('DOM not available in this environment'); },
+        'set-src!'() { throw new Error('DOM not available in this environment'); },
+        'srcset'() { throw new Error('DOM not available in this environment'); },
+        'set-srcset!'() { throw new Error('DOM not available in this environment'); },
+        'sizes'() { throw new Error('DOM not available in this environment'); },
+        'set-sizes!'() { throw new Error('DOM not available in this environment'); },
+        'cross-origin'() { throw new Error('DOM not available in this environment'); },
+        'set-cross-origin!'() { throw new Error('DOM not available in this environment'); },
+        'use-map'() { throw new Error('DOM not available in this environment'); },
+        'set-use-map!'() { throw new Error('DOM not available in this environment'); },
+        'is-map'() { throw new Error('DOM not available in this environment'); },
+        'set-is-map!'() { throw new Error('DOM not available in this environment'); },
+        'width'() { throw new Error('DOM not available in this environment'); },
+        'set-width!'() { throw new Error('DOM not available in this environment'); },
+        'height'() { throw new Error('DOM not available in this environment'); },
+        'set-height!'() { throw new Error('DOM not available in this environment'); },
+        'natural-width'() { throw new Error('DOM not available in this environment'); },
+        'natural-height'() { throw new Error('DOM not available in this environment'); },
+        'complete'() { throw new Error('DOM not available in this environment'); },
+        'current-src'() { throw new Error('DOM not available in this environment'); },
+        'decoding'() { throw new Error('DOM not available in this environment'); },
+        'set-decoding!'() { throw new Error('DOM not available in this environment'); },
+        'fetch-priority'() { throw new Error('DOM not available in this environment'); },
+        'set-fetch-priority!'() { throw new Error('DOM not available in this environment'); },
+        'loading'() { throw new Error('DOM not available in this environment'); },
+        'set-loading!'() { throw new Error('DOM not available in this environment'); },
+        'referrer-policy'() { throw new Error('DOM not available in this environment'); },
+        'set-referrer-policy!'() { throw new Error('DOM not available in this environment'); },
+        'name'() { throw new Error('DOM not available in this environment'); },
+        'set-name!'() { throw new Error('DOM not available in this environment'); },
+        'x'() { throw new Error('DOM not available in this environment'); },
+        'y'() { throw new Error('DOM not available in this environment'); },
+        'decode'() { throw new Error('DOM not available in this environment'); }
+    },
     // Element
     'element': hasDOM ? {
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
