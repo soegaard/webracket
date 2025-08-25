@@ -615,17 +615,10 @@
   #:name   "fill-style"
   (-> (extern) (extern)))
 
-; todo - the fillStyle can be either
-;        a string, an CanvasGradient object or an CanvasPattern object.
 (define-foreign js-set-canvas2d-fill-style!
   #:module "canvas-rendering-context-2d"
   #:name   "set-fill-style!"
-  (-> (extern extern) ()))
-
-(define-foreign js-set-canvas2d-fill-style!/string
-  #:module "canvas-rendering-context-2d"
-  #:name   "set-fill-style!/string"
-  (-> (extern string) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-canvas2d-filter
   #:module "canvas-rendering-context-2d"
@@ -780,12 +773,12 @@
 (define-foreign js-canvas2d-stroke-style
   #:module "canvas-rendering-context-2d"
   #:name   "stroke-style"
-  (-> (extern) (extern)))
+  (-> (value) (extern)))
 
 (define-foreign js-set-canvas2d-stroke-style!
   #:module "canvas-rendering-context-2d"
   #:name   "set-stroke-style!"
-  (-> (extern extern) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-canvas2d-text-align
   #:module "canvas-rendering-context-2d"
@@ -987,7 +980,10 @@
 (define-foreign js-canvas2d-fill
   #:module "canvas-rendering-context-2d"
   #:name   "fill"
-  (-> (extern extern string) ()))
+  #;(-> (extern) ())
+  #;(-> (extern value) ())       ; path
+  #;(-> (extern value) ())       ; fillRule
+  (-> (extern value value) ()))  ; path, fillRule
 
 (define-foreign js-canvas2d-fill-rect
   #:module "canvas-rendering-context-2d"
@@ -1107,7 +1103,7 @@
 (define-foreign js-canvas2d-stroke
   #:module "canvas-rendering-context-2d"
   #:name   "stroke"
-  (-> (extern extern) ()))
+  (-> (extern #;extern) ()))
 
 (define-foreign js-canvas2d-stroke-rect
   #:module "canvas-rendering-context-2d"
