@@ -2948,6 +2948,15 @@
        (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
        (define optionals (make-list (- max n) default))
        `(call ,($ sym) ,@aes ,@optionals))
+
+     (define (build-rest-args aes)
+       (let loop ([aes aes])
+         (if (null? aes)
+             `(global.get $null)
+             `(struct.new $Pair
+                          (i32.const 0)
+                          ,(first aes)
+                          ,(loop (rest aes))))))
      
      ;; Inlines a call to a primitive with
      ;;   at least `min` arguments.
@@ -2960,27 +2969,47 @@
        (when (< n min) (error 'primapp "too few arguments: ~a" sym))
        (define aes       (AExpr* ae1))
        (define mandatory (take aes rest-start))
-       (define rest-args (let loop ([aes (drop aes rest-start)])
-                           (if (null? aes)
-                               `(global.get $null)
-                               `(struct.new $Pair
-                                            (i32.const 0)
-                                            ,(first aes)
-                                            ,(loop (rest aes))))))
+       (define rest-args (build-rest-args (drop aes rest-start)))
        `(call ,($ sym) ,@mandatory ,rest-args))
+
+     ;; Allocate a sequence container, fill it from `aes`, and return the container.
+     (define (build-seq aes local-name local-type alloc set finish)
+       (define n    (length aes))
+       (define init (alloc n))
+       (define tmp  (emit-fresh-local local-name local-type init))
+       `(block (result (ref eq))
+               ,@(for/list ([ae aes] [i (in-naturals)])
+                   (set (Reference tmp) i (AExpr ae)))
+               ,(finish (Reference tmp))))
 
 
      (define sym (syntax->datum (variable-id pr)))
      (define work
        (case sym
+         ;;; Special Inlining
          [(void)
           (define (AE ae)   (AExpr3 ae <effect>))
           (define (AE* aes) (map AE aes))
           `(block (result (ref eq))
                   ,@(AE* ae1)
                   (global.get $void))]
-         [(s-exp->fasl)
-          ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+         [(list) 
+          (build-rest-args (AExpr* ae1))]
+         [(list*)
+          (let loop ([aes (AExpr* ae1)])
+            (match aes
+              [(list v)            v]
+              [(list v1 v2)       `(call $list* ,v1 ,v2)]
+              [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
+         [(values) ; variadic
+          (define n   (length ae1))
+          (define aes (AExpr* ae1))
+          (case n
+            [(1)   (first aes)]
+            [else  `(array.new_fixed $Values ,n ,@aes)])]
+
+         ;;; Standard Inlining         
+         [(s-exp->fasl) ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
@@ -2992,6 +3021,10 @@
          [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]                                   
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         ; Todo: map and for-each needs to check that the first argument is a procedure
+         [(map)                        (inline-prim/variadic sym ae1 2 1)]
+         [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
+
          [(char=? char<? char<=? char>? char>=?
                   char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
           ; variadic, at least one argument
@@ -3015,14 +3048,7 @@
                                   ,(first aes)
                                   ,(loop (rest aes))))))
              `(call ,$cmp ,c0 ,xs)])]
-         [(list)   ; variadic
-          (let loop ([aes ae1])
-            (if (null? aes)
-                `(global.get $null)
-                `(struct.new $Pair
-                             (i32.const 0)
-                             ,(AExpr (first aes))
-                             ,(loop (rest aes)))))]
+         
          [(string-append)
           (let loop ([aes (AExpr* ae1)])
             (match aes
@@ -3032,68 +3058,42 @@
               [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
          #;[(string-append) ; variadic, at least zero arguments
             (inline-prim/variadic sym ae1 0)]
-         [(map)   ; variadic, at least two arguments
-          ; Note: typecheck of arguments missing
-          (inline-prim/variadic sym ae1 2 1)]
-         [(for-each)   ; variadic, at least two arguments
-          (inline-prim/variadic sym ae1 2 1)]
-         [(values) ; variadic
-          (define n   (length ae1))
-          (define aes (AExpr* ae1))
-          (case n
-            [(1)   (first aes)]
-            [else  `(array.new_fixed $Values ,n ,@aes)])]
-         [(bytes) ; variadic, needs inlining
-          ; TODO: This assumes all the ae1 ... are integers.
-          (define n    (length ae1))
-          ; (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
-          (define init `(ref.cast (ref $Bytes) (call $make-bytes ,(Imm n) ,(Imm 0))))
-          ; (define init `(array.new $Bytes (i32.const 0) (i32.const ,n)))
-          (define $bs  (emit-fresh-local 'quoted-bytes '(ref $Bytes) init))
-          `(block (result (ref eq))
-                  ,@(for/list ([ae ae1] [i (in-naturals)])
-                      `(call $bytes-set!/checked
-                             ,(Reference $bs) (i32.const ,i)
-                             (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
-                  ,(Reference $bs))]
-         [(string) ; variadic, needs inlining for now
-          (define n    (length ae1))
-          ;; Allocate code-point array and bind to a (ref eq) local.
-          (define init `(array.new $I32Array (i32.const 0) (i32.const ,n)))
-          (define $a   (emit-fresh-local 'cp-array '(ref eq) init))
 
-          `(block (result (ref eq))
-                  ;; Fill array: array operand must be (ref $I32Array), so cast from (ref eq).
-                  ,@(for/list ([ae ae1] [i (in-naturals)])
-                      `(array.set $I32Array
-                                  (ref.cast (ref $I32Array) ,(Reference $a))
-                                  (i32.const ,i)
-                                  (i32.shr_s
-                                   (i31.get_s
-                                    (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
-                                   (i32.const 1))))
-                  ;; Return a fresh $String (hash=0, not immutable) wrapping the array.
-                  (struct.new $String
-                              (i32.const 0)
-                              (i32.const 0)
-                              (ref.cast (ref $I32Array) ,(Reference $a))))]
-         
+         ;;; Arrays : bytes, string, vector, vector-immutable
+         [(bytes)
+          #;(build-seq aes local-name local-type alloc set finish)
+          (build-seq ae1 'quoted-bytes '(ref $Bytes)
+                     ; Allocate 
+                     (λ (n) `(ref.cast (ref $Bytes) (call $make-bytes ,(Imm n) ,(Imm 0))))
+                     ; Initialize
+                     (λ ($bs i v)
+                        `(call $bytes-set!/checked ,$bs (i32.const ,i)
+                               (i32.shr_s (i31.get_s ,v) (i32.const 1))))
+                     ; Finish
+                     (λ ($bs) $bs))]
+         [(string)
+          (build-seq ae1 'cp-array '(ref eq)
+                     (λ (n) `(array.new $I32Array (i32.const 0) (i32.const ,n)))
+                     (λ ($a i v)
+                        `(array.set $I32Array
+                                    (ref.cast (ref $I32Array) ,$a)
+                                    (i32.const ,i)
+                                    (i32.shr_s
+                                     (i31.get_s
+                                      (ref.cast (ref i31) (call $char->integer ,v)))
+                                     (i32.const 1))))
+                     (λ ($a)
+                        `(struct.new $String
+                                     (i32.const 0) ; hash
+                                     (i32.const 0) ; mutable
+                                     (ref.cast (ref $I32Array) ,$a))))]                 
          [(vector vector-immutable)
-          (define n    (length ae1))
-          ; (define init `(array.new $Vector (ref.i31 (i32.const 0)) (i32.const ,n)))
-          (define init `(call $make-vector/checked (i32.const ,n) ,(Imm 0)))
-          (define $vs  (emit-fresh-local 'quoted-vector '(ref $Vector) init))
-          `(block (result (ref eq))
-                  ,@(for/list ([ae ae1] [i (in-naturals)])
-                      `(call $vector-set!/checked ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
-                  ; `(array.set $Vector ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
-                  ,(Reference $vs))]
-         [(list*)
-          (let loop ([aes (AExpr* ae1)])
-            (match aes
-              [(list v)            v]
-              [(list v1 v2)       `(call $list* ,v1 ,v2)]
-              [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
+          ; todo:  make it immutable when sym is `vector-immutable
+          (build-seq ae1 'quoted-vector '(ref $Vector)
+                     (λ (n)       `(call $make-vector/checked (i32.const ,n) ,(Imm 0)))
+                     (λ ($vs i v) `(call $vector-set!/checked ,$vs (i32.const ,i) ,v))
+                     (λ ($vs)     $vs))]
+         
          [else
           (match (length ae1)
             [0 (case sym
@@ -3122,14 +3122,6 @@
                  ; / needs to signal an Racket error if denominator is zero
                  [else   `(call ,(Prim pr)
                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
-            [3 (case sym
-                 [(string-replace)
-                  `(call $string-replace
-                         ,(AExpr (list-ref ae1 0))
-                         ,(AExpr (list-ref ae1 1))
-                         ,(AExpr (list-ref ae1 2))
-                         ,(Imm #t))]
-                 [else `(call ,(Prim pr) ,@(AExpr* ae1))])]
             [_ (case sym
                  [(+ fx+ fl+
                      * fx* fl*
