@@ -2907,6 +2907,8 @@
                                 [y         `(block 
                                              ,(Expr   e0 y         '<stat>)
                                              ,@(Expr* e1 '<effect> '<stat>))])]
+
+    ;; Inline Primitives. Inlining.
     [(primapp ,s ,pr ,ae1 ...) (define sym (syntax->datum (variable-id pr)))
                                (define work
                                  (case sym
