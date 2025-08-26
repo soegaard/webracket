@@ -883,8 +883,8 @@
                                     (then
                                      (if (ref.test (ref $Prim0) (local.get $code))
                                          (then
-                                          (return_call_ref $Prim0
-                                                           (ref.cast (ref $Prim0) (local.get $code))))
+                                         (return_call_ref $Prim0
+                                                          (ref.cast (ref $Prim0) (local.get $code))))
                                          (else
                                           (return (call $raise-code-type-mismatch (local.get $pproc))))))
                                     (else
@@ -899,7 +899,8 @@
                                    (if (ref.test (ref $Prim1) (local.get $code))
                                        (then
                                         (return_call_ref $Prim1
-                                                         (ref.cast (ref $Prim1) (local.get $code)) (local.get $a0)))
+                                                         (local.get $a0)
+                                                         (ref.cast (ref $Prim1) (local.get $code))))
                                        (else
                                         (return (call $raise-code-type-mismatch (local.get $pproc)))))
                                    )
@@ -915,8 +916,9 @@
                                  (if (ref.test (ref $Prim2) (local.get $code))
                                      (then
                                       (return_call_ref $Prim2
-                                                       (ref.cast (ref $Prim2) (local.get $code))
-                                                       (local.get $a0) (local.get $a1)))
+                                                       (local.get $a0)
+                                                       (local.get $a1)
+                                                       (ref.cast (ref $Prim2) (local.get $code))))
                                      (else
                                       (return (call $raise-code-type-mismatch (local.get $pproc)))))
                                  )
@@ -935,9 +937,11 @@
                                     (if (ref.test (ref $Prim>=3) (local.get $code))
                                         (then
                                          (return_call_ref $Prim>=3
-                                                          (ref.cast (ref $Prim>=3) (local.get $code))
-                                                          (local.get $a0) (local.get $a1) (local.get $a2)
-                                                          (local.get $args)))
+                                                          (local.get $a0)
+                                                          (local.get $a1)
+                                                          (local.get $a2)
+                                                          (local.get $args)
+                                                          (ref.cast (ref $Prim>=3) (local.get $code))))
                                         (else
                                          (return
                                           (call $raise-code-type-mismatch (local.get $pproc)))))
@@ -954,7 +958,8 @@
                         (if (ref.test (ref $Prim>=0) (local.get $code))
                             (then
                              (return_call_ref $Prim>=0
-                                              (ref.cast (ref $Prim>=0) (local.get $code)) (local.get $args)))
+                                              (local.get $args)
+                                              (ref.cast (ref $Prim>=0) (local.get $code))))
                             (else
                              (return (call $raise-code-type-mismatch (local.get $pproc)))))
 
@@ -966,8 +971,9 @@
                            (if (ref.test (ref $Prim>=1) (local.get $code))
                                (then
                                 (return_call_ref $Prim>=1
-                                                 (ref.cast (ref $Prim>=1) (local.get $code))
-                                                 (local.get $a0) (local.get $args)))
+                                                 (local.get $a0)
+                                                 (local.get $args)
+                                                 (ref.cast (ref $Prim>=1) (local.get $code))))
                                (else
                                 (return (call $raise-code-type-mismatch (local.get $pproc)))))
                            )
@@ -983,8 +989,10 @@
                          (if (ref.test (ref $Prim>=2) (local.get $code))
                              (then
                               (return_call_ref $Prim>=2
-                                               (ref.cast (ref $Prim>=2) (local.get $code))
-                                               (local.get $a0) (local.get $a1) (local.get $args)))
+                                               (local.get $a0)
+                                               (local.get $a1)
+                                               (local.get $args)
+                                               (ref.cast (ref $Prim>=2) (local.get $code))))
                              (else
                               (return (call $raise-code-type-mismatch (local.get $pproc)))))
                          )
@@ -1000,9 +1008,11 @@
                        (if (ref.test (ref $Prim>=3) (local.get $code))
                            (then
                             (return_call_ref $Prim>=3
-                                             (ref.cast (ref $Prim>=3) (local.get $code))
-                                             (local.get $a0) (local.get $a1) (local.get $a2)
-                                             (local.get $args)))
+                                             (local.get $a0)
+                                             (local.get $a1)
+                                             (local.get $a2)
+                                             (local.get $args)
+                                             (ref.cast (ref $Prim>=3) (local.get $code))))
                            (else
                             (return (call $raise-code-type-mismatch (local.get $pproc)))))
                        )
