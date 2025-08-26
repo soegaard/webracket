@@ -13,7 +13,7 @@
          racket/port 
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
-                              index-where append-map make-list rest)
+                              index-where append-map make-list rest take drop)
          (only-in racket/set  list->set))
 (require
   ; (prefix-in ur- urlang)
@@ -2912,6 +2912,15 @@
     [(primapp ,s ,pr ,ae1 ...)
 
      ;; Inlines a call to a primitive with
+     ;;   a fixed number of arguments.
+     (define (inline-prim/fixed sym ae1 arg-count)
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n arg-count) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n arg-count) (error 'primapp "too few arguments: ~a"  sym))
+       `(call ,($ sym) ,@aes))
+
+     ;; Inlines a call to a primitive with
      ;;   at least `min` arguments,
      ;;   at most  `max` arguments.
      ;; That is, arguments beyound `min` are optional.
@@ -2930,6 +2939,7 @@
      ;;   at most  `max` arguments.
      ;; That is, arguments beyound `min` are optional.
      ;; Passes `default` for missing arguments.
+     ;; Note: The same default values is used for all arguments.
      (define (inline-prim/optional/default sym ae1 min max default)
        (define filler `(global.get $missing))
        (define aes (AExpr* ae1))
@@ -2938,50 +2948,50 @@
        (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
        (define optionals (make-list (- max n) default))
        `(call ,($ sym) ,@aes ,@optionals))
-
+     
      ;; Inlines a call to a primitive with
-     ;;   a fixed number of arguments.
-     (define (inline-prim/fixed sym ae1 arg-count)
-       (define aes (AExpr* ae1))
-       (define n   (length aes))
-       (when (> n arg-count) (error 'primapp "too many arguments: ~a" sym))
-       (when (< n arg-count) (error 'primapp "too few arguments: ~a"  sym))
-       `(call ,($ sym) ,@aes))
+     ;;   at least `min` arguments.
+     ;; Arguments from `rest-start` are rest arguments.
+     ;; They are passed in newly allocated list.
+     ;; Note: Having `rest-start` as well as `min` allows us to
+     ;; share code for (f x ...) and (f x ...+).
+     (define (inline-prim/variadic sym ae1 min [rest-start min])
+       (define n (length ae1))
+       (when (< n min) (error 'primapp "too few arguments: ~a" sym))
+       (define aes       (AExpr* ae1))
+       (define mandatory (take aes rest-start))
+       (define rest-args (let loop ([aes (drop aes rest-start)])
+                           (if (null? aes)
+                               `(global.get $null)
+                               `(struct.new $Pair
+                                            (i32.const 0)
+                                            ,(first aes)
+                                            ,(loop (rest aes))))))
+       `(call ,($ sym) ,@mandatory ,rest-args))
+
 
      (define sym (syntax->datum (variable-id pr)))
      (define work
        (case sym
-         [(s-exp->fasl)
-          ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
-          (inline-prim/optional sym ae1 1 2)]
-         [(fasl->s-exp)
-          (inline-prim/fixed sym ae1 1)]
          [(void)
           (define (AE ae)   (AExpr3 ae <effect>))
           (define (AE* aes) (map AE aes))
           `(block (result (ref eq))
                   ,@(AE* ae1)
                   (global.get $void))]
-         [(vector-copy!)
-          (inline-prim/optional sym ae1 3 5)]
-         [(make-vector)
-          (inline-prim/optional sym ae1 1 2)]         
-         [(procedure-rename)
-          (inline-prim/optional sym ae1 2 3)]
-         [(procedure-arity-includes?)
-          ; Takes between 2 to 3 argument.
-          ; The default value for the last argument is #f.
-          (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
-         [(make-hasheq)
-          (inline-prim/optional sym ae1 0 1)]
-         [(number->string)
-          (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
-         [(make-struct-type)
-          (inline-prim/optional/default sym ae1 4 11 (Imm #f))]                                   
-         [(make-struct-field-accessor)
-          (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
-         [(make-struct-field-mutator)
-          (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         [(s-exp->fasl)
+          ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+          (inline-prim/optional sym ae1 1 2)]
+         [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
+         [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
+         [(make-vector)                (inline-prim/optional sym ae1 1 2)]         
+         [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
+         [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
+         [(number->string)             (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
+         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]                                   
+         [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
          [(char=? char<? char<=? char>? char>=?
                   char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
           ; variadic, at least one argument
@@ -3013,46 +3023,20 @@
                              (i32.const 0)
                              ,(AExpr (first aes))
                              ,(loop (rest aes)))))]
-         [(string-append) ; variadic, at least zero arguments
-          (define n   (length ae1))
-          (define aes (AExpr* ae1))
-          (define xs                                      
-            (let loop ([aes aes])
-              (if (null? aes)
-                  `(global.get $null)
-                  `(struct.new $Pair
-                               (i32.const 0)
-                               ,(first aes)
-                               ,(loop (rest aes))))))
-          `(call $string-append ,xs)]                                    
+         [(string-append)
+          (let loop ([aes (AExpr* ae1)])
+            (match aes
+              [(list)            '(global.get $string:empty)]
+              [(list v)          `(call $string-copy ,v)]
+              [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
+              [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
+         #;[(string-append) ; variadic, at least zero arguments
+            (inline-prim/variadic sym ae1 0)]
          [(map)   ; variadic, at least two arguments
-          (define n (length ae1))
-          (when (< n 2) (error 'primapp "too few arguments: ~a" s))
-          (define proc (AExpr  (first ae1)))
-          (define aes  (AExpr* (rest  ae1)))
-          (define xss                                      
-            (let loop ([aes aes])
-              (if (null? aes)
-                  `(global.get $null)
-                  `(struct.new $Pair
-                               (i32.const 0)
-                               ,(first aes)
-                               ,(loop (rest aes))))))
-          `(call $map ,proc ,xss)]
+          ; Note: typecheck of arguments missing
+          (inline-prim/variadic sym ae1 2 1)]
          [(for-each)   ; variadic, at least two arguments
-          (define n (length ae1))
-          (when (< n 2) (error 'primapp "too few arguments: ~a" s))
-          (define proc (AExpr  (first ae1)))
-          (define aes  (AExpr* (rest  ae1)))
-          (define xss                                      
-            (let loop ([aes aes])
-              (if (null? aes)
-                  `(global.get $null)
-                  `(struct.new $Pair
-                               (i32.const 0)
-                               ,(first aes)
-                               ,(loop (rest aes))))))
-          `(call $for-each ,proc ,xss)]
+          (inline-prim/variadic sym ae1 2 1)]
          [(values) ; variadic
           (define n   (length ae1))
           (define aes (AExpr* ae1))
@@ -3110,13 +3094,6 @@
               [(list v)            v]
               [(list v1 v2)       `(call $list* ,v1 ,v2)]
               [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
-         [(string-append)
-          (let loop ([aes (AExpr* ae1)])
-            (match aes
-              [(list)            '(global.get $string:empty)]
-              [(list v)          `(call $string-copy ,v)]
-              [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
-              [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
          [else
           (match (length ae1)
             [0 (case sym
