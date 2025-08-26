@@ -874,136 +874,150 @@
 
               ;; br_table dispatch by shape
               (block $done
-                (block $L7) (block $L6) (block $L5) (block $L4)
-                (block $L3) (block $L2) (block $L1) (block $L0)
-                (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 (local.get $shape))
+                (block $L7
+                  (block $L6
+                    (block $L5
+                      (block $L4
+                        (block $L3
+                          (block $L2
+                            (block $L1
+                              (block $L0
+                                (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 (local.get $shape))
 
-                ;; shape 0: exact 0
-                (label $L0)
-                (if (i32.eqz (local.get $argc))
-                    (then
-                     (if (ref.test (ref $Prim0) (local.get $code))
-                         (then
-                          (return_call_ref $Prim0
-                                           (ref.cast (ref $Prim0) (local.get $code))))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc))))))
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                                ;; shape 0: exact 0
+                                (if (i32.eqz (local.get $argc))
+                                    (then
+                                     (if (ref.test (ref $Prim0) (local.get $code))
+                                         (then
+                                          (return_call_ref $Prim0
+                                                           (ref.cast (ref $Prim0) (local.get $code))))
+                                         (else
+                                          (return (call $raise-code-type-mismatch (local.get $pproc))))))
+                                    (else
+                                     (return (call $raise-arity-error
+                                                   (local.get $pproc) (local.get $argc)))))
 
-                ;; shape 1: exact 1
-                (label $L1)
-                (if (i32.eq (local.get $argc) (i32.const 1))
-                    (then
-                     (if (ref.test (ref $Prim1) (local.get $code))
-                         (then
-                          (return_call_ref $Prim1
-                                           (ref.cast (ref $Prim1) (local.get $code)) (local.get $a0)))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                     )
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                              ) ;; end $L0
 
-                ;; shape 2: exact 2
-                (label $L2)
-                (if (i32.eq (local.get $argc) (i32.const 2))
-                    (then
-                     (if (ref.test (ref $Prim2) (local.get $code))
-                         (then
-                          (return_call_ref $Prim2
-                                           (ref.cast (ref $Prim2) (local.get $code))
-                                           (local.get $a0) (local.get $a1)))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                     )
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                              ;; shape 1: exact 1
+                              (if (i32.eq (local.get $argc) (i32.const 1))
+                                  (then
+                                   (if (ref.test (ref $Prim1) (local.get $code))
+                                       (then
+                                        (return_call_ref $Prim1
+                                                         (ref.cast (ref $Prim1) (local.get $code)) (local.get $a0)))
+                                       (else
+                                        (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                                   )
+                                  (else
+                                   (return (call $raise-arity-error
+                                                 (local.get $pproc) (local.get $argc)))))
 
-                ;; shape 3: exact >=3  (use $Prim>=3 with args a0 a1 a2 and full $Args)
-                (label $L3)
-                (if (i32.ge_u (local.get $argc) (i32.const 3))
-                    (then
-                     ;; require argc == arity for exact >=3
-                     (if (i32.eq (local.get $argc) (local.get $arity))
-                         (then
-                          (if (ref.test (ref $Prim>=3) (local.get $code))
+                            ) ;; end $L1
+
+                            ;; shape 2: exact 2
+                            (if (i32.eq (local.get $argc) (i32.const 2))
+                                (then
+                                 (if (ref.test (ref $Prim2) (local.get $code))
+                                     (then
+                                      (return_call_ref $Prim2
+                                                       (ref.cast (ref $Prim2) (local.get $code))
+                                                       (local.get $a0) (local.get $a1)))
+                                     (else
+                                      (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                                 )
+                                (else
+                                 (return (call $raise-arity-error
+                                               (local.get $pproc) (local.get $argc)))))
+
+                          ) ;; end $L2
+
+                          ;; shape 3: exact >=3  (use $Prim>=3 with args a0 a1 a2 and full $Args)
+                          (if (i32.ge_u (local.get $argc) (i32.const 3))
                               (then
-                               (return_call_ref $Prim>=3
-                                                (ref.cast (ref $Prim>=3) (local.get $code))
-                                                (local.get $a0) (local.get $a1) (local.get $a2)
-                                                (local.get $args)))
+                               ;; require argc == arity for exact >=3
+                               (if (i32.eq (local.get $argc) (local.get $arity))
+                                   (then
+                                    (if (ref.test (ref $Prim>=3) (local.get $code))
+                                        (then
+                                         (return_call_ref $Prim>=3
+                                                          (ref.cast (ref $Prim>=3) (local.get $code))
+                                                          (local.get $a0) (local.get $a1) (local.get $a2)
+                                                          (local.get $args)))
+                                        (else
+                                         (return
+                                          (call $raise-code-type-mismatch (local.get $pproc)))))
+                                   (else
+                                    (return (call $raise-arity-error
+                                                  (local.get $pproc) (local.get $argc))))))
                               (else
-                               (return
-                                (call $raise-code-type-mismatch (local.get $pproc)))))
-                         (else
-                          (return (call $raise-arity-error
-                                        (local.get $pproc) (local.get $argc))))))
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                               (return (call $raise-arity-error
+                                             (local.get $pproc) (local.get $argc)))))
 
-                ;; shape 4: at least 0
-                (label $L4)
-                (if (ref.test (ref $Prim>=0) (local.get $code))
-                    (then
-                     (return_call_ref $Prim>=0
-                                      (ref.cast (ref $Prim>=0) (local.get $code)) (local.get $args)))
-                    (else
-                     (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                        ) ;; end $L3
 
-                ;; shape 5: at least 1
-                (label $L5)
-                (if (i32.ge_u (local.get $argc) (i32.const 1))
-                    (then
-                     (if (ref.test (ref $Prim>=1) (local.get $code))
-                         (then
-                          (return_call_ref $Prim>=1
-                                           (ref.cast (ref $Prim>=1) (local.get $code))
-                                           (local.get $a0) (local.get $args)))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                     )
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                        ;; shape 4: at least 0
+                        (if (ref.test (ref $Prim>=0) (local.get $code))
+                            (then
+                             (return_call_ref $Prim>=0
+                                              (ref.cast (ref $Prim>=0) (local.get $code)) (local.get $args)))
+                            (else
+                             (return (call $raise-code-type-mismatch (local.get $pproc)))))
 
-                ;; shape 6: at least 2
-                (label $L6)
-                (if (i32.ge_u (local.get $argc) (i32.const 2))
-                    (then
-                     (if (ref.test (ref $Prim>=2) (local.get $code))
-                         (then
-                          (return_call_ref $Prim>=2
-                                           (ref.cast (ref $Prim>=2) (local.get $code))
-                                           (local.get $a0) (local.get $a1) (local.get $args)))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                     )
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
+                      ) ;; end $L4
 
-                ;; shape 7: at least >=3
-                (label $L7)
-                (if (i32.ge_u (local.get $argc) (i32.const 3))
-                    (then
-                     (if (ref.test (ref $Prim>=3) (local.get $code))
-                         (then
-                          (return_call_ref $Prim>=3
-                                           (ref.cast (ref $Prim>=3) (local.get $code))
-                                           (local.get $a0) (local.get $a1) (local.get $a2)
-                                           (local.get $args)))
-                         (else
-                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                     )
-                    (else
-                     (return (call $raise-arity-error
-                                   (local.get $pproc) (local.get $argc)))))
-                (br $done))
+                      ;; shape 5: at least 1
+                      (if (i32.ge_u (local.get $argc) (i32.const 1))
+                          (then
+                           (if (ref.test (ref $Prim>=1) (local.get $code))
+                               (then
+                                (return_call_ref $Prim>=1
+                                                 (ref.cast (ref $Prim>=1) (local.get $code))
+                                                 (local.get $a0) (local.get $args)))
+                               (else
+                                (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                           )
+                          (else
+                           (return (call $raise-arity-error
+                                         (local.get $pproc) (local.get $argc)))))
+
+                    ) ;; end $L5
+
+                    ;; shape 6: at least 2
+                    (if (i32.ge_u (local.get $argc) (i32.const 2))
+                        (then
+                         (if (ref.test (ref $Prim>=2) (local.get $code))
+                             (then
+                              (return_call_ref $Prim>=2
+                                               (ref.cast (ref $Prim>=2) (local.get $code))
+                                               (local.get $a0) (local.get $a1) (local.get $args)))
+                             (else
+                              (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                         )
+                        (else
+                         (return (call $raise-arity-error
+                                       (local.get $pproc) (local.get $argc)))))
+
+                  ) ;; end $L6
+
+                  ;; shape 7: at least >=3
+                  (if (i32.ge_u (local.get $argc) (i32.const 3))
+                      (then
+                       (if (ref.test (ref $Prim>=3) (local.get $code))
+                           (then
+                            (return_call_ref $Prim>=3
+                                             (ref.cast (ref $Prim>=3) (local.get $code))
+                                             (local.get $a0) (local.get $a1) (local.get $a2)
+                                             (local.get $args)))
+                           (else
+                            (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                       )
+                      (else
+                       (return (call $raise-arity-error
+                                     (local.get $pproc) (local.get $argc)))))
+
+                ) ;; end $L7
+                (unreachable))
               )
         )
 
