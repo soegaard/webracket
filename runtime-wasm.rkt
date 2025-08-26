@@ -1019,7 +1019,7 @@
                        (return (call $raise-arity-error
                                      (local.get $pproc) (local.get $argc)))))
 
-                ) ;; end $L7
+                )) ;; end $L7
               (unreachable))
 
         (func $repack-arguments
@@ -9719,6 +9719,8 @@
               (ref.func $primitive-invoke)
               (ref.func $code:case-lambda-dispatch)
               (ref.func $invoke-case-closure)
+
+              (ref.func $exact?)
               #;(ref.func $struct-constructor/with-guard))
 
          
