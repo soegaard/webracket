@@ -404,4 +404,16 @@
             (equal? (procedure-arity (case-lambda [(x) x] [(x y) x]))   '(1 2))
             (equal? (procedure-arity (case-lambda [(x y) x] [(x) x] ))  '(2 1))
             (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))))
- )
+
+ (list "apply-prim0"
+       (equal? (procedure? (apply open-output-bytes '())) #f))
+
+ (list "map-prim1"
+       (equal? (map not '(#t #f)) '(#f #t)))
+
+ (list "map-prim2"
+       (equal? (map eq? '(a b) '(a c)) '(#t #f)))
+
+ (list "apply-prim>=0"
+       (equal? (apply + '(1 2 3)) 6))
+)
