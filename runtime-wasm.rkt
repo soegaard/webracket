@@ -317,31 +317,21 @@
                       (result (ref eq))))
 
           ;; Raw primitive function types
-          (type $PrimitiveProcedureCode (sub (func (result (ref eq)))))
-
-          (type $Prim0    (sub $PrimitiveProcedureCode
-                               (func (result (ref eq)))))
-          (type $Prim1    (sub $PrimitiveProcedureCode
-                               (func (param (ref eq))
-                                     (result (ref eq)))))
-          (type $Prim2    (sub $PrimitiveProcedureCode
-                               (func (param (ref eq)) (param (ref eq))
-                                     (result (ref eq)))))
-          (type $Prim>=0  (sub $PrimitiveProcedureCode
-                               (func (param (ref eq))      ;; list of args
-                                     (result (ref eq)))))
-          (type $Prim>=1  (sub $PrimitiveProcedureCode
-                               (func (param (ref eq))      ;; first arg
-                                     (param (ref eq))      ;; rest list
-                                     (result (ref eq)))))
-          (type $Prim>=2  (sub $PrimitiveProcedureCode
-                               (func (param (ref eq)) (param (ref eq))
-                                     (param (ref eq))      ;; rest list
-                                     (result (ref eq)))))
-          (type $Prim>=3  (sub $PrimitiveProcedureCode
-                               (func (param (ref eq)) (param (ref eq)) (param (ref eq))
-                                     (param (ref eq))      ;; rest list
-                                     (result (ref eq)))))
+          (type $Prim0    (func                                   (result (ref eq))))
+          (type $Prim1    (func (param (ref eq))                  (result (ref eq))))
+          (type $Prim2    (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
+          
+          (type $Prim>=0  (func (param (ref eq))      ;; list of args
+                                (result (ref eq))))
+          (type $Prim>=1  (func (param (ref eq))      ;; first arg
+                                (param (ref eq))      ;; rest list
+                                (result (ref eq))))
+          (type $Prim>=2  (func (param (ref eq)) (param (ref eq))
+                                (param (ref eq))      ;; rest list
+                                (result (ref eq))))
+          (type $Prim>=3  (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (param (ref eq))      ;; rest list
+                                (result (ref eq))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
                                     (param $args (ref $Args))
@@ -386,7 +376,7 @@
                        (field $realm  (ref eq))
                        (field $invoke (ref $ProcedureInvoker))
                        ; Function pointer for primitive implementation
-                       (field $code (ref null $PrimitiveProcedureCode))
+                       (field $code (ref null func))
                        ; other fields
                        (field $result-arity (ref eq))))) ;; fixnum like 1 for most
 
@@ -399,7 +389,7 @@
                        (field $arity        (ref eq))
                        (field $realm        (ref eq))
                        (field $invoke       (ref $ProcedureInvoker))
-                       (field $code         (ref null $PrimitiveProcedureCode))
+                       (field $code         (ref null func))
                        (field $result-arity (ref eq))  ; fixnum
                        ;; Own fields
                        ; ...
