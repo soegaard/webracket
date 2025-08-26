@@ -68,9 +68,18 @@
         [_                  #f]
         [_                  (error
                              'arity->internal-representation "got: ~a" a)]))
+
+    (define (min-arity a)
+      (match a
+        [(arity-at-least n) n]
+        [(? number? n)      n]
+        [(? list? l)        (apply min (map min-arity l))]
+        [_                  (error 'min-arity "got: ~a" a)]))
+
+    (define todo-handle-later '(bytes string vector vector-immutable list namespace? values void))
     
     (define (initialize-primitives-as-globals)
-      (for/list ([pr (sort primitives symbol<?)]
+      (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
                  #:do [(define desc (primitive->description pr))]
                  #:when desc)
         (define ar (primitive-description-arity desc))
@@ -80,15 +89,22 @@
             [(? number? 1) (values '$invoke-prim1   `(ref.func ,($ pr)))]
             [(? number? 2) (values '$invoke-prim2   `(ref.func ,($ pr)))]
             [(? number? _) (values '$invoke-prim>=3 `(ref.func ,($ pr)))]
-            [(arity-at-least n)
-             (case n
-               [(0)  (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
-               [(1)  (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
-               [(2)  (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
-               [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
-            [_
-             (displayln pr (current-error-port))
-             (error 'initialize-primitives-as-globals)]))
+             [(arity-at-least n)
+              (case n
+                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
+                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
+                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
+                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
+             [(? list? l)
+              (case (min-arity l)
+                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
+                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
+                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
+                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
+             [_
+              (displayln pr (current-error-port))
+              (displayln ar (current-error-port))
+              (error 'initialize-primitives-as-globals)]))
         `(global.set ,($ (prim: pr))
                      (struct.new $PrimitiveProcedure
                       ; for $Procedure
@@ -323,31 +339,31 @@
                       (result (ref eq))))
 
           ;; Raw primitive function types
-          (rec
-           (type $PrimitiveProcedureCode (func))
-           (type $Prim0    (sub $PrimitiveProcedureCode
+          (type $PrimitiveProcedureCode (sub (func (result (ref eq)))))
+
+          (type $Prim0    (sub $PrimitiveProcedureCode
                                (func (result (ref eq)))))
-           (type $Prim1    (sub $PrimitiveProcedureCode
+          (type $Prim1    (sub $PrimitiveProcedureCode
                                (func (param (ref eq))
                                      (result (ref eq)))))
-           (type $Prim2    (sub $PrimitiveProcedureCode
+          (type $Prim2    (sub $PrimitiveProcedureCode
                                (func (param (ref eq)) (param (ref eq))
                                      (result (ref eq)))))
-           (type $Prim>=0  (sub $PrimitiveProcedureCode
+          (type $Prim>=0  (sub $PrimitiveProcedureCode
                                (func (param (ref eq))      ;; list of args
                                      (result (ref eq)))))
-           (type $Prim>=1  (sub $PrimitiveProcedureCode
+          (type $Prim>=1  (sub $PrimitiveProcedureCode
                                (func (param (ref eq))      ;; first arg
                                      (param (ref eq))      ;; rest list
                                      (result (ref eq)))))
-           (type $Prim>=2  (sub $PrimitiveProcedureCode
+          (type $Prim>=2  (sub $PrimitiveProcedureCode
                                (func (param (ref eq)) (param (ref eq))
                                      (param (ref eq))      ;; rest list
                                      (result (ref eq)))))
-           (type $Prim>=3  (sub $PrimitiveProcedureCode
+          (type $Prim>=3  (sub $PrimitiveProcedureCode
                                (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                      (param (ref eq))      ;; rest list
-                                     (result (ref eq))))))
+                                     (result (ref eq)))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
                                     (param $args (ref $Args))
