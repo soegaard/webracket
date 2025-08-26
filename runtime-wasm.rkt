@@ -83,8 +83,8 @@
                       (global.get $the-racket/primitive-realm)    ; realm
                       ; ,(primitive-description-realm desc)       ; todo
                       (ref.func $invoke-primitive)                ; todo - this ought to call a specific primitive
-                      ; for $PrimitiveProcedure
-                      ; (ref.func ,($ pr))
+                      ;                                                    for $PrimitiveProcedure
+                      ;                                                    (ref.func ,($ pr))
                       ,(Imm #f
                             #;(arity->internal-representation
                                (primitive-description-result-arity desc)))))))
@@ -352,7 +352,7 @@
                        (field $realm  (ref eq))
                        (field $invoke (ref $ProcedureInvoker))
                        ; own fields
-                       ; (field $code   (ref $PrimitiveCode))
+                       ;; (field $code   (ref $PrimitiveCode))
                        (field $result-arity (ref eq))))) ;; fixnum like 1 for most
 
           (type $PrimitiveClosure
