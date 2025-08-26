@@ -808,6 +808,10 @@
               (local $argc i32)
               (local $a0 (ref eq)) (local $a1 (ref eq)) (local $a2 (ref eq))
 
+              (local.set $a0 (global.get $null))
+              (local.set $a1 (global.get $null))
+              (local.set $a2 (global.get $null))
+
               ;; Proc -> PrimitiveProcedure
               (local.set $pproc
                          (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
