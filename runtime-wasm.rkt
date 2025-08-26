@@ -867,16 +867,15 @@
                               (array.get $Args (local.get $args) (i32.const 2)))))
 
               ;; br_table dispatch by shape
-              (block $done
-                (block $L7
-                  (block $L6
-                    (block $L5
-                      (block $L4
-                        (block $L3
-                          (block $L2
-                            (block $L1
-                              (block $L0
-                                (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 (local.get $shape))
+              (block $L7
+                (block $L6
+                  (block $L5
+                    (block $L4
+                      (block $L3
+                        (block $L2
+                          (block $L1
+                            (block $L0
+                              (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 (local.get $shape))
 
                                 ;; shape 0: exact 0
                                 (if (i32.eqz (local.get $argc))
@@ -1021,9 +1020,7 @@
                                      (local.get $pproc) (local.get $argc)))))
 
                 ) ;; end $L7
-                (unreachable))
-              )
-        )
+              (unreachable))
 
         (func $repack-arguments
               ; Returns new $Args suitable for calling both fixed and variadic procedures.
