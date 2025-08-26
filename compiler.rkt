@@ -2909,309 +2909,271 @@
                                              ,@(Expr* e1 '<effect> '<stat>))])]
 
     ;; Inline Primitives. Inlining.
-    [(primapp ,s ,pr ,ae1 ...) (define sym (syntax->datum (variable-id pr)))
-                               (define work
-                                 (case sym
-                                   [(s-exp->fasl)
-                                    ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 2) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
-                                    (define m (- 2 n))
-                                    (define optionals (make-list m `(global.get $missing)))
-                                    `(call $s-exp->fasl ,@aes ,@optionals)]
-                                   [(fasl->s-exp)
-                                    ; exactly one argument
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 1) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 1) (error 'primapp "too few arguments: ~a" s))
-                                    `(call $fasl->s-exp ,@aes)]
-                                   [(void)
-                                    (define (AE ae)   (AExpr3 ae <effect>))
-                                    (define (AE* aes) (map AE aes))
-                                    `(block (result (ref eq))
-                                            ,@(AE* ae1)
-                                            (global.get $void))]
-                                   [(vector-copy!)
-                                    ; 3 to 5 arguments
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 5) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 3) (error 'primapp "too few arguments: ~a"  s))
-                                    (define m (- 5 n))
-                                    (define optionals (make-list m `(global.get $missing)))
-                                    `(call $vector-copy! ,@aes ,@optionals)]
-                                   [(make-vector)
-                                    ; 1 to 2 arguments
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 2) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 1) (error 'primapp "too few arguments: ~a"  s))
-                                    (define m (- 2 n))
-                                    (define optionals (make-list m `(global.get $missing)))
-                                    `(call $make-vector ,@aes ,@optionals)]
-                                   [(procedure-rename)
-                                    ; 2 to 3 arguments
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 3) (error 'primapp "too many arguments: ~a" s))
-                                    (when (< n 2) (error 'primapp "too few arguments: ~a"  s))
-                                    (define m (- 3 n))
-                                    (define optionals (make-list m `(global.get $missing)))
-                                    `(call $procedure-rename ,@aes ,@optionals)]
-                                   [(procedure-arity-includes?)
-                                    ; Takes between 2 to 3 argument.
-                                    ; The default value for the last argument is #f.
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 3)
-                                      (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 3 n))
-                                    (define falses (make-list m (Imm #f)))
-                                    `(call $procedure-arity-includes? ,@aes ,@falses)]
-                                   [(make-hasheq) 
-                                    ; Takes between 0 to 1 argument.
-                                    ; The optional argument has no default, so use $missing.
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 1) (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 1 n))
-                                    (define falses (make-list m `(global.get $missing)))
-                                    `(call $make-hasheq ,@aes ,@falses)]
-                                   [(number->string)
-                                    ; takes between 1 to 2 arguments.
-                                    ; if arguments are missing, supply #f
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 2)
-                                      (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 2 n))
-                                    (define falses (make-list m (Imm #f)))
-                                    `(call $number->string ,@aes ,@falses)]
-                                   [(make-struct-type)
-                                    ; takes between 4 to 11 arguments.
-                                    ; if arguments are missing, supply #f
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 11)
-                                      (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 11 n))
-                                    (define falses (make-list m (Imm #f)))
-                                    `(call $make-struct-type ,@aes ,@falses)]                                   
-                                   [(make-struct-field-accessor)
-                                    ; takes between 2 to 5 arguments.
-                                    ; if arguments are missing, supply #f
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 5)
-                                      (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 5 n))
-                                    (define falses (make-list m (Imm #f)))
-                                    `(call $make-struct-field-accessor ,@aes ,@falses)]
-                                   [(make-struct-field-mutator)
-                                    ; takes between 2 to 5 arguments.
-                                    ; if arguments are missing, supply #f
-                                    (define aes (AExpr* ae1))
-                                    (define n   (length aes))
-                                    (when (> n 5)
-                                      (error 'primapp "too many arguments: ~a" s))
-                                    (define m (- 5 n))
-                                    (define falses (make-list m (Imm #f)))
-                                    `(call $make-struct-field-mutator ,@aes ,@falses)]
-                                   [(char=? char<? char<=? char>? char>=?
-                                     char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
-                                    ; variadic, at least one argument
-                                    (define who    sym)
-                                    (define n      (length ae1))
-                                    (when (< n 1)  (error 'primapp "too few arguments: ~a" s))
-                                    (define aes    (AExpr* ae1))
-                                    (define $cmp   ($ sym))
-                                    (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
-                                    (case n
-                                      [(1) `(call ,$cmp   ,(first aes) (global.get $null))] ; type checks 1st argument
-                                      [(2) `(call ,$cmp/2 ,@aes)]
-                                      [else
-                                       (define c0 (first aes))
-                                       (define xs
-                                         (let loop ([aes (rest aes)])
-                                           (if (null? aes)
-                                               `(global.get $null)
-                                               `(struct.new $Pair
-                                                            (i32.const 0)
-                                                            ,(first aes)
-                                                            ,(loop (rest aes))))))
-                                       `(call ,$cmp ,c0 ,xs)])]
-                                   [(list)   ; variadic
-                                    (let loop ([aes ae1])
-                                      (if (null? aes)
-                                          `(global.get $null)
-                                          `(struct.new $Pair
-                                                       (i32.const 0)
-                                                       ,(AExpr (first aes))
-                                                       ,(loop (rest aes)))))]
-                                   [(string-append) ; variadic, at least zero arguments
-                                    (define n   (length ae1))
-                                    (define aes (AExpr* ae1))
-                                    (define xs                                      
-                                      (let loop ([aes aes])
-                                        (if (null? aes)
-                                            `(global.get $null)
-                                            `(struct.new $Pair
-                                                         (i32.const 0)
-                                                         ,(first aes)
-                                                         ,(loop (rest aes))))))
-                                    `(call $string-append ,xs)]                                    
-                                   [(map)   ; variadic, at least two arguments
-                                    (define n (length ae1))
-                                    (when (< n 2) (error 'primapp "too few arguments: ~a" s))
-                                    (define proc (AExpr  (first ae1)))
-                                    (define aes  (AExpr* (rest  ae1)))
-                                    (define xss                                      
-                                      (let loop ([aes aes])
-                                        (if (null? aes)
-                                            `(global.get $null)
-                                            `(struct.new $Pair
-                                                         (i32.const 0)
-                                                         ,(first aes)
-                                                         ,(loop (rest aes))))))
-                                    `(call $map ,proc ,xss)]
-                                   [(for-each)   ; variadic, at least two arguments
-                                    (define n (length ae1))
-                                    (when (< n 2) (error 'primapp "too few arguments: ~a" s))
-                                    (define proc (AExpr  (first ae1)))
-                                    (define aes  (AExpr* (rest  ae1)))
-                                    (define xss                                      
-                                      (let loop ([aes aes])
-                                        (if (null? aes)
-                                            `(global.get $null)
-                                            `(struct.new $Pair
-                                                         (i32.const 0)
-                                                         ,(first aes)
-                                                         ,(loop (rest aes))))))
-                                    `(call $for-each ,proc ,xss)]
-                                   [(values) ; variadic
-                                    (define n   (length ae1))
-                                    (define aes (AExpr* ae1))
-                                    (case n
-                                      [(1)   (first aes)]
-                                      [else  `(array.new_fixed $Values ,n ,@aes)])]
-                                   [(bytes) ; variadic, needs inlining
-                                    ; TODO: This assumes all the ae1 ... are integers.
-                                    (define n    (length ae1))
-                                    ; (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
-                                    (define init `(ref.cast (ref $Bytes) (call $make-bytes ,(Imm n) ,(Imm 0))))
-                                    ; (define init `(array.new $Bytes (i32.const 0) (i32.const ,n)))
-                                    (define $bs  (emit-fresh-local 'quoted-bytes '(ref $Bytes) init))
-                                    `(block (result (ref eq))
-                                            ,@(for/list ([ae ae1] [i (in-naturals)])
-                                                `(call $bytes-set!/checked
-                                                       ,(Reference $bs) (i32.const ,i)
-                                                       (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
-                                            ,(Reference $bs))]
-                                   [(string) ; variadic, needs inlining for now
-                                    (define n    (length ae1))
-                                    ;; Allocate code-point array and bind to a (ref eq) local.
-                                    (define init `(array.new $I32Array (i32.const 0) (i32.const ,n)))
-                                    (define $a   (emit-fresh-local 'cp-array '(ref eq) init))
+    [(primapp ,s ,pr ,ae1 ...)
 
-                                    `(block (result (ref eq))
-                                            ;; Fill array: array operand must be (ref $I32Array), so cast from (ref eq).
-                                            ,@(for/list ([ae ae1] [i (in-naturals)])
-                                                `(array.set $I32Array
-                                                            (ref.cast (ref $I32Array) ,(Reference $a))
-                                                            (i32.const ,i)
-                                                            (i32.shr_s
-                                                             (i31.get_s
-                                                              (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
-                                                             (i32.const 1))))
-                                            ;; Return a fresh $String (hash=0, not immutable) wrapping the array.
-                                            (struct.new $String
-                                                        (i32.const 0)
-                                                        (i32.const 0)
-                                                        (ref.cast (ref $I32Array) ,(Reference $a))))]
-                                   
-                                   [(vector vector-immutable)
-                                    (define n    (length ae1))
-                                    ; (define init `(array.new $Vector (ref.i31 (i32.const 0)) (i32.const ,n)))
-                                    (define init `(call $make-vector/checked (i32.const ,n) ,(Imm 0)))
-                                    (define $vs  (emit-fresh-local 'quoted-vector '(ref $Vector) init))
-                                    `(block (result (ref eq))
-                                      ,@(for/list ([ae ae1] [i (in-naturals)])
-                                          `(call $vector-set!/checked ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
-                                          ; `(array.set $Vector ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
-                                      ,(Reference $vs))]
-                                   [(list*)
-                                    (let loop ([aes (AExpr* ae1)])
-                                      (match aes
-                                        [(list v)            v]
-                                        [(list v1 v2)       `(call $list* ,v1 ,v2)]
-                                        [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
-                                   [(string-append)
-                                    (let loop ([aes (AExpr* ae1)])
-                                      (match aes
-                                        [(list)            '(global.get $string:empty)]
-                                        [(list v)          `(call $string-copy ,v)]
-                                        [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
-                                        [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
-                                   [else
-                                    (match (length ae1)
-                                      [0 (case sym
-                                           [(+ -)      '(global.get $zero)]
-                                           [(fx+ fx-)  '(global.get $zero)]
-                                           [(fl+ fl-)  '(global.get $flzero)]
-                                           [(* fx*)    '(global.get $one)]
-                                           [(fl*)      '(global.get $flone)]
-                                           [else       `(call ,(Prim pr))])]
-                                      [1 (case sym
-                                           [(  +   *)  (AExpr (first ae1))]
-                                           [(fx+ fx*)  (AExpr (first ae1))]
-                                           [(fl+ fl*)  (AExpr (first ae1))]
-                                           [(fx-)      `(call ,(Prim pr) (global.get $zero)   ,(AExpr (first ae1)))]
-                                           [(fl-)      `(call ,(Prim pr) (global.get $flzero) ,(AExpr (first ae1)))]
-                                           [(fx/)      `(call ,(Prim pr) (global.get $one)    ,(AExpr (first ae1)))]
-                                           [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
-                                           [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
-                                      [2 (case sym
-                                           [(+ - *)       `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
-                                           [(fx+ fx- fx*) `(call ,(Prim pr)
-                                                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
-                                            [(fl+ fl- fl*) `(call ,(Prim pr)
-                                                                  ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
-                                            ; / needs to signal an Racket error if denominator is zero
-                                            [else   `(call ,(Prim pr)
-                                                           ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
-                                      [3 (case sym
-                                           [(string-replace)
-                                            `(call $string-replace
-                                                   ,(AExpr (list-ref ae1 0))
-                                                   ,(AExpr (list-ref ae1 1))
-                                                   ,(AExpr (list-ref ae1 2))
-                                                   ,(Imm #t))]
-                                           [else `(call ,(Prim pr) ,@(AExpr* ae1))])]
-                                      [_ (case sym
-                                           [(+ fx+ fl+
-                                             * fx* fl*
-                                             - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
-                                            (let loop ([aes (AExpr* ae1)])
-                                              (match aes
-                                                [(list)              `(global.get $zero)]
-                                                [(list  ae0)         ae0]
-                                                [(list* ae0 ae1 aes) `(call ,(Prim pr)
-                                                                      (call ,(Prim pr) ,ae0 ,ae1)
-                                                                      ,(loop aes))]))]
-                                           [else
-                                            `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
-                                   (match dd
-                                     [(or '<value> '<effect>)
-                                      (match cd
-                                        ['<return>             `(return ,work)]
-                                        ['<expr>                work]
-                                        ['<stat>                `(drop ,work)]
-                                        [_ (error)])]
-                                     [x  (Store! x work)])]
+     ;; Inlines a call to a primitive with
+     ;;   at least `min` arguments,
+     ;;   at most  `max` arguments.
+     ;; That is, arguments beyound `min` are optional.
+     ;; Passes `(global.get $missing)` to indicate a missing argument.
+     (define (inline-prim/optional sym ae1 min max)
+       (define filler `(global.get $missing))
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
+       (define optionals (make-list (- max n) filler))
+       `(call ,($ sym) ,@aes ,@optionals))
+
+     ;; Inlines a call to a primitive with
+     ;;   at least `min` arguments,
+     ;;   at most  `max` arguments.
+     ;; That is, arguments beyound `min` are optional.
+     ;; Passes `default` for missing arguments.
+     (define (inline-prim/optional/default sym ae1 min max default)
+       (define filler `(global.get $missing))
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
+       (define optionals (make-list (- max n) default))
+       `(call ,($ sym) ,@aes ,@optionals))
+
+     ;; Inlines a call to a primitive with
+     ;;   a fixed number of arguments.
+     (define (inline-prim/fixed sym ae1 arg-count)
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n arg-count) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n arg-count) (error 'primapp "too few arguments: ~a"  sym))
+       `(call ,($ sym) ,@aes))
+
+     (define sym (syntax->datum (variable-id pr)))
+     (define work
+       (case sym
+         [(s-exp->fasl)
+          ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
+          (inline-prim/optional sym ae1 1 2)]
+         [(fasl->s-exp)
+          (inline-prim/fixed sym ae1 1)]
+         [(void)
+          (define (AE ae)   (AExpr3 ae <effect>))
+          (define (AE* aes) (map AE aes))
+          `(block (result (ref eq))
+                  ,@(AE* ae1)
+                  (global.get $void))]
+         [(vector-copy!)
+          (inline-prim/optional sym ae1 3 5)]
+         [(make-vector)
+          (inline-prim/optional sym ae1 1 2)]         
+         [(procedure-rename)
+          (inline-prim/optional sym ae1 2 3)]
+         [(procedure-arity-includes?)
+          ; Takes between 2 to 3 argument.
+          ; The default value for the last argument is #f.
+          (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(make-hasheq)
+          (inline-prim/optional sym ae1 0 1)]
+         [(number->string)
+          (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
+         [(make-struct-type)
+          (inline-prim/optional/default sym ae1 4 11 (Imm #f))]                                   
+         [(make-struct-field-accessor)
+          (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         [(make-struct-field-mutator)
+          (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         [(char=? char<? char<=? char>? char>=?
+                  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
+          ; variadic, at least one argument
+          (define who    sym)
+          (define n      (length ae1))
+          (when (< n 1)  (error 'primapp "too few arguments: ~a" s))
+          (define aes    (AExpr* ae1))
+          (define $cmp   ($ sym))
+          (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
+          (case n
+            [(1) `(call ,$cmp   ,(first aes) (global.get $null))] ; type checks 1st argument
+            [(2) `(call ,$cmp/2 ,@aes)]
+            [else
+             (define c0 (first aes))
+             (define xs
+               (let loop ([aes (rest aes)])
+                 (if (null? aes)
+                     `(global.get $null)
+                     `(struct.new $Pair
+                                  (i32.const 0)
+                                  ,(first aes)
+                                  ,(loop (rest aes))))))
+             `(call ,$cmp ,c0 ,xs)])]
+         [(list)   ; variadic
+          (let loop ([aes ae1])
+            (if (null? aes)
+                `(global.get $null)
+                `(struct.new $Pair
+                             (i32.const 0)
+                             ,(AExpr (first aes))
+                             ,(loop (rest aes)))))]
+         [(string-append) ; variadic, at least zero arguments
+          (define n   (length ae1))
+          (define aes (AExpr* ae1))
+          (define xs                                      
+            (let loop ([aes aes])
+              (if (null? aes)
+                  `(global.get $null)
+                  `(struct.new $Pair
+                               (i32.const 0)
+                               ,(first aes)
+                               ,(loop (rest aes))))))
+          `(call $string-append ,xs)]                                    
+         [(map)   ; variadic, at least two arguments
+          (define n (length ae1))
+          (when (< n 2) (error 'primapp "too few arguments: ~a" s))
+          (define proc (AExpr  (first ae1)))
+          (define aes  (AExpr* (rest  ae1)))
+          (define xss                                      
+            (let loop ([aes aes])
+              (if (null? aes)
+                  `(global.get $null)
+                  `(struct.new $Pair
+                               (i32.const 0)
+                               ,(first aes)
+                               ,(loop (rest aes))))))
+          `(call $map ,proc ,xss)]
+         [(for-each)   ; variadic, at least two arguments
+          (define n (length ae1))
+          (when (< n 2) (error 'primapp "too few arguments: ~a" s))
+          (define proc (AExpr  (first ae1)))
+          (define aes  (AExpr* (rest  ae1)))
+          (define xss                                      
+            (let loop ([aes aes])
+              (if (null? aes)
+                  `(global.get $null)
+                  `(struct.new $Pair
+                               (i32.const 0)
+                               ,(first aes)
+                               ,(loop (rest aes))))))
+          `(call $for-each ,proc ,xss)]
+         [(values) ; variadic
+          (define n   (length ae1))
+          (define aes (AExpr* ae1))
+          (case n
+            [(1)   (first aes)]
+            [else  `(array.new_fixed $Values ,n ,@aes)])]
+         [(bytes) ; variadic, needs inlining
+          ; TODO: This assumes all the ae1 ... are integers.
+          (define n    (length ae1))
+          ; (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
+          (define init `(ref.cast (ref $Bytes) (call $make-bytes ,(Imm n) ,(Imm 0))))
+          ; (define init `(array.new $Bytes (i32.const 0) (i32.const ,n)))
+          (define $bs  (emit-fresh-local 'quoted-bytes '(ref $Bytes) init))
+          `(block (result (ref eq))
+                  ,@(for/list ([ae ae1] [i (in-naturals)])
+                      `(call $bytes-set!/checked
+                             ,(Reference $bs) (i32.const ,i)
+                             (i32.shr_s (i31.get_s ,(AExpr ae)) (i32.const 1))))
+                  ,(Reference $bs))]
+         [(string) ; variadic, needs inlining for now
+          (define n    (length ae1))
+          ;; Allocate code-point array and bind to a (ref eq) local.
+          (define init `(array.new $I32Array (i32.const 0) (i32.const ,n)))
+          (define $a   (emit-fresh-local 'cp-array '(ref eq) init))
+
+          `(block (result (ref eq))
+                  ;; Fill array: array operand must be (ref $I32Array), so cast from (ref eq).
+                  ,@(for/list ([ae ae1] [i (in-naturals)])
+                      `(array.set $I32Array
+                                  (ref.cast (ref $I32Array) ,(Reference $a))
+                                  (i32.const ,i)
+                                  (i32.shr_s
+                                   (i31.get_s
+                                    (ref.cast (ref i31) (call $char->integer ,(AExpr ae))))
+                                   (i32.const 1))))
+                  ;; Return a fresh $String (hash=0, not immutable) wrapping the array.
+                  (struct.new $String
+                              (i32.const 0)
+                              (i32.const 0)
+                              (ref.cast (ref $I32Array) ,(Reference $a))))]
+         
+         [(vector vector-immutable)
+          (define n    (length ae1))
+          ; (define init `(array.new $Vector (ref.i31 (i32.const 0)) (i32.const ,n)))
+          (define init `(call $make-vector/checked (i32.const ,n) ,(Imm 0)))
+          (define $vs  (emit-fresh-local 'quoted-vector '(ref $Vector) init))
+          `(block (result (ref eq))
+                  ,@(for/list ([ae ae1] [i (in-naturals)])
+                      `(call $vector-set!/checked ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
+                  ; `(array.set $Vector ,(Reference $vs) (i32.const ,i) ,(AExpr ae)))
+                  ,(Reference $vs))]
+         [(list*)
+          (let loop ([aes (AExpr* ae1)])
+            (match aes
+              [(list v)            v]
+              [(list v1 v2)       `(call $list* ,v1 ,v2)]
+              [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
+         [(string-append)
+          (let loop ([aes (AExpr* ae1)])
+            (match aes
+              [(list)            '(global.get $string:empty)]
+              [(list v)          `(call $string-copy ,v)]
+              [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
+              [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
+         [else
+          (match (length ae1)
+            [0 (case sym
+                 [(+ -)      '(global.get $zero)]
+                 [(fx+ fx-)  '(global.get $zero)]
+                 [(fl+ fl-)  '(global.get $flzero)]
+                 [(* fx*)    '(global.get $one)]
+                 [(fl*)      '(global.get $flone)]
+                 [else       `(call ,(Prim pr))])]
+            [1 (case sym
+                 [(  +   *)  (AExpr (first ae1))]
+                 [(fx+ fx*)  (AExpr (first ae1))]
+                 [(fl+ fl*)  (AExpr (first ae1))]
+                 [(fx-)      `(call ,(Prim pr) (global.get $zero)   ,(AExpr (first ae1)))]
+                 [(fl-)      `(call ,(Prim pr) (global.get $flzero) ,(AExpr (first ae1)))]
+                 [(fx/)      `(call ,(Prim pr) (global.get $one)    ,(AExpr (first ae1)))]
+                 [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
+                 [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
+            [2 (case sym
+                 [(+ - *)       `(call ,(Prim pr)
+                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                 [(fx+ fx- fx*) `(call ,(Prim pr)
+                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]                                           
+                 [(fl+ fl- fl*) `(call ,(Prim pr)
+                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                 ; / needs to signal an Racket error if denominator is zero
+                 [else   `(call ,(Prim pr)
+                                ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
+            [3 (case sym
+                 [(string-replace)
+                  `(call $string-replace
+                         ,(AExpr (list-ref ae1 0))
+                         ,(AExpr (list-ref ae1 1))
+                         ,(AExpr (list-ref ae1 2))
+                         ,(Imm #t))]
+                 [else `(call ,(Prim pr) ,@(AExpr* ae1))])]
+            [_ (case sym
+                 [(+ fx+ fl+
+                     * fx* fl*
+                     - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
+                  (let loop ([aes (AExpr* ae1)])
+                    (match aes
+                      [(list)              `(global.get $zero)]
+                      [(list  ae0)         ae0]
+                      [(list* ae0 ae1 aes) `(call ,(Prim pr)
+                                                  (call ,(Prim pr) ,ae0 ,ae1)
+                                                  ,(loop aes))]))]
+                 [else
+                  `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
+     (match dd
+       [(or '<value> '<effect>)
+        (match cd
+          ['<return>             `(return ,work)]
+          ['<expr>                work]
+          ['<stat>                `(drop ,work)]
+          [_ (error)])]
+       [x  (Store! x work)])]
 
     ; This version doesn't repack when it invokes a variadic function.
     [(app ,s ,ae ,ae1 ...)
