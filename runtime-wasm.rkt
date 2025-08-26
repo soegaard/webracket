@@ -77,34 +77,12 @@
         [_                  (error 'min-arity "got: ~a" a)]))
 
     (define todo-handle-later '(bytes string vector vector-immutable list namespace? values void))
-    
+
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
                  #:do [(define desc (primitive->description pr))]
                  #:when desc)
         (define ar (primitive-description-arity desc))
-        (define-values (invoker code)
-          (match ar
-            [(? number? 0) (values '$invoke-prim0   `(ref.func ,($ pr)))]
-            [(? number? 1) (values '$invoke-prim1   `(ref.func ,($ pr)))]
-            [(? number? 2) (values '$invoke-prim2   `(ref.func ,($ pr)))]
-            [(? number? _) (values '$invoke-prim>=3 `(ref.func ,($ pr)))]
-             [(arity-at-least n)
-              (case n
-                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
-                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
-                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
-                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
-             [(? list? l)
-              (case (min-arity l)
-                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
-                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
-                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
-                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
-             [_
-              (displayln pr (current-error-port))
-              (displayln ar (current-error-port))
-              (error 'initialize-primitives-as-globals)]))
         `(global.set ,($ (prim: pr))
                      (struct.new $PrimitiveProcedure
                       ; for $Procedure
@@ -112,8 +90,8 @@
                       ,(Imm #f)                                   ; name
                       ,(Imm (arity->internal-representation ar))  ; arity
                       (global.get $the-racket/primitive-realm)    ; realm
-                      (ref.func ,invoker)
-                      ,code
+                      (ref.func $primitive-invoke)
+                      (ref.func ,($ pr))
                       ,(Imm #f
                             #;(arity->internal-representation
                                (primitive-description-result-arity desc)))))))
@@ -811,186 +789,227 @@
                                 (local.get $args)
                                 (local.get $code)))
 
-         (func $invoke-prim0 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+        ;; Primitive procedure invocation helpers
+        (func $raise-no-code
+              (param $pproc (ref $PrimitiveProcedure))
+              (result (ref eq))
+              (unreachable))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg-count i32)
-               (local $code (ref $Prim0))
+        (func $raise-code-type-mismatch
+              (param $pproc (ref $PrimitiveProcedure))
+              (result (ref eq))
+              (unreachable))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.ne (local.get $arg-count) (i32.const 0))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $code
-                          (ref.cast (ref $Prim0)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim0 (local.get $code)))
+        (func $raise-arity-error
+              (param $pproc (ref $PrimitiveProcedure))
+              (param $argc i32)
+              (result (ref eq))
+              (unreachable))
 
-         (func $invoke-prim1 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+        ;; Shape codes:
+        ;;   0: exact 0     1: exact 1     2: exact 2     3: exact >=3
+        ;;   4: at least 0  5: at least 1  6: at least 2  7: at least >=3
+        (func $primitive-invoke (type $ProcedureInvoker)
+              (param $proc (ref $Procedure)) (param $args (ref $Args))
+              (result (ref eq))
+              (local $pproc (ref $PrimitiveProcedure))
+              (local $code  (ref null func))
+              (local $arity/tag i32) (local $arity i32) (local $shape i32) (local $k i32)
+              (local $argc i32)
+              (local $a0 (ref eq)) (local $a1 (ref eq)) (local $a2 (ref eq))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg0 (ref eq))
-               (local $arg-count i32)
-               (local $code (ref $Prim1))
+              ;; Proc -> PrimitiveProcedure
+              (local.set $pproc
+                         (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.ne (local.get $arg-count) (i32.const 1))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $arg0 (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $code
-                          (ref.cast (ref $Prim1)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim1 (local.get $code) (local.get $arg0)))
+              ;; Fetch code
+              (local.set $code
+                         (struct.get $PrimitiveProcedure $code (local.get $pproc)))
 
-         (func $invoke-prim2 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+              ;; Ensure non-null
+              (if (ref.is_null (local.get $code))
+                  (then
+                   (return (call $raise-no-code (local.get $pproc)))))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg0 (ref eq))
-               (local $arg1 (ref eq))
-               (local $arg-count i32)
-               (local $code (ref $Prim2))
+              ;; argc
+              (local.set $argc (array.len (local.get $args)))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.ne (local.get $arg-count) (i32.const 2))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $arg0 (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $arg1 (array.get $Args (local.get $args) (i32.const 1)))
-               (local.set $code
-                          (ref.cast (ref $Prim2)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim2 (local.get $code)
-                                (local.get $arg0)
-                                (local.get $arg1)))
+              ;; Decode arity fixnum: i31 -> i32, then >> 1
+              (local.set $arity/tag
+                         (i31.get_u
+                          (ref.cast (ref i31)
+                                    (struct.get $Procedure $arity (local.get $pproc)))))
+              (local.set $arity
+                         (i32.shr_s (local.get $arity/tag) (i32.const 1)))
 
-         (func $invoke-prim>=0 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+              ;; Compute shape (and k for "at least k")
+              (if (i32.ge_s (local.get $arity) (i32.const 0))
+                  (then
+                   ;; exact: shape = min(arity, 3)
+                   (local.set $shape (local.get $arity))
+                   (if (i32.gt_u (local.get $shape) (i32.const 3))
+                       (then (local.set $shape (i32.const 3)))))
+                  (else
+                   ;; at least: k = -arity - 1; shape = 4 + min(k, 3)
+                   (local.set $k
+                              (i32.sub (i32.const -1) (local.get $arity)))
+                   (local.set $shape (local.get $k))
+                   (if (i32.gt_u (local.get $shape) (i32.const 3))
+                       (then (local.set $shape (i32.const 3))))
+                   (local.set $shape (i32.add (i32.const 4) (local.get $shape)))))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg-count i32)
-               (local $lst (ref eq))
-               (local $code (ref $Prim>=0))
+              ;; Preload first three args when available
+              (if (i32.gt_u (local.get $argc) (i32.const 0))
+                  (then
+                   (local.set $a0
+                              (array.get $Args (local.get $args) (i32.const 0)))))
+              (if (i32.gt_u (local.get $argc) (i32.const 1))
+                  (then
+                   (local.set $a1
+                              (array.get $Args (local.get $args) (i32.const 1)))))
+              (if (i32.gt_u (local.get $argc) (i32.const 2))
+                  (then
+                   (local.set $a2
+                              (array.get $Args (local.get $args) (i32.const 2)))))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.eqz (call $procedure-arity-includes?/checked/i32
-                                      (local.get $prim)
-                                      (local.get $arg-count)))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $lst (call $rest-arguments->list (local.get $args) (i32.const 0)))
-               (local.set $code
-                          (ref.cast (ref $Prim>=0)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim>=0 (local.get $code) (local.get $lst)))
+              ;; br_table dispatch by shape
+              (block $done
+                (block $L7) (block $L6) (block $L5) (block $L4)
+                (block $L3) (block $L2) (block $L1) (block $L0)
+                (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 (local.get $shape))
 
-         (func $invoke-prim>=1 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+                ;; shape 0: exact 0
+                (label $L0)
+                (if (i32.eqz (local.get $argc))
+                    (then
+                     (if (ref.test (ref $Prim0) (local.get $code))
+                         (then
+                          (return_call_ref $Prim0
+                                           (ref.cast (ref $Prim0) (local.get $code))))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc))))))
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg0 (ref eq))
-               (local $arg-count i32)
-               (local $rest (ref eq))
-               (local $code (ref $Prim>=1))
+                ;; shape 1: exact 1
+                (label $L1)
+                (if (i32.eq (local.get $argc) (i32.const 1))
+                    (then
+                     (if (ref.test (ref $Prim1) (local.get $code))
+                         (then
+                          (return_call_ref $Prim1
+                                           (ref.cast (ref $Prim1) (local.get $code)) (local.get $a0)))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                     )
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.lt_u (local.get $arg-count) (i32.const 1))
-                   (then (call $raise-arity-mismatch)))
-               (if (i32.eqz (call $procedure-arity-includes?/checked/i32
-                                      (local.get $prim)
-                                      (local.get $arg-count)))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $arg0 (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $rest (call $rest-arguments->list (local.get $args) (i32.const 1)))
-               (local.set $code
-                          (ref.cast (ref $Prim>=1)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim>=1 (local.get $code)
-                                (local.get $arg0)
-                                (local.get $rest)))
+                ;; shape 2: exact 2
+                (label $L2)
+                (if (i32.eq (local.get $argc) (i32.const 2))
+                    (then
+                     (if (ref.test (ref $Prim2) (local.get $code))
+                         (then
+                          (return_call_ref $Prim2
+                                           (ref.cast (ref $Prim2) (local.get $code))
+                                           (local.get $a0) (local.get $a1)))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                     )
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-         (func $invoke-prim>=2 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+                ;; shape 3: exact >=3  (use $Prim>=3 with args a0 a1 a2 and full $Args)
+                (label $L3)
+                (if (i32.ge_u (local.get $argc) (i32.const 3))
+                    (then
+                     ;; require argc == arity for exact >=3
+                     (if (i32.eq (local.get $argc) (local.get $arity))
+                         (then
+                          (if (ref.test (ref $Prim>=3) (local.get $code))
+                              (then
+                               (return_call_ref $Prim>=3
+                                                (ref.cast (ref $Prim>=3) (local.get $code))
+                                                (local.get $a0) (local.get $a1) (local.get $a2)
+                                                (local.get $args)))
+                              (else
+                               (return
+                                (call $raise-code-type-mismatch (local.get $pproc)))))
+                         (else
+                          (return (call $raise-arity-error
+                                        (local.get $pproc) (local.get $argc))))))
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg0 (ref eq))
-               (local $arg1 (ref eq))
-               (local $arg-count i32)
-               (local $rest (ref eq))
-               (local $code (ref $Prim>=2))
+                ;; shape 4: at least 0
+                (label $L4)
+                (if (ref.test (ref $Prim>=0) (local.get $code))
+                    (then
+                     (return_call_ref $Prim>=0
+                                      (ref.cast (ref $Prim>=0) (local.get $code)) (local.get $args)))
+                    (else
+                     (return (call $raise-code-type-mismatch (local.get $pproc)))))
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.lt_u (local.get $arg-count) (i32.const 2))
-                   (then (call $raise-arity-mismatch)))
-               (if (i32.eqz (call $procedure-arity-includes?/checked/i32
-                                      (local.get $prim)
-                                      (local.get $arg-count)))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $arg0 (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $arg1 (array.get $Args (local.get $args) (i32.const 1)))
-               (local.set $rest (call $rest-arguments->list (local.get $args) (i32.const 2)))
-               (local.set $code
-                          (ref.cast (ref $Prim>=2)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim>=2 (local.get $code)
-                                (local.get $arg0)
-                                (local.get $arg1)
-                                (local.get $rest)))
+                ;; shape 5: at least 1
+                (label $L5)
+                (if (i32.ge_u (local.get $argc) (i32.const 1))
+                    (then
+                     (if (ref.test (ref $Prim>=1) (local.get $code))
+                         (then
+                          (return_call_ref $Prim>=1
+                                           (ref.cast (ref $Prim>=1) (local.get $code))
+                                           (local.get $a0) (local.get $args)))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                     )
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-         (func $invoke-prim>=3 (type $ProcedureInvoker)
-               (param $proc (ref $Procedure))
-               (param $args (ref $Args))
-               (result (ref eq))
+                ;; shape 6: at least 2
+                (label $L6)
+                (if (i32.ge_u (local.get $argc) (i32.const 2))
+                    (then
+                     (if (ref.test (ref $Prim>=2) (local.get $code))
+                         (then
+                          (return_call_ref $Prim>=2
+                                           (ref.cast (ref $Prim>=2) (local.get $code))
+                                           (local.get $a0) (local.get $a1) (local.get $args)))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                     )
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
 
-               (local $prim (ref $PrimitiveProcedure))
-               (local $arg0 (ref eq))
-               (local $arg1 (ref eq))
-               (local $arg2 (ref eq))
-               (local $arg-count i32)
-               (local $rest (ref eq))
-               (local $code (ref $Prim>=3))
+                ;; shape 7: at least >=3
+                (label $L7)
+                (if (i32.ge_u (local.get $argc) (i32.const 3))
+                    (then
+                     (if (ref.test (ref $Prim>=3) (local.get $code))
+                         (then
+                          (return_call_ref $Prim>=3
+                                           (ref.cast (ref $Prim>=3) (local.get $code))
+                                           (local.get $a0) (local.get $a1) (local.get $a2)
+                                           (local.get $args)))
+                         (else
+                          (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                     )
+                    (else
+                     (return (call $raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+                (br $done))
+              )
+        )
 
-               (local.set $prim (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
-               (local.set $arg-count (array.len (local.get $args)))
-               (if (i32.lt_u (local.get $arg-count) (i32.const 3))
-                   (then (call $raise-arity-mismatch)))
-               (if (i32.eqz (call $procedure-arity-includes?/checked/i32
-                                      (local.get $prim)
-                                      (local.get $arg-count)))
-                   (then (call $raise-arity-mismatch)))
-               (local.set $arg0 (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $arg1 (array.get $Args (local.get $args) (i32.const 1)))
-               (local.set $arg2 (array.get $Args (local.get $args) (i32.const 2)))
-               (local.set $rest (call $rest-arguments->list (local.get $args) (i32.const 3)))
-               (local.set $code
-                          (ref.cast (ref $Prim>=3)
-                                    (struct.get $PrimitiveProcedure $code (local.get $prim))))
-               (return_call_ref $Prim>=3 (local.get $code)
-                                (local.get $arg0)
-                                (local.get $arg1)
-                                (local.get $arg2)
-                                (local.get $rest)))
-
-         (func $repack-arguments
-               ; Returns new $Args suitable for calling both fixed and variadic procedures.
-               ; I.e. function converts the rest arguments to a list and stores them in the last slot.
+        (func $repack-arguments
+              ; Returns new $Args suitable for calling both fixed and variadic procedures.
+              ; I.e. function converts the rest arguments to a list and stores them in the last slot.
                
                (param $args  (ref $Args))   ;; full argument list
                (param $arity i32)           ;; decoded arity (from fixnum)
@@ -9674,24 +9693,18 @@
                ;; Delegate
                (call $make-struct-constructor/checked (local.get $std)))
 
-         (elem declare funcref
-               (ref.func $struct-constructor/no-guard)       ; closure body
-               (ref.func $struct-accessor)                   ; closure body
-               (ref.func $struct-mutator)                    ; closure body
-               (ref.func $struct-predicate)                  ; closure body
-               (ref.func $struct-field-accessor/specialized) ; closure body
-               (ref.func $struct-mutator/specialized)
-               (ref.func $invoke-struct)
-               (ref.func $invoke-prim0)
-               (ref.func $invoke-prim1)
-               (ref.func $invoke-prim2)
-               (ref.func $invoke-prim>=0)
-               (ref.func $invoke-prim>=1)
-               (ref.func $invoke-prim>=2)
-               (ref.func $invoke-prim>=3)
-               (ref.func $code:case-lambda-dispatch)
-               (ref.func $invoke-case-closure)
-               #;(ref.func $struct-constructor/with-guard))
+        (elem declare funcref
+              (ref.func $struct-constructor/no-guard)       ; closure body
+              (ref.func $struct-accessor)                   ; closure body
+              (ref.func $struct-mutator)                    ; closure body
+              (ref.func $struct-predicate)                  ; closure body
+              (ref.func $struct-field-accessor/specialized) ; closure body
+              (ref.func $struct-mutator/specialized)
+              (ref.func $invoke-struct)
+              (ref.func $primitive-invoke)
+              (ref.func $code:case-lambda-dispatch)
+              (ref.func $invoke-case-closure)
+              #;(ref.func $struct-constructor/with-guard))
 
          
          (func $struct-constructor/no-guard
