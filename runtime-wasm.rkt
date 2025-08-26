@@ -9719,9 +9719,11 @@
               (ref.func $primitive-invoke)
               (ref.func $code:case-lambda-dispatch)
               (ref.func $invoke-case-closure)
-
-              (ref.func $exact?)
-              #;(ref.func $struct-constructor/with-guard))
+              #;(ref.func $struct-constructor/with-guard)
+              
+              ;;; Declare all primitives
+              ,@(for/list ([pr (in-list (sort (remove* todo-handle-later primitives) symbol<?))])
+                  `(ref.func ,($ pr))))
 
          
          (func $struct-constructor/no-guard
