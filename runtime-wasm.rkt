@@ -68,7 +68,14 @@
         [_                  #f]
         [_                  (error
                              'arity->internal-representation "got: ~a" a)]))
-    
+
+    (define (min-arity a)
+      (match a
+        [(arity-at-least n) n]
+        [(? number? n)      n]
+        [(? list? l)        (apply min (map min-arity l))]
+        [_                  (error 'min-arity "got: ~a" a)]))
+
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort primitives symbol<?)]
                  #:do [(define desc (primitive->description pr))]
@@ -80,12 +87,21 @@
             [(? number? 1) (values '$invoke-prim1 `(ref.func ,($ pr)))]
             [(? number? 2) (values '$invoke-prim2 `(ref.func ,($ pr)))]
             [(? number? _) (values '$invoke-prim>=3 `(ref.func ,($ pr)))]
-            [(arity-at-least n)
-             (case n
-               [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
-               [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
-               [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
-               [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))]))])
+             [(arity-at-least n)
+              (case n
+                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
+                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
+                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
+                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
+             [(? list? l)
+              (case (min-arity l)
+                [(0) (values '$invoke-prim>=0 `(ref.func ,($ pr)))]
+                [(1) (values '$invoke-prim>=1 `(ref.func ,($ pr)))]
+                [(2) (values '$invoke-prim>=2 `(ref.func ,($ pr)))]
+                [else (values '$invoke-prim>=3 `(ref.func ,($ pr)))])]
+             [_
+              (displayln pr (current-error-port))
+              (error 'initialize-primitives-as-globals)]) )
         `(global.set ,($ (prim: pr))
                      (struct.new $PrimitiveProcedure
                       ; for $Procedure
