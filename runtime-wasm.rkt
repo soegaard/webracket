@@ -473,9 +473,9 @@
           
           (type $Vector    (sub $Heap
                                 (struct
-                                  (field $hash (mut i32))
+                                  (field $hash      (mut i32))
                                   (field $immutable i32)                        ;; 0 or 1
-                                  (field $arr  (ref $Array)))))
+                                  (field $arr       (ref $Array)))))
           (type $String    (sub $Heap
                                 (struct
                                   (field $hash      (mut i32))
@@ -2792,7 +2792,11 @@
 
          ,@(let ()
              (define (binop $+ $fx+ $fl+)
-               `(func ,$+ (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+               `(func ,$+ (type $Prim2)
+                      (param $x (ref eq))
+                      (param $y (ref eq))
+                      (result   (ref eq))
+                      
                       (if (result (ref eq)) (call $fx?/i32 (local.get $x))
                           (then (if (result (ref eq)) (call $fx?/i32 (local.get $y))
                                     (then (call ,$fx+
@@ -2951,9 +2955,14 @@
                              (then (global.get $true))
                              (else (global.get $false))))
                    (else (global.get $false))))
-         (func $fx+ (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+
+         (func $fx+ (type $Prim2)
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
                (ref.i31 (i32.add (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
+         
          (func $fx- (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
