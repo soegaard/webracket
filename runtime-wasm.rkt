@@ -5444,8 +5444,46 @@
                ;; If one is a prefix of the other
                (return (i32.lt_u (local.get $len-a) (local.get $len-b))))
 
-         
-         ;;; 
+         (func $string<=? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string<=/i32 (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string<=/i32
+               (param $a-raw (ref eq)) (param $b-raw (ref eq))
+               (result i32)
+               (return (i32.or (call $string</i32 (local.get $a-raw) (local.get $b-raw))
+                                (call $string=?/i32 (local.get $a-raw) (local.get $b-raw)))))
+
+         (func $string>? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string>/i32 (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string>/i32
+               (param $a-raw (ref eq)) (param $b-raw (ref eq))
+               (result i32)
+               (return_call $string</i32 (local.get $b-raw) (local.get $a-raw)))
+
+         (func $string>=? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string>=/i32 (local.get $a) (local.get $b))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string>=/i32
+               (param $a-raw (ref eq)) (param $b-raw (ref eq))
+               (result i32)
+               (return (i32.or (call $string</i32 (local.get $b-raw) (local.get $a-raw))
+                                (call $string=?/i32 (local.get $a-raw) (local.get $b-raw)))))
+
+
+         ;;;
 
          (func $raise-invalid-utf8-input (param $bad (ref eq)) (result (ref eq)) (unreachable))
 
