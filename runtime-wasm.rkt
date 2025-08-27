@@ -838,7 +838,7 @@
               
               ;; Decode arity fixnum: i31 -> i32, then >> 1
               (local.set $arity/tag
-                         (i31.get_u
+                         (i31.get_s  ; signed due to negative arities
                           (ref.cast (ref i31)
                                     (struct.get $Procedure $arity (local.get $pproc)))))
               (local.set $arity
