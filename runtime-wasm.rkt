@@ -474,6 +474,7 @@
           (type $Vector    (sub $Heap
                                 (struct
                                   (field $hash (mut i32))
+                                  (field $immutable i32)                        ;; 0 or 1
                                   (field $arr  (ref $Array)))))
           (type $String    (sub $Heap
                                 (struct
@@ -7326,17 +7327,19 @@
          ; The global $dummy-vector is needed when a non-nullable local variable needs
          ; initialization to a default.
          (global $dummy-array (ref $Array) (array.new $Array (global.get $false) (i32.const 0)))         
-         (global $dummy-vector (ref $Vector)
-                 (struct.new $Vector
-                             (i32.const 0)          ;; hash
-                             (global.get $dummy-array)))
+        (global $dummy-vector (ref $Vector)
+                (struct.new $Vector
+                            (i32.const 0)          ;; hash
+                            (i32.const 0)          ;; mutable
+                            (global.get $dummy-array)))
 
-         ;; Vector related exceptions
-         (func $raise-check-vector (param $x (ref eq)) (unreachable))
-         (func $raise-check-fixnum (param $x (ref eq)) (unreachable))
-         (func $raise-bad-vector-ref-index
-               (param $v (ref $Vector)) (param $i i32) (param $len i32)
-               (unreachable))
+        ;; Vector related exceptions
+        (func $raise-check-vector (param $x (ref eq)) (unreachable))
+        (func $raise-check-fixnum (param $x (ref eq)) (unreachable))
+        (func $raise-immutable-vector (param $x (ref eq)) (unreachable))
+        (func $raise-bad-vector-ref-index
+              (param $v (ref $Vector)) (param $i i32) (param $len i32)
+              (unreachable))
          (func $raise-bad-vector-copy-range
                (param (ref $Vector)) (param i32) (param (ref $Vector)) (param i32) (param i32)
                (unreachable))
@@ -7380,6 +7383,7 @@
                ;; Construct and return the vector
                (struct.new $Vector
                            (i32.const 0)    ;; hash = 0
+                           (i32.const 0)    ;; mutable
                            (local.get $arr)))
 
          (func $vector (type $Prim>=0)
@@ -7400,18 +7404,34 @@
                            (i32.const 0)
                            (local.get $len))
                (struct.new $Vector
-                           (i32.const 0)
+                           (i32.const 0)          ;; hash
+                           (i32.const 0)          ;; mutable
                            (local.get $arr)))
 
-         ; TODO - $vector-immutable - Make the returned vector immutable
-         (func $vector-immutable (type $Prim>=0)
-               (param $args (ref eq))
-               (result (ref eq))
+        (func $vector-immutable (type $Prim>=0)
+              (param $args (ref eq))
+              (result (ref eq))
 
-               (call $vector (local.get $args)))
+              (local $as  (ref $Args))
+              (local $len i32)
+              (local $arr (ref $Array))
 
-         
-         (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (local.set $as  (ref.cast (ref $Args) (local.get $args)))
+              (local.set $len (array.len (local.get $as)))
+              (local.set $arr (call $make-array (local.get $len) (global.get $false)))
+              (array.copy $Array $Args
+                          (local.get $arr)
+                          (i32.const 0)
+                          (local.get $as)
+                          (i32.const 0)
+                          (local.get $len))
+              (struct.new $Vector
+                          (i32.const 0)          ;; hash
+                          (i32.const 1)          ;; immutable
+                          (local.get $arr)))
+
+
+        (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (if (result (ref eq))
                    (ref.test (ref $Vector) (local.get $v))
@@ -7498,10 +7518,12 @@
                          (unreachable))))
 
 
-         (func $vector-set!/checked
+        (func $vector-set!/checked
                (param $vec (ref $Vector)) (param $i i32) (param $val (ref eq))
                (local $len i32)
 
+               (if (i32.ne (struct.get $Vector $immutable (local.get $vec)) (i32.const 0))
+                   (then (call $raise-immutable-vector (local.get $vec)) (unreachable)))
                (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
                (if (i32.lt_u (local.get $i) (local.get $len))
                    (then (array.set $Array
@@ -7532,8 +7554,10 @@
                              (then (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
                              (else (call $raise-check-fixnum (local.get $i)))))
                    (else (call $raise-check-fixnum (local.get $i))))
-               ;; 3. Get length
-               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+              ;; 3. Check mutability and get length
+              (if (i32.ne (struct.get $Vector $immutable (local.get $vec)) (i32.const 0))
+                  (then (call $raise-immutable-vector (local.get $v))))
+              (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
                ;; 4. Bounds check and set
                (if (result (ref eq))
                    (i32.lt_u (local.get $idx) (local.get $len))
@@ -7552,6 +7576,8 @@
                (if (ref.test (ref $Vector) (local.get $v))
                    (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
                    (else (call $raise-check-vector (local.get $v))))
+               (if (i32.ne (struct.get $Vector $immutable (local.get $vec)) (i32.const 0))
+                   (then (call $raise-immutable-vector (local.get $v))))
                (call $array-fill! (struct.get $Vector $arr (local.get $vec)) (local.get $x))
                (global.get $void))
 
@@ -7599,6 +7625,8 @@
                ;; --- Cast and decode after validation ---
                (local.set $d  (ref.cast (ref $Vector) (local.get $dest)))
                (local.set $s  (ref.cast (ref $Vector) (local.get $src)))
+               (if (i32.ne (struct.get $Vector $immutable (local.get $d)) (i32.const 0))
+                   (then (call $raise-immutable-vector (local.get $dest))))
                (local.set $ds (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
                                          (i32.const 1)))
                
@@ -7627,8 +7655,10 @@
                
                (local $src-len i32)
                (local $dest-len i32)
+               (if (i32.ne (struct.get $Vector $immutable (local.get $dest)) (i32.const 0))
+                   (then (call $raise-immutable-vector (local.get $dest)) (unreachable)))
                (local.set $src-len  (array.len (struct.get $Vector $arr (local.get $src))))
-               (local.set $dest-len (array.len (struct.get $Vector $arr (local.get $dest))))               
+               (local.set $dest-len (array.len (struct.get $Vector $arr (local.get $dest))))
                (if (i32.or
                     (i32.or (i32.gt_u (local.get $ss) (local.get $src-len))
                             (i32.gt_u (local.get $se) (local.get $src-len)))
@@ -7670,6 +7700,7 @@
                    (else (call $raise-check-vector (local.get $b))))
 
                (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
                            (call $array-append
                                  (struct.get $Vector $arr (local.get $va))
                                  (struct.get $Vector $arr (local.get $vb)))))
@@ -7693,6 +7724,7 @@
                    (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
                          (unreachable)))
                (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
                            (call $array-take (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
          (func $vector-drop (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
@@ -7714,6 +7746,7 @@
                    (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
                          (unreachable)))
                (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
                            (call $array-drop (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
          (func $vector-drop-right (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
@@ -7735,6 +7768,7 @@
                    (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
                          (unreachable)))
                (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
                            (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
          (func $vector-split-at (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
@@ -7762,7 +7796,7 @@
                          (unreachable)))
                ; 4. Split the vector
                (local.set $res (call $array-split-at (struct.get $Vector $arr (local.get $vec)) (local.get $ix)))
-               (struct.new $Vector (i32.const 0) (local.get $res)))
+               (struct.new $Vector (i32.const 0) (i32.const 0) (local.get $res)))
          
 
          (func $raise-expected-vector (unreachable))
@@ -12742,7 +12776,7 @@
                      (local.set $new-len (i32.mul (local.get $len) (i32.const 2)))
                      ;; Allocate new array and vector wrapper
                      (local.set $new-arr (array.new_default $Array (local.get $new-len) (global.get $null)))
-                     (local.set $new-vec (struct.new $Vector (i32.const 0) (local.get $new-arr)))
+                     (local.set $new-vec (struct.new $Vector (i32.const 0) (i32.const 0) (local.get $new-arr)))
                      ;; Copy elements
                      (call $vector-copy!
                            (local.get $new-vec)
@@ -12769,6 +12803,7 @@
                                  (i32.const 1)))
                      ;; Allocate new vector and copy
                      (local.set $new-vec (struct.new $Vector
+                                                     (i32.const 0)
                                                      (i32.const 0)
                                                      (array.new_default $Array (local.get $i/u) (global.get $null))))
                      (call $vector-copy!
