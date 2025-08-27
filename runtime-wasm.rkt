@@ -859,7 +859,11 @@
                    (if (i32.gt_u (local.get $shape) (i32.const 3))
                        (then (local.set $shape (i32.const 3))))
                    (local.set $shape (i32.add (i32.const 4) (local.get $shape)))))
-              
+
+              ;; Debug: log argc, arity, shape
+              (drop (call $js-log (call $i32->string (local.get $argc))))
+              (drop (call $js-log (call $i32->string (local.get $arity))))
+              (drop (call $js-log (call $i32->string (local.get $shape))))
 
               ;; Preload first three args when available
               (if (i32.gt_u (local.get $argc) (i32.const 0))
@@ -888,6 +892,7 @@
                                 (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 $default (local.get $shape))
                               ) ;; end $L0
                               ;; shape 0: exact 0
+                              (drop (call $js-log (call $i32->string (i32.const 0))))
                               (if (i32.eqz (local.get $argc))
                                   (then
                                    (if (ref.test (ref $Prim0) (local.get $code))
@@ -901,6 +906,7 @@
                                                  (local.get $pproc) (local.get $argc)))))
                             )) ;; end $L1
                             ;; shape 1: exact 1
+                            (drop (call $js-log (call $i32->string (i32.const 1))))
                             (if (i32.eq (local.get $argc) (i32.const 1))
                                 (then
                                  (if (ref.test (ref $Prim1) (local.get $code))
@@ -915,6 +921,7 @@
                                                (local.get $pproc) (local.get $argc)))))
                           )) ;; end $L2
                           ;; shape 2: exact 2
+                          (drop (call $js-log (call $i32->string (i32.const 2))))
                           (if (i32.eq (local.get $argc) (i32.const 2))
                               (then
                                (if (ref.test (ref $Prim2) (local.get $code))
@@ -930,6 +937,7 @@
                                              (local.get $pproc) (local.get $argc)))))
                         )) ;; end $L3
                         ;; shape 3: exact >=3
+                        (drop (call $js-log (call $i32->string (i32.const 3))))
                         (if (i32.ge_u (local.get $argc) (i32.const 3))
                             (then
                              (if (i32.eq (local.get $argc) (local.get $arity))
@@ -952,6 +960,7 @@
                                            (local.get $pproc) (local.get $argc)))))
                       )) ;; end $L4
                       ;; shape 4: at least 0
+                      (drop (call $js-log (call $i32->string (i32.const 4))))
                       (if (ref.test (ref $Prim>=0) (local.get $code))
                           (then
                            (return_call_ref $Prim>=0
@@ -961,6 +970,7 @@
                            (return (call $raise-code-type-mismatch (local.get $pproc))))
                     )) ;; end $L5
                     ;; shape 5: at least 1
+                    (drop (call $js-log (call $i32->string (i32.const 5))))
                     (if (i32.ge_u (local.get $argc) (i32.const 1))
                         (then
                          (if (ref.test (ref $Prim>=1) (local.get $code))
@@ -976,6 +986,7 @@
                                        (local.get $pproc) (local.get $argc)))))
                   )) ;; end $L6
                   ;; shape 6: at least 2
+                  (drop (call $js-log (call $i32->string (i32.const 6))))
                   (if (i32.ge_u (local.get $argc) (i32.const 2))
                       (then
                        (if (ref.test (ref $Prim>=2) (local.get $code))
@@ -992,6 +1003,7 @@
                                      (local.get $pproc) (local.get $argc)))))
                 )) ;; end $L7
                 ;; shape 7: at least >=3
+                (drop (call $js-log (call $i32->string (i32.const 7))))
                 (if (i32.ge_u (local.get $argc) (i32.const 3))
                     (then
                      (if (ref.test (ref $Prim>=3) (local.get $code))
@@ -1008,6 +1020,7 @@
                      (return (call $primitive-invoke:raise-arity-error
                                    (local.get $pproc) (local.get $argc)))))
               )) ;; end $default
+              (drop (call $js-log (call $i32->string (i32.const 8))))
               (unreachable))
 
         (func $repack-arguments
