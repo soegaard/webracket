@@ -116,6 +116,9 @@ char-upcase
  ; cdar
  ; cddr
 
+ ;; 10.1 Multiple Values
+ values
+ call-with-values
 
  ;; 10.2 Exceptions
  raise-argument-error

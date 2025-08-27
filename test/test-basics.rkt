@@ -424,6 +424,11 @@
  (list "map-prim2"
        (equal? (map eq? '(a b) '(a c)) '(#t #f)))
 
+ (list "call-with-values"
+       (and (equal? (call-with-values (lambda () (values 1 2)) +) 3)
+            (with-handlers ([exn:fail:contract? (λ _ #t)])
+              (call-with-values (lambda () 1) (lambda (x y) (+ x y))))))
+
  #;(list "apply-prim>=0"
-       (equal? (apply + '(1 2 3)) 6))
+        (equal? (apply + '(1 2 3)) 6))
 )

@@ -10909,13 +10909,13 @@
                    (then (return (array.get $Args (local.get $as) (i32.const 0)))))
                ;; Allocate $Values array
 
-               ;; Allocate array and copy arguments
-               (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
-               (array.copy $Values $Args
-                           (local.get $vals) (i32.const 0)
-                           (local.get $as)   (i32.const 0)
-                           (local.get $n))
-               (local.get $vals)
+              ;; Allocate array and copy arguments
+              (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
+              (array.copy $Values $Args
+                          (local.get $vals) (i32.const 0)
+                          (local.get $as)   (i32.const 0)
+                          (local.get $n))
+              (local.get $vals)
                
               ;; (local.set $vals
               ;;            (array.new_default $Values (global.get $false) (local.get $len)))
@@ -10929,6 +10929,58 @@
               ;;              (br $loop)))
               ;; (local.get $vals)
               )
+
+         (func $call-with-values (type $Prim2)
+               (param $gen (ref eq))
+               (param $rec (ref eq))
+               (result (ref eq))
+
+               (local $g    (ref $Procedure))
+               (local $r    (ref $Procedure))
+               (local $ginv (ref $ProcedureInvoker))
+               (local $rinv (ref $ProcedureInvoker))
+               (local $vals (ref eq))
+               (local $vals* (ref $Values))
+               (local $args (ref $Args))
+               (local $n    i32)
+
+               ;; Step 1: type check generator
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $gen)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $gen))
+                         (unreachable)))
+               (local.set $g    (ref.cast (ref $Procedure) (local.get $gen)))
+
+               ;; Step 2: type check receiver
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $rec)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $rec))
+                         (unreachable)))
+               (local.set $r    (ref.cast (ref $Procedure) (local.get $rec)))
+
+               ;; Step 3: call generator with zero arguments
+               (local.set $ginv (struct.get $Procedure $invoke (local.get $g)))
+               (local.set $vals
+                          (call_ref $ProcedureInvoker
+                                    (local.get $g)
+                                    (array.new $Args (global.get $null) (i32.const 0))
+                                    (local.get $ginv)))
+
+               ;; Step 4: unpack returned values into argument array
+               (if (ref.test (ref $Values) (local.get $vals))
+                   (then (local.set $vals* (ref.cast (ref $Values) (local.get $vals)))
+                         (local.set $n (array.len (local.get $vals*)))
+                         (local.set $args (array.new $Args (global.get $null) (local.get $n)))
+                         (array.copy $Args $Values
+                                     (local.get $args) (i32.const 0)
+                                     (local.get $vals*) (i32.const 0)
+                                     (local.get $n)))
+                   (else (local.set $args (array.new_fixed $Args 1 (local.get $vals)))))
+
+               ;; Step 5: call receiver in tail position
+               (local.set $rinv (struct.get $Procedure $invoke (local.get $r)))
+               (return_call_ref $ProcedureInvoker
+                                (local.get $r)
+                                (local.get $args)
+                                (local.get $rinv)))
          
 
          
