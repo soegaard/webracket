@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string))
+    (define todo-handle-later '(string))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -3833,6 +3833,57 @@
                             (i32.const 0)  ;; hash
                             (i32.const 0)  ;; immutable = false
                             (call $i8make-array (local.get $len) (local.get $val))))
+
+         (func $bytes (type $Prim>=0)
+               (param $args (ref eq))
+               (result (ref eq))
+
+               (local $as  (ref $Args))
+               (local $len i32)
+               (local $arr (ref $I8Array))
+               (local $i   i32)
+               (local $x   (ref eq))
+               (local $v   i32)
+
+               ;; Cast argument array and determine length
+               (local.set $as  (ref.cast (ref $Args) (local.get $args)))
+               (local.set $len (array.len (local.get $as)))
+
+               ;; Allocate mutable byte array
+               (local.set $arr (call $i8make-array (local.get $len) (i32.const 0)))
+
+               ;; Populate array from arguments
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $x (array.get $Args (local.get $as) (local.get $i)))
+                            (if (ref.test (ref i31) (local.get $x))
+                                (then
+                                 (local.set $v (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                                 (if (i32.eqz (i32.and (local.get $v) (i32.const 1)))
+                                     (then
+                                      (local.set $v (i32.shr_u (local.get $v) (i32.const 1)))
+                                      (if (i32.lt_u (local.get $v) (i32.const 256))
+                                          (then
+                                           (call $i8array-set! (local.get $arr) (local.get $i) (local.get $v)))
+                                          (else
+                                           (call $raise-byte-out-of-range (local.get $x))
+                                           (unreachable))))
+                                     (else
+                                      (call $raise-check-fixnum (local.get $x))
+                                      (unreachable))))
+                                (else
+                                 (call $raise-check-fixnum (local.get $x))
+                                 (unreachable)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; Wrap in Bytes struct and return
+               (struct.new $Bytes
+                           (i32.const 0)
+                           (i32.const 0)
+                           (local.get $arr)))
 
          (func $make-dummy-bytes (result (ref $Bytes))
                (struct.new $Bytes
