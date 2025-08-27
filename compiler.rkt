@@ -507,7 +507,7 @@
   string-suffix?     ; from racket/string
   string-prefix?     ; from racket/string
   string-contains?   ; from racket/string
-    
+  string-find        ; from racket/string
 
   symbol? symbol=? symbol<?
   string->symbol symbol->string

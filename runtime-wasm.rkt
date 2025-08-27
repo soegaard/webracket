@@ -6172,6 +6172,53 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $outer)))
                (global.get $false))
+         
+         (func $string-find (type $Prim2)
+               (param $s (ref eq))
+               (param $contained (ref eq))
+               (result (ref eq))
+
+               (local $str (ref $String))
+               (local $sub (ref $String))
+               (local $len i32)
+               (local $clen i32)
+               (local $limit i32)
+               (local $i i32)
+
+               ;; Type checks
+               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                   (then (call $raise-check-string (local.get $s))))
+               (if (i32.eqz (ref.test (ref $String) (local.get $contained)))
+                   (then (call $raise-check-string (local.get $contained))))
+               ;; Cast and lengths
+               (local.set $str (ref.cast (ref $String) (local.get $s)))
+               (local.set $sub (ref.cast (ref $String) (local.get $contained)))
+               (local.set $len  (call $string-length/checked/i32 (local.get $str)))
+               (local.set $clen (call $string-length/checked/i32 (local.get $sub)))
+               ;; Empty substring => 0
+               (if (i32.eqz (local.get $clen))
+                   (then (return (ref.i31 (i32.const 0)))))
+               ;; Substring longer than string => #f
+               (if (i32.lt_u (local.get $len) (local.get $clen))
+                   (then (return (global.get $false))))
+               ;; Search
+               (local.set $limit (i32.sub (local.get $len) (local.get $clen)))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.gt_u (local.get $i) (local.get $limit)))
+                            (if (ref.eq
+                                 (call $string=?
+                                       (call $substring
+                                             (local.get $s)
+                                             (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                             (ref.i31 (i32.shl (i32.add (local.get $i) (local.get $clen)) (i32.const 1))))
+                                       (local.get $contained))
+                                 (global.get $true))
+                                (then (return (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))
+                                (else (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                      (br $loop)))))
+               (global.get $false))
 
          ;;;
          ;;; 4.6 Characters

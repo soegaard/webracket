@@ -16,6 +16,6 @@
   (parameterize ([current-namespace (make-webracket-namespace)]
                  [eval-jit-enabled  #f])    
     ; (namespace-require 'racket/private/struct) 
-    (namespace-require 'racket/match) 
+    (namespace-require 'racket/match)    
     ; (namespace-require 'racket/symbol)
     (expand top-level-form-stx)))

@@ -4,6 +4,7 @@
          racket/fasl
          racket/symbol
          racket/list
+         racket/string
          (only-in racket/bool symbol=?)
          (only-in racket/keyword keyword->immutable-string))
 
@@ -41,6 +42,10 @@
 
  ;; 4.4 Strings
  build-string
+ string-prefix?
+ string-suffix?
+ string-contains?
+ string-find
 
  ;; 4.7 Symbols
  symbol?
@@ -187,5 +192,12 @@
 (define (js_log v)
   (displayln v))
 
-         
-         
+
+;; Changed in version 8.15.0.7: Added string-find.
+
+
+(define (string-find s contained)
+  (define m
+    (regexp-match-positions (regexp (regexp-quote contained)) s))
+  (and m (car (car m))))
+  
