@@ -5393,8 +5393,31 @@
                (if (result (ref eq)) (call $string</i32 (local.get $a) (local.get $b))
                    (then (global.get $true))
                    (else (global.get $false))))
-         
-          (func $string</i32
+
+         (func $string<=? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $string<? (local.get $a) (local.get $b))
+                           (global.get $true))
+                   (then (global.get $true))
+                   (else (call $string=? (local.get $a) (local.get $b)))))
+
+         (func $string>? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (call $string<? (local.get $b) (local.get $a)))
+
+         (func $string>=? (type $Prim2)
+               (param $a (ref eq)) (param $b (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $string<? (local.get $b) (local.get $a))
+                           (global.get $true))
+                   (then (global.get $true))
+                   (else (call $string=? (local.get $a) (local.get $b)))))
+
+         (func $string</i32
                (param $a-raw (ref eq)) (param $b-raw (ref eq))
                (result i32)
 
