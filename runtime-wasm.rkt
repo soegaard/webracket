@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string vector vector-immutable namespace?))
+    (define todo-handle-later '(bytes string vector vector-immutable))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -11306,32 +11306,41 @@
               (return (ref.cast (ref $String) (local.get $v))))
 
 
-         ;;;
-         ;;; 14. REFLECTION AND SECURITY
-         ;;;
+        ;;;
+        ;;; 14. REFLECTION AND SECURITY
+        ;;;
 
-         ;; 14.1 Namespaces
+        ;; 14.1 Namespaces
+        
+        (func $namespace? (type $Prim1)
+              (param $v (ref eq))
+              (result   (ref eq))
 
-         ; We need dummy implementations of `#%variable-reference` and `variable-reference-from-unsafe?`
-         ; in order to run code from an expand `for`.
+              (if (result (ref eq))
+                  (ref.test (ref $Namespace) (local.get $v))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+        
+        ; We need dummy implementations of `#%variable-reference` and `variable-reference-from-unsafe?`
+        ; in order to run code from an expand `for`.
 
-         ; The form `#%variable-reference` can occur in a fully expanded syntax,
-         ; so it is handled in the elsewhere (for now, we only handle the case `(#%variable-reference)`.
+        ; The form `#%variable-reference` can occur in a fully expanded syntax,
+        ; so it is handled in the elsewhere (for now, we only handle the case `(#%variable-reference)`.
 
-         ; This function determines if the variable stems from a module compiled in unsafe mode or not.
-         (func $variable-reference-from-unsafe? (type $Prim1)
-               (param  $varref (ref eq))
-               (result (ref eq))
-               (global.get $true))
+        ; This function determines if the variable stems from a module compiled in unsafe mode or not.
+        (func $variable-reference-from-unsafe? (type $Prim1)
+              (param  $varref (ref eq))
+              (result (ref eq))
+              (global.get $true))
 
-         (func $variable-reference-constant? (type $Prim1)
-               (param $varref (ref eq))
-               (result (ref eq))
-               (global.get $true))  ; todo: simple implementation for now.
+        (func $variable-reference-constant? (type $Prim1)
+              (param $varref (ref eq))
+              (result (ref eq))
+              (global.get $true))  ; todo: simple implementation for now.
 
-         (func $raise-unbound-variable-reference (type $Prim0)
-               (result (ref eq))
-               (unreachable))
+        (func $raise-unbound-variable-reference (type $Prim0)
+              (result (ref eq))
+              (unreachable))
          
          ;; 14.2 Evaluation and compilation
          ;; 14.3 The racket/load language
