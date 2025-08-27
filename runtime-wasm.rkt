@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string vector vector-immutable namespace? values void))
+    (define todo-handle-later '(bytes string vector vector-immutable namespace? void))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -10680,6 +10680,61 @@
                    (ref.test (ref $PrimitiveClosure) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         ;;;
+         ;;; 10. CONTROL FLOW
+         ;;;
+
+         ;; 10.1 Multiple Values
+
+         (func $values (type $Prim>=0)
+               (param $args (ref eq))
+               (result      (ref eq))
+
+               (local $as   (ref $Args))
+               (local $n    i32)
+               (local $vals (ref $Values))
+               (local $i    i32)
+
+               ;; Cast argument array
+               (local.set $as (ref.cast (ref $Args) (local.get $args)))
+               (local.set $n  (array.len (local.get $as)))
+               ;; Single argument -> return directly
+               (if (i32.eq (local.get $n) (i32.const 1))
+                   (then (return (array.get $Args (local.get $as) (i32.const 0)))))
+               ;; Allocate $Values array
+
+               ;; Allocate array and copy arguments
+               (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
+               (array.copy $Values $Args
+                           (local.get $vals) (i32.const 0)
+                           (local.get $as)   (i32.const 0)
+                           (local.get $n))
+               (local.get $vals)
+               
+              ;; (local.set $vals
+              ;;            (array.new_default $Values (global.get $false) (local.get $len)))
+              ;; (local.set $i (i32.const 0))
+              ;; (block $done
+              ;;        (loop $loop
+              ;;              (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+              ;;              (array.set $Values (local.get $vals) (local.get $i)
+              ;;                         (array.get $Args (local.get $as) (local.get $i)))
+              ;;              (local.set $i (i32.add (local.get $i) (i32.const 1)))
+              ;;              (br $loop)))
+              ;; (local.get $vals)
+              )
+         
+
+         
+         ;; 10.2 Exceptions
+         ;; 10.3 Delayed Evaluation
+         ;; 10.4 Continuations
+         ;; 10.5 Continuation Marks
+         ;; 10.6 Breaks
+         ;; 10.7 Exiting
+         ;; 10.8 Unreachable Expressions
+         
 
          ;;;
          ;;; 13. INPUT AND OUTPUT
