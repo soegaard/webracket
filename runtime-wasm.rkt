@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string vector vector-immutable))
+    (define todo-handle-later '(bytes string))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -7295,6 +7295,34 @@
                (struct.new $Vector
                            (i32.const 0)    ;; hash = 0
                            (local.get $arr)))
+
+         (func $vector (type $Prim>=0)
+               (param $args (ref eq))
+               (result (ref eq))
+
+               (local $as  (ref $Args))
+               (local $len i32)
+               (local $arr (ref $Array))
+
+               (local.set $as  (ref.cast (ref $Args) (local.get $args)))
+               (local.set $len (array.len (local.get $as)))
+               (local.set $arr (call $make-array (local.get $len) (global.get $false)))
+               (array.copy $Array $Args
+                           (local.get $arr)
+                           (i32.const 0)
+                           (local.get $as)
+                           (i32.const 0)
+                           (local.get $len))
+               (struct.new $Vector
+                           (i32.const 0)
+                           (local.get $arr)))
+
+         ; TODO - $vector-immutable - Make the returned vector immutable
+         (func $vector-immutable (type $Prim>=0)
+               (param $args (ref eq))
+               (result (ref eq))
+
+               (call $vector (local.get $args)))
 
          
          (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
