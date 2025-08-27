@@ -3128,7 +3128,7 @@
                            (struct.get $Flonum $v
                                        (ref.cast (ref $Flonum) (local.get $a))))) )
 
-        (func $flsin
+        (func $flsin (type $Prim1)
               (param $a (ref eq))
               (result (ref eq))
 
