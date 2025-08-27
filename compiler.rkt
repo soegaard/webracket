@@ -70,6 +70,7 @@
 ;     - The shape could be precomputed.
 ; [ ] For primitives not in original Racket, provide arity information.
 
+; [ ] Extend +, fx+ and friends to be variadic.
 
 ; [ ] Modules!
 
@@ -416,8 +417,8 @@
   make-void  ; zero arguments
   void
 
-  boolean? not
-
+  ;; BOOLEANS
+  boolean? not immutable?
 
   ;; CHARACTERS
   char?
@@ -3092,11 +3093,13 @@
                                      (i32.const 0) ; mutable
                                      (ref.cast (ref $I32Array) ,$a))))]                 
          [(vector vector-immutable)
-          ; todo:  make it immutable when sym is `vector-immutable
-          (build-seq ae1 'quoted-vector '(ref $Vector)
-                     (λ (n)       `(call $make-vector/checked (i32.const ,n) ,(Imm 0)))
-                     (λ ($vs i v) `(call $vector-set!/checked ,$vs (i32.const ,i) ,v))
-                     (λ ($vs)     $vs))]
+          (build-seq ae1 'quoted-vector-array '(ref $Array)
+                     (λ (n)       `(call $make-array (i32.const ,n) ,(Imm 0)))
+                     (λ ($a i v)  `(array.set $Array ,$a (i32.const ,i) ,v))
+                     (λ ($a)      `(struct.new $Vector
+                                               (i32.const 0) ; hash
+                                               (i32.const ,(if (eq? sym 'vector-immutable) 1 0))
+                                               ,$a)))]
          
          [else
           (match (length ae1)
