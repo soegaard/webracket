@@ -4639,6 +4639,23 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         (func $non-empty-string? (type $Prim1)
+               (param $s (ref eq))
+               (result   (ref eq))
+               
+               (local $str (ref $String))
+               (local $len i32)
+               (if (result (ref eq))
+                   (ref.test (ref $String) (local.get $s))
+                   (then (local.set $str (ref.cast (ref $String) (local.get $s)))
+                         (local.set $len (call $i32array-length
+                                                  (struct.get $String $codepoints (local.get $str))))
+                         (if (result (ref eq))
+                             (i32.eqz (local.get $len))
+                             (then (global.get $false))
+                             (else (global.get $true))))
+                   (else (global.get $false))))
+
          ;; Constructors
 
          (func $string (type $Prim>=0)
@@ -4753,6 +4770,77 @@
                                       (i32.const 0)
                                       (call $i32array-length (struct.get $String $codepoints (local.get $str))))))))
          
+         (func $raise-build-string:bad-length    (unreachable))
+         (func $raise-build-string:char-expected
+               (param $v (ref eq)) (call $js-log (local.get $v)) (unreachable))
+
+         (func $build-string (type $Prim2)
+               (param $n-raw (ref eq))
+               (param $proc  (ref eq))
+               (result       (ref eq))
+
+               (local $n    i32)
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+               (local $args (ref $Args))
+               (local $arr  (ref $I32Array))
+               (local $i    i32)
+               (local $res  (ref eq))
+               (local $cp   i32)
+               (local $str  (ref $String))
+
+               ;; --- Check arguments ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
+                   (then (call $raise-build-string:bad-length)))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+
+               ;; --- Decode and prepare ---
+               (local.set $n    (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw)))
+                                           (i32.const 1)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               (local.set $arr  (call $i32array-make (local.get $n) (i32.const 0)))
+               (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+               ;; --- Loop ---
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            ;; Set argument to current index as fixnum
+                            (array.set $Args (local.get $args) (i32.const 0)
+                                       (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+                            ;; Call procedure
+                            (local.set $res
+                                       (call_ref $ProcedureInvoker
+                                                 (local.get $f)
+                                                 (local.get $args)
+                                                 (local.get $finv)))
+                            ;; Validate character result
+                            (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                                (then (call $raise-build-string:char-expected (local.get $res))
+                                      (unreachable)))
+                            (local.set $cp (i31.get_u (ref.cast (ref i31) (local.get $res))))
+                            (if (i32.ne (i32.and (local.get $cp) (i32.const ,char-mask))
+                                        (i32.const ,char-tag))
+                                (then (call $raise-build-string:char-expected (local.get $res))
+                                      (unreachable)))
+                            (local.set $cp (i32.shr_u (local.get $cp) (i32.const ,char-shift)))
+                            (call $i32array-set! (local.get $arr) (local.get $i) (local.get $cp))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; --- Construct string ---
+               (local.set $str
+                          (struct.new $String
+                                      (i32.const 0)
+                                      (i32.const 0)
+                                      (local.get $arr)))
+               (local.get $str))
+         
+
          (func $string-length (type $Prim1)
                (param $s-raw (ref eq))
                (result (ref eq))

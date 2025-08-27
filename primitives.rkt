@@ -33,11 +33,14 @@
  boolean?
  immutable?
 
-;; 4.3 Characters
-char-downcase
-char-foldcase
-char-titlecase
-char-upcase
+ ;; 4.3 Characters
+ char-downcase
+ char-foldcase
+ char-titlecase
+ char-upcase
+
+ ;; 4.4 Strings
+ build-string
 
  ;; 4.7 Symbols
  symbol?

@@ -493,9 +493,10 @@
   bytes->string/utf-8
 
   string? string=? string<?
-  make-string string-ref string-set! string-length substring string-copy!
+  make-string build-string string-ref string-set! string-length substring string-copy!
   string-copy string-fill! string-append string->list list->string
   string->bytes/utf-8 string->immutable-string
+  non-empty-string?
 
   string-take        ; not in Racket
   string-take-right  ; not in Racket
