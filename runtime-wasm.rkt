@@ -6105,6 +6105,74 @@
                             (br $loop)))
                (i32.const 1))
 
+         (func $string-contains? (type $Prim2)
+               (param $s (ref eq))
+               (param $contained (ref eq))
+               (result (ref eq))
+
+               (local $str    (ref $String))
+               (local $sub    (ref $String))
+               (local $arr-s  (ref $I32Array))
+               (local $arr-c  (ref $I32Array))
+               (local $len-s  i32)
+               (local $len-c  i32)
+               (local $limit  i32)
+               (local $i      i32)
+               (local $j      i32)
+               (local $ch-s   i32)
+               (local $ch-c   i32)
+
+               ;; --- Check inputs ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                   (then (call $raise-argument-error:string-expected (local.get $s))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $String) (local.get $contained)))
+                   (then (call $raise-argument-error:string-expected (local.get $contained))
+                         (unreachable)))
+
+               ;; --- Decode after checks ---
+               (local.set $str   (ref.cast (ref $String) (local.get $s)))
+               (local.set $sub   (ref.cast (ref $String) (local.get $contained)))
+               (local.set $arr-s (struct.get $String $codepoints (local.get $str)))
+               (local.set $arr-c (struct.get $String $codepoints (local.get $sub)))
+               (local.set $len-s (array.len (local.get $arr-s)))
+               (local.set $len-c (array.len (local.get $arr-c)))
+
+               ;; --- Edge cases ---
+               (if (i32.eqz (local.get $len-c))
+                   (then (return (global.get $true))))
+               (if (i32.lt_u (local.get $len-s) (local.get $len-c))
+                   (then (return (global.get $false))))
+
+               (local.set $limit (i32.sub (local.get $len-s) (local.get $len-c)))
+               (local.set $i     (i32.const 0))
+               (block $not-found
+                      (loop $outer
+                            (br_if $not-found
+                                   (i32.gt_u (local.get $i) (local.get $limit)))
+                            (local.set $j (i32.const 0))
+                            (block $mismatch
+                                   (loop $inner
+                                         (br_if $mismatch
+                                                (i32.ge_u (local.get $j) (local.get $len-c)))
+                                         (local.set $ch-s
+                                                    (call $i32array-ref
+                                                          (local.get $arr-s)
+                                                          (i32.add (local.get $i) (local.get $j))))
+                                         (local.set $ch-c
+                                                    (call $i32array-ref
+                                                          (local.get $arr-c)
+                                                          (local.get $j)))
+                                         (if (i32.ne (local.get $ch-s) (local.get $ch-c))
+                                             (then (br $mismatch)))
+                                         (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                                         (br $inner)))
+                            (if (i32.eq (local.get $j) (local.get $len-c))
+                                (then (return (global.get $true))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $outer)))
+               (global.get $false))
+
          ;;;
          ;;; 4.6 Characters
          ;;;

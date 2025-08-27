@@ -506,7 +506,8 @@
   string-trim-right  ; not in Racket
   string-suffix?     ; from racket/string
   string-prefix?     ; from racket/string
-  
+  string-contains?   ; from racket/string
+    
 
   symbol? symbol=? symbol<?
   string->symbol symbol->string
