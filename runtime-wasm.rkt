@@ -10933,16 +10933,16 @@
          (func $call-with-values (type $Prim2)
                (param $gen (ref eq))
                (param $rec (ref eq))
-               (result (ref eq))
+               (result     (ref eq))
 
-               (local $g    (ref $Procedure))
-               (local $r    (ref $Procedure))
-               (local $ginv (ref $ProcedureInvoker))
-               (local $rinv (ref $ProcedureInvoker))
-               (local $vals (ref eq))
+               (local $g     (ref $Procedure))
+               (local $r     (ref $Procedure))
+               (local $ginv  (ref $ProcedureInvoker))
+               (local $rinv  (ref $ProcedureInvoker))
+               (local $vals  (ref eq))
                (local $vals* (ref $Values))
-               (local $args (ref $Args))
-               (local $n    i32)
+               (local $args  (ref $Args))
+               (local $n     i32)
 
                ;; Step 1: type check generator
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $gen)))
@@ -10967,8 +10967,8 @@
                ;; Step 4: unpack returned values into argument array
                (if (ref.test (ref $Values) (local.get $vals))
                    (then (local.set $vals* (ref.cast (ref $Values) (local.get $vals)))
-                         (local.set $n (array.len (local.get $vals*)))
-                         (local.set $args (array.new $Args (global.get $null) (local.get $n)))
+                         (local.set $n     (array.len (local.get $vals*)))
+                         (local.set $args  (array.new $Args (global.get $null) (local.get $n)))
                          (array.copy $Args $Values
                                      (local.get $args) (i32.const 0)
                                      (local.get $vals*) (i32.const 0)

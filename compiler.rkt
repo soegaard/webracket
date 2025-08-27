@@ -80,7 +80,7 @@
 ;     [ ] missing-kw
 ;     [ ] null
 
-; [ ] $vector-immutable - Make the returned vector immutable
+; [x] $vector-immutable - Make the returned vector immutable
 
 
 ; [ ] Input / output port going to the host.
@@ -553,6 +553,9 @@
 
   js-log
 
+  ;; 10. Control Flow
+  call-with-values
+  
   ;; 17. Unsafe Operations
   unsafe-fx+
   unsafe-fl/
