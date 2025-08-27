@@ -2128,9 +2128,17 @@
                            (local.get $arr))) ;; the backing I8Array
 
          
-         ;;; 
-         ;;;  Equality
          ;;;
+         ;;; DATATYPES
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/data.html
+
+         ;;; 
+         ;;;  4.1 Equality
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/Equality.html
 
          (func $eq? (type $Prim2) (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
@@ -2323,7 +2331,40 @@
                     (return (global.get $true))))
                (return (global.get $false)))
 
+         ;;;
+         ;;; 4.2 Booleans
+         ;;;
 
+         ;; https://docs.racket-lang.org/reference/booleans.html
+         
+         ; todo: Benchmark the two implementations of $boolean? below
+
+         (func $boolean? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $v) (global.get $true))
+                   (then (global.get $true))
+                   (else (if (result (ref eq))
+                             (ref.eq (local.get $v) (global.get $false))
+                             (then (global.get $true))
+                             (else (global.get $false))))))
+         ; see comment above
+         #;(func $boolean? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test i31ref (local.get $v))
+                   (then (if (result (ref eq))
+                             (i32.eq (i32.and (i31.get_s (ref.cast i31ref (local.get $v)))
+                                              (i32.const ,boolean-mask))
+                                     (i32.const ,boolean-tag))
+                             (then (global.get $true))
+                             (else (global.get $false))))
+                   (else (global.get $false))))
+
+         (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $v) (global.get $false))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
          ;;;
          ;;; 4.3 Numbers
          ;;;
@@ -3718,37 +3759,6 @@
          (func $make-void (type $Prim0) (result (ref eq)) ; no arguments
                (return (global.get $void)))
 
-         ;;;
-         ;;; 4.2 Booleans
-         ;;;
-
-         ;; https://docs.racket-lang.org/reference/booleans.html
-         
-         ; todo: Benchmark the two implementations of $boolean? below
-         (func $boolean? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $v) (global.get $true))
-                   (then (global.get $true))
-                   (else (if (result (ref eq))
-                             (ref.eq (local.get $v) (global.get $false))
-                             (then (global.get $true))
-                             (else (global.get $false))))))
-         ; see comment above
-         #;(func $boolean? (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test i31ref (local.get $v))
-                   (then (if (result (ref eq))
-                             (i32.eq (i32.and (i31.get_s (ref.cast i31ref (local.get $v)))
-                                              (i32.const ,boolean-mask))
-                                     (i32.const ,boolean-tag))
-                             (then (global.get $true))
-                             (else (global.get $false))))
-                   (else (global.get $false))))
-         (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $v) (global.get $false))
-                   (then (global.get $true))
-                   (else (global.get $false))))
 
         ;;;
         ;;; - External host values
