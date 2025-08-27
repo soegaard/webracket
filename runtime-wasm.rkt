@@ -2336,6 +2336,33 @@
          ;;;
 
          ;; https://docs.racket-lang.org/reference/booleans.html
+
+         ;; [x] boolean?
+         ;; [x] not
+         ;; [ ] immutable?
+         
+         ;;; Boolean Aliases
+         ;; [ ] true
+         ;; [ ] false
+         ;; [ ] symbol=?
+         ;; [ ] boolean=?
+         ;; [ ] false?
+         ;; [ ] nand
+         ;; [ ] nor
+         ;; [ ] implies
+         ;; [ ] xor
+
+         ;;; Mutability Predicates
+         ;; [ ] mutable-string?
+         ;; [ ] immutable-string?
+         ;; [ ] mutable-bytes?
+         ;; [ ] immutable-bytes?
+         ;; [ ] mutable-vector?
+         ;; [ ] immutable-vector?
+         ;; [ ] mutable-box?
+         ;; [ ] immutable-box?
+         ;; [ ] mutable-hash?
+         ;; [ ] immutable-hash?
          
          ; todo: Benchmark the two implementations of $boolean? below
 
