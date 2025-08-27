@@ -5352,8 +5352,8 @@
                                           (else (br $loop))))))))))
 
                (call $i32growable-array->string (local.get $out)))
+                  
          
-
          ;; 4.4.2 String Comparisons
          
          (func $string=? (type $Prim2)
@@ -5988,6 +5988,68 @@
                                        (local.get $str)
                                        (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))
                (unreachable))
+
+         ;; 4.4.6 Additional String Functions  (racket/string)
+         
+         (func $string-suffix? (type $Prim2)
+               (param $s (ref eq)) (param $suffix (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (call $string-suffix?/i32 (local.get $s) (local.get $suffix))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string-suffix?/i32
+               (param $s-raw (ref eq)) (param $suffix-raw (ref eq))
+               (result i32)
+
+               (local $s (ref $String))
+               (local $suf (ref $String))
+
+               ;; Type checks
+               (if (i32.eqz (ref.test (ref $String) (local.get $s-raw)))
+                   (then (return (i32.const 0))))
+               (if (i32.eqz (ref.test (ref $String) (local.get $suffix-raw)))
+                   (then (return (i32.const 0))))
+
+               ;; Cast and delegate
+               (local.set $s   (ref.cast (ref $String) (local.get $s-raw)))
+               (local.set $suf (ref.cast (ref $String) (local.get $suffix-raw)))
+               (return_call $string-suffix?/i32/checked (local.get $s) (local.get $suf)))
+
+         (func $string-suffix?/i32/checked
+               (param $s (ref $String)) (param $suf (ref $String))
+               (result i32)
+
+               (local $arr-s   (ref $I32Array))
+               (local $arr-suf (ref $I32Array))
+               (local $len-s   i32)
+               (local $len-suf i32)
+               (local $offset  i32)
+               (local $i       i32)
+
+               (local.set $arr-s   (struct.get $String $codepoints (local.get $s)))
+               (local.set $arr-suf (struct.get $String $codepoints (local.get $suf)))
+               (local.set $len-s   (array.len (local.get $arr-s)))
+               (local.set $len-suf (array.len (local.get $arr-suf)))
+
+               ;; If suffix longer than string, fail
+               (if (i32.gt_u (local.get $len-suf) (local.get $len-s))
+                   (then (return (i32.const 0))))
+
+               (local.set $offset (i32.sub (local.get $len-s) (local.get $len-suf)))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len-suf)))
+                            (if (i32.ne
+                                 (array.get $I32Array (local.get $arr-s)
+                                            (i32.add (local.get $offset) (local.get $i)))
+                                 (array.get $I32Array (local.get $arr-suf) (local.get $i)))
+                                (then (return (i32.const 0))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (i32.const 1))
          
 
          ;;;
