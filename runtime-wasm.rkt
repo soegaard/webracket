@@ -2342,7 +2342,7 @@
 
          ;; [x] boolean?
          ;; [x] not
-         ;; [ ] immutable?
+         ;; [x] immutable?
          
          ;;; Boolean Aliases
          ;; [ ] true
@@ -2394,6 +2394,43 @@
                    (ref.eq (local.get $v) (global.get $false))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         (func $immutable? (type $Prim1)
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (local $s    (ref $String))
+               (local $bs   (ref $Bytes))
+               (local $vec  (ref $Vector))
+               (local $hash (ref $Hash))
+
+               (if (ref.test (ref $String) (local.get $v))
+                   (then
+                    (local.set $s (ref.cast (ref $String) (local.get $v)))
+                    (if (i32.eq (struct.get $String $immutable (local.get $s)) (i32.const 1))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
+               (if (ref.test (ref $Bytes) (local.get $v))
+                   (then
+                    (local.set $bs (ref.cast (ref $Bytes) (local.get $v)))
+                    (if (i32.eq (struct.get $Bytes $immutable (local.get $bs)) (i32.const 1))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then
+                    (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                    (if (i32.eq (struct.get $Vector $immutable (local.get $vec)) (i32.const 1))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
+               (if (ref.test (ref $Hash) (local.get $v))
+                   (then
+                    (local.set $hash (ref.cast (ref $Hash) (local.get $v)))
+                    (if (ref.eq (struct.get $Hash $mutable? (local.get $hash)) (global.get $false))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
+               (if (ref.test (ref $Box) (local.get $v))
+                   (then (return (global.get $false))))
+               (global.get $false))
          
          ;;;
          ;;; 4.3 Numbers

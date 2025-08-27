@@ -31,7 +31,7 @@
  ;; 4.2 Booleans
  not
  boolean?
- ; immutable?
+ immutable?
 
 ;; 4.3 Characters
 char-downcase
