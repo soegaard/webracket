@@ -70,15 +70,6 @@
 ;     - The shape could be precomputed.
 ; [ ] For primitives not in original Racket, provide arity information.
 
-; [ ] Primitives that currently are inlined, but haven't got a `func` in `runtime-wasm.rkt`.
-;      [ ] bytes string vector vector-immutable 
-;      [x] list
-;      [x] namespace?
-;      [x] values
-;      [x] void
-;      [ ] Remove them from `todo-handle-later` in runtime-wasm.rkt
-;      [ ] Add $Prim0, ... annotations when implemented.
-
 
 ; [ ] Modules!
 

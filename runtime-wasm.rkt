@@ -76,7 +76,9 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(string))
+    ; If a primitive is handled in the inliner, but hasn't been
+    ; implemented her in `runtime-wasm.rkt` then put the symbol here.
+    (define todo-handle-later '())
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -4591,6 +4593,39 @@
                    (else (global.get $false))))
 
          ;; Constructors
+
+         (func $string (type $Prim>=0)
+               (param $args (ref eq))
+               (result      (ref eq))
+
+               (local $argv (ref $Args))
+               (local $len  i32)
+               (local $arr  (ref $I32Array))
+               (local $i    i32)
+               (local $ch   (ref eq))
+
+               ;; Cast argument list and determine length
+               (local.set $argv (ref.cast (ref $Args) (local.get $args)))
+               (local.set $len  (array.len (local.get $argv)))
+               ;; Allocate array for codepoints
+               (local.set $arr (array.new $I32Array (i32.const 0) (local.get $len)))
+               ;; Fill array with characters
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $ch (array.get $Args (local.get $argv) (local.get $i)))
+                            (array.set $I32Array
+                                       (local.get $arr)
+                                       (local.get $i)
+                                       (call $char->integer/i32 (local.get $ch)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; Construct mutable string
+               (struct.new $String
+                           (i32.const 0)  ;; hash
+                           (i32.const 0)  ;; mutable
+                           (local.get $arr)))
 
          (func $raise-make-string:bad-length       (unreachable))
          (func $raise-make-string:bad-char         (unreachable))
