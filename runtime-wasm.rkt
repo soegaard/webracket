@@ -3581,9 +3581,10 @@
                (call $i32growable-array-add! (local.get $g) (i32.const 101)) ;; 'e'
                ;; Exponent
                (local.set $exp-str
-                          (call $number->string
-                                (ref.i31 (i32.shl (local.get $exp) (i32.const 1)))   ;; boxed fixnum
-                                (ref.i31 (i32.const 20))))                          ;; fixnum 10 (radix)
+                          (ref.cast (ref $String)
+                                    (call $number->string
+                                          (ref.i31 (i32.shl (local.get $exp) (i32.const 1)))   ;; boxed fixnum
+                                          (ref.i31 (i32.const 20)))))                          ;; fixnum 10 (radix)
                (local.set $exp-cps
                           (struct.get $String $codepoints (local.get $exp-str)))
                ;; Append minus sign if negative
@@ -3604,7 +3605,7 @@
 
          (func $flonum->string
                (param $f (ref $Flonum))
-               (result (ref $String))
+               (result   (ref $String))
 
                (local $s   (ref $String))
                (local $len i32)
@@ -3612,10 +3613,11 @@
 
                ;; Convert to decimal string and trim trailing zeros
                (local.set $s
-                          (call $string-trim-right
-                                (call $f64->string
-                                      (struct.get $Flonum $v (local.get $f)))
-                                ,(Imm #\0)))
+                          (ref.cast (ref $String)
+                            (call $string-trim-right
+                                  (call $f64->string
+                                        (struct.get $Flonum $v (local.get $f)))
+                                  ,(Imm #\0))))
                (local.set $len (call $string-length/checked/i32 (local.get $s)))
                (local.set $ch
                           (call $string-ref/checked/i32
@@ -3695,10 +3697,11 @@
          (func $format/display:flonum
                (param $val (ref $Flonum))
                (result     (ref $String))
-               (call $string-trim-right
-                     (call $f64->string
-                           (struct.get $Flonum $v (local.get $val)))
-                     ,(Imm #\0)))
+               (ref.cast (ref $String)
+                 (call $string-trim-right
+                       (call $f64->string
+                             (struct.get $Flonum $v (local.get $val)))
+                       ,(Imm #\0))))
          
          ;;;
          ;;;  4.21 Void
@@ -6267,7 +6270,7 @@
          (func $make-gensym-name
                (param $prefix (ref $String))
                (result        (ref $String))
-
+               
                (local $n     i32)
                (local $n-str (ref $String))
                ;; Get current counter
@@ -6276,7 +6279,8 @@
                (global.set $gensym-counter (i32.add (local.get $n) (i32.const 1)))
                ;; Convert number to fixnum
                (local.set $n-str
-                          (call $number->string (ref.i31 (local.get $n)) ,(Imm 10)))
+                          (ref.cast (ref $String)
+                            (call $number->string (ref.i31 (local.get $n)) ,(Imm 10))))
                ;; Append prefix and number string
                (ref.cast (ref $String)
                          (call $string-append/2 (local.get $prefix) (local.get $n-str))))
@@ -7871,7 +7875,8 @@
                (if (ref.eq (local.get $assocs) (global.get $missing))
                    (then (return (call $make-empty-hasheq))))
                ;; Case 2: Provided association list
-               (local.set $ht    (call $make-empty-hasheq))
+               (local.set $ht    (ref.cast (ref $HashEqMutable)
+                                           (call $make-empty-hasheq)))
                (local.set $alist (local.get $assocs))
 
                (block $done
@@ -10968,7 +10973,8 @@
               (call $fasl:read-string (local.get $arr) (local.get $i))
               (local.set $next) (local.set $str) ; note: reversed
               
-              (return (call $string->symbol (local.get $str))
+              (return (ref.cast (ref $Symbol)
+                                (call $string->symbol (local.get $str)))
                       (local.get $next)))
 
         (func $fasl:read-f64
@@ -11341,30 +11347,26 @@
                    (then (local.set $i31 (ref.cast (ref i31) (local.get $v)))
                          (local.set $n (i31.get_u (local.get $i31)))
                          (if (i32.eqz (i32.and (local.get $n) (i32.const 1))) ;; check lsb = 0
-                             (then (return (call $number->string (local.get $v) ,(Imm 10)))))))
+                             (then (return (ref.cast (ref $String)
+                                                     (call $number->string (local.get $v) ,(Imm 10))))))))
                ;; --- Case: null ---
                (if (ref.eq (local.get $v) (global.get $null))
-                   (then (return (ref.cast (ref $String)
-                                            (global.get $string:null)))))
+                   (then (return (ref.cast (ref $String) (global.get $string:null)))))
                ;; --- Case: true ---
                (if (ref.eq (local.get $v) (global.get $true))
                    (then (return (ref.cast (ref $String) (global.get $string:hash-t)))))
                ;; --- Case: false ---
                (if (ref.eq (local.get $v) (global.get $false))
-                   (then (return (ref.cast (ref $String)
-                                            (global.get $string:hash-f)))))
+                   (then (return (ref.cast (ref $String) (global.get $string:hash-f)))))
                ;; --- Case: void ---
                (if (ref.eq (local.get $v) (global.get $void))
-                   (then (return (ref.cast (ref $String)
-                                            (global.get $string:void)))))
+                   (then (return (ref.cast (ref $String) (global.get $string:void)))))
                ;; --- Case: missing ---
                (if (ref.eq (local.get $v) (global.get $missing))
-                   (then (return (ref.cast (ref $String)
-                                            (global.get $string:missing)))))
+                   (then (return (ref.cast (ref $String) (global.get $string:missing)))))
                ;; --- Case: undefined ---
                (if (ref.eq (local.get $v) (global.get $undefined))
-                   (then (return (ref.cast (ref $String)
-                                            (global.get $string:undefined)))))
+                   (then (return (ref.cast (ref $String) (global.get $string:undefined)))))
                ;; --- Case: closure ---
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
@@ -11565,7 +11567,9 @@
                (local.set $name      (struct.get $PrimitiveProcedure $name  (local.get $p)))
                (local.set $arity-fx  (struct.get $PrimitiveProcedure $arity (local.get $p)))
                ;; Step 3: convert arity to string
-               (local.set $arity-str (call $number->string (local.get $arity-fx) (global.get $false)))
+               (local.set $arity-str (ref.cast (ref $String)
+                                               (call $number->string
+                                                     (local.get $arity-fx) (global.get $false))))
                ;; Step 4: get mask and convert to string
                (local.set $mask      (call $procedure-arity-mask/checked/i32 (local.get $p)))
                (local.set $mask-str  (call $i32->string                      (local.get $mask)))
@@ -12554,7 +12558,8 @@
                                  (i32.const 0)                         ;; $hash
                                  (global.get $false)                   ;; $name
                                  (i32.const 0)                         ;; $base-phase
-                                 (call $make-empty-hasheq)             ;; $table
+                                 (ref.cast (ref $HashEqMutable)        ;; $table
+                                           (call $make-empty-hasheq))             
                                  (global.get $empty-module-registry)   ;; $modules
                                  (i32.const 0)))                       ;; $protect
 
@@ -12810,7 +12815,8 @@
                                                     (global.get ,(TopVar v))))))
 
                      ;; Initialize the top-level namespace
-                     (global.set $top-level-namespace (call $make-empty-namespace))
+                     (global.set $top-level-namespace 
+                                 (ref.cast (ref $Namespace) (call $make-empty-namespace)))
                      
                      
                      ; Initialize local variables
