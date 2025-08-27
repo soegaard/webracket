@@ -899,7 +899,7 @@
                                   (else
                                    (return (call $primitive-invoke:raise-arity-error
                                                  (local.get $pproc) (local.get $argc)))))
-                            ) ;; end $L1
+                            )) ;; end $L1
                             ;; shape 1: exact 1
                             (if (i32.eq (local.get $argc) (i32.const 1))
                                 (then
@@ -913,7 +913,7 @@
                                 (else
                                  (return (call $primitive-invoke:raise-arity-error
                                                (local.get $pproc) (local.get $argc)))))
-                          ) ;; end $L2
+                          )) ;; end $L2
                           ;; shape 2: exact 2
                           (if (i32.eq (local.get $argc) (i32.const 2))
                               (then
@@ -928,7 +928,7 @@
                               (else
                                (return (call $primitive-invoke:raise-arity-error
                                              (local.get $pproc) (local.get $argc)))))
-                        ) ;; end $L3
+                        )) ;; end $L3
                         ;; shape 3: exact >=3
                         (if (i32.ge_u (local.get $argc) (i32.const 3))
                             (then
@@ -943,14 +943,14 @@
                                                         (local.get $args)
                                                         (ref.cast (ref $Prim>=3) (local.get $code))))
                                       (else
-                                       (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                                       (return (call $raise-code-type-mismatch (local.get $pproc))))))
                                  (else
                                   (return (call $primitive-invoke:raise-arity-error
                                                 (local.get $pproc) (local.get $argc)))))
                             (else
                              (return (call $primitive-invoke:raise-arity-error
                                            (local.get $pproc) (local.get $argc)))))
-                      ) ;; end $L4
+                      )) ;; end $L4
                       ;; shape 4: at least 0
                       (if (ref.test (ref $Prim>=0) (local.get $code))
                           (then
@@ -958,8 +958,8 @@
                                             (local.get $args)
                                             (ref.cast (ref $Prim>=0) (local.get $code))))
                           (else
-                           (return (call $raise-code-type-mismatch (local.get $pproc)))))
-                    ) ;; end $L5
+                           (return (call $raise-code-type-mismatch (local.get $pproc))))
+                    )) ;; end $L5
                     ;; shape 5: at least 1
                     (if (i32.ge_u (local.get $argc) (i32.const 1))
                         (then
@@ -974,7 +974,7 @@
                         (else
                          (return (call $primitive-invoke:raise-arity-error
                                        (local.get $pproc) (local.get $argc)))))
-                  ) ;; end $L6
+                  )) ;; end $L6
                   ;; shape 6: at least 2
                   (if (i32.ge_u (local.get $argc) (i32.const 2))
                       (then
@@ -990,7 +990,7 @@
                       (else
                        (return (call $primitive-invoke:raise-arity-error
                                      (local.get $pproc) (local.get $argc)))))
-                ) ;; end $L7
+                )) ;; end $L7
                 ;; shape 7: at least >=3
                 (if (i32.ge_u (local.get $argc) (i32.const 3))
                     (then
@@ -1007,7 +1007,7 @@
                     (else
                      (return (call $primitive-invoke:raise-arity-error
                                    (local.get $pproc) (local.get $argc)))))
-              ) ;; end $default
+              )) ;; end $default
               (unreachable))
 
         (func $repack-arguments
