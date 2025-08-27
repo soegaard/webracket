@@ -10944,6 +10944,9 @@
                (local $args  (ref $Args))
                (local $n     i32)
 
+               ;; initialize $args to satisfy the validator; overwritten later
+               (local.set $args (array.new $Args (global.get $null) (i32.const 0)))
+
                ;; Step 1: type check generator
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $gen)))
                    (then (call $raise-argument-error:procedure-expected (local.get $gen))

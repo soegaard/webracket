@@ -89,7 +89,7 @@
 ; [ ] Calling conventions for primitives?
 
 ; [x] procedure?, procedure-rename, procedure-arity, etc.
-; [ ] call-with-values
+; [x] call-with-values
 ; [x] apply
 ; [x] map
 ; [x] for-each
