@@ -58,16 +58,27 @@
 ;;; Expressions to work on
 ;;;
 
-; Invoking a primitive via a $PrimitiveProcedure is not done.
-
-; (comp+ #'(let ([f fx+]) (f 11 22)))
-
-; The PrimitiveProcedure has an invoke field.
-; This should be a generic one, but one for each primitive.
 
 ;;;
 ;;; TODO
 ;;;
+
+; [ ] Consider adding extra shapes to `primitive-invoke`.
+;     The possible shapes:
+;        (list->set (map (λ (x) (if x (primitive-description-arity x) #f))
+;                          (map primitive->description primitives)))
+;     - The shape could be precomputed.
+; [ ] For primitives not in original Racket, provide arity information.
+
+; [ ] Primitives that currently are inlined, but haven't got a `func` in `runtime-wasm.rkt`.
+;      [ ] bytes string vector vector-immutable 
+;      [ ] list
+;      [ ] namespace?
+;      [ ] values
+;      [ ] void
+;      [ ] Remove them from `todo-handle-later` in runtime-wasm.rkt
+;      [ ] Add $Prim0, ... annotations when implemented.
+
 
 ; [ ] Modules!
 
