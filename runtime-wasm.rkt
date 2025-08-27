@@ -6050,7 +6050,60 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $loop)))
                (i32.const 1))
-         
+
+         (func $string-prefix? (type $Prim2)
+               (param $s (ref eq)) (param $prefix (ref eq))
+               (result (ref eq))
+               (if (result (ref eq)) (call $string-prefix?/i32 (local.get $s) (local.get $prefix))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $string-prefix?/i32
+               (param $s-raw (ref eq)) (param $prefix-raw (ref eq))
+               (result i32)
+
+               (local $s (ref $String))
+               (local $p (ref $String))
+
+               (if (i32.eqz (ref.test (ref $String) (local.get $s-raw)))
+                   (then (call $raise-check-string (local.get $s-raw))))
+               (if (i32.eqz (ref.test (ref $String) (local.get $prefix-raw)))
+                   (then (call $raise-check-string (local.get $prefix-raw))))
+
+               (local.set $s (ref.cast (ref $String) (local.get $s-raw)))
+               (local.set $p (ref.cast (ref $String) (local.get $prefix-raw)))
+
+               (return_call $string-prefix?/i32/checked (local.get $s) (local.get $p)))
+
+         (func $string-prefix?/i32/checked
+               (param $s (ref $String)) (param $p (ref $String))
+               (result i32)
+
+               (local $arr-s (ref $I32Array))
+               (local $arr-p (ref $I32Array))
+               (local $len-s i32)
+               (local $len-p i32)
+               (local $i i32)
+               (local $cp-s i32)
+               (local $cp-p i32)
+
+               (local.set $arr-s (struct.get $String $codepoints (local.get $s)))
+               (local.set $arr-p (struct.get $String $codepoints (local.get $p)))
+               (local.set $len-s (array.len (local.get $arr-s)))
+               (local.set $len-p (array.len (local.get $arr-p)))
+               (if (i32.lt_u (local.get $len-s) (local.get $len-p))
+                   (then (return (i32.const 0))))
+               (local.set $i (i32.const 0))
+               (block $exit
+                      (loop $loop
+                            (br_if $exit (i32.ge_u (local.get $i) (local.get $len-p)))
+                            (local.set $cp-s (array.get $I32Array (local.get $arr-s) (local.get $i)))
+                            (local.set $cp-p (array.get $I32Array (local.get $arr-p) (local.get $i)))
+                            (if (i32.ne (local.get $cp-s) (local.get $cp-p))
+                                (then (return (i32.const 0))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (i32.const 1))
 
          ;;;
          ;;; 4.6 Characters
