@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string vector vector-immutable list namespace? values void))
+    (define todo-handle-later '(bytes string vector vector-immutable namespace? values void))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -6529,6 +6529,14 @@
                                 (else (return (global.get $false)))))
                       ;; fallthrough: not a proper list
                       (global.get $false)))
+
+         (func $list (type $Prim>=0)
+               (param $args (ref eq))
+               (result      (ref eq))
+
+               (call $rest-arguments->list
+                     (ref.cast (ref $Args) (local.get $args))
+                     (i32.const 0)))
 
          (func $length/i32 (param $xs (ref eq)) (result i32)
                (local $i i32)
