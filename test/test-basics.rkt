@@ -340,8 +340,8 @@
                            (symbol->string 'apple))
                       #f)
               (equal? (symbol->immutable-string 'apple) "apple")
-              #;(equal? (immutable? (symbol->immutable-string 'apple)) #t)    ; todo - implement immutable?
-              #;(equal? (immutable? (symbol->immutable-string 'box))   #t))))
+              (equal? (immutable? (symbol->immutable-string 'apple)) #t)
+              (equal? (immutable? (symbol->immutable-string 'box))   #t))))
 
  (list "symbol<?"
        (and (equal? (symbol<? 'a 'b)    #t)
@@ -361,7 +361,7 @@
                          (keyword->string '#:apple))
                     #f)
             (equal? (keyword->immutable-string '#:apple) "apple")
-            #;(equal? (immutable? (keyword->immutable-string '#:apple)) #t)
+            (equal? (immutable? (keyword->immutable-string '#:apple)) #t)
 
             #;(equal? (procedure-arity keyword?) 1))) 
 
@@ -389,6 +389,16 @@
                                (string->keyword "\uA0")) #f)
 
             #;(equal? (procedure-arity keyword<?) 2)))
+
+ (list "immutable?"
+       (and (equal? (immutable? "a") #t)
+            (equal? (immutable? (string-copy "a")) #f)
+            (equal? (immutable? '#(1 2)) #t)
+            (equal? (immutable? (make-vector 2 0)) #f)
+            (equal? (immutable? (bytes 1 2)) #t)
+            (equal? (immutable? (make-bytes 2 0)) #f)
+            (equal? (immutable? (make-hasheq)) #f)
+            (equal? (immutable? (box 5)) #f)))
 
  (list "case-lambda"
        (and (equal? (procedure? (case-lambda)) #t)
