@@ -2132,13 +2132,13 @@
          ;;;  Equality
          ;;;
 
-         (func $eq? (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
+         (func $eq? (type $Prim2) (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v1) (local.get $v2))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $eqv?
+         (func $eqv? (type $Prim2)
                ; Except for numbers and characters, `eqv?` works like `eq?`.
                (param $v1 (ref eq))
                (param $v2 (ref eq))
@@ -2172,7 +2172,7 @@
          ;;; equal?
 
          ;; Top-level equal?
-         (func $equal?
+         (func $equal? (type $Prim2)
                (param $v1 (ref eq))
                (param $v2 (ref eq))
                (result    (ref eq))
@@ -2360,7 +2360,7 @@
          ;; [ ] real->single-flonum
          ;; [ ] real->double-flonum
          
-         (func $exact?
+         (func $exact? (type $Prim1)
                ;; A number is exact if it's a fixnum: a ref i31 with LSB = 0
                (param $z (ref eq))
                (result   (ref eq))
@@ -2375,7 +2375,7 @@
                              (else (global.get $false))))
                    (else (global.get $false))))
 
-         (func $exact-integer?
+         (func $exact-integer? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2390,7 +2390,7 @@
                              (else (global.get $false))))
                    (else (global.get $false))))
 
-         (func $exact-nonnegative-integer?
+         (func $exact-nonnegative-integer? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2411,7 +2411,7 @@
                ;; Not a fixnum
                (return (global.get $false)))
 
-         (func $exact-positive-integer?
+         (func $exact-positive-integer? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2436,7 +2436,7 @@
 
 
 
-        (func $inexact->exact
+        (func $inexact->exact (type $Prim1)
               (param $z (ref eq))
               (result   (ref eq))
 
@@ -2474,7 +2474,7 @@
               (unreachable))
 
 
-        (func $zero?
+        (func $zero? (type $Prim1)
               (param $x (ref eq))
               (result   (ref eq))
 
@@ -2502,7 +2502,7 @@
                (call $raise-expected-number (local.get $x))
                (unreachable))
 
-         (func $positive?
+         (func $positive? (type $Prim1)
                (param $x (ref eq))
                (result   (ref eq))
 
@@ -2533,7 +2533,7 @@
                (call $raise-expected-number (local.get $x))
                (unreachable))
 
-         (func $negative?
+         (func $negative? (type $Prim1)
                (param $x (ref eq))
                (result (ref eq))
 
@@ -2564,7 +2564,7 @@
                (unreachable))
 
 
-         (func $integer?
+         (func $integer? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2634,7 +2634,7 @@
          ;; [ ] rationalize
          ;; TODO  Implement arithmetic functions.
          
-         (func $add1
+         (func $add1 (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2660,7 +2660,7 @@
                (call $raise-expected-number (local.get $v))
                (unreachable))
 
-         (func $sub1
+         (func $sub1 (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -2687,7 +2687,7 @@
                (unreachable))
 
 
-        (func $round
+        (func $round (type $Prim1)
               (param $x (ref eq))
               (result   (ref eq))
 
@@ -2748,7 +2748,7 @@
 
          ;; Note: fx/ doesn't exist, but fxquotient do.
 
-         (func $/
+         (func $/ (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))
                (result   (ref eq))
@@ -2852,7 +2852,7 @@
 
          (func $raise-not-fixnum (param $x (ref eq)) (unreachable))
 
-         (func $fixnum? (param $v (ref eq)) (result (ref eq))
+         (func $fixnum? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test i31ref (local.get $v))
                    (then (if (result (ref eq))
@@ -2872,7 +2872,7 @@
                (unreachable))
 
          
-         (func $fxzero? (param $x (ref eq)) (result (ref eq))
+         (func $fxzero? (type $Prim1) (param $x (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test i31ref (local.get $x))
                    (then (if (result (ref eq))
@@ -2880,14 +2880,14 @@
                              (then (global.get $true))
                              (else (global.get $false))))
                    (else (global.get $false))))
-         (func $fx+ (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+         (func $fx+ (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.add (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
-         (func $fx- (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+         (func $fx- (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
          ; Since an integer n is represented as 2n, we need to halve one argument. 
-         (func $fx* (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+         (func $fx* (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.mul (i31.get_s (ref.cast i31ref (local.get $x)))
                                  ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
@@ -2895,14 +2895,14 @@
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
-         (func $unsafe-fxquotient
+         (func $unsafe-fxquotient (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result   (ref eq))               
                (ref.i31 ,(Double `(i32.div_s ,(Half `(i31.get_s (ref.cast i31ref (local.get $x))))
                                              ,(Half `(i31.get_s (ref.cast i31ref (local.get $y))))))))
 
          (func $raise-division-by-zero (unreachable))
          
-         (func $fxquotient
+         (func $fxquotient (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))
                (result   (ref eq))
@@ -2939,7 +2939,7 @@
                ;; --- re-tag as fixnum ---
                (ref.i31 (i32.shl (local.get $q) (i32.const 1))))
 
-         (func $fx= (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
+         (func $fx= (type $Prim2) (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (call $fixnum? (local.get $v1))
                            (global.get $true))
@@ -2992,7 +2992,7 @@
 
          ;; flonum? : (ref eq) -> (ref eq)
          ;;   Returns #t if the value is a flonum, #f otherwise
-         (func $flonum? (param $a (ref eq)) (result (ref eq))
+         (func $flonum? (type $Prim1) (param $a (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $Flonum) (local.get $a))
                    (then (global.get $true))
@@ -3056,7 +3056,7 @@
                   '($fl+    $fl-    $fl*)
                   '(f64.add f64.sub f64.mul)))
 
-         (func $unsafe-fl/
+         (func $unsafe-fl/ (type $Prim2)
                (param $x (ref $Flonum))
                (param $y (ref $Flonum))
                (result   (ref $Flonum))
@@ -3085,7 +3085,7 @@
 
          (func $raise-check-flonum (unreachable))
          
-         (func $fl/
+         (func $fl/ (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))
                (result   (ref $Flonum))
@@ -3112,7 +3112,7 @@
                            (f64.div (local.get $x/f64) (local.get $y/f64))))
 
 
-        (func $flround
+        (func $flround (type $Prim1)
               (param $a (ref eq))
               (result (ref eq))
 
@@ -3145,7 +3145,7 @@
                           (i32.const 0)
                           (call $js-math-sin (local.get $a/f64))))
 
-        (func $flcos
+        (func $flcos (type $Prim1)
               (param $a (ref eq))
               (result (ref eq))
 
@@ -3160,7 +3160,7 @@
                           (i32.const 0)
                           (call $js-math-cos (local.get $a/f64))))
 
-        (func $fltan
+        (func $fltan (type $Prim1)
               (param $a (ref eq))
               (result (ref eq))
 
@@ -3292,7 +3292,7 @@
                            (i32.const 1)        ;; immutable = true
                            (local.get $out)))
                   
-         (func $number->string
+         (func $number->string (type $Prim2)
                (param $z         (ref eq))
                (param $radix-raw (ref eq))
                (result           (ref $String))
@@ -3700,13 +3700,13 @@
 
          ;; https://docs.racket-lang.org/reference/void.html
          
-         (func $void? (param $v (ref eq))  (result (ref eq))
+         (func $void? (type $Prim1) (param $v (ref eq))  (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $void))
                    (then (global.get $true))
                    (else (global.get $false))))
          
-         (func $make-void (result (ref eq)) ; no arguments
+         (func $make-void (type $Prim0) (result (ref eq)) ; no arguments
                (return (global.get $void)))
 
          ;;;
@@ -3716,7 +3716,7 @@
          ;; https://docs.racket-lang.org/reference/booleans.html
          
          ; todo: Benchmark the two implementations of $boolean? below
-         (func $boolean? (param $v (ref eq)) (result (ref eq))
+         (func $boolean? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $true))
                    (then (global.get $true))
@@ -3735,7 +3735,7 @@
                              (then (global.get $true))
                              (else (global.get $false))))
                    (else (global.get $false))))
-         (func $not (param $v (ref eq)) (result (ref eq))
+         (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $false))
                    (then (global.get $true))
@@ -3772,7 +3772,7 @@
          (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq)) (unreachable))         
          (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
          
-         (func $make-bytes (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
+         (func $make-bytes (type $Prim2) (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
                (local $len i32)
                (local $val i32)
                ;; Decode and check $k as fixnum
@@ -3808,7 +3808,7 @@
                            (i32.const 0)  ;; mutable
                            (call $i8make-array (i32.const 0) (i32.const 0))))
 
-         (func $bytes->immutable-bytes (param $b (ref eq)) (result (ref eq))
+         (func $bytes->immutable-bytes (type $Prim1) (param $b (ref eq)) (result (ref eq))
                (local $bs (ref $Bytes))
                (local.set $bs (call $make-dummy-bytes))
                ;; 1. Check that b is a byte string
@@ -3829,7 +3829,7 @@
                                       (i32.const 0)
                                       (call $i8array-length (struct.get $Bytes $bs (local.get $bs))))))))
 
-         (func $bytes-length (param $a (ref eq)) (result (ref eq))
+         (func $bytes-length (type $Prim1) (param $a (ref eq)) (result (ref eq))
                (local $bs  (ref null $Bytes))
                (local $arr (ref $I8Array))
                (local $len i32)
@@ -3844,14 +3844,14 @@
                ;; Convert to fixnum and return
                (ref.i31 (i32.shl (local.get $len) (i32.const 1))))
 
-         (func $bytes? (param $a (ref eq)) (result (ref eq))
+         (func $bytes? (type $Prim1) (param $a (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Bytes) (local.get $a))
                    (then (global.get $true))
                    (else (global.get $false))))
 
          (func $raise-expected-bytes (unreachable))
 
-         (func $bytes=?
+         (func $bytes=? (type $Prim2)
                (param $v1 (ref eq))
                (param $v2 (ref eq))
                (result    (ref eq))
@@ -3906,7 +3906,7 @@
                (global.get $true))
 
          
-         (func $byte? (param $v (ref eq)) (result (ref eq))
+         (func $byte? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $i i32)
                (if (result (ref eq)) (ref.test (ref i31) (local.get $v))
                    (then (local.set $i (i31.get_u (ref.cast (ref i31) (local.get $v))))
@@ -3920,7 +3920,7 @@
                              (else (global.get $false))))
                    (else (global.get $false))))
          
-         (func $bytes-ref (param $a (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $bytes-ref (type $Prim2) (param $a (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $b   (ref null $Bytes))
                (local $arr (ref $I8Array))
                (local $idx i32)
@@ -4090,7 +4090,7 @@
                            (local.get $ei)))
                (global.get $void))
          
-         (func $bytes-copy
+         (func $bytes-copy (type $Prim1)
                (param $src (ref eq))
                (result (ref eq))
                (local $b  (ref null $Bytes))
@@ -4109,7 +4109,7 @@
                            (i32.const 0)          ;; immutable = false
                            (local.get $a2)))
          
-         (func $bytes-fill!
+         (func $bytes-fill! (type $Prim2)
                (param $dest (ref eq))
                (param $b (ref eq))
                (result (ref eq))
@@ -4133,7 +4133,7 @@
                ;; Return void
                (global.get $void))
 
-         (func $bytes-append
+         (func $bytes-append (type $Prim2)
                (param $b1 (ref eq))
                (param $b2 (ref eq))
                (result (ref eq))
@@ -4161,7 +4161,7 @@
                            (i32.const 0) ;; mutable
                            (local.get $new)))
 
-         (func $bytes->list
+         (func $bytes->list (type $Prim1)
                (param $bstr (ref eq))
                (result (ref eq))
                (local $bs   (ref null $Bytes))
@@ -4194,7 +4194,7 @@
                             (br $loop)))
                (local.get $acc))
 
-         (func $list->bytes
+         (func $list->bytes (type $Prim1)
                (param $xs (ref eq))
                (result (ref eq))
 
@@ -4501,7 +4501,7 @@
          
          ;; 4.4.1 String Constructors, Selectors, and Mutators
          
-         (func $string? (param $s (ref eq)) (result (ref eq))
+         (func $string? (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $String) (local.get $s))
                    (then (global.get $true))
@@ -4513,7 +4513,7 @@
          (func $raise-make-string:bad-char         (unreachable))
          (func $raise-argument-error:char-expected (unreachable))
                   
-         (func $make-string
+         (func $make-string (type $Prim2)
                (param $n-raw  (ref eq))    ;; fixnum
                (param $ch-raw (ref eq))    ;; immediate character
                (result        (ref eq))
@@ -4565,7 +4565,7 @@
                            (i32.const 1)     ;; immutable
                            (local.get $arr)))
          
-         (func $string->immutable-string (param $s (ref eq)) (result (ref eq))
+         (func $string->immutable-string (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str (ref $String))
                (local.set $str (call $make-dummy-string))
                ;; 1. Check that s is a String
@@ -4588,7 +4588,7 @@
                                       (i32.const 0)
                                       (call $i32array-length (struct.get $String $codepoints (local.get $str))))))))
          
-         (func $string-length
+         (func $string-length (type $Prim1)
                (param $s-raw (ref eq))
                (result (ref eq))
                
@@ -4613,7 +4613,7 @@
                (call $i32array-length (struct.get $String $codepoints (local.get $s))))
          
 
-         (func $string-ref
+         (func $string-ref (type $Prim2)
                (param $s (ref eq))
                (param $i (ref eq))
                (result (ref eq))
@@ -4758,7 +4758,7 @@
                            (i32.const 0) ; mutable (also for immutable input)
                            (call $i32array-copy (local.get $arr) (local.get $i32start) (local.get $i32end))))
 
-         (func $string-copy
+         (func $string-copy (type $Prim1)
                (param $s (ref eq))
                (result (ref eq))
 
@@ -4783,7 +4783,7 @@
 
          (func $raise-immutable-string (param $x (ref eq)) (unreachable))
          
-         (func $string-fill!
+         (func $string-fill! (type $Prim2)
                (param $s   (ref eq))
                (param $ch  (ref eq))
                (result     (ref eq))
@@ -4830,7 +4830,7 @@
                                  (struct.get $String $codepoints (local.get $str1))
                                  (struct.get $String $codepoints (local.get $str2)))))
 
-         (func $string-append
+         (func $string-append (type $Prim>=0)
                (param $xs (ref eq))  ; expects a list of strings
                (result (ref eq))
 
@@ -4906,7 +4906,7 @@
                                                               (struct.get $String $codepoints (local.get $str1))
                                                               (struct.get $String $codepoints (local.get $str2)))))))
          
-         (func $string->list (param $s (ref eq)) (result (ref eq))
+         (func $string->list (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))
                (local $arr   (ref $I32Array))
                (local $len   i32)
@@ -4943,7 +4943,7 @@
                                       (br $build)))
                          (local.get $res))))
 
-         (func $list->string (param $xs (ref eq)) (result (ref eq))
+         (func $list->string (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $len   i32)
                (local $str   (ref $String))
                (local $arr   (ref $I32Array))
@@ -5103,7 +5103,7 @@
 
          ;; 4.4.2 String Comparisons
          
-         (func $string=?
+         (func $string=? (type $Prim2)
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq)) (call $string=?/i32 (local.get $a) (local.get $b))
@@ -5134,7 +5134,7 @@
                             (struct.get $String $codepoints (local.get $a))
                             (struct.get $String $codepoints (local.get $b))))
 
-         (func $string<?
+         (func $string<? (type $Prim2)
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq)) (call $string</i32 (local.get $a) (local.get $b))
@@ -5446,7 +5446,7 @@
 
          
          
-         (func $string-take
+         (func $string-take (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
                (result   (ref $String))
@@ -5484,7 +5484,7 @@
 
 
 
-         (func $string-take-right
+         (func $string-take-right (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
                (result   (ref $String))
@@ -5522,7 +5522,7 @@
                            (struct.get $String $codepoints (local.get $s))
                            (local.get $n))))
 
-         (func $string-drop
+         (func $string-drop (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
                (result (ref $String))
@@ -5557,7 +5557,7 @@
                            (struct.get $String $codepoints (local.get $s))
                            (local.get $n))))
 
-         (func $string-drop-right
+         (func $string-drop-right (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
                (result   (ref $String))
@@ -5600,7 +5600,7 @@
 
          (func $bomb (unreachable))
          
-         (func $string-trim-right
+         (func $string-trim-right (type $Prim2)
                (param $s       (ref eq))   ;; any value, must be a string
                (param $sep     (ref eq))   ;; a character (tagged i31) or #f
                (result         (ref $String))
@@ -5672,7 +5672,7 @@
 
                (unreachable))
          
-         (func $string-trim-left
+         (func $string-trim-left (type $Prim2)
                (param $s   (ref eq))   ;; any value, must be a string
                (param $sep (ref eq))   ;; a character (i31) or #f
                (result     (ref $String))
@@ -5752,7 +5752,7 @@
 
          ;; 4.6.1 Characters and Scalar Values
          
-         (func $char? (param $v (ref eq)) (result (ref eq))
+         (func $char? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $i31 (ref i31))
                ; Is $v an immediate?
                (if (i32.eqz (ref.test (ref i31) (local.get $v)))
@@ -5765,7 +5765,7 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $char->integer (param $c (ref eq)) (result (ref eq))
+         (func $char->integer (type $Prim1) (param $c (ref eq)) (result (ref eq))
                (local $i31   (ref i31))
                (local $c/tag i32)
                (local $cp    i32)
@@ -5801,7 +5801,7 @@
                     (call $raise-check-char (local.get $c))))
                (unreachable))
 
-         (func $integer->char
+         (func $integer->char (type $Prim1)
                (param $k (ref eq))
                (result   (ref eq))
                
@@ -5931,7 +5931,7 @@
 
         ;; 4.6.3 Classifications
 
-        (func $char-whitespace? (param $c (ref eq)) (result (ref eq))
+        (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
@@ -5980,7 +5980,7 @@
 
         ;; 4.6.4 Character Conversions
 
-        (func $char-upcase (param $c (ref eq)) (result (ref eq))
+        (func $char-upcase (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
@@ -6002,7 +6002,7 @@
               (ref.i31 (i32.or (i32.shl (local.get $cp2) (i32.const ,char-shift))
                                (i32.const ,char-tag))))
 
-        (func $char-downcase (param $c (ref eq)) (result (ref eq))
+        (func $char-downcase (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
@@ -6024,7 +6024,7 @@
               (ref.i31 (i32.or (i32.shl (local.get $cp2) (i32.const ,char-shift))
                                (i32.const ,char-tag))))
 
-        (func $char-titlecase (param $c (ref eq)) (result (ref eq))
+        (func $char-titlecase (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
@@ -6048,7 +6048,7 @@
 
         ;; Note: JavaScript doesn't have a unicode aware `casefold` so instead
         ;        toLower is used. This is not 100% correct.
-        (func $char-foldcase (param $c (ref eq)) (result (ref eq))
+        (func $char-foldcase (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
@@ -6089,12 +6089,12 @@
          ;;              (field $property-list (mut (ref eq))))))  ;; user-defined properties    
 
 
-         (func $symbol? (param $x (ref eq)) (result (ref eq))
+         (func $symbol? (type $Prim1) (param $x (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Symbol) (local.get $x))
                    (then (global.get $true))
                    (else (global.get $false))))
          
-         (func $symbol=?
+         (func $symbol=? (type $Prim2)
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq))
@@ -6110,7 +6110,7 @@
                (call $js-log (local.get $v))
                (unreachable))
          
-         (func $symbol->string
+         (func $symbol->string (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -6132,7 +6132,7 @@
                (unreachable))
          
 
-         (func $symbol->immutable-string
+         (func $symbol->immutable-string (type $Prim1)
                (param  $v (ref eq))
                (result (ref eq))
 
@@ -6166,7 +6166,7 @@
 
          (func $raise-string->symbol:bad-argument (param $v (ref eq)) (unreachable))                  
 
-         (func $string->symbol
+         (func $string->symbol (type $Prim1)
                (param $v (ref eq))
                (result   (ref $Symbol))
                
@@ -6205,7 +6205,7 @@
 
          (func $raise-string->uninterned-symbol:bad-argument (param $v (ref eq)) (unreachable))
 
-         (func $string->uninterned-symbol
+         (func $string->uninterned-symbol (type $Prim1)
                (param $v (ref eq))
                (result (ref $Symbol))
 
@@ -6225,7 +6225,7 @@
                            (local.get $str)         ;; name
                            (global.get $null)))     ;; empty property list
 
-         (func $symbol-interned?
+         (func $symbol-interned? (type $Prim1)
                (param $sym (ref eq))
                (result     (ref eq))
 
@@ -6245,7 +6245,7 @@
 
          (func $raise-check-symbol (param $x (ref eq)) (unreachable))
          
-         (func $symbol<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+         (func $symbol<? (type $Prim2) (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
                (local $s1 (ref $String))
                (local $s2 (ref $String))
 
@@ -6331,7 +6331,7 @@
                (result i32)
                (ref.test (ref $Keyword) (local.get $v)))
 
-         (func $keyword?
+         (func $keyword? (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
                (if (result (ref eq))
@@ -6339,7 +6339,7 @@
                    (then (global.get $true))
                    (else (global.get $false))))
          
-         (func $string->keyword
+         (func $string->keyword (type $Prim1)
                (param $str (ref eq))
                (result (ref $Keyword))
                ;; Type check: must be a string
@@ -6378,7 +6378,7 @@
 
          (func $raise-argument-error:keyword-expected (unreachable))
          
-         (func $keyword->string ; the result does not contain #:
+         (func $keyword->string (type $Prim1) ; the result does not contain #:
                (param $kw (ref eq))
                (result    (ref $String))
                ;; Type check: must be a keyword
@@ -6397,7 +6397,7 @@
 
                (ref.cast (ref $String) (call $string-copy (local.get $name))))
 
-         (func $keyword->immutable-string
+         (func $keyword->immutable-string (type $Prim1)
                (param $kw (ref eq))
                (result    (ref $String))
                ;; Type check: must be a keyword
@@ -6431,7 +6431,7 @@
          (func $raise-keyword-expected (unreachable))
          
          ;; keyword<? : (ref eq) (ref eq) -> (ref eq)  ;; returns #t/#f
-         (func $keyword<? (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+         (func $keyword<? (type $Prim2) (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
                (local $s1 (ref $String))
                (local $s2 (ref $String))
 
@@ -6470,36 +6470,36 @@
          (func $raise-bad-list-ref-index
                (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
                (unreachable))
-         (func $pair? (param $v (ref eq)) (result (ref eq))
+         (func $pair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $null? (param $v (ref eq)) (result (ref eq))
+         (func $null? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $cons (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
+         (func $cons (type $Prim2) (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
 
-         (func $list* (param $a (ref eq)) (param $tail (ref eq)) (result (ref eq))
+         (func $list* (type $Prim>=1) (param $a (ref eq)) (param $tail (ref eq)) (result (ref eq))
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $tail)))
 
-         (func $car (param $v (ref eq)) (result (ref eq))
+         (func $car (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
                    (then (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))))
                    (else (call $raise-pair-expected (local.get $v))
                          (unreachable))))
 
-         (func $cdr (param $v (ref eq)) (result (ref eq))
+         (func $cdr (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
                    (then (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))))
                    (else (call $raise-pair-expected (local.get $v))
                          (unreachable))))
 
 
-         (func $list? (param $v (ref eq)) (result (ref eq))
+         (func $list? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (block $exit (result (ref eq))
                       (loop $loop
                             (if (ref.eq (local.get $v) (global.get $null))
@@ -6535,7 +6535,7 @@
                ;; fall-through just returns the current count
                (local.get $i))
 
-         (func $length (param $xs (ref eq)) (result (ref eq))
+         (func $length (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $i i32)
                (local.set $i (i32.const 0))
                (block $done
@@ -6586,7 +6586,7 @@
                (unreachable))
 
 
-         (func $list-ref (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $list-ref (type $Prim2) (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $idx i32)
                ;; Decode & check fixnum index
                (if (ref.test (ref i31) (local.get $i))
@@ -6637,7 +6637,7 @@
                           (call $raise-pair-expected (local.get $next)))))
                (unreachable))
          
-         (func $list-tail (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $list-tail (type $Prim2) (param $xs (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $pair (ref $Pair))
                (local $idx  i32)
                ;; Initialize non-defaultable local to a safe value.
@@ -6664,7 +6664,7 @@
 
 
 
-         (func $append (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
+         (func $append (type $Prim>=0) (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $xs) (global.get $null))
                    (then (local.get $ys))  ; "the last list is used directly in the output"
@@ -6679,7 +6679,7 @@
                              (else (call $raise-pair-expected (local.get $xs))
                                    (unreachable))))))
 
-         (func $reverse (param $xs (ref eq)) (result (ref eq))
+         (func $reverse (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $acc (ref eq))
                (local.set $acc (global.get $null))
                (block $done
@@ -6703,7 +6703,7 @@
          ; the check that the input is a list.
          ; Here, for now, we simply have a copy of $reverse.
          ; Note: `alt-reverse` is used in the expansion of `for/list` loops.
-         (func $alt-reverse (param $xs (ref eq)) (result (ref eq))
+         (func $alt-reverse (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $acc (ref eq))
                (local.set $acc (global.get $null))
                (block $done
@@ -6722,7 +6722,7 @@
                             (br $rev)))
                (unreachable))
          
-         (func $memq (param $needle (ref eq)) (param $xs (ref eq)) (result (ref eq))
+         (func $memq (type $Prim2) (param $needle (ref eq)) (param $xs (ref eq)) (result (ref eq))
                (loop $search
                      ;; 1) end-of-list? => not found
                      (if (ref.eq (local.get $xs) (global.get $null))
@@ -6745,7 +6745,7 @@
                (unreachable))
 
 
-         (func $make-list
+         (func $make-list (type $Prim2)
                (param $n-raw (ref eq))    ;; fixnum
                (param $v     (ref eq))    ;; value to repeat
                (result       (ref eq))
@@ -6836,7 +6836,7 @@
                             (br $loop)))
                (local.get $lst))
 
-         (func $map
+         (func $map (type $Prim>=1)
                (param $proc (ref eq))   ;; procedure
                (param $xss  (ref eq))   ;; list of lists
                (result      (ref eq))
@@ -6986,7 +6986,7 @@
                (unreachable))
 
 
-         (func $for-each
+         (func $for-each (type $Prim>=1)
                (param $proc (ref eq))   ;; procedure
                (param $xss  (ref eq))   ;; list of lists
                (result      (ref eq))
@@ -7113,7 +7113,7 @@
                      (br $loop))
                (unreachable))
 
-         (func $filter
+         (func $filter (type $Prim>=1)
                (param $proc (ref eq))  ;; predicate
                (param $xs   (ref eq))  ;; list
                (result      (ref eq))
@@ -7221,7 +7221,7 @@
          (func $raise-make-vector:bad-length (unreachable))
          
 
-         (func $make-vector
+         (func $make-vector (type $Prim2)
                (param $k-fx   (ref eq))  ;; fixnum
                (param $val    (ref eq))  ;; optional, defaults to 0
                (result        (ref eq))
@@ -7256,7 +7256,7 @@
                            (local.get $arr)))
 
          
-         (func $vector-length (param $v (ref eq)) (result (ref eq))
+         (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (if (result (ref eq))
                    (ref.test (ref $Vector) (local.get $v))
@@ -7285,7 +7285,7 @@
          (func $vector?/i32 (param $a (ref eq)) (result i32)
                (ref.test (ref $Vector) (local.get $a)))
 
-         (func $vector? (param $a (ref eq)) (result (ref eq))
+         (func $vector? (type $Prim1) (param $a (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $Vector) (local.get $a))
                    (then (global.get $true))
@@ -7308,7 +7308,7 @@
                                (local.get $a) (local.get $i) (local.get $len))
                          (unreachable))))
 
-         (func $vector-ref
+         (func $vector-ref (type $Prim2)
                (param $v (ref eq)) (param $i (ref eq))
                (result (ref eq))
                (local $vec (ref $Vector))
@@ -7391,7 +7391,7 @@
                                (local.get $vec) (local.get $idx) (local.get $len))
                          (unreachable))))
 
-         (func $vector-fill! (param $v (ref eq)) (param $x (ref eq)) (result (ref eq))
+         (func $vector-fill! (type $Prim2) (param $v (ref eq)) (param $x (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local.set $vec (global.get $dummy-vector))
                (if (ref.test (ref $Vector) (local.get $v))
@@ -7488,7 +7488,7 @@
                      (struct.get $Vector $arr (local.get $src))  (local.get $ss) (local.get $se))
                (global.get $void))
 
-         (func $vector-empty? (param $v (ref eq)) (result (ref eq))
+         (func $vector-empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $len i32)
                (if (result (ref eq))
@@ -7519,7 +7519,7 @@
                                  (struct.get $Vector $arr (local.get $va))
                                  (struct.get $Vector $arr (local.get $vb)))))
 
-         (func $vector-take (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $vector-take (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $ix i32)
                (local $len i32)
@@ -7540,7 +7540,7 @@
                (struct.new $Vector (i32.const 0)
                            (call $array-take (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
-         (func $vector-drop (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $vector-drop (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $ix i32)
                (local $len i32)
@@ -7561,7 +7561,7 @@
                (struct.new $Vector (i32.const 0)
                            (call $array-drop (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
-         (func $vector-drop-right (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $vector-drop-right (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $ix i32)
                (local $len i32)
@@ -7582,7 +7582,7 @@
                (struct.new $Vector (i32.const 0)
                            (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
-         (func $vector-split-at (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $vector-split-at (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $ix  i32)
                (local $len i32)
@@ -7612,7 +7612,7 @@
 
          (func $raise-expected-vector (unreachable))
          
-         (func $vector->list
+         (func $vector->list (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
                (if (i32.eqz (ref.test (ref $Vector) (local.get $v)))
@@ -7652,16 +7652,16 @@
          ;; These "boxes" are not the same as the Racket datatype `box`.
          ;; See next section.
          
-         (func $boxed (param $v (ref eq))  (result (ref eq)) 
+         (func $boxed (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
                (struct.new $Boxed (local.get $v)))
 
-         (func $unboxed (param $b (ref eq))  (result (ref eq))
+         (func $unboxed (type $Prim1) (param $b (ref eq))  (result (ref eq))
                (struct.get $Boxed $v
                            (block $ok (result (ref $Boxed))
                              (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
                              (unreachable))))
 
-         (func $set-boxed!
+         (func $set-boxed! (type $Prim2)
                ; todo: make this return no values
                ;       problem: set-boxed! is currently wrapped by drop in
                ;                the code generator. Add an rule that avoids
@@ -7686,14 +7686,14 @@
          ;; https://docs.racket-lang.org/reference/boxes.html
 
          ;; This section implements the Racket data type `box`.
-         (func $box (param $v (ref eq))  (result (ref eq)) 
+         (func $box (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
                (struct.new $Box (i32.const 0) (local.get $v)))
-         (func $unbox (param $b (ref eq))  (result (ref eq))
+         (func $unbox (type $Prim1) (param $b (ref eq))  (result (ref eq))
                (struct.get $Box $v
                            (block $ok (result (ref $Box))
                              (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
                              (return (global.get $error)))))
-         (func $set-box! ; todo: should this invalidate the hash code?
+         (func $set-box! (type $Prim2) ; todo: should this invalidate the hash code?
                (param $b (ref eq)) (param $v (ref eq))
                (result (ref eq))
                ; 1. Cast $b into a (ref $Box)
@@ -7830,7 +7830,7 @@
 
          ; Theory: https://thenumb.at/Hashtables/
 
-         (func $make-empty-hasheq (result (ref $HashEqMutable))
+         (func $make-empty-hasheq (type $Prim0) (result (ref $HashEqMutable))
                (local $entries (ref $Array))
                ;; Step 1: Allocate an array with 2 × capacity (key/value pairs)
                ;; Capacity = 16 entries → 32 elements
@@ -7847,7 +7847,7 @@
          (func $raise-argument-error:pair-expected1 (unreachable))
          (func $raise-argument-error:pair-expected2 (unreachable))
          
-         (func $make-hasheq ; (make-hasheq [assocs])   - optional without default 
+         (func $make-hasheq (type $Prim1) ; (make-hasheq [assocs])   - optional without default 
                (param $assocs (ref eq))       ;; Either $missing or an alist of key/value pairs
                (result (ref $HashEqMutable))
 
@@ -8102,7 +8102,7 @@
 
          (func $raise-argument-error:hasheq-mutable-expected (unreachable))
          
-         (func $hash-remove!
+         (func $hash-remove! (type $Prim2)
                (param $ht  (ref eq))
                (param $key (ref eq))
                (result     (ref eq))
@@ -8249,7 +8249,7 @@
                (local.get $table))
 
 
-         (func $hash-has-key?
+         (func $hash-has-key? (type $Prim2)
                (param $ht  (ref eq))
                (param $key (ref eq))
                (result     (ref eq))
@@ -8304,7 +8304,7 @@
                ;; Not found: return #f
                (global.get $false))
 
-         (func $hash-clear!
+         (func $hash-clear! (type $Prim1)
                (param $ht (ref eq))
                (result    (ref eq))
                ;; Type check
@@ -8337,7 +8337,7 @@
          ;;; HASH CODES
          ;;;
 
-         (func $eq-hash-code
+         (func $eq-hash-code (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
 
@@ -8704,7 +8704,7 @@
         (func $raise-check-string-port (param $x (ref eq)) (unreachable))
         (func $raise-check-port-or-false (param $x (ref eq)) (unreachable))
          
-         (func $string-port?
+         (func $string-port? (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
                (if (result (ref eq))
@@ -8712,7 +8712,7 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $port-next-location
+         (func $port-next-location (type $Prim1)
                (param $p (ref eq))
                (result   (ref eq))
 
@@ -8730,7 +8730,7 @@
                                 (struct.get $Location $col  (local.get $loc))
                                 (struct.get $Location $pos  (local.get $loc))))
 
-         (func $open-output-bytes
+         (func $open-output-bytes (type $Prim0)
                (result (ref eq))
 
                (local $bs  (ref $Bytes))
@@ -8755,7 +8755,7 @@
                            (i32.const 0)                 ;; $utf8-left
                            (i32.const 0)))               ;; $utf8-bytes
 
-         (func $get-output-bytes
+         (func $get-output-bytes (type $Prim1)
                (param $out (ref eq))
                (result (ref eq))
                
@@ -8801,7 +8801,7 @@
          ;;         (field $idx   i32)          ; the current index into the string
          ;;         (field $loc   (ref $Location)))) ; the current location
          
-         (func $write-byte
+         (func $write-byte (type $Prim2)
                (param $byte (ref eq))
                (param $out  (ref eq))
                (result      (ref eq))
@@ -8954,7 +8954,7 @@
          ;;; FFI Helpers
          ;;;
 
-         (func $js-log
+         (func $js-log (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -9054,7 +9054,7 @@
          (func $struct?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $Struct) (local.get $v)))
 
-         (func $struct? (param $v (ref eq)) (result (ref eq))
+         (func $struct? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $Struct) (local.get $v))
                    (then (global.get $true))
@@ -9063,7 +9063,7 @@
          (func $struct-type?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $StructType) (local.get $v)))
 
-         (func $struct-type? (param $v (ref eq)) (result (ref eq))
+         (func $struct-type? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $StructType) (local.get $v))
                    (then (global.get $true))
@@ -10153,25 +10153,25 @@
                          (struct.get $Closure $code (local.get $accessor))))
 
 
-         (func $struct-constructor-procedure? (param $v (ref eq)) (result (ref eq))
+         (func $struct-constructor-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $StructConstructorProcedure) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $struct-predicate-procedure? (param $v (ref eq)) (result (ref eq))
+         (func $struct-predicate-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $StructPredicateProcedure) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
          
-         (func $struct-accessor-procedure? (param $v (ref eq)) (result (ref eq))
+         (func $struct-accessor-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $StructAccessorProcedure) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $struct-mutator-procedure? (param $v (ref eq)) (result (ref eq))
+         (func $struct-mutator-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.test (ref $StructMutatorProcedure) (local.get $v))
                    (then (global.get $true))
@@ -10317,7 +10317,7 @@
          ;;; PROCEDURES
          ;;;
 
-         (func $procedure?
+         (func $procedure? (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
                (if (result (ref eq))
@@ -10332,7 +10332,7 @@
          ; Notes: repacking of arguments are done in $invoke-closure,
          ;        so no repacking is needed in $apply.
          
-         (func $apply
+         (func $apply (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
                (param $xs   (ref eq))   ;; list of arguments
                (result (ref eq))        ;; result of applying the procedure
@@ -10415,7 +10415,7 @@
          
          (func $raise-argument-error:procedure-expected (unreachable))
          
-         (func $procedure-arity
+         (func $procedure-arity (type $Prim1)
                ; Wrapper: accepts any value, checks that it’s a procedure, then delegates
                ; to the checked version that expects (ref $Procedure).
                (param $proc (ref eq))
@@ -10470,7 +10470,7 @@
 
 
          
-         (func $procedure-arity-mask
+         (func $procedure-arity-mask (type $Prim1)
                ; TODO: Only tested with closures.
                ;       Also test with primitives and case-lambda
                (param $proc (ref eq))
@@ -10591,7 +10591,7 @@
 
          (func $raise-argument-error:primitive-procedure-expected (unreachable))
          
-         (func $primitive?
+         (func $primitive? (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
 
@@ -10600,7 +10600,7 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $primitive-result-arity
+         (func $primitive-result-arity (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
 
@@ -10614,7 +10614,7 @@
                (struct.get $PrimitiveProcedure $result-arity (local.get $p)))
 
 
-         (func $primitive-closure?
+         (func $primitive-closure? (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
 
@@ -10642,7 +10642,7 @@
          (global $fasl-void       (ref i31) ,(Imm 10))
          (global $fasl-eof        (ref i31) ,(Imm 11))
          
-         (func $s-exp->fasl
+         (func $s-exp->fasl (type $Prim2)
                (param $v   (ref eq))
                ; optionals:
                (param $out (ref eq)) ;; a StringPort or #f (or $missing)              
@@ -10860,7 +10860,7 @@
          
          ;;; Fasl decoding
                   
-         (func $fasl->s-exp
+         (func $fasl->s-exp (type $Prim1)
               ;; entry point: decode byte string
               (param $bs (ref eq))
               (result    (ref eq))
@@ -11194,17 +11194,17 @@
          ; so it is handled in the elsewhere (for now, we only handle the case `(#%variable-reference)`.
 
          ; This function determines if the variable stems from a module compiled in unsafe mode or not.
-         (func $variable-reference-from-unsafe?
+         (func $variable-reference-from-unsafe? (type $Prim1)
                (param  $varref (ref eq))
                (result (ref eq))
                (global.get $true))
 
-         (func $variable-reference-constant?
+         (func $variable-reference-constant? (type $Prim1)
                (param $varref (ref eq))
                (result (ref eq))
                (global.get $true))  ; todo: simple implementation for now.
 
-         (func $raise-unbound-variable-reference
+         (func $raise-unbound-variable-reference (type $Prim0)
                (result (ref eq))
                (unreachable))
          
@@ -11217,7 +11217,7 @@
          ;; 14.8 Thread Groups
          ;; 14.9 Structure Inspectors
 
-         (func $current-inspector   ; TODO: dummy 
+         (func $current-inspector (type $Prim0)   ; TODO: dummy 
                (result (ref eq))
                (global.get $false))
          
@@ -11233,7 +11233,7 @@
 
          ;; 17.1 Unsafe Numeric Operations
 
-         (func $unsafe-fx+
+         (func $unsafe-fx+ (type $Prim2)
                (param $x (ref eq))   ;; x must be a fixnum (i31 with lsb = 0)
                (param $y (ref eq))   ;; y must be a fixnum (i31 with lsb = 0)
                (result   (ref eq))   ;; result is a fixnum (i31)
@@ -11242,7 +11242,7 @@
                (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
                                  (i31.get_s (ref.cast (ref i31) (local.get $y))))))
 
-         (func $unsafe-fx=
+         (func $unsafe-fx= (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))
                (result   (ref eq))
@@ -11253,7 +11253,7 @@
                    (then (global.get $true))
                    (else (global.get $false))))
          
-         (func $unsafe-fx<
+         (func $unsafe-fx< (type $Prim2)
                (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
                (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
                (result   (ref eq)) ;; result is a boolean
@@ -11268,15 +11268,15 @@
          ;; 17.2 Unsafe Character Operations
          ;; 17.3 Unsafe Compound-Data Operations
 
-         (func $unsafe-car (param $v (ref eq)) (result (ref eq))
+         (func $unsafe-car (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $v))))
 
-         (func $unsafe-cdr (param $v (ref eq)) (result (ref eq))
+         (func $unsafe-cdr (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))))
 
          ;; Note the `unsafe-vector*-...` variants do not work on impersonators.
          ;; (the `unsafe-vector-...` variants do)
-         (func $unsafe-vector*-length (param $v (ref eq)) (result (ref eq))
+         (func $unsafe-vector*-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
                (ref.i31 (i32.shl
@@ -12539,7 +12539,7 @@
 
                ;; 14.1 Namespaces
 
-               (func $make-empty-namespace (result (ref $Namespace))
+               (func $make-empty-namespace (type $Prim0) (result (ref $Namespace))
                      (struct.new $Namespace
                                  (i32.const 0)                         ;; $hash
                                  (global.get $false)                   ;; $name
@@ -12551,7 +12551,7 @@
                (func $raise-undefined-top (unreachable))
                (func $raise-argument-error:namespace-expected (unreachable))
 
-               (func $namespace-variable-value-simple
+               (func $namespace-variable-value-simple (type $Prim2)
                      (param $ns  (ref eq))
                      (param $sym (ref eq))
                      (result     (ref eq))
@@ -12647,7 +12647,7 @@
                           (return (global.get $void))))
                      (unreachable))
 
-               (func $namespace-undefine-variable!
+               (func $namespace-undefine-variable! (type $Prim2)
                      (param $ns  (ref eq))
                      (param $sym (ref eq))
                      (result     (ref eq))
