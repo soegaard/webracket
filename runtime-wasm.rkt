@@ -3057,19 +3057,25 @@
                   '(f64.add f64.sub f64.mul)))
 
          (func $unsafe-fl/ (type $Prim2)
-               (param $x (ref $Flonum))
-               (param $y (ref $Flonum))
-               (result   (ref $Flonum))
-               
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
+
+               (local $x/fl (ref $Flonum))
+               (local $y/fl (ref $Flonum))
                (local $x/f64 f64)
                (local $y/f64 f64)
+               ;; Validate via cast (will trap if not a Flonum - hence unsafe)
+               (local.set $x/fl (ref.cast (ref $Flonum) (local.get $x)))
+               (local.set $y/fl (ref.cast (ref $Flonum) (local.get $y)))
                ;; Extract f64 values
-               (local.set $x/f64 (struct.get $Flonum $v (local.get $x)))
-               (local.set $y/f64 (struct.get $Flonum $v (local.get $y)))
+               (local.set $x/f64 (struct.get $Flonum $v (local.get $x/fl)))
+               (local.set $y/f64 (struct.get $Flonum $v (local.get $y/fl)))
                ;; Compute and box result
                (struct.new $Flonum
-                           (i32.const 0) ;; hash = 0
+                           (i32.const 0)  ;; hash = 0
                            (f64.div (local.get $x/f64) (local.get $y/f64))))
+
          
          (func $fl//checked
                (param $x (ref $Flonum))
@@ -3088,7 +3094,7 @@
          (func $fl/ (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))
-               (result   (ref $Flonum))
+               (result   (ref eq)) ; An (ref $Flonum)
                
                (local $x/fl  (ref $Flonum))
                (local $y/fl  (ref $Flonum))
@@ -3295,7 +3301,7 @@
          (func $number->string (type $Prim2)
                (param $z         (ref eq))
                (param $radix-raw (ref eq))
-               (result           (ref $String))
+               (result           (ref eq)) ;; An (ref $String)
 
                (local $radix i32)
                (local $n     i32)
@@ -5442,14 +5448,10 @@
                      (call $growable-array->array (local.get $g))))
 
          
-
-
-         
-         
          (func $string-take (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
-               (result   (ref $String))
+               (result   (ref eq))  ; an (ref $String)
 
                (local $str   (ref $String))
                (local $n/tag i32)
@@ -5487,7 +5489,7 @@
          (func $string-take-right (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
-               (result   (ref $String))
+               (result   (ref eq))  ; an (ref $String)
 
                (local $str   (ref $String))
                (local $n/tag i32)
@@ -5525,7 +5527,7 @@
          (func $string-drop (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
-               (result (ref $String))
+               (result   (ref eq))  ; an (ref $String)
 
                (local $str   (ref $String))
                (local $n/tag i32)
@@ -5560,7 +5562,7 @@
          (func $string-drop-right (type $Prim2)
                (param $s (ref eq))
                (param $n (ref eq))
-               (result   (ref $String))
+               (result   (ref eq)) ; an (ref $String)
 
                (local $str   (ref $String))
                (local $n/tag i32)
@@ -5603,7 +5605,7 @@
          (func $string-trim-right (type $Prim2)
                (param $s       (ref eq))   ;; any value, must be a string
                (param $sep     (ref eq))   ;; a character (tagged i31) or #f
-               (result         (ref $String))
+               (result         (ref eq))   ;; an (ref $String)
 
                (local $str     (ref $String))
                (local $len     i32)
@@ -5675,7 +5677,7 @@
          (func $string-trim-left (type $Prim2)
                (param $s   (ref eq))   ;; any value, must be a string
                (param $sep (ref eq))   ;; a character (i31) or #f
-               (result     (ref $String))
+               (result     (ref eq))   ;; an (ref $String)
 
                (local $str     (ref $String))
                (local $len     i32)
@@ -6168,7 +6170,7 @@
 
          (func $string->symbol (type $Prim1)
                (param $v (ref eq))
-               (result   (ref $Symbol))
+               (result   (ref eq))  ; An (ref $Symbol)
                
                (if (ref.test (ref $String) (local.get $v))
                    (then (return
@@ -6179,7 +6181,7 @@
 
          (func $string->symbol/checked
                (param $str (ref $String))
-               (result     (ref $Symbol))
+               (result     (ref $Symbol)) 
 
                (local $existing (ref eq))
                (local $sym      (ref $Symbol))
@@ -6207,7 +6209,7 @@
 
          (func $string->uninterned-symbol (type $Prim1)
                (param $v (ref eq))
-               (result (ref $Symbol))
+               (result   (ref eq)) ; An (ref $Symbol)
 
                (if (ref.test (ref $String) (local.get $v))
                    (then (return
@@ -6341,7 +6343,7 @@
          
          (func $string->keyword (type $Prim1)
                (param $str (ref eq))
-               (result (ref $Keyword))
+               (result (ref eq)) ; an (ref $Keyword)
                ;; Type check: must be a string
                (if (i32.eqz (ref.test (ref $String) (local.get $str)))
                    (then (call $raise-argument-error:string-expected (local.get $str))
@@ -6380,7 +6382,7 @@
          
          (func $keyword->string (type $Prim1) ; the result does not contain #:
                (param $kw (ref eq))
-               (result    (ref $String))
+               (result    (ref eq)) ; an (ref $String)
                ;; Type check: must be a keyword
                (if (i32.eqz (ref.test (ref $Keyword) (local.get $kw)))
                    (then (call $raise-argument-error:keyword-expected (local.get $kw))
@@ -6399,7 +6401,7 @@
 
          (func $keyword->immutable-string (type $Prim1)
                (param $kw (ref eq))
-               (result    (ref $String))
+               (result    (ref eq)) ; an (ref $String)
                ;; Type check: must be a keyword
                (if (i32.eqz (ref.test (ref $Keyword) (local.get $kw)))
                    (then (call $raise-argument-error:keyword-expected (local.get $kw))
@@ -6664,7 +6666,11 @@
 
 
 
-         (func $append (type $Prim>=0) (param $xs (ref eq)) (param $ys (ref eq)) (result (ref eq))
+         (func $append #;(type $Prim>=0)  ; todo: make $append variadic and add correct type
+               (param $xs (ref eq))
+               (param $ys (ref eq))
+               (result    (ref eq))
+               
                (if (result (ref eq))
                    (ref.eq (local.get $xs) (global.get $null))
                    (then (local.get $ys))  ; "the last list is used directly in the output"
@@ -7830,7 +7836,9 @@
 
          ; Theory: https://thenumb.at/Hashtables/
 
-         (func $make-empty-hasheq (type $Prim0) (result (ref $HashEqMutable))
+         (func $make-empty-hasheq (type $Prim0)
+               (result (ref eq))  ; an (ref $HashEqMutable)
+               
                (local $entries (ref $Array))
                ;; Step 1: Allocate an array with 2 × capacity (key/value pairs)
                ;; Capacity = 16 entries → 32 elements
@@ -7848,8 +7856,8 @@
          (func $raise-argument-error:pair-expected2 (unreachable))
          
          (func $make-hasheq (type $Prim1) ; (make-hasheq [assocs])   - optional without default 
-               (param $assocs (ref eq))       ;; Either $missing or an alist of key/value pairs
-               (result (ref $HashEqMutable))
+               (param $assocs (ref eq))   ;; Either $missing or an alist of key/value pairs
+               (result        (ref eq))   ;; an (ref $HashEqMutable)
 
                (local $alist (ref eq))
                (local $pair  (ref $Pair))
@@ -10332,10 +10340,10 @@
          ; Notes: repacking of arguments are done in $invoke-closure,
          ;        so no repacking is needed in $apply.
          
-         (func $apply (type $Prim>=2)
-               (param $proc (ref eq))   ;; procedure
-               (param $xs   (ref eq))   ;; list of arguments
-               (result (ref eq))        ;; result of applying the procedure
+         (func $apply #;(type $Prim>=2)  ;; TODO - Implement full `append` and add type
+               (param $proc (ref eq))    ;; procedure
+               (param $xs   (ref eq))    ;; list of arguments
+               (result      (ref eq))    ;; result of applying the procedure
 
                (local $p    (ref $Procedure))
                (local $args (ref $Array))  ;; array of arguments
@@ -12539,7 +12547,9 @@
 
                ;; 14.1 Namespaces
 
-               (func $make-empty-namespace (type $Prim0) (result (ref $Namespace))
+               (func $make-empty-namespace (type $Prim0)
+                     (result (ref eq)) ;; and (ref $Namespace)
+                     
                      (struct.new $Namespace
                                  (i32.const 0)                         ;; $hash
                                  (global.get $false)                   ;; $name
