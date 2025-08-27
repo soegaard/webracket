@@ -76,7 +76,7 @@
         [(? list? l)        (apply min (map min-arity l))]
         [_                  (error 'min-arity "got: ~a" a)]))
 
-    (define todo-handle-later '(bytes string vector vector-immutable namespace? void))
+    (define todo-handle-later '(bytes string vector vector-immutable namespace?))
 
     (define (initialize-primitives-as-globals)
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
@@ -3771,20 +3771,6 @@
                              (struct.get $Flonum $v (local.get $val)))
                        ,(Imm #\0))))
          
-         ;;;
-         ;;;  4.21 Void
-         ;;;
-
-         ;; https://docs.racket-lang.org/reference/void.html
-         
-         (func $void? (type $Prim1) (param $v (ref eq))  (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $v) (global.get $void))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-         
-         (func $make-void (type $Prim0) (result (ref eq)) ; no arguments
-               (return (global.get $void)))
 
 
         ;;;
@@ -10680,6 +10666,31 @@
                    (ref.test (ref $PrimitiveClosure) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         ;;;
+         ;;;  4.21 Void
+         ;;;
+
+         ;; https://docs.racket-lang.org/reference/void.html
+         
+         (func $void? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $v) (global.get $void))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
+         (func $void (type $Prim>=0)
+               (param $xs (ref eq))
+               (result    (ref eq))
+
+               (global.get $void))
+
+         (func $make-void (type $Prim0) (result (ref eq)) ; no arguments
+               (return (global.get $void)))
+
 
          ;;;
          ;;; 10. CONTROL FLOW
