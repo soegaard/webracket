@@ -492,7 +492,7 @@
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes bytes->list list->bytes bytes=?
   bytes->string/utf-8
 
-  string? string=? string<?
+  string? string=? string<? string<=? string>? string>=?
   make-string build-string string-ref string-set! string-length substring string-copy!
   string-copy string-fill! string-append string->list list->string
   string->bytes/utf-8 string->immutable-string
@@ -507,9 +507,9 @@
   string-suffix?     ; from racket/string
   string-prefix?     ; from racket/string
   string-contains?   ; from racket/string
-  string-find        ; from racket/string
+  ; string-find        ; from racket/string  (added in 8.15)
 
-  symbol? symbol=? symbol<?
+  symbol? symbol=? symbol<? 
   string->symbol symbol->string
   string->uninterned-symbol symbol-interned?
   symbol->immutable-string
