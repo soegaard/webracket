@@ -79,6 +79,7 @@
 var memory = new WebAssembly.Memory({initial:1024});
 
 var output_string = [];
+var externals = [];
 var callback_export;
 
 function read_u32(arr, i) {
@@ -152,6 +153,10 @@ function fasl_to_js_value(arr, i = 0) {
       return [undefined, i];
     case @|fasl-eof|:
       return ['<eof>', i];
+    case @|fasl-external|: {
+      const idx = u32();
+      return [externals[idx], i];
+    }
     default:
       throw new Error('bad FASL tag ' + tag);
   }
@@ -309,7 +314,11 @@ function js_value_to_fasl(v) {
       writeStringVal(x);
       return;
     }
-    throw new TypeError("unsupported value for FASL encoding: " + String(x));
+    // Fallback: treat value as external reference
+    const idx = externals.push(x) - 1;
+    writeByte(@|fasl-external|);
+    writeU32(idx >>> 0);
+    return;
   }
   writeAny(v);
   return Uint8Array.from(out);
@@ -458,6 +467,8 @@ var imports = {
         const [v] = fasl_to_js_value(bytes);
         console.log(v);
       }),
+      'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
+      'lookup_external':   (idx => externals[idx]),
       'char_upcase': ((cp) => {
         const s = String.fromCodePoint(cp).toUpperCase();
         const arr = Array.from(s);

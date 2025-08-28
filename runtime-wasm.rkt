@@ -652,6 +652,16 @@
                (param i32)
                (result (ref extern)))
 
+         (func $js-register-external
+               (import "primitives" "register_external")
+               (param (ref extern))
+               (result i32))
+
+         (func $js-lookup-external
+               (import "primitives" "lookup_external")
+               (param i32)
+               (result (ref extern)))
+
          ;; FFI related imports
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -11445,6 +11455,7 @@
          (global $fasl-flonum     (ref i31) ,(Imm 9))
          (global $fasl-void       (ref i31) ,(Imm 10))
          (global $fasl-eof        (ref i31) ,(Imm 11))
+         (global $fasl-external   (ref i31) ,(Imm 12))
          
          (func $s-exp->fasl (type $Prim2)
                (param $v   (ref eq))
@@ -11539,17 +11550,25 @@
                                                                       (call $fasl:write-u32 (local.get $n) (local.get $out))
 
                                                                       (local.set $i (i32.const 0))
-                                                                      (block $break
-                                                                             (loop $loop
-                                                                                   (br_if $break (i32.ge_u (local.get $i) (local.get $n)))
-                                                                                   (call $fasl:s-exp->fasl
-                                                                                         (array.get $Array (local.get $arr) (local.get $i))
-                                                                                         (local.get $out))
-                                                                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                                                                   (br $loop))))
+                                                                     (block $break
+                                                                            (loop $loop
+                                                                                  (br_if $break (i32.ge_u (local.get $i) (local.get $n)))
+                                                                                  (call $fasl:s-exp->fasl
+                                                                                        (array.get $Array (local.get $arr) (local.get $i))
+                                                                                        (local.get $out))
+                                                                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                                                  (br $loop))))
                                                                      (else
-                                                                      (unreachable) ;; unsupported type
-                                                                      )))))))))))))))
+                                                                      (if (ref.test (ref $External) (local.get $v))
+                                                                          (then
+                                                                           (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
+                                                                           (call $fasl:write-u32
+                                                                                 (call $js-register-external
+                                                                                       (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
+                                                                                 (local.get $out)))
+                                                                          (else
+                                                                           (unreachable) ;; unsupported type
+                                                                           )))))))))))))))
 
          (func $s-exp->fasl/immediate
                (param $i   i32)
@@ -11816,6 +11835,7 @@
               (local $j    i32)
               (local $elem (ref eq))
               (local $fl   (ref $Flonum))
+              (local $idx  i32)
               
               (local.set $tag (array.get_u $I8Array (local.get $arr) (local.get $i)))
               (local.set $tag (i32.shl (local.get $tag) (i32.const 1))) ; as fixnum
@@ -11926,7 +11946,17 @@
                     (i32.eq (local.get $tag) (i31.get_u (global.get $fasl-eof)))
                     (then (return (ref.i31 (i32.const ,eof-value))
                                   (local.get $i)))
-                    (else (unreachable))))))))))))))))))))))))))
+                    (else
+                     ;; external
+                     (if (result (ref eq) i32)
+                         (i32.eq (local.get $tag) (i31.get_u (global.get $fasl-external)))
+                         (then (call $fasl:read-u32 (local.get $arr) (local.get $i))
+                               (local.set $i) (local.set $idx)
+                               (return (struct.new $External
+                                                   (i32.const 0)
+                                                   (call $js-lookup-external (local.get $idx)))
+                                       (local.get $i)))
+                         (else (unreachable))))))))))))))))))))))))))
 
 
         (func $copy-memory-to-i8array (export "copy-memory-to-i8array")

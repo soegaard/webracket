@@ -10,7 +10,8 @@
          fasl-vector
          fasl-flonum
          fasl-void
-         fasl-eof)
+         fasl-eof
+         fasl-external)
 
 (define fasl-fixnum     0)
 (define fasl-character  1)
@@ -24,4 +25,5 @@
 (define fasl-flonum     9)
 (define fasl-void      10)
 (define fasl-eof       11)
+(define fasl-external  12)
 
