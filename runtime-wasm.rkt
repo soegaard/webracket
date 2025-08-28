@@ -11563,12 +11563,10 @@
                                                                           (then
                                                                            (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
                                                                            (call $fasl:write-u32
-                                                                                 (call $js-register-external
-                                                                                       (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
-                                                                                 (local.get $out)))
-                                                                          (else
-                                                                           (unreachable) ;; unsupported type
-                                                                           )))))))))))))))
+                                                                      (call $js-register-external
+                                                                                      (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
+                                                                                (local.get $out)))
+                                                                          (else (unreachable)))))))))))))))))))) ;; unsupported type
 
          (func $s-exp->fasl/immediate
                (param $i   i32)
