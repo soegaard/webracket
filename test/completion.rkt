@@ -1063,6 +1063,7 @@
             procedure-arity-includes?
             procedure-arity-mask
             procedure-arity
+            procedure->external
             procedure?
             procedure-rename
             apply

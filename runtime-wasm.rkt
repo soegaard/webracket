@@ -9688,12 +9688,13 @@
                                 (i32.const 0)))
                (local.get $len))
 
-         (func $procedure->external
+         (func $procedure->external (export "procedure->external")
                (param $proc (ref eq))
-               (result (ref extern))
+               (result (ref eq))
 
                (local $p  (ref $Procedure))
                (local $id i32)
+               (local $cb (ref extern))
 
                ;; Fail-early type check
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
@@ -9702,9 +9703,12 @@
 
                (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $id (call $callback-register (local.get $p)))
+               (local.set $cb (call $js-make-callback (local.get $id)))
 
-               ;; Ask JS to build a callable extern function that forwards to (export "callback")
-               (call $js-make-callback (local.get $id)))
+               ;; Wrap extern callback as a Racket external value
+               (struct.new $External
+                           (i32.const 0)
+                           (local.get $cb)))
 
          ;;;
          ;;; STRUCTURES
