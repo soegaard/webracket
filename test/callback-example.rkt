@@ -44,7 +44,7 @@
   (set! count (+ count 1))
   (update))
 
-(define id (callback-register on-click))
-(js-eval (string-append "document.getElementById('press-button').addEventListener('click', make_callback("
-                        (number->string id)
-                        "));"))
+(define on-click-host (procedure->external on-click))
+(js-add-event-listener! (js-document-get-element-by-id "press-button")
+                        "click"
+                        on-click-host)
