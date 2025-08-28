@@ -647,6 +647,11 @@
                (import "math" "tan")
                (param f64) (result f64))
 
+         (func $js-make-callback
+               (import "primitives" "make_callback")
+               (param i32)
+               (result (ref extern)))
+
          ;; FFI related imports
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -1611,7 +1616,7 @@
                (local.set $n (array.len (local.get $a)))
                (struct.new $GrowableArray (local.get $a) (local.get $n) (local.get $n)))
 
-         
+
 
 
          ;;;
@@ -9633,24 +9638,27 @@
 
          (func $callback-register (export "callback-register")
                (param $p (ref $Procedure))
-               (result i32)
+               (result   i32)
+
                (local $g (ref $GrowableArray))
                (local $i i32)
+               
                (local.set $g (global.get $callback-registry))
                (local.set $i (call $growable-array-count (local.get $g)))
                (call $growable-array-add! (local.get $g) (local.get $p))
                (local.get $i))
 
          (func $callback (export "callback")
-               (param $id    i32)
-               (param $fasl  i32)
-               (result       i32)
+               (param $id i32)
+               (param $fasl i32)
+               (result i32)
 
                (local $proc  (ref $Procedure))
                (local $vec   (ref $Vector))
                (local $args  (ref $Args))
                (local $res   (ref eq))
                (local $len   i32)
+
                ;; Look up procedure by id
                (local.set $proc
                           (ref.cast (ref $Procedure)
@@ -9680,7 +9688,23 @@
                                 (i32.const 0)))
                (local.get $len))
 
+         (func $procedure->external
+               (param $proc (ref eq))
+               (result (ref extern))
 
+               (local $p  (ref $Procedure))
+               (local $id i32)
+
+               ;; Fail-early type check
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+
+               (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $id (call $callback-register (local.get $p)))
+
+               ;; Ask JS to build a callable extern function that forwards to (export "callback")
+               (call $js-make-callback (local.get $id)))
 
          ;;;
          ;;; STRUCTURES
