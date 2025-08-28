@@ -11550,24 +11550,24 @@
                                                                       (call $fasl:write-u32 (local.get $n) (local.get $out))
 
                                                                       (local.set $i (i32.const 0))
-                                                                     (block $break
-                                                                            (loop $loop
-                                                                                  (br_if $break (i32.ge_u (local.get $i) (local.get $n)))
-                                                                                  (call $fasl:s-exp->fasl
-                                                                                        (array.get $Array (local.get $arr) (local.get $i))
-                                                                                        (local.get $out))
-                                                                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                                                                  (br $loop))))
+                                                                      (block $break
+                                                                             (loop $loop
+                                                                                   (br_if $break (i32.ge_u (local.get $i) (local.get $n)))
+                                                                                   (call $fasl:s-exp->fasl
+                                                                                         (array.get $Array (local.get $arr) (local.get $i))
+                                                                                         (local.get $out))
+                                                                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                                                   (br $loop))))
                                                                      (else
                                                                       (if (ref.test (ref $External) (local.get $v))
                                                                           (then
                                                                            (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
                                                                            (call $fasl:write-u32
-                                                                      (call $js-register-external
-                                                                                      (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
-                                                                                (local.get $out)))
-                                                                          (else (unreachable)))))))))))))))))))) ;; unsupported type
-
+                                                                                 (call $js-register-external
+                                                                                       (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
+                                                                                 (local.get $out)))
+                                                                          (else (unreachable)))))))))))))))))) ;; unsupported type
+         
          (func $s-exp->fasl/immediate
                (param $i   i32)
                (param $v   (ref eq))
@@ -11944,17 +11944,17 @@
                     (i32.eq (local.get $tag) (i31.get_u (global.get $fasl-eof)))
                     (then (return (ref.i31 (i32.const ,eof-value))
                                   (local.get $i)))
-                    (else
-                     ;; external
-                     (if (result (ref eq) i32)
-                         (i32.eq (local.get $tag) (i31.get_u (global.get $fasl-external)))
-                         (then (call $fasl:read-u32 (local.get $arr) (local.get $i))
-                               (local.set $i) (local.set $idx)
-                               (return (struct.new $External
-                                                   (i32.const 0)
-                                                   (call $js-lookup-external (local.get $idx)))
-                                       (local.get $i)))
-                         (else (unreachable))))))))))))))))))))))))))
+               (else
+                ;; external
+                (if (result (ref eq) i32)
+                    (i32.eq (local.get $tag) (i31.get_u (global.get $fasl-external)))
+                    (then (call $fasl:read-u32 (local.get $arr) (local.get $i))
+                          (local.set $i) (local.set $idx)
+                          (return (struct.new $External
+                                              (i32.const 0)
+                                              (call $js-lookup-external (local.get $idx)))
+                                  (local.get $i)))
+                    (else (unreachable))))))))))))))))))))))))))))
 
 
         (func $copy-memory-to-i8array (export "copy-memory-to-i8array")
