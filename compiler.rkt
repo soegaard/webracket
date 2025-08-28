@@ -888,8 +888,8 @@
         [(#%plain-app e0 e1 ...)                    `(app ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]
         [(#%top . x)                                `(top ,E ,(variable #'x))]
         [(#%variable-reference)                     `(variable-reference ,E (anonymous ,E))]
-        [(#%variable-reference (#%top . x:id))      `(variable-reference ,E (top ,E ,(variable #'x)))]
-        [(#%variable-reference x:id)                `(variable-reference ,E ,(variable #'x))]
+        [(#%variable-reference (#%top . x:id))      `(variable-reference ,E (top       ,E ,(variable #'x)))]
+        [(#%variable-reference x:id)                `(variable-reference ,E (non-top   ,E ,(variable #'x)))]
         [_ (displayln E)
            (error 'parse "expected <expression> got: ~a" E)])))
   
