@@ -1039,7 +1039,8 @@
 
 (define implemented-primitives
   (append implemented-constants
-          '(namespace-undefine-variable!
+          '(string<=? string>? string>=?
+                      namespace-undefine-variable!
             namespace-set-variable-value!
             namespace-variable-value-simple
             make-empty-namespace
@@ -1052,6 +1053,7 @@
             unsafe-fx=
             unsafe-fl/
             unsafe-fx+
+            call-with-values
             js-log
             variable-reference-constant?
             variable-reference-from-unsafe?
@@ -1092,12 +1094,17 @@
             symbol<?
             symbol=?
             symbol?
+            ; string-find
+            string-contains?
+            string-prefix?
+            string-suffix?
             string-trim-right
             string-trim-left
             string-drop-right
             string-drop
             string-take-right
             string-take
+            non-empty-string?
             string->immutable-string
             string->bytes/utf-8
             list->string
@@ -1110,6 +1117,7 @@
             string-length
             string-set!
             string-ref
+            build-string
             make-string
             string<?
             string=?
@@ -1144,10 +1152,10 @@
             vector?
             vector
             byte?
-            flround
-            flsin
-            flcos
             fltan
+            flcos
+            flsin
+            flround
             fl>=
             fl<=
             fl>
@@ -1213,6 +1221,7 @@
             integer->char
             char->integer
             char?
+            immutable?
             not
             boolean?
             void
@@ -1246,7 +1255,6 @@
             set-boxed!
             unboxed
             boxed
-            box-immutable
             values
             current-inspector
             struct-type?
@@ -1259,6 +1267,7 @@
             make-struct-field-accessor
             make-struct-type
             raise-unbound-variable-reference)
+
 
           ))
 
