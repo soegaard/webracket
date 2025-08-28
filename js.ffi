@@ -1,0 +1,266 @@
+;;; 
+;;; JavaScript
+;;;
+
+;; This file declares foreign function bindings for builtin JavaScript
+;; arrays.
+;;
+;; See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+;;; Static methods
+
+(define-foreign js-array-from
+  #:module "array"
+  #:name   "from"
+  ;; Pass `(void)` for missing map function and this argument.
+  (-> (value extern value) (extern)))
+
+(define-foreign js-array-from-async
+  #:module "array"
+  #:name   "from-async"
+  ;; Pass `(void)` for missing map function and this argument.
+  (-> (value extern value) (extern)))
+
+(define-foreign js-array-is-array
+  #:module "array"
+  #:name   "is-array"
+  (-> (value) (i32)))
+
+(define-foreign js-array-of
+  #:module "array"
+  #:name   "of"
+  ;; `items` should be a list or vector.
+  (-> (value) (extern)))
+
+;;; Properties
+
+(define-foreign js-array-length
+  #:module "array"
+  #:name   "length"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-array-length!
+  #:module "array"
+  #:name   "set-length!"
+  (-> (extern u32) ()))
+
+;;; Methods
+
+(define-foreign js-array-at
+  #:module "array"
+  #:name   "at"
+  (-> (extern i32) (value)))
+
+(define-foreign js-array-concat
+  #:module "array"
+  #:name   "concat"
+  ;; `items` should be a list or vector.
+  (-> (extern value) (extern)))
+
+(define-foreign js-array-copy-within
+  #:module "array"
+  #:name   "copy-within"
+  ;; Pass `(void)` for missing end.
+  (-> (extern i32 i32 value) (extern)))
+
+(define-foreign js-array-entries
+  #:module "array"
+  #:name   "entries"
+  (-> (extern) (extern)))
+
+(define-foreign js-array-every
+  #:module "array"
+  #:name   "every"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (i32)))
+
+(define-foreign js-array-fill
+  #:module "array"
+  #:name   "fill"
+  ;; Pass `(void)` for missing start and end.
+  (-> (extern value value value) (extern)))
+
+(define-foreign js-array-filter
+  #:module "array"
+  #:name   "filter"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (extern)))
+
+(define-foreign js-array-find
+  #:module "array"
+  #:name   "find"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (value)))
+
+(define-foreign js-array-find-index
+  #:module "array"
+  #:name   "find-index"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (i32)))
+
+(define-foreign js-array-find-last
+  #:module "array"
+  #:name   "find-last"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (value)))
+
+(define-foreign js-array-find-last-index
+  #:module "array"
+  #:name   "find-last-index"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (i32)))
+
+(define-foreign js-array-flat
+  #:module "array"
+  #:name   "flat"
+  ;; Pass `(void)` for missing depth.
+  (-> (extern value) (extern)))
+
+(define-foreign js-array-flat-map
+  #:module "array"
+  #:name   "flat-map"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (extern)))
+
+(define-foreign js-array-for-each
+  #:module "array"
+  #:name   "for-each"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) ()))
+
+(define-foreign js-array-includes
+  #:module "array"
+  #:name   "includes"
+  ;; Pass `(void)` for missing from-index.
+  (-> (extern value value) (i32)))
+
+(define-foreign js-array-index-of
+  #:module "array"
+  #:name   "index-of"
+  ;; Pass `(void)` for missing from-index.
+  (-> (extern value value) (i32)))
+
+(define-foreign js-array-join
+  #:module "array"
+  #:name   "join"
+  ;; Pass `(void)` for missing separator.
+  (-> (extern value) (string)))
+
+(define-foreign js-array-keys
+  #:module "array"
+  #:name   "keys"
+  (-> (extern) (extern)))
+
+(define-foreign js-array-last-index-of
+  #:module "array"
+  #:name   "last-index-of"
+  ;; Pass `(void)` for missing from-index.
+  (-> (extern value value) (i32)))
+
+(define-foreign js-array-map
+  #:module "array"
+  #:name   "map"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (extern)))
+
+(define-foreign js-array-pop
+  #:module "array"
+  #:name   "pop"
+  (-> (extern) (value)))
+
+(define-foreign js-array-push
+  #:module "array"
+  #:name   "push"
+  ;; `items` should be a list or vector.
+  (-> (extern value) (u32)))
+
+(define-foreign js-array-reduce
+  #:module "array"
+  #:name   "reduce"
+  ;; Pass `(void)` for missing initial-value.
+  (-> (extern extern value) (value)))
+
+(define-foreign js-array-reduce-right
+  #:module "array"
+  #:name   "reduce-right"
+  ;; Pass `(void)` for missing initial-value.
+  (-> (extern extern value) (value)))
+
+(define-foreign js-array-reverse
+  #:module "array"
+  #:name   "reverse"
+  (-> (extern) (extern)))
+
+(define-foreign js-array-shift
+  #:module "array"
+  #:name   "shift"
+  (-> (extern) (value)))
+
+(define-foreign js-array-slice
+  #:module "array"
+  #:name   "slice"
+  ;; Pass `(void)` for missing start and end.
+  (-> (extern value value) (extern)))
+
+(define-foreign js-array-some
+  #:module "array"
+  #:name   "some"
+  ;; Pass `(void)` for missing this-arg.
+  (-> (extern extern value) (i32)))
+
+(define-foreign js-array-sort
+  #:module "array"
+  #:name   "sort"
+  ;; Pass `(void)` for missing compare-function.
+  (-> (extern extern) (extern)))
+
+(define-foreign js-array-splice
+  #:module "array"
+  #:name   "splice"
+  ;; `items` should be a list or vector.
+  (-> (extern value) (extern)))
+
+(define-foreign js-array-to-locale-string
+  #:module "array"
+  #:name   "to-locale-string"
+  ;; Pass `(void)` for missing locales/options (as a list).
+  (-> (extern value) (string)))
+
+(define-foreign js-array-to-string
+  #:module "array"
+  #:name   "to-string"
+  (-> (extern) (string)))
+
+(define-foreign js-array-unshift
+  #:module "array"
+  #:name   "unshift"
+  ;; `items` should be a list or vector.
+  (-> (extern value) (u32)))
+
+(define-foreign js-array-values
+  #:module "array"
+  #:name   "values"
+  (-> (extern) (extern)))
+
+(define-foreign js-array-to-reversed
+  #:module "array"
+  #:name   "to-reversed"
+  (-> (extern) (extern)))
+
+(define-foreign js-array-to-sorted
+  #:module "array"
+  #:name   "to-sorted"
+  ;; Pass `(void)` for missing compare-function.
+  (-> (extern extern) (extern)))
+
+(define-foreign js-array-to-spliced
+  #:module "array"
+  #:name   "to-spliced"
+  ;; `items` should be a list or vector.
+  (-> (extern value) (extern)))
+
+(define-foreign js-array-with
+  #:module "array"
+  #:name   "with"
+  (-> (extern i32 value) (extern)))
+
