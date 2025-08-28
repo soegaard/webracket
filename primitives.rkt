@@ -185,12 +185,18 @@
 
  s-exp->fasl
  fasl->s-exp
+ procedure->external
  js_log
 
 )
 
 (define (js_log v)
   (displayln v))
+
+(define (procedure->external p)
+  (unless (procedure? p)
+    (raise-argument-error 'procedure->external "procedure?" p))
+  p)
 
 
 ;; Changed in version 8.15.0.7: Added string-find.

@@ -545,6 +545,7 @@
   apply
   procedure-rename
   procedure?
+  procedure->external
   procedure-arity
   procedure-arity-mask
   procedure-arity-includes?
