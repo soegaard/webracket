@@ -79,6 +79,7 @@
 var memory = new WebAssembly.Memory({initial:1024});
 
 var output_string = [];
+var callback_export;
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -432,6 +433,15 @@ function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
 
+export function make_callback(id) {
+    return (...args) => {
+        const fasl = js_value_to_fasl(Array.from(args));
+        new Uint8Array(memory.buffer).set(fasl, 0);
+        const len = callback_export(id, 0);
+        return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    };
+}
+
 var imports = {
     'env': {
         'memory': memory
@@ -439,6 +449,7 @@ var imports = {
     'primitives': {
       'console_log': ((x)   => console.log(x)),
       'add':         ((x,y) => x+y),
+      'make_callback': make_callback,
       'js_output':   ((x)   => output_string.push(x)),
       'js_print_fasl': ((start, len) => {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
@@ -1535,7 +1546,8 @@ var imports = {
 const wasmModule
       = await WebAssembly
       .instantiate(wasmBuffer, imports)
-      .then(results  => { const { entry, get_bytes, copy_bytes_to_memory } = results.instance.exports;
+      .then(results  => { const { entry, get_bytes, copy_bytes_to_memory, callback } = results.instance.exports;
+                          callback_export = callback;
                           var result = entry();
                           // console.log( "Output:")
                           // console.log( output_string );

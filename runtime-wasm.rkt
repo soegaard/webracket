@@ -647,6 +647,10 @@
                (import "math" "tan")
                (param f64) (result f64))
 
+         (func $js-make-callback
+               (import "primitives" "make_callback")
+               (param i32) (result extern))
+
          ;; FFI related imports
          ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -1665,7 +1669,24 @@
 
                (local.get $len))
 
-         
+         (func $procedure->external
+               (param $proc (ref eq))
+               (result extern)
+
+               ;; Fail-early type check
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+
+               (local $p  (ref $Procedure))
+               (local $id i32)
+               (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $id (call $callback-register (local.get $p)))
+
+               ;; Ask JS to build a callable extern function that forwards to (export "callback")
+               (call $js-make-callback (local.get $id)))
+
+
 
 
          ;;;
