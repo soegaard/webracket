@@ -34,11 +34,11 @@
 
 (define (update)
   (define msg (js-get-element-by-id "message"))
-  (js-replace-children! msg
-                         (js-create-text-node
-                          (string-append "You have pressed the button "
-                                         (number->string count)
-                                         " times"))))
+  (js-set-attribute! msg
+                     "textContent"
+                     (string-append "You have pressed the button "
+                                    (number->string count)
+                                    " times")))
 
 (define (on-click _event)
   (set! count (+ count 1))
