@@ -765,6 +765,10 @@
                           (i32.shr_s (i31.get_s (local.get $arity-i31)) (i32.const 1)))
                ;; Step 3: get argument count
                (local.set $arg-count (array.len (local.get $args)))
+               ;; Debug: log closure, argument count, and expected arity
+               (drop (call $js-log (local.get $clos)))
+               (drop (call $js-log (call $i32->string (local.get $arg-count))))
+               (drop (call $js-log (call $i32->string (local.get $arity-i32))))
                ;; Step 4: check arity match
                (if (i32.eqz
                     (call $procedure-arity-includes?/checked/i32
