@@ -1621,6 +1621,50 @@
                (call $growable-array-add! (local.get $g) (local.get $p))
                (local.get $i))
 
+         (func $callback (export "callback")
+               (param $id i32)
+               (param $fasl i32)
+               (result i32)
+
+               (local $proc  (ref $Procedure))
+               (local $vec   (ref $Vector))
+               (local $args  (ref $Args))
+               (local $res   (ref eq))
+               (local $len   i32)
+
+               ;; Look up procedure by id
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (call $growable-array-ref
+                                          (global.get $callback-registry)
+                                          (local.get $id))))
+
+               ;; Decode FASL-encoded arguments from linear memory
+               (local.set $vec
+                          (ref.cast (ref $Vector)
+                                    (call $linear-memory->value
+                                          (local.get $fasl))))
+               (local.set $args
+                          (ref.cast (ref $Args)
+                                    (struct.get $Vector $arr (local.get $vec))))
+
+               ;; Invoke procedure with arguments
+               (local.set $res
+                          (call_ref $ProcedureInvoker
+                                    (local.get $proc)
+                                    (local.get $args)
+                                    (struct.get $Procedure $invoke (local.get $proc))))
+
+               ;; Encode result and copy to memory for host
+               (global.set $result-bytes
+                           (call $s-exp->fasl (local.get $res) (global.get $false)))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+
+               (local.get $len))
+
          
 
 
