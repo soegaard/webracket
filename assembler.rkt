@@ -509,6 +509,7 @@ var imports = {
       'encode-uri-component':      ((s) => encodeURIComponent(from_fasl(s))),
       'escape':                    ((s) => escape(from_fasl(s))),
       'unescape':                  ((s) => unescape(from_fasl(s))),
+      'set-property!':             ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
       'object':                    (() => Object),
       'function':                  (() => Function),
       'boolean':                   (() => Boolean),
