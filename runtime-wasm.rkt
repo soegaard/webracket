@@ -766,7 +766,7 @@
                ;; Step 3: get argument count
                (local.set $arg-count (array.len (local.get $args)))
                ;; Debug: log closure, argument count, and expected arity
-               (drop (call $js-log (local.get $clos)))
+               ; (drop (call $js-log (local.get $clos)))
                (drop (call $js-log (call $i32->string (local.get $arg-count))))
                (drop (call $js-log (call $i32->string (local.get $arity-i32))))
                ;; Step 4: check arity match
@@ -1049,7 +1049,7 @@
                      (return (call $primitive-invoke:raise-arity-error
                                    (local.get $pproc) (local.get $argc)))))
               )) ;; end $default
-              (drop (call $js-log (call $i32->string (i32.const 8))))
+              #;(drop (call $js-log (call $i32->string (i32.const 8))))
               (unreachable))
 
         (func $repack-arguments
