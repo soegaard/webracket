@@ -731,6 +731,17 @@
   (-> (string) ()))
  
 
+;;; EventTarget
+;;;
+; The various functions in this section are documented here:
+;
+;     https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
+;
+(define-foreign js-add-event-listener!
+  #:module "event-target"
+  #:name   "add-event-listener!"
+  (-> (extern string extern) ()))
+
 ;;; Event
 ;;;
 ; The various functions in this section are documented here:

@@ -1441,6 +1441,12 @@ var imports = {
         'stop-propagation'() { throw new Error('DOM not available in this environment'); },
         'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
     },
+    // EventTarget
+    'event-target': hasDOM ? {
+        'add-event-listener!': ((target, type, listener) => target.addEventListener(from_fasl(type), listener))
+    } : {
+        'add-event-listener!'() { throw new Error('DOM not available in this environment'); }
+    },
     // Element
     'element': hasDOM ? {
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
