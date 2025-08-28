@@ -11564,7 +11564,9 @@
                                                                            (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
                                                                            (call $fasl:write-u32
                                                                                  (call $js-register-external
-                                                                                       (struct.get $External $v (ref.cast (ref $External) (local.get $v))))
+                                                                                       (ref.as_non_null
+                                                                                         (struct.get $External $v
+                                     (ref.cast (ref $External) (local.get $v)))))
                                                                                  (local.get $out)))
                                                                           (else (unreachable)))))))))))))))))) ;; unsupported type
          
