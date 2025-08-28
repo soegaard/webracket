@@ -46,6 +46,11 @@
 
 ;;; Methods
 
+(define-foreign js-array-ref
+  #:module "array"
+  #:name   "at"
+  (-> (extern i32) (value)))
+  
 (define-foreign js-array-at
   #:module "array"
   #:name   "at"
