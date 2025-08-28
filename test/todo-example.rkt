@@ -1,5 +1,5 @@
-(struct vtext (text) #:transparent)
-(struct velem (tag attrs children) #:transparent)
+(struct vtext (text))
+(struct velem (tag attrs children))
 
 (define (add-children elem children)
   (for ([child (in-list children)])
@@ -37,8 +37,8 @@
                          "expected a valid SXML expression; got ~a"
                          exp)]))
 
-(struct todo (id text done?) #:mutable #:transparent)
-(struct model (todos next-id) #:mutable #:transparent)
+(struct todo (id text done?)  #:mutable)
+(struct model (todos next-id) #:mutable)
 
 (define app (model '() 0))
 
