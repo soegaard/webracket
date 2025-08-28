@@ -181,8 +181,8 @@
  namespace-undefine-variable!
  ; namespace-has-key?
 
-;;
-
+ ;; FFI
+ 
  s-exp->fasl
  fasl->s-exp
  procedure->external
