@@ -6,6 +6,7 @@ const wasmBuffer = await fs.readFile("out.wasm");
 var memory = new WebAssembly.Memory({initial:1024});
 
 var output_string = [];
+var callback_export;
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -359,6 +360,17 @@ function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
 
+// The procedure to call has been given an `id` by `callback-register` in the wasm runtime.
+// To call it, fasl encode an array of arguments and use `callback`.
+export function make_callback(id) {
+    return (...args) => {
+        const fasl = js_value_to_fasl(Array.from(args));
+        new Uint8Array(memory.buffer).set(fasl, 0);
+        const len = callback_export(id, 0);
+        return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    };
+}
+
 var imports = {
     'env': {
         'memory': memory
@@ -366,6 +378,7 @@ var imports = {
     'primitives': {
       'console_log': ((x)   => console.log(x)),
       'add':         ((x,y) => x+y),
+      'make_callback': make_callback,
       'js_output':   ((x)   => output_string.push(x)),
       'js_print_fasl': ((start, len) => {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
@@ -509,7 +522,7 @@ var imports = {
         'max':    ((x, y)    => Math.max(x, y)),
         'min':    ((x, y)    => Math.min(x, y)),
         'pow':    ((x, y)    => Math.pow(x, y)),
-        'random': (()         => Math.random()),
+        'random': (()        => Math.random()),
         'round':  ((x)       => Math.round(x)),
         'sign':   ((x)       => Math.sign(x)),
         'sin':    ((x)       => Math.sin(x)),
@@ -519,28 +532,474 @@ var imports = {
         'tanh':   ((x)       => Math.tanh(x)),
         'trunc':  ((x)       => Math.trunc(x))
     },
+    'array': {
+        'length':            (arr => arr.length),
+        'set-length!':       ((arr, len) => { arr.length = len; }),
+        'from':              ((arrLike, mapFn, thisArg) => {
+            const a = from_fasl(arrLike);
+            const m = mapFn;
+            const t = from_fasl(thisArg);
+            if (m === undefined) {
+                return Array.from(a);
+            } else if (t === undefined) {
+                return Array.from(a, m);
+            } else {
+                return Array.from(a, m, t);
+            }
+        }),
+        'from-async':        ((arrLike, mapFn, thisArg) => {
+            const a = from_fasl(arrLike);
+            const m = mapFn;
+            const t = from_fasl(thisArg);
+            if (m === undefined) {
+                return Array.fromAsync(a);
+            } else if (t === undefined) {
+                return Array.fromAsync(a, m);
+            } else {
+                return Array.fromAsync(a, m, t);
+            }
+        }),
+        'is-array':          (v => Array.isArray(from_fasl(v)) ? 1 : 0),
+        'of':                (items => Array.of(...(from_fasl(items) || []))),
+        'at':                ((arr, index) => arr.at(index)),
+        'concat':            ((arr, items) => arr.concat(...(from_fasl(items) || []))),
+        'copy-within':       ((arr, target, start, end) => {
+            const e = from_fasl(end);
+            return e === undefined ? arr.copyWithin(target, start)
+                                   : arr.copyWithin(target, start, e);
+        }),
+        'entries':           (arr => arr.entries()),
+        'every':             ((arr, fn, thisArg) => arr.every(fn, from_fasl(thisArg)) ? 1 : 0),
+        'fill':              ((arr, value, start, end) => arr.fill(from_fasl(value), from_fasl(start), from_fasl(end))),
+        'filter':            ((arr, fn, thisArg) => arr.filter(fn, from_fasl(thisArg))),
+        'find':              ((arr, fn, thisArg) => arr.find(fn, from_fasl(thisArg))),
+        'find-index':        ((arr, fn, thisArg) => arr.findIndex(fn, from_fasl(thisArg))),
+        'find-last':         ((arr, fn, thisArg) => arr.findLast(fn, from_fasl(thisArg))),
+        'find-last-index':   ((arr, fn, thisArg) => arr.findLastIndex(fn, from_fasl(thisArg))),
+        'flat':              ((arr, depth) => arr.flat(from_fasl(depth))),
+        'flat-map':          ((arr, fn, thisArg) => arr.flatMap(fn, from_fasl(thisArg))),
+        'for-each':          ((arr, fn, thisArg) => { arr.forEach(fn, from_fasl(thisArg)); }),
+        'includes':          ((arr, value, fromIndex) => arr.includes(from_fasl(value), from_fasl(fromIndex)) ? 1 : 0),
+        'index-of':          ((arr, value, fromIndex) => arr.indexOf(from_fasl(value), from_fasl(fromIndex))),
+        'join':              ((arr, sep) => arr.join(from_fasl(sep))),
+        'keys':              (arr => arr.keys()),
+        'last-index-of':     ((arr, value, fromIndex) => arr.lastIndexOf(from_fasl(value), from_fasl(fromIndex))),
+        'map':               ((arr, fn, thisArg) => arr.map(fn, from_fasl(thisArg))),
+        'pop':               (arr => arr.pop()),
+        'push':              ((arr, items) => arr.push(...(from_fasl(items) || []))),
+        'reduce':            ((arr, fn, init) => {
+            const i = from_fasl(init);
+            return i === undefined ? arr.reduce(fn) : arr.reduce(fn, i);
+        }),
+        'reduce-right':      ((arr, fn, init) => {
+            const i = from_fasl(init);
+            return i === undefined ? arr.reduceRight(fn) : arr.reduceRight(fn, i);
+        }),
+        'reverse':           (arr => arr.reverse()),
+        'shift':             (arr => arr.shift()),
+        'slice':             ((arr, start, end) => arr.slice(from_fasl(start), from_fasl(end))),
+        'some':              ((arr, fn, thisArg) => arr.some(fn, from_fasl(thisArg)) ? 1 : 0),
+        'sort':              ((arr, fn) => arr.sort(fn)),
+        'splice':            ((arr, items) => arr.splice(...(from_fasl(items) || []))),
+        'to-locale-string':  ((arr, args) => arr.toLocaleString(...(from_fasl(args) || []))),
+        'to-string':         (arr => arr.toString()),
+        'unshift':           ((arr, items) => arr.unshift(...(from_fasl(items) || []))),
+        'values':            (arr => arr.values()),
+        'to-reversed':       (arr => (arr.toReversed ? arr.toReversed() : [...arr].reverse())),
+        'to-sorted':         ((arr, fn) => (arr.toSorted ? arr.toSorted(fn) : [...arr].sort(fn))),
+        'to-spliced':        ((arr, items) => (arr.toSpliced ? arr.toSpliced(...(from_fasl(items) || [])) : (() => { const b = arr.slice(); b.splice(...(from_fasl(items) || [])); return b; })())),
+        'with':              ((arr, index, value) => (arr.with ? arr.with(index, from_fasl(value)) : (() => { const b = arr.slice(); b[index] = from_fasl(value); return b; })())),
+    },
     // Canvas
     'canvas': hasDOM ? {
-        'capture-stream':             ((canvas, rate)                 => canvas.captureStream(rate)),
-        'get-context':                ((canvas, type, opts)           => canvas.getContext(from_fasl(type), opts)),
-        'height':                     ((canvas)                       => canvas.height),
-        'set-height!':                ((canvas, h)                    => { canvas.height = h; }),
-        'to-blob':                    ((canvas, cb, type, quality)    => canvas.toBlob(cb, from_fasl(type), quality)),
-        'to-data-url':                ((canvas, type, quality)        => canvas.toDataURL(from_fasl(type), quality)),
-        'transfer-control-to-offscreen': ((canvas)                   => canvas.transferControlToOffscreen()),
-        'width':                      ((canvas)                       => canvas.width),
-        'set-width!':                 ((canvas, w)                    => { canvas.width = w; })
+        'capture-stream':                ((canvas, rate)                 => canvas.captureStream(rate)),
+        'get-context':                   ((canvas, type, opts)           => canvas.getContext(from_fasl(type), opts)),
+        'height':                        ((canvas)                       => canvas.height),
+        'set-height!':                   ((canvas, h)                    => { canvas.height = h; }),
+        'to-blob':                       ((canvas, cb, type, quality)    => canvas.toBlob(cb, from_fasl(type), quality)),
+        'to-data-url':                   ((canvas, type, quality)        => canvas.toDataURL(from_fasl(type), quality)),
+        'transfer-control-to-offscreen': ((canvas)                       => canvas.transferControlToOffscreen()),
+        'width':                         ((canvas)                       => canvas.width),
+        'set-width!':                    ((canvas, w)                    => { canvas.width = w; })
     } : {
-        'capture-stream'()             { throw new Error('DOM not available in this environment'); },
-        'get-context'()                { throw new Error('DOM not available in this environment'); },
-        'height'()                     { throw new Error('DOM not available in this environment'); },
-        'set-height!'()                { throw new Error('DOM not available in this environment'); },
-        'to-blob'()                    { throw new Error('DOM not available in this environment'); },
-        'to-data-url'()                { throw new Error('DOM not available in this environment'); },
+        'capture-stream'()                { throw new Error('DOM not available in this environment'); },
+        'get-context'()                   { throw new Error('DOM not available in this environment'); },
+        'height'()                        { throw new Error('DOM not available in this environment'); },
+        'set-height!'()                   { throw new Error('DOM not available in this environment'); },
+        'to-blob'()                       { throw new Error('DOM not available in this environment'); },
+        'to-data-url'()                   { throw new Error('DOM not available in this environment'); },
         'transfer-control-to-offscreen'() { throw new Error('DOM not available in this environment'); },
-        'width'()                      { throw new Error('DOM not available in this environment'); },
-        'set-width!'()                 { throw new Error('DOM not available in this environment'); }
+        'width'()                         { throw new Error('DOM not available in this environment'); },
+        'set-width!'()                    { throw new Error('DOM not available in this environment'); }
     },
+    // CanvasRenderingContext2D
+    'canvas-rendering-context-2d': hasDOM ? {
+        'canvas':                 (ctx => ctx.canvas),
+        'direction':              (ctx => ctx.direction),
+        'set-direction!':         ((ctx, dir) => { ctx.direction = from_fasl(dir); }),
+        'fill-style':             (ctx => ctx.fillStyle),
+        'set-fill-style!':        ((ctx, style) => { ctx.fillStyle = from_fasl(style); }),
+        'filter':                 (ctx => ctx.filter),
+        'set-filter!':            ((ctx, filter) => { ctx.filter = from_fasl(filter); }),
+        'font':                   (ctx => ctx.font),
+        'set-font!':              ((ctx, font) => { ctx.font = from_fasl(font); }),
+        'global-alpha':           (ctx => ctx.globalAlpha),
+        'set-global-alpha!':      ((ctx, a) => { ctx.globalAlpha = a; }),
+        'global-composite-operation': (ctx => ctx.globalCompositeOperation),
+        'set-global-composite-operation!': ((ctx, op) => { ctx.globalCompositeOperation = from_fasl(op); }),
+        'image-smoothing-enabled': (ctx => ctx.imageSmoothingEnabled ? 1 : 0),
+        'set-image-smoothing-enabled!': ((ctx, flag) => { ctx.imageSmoothingEnabled = !!flag; }),
+        'image-smoothing-quality': (ctx => ctx.imageSmoothingQuality),
+        'set-image-smoothing-quality!': ((ctx, q) => { ctx.imageSmoothingQuality = from_fasl(q); }),
+        'line-cap':               (ctx => ctx.lineCap),
+        'set-line-cap!':          ((ctx, cap) => { ctx.lineCap = from_fasl(cap); }),
+        'line-dash-offset':       (ctx => ctx.lineDashOffset),
+        'set-line-dash-offset!':  ((ctx, off) => { ctx.lineDashOffset = off; }),
+        'line-join':              (ctx => ctx.lineJoin),
+        'set-line-join!':         ((ctx, join) => { ctx.lineJoin = from_fasl(join); }),
+        'line-width':             (ctx => ctx.lineWidth),
+        'set-line-width!':        ((ctx, w) => { ctx.lineWidth = w; }),
+        'miter-limit':            (ctx => ctx.miterLimit),
+        'set-miter-limit!':       ((ctx, m) => { ctx.miterLimit = m; }),
+        'shadow-blur':            (ctx => ctx.shadowBlur),
+        'set-shadow-blur!':       ((ctx, b) => { ctx.shadowBlur = b; }),
+        'shadow-color':           (ctx => ctx.shadowColor),
+        'set-shadow-color!':      ((ctx, c) => { ctx.shadowColor = from_fasl(c); }),
+        'shadow-offset-x':        (ctx => ctx.shadowOffsetX),
+        'set-shadow-offset-x!':   ((ctx, x) => { ctx.shadowOffsetX = x; }),
+        'shadow-offset-y':        (ctx => ctx.shadowOffsetY),
+        'set-shadow-offset-y!':   ((ctx, y) => { ctx.shadowOffsetY = y; }),
+        'stroke-style':           (ctx => ctx.strokeStyle),
+        'set-stroke-style!':      ((ctx, style) => { ctx.strokeStyle = style; }),
+        'text-align':             (ctx => ctx.textAlign),
+        'set-text-align!':        ((ctx, a) => { ctx.textAlign = from_fasl(a); }),
+        'text-baseline':          (ctx => ctx.textBaseline),
+        'set-text-baseline!':     ((ctx, b) => { ctx.textBaseline = from_fasl(b); }),
+        'text-rendering':         (ctx => ctx.textRendering),
+        'set-text-rendering!':    ((ctx, r) => { ctx.textRendering = from_fasl(r); }),
+        'font-kerning':           (ctx => ctx.fontKerning),
+        'set-font-kerning!':      ((ctx, k) => { ctx.fontKerning = from_fasl(k); }),
+        'font-stretch':           (ctx => ctx.fontStretch),
+        'set-font-stretch!':      ((ctx, s) => { ctx.fontStretch = from_fasl(s); }),
+        'font-variant-caps':      (ctx => ctx.fontVariantCaps),
+        'set-font-variant-caps!': ((ctx, v) => { ctx.fontVariantCaps = from_fasl(v); }),
+        'font-variant-ligatures': (ctx => ctx.fontVariantLigatures),
+        'set-font-variant-ligatures!': ((ctx, v) => { ctx.fontVariantLigatures = from_fasl(v); }),
+        'font-variant-numeric':   (ctx => ctx.fontVariantNumeric),
+        'set-font-variant-numeric!': ((ctx, v) => { ctx.fontVariantNumeric = from_fasl(v); }),
+        'letter-spacing':         (ctx => ctx.letterSpacing),
+        'set-letter-spacing!':    ((ctx, v) => { ctx.letterSpacing = from_fasl(v); }),
+        'word-spacing':           (ctx => ctx.wordSpacing),
+        'set-word-spacing!':      ((ctx, v) => { ctx.wordSpacing = from_fasl(v); }),
+        'arc': ((ctx, x, y, r, sa, ea, ccw) => ctx.arc(x, y, r, sa, ea, !!ccw)),
+        'arc-to': ((ctx, x1, y1, x2, y2, r) => ctx.arcTo(x1, y1, x2, y2, r)),
+        'begin-path': (ctx => ctx.beginPath()),
+        'bezier-curve-to': ((ctx, cp1x, cp1y, cp2x, cp2y, x, y) => ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y)),
+        'clear-rect': ((ctx, x, y, w, h) => ctx.clearRect(x, y, w, h)),
+        'clip': ((ctx, path, rule) => {
+          // `(void)` is decoded as `undefined`
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            ctx.clip();
+          } else if (p === undefined) {
+            ctx.clip(from_fasl(r));
+          } else if (r === undefined) {
+            ctx.clip(p);
+          } else {
+            ctx.clip(p, from_fasl(r));
+          }
+        }),
+        'close-path': (ctx => ctx.closePath()),
+        'create-image-data': ((ctx, sw, sh) => ctx.createImageData(sw, sh)),
+        'create-image-data-from': ((ctx, data) => ctx.createImageData(data)),
+        'create-linear-gradient': ((ctx, x0, y0, x1, y1) => ctx.createLinearGradient(x0, y0, x1, y1)),
+        'create-pattern': ((ctx, img, rep) => ctx.createPattern(img, from_fasl(rep))),
+        'create-radial-gradient': ((ctx, x0, y0, r0, x1, y1, r1) => ctx.createRadialGradient(x0, y0, r0, x1, y1, r1)),
+        'create-conic-gradient': ((ctx, sa, x, y) => ctx.createConicGradient(sa, x, y)),
+        'draw-focus-if-needed!': ((ctx, elem) => ctx.drawFocusIfNeeded(elem)),
+        'draw-focus-if-needed-path!': ((ctx, path, elem) => ctx.drawFocusIfNeeded(path, elem)),
+        'draw-image': ((ctx, img, dx, dy) => ctx.drawImage(img, dx, dy)),
+        'draw-image-5': ((ctx, img, dx, dy, dw, dh) => ctx.drawImage(img, dx, dy, dw, dh)),
+        'draw-image-9': ((ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)),
+        'ellipse': ((ctx, x, y, rx, ry, rot, sa, ea, ccw) => ctx.ellipse(x, y, rx, ry, rot, sa, ea, !!ccw)),
+        'fill': ((ctx, path, rule) => {
+          // `(void)` is decoded as `undefined`
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            ctx.fill();
+          } else if (p === undefined) {
+            ctx.fill(from_fasl(r));
+          } else if (r === undefined) {
+            ctx.fill(p);
+          } else {
+            ctx.fill(p, from_fasl(r));
+          }
+        }),
+        'fill-rect': ((ctx, x, y, w, h) => ctx.fillRect(x, y, w, h)),
+        'fill-text': ((ctx, text, x, y, mw) => {
+          const m = from_fasl(mw);
+          if (m === undefined) {
+            ctx.fillText(from_fasl(text), x, y);
+          } else {
+            ctx.fillText(from_fasl(text), x, y, m);
+          }
+        }),
+        'get-image-data': ((ctx, sx, sy, sw, sh, opts) => {
+          const o = from_fasl(opts);
+          if (o === undefined) {
+            return ctx.getImageData(sx, sy, sw, sh);
+          } else {
+            return ctx.getImageData(sx, sy, sw, sh, o);
+          }
+        }),
+        'get-line-dash': (ctx => ctx.getLineDash()),
+        'get-transform': (ctx => ctx.getTransform()),
+        'is-point-in-path': ((ctx, path, x, y, rule) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          if (p === undefined && r === undefined) {
+            return ctx.isPointInPath(x, y) ? 1 : 0;
+          } else if (p === undefined) {
+            return ctx.isPointInPath(x, y, from_fasl(r)) ? 1 : 0;
+          } else if (r === undefined) {
+            return ctx.isPointInPath(p, x, y) ? 1 : 0;
+          } else {
+            return ctx.isPointInPath(p, x, y, from_fasl(r)) ? 1 : 0;
+          }
+        }),
+        'is-point-in-stroke': ((ctx, path, x, y) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          if (p === undefined) {
+            return ctx.isPointInStroke(x, y) ? 1 : 0;
+          } else {
+            return ctx.isPointInStroke(p, x, y) ? 1 : 0;
+          }
+        }),
+        'line-to': ((ctx, x, y) => ctx.lineTo(x, y)),
+        'measure-text': ((ctx, text) => ctx.measureText(from_fasl(text))),
+        'move-to': ((ctx, x, y) => ctx.moveTo(x, y)),
+        'put-image-data': ((ctx, data, dx, dy, dirtyX, dirtyY, dirtyW, dirtyH) => {
+          const dX = from_fasl(dirtyX);
+          const dY = from_fasl(dirtyY);
+          const dW = from_fasl(dirtyW);
+          const dH = from_fasl(dirtyH);
+          if (dX === undefined && dY === undefined && dW === undefined && dH === undefined) {
+            ctx.putImageData(data, dx, dy);
+          } else {
+            ctx.putImageData(data, dx, dy, dX, dY, dW, dH);
+          }
+        }),
+        'quadratic-curve-to': ((ctx, cpx, cpy, x, y) => ctx.quadraticCurveTo(cpx, cpy, x, y)),
+        'rect': ((ctx, x, y, w, h) => ctx.rect(x, y, w, h)),
+        'reset': (ctx => ctx.reset()),
+        'reset-transform': (ctx => ctx.resetTransform()),
+        'restore': (ctx => ctx.restore()),
+        'rotate': ((ctx, angle) => ctx.rotate(angle)),
+        'round-rect': ((ctx, x, y, w, h, r) => {
+          const rad = from_fasl(r);
+          if (rad === undefined) {
+            ctx.roundRect(x, y, w, h);
+          } else {
+            ctx.roundRect(x, y, w, h, rad);
+          }
+        }),
+        'save': (ctx => ctx.save()),
+        'scale': ((ctx, x, y) => ctx.scale(x, y)),
+        'set-line-dash': ((ctx, arr) => ctx.setLineDash(arr)),
+        'set-transform!': ((ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f)),
+        'set-transform-matrix!': ((ctx, m) => ctx.setTransform(m)),
+        'stroke': ((ctx, path) => {
+          const p = (from_fasl(path) === undefined) ? undefined : path;
+          if (p === undefined) {
+            ctx.stroke();
+          } else {
+            ctx.stroke(p);
+          }
+        }),
+        'stroke-rect': ((ctx, x, y, w, h) => ctx.strokeRect(x, y, w, h)),
+        'stroke-text': ((ctx, text, x, y, mw) => {
+          const m = from_fasl(mw);
+          if (m === undefined) {
+            ctx.strokeText(from_fasl(text), x, y);
+          } else {
+            ctx.strokeText(from_fasl(text), x, y, m);
+          }
+        }),
+        'transform': ((ctx, a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f)),
+        'translate': ((ctx, x, y) => ctx.translate(x, y)),
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    // Window
+    'window': hasDOM ? {
+        'window':               (() => window),
+        'self':                 (() => self),
+        'document':             (() => document),
+        'name':                 (() => window.name),
+        'set-name!':            (n => { window.name = from_fasl(n); }),
+        'location':             (() => window.location),
+        'set-location!':        (loc => { window.location = from_fasl(loc); }),
+        'custom-elements':      (() => window.customElements),
+        'history':              (() => window.history),
+        'locationbar':          (() => window.locationbar),
+        'menubar':              (() => window.menubar),
+        'personalbar':          (() => window.personalbar),
+        'scrollbars':           (() => window.scrollbars),
+        'statusbar':            (() => window.statusbar),
+        'toolbar':              (() => window.toolbar),
+        'status':               (() => window.status),
+        'set-status!':          (s => { window.status = from_fasl(s); }),
+        'closed':               (() => window.closed ? 1 : 0),
+        'frames':               (() => window.frames),
+        'length':               (() => window.length),
+        'opener':               (() => window.opener),
+        'set-opener!':          (o => { window.opener = o; }),
+        'parent':               (() => window.parent),
+        'top':                  (() => window.top),
+        'visual-viewport':      (() => window.visualViewport),
+        'navigator':            (() => window.navigator),
+        'origin':               (() => window.origin),
+        'crypto':               (() => window.crypto),
+        'device-pixel-ratio':   (() => window.devicePixelRatio),
+        'event':                (() => window.event),
+        'frame-element':        (() => window.frameElement),
+        'inner-height':         (() => window.innerHeight),
+        'inner-width':          (() => window.innerWidth),
+        'outer-height':         (() => window.outerHeight),
+        'outer-width':          (() => window.outerWidth),
+        'screen-x':             (() => window.screenX),
+        'screen-y':             (() => window.screenY),
+        'screen-left':          (() => window.screenLeft),
+        'screen-top':           (() => window.screenTop),
+        'page-x-offset':        (() => window.pageXOffset),
+        'page-y-offset':        (() => window.pageYOffset),
+        'scroll-x':             (() => window.scrollX),
+        'scroll-y':             (() => window.scrollY),
+        'screen':               (() => window.screen),
+        'local-storage':        (() => window.localStorage),
+        'session-storage':      (() => window.sessionStorage),
+        'performance':          (() => window.performance),
+        'indexed-db':           (() => window.indexedDB),
+        'is-secure-context':    (() => window.isSecureContext ? 1 : 0),
+        'cross-origin-isolated':(() => window.crossOriginIsolated ? 1 : 0),
+        'caches':               (() => window.caches),
+        'speech-synthesis':     (() => window.speechSynthesis),
+        'style-media':          (() => window.styleMedia),
+        'alert':                (msg => window.alert(from_fasl(msg))),
+        'atob':                 (s => window.atob(from_fasl(s))),
+        'btoa':                 (s => window.btoa(from_fasl(s))),
+        'blur':                 (() => window.blur()),
+        'cancel-animation-frame': (id => window.cancelAnimationFrame(id)),
+        'cancel-idle-callback': (id => window.cancelIdleCallback(id)),
+        'clear-interval':       (id => window.clearInterval(id)),
+        'clear-timeout':        (id => window.clearTimeout(id)),
+        'close':                (() => window.close()),
+        'confirm':              (msg => window.confirm(from_fasl(msg)) ? 1 : 0),
+        'create-image-bitmap':  ((image, sx, sy, sw, sh, opts) => {
+            const Sx = from_fasl(sx);
+            const Sy = from_fasl(sy);
+            const Sw = from_fasl(sw);
+            const Sh = from_fasl(sh);
+            const o  = from_fasl(opts);
+            if (Sx === undefined) {
+                return window.createImageBitmap(image);
+            } else if (o === undefined) {
+                return window.createImageBitmap(image, Sx, Sy, Sw, Sh);
+            } else {
+                return window.createImageBitmap(image, Sx, Sy, Sw, Sh, o);
+            }
+        }),
+        'fetch': ((input, init) => {
+            const i = from_fasl(init);
+            if (i === undefined) {
+                return fetch(input);
+            } else {
+                return fetch(input, i);
+            }
+        }),
+        'focus':                (() => window.focus()),
+        'get-computed-style':   ((elt, pseudo) => {
+            const p = from_fasl(pseudo);
+            return window.getComputedStyle(elt, p);
+        }),
+        'get-selection':        (() => window.getSelection()),
+        'match-media':          (q => window.matchMedia(from_fasl(q))),
+        'move-by':              ((x, y) => window.moveBy(x, y)),
+        'move-to':              ((x, y) => window.moveTo(x, y)),
+        'open':                 ((url, target, features, replace) => {
+            const u = from_fasl(url);
+            const t = from_fasl(target);
+            const f = from_fasl(features);
+            const r = from_fasl(replace);
+            if (t === undefined && f === undefined && r === undefined) {
+                return window.open(u);
+            } else if (f === undefined && r === undefined) {
+                return window.open(u, t);
+            } else if (r === undefined) {
+                return window.open(u, t, f);
+            } else {
+                return window.open(u, t, f, r);
+            }
+        }),
+        'post-message':        ((msg, target, transfer) => {
+            const t = from_fasl(transfer);
+            if (t === undefined) {
+                window.postMessage(from_fasl(msg), from_fasl(target));
+            } else {
+                window.postMessage(from_fasl(msg), from_fasl(target), t);
+            }
+        }),
+        'print':               (() => window.print()),
+        'prompt':              ((msg, def) => window.prompt(from_fasl(msg), from_fasl(def))),
+        'request-animation-frame': (cb => window.requestAnimationFrame(cb)),
+        'request-idle-callback': ((cb, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                return window.requestIdleCallback(cb);
+            } else {
+                return window.requestIdleCallback(cb, o);
+            }
+        }),
+        'resize-by':           ((x, y) => window.resizeBy(x, y)),
+        'resize-to':           ((w, h) => window.resizeTo(w, h)),
+        'scroll':              ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scroll(x, y);
+            } else {
+                window.scroll(o);
+            }
+        }),
+        'scroll-by':           ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scrollBy(x, y);
+            } else {
+                window.scrollBy(o);
+            }
+        }),
+        'scroll-to':           ((x, y, opts) => {
+            const o = from_fasl(opts);
+            if (o === undefined) {
+                window.scrollTo(x, y);
+            } else {
+                window.scrollTo(o);
+            }
+        }),
+        'set-interval':        ((handler, delay) => window.setInterval(handler, delay)),
+        'set-timeout':         ((handler, delay) => window.setTimeout(handler, delay)),
+        'stop':                (() => window.stop()),
+        'structured-clone':    ((value, options) => {
+            const o = from_fasl(options);
+            if (o === undefined) {
+                return window.structuredClone(from_fasl(value));
+            } else {
+                return window.structuredClone(from_fasl(value), o);
+            }
+        }),
+        'queue-microtask':     (cb => window.queueMicrotask(cb)),
+        'report-error':        (err => window.reportError(err))
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Document
     'document': hasDOM ? {
         'body':                     (()                               => document.body),
@@ -643,6 +1102,271 @@ var imports = {
         'release-events'()           { throw new Error('DOM not available in this environment'); },
         'write'()                    { throw new Error('DOM not available in this environment'); },
         'writeln'()                  { throw new Error('DOM not available in this environment'); },
+    },
+    // Media
+    'media': hasDOM ? {
+        'audio-tracks': (m => m.audioTracks),
+        'autoplay': (m => m.autoplay ? 1 : 0),
+        'set-autoplay!': ((m, flag) => { m.autoplay = !!flag; }),
+        'buffered': (m => m.buffered),
+        'controls': (m => m.controls ? 1 : 0),
+        'set-controls!': ((m, flag) => { m.controls = !!flag; }),
+        'controls-list': (m => m.controlsList),
+        'cross-origin': (m => m.crossOrigin),
+        'set-cross-origin!': ((m, o) => { m.crossOrigin = from_fasl(o); }),
+        'current-src': (m => m.currentSrc),
+        'current-time': (m => m.currentTime),
+        'set-current-time!': ((m, t) => { m.currentTime = t; }),
+        'default-muted': (m => m.defaultMuted ? 1 : 0),
+        'set-default-muted!': ((m, flag) => { m.defaultMuted = !!flag; }),
+        'default-playback-rate': (m => m.defaultPlaybackRate),
+        'set-default-playback-rate!': ((m, r) => { m.defaultPlaybackRate = r; }),
+        'disable-remote-playback': (m => m.disableRemotePlayback ? 1 : 0),
+        'set-disable-remote-playback!': ((m, flag) => { m.disableRemotePlayback = !!flag; }),
+        'duration': (m => m.duration),
+        'ended': (m => m.ended ? 1 : 0),
+        'error': (m => m.error),
+        'loop': (m => m.loop ? 1 : 0),
+        'set-loop!': ((m, flag) => { m.loop = !!flag; }),
+        'media-keys': (m => m.mediaKeys),
+        'media-group': (m => m.mediaGroup),
+        'set-media-group!': ((m, g) => { m.mediaGroup = from_fasl(g); }),
+        'muted': (m => m.muted ? 1 : 0),
+        'set-muted!': ((m, flag) => { m.muted = !!flag; }),
+        'network-state': (m => m.networkState),
+        'paused': (m => m.paused ? 1 : 0),
+        'playback-rate': (m => m.playbackRate),
+        'set-playback-rate!': ((m, r) => { m.playbackRate = r; }),
+        'played': (m => m.played),
+        'preload': (m => m.preload),
+        'set-preload!': ((m, p) => { m.preload = from_fasl(p); }),
+        'preserves-pitch': (m => m.preservesPitch ? 1 : 0),
+        'set-preserves-pitch!': ((m, flag) => { m.preservesPitch = !!flag; }),
+        'ready-state': (m => m.readyState),
+        'seekable': (m => m.seekable),
+        'seeking': (m => m.seeking ? 1 : 0),
+        'sink-id': (m => m.sinkId),
+        'src': (m => m.src),
+        'set-src!': ((m, s) => { m.src = from_fasl(s); }),
+        'src-object': (m => m.srcObject),
+        'set-src-object!': ((m, obj) => { m.srcObject = obj; }),
+        'text-tracks': (m => m.textTracks),
+        'video-tracks': (m => m.videoTracks),
+        'volume': (m => m.volume),
+        'set-volume!': ((m, v) => { m.volume = v; }),
+        'add-text-track!': ((m, kind, label, lang) => {
+            const l = from_fasl(label);
+            const g = from_fasl(lang);
+            if (l === undefined && g === undefined) {
+                return m.addTextTrack(from_fasl(kind));
+            } else if (g === undefined) {
+                return m.addTextTrack(from_fasl(kind), from_fasl(label));
+            } else {
+                return m.addTextTrack(from_fasl(kind), from_fasl(label), from_fasl(lang));
+            }
+        }),
+        'can-play-type': ((m, type) => m.canPlayType(from_fasl(type))),
+        'capture-stream': ((m, rate) => {
+            const r = from_fasl(rate);
+            if (r === undefined) {
+                return m.captureStream();
+            } else {
+                return m.captureStream(r);
+            }
+        }),
+        'fast-seek!': ((m, t) => { m.fastSeek(t); }),
+        'load!': (m => { m.load(); }),
+        'pause': (m => m.pause()),
+        'play': (m => m.play()),
+        'set-media-keys!': ((m, keys) => m.setMediaKeys(keys)),
+        'set-sink-id!': ((m, id) => m.setSinkId(from_fasl(id))),
+    } : {
+        'audio-tracks'() { throw new Error('DOM not available in this environment'); },
+        'autoplay'() { throw new Error('DOM not available in this environment'); },
+        'set-autoplay!'() { throw new Error('DOM not available in this environment'); },
+        'buffered'() { throw new Error('DOM not available in this environment'); },
+        'controls'() { throw new Error('DOM not available in this environment'); },
+        'set-controls!'() { throw new Error('DOM not available in this environment'); },
+        'controls-list'() { throw new Error('DOM not available in this environment'); },
+        'cross-origin'() { throw new Error('DOM not available in this environment'); },
+        'set-cross-origin!'() { throw new Error('DOM not available in this environment'); },
+        'current-src'() { throw new Error('DOM not available in this environment'); },
+        'current-time'() { throw new Error('DOM not available in this environment'); },
+        'set-current-time!'() { throw new Error('DOM not available in this environment'); },
+        'default-muted'() { throw new Error('DOM not available in this environment'); },
+        'set-default-muted!'() { throw new Error('DOM not available in this environment'); },
+        'default-playback-rate'() { throw new Error('DOM not available in this environment'); },
+        'set-default-playback-rate!'() { throw new Error('DOM not available in this environment'); },
+        'disable-remote-playback'() { throw new Error('DOM not available in this environment'); },
+        'set-disable-remote-playback!'() { throw new Error('DOM not available in this environment'); },
+        'duration'() { throw new Error('DOM not available in this environment'); },
+        'ended'() { throw new Error('DOM not available in this environment'); },
+        'error'() { throw new Error('DOM not available in this environment'); },
+        'loop'() { throw new Error('DOM not available in this environment'); },
+        'set-loop!'() { throw new Error('DOM not available in this environment'); },
+        'media-keys'() { throw new Error('DOM not available in this environment'); },
+        'media-group'() { throw new Error('DOM not available in this environment'); },
+        'set-media-group!'() { throw new Error('DOM not available in this environment'); },
+        'muted'() { throw new Error('DOM not available in this environment'); },
+        'set-muted!'() { throw new Error('DOM not available in this environment'); },
+        'network-state'() { throw new Error('DOM not available in this environment'); },
+        'paused'() { throw new Error('DOM not available in this environment'); },
+        'playback-rate'() { throw new Error('DOM not available in this environment'); },
+        'set-playback-rate!'() { throw new Error('DOM not available in this environment'); },
+        'played'() { throw new Error('DOM not available in this environment'); },
+        'preload'() { throw new Error('DOM not available in this environment'); },
+        'set-preload!'() { throw new Error('DOM not available in this environment'); },
+        'preserves-pitch'() { throw new Error('DOM not available in this environment'); },
+        'set-preserves-pitch!'() { throw new Error('DOM not available in this environment'); },
+        'ready-state'() { throw new Error('DOM not available in this environment'); },
+        'seekable'() { throw new Error('DOM not available in this environment'); },
+        'seeking'() { throw new Error('DOM not available in this environment'); },
+        'sink-id'() { throw new Error('DOM not available in this environment'); },
+        'src'() { throw new Error('DOM not available in this environment'); },
+        'set-src!'() { throw new Error('DOM not available in this environment'); },
+        'src-object'() { throw new Error('DOM not available in this environment'); },
+        'set-src-object!'() { throw new Error('DOM not available in this environment'); },
+        'text-tracks'() { throw new Error('DOM not available in this environment'); },
+        'video-tracks'() { throw new Error('DOM not available in this environment'); },
+        'volume'() { throw new Error('DOM not available in this environment'); },
+        'set-volume!'() { throw new Error('DOM not available in this environment'); },
+        'add-text-track!'() { throw new Error('DOM not available in this environment'); },
+        'can-play-type'() { throw new Error('DOM not available in this environment'); },
+        'capture-stream'() { throw new Error('DOM not available in this environment'); },
+        'fast-seek!'() { throw new Error('DOM not available in this environment'); },
+        'load!'() { throw new Error('DOM not available in this environment'); },
+        'pause'() { throw new Error('DOM not available in this environment'); },
+        'play'() { throw new Error('DOM not available in this environment'); },
+        'set-media-keys!'() { throw new Error('DOM not available in this environment'); },
+        'set-sink-id!'() { throw new Error('DOM not available in this environment'); },
+    },
+    // Image
+    'image': hasDOM ? {
+        'new': ((width, height) => {
+            const w = from_fasl(width);
+            const h = from_fasl(height);
+            if (w === undefined && h === undefined) {
+                return new Image();
+            } else if (h === undefined) {
+                return new Image(w);
+            } else {
+                return new Image(w, h);
+            }
+        }),
+        'alt': (img => img.alt),
+        'set-alt!': ((img, alt) => { img.alt = from_fasl(alt); }),
+        'src': (img => img.src),
+        'set-src!': ((img, src) => { img.src = from_fasl(src); }),
+        'srcset': (img => img.srcset),
+        'set-srcset!': ((img, s) => { img.srcset = from_fasl(s); }),
+        'sizes': (img => img.sizes),
+        'set-sizes!': ((img, s) => { img.sizes = from_fasl(s); }),
+        'cross-origin': (img => img.crossOrigin),
+        'set-cross-origin!': ((img, o) => { img.crossOrigin = from_fasl(o); }),
+        'use-map': (img => img.useMap),
+        'set-use-map!': ((img, m) => { img.useMap = from_fasl(m); }),
+        'is-map': (img => img.isMap ? 1 : 0),
+        'set-is-map!': ((img, flag) => { img.isMap = !!flag; }),
+        'width': (img => img.width),
+        'set-width!': ((img, w) => { img.width = w; }),
+        'height': (img => img.height),
+        'set-height!': ((img, h) => { img.height = h; }),
+        'natural-width': (img => img.naturalWidth),
+        'natural-height': (img => img.naturalHeight),
+        'complete': (img => img.complete ? 1 : 0),
+        'current-src': (img => img.currentSrc),
+        'decoding': (img => img.decoding),
+        'set-decoding!': ((img, d) => { img.decoding = from_fasl(d); }),
+        'fetch-priority': (img => img.fetchPriority),
+        'set-fetch-priority!': ((img, p) => { img.fetchPriority = from_fasl(p); }),
+        'loading': (img => img.loading),
+        'set-loading!': ((img, l) => { img.loading = from_fasl(l); }),
+        'referrer-policy': (img => img.referrerPolicy),
+        'set-referrer-policy!': ((img, p) => { img.referrerPolicy = from_fasl(p); }),
+        'name': (img => img.name),
+        'set-name!': ((img, n) => { img.name = from_fasl(n); }),
+        'x': (img => img.x),
+        'y': (img => img.y),
+        'decode': (img => img.decode())
+    } : {
+        'new'() { throw new Error('DOM not available in this environment'); },
+        'alt'() { throw new Error('DOM not available in this environment'); },
+        'set-alt!'() { throw new Error('DOM not available in this environment'); },
+        'src'() { throw new Error('DOM not available in this environment'); },
+        'set-src!'() { throw new Error('DOM not available in this environment'); },
+        'srcset'() { throw new Error('DOM not available in this environment'); },
+        'set-srcset!'() { throw new Error('DOM not available in this environment'); },
+        'sizes'() { throw new Error('DOM not available in this environment'); },
+        'set-sizes!'() { throw new Error('DOM not available in this environment'); },
+        'cross-origin'() { throw new Error('DOM not available in this environment'); },
+        'set-cross-origin!'() { throw new Error('DOM not available in this environment'); },
+        'use-map'() { throw new Error('DOM not available in this environment'); },
+        'set-use-map!'() { throw new Error('DOM not available in this environment'); },
+        'is-map'() { throw new Error('DOM not available in this environment'); },
+        'set-is-map!'() { throw new Error('DOM not available in this environment'); },
+        'width'() { throw new Error('DOM not available in this environment'); },
+        'set-width!'() { throw new Error('DOM not available in this environment'); },
+        'height'() { throw new Error('DOM not available in this environment'); },
+        'set-height!'() { throw new Error('DOM not available in this environment'); },
+        'natural-width'() { throw new Error('DOM not available in this environment'); },
+        'natural-height'() { throw new Error('DOM not available in this environment'); },
+        'complete'() { throw new Error('DOM not available in this environment'); },
+        'current-src'() { throw new Error('DOM not available in this environment'); },
+        'decoding'() { throw new Error('DOM not available in this environment'); },
+        'set-decoding!'() { throw new Error('DOM not available in this environment'); },
+        'fetch-priority'() { throw new Error('DOM not available in this environment'); },
+        'set-fetch-priority!'() { throw new Error('DOM not available in this environment'); },
+        'loading'() { throw new Error('DOM not available in this environment'); },
+        'set-loading!'() { throw new Error('DOM not available in this environment'); },
+        'referrer-policy'() { throw new Error('DOM not available in this environment'); },
+        'set-referrer-policy!'() { throw new Error('DOM not available in this environment'); },
+        'name'() { throw new Error('DOM not available in this environment'); },
+        'set-name!'() { throw new Error('DOM not available in this environment'); },
+        'x'() { throw new Error('DOM not available in this environment'); },
+        'y'() { throw new Error('DOM not available in this environment'); },
+        'decode'() { throw new Error('DOM not available in this environment'); }
+    },
+    // Event
+    'event': hasDOM ? {
+        'new': ((type, init) => {
+            const t = from_fasl(type);
+            const i = from_fasl(init);
+            if (i === undefined) {
+                return new Event(t);
+            } else {
+                return new Event(t, i);
+            }
+        }),
+        'type': (evt => evt.type),
+        'target': (evt => evt.target),
+        'current-target': (evt => evt.currentTarget),
+        'event-phase': (evt => evt.eventPhase),
+        'bubbles': (evt => evt.bubbles ? 1 : 0),
+        'cancelable': (evt => evt.cancelable ? 1 : 0),
+        'default-prevented': (evt => evt.defaultPrevented ? 1 : 0),
+        'composed': (evt => evt.composed ? 1 : 0),
+        'is-trusted': (evt => evt.isTrusted ? 1 : 0),
+        'time-stamp': (evt => evt.timeStamp),
+        'composed-path': (evt => evt.composedPath()),
+        'prevent-default': (evt => evt.preventDefault()),
+        'stop-propagation': (evt => evt.stopPropagation()),
+        'stop-immediate-propagation': (evt => evt.stopImmediatePropagation())
+    } : {
+        'new'() { throw new Error('DOM not available in this environment'); },
+        'type'() { throw new Error('DOM not available in this environment'); },
+        'target'() { throw new Error('DOM not available in this environment'); },
+        'current-target'() { throw new Error('DOM not available in this environment'); },
+        'event-phase'() { throw new Error('DOM not available in this environment'); },
+        'bubbles'() { throw new Error('DOM not available in this environment'); },
+        'cancelable'() { throw new Error('DOM not available in this environment'); },
+        'default-prevented'() { throw new Error('DOM not available in this environment'); },
+        'composed'() { throw new Error('DOM not available in this environment'); },
+        'is-trusted'() { throw new Error('DOM not available in this environment'); },
+        'time-stamp'() { throw new Error('DOM not available in this environment'); },
+        'composed-path'() { throw new Error('DOM not available in this environment'); },
+        'prevent-default'() { throw new Error('DOM not available in this environment'); },
+        'stop-propagation'() { throw new Error('DOM not available in this environment'); },
+        'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
     },
     // Element
     'element': hasDOM ? {
@@ -751,7 +1475,8 @@ var imports = {
 const wasmModule
       = await WebAssembly
       .instantiate(wasmBuffer, imports)
-      .then(results  => { const { entry, get_bytes, copy_bytes_to_memory } = results.instance.exports;
+      .then(results  => { const { entry, get_bytes, copy_bytes_to_memory, callback } = results.instance.exports;
+                          callback_export = callback;
                           var result = entry();
                           // console.log( "Output:")
                           // console.log( output_string );
