@@ -565,7 +565,7 @@
           (type $External 
             (sub $Heap
               (struct
-               (field $hash (mut i32))
+                (field $hash (mut i32))
                 (field $v    (ref null extern)))))
 
           ;; (Placeholder) module registry
