@@ -90,6 +90,11 @@
   #:name   "unescape"
   (-> (string) (extern)))
 
+(define-foreign js-set-property!
+  #:module "standard"
+  #:name   "set-property!"
+  (-> (extern value value) ()))
+
 ;;;
 ;;; Fundamental objects
 ;;;
