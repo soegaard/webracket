@@ -765,8 +765,7 @@
                           (i32.shr_s (i31.get_s (local.get $arity-i31)) (i32.const 1)))
                ;; Step 3: get argument count
                (local.set $arg-count (array.len (local.get $args)))
-               ;; Debug: log closure, argument count, and expected arity
-               (drop (call $js-log (local.get $clos)))
+               ;; Debug: log argument count and expected arity
                (drop (call $js-log (call $i32->string (local.get $arg-count))))
                (drop (call $js-log (call $i32->string (local.get $arity-i32))))
                ;; Step 4: check arity match
@@ -10313,7 +10312,7 @@
                (struct.new $StructAccessorProcedure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.const 4))     ; arity: 2
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure) ; invoke (used by apply, map, etc.)
                            (ref.func $struct-accessor)
@@ -10459,6 +10458,7 @@
                (local $auto-values  (ref eq))
                (local $free         (ref $Free))
                (local $code         (ref $ClosureCode))
+               (local $arity        i32)
 
                ;; Extract descriptor data
                (local.set $field-count   (struct.get $StructType $field-count      (local.get $std)))
@@ -10467,6 +10467,7 @@
                (local.set $init-indices  (struct.get $StructType $init-indices     (local.get $std)))
                (local.set $auto-indices  (struct.get $StructType $auto-indices     (local.get $std)))
                (local.set $auto-values   (struct.get $StructType $auto-values      (local.get $std)))
+               (local.set $arity        (call $length/i32 (local.get $init-indices)))
 
                ;; Choose code based on guard
                ;;  TODO We are ignoring guards for now.
@@ -10488,10 +10489,10 @@
                                            (local.get $name)))
 
                ;; Construct closure
-               (struct.new $Closure 
+               (struct.new $Closure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.shl (local.get $arity) (i32.const 1))) ; arity
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (local.get $code)
@@ -10512,7 +10513,7 @@
                (struct.new $Closure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.const 6))     ; arity: 3
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-mutator)
@@ -10601,7 +10602,7 @@
                (struct.new $Closure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.const 4))     ; arity: 2
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-mutator/specialized)
@@ -10723,7 +10724,7 @@
                (struct.new $Closure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.const 2))     ; arity: 1
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-predicate)
@@ -10795,7 +10796,7 @@
                (struct.new $Closure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
-                           (global.get $zero)          ; arity: todo
+                           (ref.i31 (i32.const 2))     ; arity: 1
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-field-accessor/specialized)
