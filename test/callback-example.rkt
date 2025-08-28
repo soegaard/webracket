@@ -1,0 +1,50 @@
+(define sxml
+  '(section
+    (h1 "Callback Example:")
+    (p (@ (id "message")) "You have pressed the button 0 times")
+    (button (@ (id "press-button")) "Press me")))
+
+(define (add-children elem children)
+  (for ([child (in-list children)])
+    (js-append-child! elem (sxml->dom child))))
+
+(define (set-elem-attributes elem attrs)
+  (for ([attr (in-list attrs)])
+    (match attr
+      [(list name value)
+       (js-set-attribute! elem (symbol->string name) value)])))
+
+(define (sxml->dom exp)
+  (match exp
+    [(? string? s)
+     (js-create-text-node exp)]
+    [(list tag (list '@ attrs ...) children ...)
+     (define elem (js-create-element (symbol->string tag)))
+     (set-elem-attributes elem attrs)
+     (add-children elem children)
+     elem]
+    [(list tag children ...)
+     (define elem (js-create-element (symbol->string tag)))
+     (add-children elem children)
+     elem]))
+
+(js-append-child! (js-document-body) (sxml->dom sxml))
+
+(define count 0)
+
+(define (update)
+  (define msg (js-document-get-element-by-id "message"))
+  (js-replace-children! msg
+                         (js-create-text-node
+                          (string-append "You have pressed the button "
+                                         (number->string count)
+                                         " times"))))
+
+(define (on-click _event)
+  (set! count (+ count 1))
+  (update))
+
+(define id (callback-register on-click))
+(js-eval (string-append "document.getElementById('press-button').addEventListener('click', make_callback("
+                        (number->string id)
+                        "));"))
