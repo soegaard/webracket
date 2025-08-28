@@ -7,6 +7,8 @@ var memory = new WebAssembly.Memory({initial:1024});
 
 var output_string = [];
 
+let instance;
+
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
           (arr[i + 2] << 8)  | arr[i + 3]) >>> 0;
@@ -394,6 +396,16 @@ var imports = {
         const s = String.fromCodePoint(cp).toLowerCase();
         const arr = Array.from(s);
         return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
+      }),
+      'make_callback': ((id) => {
+        return (...args) => {
+          const bytes = js_value_to_fasl(args);
+          const u8 = new Uint8Array(memory.buffer);
+          u8.set(bytes, 0);
+          const len = instance.exports.callback(id, 0);
+          const res = fasl_to_js_value(u8.slice(0, len))[0];
+          return res;
+        };
       })
     },
     'standard': {
@@ -748,20 +760,18 @@ var imports = {
     }
 };
 
-const wasmModule
-      = await WebAssembly
-      .instantiate(wasmBuffer, imports)
-      .then(results  => { const { entry, get_bytes, copy_bytes_to_memory } = results.instance.exports;
-                          var result = entry();
-                          // console.log( "Output:")
-                          // console.log( output_string );
-                          // console.log( "Result:")
-                          // console.log( result );
+const wasmModule = await WebAssembly.instantiate(wasmBuffer, imports);
+instance = wasmModule.instance;
+const { entry, get_bytes, copy_bytes_to_memory } = instance.exports;
+var result = entry();
+// console.log( "Output:")
+// console.log( output_string );
+// console.log( "Result:")
+// console.log( result );
 
-                          // console.log( "Result bytes:" )
-                          const bytes  = new Uint8Array(memory.buffer, 0, result);
-                          console.log(new TextDecoder().decode(bytes));
-                        });
+// console.log( "Result bytes:" )
+const bytes  = new Uint8Array(memory.buffer, 0, result);
+console.log(new TextDecoder().decode(bytes));
 
 
 
