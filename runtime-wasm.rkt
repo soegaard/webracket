@@ -702,7 +702,14 @@
          ;; Namespaces
          (global $top-level-namespace (mut (ref null $Namespace)) (ref.null $Namespace))
 
-         
+         ;; Callback registry
+         (global $callback-registry (ref $GrowableArray)
+                 (struct.new $GrowableArray
+                             (array.new $Array (global.get $false) (i32.const 4))
+                             (i32.const 4)
+                             (i32.const 0)))
+
+
          ;; Primitives (as values)
          ,@(declare-primitives-as-globals)
 
@@ -1603,6 +1610,16 @@
                (local $n i32)
                (local.set $n (array.len (local.get $a)))
                (struct.new $GrowableArray (local.get $a) (local.get $n) (local.get $n)))
+
+         (func $callback-register (export "callback-register")
+               (param $p (ref $Procedure))
+               (result i32)
+               (local $g (ref $GrowableArray))
+               (local $i i32)
+               (local.set $g (global.get $callback-registry))
+               (local.set $i (call $growable-array-count (local.get $g)))
+               (call $growable-array-add! (local.get $g) (local.get $p))
+               (local.get $i))
 
          
 
