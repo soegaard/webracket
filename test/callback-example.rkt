@@ -33,7 +33,7 @@
 (define count 0)
 
 (define (update)
-  (define msg (js-document-get-element-by-id "message"))
+  (define msg (js-get-element-by-id "message"))
   (js-replace-children! msg
                          (js-create-text-node
                           (string-append "You have pressed the button "
@@ -45,6 +45,6 @@
   (update))
 
 (define on-click-host (procedure->external on-click))
-(js-add-event-listener! (js-document-get-element-by-id "press-button")
+(js-add-event-listener! (js-get-element-by-id "press-button")
                         "click"
                         on-click-host)
