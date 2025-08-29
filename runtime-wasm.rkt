@@ -239,6 +239,8 @@
     (add-runtime-string-constant 'colon                     ":")
     (add-runtime-string-constant '->                        ">")
     (add-runtime-string-constant 'hash-less-boxed-colon     "#<boxed:")
+
+    (add-runtime-bytes-constant  'empty                     #"")
     
     `(module
          ;;;
