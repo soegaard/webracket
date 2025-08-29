@@ -4093,15 +4093,9 @@
                            (i32.const 0)
                            (local.get $arr)))
 
-         (func $make-dummy-bytes (result (ref $Bytes))
-               (struct.new $Bytes
-                           (i32.const 0)  ;; hash = 0
-                           (i32.const 0)  ;; mutable
-                           (call $i8make-array (i32.const 0) (i32.const 0))))
-
          (func $bytes->immutable-bytes (type $Prim1) (param $b (ref eq)) (result (ref eq))
                (local $bs (ref $Bytes))
-               (local.set $bs (call $make-dummy-bytes))
+               (local.set $bs (ref.cast (ref $Bytes) (global.get $bytes:empty)))
                ;; 1. Check that b is a byte string
                (if (ref.test (ref $Bytes) (local.get $b))
                    (then (local.set $bs (ref.cast (ref $Bytes) (local.get $b))))
