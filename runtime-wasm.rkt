@@ -413,7 +413,7 @@
                        (field $invoke (ref $ProcedureInvoker))
                        ; fields for structs
                        (field $type   (ref $StructType))      ;; Pointer to struct type descriptor
-                       (field $fields (ref $Array)))))        ;; Array of (ref eq), holds field values        
+                       (field $fields (ref $Array)))))        ;; Array of (ref eq), holds field values
 
           (type $StructConstructorProcedure
                 ; current representation is a plain closure
@@ -9724,14 +9724,60 @@
                            (local.get $cb)))
 
          ;;;
-         ;;; STRUCTURES
+         ;;; 5. STRUCTURES
          ;;;
 
+         ;; TODO
          ;; [x] structure types and super structs
          ;; [x] auto fields
          ;; [ ] prefab structures
          ;; [ ] structure guards
          ;; [ ] applicable structures
+
+         ;; 5.1 Defining Structure Types: struct
+         ;; [/] struct                     [syntax]
+         ;; [x] struct-field-index         [syntax]
+         ;; [x] define-struct              [syntax]
+         ;; [x] struct/derived             [syntax]
+         ;; [x] define-struct/derived      [syntax]
+
+         ;; 5.2 Creating Structure Types
+         ;; [x] make-struct-type
+         ;; [x] make-struct-field-accessor
+         ;; [x] make-struct-field-mutator
+         ;; [ ] prop:sealed                [value]
+         ;;       - a structure type property
+         ;;       - a sealed struct can not be a supertype of another structure type
+
+         ;; 5.3 Structure Type Properties
+         ;; [ ] make-struct-type-property
+         ;; [ ] struct-type-property?
+         ;; [ ] struct-type-property-accessor-procedure?
+         ;; [ ] struct-type-property-predicate-procedure?
+
+         ;; 5.4 Generic Interfaces (racket/generic)
+         ;; ...
+
+         ;; 5.5 Copying and Updating Structures
+         ;; [ ] struct-copy      [syntax]
+
+         ;; 5.6 Structure Utilities
+         ;; [ ] struct->vector
+         ;; [x] struct?
+         ;; [x] struct-type?
+         ;; [x] struct-constructor-procedure?
+         ;; [x] struct-predicate-procedure?
+         ;; [x] struct-accessor-procedure?
+         ;; [x] struct-mutator-procedure?
+         ;; [ ] prefab-struct-key
+         ;; [ ] make-prefab-struct
+         ;; [ ] prefab-struct-type-key+ field-count
+         ;; [ ] prefab-key->struct-type
+         ;; [ ] prefab-key?
+
+         ;; 5.6.1 Additional Structure Utilities
+         ;; [ ] make-constructor-style-printer
+         ;; [ ] struct->list
          
          (func $struct?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $Struct) (local.get $v)))
