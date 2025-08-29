@@ -455,6 +455,7 @@
   zero? positive? negative? 
   add1 sub1
 
+  number?
   integer?
   exact? exact-integer?
   exact-nonnegative-integer?
