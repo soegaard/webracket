@@ -490,15 +490,18 @@
   vector? make-vector vector-ref vector-set! vector-length
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
   vector-drop-right vector-split-at
-  vector->list
+  vector->list vector-copy
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
-  bytes-copy bytes-fill! bytes-append bytes->immutable-bytes bytes->list list->bytes bytes=?
+  bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
+  bytes->list list->bytes bytes=?
   bytes->string/utf-8
 
   string? string=? string<? string<=? string>? string>=?
-  make-string build-string string-ref string-set! string-length substring string-copy!
-  string-copy string-fill! string-append string-append-immutable string->list list->string
+  make-string build-string string-ref string-set! string-length substring
+  string-copy!
+  string-copy string-fill! string-append string-append-immutable
+  string->list list->string
   string->bytes/utf-8 string->immutable-string
   non-empty-string?
 
@@ -3032,6 +3035,9 @@
          [(s-exp->fasl) ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
+
+         [(vector-copy)                (inline-prim/optional sym ae1 1 3)]
+
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
 
@@ -3043,12 +3049,12 @@
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
 
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
-         [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
          [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
-         [(number->string)             (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
-         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]                                   
-         [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
-         [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2 5 (Imm #f))]
+         [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
+         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
+         [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
+         [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          ; Todo: map and for-each needs to check that the first argument is a procedure
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]

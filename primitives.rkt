@@ -40,7 +40,8 @@
  immutable?
 
  ;; 4.3 Numbers
- number? integer? exact? exact-integer? exact-nonnegative-integer? exact-positive-integer?
+ number? integer? exact? exact-integer?
+ exact-nonnegative-integer? exact-positive-integer?
  inexact->exact round sqrt number->string
  + - * / = < > <= >= zero? positive? negative? add1 sub1
  fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
@@ -218,7 +219,7 @@
  ;; 4.12 Vectors
  vector vector-immutable vector? make-vector vector-ref vector-set!
  vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop
- vector-drop-right vector-split-at vector->list
+ vector-drop-right vector-split-at vector->list vector-copy
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

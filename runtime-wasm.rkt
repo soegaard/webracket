@@ -5951,9 +5951,11 @@
                    (then (call $raise-check-fixnum (local.get $n))))
                (local.set $n/i32 (i32.shr_u (local.get $n/tag) (i32.const 1)))
 
-               (local.set $len (call $string-length/checked/i32 (local.get $str)))
+               (local.set $len
+                          (call $string-length/checked/i32 (local.get $str)))
                (if (i32.gt_u (local.get $n/i32) (local.get $len))
-                   (then (call $raise-bad-string-index/i32 (local.get $s) (local.get $n/i32))))
+                   (then (call $raise-bad-string-index/i32
+                               (local.get $s) (local.get $n/i32))))
 
                (call $string-take/checked (local.get $str) (local.get $n/i32)))
 
@@ -6178,18 +6180,22 @@
                    (else
                     ;; Check: is it a (ref i31)?
                     (if (i32.eqz (ref.test (ref i31) (local.get $sep)))
-                        (then (call $raise-argument-error:char-expected (local.get $sep))
+                        (then (call $raise-argument-error:char-expected
+                                    (local.get $sep))
                               (unreachable)))
                     ;; Extract raw tagged value
-                    (local.set $sep/tag (i31.get_u (ref.cast (ref i31) (local.get $sep))))
+                    (local.set $sep/tag
+                               (i31.get_u (ref.cast (ref i31) (local.get $sep))))
                     ;; Check tag matches ,char-tag
                     (if (i32.ne (i32.and (local.get $sep/tag) (i32.const ,char-mask))
                                 (i32.const ,char-tag))
-                        (then (call $raise-argument-error:char-expected (local.get $sep))
+                        (then (call $raise-argument-error:char-expected
+                                    (local.get $sep))
                               (unreachable)))
                     ;; Passed: decode
                     (local.set $use-whitespace? (i32.const 0))
-                    (local.set $sep-ch (i32.shr_u (local.get $sep/tag) (i32.const ,char-shift)))))
+                    (local.set $sep-ch (i32.shr_u (local.get $sep/tag)
+                                                  (i32.const ,char-shift)))))
                ;; --- Decode after checks ---
                (local.set $str (ref.cast (ref $String) (local.get $s)))
                ;; --- Get string length (as i32) ---
@@ -8178,7 +8184,7 @@
                    (then (call $raise-immutable-vector (local.get $v))))
                (call $array-fill! (struct.get $Vector $arr (local.get $vec)) (local.get $x))
                (global.get $void))
-
+         
          (func $vector-copy!
                (param $dest       (ref eq))
                (param $dest-start (ref eq))   ;; fixnum
@@ -8270,6 +8276,55 @@
                      (struct.get $Vector $arr (local.get $dest)) (local.get $ds)
                      (struct.get $Vector $arr (local.get $src))  (local.get $ss) (local.get $se))
                (global.get $void))
+
+         (func $vector-copy (type $Prim3)
+               (param $v     (ref eq))
+               (param $start (ref eq))   ;; fixnum or $missing, default: 0
+               (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)
+               (result       (ref eq))
+
+               (local $vec (ref $Vector))
+               (local $ss  i32)
+               (local $se  i32)
+               (local $len i32)
+
+               ;; --- Validate vector ---
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               ;; --- Decode $start ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $ss (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $ss (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.and (local.get $ss) (i32.const 1))
+                                       (then (call $raise-check-fixnum (local.get $start))))
+                                   (local.set $ss (i32.shr_u (local.get $ss) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $start))))))
+               ;; --- Decode $end ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $se (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $se (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.and (local.get $se) (i32.const 1))
+                                       (then (call $raise-check-fixnum (local.get $end))))
+                                   (local.set $se (i32.shr_u (local.get $se) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $end))))))
+               ;; --- Bounds check: start <= end <= len ---
+               (if (i32.or (i32.gt_u (local.get $ss) (local.get $se))
+                           (i32.gt_u (local.get $se) (local.get $len)))
+                   (then (call $raise-bad-vector-copy-range
+                               (local.get $vec) (i32.const 0)
+                               (local.get $vec) (local.get $ss) (local.get $se))
+                         (unreachable)))
+               ;; --- Allocate and return new mutable vector ---
+               (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
+                           (call $array-copy
+                                 (struct.get $Vector $arr (local.get $vec))
+                                 (local.get $ss) (local.get $se))))
 
          (func $vector-empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
