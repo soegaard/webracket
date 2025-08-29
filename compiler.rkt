@@ -3093,6 +3093,14 @@
          [(string-append-immutable) ; variadic, at least zero arguments
           (inline-prim/variadic sym ae1 0)]
 
+         [(bytes-append)
+          (let loop ([aes (AExpr* ae1)])
+            (match aes
+              [(list)        `(call $make-dummy-bytes)]  ; $bytes:empty ??
+              [(list v)      `(call $bytes-copy ,v)]
+              [(list v1 v2)  `(call $bytes-append/2 ,v1 ,v2)]
+              [(list* vs)    `(call $bytes-append ,(build-rest-args aes))]) )]
+
          ;;; Arrays : bytes, string, vector, vector-immutable
          [(bytes)
           #;(build-seq aes local-name local-type alloc set finish)
