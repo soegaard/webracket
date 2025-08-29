@@ -646,6 +646,9 @@
          (func $js-math-tan
                (import "math" "tan")
                (param f64) (result f64))
+         (func $js-math-sqrt
+               (import "math" "sqrt")
+               (param f64) (result f64))
 
          (func $js-make-callback
                (import "primitives" "make_callback")
@@ -2835,6 +2838,47 @@
                (unreachable))
 
 
+        (func $sqrt (type $Prim1)
+              (param $x (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+
+              ;; If x is a fixnum, compute sqrt and return fixnum if integral
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $f64
+                                   (call $js-math-sqrt
+                                         (f64.convert_i32_s
+                                          (i32.shr_s (local.get $bits) (i32.const 1)))))
+                        (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                            (then
+                             (local.set $bits (i32.trunc_f64_s (local.get $f64)))
+                             (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1)))))
+                            (else
+                             (return (struct.new $Flonum (i32.const 0) (local.get $f64))))))
+                       (else (call $raise-expected-number (local.get $x))
+                             (unreachable)))))
+
+              ;; If x is a flonum, compute sqrt and box
+              (if (ref.test (ref $Flonum) (local.get $x))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (return (struct.new $Flonum
+                                        (i32.const 0)
+                                        (call $js-math-sqrt (local.get $f64))))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $x))
+              (unreachable))
+
+
         (func $round (type $Prim1)
               (param $x (ref eq))
               (result   (ref eq))
@@ -3337,8 +3381,22 @@
               (struct.new $Flonum
                           (i32.const 0)
                           (call $js-math-tan (local.get $a/f64))))
+        (func $flsqrt (type $Prim1)
+              (param $a (ref eq))
+              (result (ref eq))
 
-         ,@(let ()
+              (local $a/fl (ref $Flonum))
+              (local $a/f64 f64)
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $a))
+                        (unreachable)))
+              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (call $js-math-sqrt (local.get $a/f64))))
+
+        ,@(let ()
              (define (fl-cmp flname flcmp)
                `(func ,flname
                       (param $x (ref eq)) (param $y (ref eq))

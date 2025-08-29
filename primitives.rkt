@@ -173,7 +173,7 @@
  fx->fl
  fl->fx
 
- inexact->exact round flround flsin flcos fltan
+ inexact->exact round sqrt flround flsin flcos fltan flsqrt
 
  ;; 14.1 Namespaces
 
