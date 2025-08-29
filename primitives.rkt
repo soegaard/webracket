@@ -57,6 +57,21 @@
  string-find
 
  ;; 4.5 Byte Strings
+ bytes?
+ make-bytes
+ bytes-ref
+ bytes-set!
+ bytes-length
+ subbytes
+ bytes-copy!
+ bytes-copy
+ bytes-fill!
+ bytes-append
+ bytes->immutable-bytes
+ bytes->list
+ list->bytes
+ bytes=?
+ bytes->string/utf-8
 
  ;; 4.6 Characters
  char-downcase

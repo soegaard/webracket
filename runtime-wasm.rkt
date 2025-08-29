@@ -4003,7 +4003,11 @@
          (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq)) (unreachable))         
          (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
          
-         (func $make-bytes (type $Prim2) (param $k (ref eq)) (param $b (ref eq)) (result (ref eq))
+         (func $make-bytes (type $Prim2)
+               (param $k (ref eq))
+               (param $b (ref eq))
+               (result (ref eq))
+               
                (local $len i32)
                (local $val i32)
                ;; Decode and check $k as fixnum
