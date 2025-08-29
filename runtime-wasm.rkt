@@ -5215,117 +5215,110 @@
                                  (struct.get $String $codepoints (local.get $str1))
                                  (struct.get $String $codepoints (local.get $str2)))))
 
-        (func $string-append (type $Prim>=0)
-              (param $xs (ref eq))  ; expects a list of strings
-              (result (ref eq))
 
-              (local $n     i32)
-              (local $node  (ref $Pair))
-              (local $s     (ref null $String))
-              (local $orig  (ref eq))
-              (local $total i32)
-              (local $len   i32)
-              (local $arr   (ref $I32Array))
-              (local $pos   i32)
+         (func $string-append (type $Prim>=0)
+               (param  $xs   (ref eq))        ;; expects a list of strings
+               (result       (ref eq))
 
-              ;; Preserve original list
-              (local.set $orig (local.get $xs))
+               (local $n     i32)
+               (local $node  (ref $Pair))
+               (local $s     (ref $String))
+               (local $v     (ref eq))
+               (local $orig  (ref eq))
+               (local $total i32)
+               (local $len   i32)
+               (local $arr   (ref $I32Array))
+               (local $pos   i32)
 
-              ;; Determine number of arguments
-              (local.set $n (call $length/i32 (local.get $xs)))
+               ;; === initialize non-defaultable refs ===
+               (local.set $s (ref.cast (ref $String) (global.get $string:empty)))
+               
+               ;; Preserve original list
+               (local.set $orig (local.get $xs))
+               ;; Determine number of arguments
+               (local.set $n (call $length/i32 (local.get $xs)))
+               ;; Zero arguments -> existing empty string
+               (if (i32.eqz (local.get $n))
+                   (then (return (global.get $string:empty))))
+               ;; Extract and check first argument
+               (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+               (local.set $v    (struct.get $Pair $a (local.get $node)))
+               (if (ref.test (ref $String) (local.get $v))
+                   (then (local.set $s (ref.cast (ref $String) (local.get $v))))
+                   (else (call $raise-check-string (local.get $v))))
+               ;; Single argument -> copy to ensure fresh mutable string
+               (if (i32.eq (local.get $n) (i32.const 1))
+                   (then (if (ref.eq (local.get $s) (global.get $string:empty))
+                             (then (return (global.get $string:empty)))
+                             (else (return (call $string-copy (local.get $s)))))))
+               ;; Compute total length
+               (local.set $total
+                          (call $i32array-length
+                                (struct.get $String $codepoints (local.get $s))))
+               (local.set $xs (struct.get $Pair $d (local.get $node)))
+               (block $done1
+                      (loop $loop1
+                            (br_if $done1 (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (if (ref.test (ref $String) (local.get $v))
+                                (then
+                                 (local.set $s (ref.cast (ref $String) (local.get $v)))
+                                 (local.set $len
+                                            (call $i32array-length
+                                                  (struct.get $String $codepoints (local.get $s))))
+                                 (local.set $total (i32.add (local.get $total) (local.get $len))))
+                                (else (call $raise-check-string (local.get $v))))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (br $loop1)))
+               ;; All strings empty -> return empty string
+               (if (i32.eqz (local.get $total))
+                   (then (return (global.get $string:empty))))
+               ;; Allocate result array
+               (local.set $arr (call $i32array-make (local.get $total) (i32.const 0)))
+               ;; Copy strings into result array
+               (local.set $xs (local.get $orig))
+               (local.set $pos (i32.const 0))
+               (block $done2
+                      (loop $loop2
+                            (br_if $done2 (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $s
+                                       (ref.cast (ref $String) (struct.get $Pair $a (local.get $node))))
+                            (local.set $len
+                                       (call $i32array-length
+                                             (struct.get $String $codepoints (local.get $s))))
+                            (call $i32array-copy!
+                                  (local.get $arr) (local.get $pos)
+                                  (struct.get $String $codepoints (local.get $s))
+                                  (i32.const 0) (local.get $len))
+                            (local.set $pos (i32.add (local.get $pos) (local.get $len)))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (br $loop2)))
 
-              ;; Zero arguments -> existing empty string
-              (if (i32.eqz (local.get $n))
-                  (then (return (global.get $string:empty))))
-
-              ;; Extract and check first argument
-              (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-              (local.set $s    (struct.get $Pair $a (local.get $node)))
-              (if (ref.test (ref $String) (local.get $s))
-                  (then (local.set $s (ref.cast (ref $String) (local.get $s))))
-                  (else (call $raise-check-string (local.get $s))))
-
-              ;; Single argument -> copy to ensure fresh mutable string
-              (if (i32.eq (local.get $n) (i32.const 1))
-                  (then (if (ref.eq (local.get $s) (global.get $string:empty))
-                            (then (return (global.get $string:empty)))
-                            (else (return (call $string-copy (local.get $s)))))))
-
-              ;; Compute total length
-              (local.set $total
-                         (call $i32array-length
-                               (struct.get $String $codepoints (local.get $s))))
-              (local.set $xs (struct.get $Pair $d (local.get $node)))
-
-              (block $done1
-                     (loop $loop1
-                           (br_if $done1 (ref.eq (local.get $xs) (global.get $null)))
-                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-                           (local.set $s    (struct.get $Pair $a (local.get $node)))
-                           (if (ref.test (ref $String) (local.get $s))
-                               (then (local.set $s (ref.cast (ref $String) (local.get $s)))
-                                     (local.set $len
-                                                (call $i32array-length
-                                                      (struct.get $String $codepoints (local.get $s))))
-                                     (local.set $total (i32.add (local.get $total) (local.get $len))))
-                               (else (call $raise-check-string (local.get $s))))
-                           (local.set $xs (struct.get $Pair $d (local.get $node)))
-                           (br $loop1)))
-
-              ;; All strings empty -> return empty string
-              (if (i32.eqz (local.get $total))
-                  (then (return (global.get $string:empty))))
-
-              ;; Allocate result array
-              (local.set $arr (call $i32array-make (local.get $total) (i32.const 0)))
-
-              ;; Copy strings into result array
-              (local.set $xs (local.get $orig))
-              (local.set $pos (i32.const 0))
-              (block $done2
-                     (loop $loop2
-                           (br_if $done2 (ref.eq (local.get $xs) (global.get $null)))
-                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-                           (local.set $s (ref.cast (ref $String)
-                                                   (struct.get $Pair $a (local.get $node))))
-                           (local.set $len
-                                      (call $i32array-length
-                                            (struct.get $String $codepoints (local.get $s))))
-                           (call $i32array-copy!
-                                 (local.get $arr) (local.get $pos)
-                                 (struct.get $String $codepoints (local.get $s))
-                                 (i32.const 0) (local.get $len))
-                           (local.set $pos (i32.add (local.get $pos) (local.get $len)))
-                           (local.set $xs (struct.get $Pair $d (local.get $node)))
-                           (br $loop2)))
-
-              (struct.new $String
-                          (i32.const 0)
-                          (i32.const 0)
-                          (local.get $arr)))
-
-         (func $string-append-immutable (param $s1 (ref eq)) (param $s2 (ref eq)) (result (ref eq))
-               (local $str1 (ref null $String))
-               (local $str2 (ref null $String))
-               ;; check strings
-               (if (ref.test (ref $String) (local.get $s1))
-                   (then (local.set $str1 (ref.cast (ref $String) (local.get $s1))))
-                   (else (call $raise-check-string (local.get $s1))))
-               (if (ref.test (ref $String) (local.get $s2))
-                   (then (local.set $str2 (ref.cast (ref $String) (local.get $s2))))
-                   (else (call $raise-check-string (local.get $s2))))
-               ;; create immutable
                (struct.new $String
                            (i32.const 0)
-                           (i32.const 1)
-                           (call $i32array-copy
-                                 (call $i32array-append
-                                       (struct.get $String $codepoints (local.get $str1))
-                                       (struct.get $String $codepoints (local.get $str2)))
-                                 (i32.const 0)
-                                 (call $i32array-length (call $i32array-append
-                                                              (struct.get $String $codepoints (local.get $str1))
-                                                              (struct.get $String $codepoints (local.get $str2)))))))
+                           (i32.const 0)
+                           (local.get $arr)))
+
+
+         (func $string-append-immutable (type $Prim>=0)
+               (param  $xs (ref eq))         ;; list of strings
+               (result     (ref eq))
+
+               (local $s   (ref $String))
+               (local $arr (ref $I32Array))
+               ;; Do the append (returns a fresh $String)
+               (local.set $s (ref.cast (ref $String)
+                                       (call $string-append (local.get $xs))))
+               ;; Reuse its codepoint array
+               (local.set $arr (struct.get $String $codepoints (local.get $s)))
+               ;; Build a new $String that is immutable (=1). Hash = 0 (lazy).
+               (struct.new $String
+                           (i32.const 0)      ;; $hash
+                           (i32.const 1)      ;; $immutable
+                           (local.get $arr))) ;; $codepoints
+
          
          (func $string->list (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))

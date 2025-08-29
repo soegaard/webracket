@@ -3074,12 +3074,12 @@
          [(string-append)
           (let loop ([aes (AExpr* ae1)])
             (match aes
-              [(list)            '(global.get $string:empty)]
-              [(list v)          `(call $string-copy ,v)]
-              [(list v1 v2)      `(call $string-append/2 ,v1 ,v2)]
-              [(list* v0 v1 vs)  `(call $string-append/2 ,v0 ,(loop (cons v1 vs)))]) )]
-         #;[(string-append) ; variadic, at least zero arguments
-            (inline-prim/variadic sym ae1 0)]
+              [(list)        '(global.get $string:empty)]
+              [(list v)      `(call $string-copy ,v)]
+              [(list v1 v2)  `(call $string-append/2 ,v1 ,v2)]
+              [(list* vs)    `(call $string-append ,(build-rest-args aes))]) )]
+         [(string-append-immutable) ; variadic, at least zero arguments
+          (inline-prim/variadic sym ae1 0)]
 
          ;;; Arrays : bytes, string, vector, vector-immutable
          [(bytes)
