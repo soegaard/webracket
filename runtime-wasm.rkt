@@ -4801,19 +4801,23 @@
                (local $n          i32)
                (local $ch-tagged  i32)
                (local $ch         i32)
-               ;; --- Type checks ---
+               ;; --- Type check for length ---
                (if (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
                    (then (call $raise-make-string:bad-length)))
-               (if (i32.eqz (ref.test (ref i31) (local.get $ch-raw)))
-                   (then (call $raise-make-string:bad-char)))
-               ;; --- Decode ---
-               (local.set $n         (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
-               (local.set $ch-tagged (i31.get_u (ref.cast (ref i31) (local.get $ch-raw))))
-               ;; --- Validate character tag ---
-               (if (i32.ne (i32.and (local.get $ch-tagged) (i32.const ,char-mask)) (i32.const ,char-tag))
-                   (then (call $raise-make-string:bad-char)))
-               ;; --- Extract code point from character ---
-               (local.set $ch (i32.shr_u (local.get $ch-tagged) (i32.const ,char-shift)))
+               ;; --- Decode length ---
+               (local.set $n (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
+               ;; --- Handle optional character ---
+               (if (ref.eq (local.get $ch-raw) (global.get $missing))
+                   (then (local.set $ch (i32.const 0)))
+                   (else
+                    ;; --- Validate character ---
+                    (if (i32.eqz (ref.test (ref i31) (local.get $ch-raw)))
+                        (then (call $raise-make-string:bad-char)))
+                    (local.set $ch-tagged (i31.get_u (ref.cast (ref i31) (local.get $ch-raw))))
+                    (if (i32.ne (i32.and (local.get $ch-tagged) (i32.const ,char-mask)) (i32.const ,char-tag))
+                        (then (call $raise-make-string:bad-char)))
+                    ;; --- Extract code point from character ---
+                    (local.set $ch (i32.shr_u (local.get $ch-tagged) (i32.const ,char-shift)))))
                ;; --- Delegate ---
                (call $make-string/checked (local.get $n) (local.get $ch)))
 

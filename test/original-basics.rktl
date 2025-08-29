@@ -928,6 +928,7 @@
 (arity-test string? 1 1)
 (test 3 'make-string (string-length (make-string 3)))
 (test "" make-string 0)
+(test (string #\nul #\nul) make-string 2)
 (arity-test make-string 1 2)
 (err/rt-test (make-string "hello") exn:fail:contract? "exact-nonnegative-integer[?]")
 (err/rt-test (make-string 5 "hello") exn:fail:contract? "char[?]")
