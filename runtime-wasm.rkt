@@ -4795,7 +4795,7 @@
                   
          (func $make-string (type $Prim2)
                (param $n-raw  (ref eq))    ;; fixnum
-               (param $ch-raw (ref eq))    ;; immediate character
+               (param $ch-raw (ref eq))    ;; optional immediate character
                (result        (ref eq))
 
                (local $n          i32)
@@ -4845,7 +4845,10 @@
                            (i32.const 1)     ;; immutable
                            (local.get $arr)))
          
-         (func $string->immutable-string (type $Prim1) (param $s (ref eq)) (result (ref eq))
+         (func $string->immutable-string (type $Prim1)
+               (param $s (ref eq))
+               (result   (ref eq))
+               
                (local $str (ref $String))
                (local.set $str (call $make-dummy-string))
                ;; 1. Check that s is a String

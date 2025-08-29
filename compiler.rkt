@@ -498,7 +498,7 @@
 
   string? string=? string<? string<=? string>? string>=?
   make-string build-string string-ref string-set! string-length substring string-copy!
-  string-copy string-fill! string-append string->list list->string
+  string-copy string-fill! string-append string-append-immutable string->list list->string
   string->bytes/utf-8 string->immutable-string
   non-empty-string?
 
@@ -3034,6 +3034,7 @@
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]         
+         [(make-string)                (inline-prim/optional sym ae1 1 2)]
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
