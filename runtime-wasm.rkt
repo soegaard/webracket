@@ -4327,57 +4327,96 @@
                (param $dest       (ref eq))
                (param $dest-start (ref eq))
                (param $src        (ref eq))
-               (param $src-start  (ref eq))
-               (param $src-end    (ref eq))
-               (result (ref eq))
+               (param $src-start  (ref eq))  ;; optional fixnum, default = 0
+               (param $src-end    (ref eq))  ;; optional fixnum, default = (bytes-length src)
+               (result            (ref eq))
 
-               (local $d    (ref null $Bytes))
-               (local $s    (ref null $Bytes))
-               (local $darr (ref $I8Array))
-               (local $sarr (ref $I8Array))
-               (local $di   i32)
-               (local $si   i32)
-               (local $ei   i32)
-               ;; check $dest
-               (if (ref.test (ref $Bytes) (local.get $dest))
-                   (then (local.set $d (ref.cast (ref $Bytes) (local.get $dest))))
-                   (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
-               ;; check $src
-               (if (ref.test (ref $Bytes) (local.get $src))
-                   (then (local.set $s (ref.cast (ref $Bytes) (local.get $src))))
-                   (else (call $raise-check-bytes (local.get $src)) (unreachable)))
-               ;; decode $dest-start
-               (if (ref.test (ref i31) (local.get $dest-start))
-                   (then (local.set $di (i31.get_u (ref.cast (ref i31) (local.get $dest-start))))
-                         (if (i32.eqz (i32.and (local.get $di) (i32.const 1)))
-                             (then (local.set $di (i32.shr_u (local.get $di) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $dest-start)) (unreachable)))
-               ;; decode $src-start
-               (if (ref.test (ref i31) (local.get $src-start))
-                   (then (local.set $si (i31.get_u (ref.cast (ref i31) (local.get $src-start))))
-                         (if (i32.eqz (i32.and (local.get $si) (i32.const 1)))
-                             (then (local.set $si (i32.shr_u (local.get $si) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $src-start)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $src-start)) (unreachable)))
-               ;; decode $src-end
-               (if (ref.test (ref i31) (local.get $src-end))
-                   (then (local.set $ei (i31.get_u (ref.cast (ref i31) (local.get $src-end))))
-                         (if (i32.eqz (i32.and (local.get $ei) (i32.const 1)))
-                             (then (local.set $ei (i32.shr_u (local.get $ei) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $src-end)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $src-end)) (unreachable)))
-               ;; get byte arrays
-               (local.set $darr (struct.get $Bytes $bs (local.get $d)))
-               (local.set $sarr (struct.get $Bytes $bs (local.get $s)))
-               ;; copy bytes
-               (drop (call $i8array-copy!/error
-                           (local.get $darr)
-                           (local.get $di)
-                           (local.get $sarr)
-                           (local.get $si)
-                           (local.get $ei)))
+               (local $d          (ref $Bytes))
+               (local $s          (ref $Bytes))
+               (local $darr       (ref $I8Array))
+               (local $sarr       (ref $I8Array))
+               
+               (local $di         i32)
+               (local $si         i32)
+               (local $ei         i32)
+               (local $src-len    i32)
+               (local $dest-len   i32)
+
+               ;; --- Validate $dest ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $dest)))
+                   (then (call $raise-check-bytes (local.get $dest))))
+               ;; --- Validate $src ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $src)))
+                   (then (call $raise-check-bytes (local.get $src))))
+               ;; --- Cast after validation ---
+               (local.set $d (ref.cast (ref $Bytes) (local.get $dest)))
+               (local.set $s (ref.cast (ref $Bytes) (local.get $src)))
+               ;; --- Reject immutable destination ---
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $d)) (i32.const 1))
+                   (then (call $raise-expected-mutable-bytes (local.get $dest)) (unreachable)))
+               ;; --- Decode $dest-start ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $dest-start)))
+                   (then (call $raise-check-fixnum (local.get $dest-start))))
+               (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
+                                    (i32.const 1))
+                           (i32.const 0))
+                   (then (call $raise-check-fixnum (local.get $dest-start))))
+               (local.set $di
+                          (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $dest-start)))
+                                     (i32.const 1)))
+               ;; --- Extract arrays and lengths  ---
+               (local.set $darr     (struct.get $Bytes $bs (local.get $d)))
+               (local.set $sarr     (struct.get $Bytes $bs (local.get $s)))
+               (local.set $src-len  (call $i8array-length (local.get $sarr)))
+               (local.set $dest-len (call $i8array-length (local.get $darr)))
+               ;; --- Decode optional $src-start ---
+               (if (ref.eq (local.get $src-start) (global.get $missing))
+                   (then (local.set $si (i32.const 0)))
+                   (else
+                    (if (i32.eqz (ref.test (ref i31) (local.get $src-start)))
+                        (then (call $raise-check-fixnum (local.get $src-start))))
+                    (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-start)))
+                                         (i32.const 1))
+                                (i32.const 0))
+                        (then (call $raise-check-fixnum (local.get $src-start))))
+                    (local.set $si
+                               (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-start)))
+                                          (i32.const 1)))))
+               ;; --- Decode optional $src-end ---
+               (if (ref.eq (local.get $src-end) (global.get $missing))
+                   (then (local.set $ei (local.get $src-len)))
+                   (else
+                    (if (i32.eqz (ref.test (ref i31) (local.get $src-end)))
+                        (then (call $raise-check-fixnum (local.get $src-end))))
+                    (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-end)))
+                                         (i32.const 1))
+                                (i32.const 0))
+                        (then (call $raise-check-fixnum (local.get $src-end))))
+                    (local.set $ei
+                               (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-end)))
+                                          (i32.const 1)))))
+               ;; --- Range validation ---
+               (if (i32.gt_u (local.get $si) (local.get $ei))
+                   (then (call $raise-bad-bytes-range (local.get $src)
+                               (local.get $si) (local.get $ei))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $ei) (local.get $src-len))
+                   (then (call $raise-bad-bytes-range (local.get $src)
+                               (local.get $si) (local.get $ei))
+                         (unreachable)))
+               (if (i32.gt_u (i32.add (local.get $di)
+                                      (i32.sub (local.get $ei) (local.get $si)))
+                             (local.get $dest-len))
+                   (then (call $raise-bad-bytes-range
+                               (local.get $dest) (local.get $di)
+                               (i32.add (local.get $di)
+                                        (i32.sub (local.get $ei) (local.get $si))))
+                         (unreachable)))
+               ;; --- Copy bytes ---
+               (call $i8array-copy! (local.get $darr) (local.get $di)
+                     (local.get $sarr) (local.get $si) (local.get $ei))
                (global.get $void))
+
          
          (func $bytes-copy (type $Prim1)
                (param $src (ref eq))
