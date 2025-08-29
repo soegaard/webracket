@@ -573,6 +573,7 @@
   unsafe-cdr
   unsafe-vector*-length
   unsafe-vector*-set!
+  unsafe-struct-set!
 
   namespace?
   make-empty-namespace

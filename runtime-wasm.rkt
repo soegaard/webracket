@@ -12184,9 +12184,9 @@
                (param $idx (ref eq))
                (param $val (ref eq))
                (result     (ref eq))
-               
+
                (array.set $Array
-                          (struct.get $Vector $arr 
+                          (struct.get $Vector $arr
                                       (ref.cast (ref $Vector) (local.get $vec)))
                           (i32.shr_s (i31.get_s (ref.cast (ref i31)
                                                           (local.get $idx)))
@@ -12194,10 +12194,25 @@
                           (local.get $val))
                (global.get $void))
 
-         ;; 17.4 Unsafe Extflonum Operations
-         ;; 17.5 Unsafe Impersonators and Chaperones
-         ;; 17.6 Unsafe Assertions
-         ;; 17.7 Unsafe Undefined
+        (func $unsafe-struct-set!
+              (param $struct (ref eq))
+              (param $idx    (ref eq))
+              (param $val    (ref eq))
+              (result        (ref eq))
+
+              (array.set $Array
+                         (struct.get $Struct $fields
+                                     (ref.cast (ref $Struct) (local.get $struct)))
+                         (i32.shr_s (i31.get_s (ref.cast (ref i31)
+                                                         (local.get $idx)))
+                                    (i32.const 1))
+                         (local.get $val))
+              (global.get $void))
+
+        ;; 17.4 Unsafe Extflonum Operations
+        ;; 17.5 Unsafe Impersonators and Chaperones
+        ;; 17.6 Unsafe Assertions
+        ;; 17.7 Unsafe Undefined
          
          
          

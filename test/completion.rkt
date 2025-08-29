@@ -1045,6 +1045,7 @@
             namespace-variable-value-simple
             make-empty-namespace
             namespace?
+            unsafe-struct-set!
             unsafe-vector*-set!
             unsafe-vector*-length
             unsafe-cdr
