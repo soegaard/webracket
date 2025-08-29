@@ -3036,8 +3036,6 @@
           (inline-prim/optional sym ae1 1 2)]
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
 
-         [(vector-copy)                (inline-prim/optional sym ae1 1 3)]
-
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(bytes-copy!)                (inline-prim/optional sym ae1 3 5)]
@@ -3048,6 +3046,7 @@
          
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
+         [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
 
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]

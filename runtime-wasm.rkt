@@ -4281,8 +4281,8 @@
          (func $subbytes
                (param $b     (ref eq))   ;; input byte string
                (param $start (ref eq))   ;; start index
-               (param $end   (ref eq))   ;; end index
-               (result (ref eq))
+               (param $end   (ref eq))   ;; optional end index, default = (bytes-length $b)
+               (result       (ref eq))
                
                (local $bs   (ref null $Bytes))
                (local $arr  (ref $I8Array))
@@ -4304,14 +4304,16 @@
                         (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
                         (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
                    (else (call $raise-check-fixnum (local.get $start)) (unreachable)))
-               ;; Decode and validate fixnum $end
-               (if (ref.test (ref i31) (local.get $end))
-                   (then
-                    (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
-                    (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
-                        (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
-                        (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $end)) (unreachable)))
+               ;; Decode and validate fixnum $end (optional)
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then
+                              (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                              (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                  (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                  (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
                ;; Bounds check: 0 <= from <= to <= len
                (if (i32.gt_u (local.get $from) (local.get $to))
                    (then (call $raise-bad-bytes-range (local.get $b) (local.get $from) (local.get $to)) (unreachable)))

@@ -336,15 +336,15 @@
               (and (equal? (bytes-ref #"abc" 0) 97)
                    (equal? (bytes-ref #"abc" 2) 99)))
 
-        ;; (list "subbytes"
-        ;;       (let ([b (bytes 32 97 0 98 45)])
-        ;;         (and (equal? (subbytes #"ab" 0 0) #"")
-        ;;              (equal? (subbytes #"ab" 1 2) #"b")
-        ;;              (equal? (subbytes #"ab" 0 2) #"ab")
-        ;;              (equal? (subbytes #"ab" 0) #"ab")
-        ;;              (equal? (subbytes #"ab" 1) #"b")
-        ;;              (equal? (subbytes #"ab" 2) #"")
-        ;;              (equal? (subbytes b 1 4) (bytes 97 0 98)))))
+        (list "subbytes"
+              (let ([b (bytes 32 97 0 98 45)])
+                (and (equal? (subbytes #"ab" 0 0) #"")
+                     (equal? (subbytes #"ab" 1 2) #"b")
+                     (equal? (subbytes #"ab" 0 2) #"ab")
+                     (equal? (subbytes #"ab" 0)   #"ab")
+                     (equal? (subbytes #"ab" 1)   #"b")
+                     (equal? (subbytes #"ab" 2)   #"")
+                     (equal? (subbytes b 1 4) (bytes 97 0 98)))))
 
         ;; (list "bytes-append"
         ;;       (and (equal? (bytes-append #"foo" #"bar") #"foobar")
@@ -368,11 +368,11 @@
                      (bytes-fill! s (char->integer #\x))
                      (equal? s #"xxxxx"))))
 
-        ;; (list "bytes-copy!"
-        ;;       (let ([bstr (make-bytes 10)])
-        ;;         (and (eq? (bytes-copy! bstr 1 #"testing" 2 6) (void))
-        ;;              (eq? (bytes-copy! bstr 0 #"testing") (void))
-        ;;              (equal? bstr (bytes 116 101 115 116 105 110 103 0 0 0)))))
+        (list "bytes-copy!"
+              (let ([bstr (make-bytes 10)])
+                (and (eq? (bytes-copy! bstr 1 #"testing" 2 6) (void))
+                     (eq? (bytes-copy! bstr 0 #"testing") (void))
+                     (equal? bstr (bytes 116 101 115 116 105 110 103 0 0 0)))))
 
         (list "list->bytes/bytes->list"
               (equal? (memq (list->bytes (bytes->list #"apple"))
