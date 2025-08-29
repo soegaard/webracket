@@ -5099,7 +5099,7 @@
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))))
                (unreachable))
 
-        (func $substring (type $Prim3)
+         (func $substring (type $Prim3)
               (param $s     (ref eq))
               (param $start (ref eq))
               (param $end   (ref eq))
@@ -5132,7 +5132,7 @@
                                   (if (i32.ne (i32.and (local.get $i32end) (i32.const 1)) (i32.const 0))
                                       (then (call $raise-check-fixnum (local.get $end))))
                                   (local.set $i32end (i32.shr_u (local.get $i32end) (i32.const 1))))
-                            (else (call $raise-check-fixnum (local.get $end)))))
+                            (else (call $raise-check-fixnum (local.get $end))))))
               ;; bounds check: start <= end <= len
               (if (i32.or (i32.gt_u (local.get $i32start) (local.get $i32end))
                           (i32.gt_u (local.get $i32end) (local.get $len)))
