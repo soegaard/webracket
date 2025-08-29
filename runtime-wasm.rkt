@@ -834,8 +834,8 @@
               (unreachable))
         
         ;; Shape codes:
-        ;;   0: exact 0     1: exact 1     2: exact 2     3: exact 3     4: exact >=4
-        ;;   5: at least 0  6: at least 1  7: at least 2  8: at least >=3
+        ;;   0: exact 0     1: exact 1     2: exact 2     3: exact 3     4: exact 4
+        ;;   5: exact 5     6: at least 0  7: at least 1  8: at least 2  9: at least >=3
         (func $primitive-invoke (type $ProcedureInvoker)
               (param $proc (ref $Procedure))
               (param $args (ref $Args))
@@ -853,10 +853,14 @@
               (local $a0 (ref eq))
               (local $a1 (ref eq))
               (local $a2 (ref eq))
+              (local $a3 (ref eq))
+              (local $a4 (ref eq))
 
               (local.set $a0 (global.get $null))
               (local.set $a1 (global.get $null))
               (local.set $a2 (global.get $null))
+              (local.set $a3 (global.get $null))
+              (local.set $a4 (global.get $null))
               
               ;; Proc -> PrimitiveProcedure
               (local.set $pproc
@@ -884,25 +888,25 @@
               ;; Compute shape (and k for "at least k")
               (if (i32.ge_s (local.get $arity) (i32.const 0))
                   (then
-                   ;; exact: shape = min(arity, 4)
+                   ;; exact: shape = min(arity, 5)
                    (local.set $shape (local.get $arity))
-                   (if (i32.gt_u (local.get $shape) (i32.const 4))
-                       (then (local.set $shape (i32.const 4)))))
+                   (if (i32.gt_u (local.get $shape) (i32.const 5))
+                       (then (local.set $shape (i32.const 5)))))
                   (else
-                   ;; at least: k = -arity - 1; shape = 5 + min(k, 3)
+                   ;; at least: k = -arity - 1; shape = 6 + min(k, 3)
                    (local.set $k
                               (i32.sub (i32.const -1) (local.get $arity)))
                    (local.set $shape (local.get $k))
                    (if (i32.gt_u (local.get $shape) (i32.const 3))
                        (then (local.set $shape (i32.const 3))))
-                   (local.set $shape (i32.add (i32.const 5) (local.get $shape)))))
+                   (local.set $shape (i32.add (i32.const 6) (local.get $shape)))))
 
               ;; Debug: log argc, arity, shape
               ;; (drop (call $js-log (call $i32->string (local.get $argc))))
               ;; (drop (call $js-log (call $i32->string (local.get $arity))))
               ;; (drop (call $js-log (call $i32->string (local.get $shape))))
 
-              ;; Preload first three args when available
+              ;; Preload first five args when available
               (if (i32.gt_u (local.get $argc) (i32.const 0))
                   (then
                    (local.set $a0
@@ -916,106 +920,130 @@
                    (local.set $a2
                               (array.get $Args (local.get $args) (i32.const 2)))))
 
+              (if (i32.gt_u (local.get $argc) (i32.const 3))
+                  (then
+                   (local.set $a3
+                              (array.get $Args (local.get $args) (i32.const 3)))))
+              (if (i32.gt_u (local.get $argc) (i32.const 4))
+                  (then
+                   (local.set $a4
+                              (array.get $Args (local.get $args) (i32.const 4)))))
+
               ;; br_table dispatch by shape
               (block $default
-                (block $L8
-                  (block $L7
-                    (block $L6
-                      (block $L5
-                        (block $L4
-                          (block $L3
-                            (block $L2
-                              (block $L1
-                                (block $L0
-                                  (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 $L8 $default (local.get $shape))
-                                ) ;; end $L0
-                                ;; shape 0: exact 0
-                                #;(drop (call $js-log (call $i32->string (i32.const 0))))
-                                (if (i32.eqz (local.get $argc))
+                (block $L9
+                  (block $L8
+                    (block $L7
+                      (block $L6
+                        (block $L5
+                          (block $L4
+                            (block $L3
+                              (block $L2
+                                (block $L1
+                                  (block $L0
+                                    (br_table $L0 $L1 $L2 $L3 $L4 $L5 $L6 $L7 $L8 $L9 $default (local.get $shape))
+                                  ) ;; end $L0
+                                  ;; shape 0: exact 0
+                                  #;(drop (call $js-log (call $i32->string (i32.const 0))))
+                                  (if (i32.eqz (local.get $argc))
+                                      (then
+                                       (if (ref.test (ref $Prim0) (local.get $code))
+                                           (then
+                                            (return_call_ref $Prim0
+                                                             (ref.cast (ref $Prim0) (local.get $code))))
+                                           (else
+                                            (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                                      (else
+                                       (return (call $primitive-invoke:raise-arity-error
+                                                     (local.get $pproc) (local.get $argc)))))
+                                )) ;; end $L1
+                                ;; shape 1: exact 1
+                                #;(drop (call $js-log (call $i32->string (i32.const 1))))
+                                (if (i32.eq (local.get $argc) (i32.const 1))
                                     (then
-                                     (if (ref.test (ref $Prim0) (local.get $code))
+                                     (if (ref.test (ref $Prim1) (local.get $code))
                                          (then
-                                          (return_call_ref $Prim0
-                                                           (ref.cast (ref $Prim0) (local.get $code))))
+                                          (return_call_ref $Prim1
+                                                           (local.get $a0)
+                                                           (ref.cast (ref $Prim1) (local.get $code))))
                                          (else
                                           (return (call $raise-code-type-mismatch (local.get $pproc)))))
                                     (else
                                      (return (call $primitive-invoke:raise-arity-error
                                                    (local.get $pproc) (local.get $argc)))))
-                              )) ;; end $L1
-                              ;; shape 1: exact 1
-                              #;(drop (call $js-log (call $i32->string (i32.const 1))))
-                              (if (i32.eq (local.get $argc) (i32.const 1))
+                              )) ;; end $L2
+                              ;; shape 2: exact 2
+                              #;(drop (call $js-log (call $i32->string (i32.const 2))))
+                              (if (i32.eq (local.get $argc) (i32.const 2))
                                   (then
-                                   (if (ref.test (ref $Prim1) (local.get $code))
+                                   (if (ref.test (ref $Prim2) (local.get $code))
                                        (then
-                                        (return_call_ref $Prim1
+                                        (return_call_ref $Prim2
                                                          (local.get $a0)
-                                                         (ref.cast (ref $Prim1) (local.get $code))))
+                                                         (local.get $a1)
+                                                         (ref.cast (ref $Prim2) (local.get $code))))
                                        (else
                                         (return (call $raise-code-type-mismatch (local.get $pproc)))))
                                   (else
                                    (return (call $primitive-invoke:raise-arity-error
                                                  (local.get $pproc) (local.get $argc)))))
-                            )) ;; end $L2
-                            ;; shape 2: exact 2
-                            #;(drop (call $js-log (call $i32->string (i32.const 2))))
-                            (if (i32.eq (local.get $argc) (i32.const 2))
+                            )) ;; end $L3
+                            ;; shape 3: exact 3
+                            #;(drop (call $js-log (call $i32->string (i32.const 3))))
+                            (if (i32.eq (local.get $argc) (i32.const 3))
                                 (then
-                                 (if (ref.test (ref $Prim2) (local.get $code))
+                                 (if (ref.test (ref $Prim3) (local.get $code))
                                      (then
-                                      (return_call_ref $Prim2
+                                      (return_call_ref $Prim3
                                                        (local.get $a0)
                                                        (local.get $a1)
-                                                       (ref.cast (ref $Prim2) (local.get $code))))
+                                                       (local.get $a2)
+                                                       (ref.cast (ref $Prim3) (local.get $code))))
                                      (else
                                       (return (call $raise-code-type-mismatch (local.get $pproc)))))
                                 (else
                                  (return (call $primitive-invoke:raise-arity-error
                                                (local.get $pproc) (local.get $argc)))))
-                          )) ;; end $L3
-                          ;; shape 3: exact 3
-                          #;(drop (call $js-log (call $i32->string (i32.const 3))))
-                          (if (i32.eq (local.get $argc) (i32.const 3))
+                          )) ;; end $L4
+                          ;; shape 4: exact 4
+                          #;(drop (call $js-log (call $i32->string (i32.const 4))))
+                          (if (i32.eq (local.get $argc) (i32.const 4))
                               (then
-                               (if (ref.test (ref $Prim3) (local.get $code))
+                               (if (ref.test (ref $Prim4) (local.get $code))
                                    (then
-                                    (return_call_ref $Prim3
+                                    (return_call_ref $Prim4
                                                      (local.get $a0)
                                                      (local.get $a1)
                                                      (local.get $a2)
-                                                     (ref.cast (ref $Prim3) (local.get $code))))
+                                                     (local.get $a3)
+                                                     (ref.cast (ref $Prim4) (local.get $code))))
                                    (else
                                     (return (call $raise-code-type-mismatch (local.get $pproc)))))
                               (else
                                (return (call $primitive-invoke:raise-arity-error
                                              (local.get $pproc) (local.get $argc)))))
-                        )) ;; end $L4
-                        ;; shape 4: exact >=4
-                        #;(drop (call $js-log (call $i32->string (i32.const 4))))
-                        (if (i32.ge_u (local.get $argc) (i32.const 4))
+                        )) ;; end $L5
+                        ;; shape 5: exact 5
+                        #;(drop (call $js-log (call $i32->string (i32.const 5))))
+                        (if (i32.eq (local.get $argc) (i32.const 5))
                             (then
-                             (if (i32.eq (local.get $argc) (local.get $arity))
+                             (if (ref.test (ref $Prim5) (local.get $code))
                                  (then
-                                  (if (ref.test (ref $Prim>=3) (local.get $code))
-                                      (then
-                                       (return_call_ref $Prim>=3
-                                                        (local.get $a0)
-                                                        (local.get $a1)
-                                                        (local.get $a2)
-                                                        (local.get $args)
-                                                        (ref.cast (ref $Prim>=3) (local.get $code))))
-                                      (else
-                                       (return (call $raise-code-type-mismatch (local.get $pproc))))))
+                                  (return_call_ref $Prim5
+                                                   (local.get $a0)
+                                                   (local.get $a1)
+                                                   (local.get $a2)
+                                                   (local.get $a3)
+                                                   (local.get $a4)
+                                                   (ref.cast (ref $Prim5) (local.get $code))))
                                  (else
-                                  (return (call $primitive-invoke:raise-arity-error
-                                                (local.get $pproc) (local.get $argc)))))
+                                  (return (call $raise-code-type-mismatch (local.get $pproc)))))
                             (else
                              (return (call $primitive-invoke:raise-arity-error
                                            (local.get $pproc) (local.get $argc)))))
-                      )) ;; end $L5
-                      ;; shape 5: at least 0
-                      #;(drop (call $js-log (call $i32->string (i32.const 5))))
+                      )) ;; end $L6
+                      ;; shape 6: at least 0
+                      #;(drop (call $js-log (call $i32->string (i32.const 6))))
                       (if (ref.test (ref $Prim>=0) (local.get $code))
                           (then
                            (return_call_ref $Prim>=0
@@ -1023,9 +1051,9 @@
                                             (ref.cast (ref $Prim>=0) (local.get $code))))
                           (else
                            (return (call $raise-code-type-mismatch (local.get $pproc))))
-                    )) ;; end $L6
-                    ;; shape 6: at least 1
-                    #;(drop (call $js-log (call $i32->string (i32.const 6))))
+                    )) ;; end $L7
+                    ;; shape 7: at least 1
+                    #;(drop (call $js-log (call $i32->string (i32.const 7))))
                     (if (i32.ge_u (local.get $argc) (i32.const 1))
                         (then
                          (if (ref.test (ref $Prim>=1) (local.get $code))
@@ -1039,9 +1067,9 @@
                         (else
                          (return (call $primitive-invoke:raise-arity-error
                                        (local.get $pproc) (local.get $argc)))))
-                  )) ;; end $L7
-                  ;; shape 7: at least 2
-                  #;(drop (call $js-log (call $i32->string (i32.const 7))))
+                  )) ;; end $L8
+                  ;; shape 8: at least 2
+                  #;(drop (call $js-log (call $i32->string (i32.const 8))))
                   (if (i32.ge_u (local.get $argc) (i32.const 2))
                       (then
                        (if (ref.test (ref $Prim>=2) (local.get $code))
@@ -1056,9 +1084,9 @@
                       (else
                        (return (call $primitive-invoke:raise-arity-error
                                      (local.get $pproc) (local.get $argc)))))
-                )) ;; end $L8
-                ;; shape 8: at least >=3
-                #;(drop (call $js-log (call $i32->string (i32.const 8))))
+                )) ;; end $L9
+                ;; shape 9: at least >=3
+                #;(drop (call $js-log (call $i32->string (i32.const 9))))
                 (if (i32.ge_u (local.get $argc) (i32.const 3))
                     (then
                      (if (ref.test (ref $Prim>=3) (local.get $code))
@@ -1075,7 +1103,7 @@
                      (return (call $primitive-invoke:raise-arity-error
                                    (local.get $pproc) (local.get $argc)))))
               )) ;; end $default
-              #;(drop (call $js-log (call $i32->string (i32.const 9))))
+              #;(drop (call $js-log (call $i32->string (i32.const 10))))
               (unreachable))
 
         (func $repack-arguments
