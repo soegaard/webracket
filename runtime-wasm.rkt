@@ -321,11 +321,15 @@
           ;; Raw primitive function types
           (type $Prim0    (func                                   (result (ref eq))))
           (type $Prim1    (func (param (ref eq))                  (result (ref eq))))
-          (type $Prim2    (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
-          (type $Prim3    (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+         (type $Prim2    (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
+         (type $Prim3    (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (result (ref eq))))
+         (type $Prim4    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (result (ref eq))))
+         (type $Prim5    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
 
-          (type $Prim>=0  (func (param (ref eq))      ;; list of args
+         (type $Prim>=0  (func (param (ref eq))      ;; list of args
                                 (result (ref eq))))
           (type $Prim>=1  (func (param (ref eq))      ;; first arg
                                 (param (ref eq))      ;; rest list
@@ -5734,12 +5738,12 @@
          (func $raise-string-copy!:bad-source-range      (unreachable))
          (func $raise-string-copy!:bad-destination-range (unreachable))
 
-         (func $string-copy!
+         (func $string-copy! (type $Prim5)
                (param $dst-raw       (ref eq))
                (param $dst-start-raw (ref eq))
                (param $src-raw       (ref eq))
-               (param $src-start-raw (ref eq))
-               (param $src-end-raw   (ref eq))
+               (param $src-start-raw (ref eq))   ;; fixnum or $missing
+               (param $src-end-raw   (ref eq))   ;; fixnum or $missing
                (result (ref eq))
 
                (local $dst        (ref $String))
@@ -5759,25 +5763,35 @@
 
                (if (i32.eqz (ref.test (ref $String) (local.get $src-raw)))
                    (then (call $raise-string-copy!:bad-source)))
-               (if (i32.eqz (ref.test (ref i31) (local.get $src-start-raw)))
-                   (then (call $raise-string-copy!:bad-source-start)))
-               (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-start-raw))) (i32.const 1)) (i32.const 0))
-                   (then (call $raise-string-copy!:bad-source-start)))
-               (if (i32.eqz (ref.test (ref i31) (local.get $src-end-raw)))
-                   (then (call $raise-string-copy!:bad-source-end)))
-               (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-end-raw))) (i32.const 1)) (i32.const 0))
-                   (then (call $raise-string-copy!:bad-source-end)))
+               ;; src-start optional
+               (if (i32.eqz (ref.eq (local.get $src-start-raw) (global.get $missing)))
+                   (then
+                    (if (i32.eqz (ref.test (ref i31) (local.get $src-start-raw)))
+                        (then (call $raise-string-copy!:bad-source-start)))
+                    (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-start-raw))) (i32.const 1)) (i32.const 0))
+                        (then (call $raise-string-copy!:bad-source-start)))))
+               ;; src-end optional
+               (if (i32.eqz (ref.eq (local.get $src-end-raw) (global.get $missing)))
+                   (then
+                    (if (i32.eqz (ref.test (ref i31) (local.get $src-end-raw)))
+                        (then (call $raise-string-copy!:bad-source-end)))
+                    (if (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $src-end-raw))) (i32.const 1)) (i32.const 0))
+                        (then (call $raise-string-copy!:bad-source-end)))))
                ;; --- Decode ---
                (local.set $dst       (ref.cast (ref $String) (local.get $dst-raw)))
                (local.set $src       (ref.cast (ref $String) (local.get $src-raw)))
                (local.set $dst-start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $dst-start-raw))) (i32.const 1)))
-               (local.set $src-start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-start-raw))) (i32.const 1)))
-               (local.set $src-end   (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-end-raw)))   (i32.const 1)))
+               (local.set $src-len   (call $string-length/checked/i32 (local.get $src)))
+               (if (ref.eq (local.get $src-start-raw) (global.get $missing))
+                   (then (local.set $src-start (i32.const 0)))
+                   (else (local.set $src-start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-start-raw))) (i32.const 1)))))
+               (if (ref.eq (local.get $src-end-raw) (global.get $missing))
+                   (then (local.set $src-end (local.get $src-len)))
+                   (else (local.set $src-end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $src-end-raw))) (i32.const 1)))))
                ;; --- Mutability Check ---
                (if (i32.ne (struct.get $String $immutable (local.get $dst)) (i32.const 0))
                    (then (call $raise-immutable-string (local.get $dst))))
                ;; --- Range Validation ---
-               (local.set $src-len (call $string-length/checked/i32 (local.get $src)))
                (local.set $dst-len (call $string-length/checked/i32 (local.get $dst)))
                (if (i32.gt_u (local.get $src-start) (local.get $src-end))
                    (then (call $raise-string-copy!:bad-source-range)))
