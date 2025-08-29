@@ -1,33 +1,38 @@
 #lang racket/base
-(require racket/fixnum
-         racket/flonum
+(require racket/bool
          racket/fasl
-         racket/symbol
+         racket/fixnum
+         racket/flonum
+         racket/hash
+         racket/keyword
          racket/list
+         ; racket/namespace
+         racket/port
          racket/string
-         (only-in racket/bool symbol=?)
-         (only-in racket/keyword keyword->immutable-string))
+         racket/symbol
+         racket/vector
+         racket/unsafe/ops)
 
 ;; The primitives are 
 
 (provide
- ;; 4.1 Equality
- equal?
- ; equal-always?
- eqv?
- eq?
- ; equal?/recur
- ; equal-always?/recur
 
+ ;; 4.1 Equality
+ eq?
+ eqv?
+ equal?
  eq-hash-code
  eqv-hash-code
  equal-hash-code
-
+ ; equal-always?
+ ; equal?/recur
+ ; equal-always?/recur
  ;; equal-hash-code/recur
  ;; equal-secondary-hash-code
  ;; equal-always-hash-code
  ;; equal-always-hash-code/recur
  ;; equal-always-secondary-hash-code
+
 
  ;; 4.2 Booleans
  not
@@ -35,27 +40,80 @@
  immutable?
 
  ;; 4.3 Numbers
- number?
+ number? integer? exact? exact-integer? exact-nonnegative-integer? exact-positive-integer?
+ inexact->exact round sqrt number->string
+ + - * / = < > <= >= zero? positive? negative? add1 sub1
+ fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
+ flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flround flsin flcos fltan flsqrt
+ byte? 
 
+ ;; Fixnum
+ fx+
+ fx-
+ fx*
+ fxquotient
+ fxremainder
+ fxmodulo
+ fxabs
 
+ fxand
+ fxior
+ fxxor
+ fxnot
+ fxlshift
+ fxrshift
+
+ fxpopcount
+ fxpopcount32
+ fxpopcount16
+
+ fx+/wraparound
+ fx-/wraparound
+ fx*/wraparound
+ fxlshift/wraparound
+
+ fxrshift/logical
+
+ fx= fx< fx>
+ fx<= fx>=
+ fxmin fxmax
+
+ fx->fl
+ fl->fx
+
+ inexact->exact round sqrt flround flsin flcos fltan flsqrt
+
+ 
  ;; 4.4 Strings
+ build-string
+ make-string
+ list->string
+ substring
+
  string?
+ string-ref
  string-set!
  string-length
- string-ref
  string-append
  string-append-immutable
  string-copy
- string-fill!
  string-copy!
+ string-fill! 
  string->immutable-string
- string-ci=?
- build-string 
+ string=? string<? string<=? string>? string>=?
+ string-ci=?  
  string-prefix?
  string-suffix?
  string-contains?
  string-find
-
+ string-take string-take-right
+ string-drop string-drop-right
+ string-trim-left string-trim-right
+ 
+ string->list
+ string->bytes/utf-8
+ string->immutable-string
+ 
  ;; 4.5 Byte Strings
  bytes?
  make-bytes
@@ -74,25 +132,26 @@
  bytes->string/utf-8
 
  ;; 4.6 Characters
- char-downcase
- char-foldcase
- char-titlecase
- char-upcase
+ char? char->integer integer->char
+ char=? char<? char<=? char>? char>=?
+ char-downcase char-foldcase char-titlecase char-upcase
+ char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?
+ char-whitespace?
 
  ;; 4.7 Symbols
  symbol?
+ symbol=?  ; from racket/bool
+ symbol<?
+ string->symbol
+ symbol->string
+ string->uninterned-symbol
  symbol-interned?
  ; symbol-unreadable?
- symbol->string
- string->symbol
- string->uninterned-symbol
  ; gensym
- symbol<?
-
- symbol=?  ; from racket/bool
 
  ;; 4.7.1
  symbol->immutable-string
+ 
 
 ;; 4.9 Keywords
 
@@ -156,8 +215,32 @@
  ; cdar
  ; cddr
 
+ ;; 4.12 Vectors
+ vector vector-immutable vector? make-vector vector-ref vector-set!
+ vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop
+ vector-drop-right vector-split-at vector->list
+
+ ;; 4.14 Boxes
+ ; boxed unboxed set-boxed!  ; internal
+ box unbox set-box!
+
+ ;; 4.15 Hash Tables
+ make-empty-hasheq make-hasheq hash-ref hash-set! hash-remove! hash-clear!
+ hash-has-key? eq-hash-code
+ 
  ;; 4.20 Procedures
- procedure?
+ procedure? apply procedure-rename procedure->external
+ procedure-arity procedure-arity-mask procedure-arity-includes?
+ primitive? primitive-closure? primitive-result-arity
+
+ ;; 4.21 Void
+ void? make-void void
+
+ ;; 5.1 Structures
+ make-struct-type make-struct-field-accessor make-struct-field-mutator
+ struct-constructor-procedure? struct-predicate-procedure?
+ struct-accessor-procedure? struct-mutator-procedure?
+ struct? struct-type? current-inspector
  
  ;; 10.1 Multiple Values
  values
@@ -165,47 +248,25 @@
 
  ;; 10.2 Exceptions
  raise-argument-error
+ ; raise-unbound-variable-reference
+
  
  ;; 13.5 Writing
  display
  displayln
  newline
+
+ ;; 13.7 String Ports
+ string-port? open-output-bytes get-output-bytes write-byte port-next-location
  
- ;; Fixnum
- fx+
- fx-
- fx*
- fxquotient
- fxremainder
- fxmodulo
- fxabs
+ ;; 14.1 Namespaces
+ namespace? make-empty-namespace namespace-variable-value-simple
+ namespace-set-variable-value! namespace-undefine-variable!
 
- fxand
- fxior
- fxxor
- fxnot
- fxlshift
- fxrshift
-
- fxpopcount
- fxpopcount32
- fxpopcount16
-
- fx+/wraparound
- fx-/wraparound
- fx*/wraparound
- fxlshift/wraparound
-
- fxrshift/logical
-
- fx= fx< fx>
- fx<= fx>=
- fxmin fxmax
-
- fx->fl
- fl->fx
-
- inexact->exact round sqrt flround flsin flcos fltan flsqrt
+ ;; 17. Unsafe Operations
+ unsafe-fx+ unsafe-fl/ unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
+ unsafe-struct-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
+ 
 
  ;; 14.1 Namespaces
 
@@ -241,4 +302,69 @@
   (define m
     (regexp-match-positions (regexp (regexp-quote contained)) s))
   (and m (car (car m))))
-  
+
+(define (fxzero? x)
+  (and (fixnum? x)
+       (zero? x)))
+
+(define (string-take s n)
+  (define l (string-length s))
+  (when (> n l)
+    (error 'string-take "attempt to take substring longer than string"))
+  (substring s 0 n))
+
+(define (string-take-right s n)
+  (define l (string-length s))
+  (when (> n l)
+    (error 'string-take-right
+           "attempt to take substring longer than string"))
+  (substring s (- l n) l))
+
+(define (string-drop s n)
+  (define l (string-length s))
+  (when (> n l)
+    (error 'string-drop "attempt to drop substring longer than string"))
+  (substring s n l))
+
+(define (string-drop-right s n)
+  (define l (string-length s))
+  (when (> n l)
+    (error 'string-drop-right
+           "attempt to drop substring longer than string"))
+  (substring s 0 (- l n)))
+
+(define (string-trim-left s sep)
+  ; trims s to the left by removing sep
+  (define l (string-length s))
+  (define n (let loop ([i 0])
+              (cond
+                [(> i l)                     n]
+                [(eqv? (string-ref s i) sep) (loop (+ i 1))]
+                [else                        i])))  
+  (substring s n l))
+
+(define (string-trim-right s sep)
+  ; trims s to the left by removing sep
+  (define l (string-length s))
+  (define n (let loop ([i 0])
+              (cond
+                [(> i l)                     n]
+                [(eqv? (string-ref s i) sep) (loop (+ i 1))]
+                [else                        i])))  
+  (substring s (- l n) l))
+
+
+(struct boxed (x) #:transparent #:mutable)
+(define (unboxed b)      (boxed-x b))
+(define (set-boxed! b x) (set-boxed-x! b x))
+
+(define (make-empty-hasheq)
+  (make-hasheq))
+
+(define (make-void) (void))
+
+(define (namespace-variable-value-simple ns sym)
+  (namespace-variable-value sym #t #f ns))
+
+
+
