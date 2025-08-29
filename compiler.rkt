@@ -574,6 +574,7 @@
   unsafe-struct-ref
   unsafe-vector*-length
   unsafe-vector*-set!
+  unsafe-struct-set!
 
   namespace?
   make-empty-namespace
