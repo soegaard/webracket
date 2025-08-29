@@ -393,6 +393,55 @@
 
  (list "4.6 Characters"
        (list
+        (list "char?"
+              (and (equal? (char? #\a) #t)
+                   (equal? (char? #\space) #t)
+                   (equal? (char? #\newline) #t)
+                   (equal? (char? 7) #f)
+                   (equal? (char? #t) #f)
+                   (equal? (char? 'x) #f)
+                   (equal? (procedure-arity char?) 1)))
+
+        (list "char->integer"
+              (and (equal? (char->integer #\.) 46)
+                   (equal? (char->integer #\A) 65)
+                   (equal? (char->integer #\a) 97)
+                   (equal? (char->integer #\space) 32)
+                   (equal? (procedure-arity char->integer) 1)))
+
+        (list "integer->char"
+              (and (equal? (integer->char 46) #\.)
+                   (equal? (integer->char 65) #\A)
+                   (equal? (integer->char 97) #\a)
+                   (equal? (integer->char 32) #\space)
+                   (equal? (procedure-arity integer->char) 1)))
+
+        (list "char=?"
+              (and (equal? (char=? #\A #\A) #t)
+                   (equal? (char=? #\A #\B) #f)
+                   (equal? (char=? #\A #\A #\A) #t)))
+
+        (list "char<?"
+              (and (equal? (char<? #\A #\B) #t)
+                   (equal? (char<? #\b #\A) #f)))
+
+        (list "char<=?"
+              (and (equal? (char<=? #\A #\B) #t)
+                   (equal? (char<=? #\b #\A) #f)))
+
+        (list "char>?"
+              (and (equal? (char>? #\B #\A) #t)
+                   (equal? (char>? #\A #\b) #f)))
+
+        (list "char>=?"
+              (and (equal? (char>=? #\B #\A) #t)
+                   (equal? (char>=? #\A #\b) #f)))
+
+        (list "char-whitespace?"
+              (and (equal? (char-whitespace? #\space) #t)
+                   (equal? (char-whitespace? #\tab) #t)
+                   (equal? (char-whitespace? #\A) #f)
+                   (equal? (procedure-arity char-whitespace?) 1)))
         (list "char-upcase"
               (and (equal? (char-upcase #\a) #\A)
                    (equal? (char-upcase #\u03BB) #\u039B)
