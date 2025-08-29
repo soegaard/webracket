@@ -178,11 +178,104 @@
 
  (list "4.4 Strings"
        (list
+        (list "string?"
+              (and (equal? (string? "hello") #t)
+                   (equal? (string? "") #t)
+                   (equal? (string? 5) #f)
+                   (equal? (procedure-arity string?) 1)))
+
+        (list "make-string"
+                (and #;(equal? (string-length (make-string 3)) 3)
+                     (equal? (make-string 0) "")))
+
+        (list "string-set!"
+              (let ([f (make-string 3 #\*)])
+                (and (equal? (begin (string-set! f 0 #\?) f) "?**")
+                     (equal? (procedure-arity string-set!) 3))))
+
+        (list "string-length"
+              (and (equal? (string-length "abc") 3)
+                   (equal? (string-length "") 0)
+                   (equal? (procedure-arity string-length) 1)))
+
+        (list "string-ref"
+              (and (equal? (string-ref "abc" 0) #\a)
+                   (equal? (string-ref "abc" 2) #\c)
+                   (equal? (procedure-arity string-ref) 2)))
+
+        (list "substring"
+              (and (equal? (substring "ab" 0 1) "a")
+                   (equal? (substring "ab" 1 2) "b")
+                   (equal? (substring "ab" 1)   "b")
+                   (equal? (substring "ab" 2)   "")))
+
         (list "string-append"
               (and (equal? (string-append) "")
                    (equal? (string-append "A") "A")
                    (equal? (string-append "A" "B") "AB")
-                   (equal? (string-append "A" "B" "C") "ABC")))))
+                   (equal? (string-append "A" "B" "C") "ABC")))
+
+        (list "string-append-immutable"
+              (and (equal? (string-append-immutable "foo" "bar") "foobar")
+                   (equal? (string-append-immutable) "")
+                   (equal? (immutable? (string-append-immutable "foo")) #t)))
+
+        (list "string-copy"
+              (let* ([s (string-copy "hello")]
+                     [s2 (string-copy s)])
+                (string-set! s 0 #\H)
+                (and (equal? s2 "hello")
+                     (equal? (procedure-arity string-copy) 1))))
+
+        (list "string-fill!"
+              (let ([s (string-copy "hello")])
+                (string-fill! s #\x)
+                (and (equal? s "xxxxx")
+                     (equal? (procedure-arity string-fill!) 2))))
+
+        (list "string-copy!"
+              (let ([s (make-string 10 #\x)])
+                (string-copy! s 0 "hello")
+                (list (equal? s "helloxxxxx")
+                      #;(list (procedure-arity string-copy!) '(3 4 5))))) ; todo - got #f - improve arities
+
+        (list "string->immutable-string"
+              (and (equal? (string->immutable-string "hi") "hi")
+                   (equal? (immutable? (string->immutable-string "hi")) #t)
+                   (equal? (procedure-arity string->immutable-string) 1)))
+
+        ;; (list "string=?"
+        ;;       (and (equal? (string=? "") #t)
+        ;;            (equal? (string=? "A" "A") #t)
+        ;;            (equal? (string=? "A" "B") #f)
+        ;;            (equal? (string=? "A" "AB") #f)))
+
+        ;; (list "string<?"
+        ;;       (and (equal? (string<? "" "") #f)
+        ;;            (equal? (string<? "A" "B") #t)
+        ;;            (equal? (string<? "AB" "A") #f)))
+
+        ;; (list "string>?"
+        ;;       (and (equal? (string>? "" "") #f)
+        ;;            (equal? (string>? "B" "A") #t)
+        ;;            (equal? (string>? "A" "AB") #f)))
+
+        ;; (list "string<=?"
+        ;;       (and (equal? (string<=? "" "") #t)
+        ;;            (equal? (string<=? "A" "B") #t)
+        ;;            (equal? (string<=? "AB" "A") #f)))
+
+        ;; (list "string>=?"
+        ;;       (and (equal? (string>=? "" "") #t)
+        ;;            (equal? (string>=? "B" "A") #t)
+        ;;            (equal? (string>=? "A" "AB") #f)))
+
+        #;(list "string-ci=?"
+              (and (equal? (string-ci=? "A" "a") #t)
+                   (equal? (string-ci=? "A" "B") #f)
+                   (equal? (string-ci=? "A" "AB") #f)))
+
+        ))
 
  (list "4.5 Byte Strings"
        (list

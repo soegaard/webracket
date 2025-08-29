@@ -3159,6 +3159,7 @@
                                                   (call ,(Prim pr) ,ae0 ,ae1)
                                                   ,(loop aes))]))]
                  [else
+                  ; TODO - INSERT ARITY CHECK
                   `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
      (match dd
        [(or '<value> '<effect>)

@@ -859,8 +859,8 @@
               (local.set $a0 (global.get $null))
               (local.set $a1 (global.get $null))
               (local.set $a2 (global.get $null))
-              (local.set $a3 (global.get $null))
-              (local.set $a4 (global.get $null))
+              ; (local.set $a3 (global.get $null))
+              ; (local.set $a4 (global.get $null))
               
               ;; Proc -> PrimitiveProcedure
               (local.set $pproc
@@ -920,11 +920,11 @@
                    (local.set $a2
                               (array.get $Args (local.get $args) (i32.const 2)))))
 
-              (if (i32.gt_u (local.get $argc) (i32.const 3))
+              #;(if (i32.gt_u (local.get $argc) (i32.const 3))
                   (then
                    (local.set $a3
                               (array.get $Args (local.get $args) (i32.const 3)))))
-              (if (i32.gt_u (local.get $argc) (i32.const 4))
+              #;(if (i32.gt_u (local.get $argc) (i32.const 4))
                   (then
                    (local.set $a4
                               (array.get $Args (local.get $args) (i32.const 4)))))
@@ -1015,7 +1015,7 @@
                                                      (local.get $a0)
                                                      (local.get $a1)
                                                      (local.get $a2)
-                                                     (local.get $a3)
+                                                     (array.get $Args (local.get $args) (i32.const 3))
                                                      (ref.cast (ref $Prim4) (local.get $code))))
                                    (else
                                     (return (call $raise-code-type-mismatch (local.get $pproc)))))
@@ -1033,8 +1033,8 @@
                                                    (local.get $a0)
                                                    (local.get $a1)
                                                    (local.get $a2)
-                                                   (local.get $a3)
-                                                   (local.get $a4)
+                                                   (array.get $Args (local.get $args) (i32.const 3))
+                                                   (array.get $Args (local.get $args) (i32.const 4))
                                                    (ref.cast (ref $Prim5) (local.get $code))))
                                  (else
                                   (return (call $raise-code-type-mismatch (local.get $pproc)))))
@@ -4906,9 +4906,10 @@
                (result   (ref eq))
                
                (local $str (ref $String))
+
                (local.set $str (call $make-dummy-string))
                ;; 1. Check that s is a String
-               (if (ref.test (ref $String) (local.get $s))
+               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
                    (then (call $raise-check-string (local.get $s))))
                (local.set $str (ref.cast (ref $String) (local.get $s)))
                ;; 2. If already immutable, return it directly

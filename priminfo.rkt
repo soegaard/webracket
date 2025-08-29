@@ -25,6 +25,7 @@
   (namespace-require 'racket/fixnum)
   (namespace-require 'racket/fasl)
   (namespace-require 'racket/symbol)
+  (namespace-require 'racket/string)
   (namespace-require 'racket/keyword)            ; keyword->immutable-string
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   #;(namespace-require 'racket/base)
@@ -45,7 +46,6 @@
     string-take         ; srfi 13
     string-take-right   ; srfi 13
     string-replace      ; srfi 13
-    string->immutable-string
     make-void
     
     set-boxed!          ; assignment boxes
