@@ -37,18 +37,32 @@
  ;; 4.3 Numbers
  number?
 
- ;; 4.4 Characters
- char-downcase
- char-foldcase
- char-titlecase
- char-upcase
 
- ;; 4.5 Strings
- build-string
+ ;; 4.4 Strings
+ string?
+ string-set!
+ string-length
+ string-ref
+ string-append
+ string-append-immutable
+ string-copy
+ string-fill!
+ string-copy!
+ string->immutable-string
+ string-ci=?
+ build-string 
  string-prefix?
  string-suffix?
  string-contains?
  string-find
+
+ ;; 4.5 Byte Strings
+
+ ;; 4.6 Characters
+ char-downcase
+ char-foldcase
+ char-titlecase
+ char-upcase
 
  ;; 4.7 Symbols
  symbol?

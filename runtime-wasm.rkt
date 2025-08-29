@@ -1018,7 +1018,7 @@
                                             (local.get $args)
                                             (ref.cast (ref $Prim>=0) (local.get $code))))
                           (else
-                           (return (call $raise-code-type-mismatch (local.get $pproc)))))
+                           (return (call $raise-code-type-mismatch (local.get $pproc))))
                     )) ;; end $L6
                     ;; shape 6: at least 1
                     #;(drop (call $js-log (call $i32->string (i32.const 6))))
