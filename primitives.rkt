@@ -34,13 +34,16 @@
  boolean?
  immutable?
 
- ;; 4.3 Characters
+ ;; 4.3 Numbers
+ number?
+
+ ;; 4.4 Characters
  char-downcase
  char-foldcase
  char-titlecase
  char-upcase
 
- ;; 4.4 Strings
+ ;; 4.5 Strings
  build-string
  string-prefix?
  string-suffix?
