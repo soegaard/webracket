@@ -4004,38 +4004,41 @@
          (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
          
          (func $make-bytes (type $Prim2)
-               (param $k (ref eq))
-               (param $b (ref eq))
-               (result (ref eq))
-               
+               (param $k-raw (ref eq))     ;; fixnum
+               (param $b-raw (ref eq))     ;; optional byte
+               (result       (ref eq))
+
                (local $len i32)
                (local $val i32)
                ;; Decode and check $k as fixnum
-               (if (ref.test (ref i31) (local.get $k))
-                   (then (local.set $len (i31.get_u (ref.cast (ref i31) (local.get $k))))
+               (if (ref.test (ref i31) (local.get $k-raw))
+                   (then (local.set $len (i31.get_u (ref.cast (ref i31) (local.get $k-raw))))
                          (if (i32.eqz (i32.and (local.get $len) (i32.const 1)))
                              (then (local.set $len (i32.shr_u (local.get $len) (i32.const 1))))
-                             (else (call $raise-check-fixnum (local.get $k))
+                             (else (call $raise-check-fixnum (local.get $k-raw))
                                    (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $k))
+                   (else (call $raise-check-fixnum (local.get $k-raw))
                          (unreachable)))
-               ;; Decode and check $b as fixnum in range [0, 255]
-               (if (ref.test (ref i31) (local.get $b))
-                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
-                         (if (i32.eqz (i32.and (local.get $val) (i32.const 1)))
-                             (then (local.set $val (i32.shr_u (local.get $val) (i32.const 1)))
-                                   (if (i32.gt_u (local.get $val) (i32.const 255))
-                                       (then (call $raise-byte-out-of-range (local.get $b))
+               ;; Handle optional byte argument
+               (if (ref.eq (local.get $b-raw) (global.get $missing))
+                   (then (local.set $val (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $b-raw))
+                             (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b-raw))))
+                                   (if (i32.eqz (i32.and (local.get $val) (i32.const 1)))
+                                       (then (local.set $val (i32.shr_u (local.get $val) (i32.const 1)))
+                                             (if (i32.gt_u (local.get $val) (i32.const 255))
+                                                 (then (call $raise-byte-out-of-range (local.get $b-raw))
+                                                       (unreachable))))
+                                       (else (call $raise-check-fixnum (local.get $b-raw))
                                              (unreachable))))
-                             (else (call $raise-check-fixnum (local.get $b))
-                                   (unreachable))))
-                   (else (call $raise-check-fixnum (local.get $b))
-                         (unreachable)))
+                             (else (call $raise-check-fixnum (local.get $b-raw))
+                                   (unreachable)))))
                ;; Construct mutable bytes object
-                (struct.new $Bytes
-                            (i32.const 0)  ;; hash
-                            (i32.const 0)  ;; immutable = false
-                            (call $i8make-array (local.get $len) (local.get $val))))
+               (struct.new $Bytes
+                           (i32.const 0)  ;; hash
+                           (i32.const 0)  ;; immutable = false
+                           (call $i8make-array (local.get $len) (local.get $val))))
+         
 
          (func $bytes (type $Prim>=0)
                (param $args (ref eq))

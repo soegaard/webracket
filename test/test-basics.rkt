@@ -186,7 +186,9 @@
 
         (list "make-string"
                 (and #;(equal? (string-length (make-string 3)) 3)
-                     (equal? (make-string 0) "")))
+                     (equal? (make-string 0) "")
+                     #;(equal? (procedure-arity make-string) '(1 2)) ; todo - improve arities
+                     ))
 
         (list "string-set!"
               (let ([f (make-string 3 #\*)])
@@ -207,13 +209,16 @@
               (and (equal? (substring "ab" 0 1) "a")
                    (equal? (substring "ab" 1 2) "b")
                    (equal? (substring "ab" 1)   "b")
-                   (equal? (substring "ab" 2)   "")))
+                   (equal? (substring "ab" 2)   "")
+                   #;(equal? (procedure-arity substring) '(2 3)))) ; todo - improve arities
 
         (list "string-append"
               (and (equal? (string-append) "")
                    (equal? (string-append "A") "A")
                    (equal? (string-append "A" "B") "AB")
-                   (equal? (string-append "A" "B" "C") "ABC")))
+                   (equal? (string-append "A" "B" "C") "ABC")
+                   #; (equal? (procedure-arity string-append) (arity-at-least 0)) ; todo
+                   ))
 
         (list "string-append-immutable"
               (and (equal? (string-append-immutable "foo" "bar") "foobar")
@@ -245,6 +250,7 @@
                    (equal? (procedure-arity string->immutable-string) 1)))
 
         (list "string=?"
+              '(todo 'string=? "make it variadic")
               (and #;(equal? (string=? "") #t)     ; todo - make string=? variadic
                    (equal? (string=? "A" "A") #t)
                    (equal? (string=? "A" "B") #f)
@@ -275,6 +281,14 @@
                    (equal? (string-ci=? "A" "B") #f)
                    (equal? (string-ci=? "A" "AB") #f)))
 
+        (list "string->list"
+              (and (equal? (string->list "P l") '(#\P #\space #\l))
+                   (equal? (string->list "") '())))
+
+        (list "list->string"
+              (and (equal? (list->string '(#\1 #\\ #\")) "1\\\"")
+                   (equal? (list->string '()) "")))
+        
         ))
 
  (list "4.5 Byte Strings"
@@ -286,6 +300,95 @@
                 (and (equal? i m)
                      (not (eq? i m))
                      (eq? i2 i))))
+
+        (list "byte?"
+              (and (equal? (byte? 10)  #t)
+                   (equal? (byte? 0)   #t)
+                   (equal? (byte? 255) #t)
+                   (equal? (byte? 256) #f)
+                   (equal? (byte? -1)  #f)
+                   (equal? (byte? #\newline) #f)))
+
+        (list "bytes?"
+              (and (equal? (bytes? #"hello") #t)
+                   (equal? (bytes? #"") #t)
+                   (equal? (procedure-arity bytes?) 1)))
+
+        (list "make-bytes"
+              (and (equal? (bytes-length (make-bytes 3)) 3)
+                   (equal? (make-bytes 3 (char->integer #\*)) #"***")
+                   (equal? (make-bytes 0) #"")))
+
+        ;; (list "bytes-set!"
+        ;;       (let ([f (make-bytes 3 )])
+        ;;         (bytes-set! f 0 (char->integer #\?))
+        ;;         (equal? f #"?**")))
+
+        (list "bytes"
+              (and (equal? (bytes 97 98 99) #"abc")
+                   (equal? (bytes) #"")))
+
+        (list "bytes-length"
+              (and (equal? (bytes-length #"abc") 3)
+                   (equal? (bytes-length #"") 0)))
+
+        (list "bytes-ref"
+              (and (equal? (bytes-ref #"abc" 0) 97)
+                   (equal? (bytes-ref #"abc" 2) 99)))
+
+        ;; (list "subbytes"
+        ;;       (let ([b (bytes 32 97 0 98 45)])
+        ;;         (and (equal? (subbytes #"ab" 0 0) #"")
+        ;;              (equal? (subbytes #"ab" 1 2) #"b")
+        ;;              (equal? (subbytes #"ab" 0 2) #"ab")
+        ;;              (equal? (subbytes #"ab" 0) #"ab")
+        ;;              (equal? (subbytes #"ab" 1) #"b")
+        ;;              (equal? (subbytes #"ab" 2) #"")
+        ;;              (equal? (subbytes b 1 4) (bytes 97 0 98)))))
+
+        ;; (list "bytes-append"
+        ;;       (and (equal? (bytes-append #"foo" #"bar") #"foobar")
+        ;;            (equal? (bytes-append #"foo") #"foo")
+        ;;            (equal? (bytes-append #"foo" #"") #"foo")
+        ;;            (equal? (bytes-append #"foo" #"" #"goo") #"foogoo")
+        ;;            (equal? (bytes-append #"" #"foo") #"foo")
+        ;;            (equal? (bytes-append) #"")
+        ;;            (equal? (bytes-append (bytes 97 0 98) (bytes 99 0 100))
+        ;;                    (bytes 97 0 98 99 0 100))))
+
+        (list "bytes-copy"
+              (let* ([s (bytes-copy #"hello")]
+                     [s2 (bytes-copy s)])
+                (and (equal? s2 #"hello")
+                     (begin (bytes-set! s 2 (char->integer #\x)) (equal? s2 #"hello"))
+                     (equal? (bytes-copy (bytes 97 0 98)) (bytes 97 0 98)))))
+
+        (list "bytes-fill!"
+              (let ([s (bytes-copy #"hello")])
+                (bytes-fill! s (char->integer #\x))
+                (equal? s #"xxxxx")))
+
+        ;; (list "bytes-copy!"
+        ;;       (let ([bstr (make-bytes 10)])
+        ;;         (and (eq? (bytes-copy! bstr 1 #"testing" 2 6) (void))
+        ;;              (eq? (bytes-copy! bstr 0 #"testing") (void))
+        ;;              (equal? bstr (bytes 116 101 115 116 105 110 103 0 0 0)))))
+
+        (list "list->bytes/bytes->list"
+              (equal? (memq (list->bytes (bytes->list #"apple"))
+                            '(#"apple")) #f))
+
+        (list "bytes=?"
+              '(todo "Make bytes=? variadic")
+              (and #;(equal? (bytes=? #"a" #"a" #"a") #t)
+                   (equal? (bytes=? #"a" #"a") #t)
+                   #;(equal? (bytes=? #"a") #t)
+                   #;(equal? (bytes=? #"a" #"a" #"c") #f)
+                   #;(equal? (bytes=? #"a" #"b" #"c") #f)
+                   (equal? (bytes=? #"a" #"b") #f)
+                   #;(equal? (bytes=? #"c" #"a" #"a") #f)
+                   #;(equal? (bytes=? #"c" #"b" #"a") #f)
+                   (equal? (bytes=? #"b" #"a") #f)))
         ))
 
  (list "4.6 Characters"
