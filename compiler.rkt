@@ -3033,6 +3033,7 @@
           (inline-prim/optional sym ae1 1 2)]
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
+         [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
