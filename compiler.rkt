@@ -58,6 +58,9 @@
 ;;; Expressions to work on
 ;;;
 
+; [ ] (list (procedure-arity (case-lambda [() 10] [x 1])) -1)))
+;     result is (0 -1) instead of the expected -1
+
 
 ;;;
 ;;; TODO

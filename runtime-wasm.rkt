@@ -11122,7 +11122,8 @@
 
          (func $procedure? (type $Prim1)
                (param $v (ref eq))
-               (result (ref eq))
+               (result   (ref eq))
+
                (if (result (ref eq))
                    (ref.test (ref $Procedure) (local.get $v))
                    (then (global.get $true))

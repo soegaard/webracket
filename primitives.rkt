@@ -127,6 +127,9 @@
  ; cdar
  ; cddr
 
+ ;; 4.20 Procedures
+ procedure?
+ 
  ;; 10.1 Multiple Values
  values
  call-with-values

@@ -2,9 +2,19 @@
 (list
  (list "3.8 Procedure Expressions: lambda and case-lambda"
        (list
+        (list "lambda"
+              (and (equal? (procedure? (lambda (x) (* x x))) #t)
+                   (equal? (procedure? '(lambda (x) (* x x))) #f)
+                   (equal? (apply (lambda (a b) (+ a b)) (list 3 4)) 7)
+                   #;(let ([compose (lambda (f g) (lambda args (f (apply g args))))])
+                       (equal? ((compose sqrt *) 12 75) 30)) ; todo : improve *
+                   (let ([compose (lambda (f g) (lambda args (f (apply g args))))])
+                     (equal? ((compose sqrt (λ (x y) (* x y))) 12 75) 30))
+                   (equal? (procedure-arity (lambda x x)) -1)))
         (list "case-lambda"
-              (and (equal? (procedure? (case-lambda)) #t)
+              (list (equal? (procedure? (case-lambda)) #t)
                    (equal? (procedure? (case-lambda [(x) x])) #t)
+                   (equal? (procedure? (case-lambda [(x) x] [(x y) (+ x y)])) #t)
                    (equal? ((case-lambda [(x) x] [(x y) (list x y)]) 11) 11)
                    (equal? ((case-lambda [(x) x] [(x y) (+ x y)]) 11 22) 33)
                    (equal? ((case-lambda [(x . y) x]) 11 22) 11)
@@ -15,7 +25,22 @@
                    (equal? (procedure-arity (case-lambda [(x . y) x]))         -2)
                    (equal? (procedure-arity (case-lambda [(x) x] [(x y) x]))   '(1 2))
                    (equal? (procedure-arity (case-lambda [(x y) x] [(x) x] ))  '(2 1))
-                   (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))))))
+                   (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))
+                   (equal? (procedure-arity (case-lambda [(x) 0]
+                                                         [(x y z) 1]
+                                                         [(x y z w u . rest) 2])) '(1 3 -6))
+                   ; todo - fails - result is (0 -1) instead of the expected -1
+                   (list (procedure-arity (case-lambda [() 10] [x 1])) -1)))
+        (list "procedure?"
+              (and
+                  (equal? (procedure? car) #t)
+                  (equal? (procedure? 'car) #f)
+                  (equal? (procedure? (lambda (x) (* x x))) #t)
+                  (equal? (procedure? '(lambda (x) (* x x))) #f)
+                  #;(equal? (procedure? call-with-current-continuation) #t)
+                  #;(equal? (procedure? call-with-escape-continuation) #t)
+                  (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
+                  (equal? (procedure-arity procedure?) 1)))))
 
  (list "4.1 Equality"
        (list "eqv?"
