@@ -5079,7 +5079,12 @@
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))))
                (unreachable))
 
-         (func $substring (param $s (ref eq)) (param $start (ref eq)) (param $end (ref eq)) (result (ref eq))
+         (func $substring 
+               (param $s     (ref eq))
+               (param $start (ref eq))
+               (param $end   (ref eq)) ; optional, default is (string-length str)
+               (result       (ref eq))
+               
                (local $str      (ref null $String))
                (local $arr      (ref $I32Array))
                (local $i32start i32)
