@@ -1049,6 +1049,7 @@
             unsafe-vector*-length
             unsafe-cdr
             unsafe-car
+            unsafe-struct-ref
             unsafe-fx<
             unsafe-fx=
             unsafe-fl/

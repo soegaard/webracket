@@ -571,6 +571,7 @@
 
   unsafe-car
   unsafe-cdr
+  unsafe-struct-ref
   unsafe-vector*-length
   unsafe-vector*-set!
 

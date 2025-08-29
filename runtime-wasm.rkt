@@ -12169,6 +12169,17 @@
          (func $unsafe-cdr (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $v))))
 
+         (func $unsafe-struct-ref (type $Prim2)
+               (param $v (ref eq))
+               (param $k (ref eq))
+               (result (ref eq))
+               (array.get $Array
+                          (struct.get $Struct $fields
+                                      (ref.cast (ref $Struct) (local.get $v)))
+                          (i32.shr_s (i31.get_s (ref.cast (ref i31)
+                                                          (local.get $k)))
+                                     (i32.const 1))))
+
          ;; Note the `unsafe-vector*-...` variants do not work on impersonators.
          ;; (the `unsafe-vector-...` variants do)
          (func $unsafe-vector*-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
