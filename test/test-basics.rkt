@@ -16,6 +16,13 @@
             (equal? (boolean? '()) #f)
             (equal? (procedure-arity boolean?) 1)))
 
+ (list "number?"
+       (and (equal? (number? 1)   #t)
+            (equal? (number? 1.5) #t)
+            (equal? (number? 'a)  #f)
+            (equal? (number? #f)  #f)
+            (equal? (procedure-arity number?) 1)))
+
  (list "eqv?"
        (and (equal? (eqv? 'a 'a) #t)
             (equal? (eqv? 'a 'b) #f)
