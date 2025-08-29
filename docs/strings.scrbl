@@ -44,7 +44,7 @@ See also @racket[immutable-string?] and @racket[mutable-string?].
 each position in the string is initialized with the character
 @racket[char].
 
-@mz-examples[(make-string 5 #\z)]}
+@mz-examples[(make-string 5 #\z) (make-string 3)]}
 
 
 @defproc[(string [char char?] ...) string?]{ Returns a new
