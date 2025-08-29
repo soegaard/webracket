@@ -319,10 +319,10 @@
                    (equal? (make-bytes 3 (char->integer #\*)) #"***")
                    (equal? (make-bytes 0) #"")))
 
-        ;; (list "bytes-set!"
-        ;;       (let ([f (make-bytes 3 )])
-        ;;         (bytes-set! f 0 (char->integer #\?))
-        ;;         (equal? f #"?**")))
+        (list "bytes-set!"
+              (and (let ([f (make-bytes 3 (char->integer #\*))])
+                     (bytes-set! f 0 (char->integer #\?))
+                     (equal? f #"?**"))))
 
         (list "bytes"
               (and (equal? (bytes 97 98 99) #"abc")
@@ -346,15 +346,15 @@
                      (equal? (subbytes #"ab" 2)   #"")
                      (equal? (subbytes b 1 4) (bytes 97 0 98)))))
 
-        ;; (list "bytes-append"
-        ;;       (and (equal? (bytes-append #"foo" #"bar") #"foobar")
-        ;;            (equal? (bytes-append #"foo") #"foo")
-        ;;            (equal? (bytes-append #"foo" #"") #"foo")
-        ;;            (equal? (bytes-append #"foo" #"" #"goo") #"foogoo")
-        ;;            (equal? (bytes-append #"" #"foo") #"foo")
-        ;;            (equal? (bytes-append) #"")
-        ;;            (equal? (bytes-append (bytes 97 0 98) (bytes 99 0 100))
-        ;;                    (bytes 97 0 98 99 0 100))))
+        (list "bytes-append"
+              (and (equal? (bytes-append #"foo" #"bar") #"foobar")
+                   (equal? (bytes-append #"foo") #"foo")
+                   (equal? (bytes-append #"foo" #"") #"foo")
+                   (equal? (bytes-append #"foo" #"" #"goo") #"foogoo")
+                   (equal? (bytes-append #"" #"foo") #"foo")
+                   (equal? (bytes-append) #"")
+                   (equal? (bytes-append (bytes 97 0 98) (bytes 99 0 100))
+                           (bytes 97 0 98 99 0 100))))
 
         (list "bytes-copy"
               (let* ([s (bytes-copy #"hello")]

@@ -3096,7 +3096,7 @@
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])
             (match aes
-              [(list)        `(call $make-dummy-bytes)]  ; $bytes:empty ??
+              [(list)        `(global.get $bytes:empty)]
               [(list v)      `(call $bytes-copy ,v)]
               [(list v1 v2)  `(call $bytes-append/2 ,v1 ,v2)]
               [(list* vs)    `(call $bytes-append ,(build-rest-args aes))]) )]

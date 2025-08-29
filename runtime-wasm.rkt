@@ -4498,7 +4498,7 @@
                (local $pos   i32)
 
                ;; === initialize non-defaultable refs ===
-               (local.set $b (call $make-dummy-bytes))
+               (local.set $b (ref.cast (ref $Bytes) (global.get $bytes:empty)))
 
                ;; Preserve original list
                (local.set $orig (local.get $xs))
@@ -4506,7 +4506,7 @@
                (local.set $n (call $length/i32 (local.get $xs)))
                ;; Zero arguments -> empty byte string
                (if (i32.eqz (local.get $n))
-                   (then (return (call $make-dummy-bytes))))
+                   (then (return (global.get $bytes:empty))))
                ;; Extract and check first argument
                (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                (local.set $v    (struct.get $Pair $a (local.get $node)))
@@ -4538,7 +4538,7 @@
                             (br $loop1)))
                ;; All byte strings empty -> return empty byte string
                (if (i32.eqz (local.get $total))
-                   (then (return (call $make-dummy-bytes))))
+                   (then (return (global.get $bytes:empty))))
                ;; Allocate result array
                (local.set $arr (call $i8make-array (local.get $total) (i32.const 0)))
                ;; Copy byte strings into result array
