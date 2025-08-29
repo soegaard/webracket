@@ -5099,47 +5099,49 @@
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))))
                (unreachable))
 
-         (func $substring 
-               (param $s     (ref eq))
-               (param $start (ref eq))
-               (param $end   (ref eq)) ; optional, default is (string-length str)
-               (result       (ref eq))
-               
-               (local $str      (ref null $String))
-               (local $arr      (ref $I32Array))
-               (local $i32start i32)
-               (local $i32end   i32)
-               (local $len      i32)
-               ;; check string
-               (if (ref.test (ref $String) (local.get $s))
-                   (then (local.set $str (ref.cast (ref $String) (local.get $s))))
-                   (else (call $raise-check-string (local.get $s))))
-               ;; decode and check start index
-               (if (ref.test (ref i31) (local.get $start))
-                   (then (local.set $i32start (i31.get_u (ref.cast (ref i31) (local.get $start))))
-                         (if (i32.ne (i32.and (local.get $i32start) (i32.const 1)) (i32.const 0))
-                             (then (call $raise-check-fixnum (local.get $start))))
-                         (local.set $i32start (i32.shr_u (local.get $i32start) (i32.const 1))))
-                   (else (call $raise-check-fixnum (local.get $start))))
-               ;; decode and check end index
-               (if (ref.test (ref i31) (local.get $end))
-                   (then (local.set $i32end (i31.get_u (ref.cast (ref i31) (local.get $end))))
-                         (if (i32.ne (i32.and (local.get $i32end) (i32.const 1)) (i32.const 0))
-                             (then (call $raise-check-fixnum (local.get $end))))
-                         (local.set $i32end (i32.shr_u (local.get $i32end) (i32.const 1))))
-                   (else (call $raise-check-fixnum (local.get $end))))
-               ;; get array and length
-               (local.set $arr (struct.get $String $codepoints (local.get $str)))
-               (local.set $len (call $i32array-length (local.get $arr)))
-               ;; bounds check: start <= end <= len
-               (if (i32.or (i32.gt_u (local.get $i32start) (local.get $i32end))
-                           (i32.gt_u (local.get $i32end) (local.get $len)))
-                   (then (call $raise-string-index-out-of-bounds/i32 (local.get $s) (local.get $i32end) (local.get $len))))
-               ;; create new string
-               (struct.new $String
-                           (i32.const 0) ; hash
-                           (i32.const 0) ; mutable (also for immutable input)
-                           (call $i32array-copy (local.get $arr) (local.get $i32start) (local.get $i32end))))
+        (func $substring (type $Prim3)
+              (param $s     (ref eq))
+              (param $start (ref eq))
+              (param $end   (ref eq))
+              (result       (ref eq))
+
+              (local $str      (ref null $String))
+              (local $arr      (ref $I32Array))
+              (local $i32start i32)
+              (local $i32end   i32)
+              (local $len      i32)
+              ;; check string
+              (if (ref.test (ref $String) (local.get $s))
+                  (then (local.set $str (ref.cast (ref $String) (local.get $s))))
+                  (else (call $raise-check-string (local.get $s))))
+              ;; decode and check start index
+              (if (ref.test (ref i31) (local.get $start))
+                  (then (local.set $i32start (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                        (if (i32.ne (i32.and (local.get $i32start) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $start))))
+                        (local.set $i32start (i32.shr_u (local.get $i32start) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $start))))
+              ;; get array and length
+              (local.set $arr (struct.get $String $codepoints (local.get $str)))
+              (local.set $len (call $i32array-length (local.get $arr)))
+              ;; decode and check end index (optional)
+              (if (ref.eq (local.get $end) (global.get $missing))
+                  (then (local.set $i32end (local.get $len)))
+                  (else (if (ref.test (ref i31) (local.get $end))
+                            (then (local.set $i32end (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                  (if (i32.ne (i32.and (local.get $i32end) (i32.const 1)) (i32.const 0))
+                                      (then (call $raise-check-fixnum (local.get $end))))
+                                  (local.set $i32end (i32.shr_u (local.get $i32end) (i32.const 1))))
+                            (else (call $raise-check-fixnum (local.get $end)))))
+              ;; bounds check: start <= end <= len
+              (if (i32.or (i32.gt_u (local.get $i32start) (local.get $i32end))
+                          (i32.gt_u (local.get $i32end) (local.get $len)))
+                  (then (call $raise-string-index-out-of-bounds/i32 (local.get $s) (local.get $i32end) (local.get $len))))
+              ;; create new string
+              (struct.new $String
+                          (i32.const 0) ; hash
+                          (i32.const 0) ; mutable (also for immutable input)
+                          (call $i32array-copy (local.get $arr) (local.get $i32start) (local.get $i32end))))
 
          (func $string-copy (type $Prim1)
                (param $s (ref eq))
