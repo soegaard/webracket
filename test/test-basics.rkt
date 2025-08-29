@@ -364,9 +364,9 @@
                      (equal? (bytes-copy (bytes 97 0 98)) (bytes 97 0 98)))))
 
         (list "bytes-fill!"
-              (let ([s (bytes-copy #"hello")])
-                (bytes-fill! s (char->integer #\x))
-                (equal? s #"xxxxx")))
+              (and (let ([s (bytes-copy #"hello")])
+                     (bytes-fill! s (char->integer #\x))
+                     (equal? s #"xxxxx"))))
 
         ;; (list "bytes-copy!"
         ;;       (let ([bstr (make-bytes 10)])
@@ -586,3 +586,12 @@
                    ; (comp+ (equal? (procedure-arity memq) 2)) works
                    ; but not as part in this file
                    #; (equal? (procedure-arity memq) 2))))))
+
+;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4)))
+;; #(1 2 3 4)
+
+;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4) 3))
+;; #(4)
+
+;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4) 2 3))
+;; #(3)

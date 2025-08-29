@@ -4397,30 +4397,49 @@
                            (i32.const 0)          ;; hash
                            (i32.const 0)          ;; immutable = false
                            (local.get $a2)))
+
+         (func $raise-expected-mutable-bytes (unreachable))
          
          (func $bytes-fill! (type $Prim2)
                (param $dest (ref eq))
-               (param $b (ref eq))
-               (result (ref eq))
-               
-               (local $bs  (ref null $Bytes))
-               (local $arr (ref $I8Array))
-               (local $val i32)
-               ;; Check that dest is a byte string
+               (param $b    (ref eq))
+               (result      (ref eq))
+
+               (local $bs     (ref null $Bytes))
+               (local $arr    (ref $I8Array))
+               (local $b/tag  i32)     ;; raw i31 payload (tagged)
+               (local $val    i32)     ;; untagged byte value 0..255
+
+               ;; dest must be a (mutable) byte string
                (if (ref.test (ref $Bytes) (local.get $dest))
                    (then (local.set $bs (ref.cast (ref $Bytes) (local.get $dest))))
                    (else (call $raise-check-bytes (local.get $dest)) (unreachable)))
-               ;; Check that b is a valid fixnum byte (0–255)
+
+               ;; reject immutable byte strings
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $bs)) (i32.const 1))
+                   (then (call $raise-expected-mutable-bytes (local.get $dest)) (unreachable)))
+               
+               ;; b must be a fixnum byte (i31 with lsb=0), then 0..255
                (if (ref.test (ref i31) (local.get $b))
-                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $b))))
-                         (if (i32.ge_u (local.get $val) (i32.const 256))
-                             (then (call $raise-check-byte (local.get $b)) (unreachable))))
+                   (then
+                    (local.set $b/tag (i31.get_u (ref.cast (ref i31) (local.get $b))))
+                    ;; ensure lsb=0 => fixnum (not a char etc.)
+                    (if (i32.ne (i32.and (local.get $b/tag) (i32.const 1)) (i32.const 0))
+                        (then (call $raise-check-byte (local.get $b)) (unreachable)))
+                    ;; untag: shift right by 1 (your fixnum convention)
+                    (local.set $val (i32.shr_u (local.get $b/tag) (i32.const 1)))
+                    ;; range check 0..255
+                    (if (i32.ge_u (local.get $val) (i32.const 256))
+                        (then (call $raise-check-byte (local.get $b)) (unreachable))))
                    (else (call $raise-check-byte (local.get $b)) (unreachable)))
-               ;; Fill the byte array
+
+               ;; Fill underlying byte array
                (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
                (call $i8array-fill! (local.get $arr) (local.get $val))
-               ;; Return void
+
+               ;; return void
                (global.get $void))
+
 
          (func $bytes-append (type $Prim2)
                (param $b1 (ref eq))
