@@ -244,31 +244,31 @@
                    (equal? (immutable? (string->immutable-string "hi")) #t)
                    (equal? (procedure-arity string->immutable-string) 1)))
 
-        ;; (list "string=?"
-        ;;       (and (equal? (string=? "") #t)
-        ;;            (equal? (string=? "A" "A") #t)
-        ;;            (equal? (string=? "A" "B") #f)
-        ;;            (equal? (string=? "A" "AB") #f)))
+        (list "string=?"
+              (and #;(equal? (string=? "") #t)     ; todo - make string=? variadic
+                   (equal? (string=? "A" "A") #t)
+                   (equal? (string=? "A" "B") #f)
+                   (equal? (string=? "A" "AB") #f)))
 
-        ;; (list "string<?"
-        ;;       (and (equal? (string<? "" "") #f)
-        ;;            (equal? (string<? "A" "B") #t)
-        ;;            (equal? (string<? "AB" "A") #f)))
+        (list "string<?"
+              (and (equal? (string<? "" "") #f)
+                   (equal? (string<? "A" "B") #t)
+                   (equal? (string<? "AB" "A") #f)))
 
-        ;; (list "string>?"
-        ;;       (and (equal? (string>? "" "") #f)
-        ;;            (equal? (string>? "B" "A") #t)
-        ;;            (equal? (string>? "A" "AB") #f)))
+        (list "string>?"
+              (and (equal? (string>? "" "") #f)
+                   (equal? (string>? "B" "A") #t)
+                   (equal? (string>? "A" "AB") #f)))
 
-        ;; (list "string<=?"
-        ;;       (and (equal? (string<=? "" "") #t)
-        ;;            (equal? (string<=? "A" "B") #t)
-        ;;            (equal? (string<=? "AB" "A") #f)))
+        (list "string<=?"
+              (and (equal? (string<=? "" "") #t)
+                   (equal? (string<=? "A" "B") #t)
+                   (equal? (string<=? "AB" "A") #f)))
 
-        ;; (list "string>=?"
-        ;;       (and (equal? (string>=? "" "") #t)
-        ;;            (equal? (string>=? "B" "A") #t)
-        ;;            (equal? (string>=? "A" "AB") #f)))
+        (list "string>=?"
+              (and (equal? (string>=? "" "") #t)
+                   (equal? (string>=? "B" "A") #t)
+                   (equal? (string>=? "A" "AB") #f)))
 
         #;(list "string-ci=?"
               (and (equal? (string-ci=? "A" "a") #t)
