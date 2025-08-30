@@ -1114,12 +1114,25 @@
             fl=
             fl>
             fl>=
+            flabs
+            flacos
+            flasin
+            flatan
+            flceiling
             flcos
+            flexp
+            flexpt
+            flfloor
+            fllog
+            flmax
+            flmin
             flonum?
             flround
             flsin
+            flsingle
             flsqrt
             fltan
+            fltruncate
             for-each
             fx*
             fx+
@@ -1137,6 +1150,7 @@
             hash-ref
             hash-remove!
             hash-set!
+            hash?
             immutable?
             inexact->exact
             integer->char
@@ -1151,6 +1165,7 @@
             list*
             list->bytes
             list->string
+            list->vector
             list-ref
             list-tail
             list?
@@ -1248,6 +1263,24 @@
             unsafe-car
             unsafe-cdr
             unsafe-fl/
+            unsafe-flabs
+            unsafe-flacos
+            unsafe-flasin
+            unsafe-flatan
+            unsafe-flceiling
+            unsafe-flcos
+            unsafe-flexp
+            unsafe-flexpt
+            unsafe-flfloor
+            unsafe-fllog
+            unsafe-flmax
+            unsafe-flmin
+            unsafe-flround
+            unsafe-flsin
+            unsafe-flsingle
+            unsafe-flsqrt
+            unsafe-fltan
+            unsafe-fltruncate
             unsafe-fx+
             unsafe-fx<
             unsafe-fx=
@@ -1278,6 +1311,7 @@
             void?
             write-byte
             zero?)
+
 
 
 

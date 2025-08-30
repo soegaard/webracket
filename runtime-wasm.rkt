@@ -3359,6 +3359,7 @@
                            (f64.div (local.get $x/f64) (local.get $y/f64))))
 
 
+         ;; flonum -> flonum
         ,@(let ([ops '((flabs      (f64.abs (local.get $a/f64)))
                        (flround    (f64.nearest (local.get $a/f64)))
                        (flfloor    (f64.floor (local.get $a/f64)))
@@ -3407,6 +3408,7 @@
                                    (i32.const 0)
                                    ,expr)))))
 
+        ;; flonum flonum -> flonum
         ,@(let ([ops '((flmin  (f64.min (local.get $a/f64) (local.get $b/f64)))
                        (flmax  (f64.max (local.get $a/f64) (local.get $b/f64)))
                        (flexpt (call $js-math-pow (local.get $a/f64) (local.get $b/f64))))])
