@@ -140,11 +140,11 @@ illustrating that logical right-shift results are platform-dependent.
 
 
 @deftogether[(
-@defproc[(fx=   [a fixnum?] [b fixnum?] ...) boolean?]
-@defproc[(fx<   [a fixnum?] [b fixnum?] ...) boolean?]
-@defproc[(fx>   [a fixnum?] [b fixnum?] ...) boolean?]
-@defproc[(fx<=  [a fixnum?] [b fixnum?] ...) boolean?]
-@defproc[(fx>=  [a fixnum?] [b fixnum?] ...) boolean?]
+@defproc[(fx=   [a fixnum?] ...+) boolean?]
+@defproc[(fx<   [a fixnum?] ...+) boolean?]
+@defproc[(fx>   [a fixnum?] ...+) boolean?]
+@defproc[(fx<=  [a fixnum?] ...+) boolean?]
+@defproc[(fx>=  [a fixnum?] ...+) boolean?]
 @defproc[(fxmin [a fixnum?] [b fixnum?] ...) fixnum?]
 @defproc[(fxmax [a fixnum?] [b fixnum?] ...) fixnum?]
 )]{

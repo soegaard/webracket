@@ -3072,7 +3072,19 @@
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1 1)] ; actual arity: 1,2
-         
+
+        [(fx= fx< fx> fx<= fx>=)
+          ; variadic, at least one argument
+          (define n   (length ae1))
+          (when (< n 1) (error 'primapp "too few arguments: ~a" sym))
+          (define aes  (AExpr* ae1))
+          (define $cmp   ($ sym))
+          (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
+          (case n
+            [(1) `(call ,$cmp ,(first aes) (global.get $null))]
+            [(2) `(call ,$cmp/2 ,@aes)]
+            [else `(call ,$cmp ,(first aes) ,(build-rest-args (rest aes)))])]
+
         [(char=? char<? char<=? char>? char>=?
                  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
           ; variadic, at least one argument
