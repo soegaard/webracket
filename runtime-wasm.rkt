@@ -2950,15 +2950,20 @@
               (unreachable))
 
         ;; Trigonometric functions
-        ,@(let ([ops '((sin  $js-math-sin  0 0)
-                       (cos  $js-math-cos  0 2)
-                       (tan  $js-math-tan  0 0)
-                       (asin $js-math-asin 0 0)
-                       (acos $js-math-acos 2 0)
-                       (atan $js-math-atan 0 0))])
+        ;               name js            inbits outbits
+        ,@(let ([ops '((sin  $js-math-sin  0      0)    ;  sin(0) = 0
+                       (cos  $js-math-cos  0      2)    ;  cos(0) = 1
+                       (tan  $js-math-tan  0      0)    ;  tan(0) = 0
+                       (asin $js-math-asin 0      0)    ; asin(0) = 0
+                       (acos $js-math-acos 2      0)    ; acos(1) = 0
+                       (atan $js-math-atan 0      0))]) ; atan(0) = 0
+            ;; inbits and outbits are raw i31 fixnum encodings.  
+            ;; They mark trivial exact identities of trig functions  
+            ;; (e.g. sin 0 = 0, cos 0 = 1, acos 1 = 0).  
+            ;; This avoids JS calls and flonum allocation in those cases.  
             (for/list ([p ops])
-              (define name (car p))
-              (define js   (cadr p))
+              (define name    (car p))
+              (define js      (cadr p))
               (define inbits  (caddr p))
               (define outbits (cadddr p))
               `(func ,(string->symbol (format "$~a" name))
@@ -2976,7 +2981,7 @@
                           (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
                               (then
                                (if (i32.eq (local.get $bits) (i32.const ,inbits))
-                                   (return (ref.i31 (i32.const ,outbits))))
+                                   (then (return (ref.i31 (i32.const ,outbits)))))
                                (return (struct.new $Flonum
                                                    (i32.const 0)
                                                    (call ,js
@@ -2995,6 +3000,7 @@
 
                      (call $raise-expected-number (local.get $x))
                      (unreachable))))
+        
          (func $raise-expected-number (unreachable))
 
          ,@(let ()
