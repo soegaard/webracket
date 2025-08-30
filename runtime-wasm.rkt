@@ -8961,9 +8961,9 @@
                (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
                (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
                ;; Hash key (identity hash)
-               (local.set $hash  (call $eq-hash/i32 (local.get $key)))
-               (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step  (i32.const 0))
+               (local.set $hash     (call $eq-hash/i32 (local.get $key)))
+               (local.set $index    (i32.rem_u (local.get $hash) (local.get $capacity)))
+               (local.set $step     (i32.const 0))
                (block $not-found
                       (loop $probe
                             ;; Stop probing if we've checked all slots
@@ -8995,21 +8995,23 @@
                             (local.set $step (i32.add (local.get $step) (i32.const 1)))
                             (br $probe)))
                ;; Not found — handle failure result
-               (if (ref.eq (local.get $fail) (global.get $missing))
-                   (then
-                    (call $raise-hash-ref-key-not-found (local.get $key))
-                    (unreachable))
+               (if (result (ref eq))
+                   (ref.eq (local.get $fail) (global.get $missing))
+                   (then (call $raise-hash-ref-key-not-found (local.get $key))
+                         (unreachable))
                    (else
-                    (if (ref.test (ref $Procedure) (local.get $fail))
+                    (if (result (ref eq))
+                        (ref.test (ref $Procedure) (local.get $fail))
                         (then
-                         (local.set $proc (ref.cast (ref $Procedure) (local.get $fail)))
-                         (local.set $inv  (struct.get $Procedure $invoke (local.get $proc)))
+                         (local.set $proc   (ref.cast (ref $Procedure) (local.get $fail)))
+                         (local.set $inv    (struct.get $Procedure $invoke (local.get $proc)))
                          (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
                          (return_call_ref $ProcedureInvoker
                                           (local.get $proc)
                                           (local.get $noargs)
                                           (local.get $inv)))
-                        (else (local.get $fail))))))
+                        (else
+                         (local.get $fail))))))
 
 
          (func $raise-argument-error:mutable-hasheq-expected (unreachable))
