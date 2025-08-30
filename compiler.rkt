@@ -464,7 +464,7 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
-  inexact->exact round sqrt
+  inexact->exact round sqrt sin cos tan asin acos atan
 
   fixnum? fxzero?
   fx+ fx- fx*

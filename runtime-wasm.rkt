@@ -2949,6 +2949,52 @@
               (call $raise-expected-number (local.get $x))
               (unreachable))
 
+        ;; Trigonometric functions
+        ,@(let ([ops '((sin  $js-math-sin  0 0)
+                       (cos  $js-math-cos  0 2)
+                       (tan  $js-math-tan  0 0)
+                       (asin $js-math-asin 0 0)
+                       (acos $js-math-acos 2 0)
+                       (atan $js-math-atan 0 0))])
+            (for/list ([p ops])
+              (define name (car p))
+              (define js   (cadr p))
+              (define inbits  (caddr p))
+              (define outbits (cadddr p))
+              `(func ,(string->symbol (format "$~a" name))
+                     (type $Prim1)
+                     (param $x (ref eq))
+                     (result (ref eq))
+
+                     (local $bits i32)
+                     (local $fl (ref $Flonum))
+                     (local $f64 f64)
+
+                     (if (ref.test (ref i31) (local.get $x))
+                         (then
+                          (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                          (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                              (then
+                               (if (i32.eq (local.get $bits) (i32.const ,inbits))
+                                   (return (ref.i31 (i32.const ,outbits))))
+                               (return (struct.new $Flonum
+                                                   (i32.const 0)
+                                                   (call ,js
+                                                         (f64.convert_i32_s
+                                                          (i32.shr_s (local.get $bits) (i32.const 1)))))))
+                              (else (call $raise-expected-number (local.get $x))
+                                    (unreachable)))))
+
+                     (if (ref.test (ref $Flonum) (local.get $x))
+                         (then
+                          (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                          (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                          (return (struct.new $Flonum
+                                               (i32.const 0)
+                                               (call ,js (local.get $f64))))))
+
+                     (call $raise-expected-number (local.get $x))
+                     (unreachable))))
          (func $raise-expected-number (unreachable))
 
          ,@(let ()
