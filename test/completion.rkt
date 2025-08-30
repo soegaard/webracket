@@ -1018,6 +1018,52 @@
       prop:checked-procedure
       prop:procedure
     )
+    (racket/flonum
+      fl+
+      fl-
+      fl*
+      fl/
+      flabs
+      fl=
+      fl<
+      fl>
+      fl<=
+      fl>=
+      flmin
+      flmax
+      flround
+      flfloor
+      flceiling
+      fltruncate
+      flsingle
+      flbit-field
+      flsin
+      flcos
+      fltan
+      flasin
+      flacos
+      flatan
+      fllog
+      flexp
+      flsqrt
+      flexpt
+      ->fl
+      fl->exact-integer
+      make-flrectangular
+      flreal-part
+      flimag-part
+      flrandom
+      flvector?
+      flvector
+      make-flvector
+      flvector-length
+      flvector-ref
+      flvector-set!
+      flvector-copy
+      in-flvector
+      shared-flvector
+      make-shared-flvector
+    )
     (void
       void
       void?
