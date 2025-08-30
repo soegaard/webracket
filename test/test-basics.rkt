@@ -518,9 +518,34 @@
                      (equal? (immutable? (symbol->immutable-string 'apple)) #t)
                      (equal? (immutable? (symbol->immutable-string 'box))   #t))))
 
+        (let ([a (string->uninterned-symbol "a")]
+              [b (string->uninterned-symbol "a")])
+          (list "symbol=?"
+                (and (equal? (symbol=? 'a 'a) #t)
+                     (equal? (symbol=? 'a 'b) #f)
+                     (equal? (symbol=? a b)   #f)
+                     (equal? (eq? a b)        #f)
+                     #;(equal? (symbol=? 'x 'x 'x) #t)    ; todo - make symbol=? variadic
+                     #;(equal? (symbol=? 'x 'x 'y) #f))))
+
+        (let ([s1 (string->uninterned-symbol "apple")]
+              [s2 (string->uninterned-symbol "apple")])
+          (list "string->uninterned-symbol"
+                (and (equal? (symbol? s1)          #t)
+                     (equal? (eq? s1 s2)           #f)
+                     (equal? (symbol=? s1 s2)      #f)
+                     (equal? (symbol-interned? s1) #f))))
+
+        (let ([interned 'banana]
+              [uninterned (string->uninterned-symbol "banana")])
+          (list "symbol-interned?"
+                (and (equal? (symbol-interned? interned) #t)
+                     (equal? (symbol-interned? uninterned) #f)
+                     (equal? (symbol-interned? (string->symbol "bar")) #t))))
+
         (list "symbol<?"
               (and (equal? (symbol<? 'a 'b)    #t)
-                   ;(equal? (symbol<? 'a 'b 'c) #t)  ; todo - make it variadic
+                   ;(equal? (symbol<? 'a 'b 'c) #t)  ; todo - make symbol<? variadic
                    ;(equal? (symbol<? 'a 'c 'b) #f)
                    (equal? (symbol<? 'a 'aa)   #t)
                    (equal? (symbol<? 'aa 'a)   #f)
