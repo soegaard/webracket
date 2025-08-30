@@ -3072,8 +3072,8 @@
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
 
          
-         [(char=? char<? char<=? char>? char>=?
-                  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
+        [(char=? char<? char<=? char>? char>=?
+                 char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
           ; variadic, at least one argument
           (define who    sym)
           (define n      (length ae1))
@@ -3094,11 +3094,27 @@
                                   (i32.const 0)
                                   ,(first aes)
                                   ,(loop (rest aes))))))
-             `(call ,$cmp ,c0 ,xs)])]
-         
-         [(string-append)
-          (let loop ([aes (AExpr* ae1)])
-            (match aes
+            `(call ,$cmp ,c0 ,xs)])]
+
+        [(fxand fxior fxxor)
+         (define aes (AExpr* ae1))
+         (define $op (case sym
+                        [(fxand) '$fxand/2]
+                        [(fxior) '$fxior/2]
+                        [(fxxor) '$fxxor/2]))
+         (let loop ([aes aes])
+           (match aes
+             [(list)
+              (case sym
+                [(fxand) (Imm -1)]
+                [else      '(global.get $zero)])]
+             [(list ae0) ae0]
+             [(list* ae0 ae1 aes*)
+              `(call ,$op (call ,$op ,ae0 ,ae1) ,(loop aes*))]))]
+
+        [(string-append)
+         (let loop ([aes (AExpr* ae1)])
+           (match aes
               [(list)        '(global.get $string:empty)]
               [(list v)      `(call $string-copy ,v)]
               [(list v1 v2)  `(call $string-append/2 ,v1 ,v2)]

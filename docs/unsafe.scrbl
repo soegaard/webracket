@@ -72,6 +72,8 @@ For @tech{fixnums}: Unchecked versions of @racket[fx+], @racket[fx-],
 
 For @tech{fixnums}: Unchecked versions of @racket[fxand], @racket[fxior], @racket[fxxor],
 @racket[fxnot], @racket[fxlshift], @racket[fxrshift], and @racket[fxrshift/logical].
+With no arguments, @racket[unsafe-fxand] yields @racket[-1], while
+@racket[unsafe-fxior] and @racket[unsafe-fxxor] yield @racket[0].
 
 @history[#:changed "7.0.0.13" @elem{Allow zero or more arguments for
                                     @racket[unsafe-fxand], @racket[unsafe-fxior],
