@@ -485,7 +485,7 @@
   fl+ fl- fl* fl/
   fl= fl< fl> fl<= fl>=
   flabs flround flfloor flceiling fltruncate flsingle
-  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt
+  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
 
   byte?
 
@@ -579,6 +579,7 @@
   unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
   unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
   unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
+  unsafe-flmin unsafe-flmax unsafe-flexpt
 
   unsafe-fx=
   unsafe-fx<
