@@ -634,13 +634,47 @@
                    ; todo - this one is peculiar
                    ; (comp+ (equal? (procedure-arity memq) 2)) works
                    ; but not as part in this file
-                   #; (equal? (procedure-arity memq) 2))))))
+                   #; (equal? (procedure-arity memq) 2)))))
 
-;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4)))
-;; #(1 2 3 4)
+ (list "4.12 Vectors"
+       (list
+        (list "vector?"
+              (equal? (vector? (make-vector 0)) #t))
 
-;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4) 3))
-;; #(4)
+        (list "make-vector"
+              (and (equal? (make-vector 5) '#(0 0 0 0 0))
+                   (equal? (make-vector 5 0) '#(0 0 0 0 0))))
 
-;; compiler.rkt> (comp+ #'(vector-copy #(1 2 3 4) 2 3))
-;; #(3)
+        (list "vector-copy!"
+              (and (let ([b (vector 1 2 3)])
+                     (vector-copy! b 0 b 1)
+                     (equal? b '#(2 3 3)))
+                   (let ([b (vector 2 3 4)])
+                     (vector-copy! b 1 b 0 2)
+                     (equal? b '#(2 2 3)))))
+
+        (list "vector-set!"
+              (let ([v (make-vector 5)])
+                (for-each (lambda (i) (vector-set! v i (* i i)))
+                          '(0 1 2 3 4))
+                (equal? v '#(0 1 4 9 16))))
+
+        (list "vector->list"
+              (and (equal? (vector->list '#(dah dah didah)) '(dah dah didah))
+                   (equal? (vector->list '#()) '())))
+
+        (list "list->vector"
+              (and (equal? (list->vector '(dididit dah))
+                           '#(dididit dah))
+                   (equal? (list->vector '()) '#())))
+        
+        (list "vector-immutable"
+              (let ([v (vector-immutable 5 'a)])
+                (and (equal? v '#(5 a))
+                     (equal? (immutable? v) #t)))))
+
+       (list "vector-copy"
+              (and (equal? (vector-copy '#(1 2 3 4))     '#(1 2 3 4))
+                   (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
+                   (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))))
+

@@ -219,7 +219,7 @@
  ;; 4.12 Vectors
  vector vector-immutable vector? make-vector vector-ref vector-set!
  vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop
- vector-drop-right vector-split-at vector->list vector-copy
+ vector-drop-right vector-split-at vector->list vector-copy list->vector
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

@@ -486,11 +486,11 @@
 
   byte?
 
-  vector  ; not first order yet, rewritten to (list->vector ...)
+  vector 
   vector? make-vector vector-ref vector-set! vector-length
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
   vector-drop-right vector-split-at
-  vector->list vector-copy
+  vector->list list->vector vector-copy
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3106,7 +3106,8 @@
           #;(build-seq aes local-name local-type alloc set finish)
           (build-seq ae1 'quoted-bytes '(ref $Bytes)
                      ; Allocate 
-                     (λ (n) `(ref.cast (ref $Bytes) (call $make-bytes ,(Imm n) ,(Imm 0))))
+                     (λ (n) `(ref.cast (ref $Bytes)
+                                       (call $make-bytes ,(Imm n) ,(Imm 0))))
                      ; Initialize
                      (λ ($bs i v)
                         `(call $bytes-set!/checked ,$bs (i32.const ,i)
@@ -3122,20 +3123,23 @@
                                     (i32.const ,i)
                                     (i32.shr_s
                                      (i31.get_s
-                                      (ref.cast (ref i31) (call $char->integer ,v)))
+                                      (ref.cast (ref i31)
+                                                (call $char->integer ,v)))
                                      (i32.const 1))))
                      (λ ($a)
                         `(struct.new $String
                                      (i32.const 0) ; hash
                                      (i32.const 0) ; mutable
-                                     (ref.cast (ref $I32Array) ,$a))))]                 
+                                     (ref.cast (ref $I32Array) ,$a))))]          
          [(vector vector-immutable)
           (build-seq ae1 'quoted-vector-array '(ref $Array)
                      (λ (n)       `(call $make-array (i32.const ,n) ,(Imm 0)))
                      (λ ($a i v)  `(array.set $Array ,$a (i32.const ,i) ,v))
                      (λ ($a)      `(struct.new $Vector
                                                (i32.const 0) ; hash
-                                               (i32.const ,(if (eq? sym 'vector-immutable) 1 0))
+                                               (i32.const
+                                                ,(if (eq? sym 'vector-immutable)
+                                                     1 0))
                                                ,$a)))]
          
          [else
