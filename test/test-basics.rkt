@@ -733,12 +733,15 @@
                 (hash-set! h 'a 1)
                 (equal? (hash-ref h 'a) 1)))
 
-        ;; (list "hash-ref"
-        ;;       (let ([h (make-hasheq)])
-        ;;         (hash-set! h 'a 1)
-        ;;         (and (equal? (hash-ref h 'a) 1)
-        ;;              (equal? (hash-ref h 'b 2) 2)
-        ;;              (equal? (hash-ref h 'b (lambda () 3)) 3))))
+        (list "hash-ref"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (and (equal? (hash-ref h 'a) 1)
+                     (equal? (hash-ref h 'b 2) 2)
+                     (equal? (hash-ref h 'b (lambda () 3)) 3)
+                     (equal? (with-handlers ([exn:fail? (λ (_) 'no)])
+                               (hash-ref h 'c))
+                              'no))))
 
         ;; (list "hash-remove!"
         ;;       (let ([h (make-hasheq)])

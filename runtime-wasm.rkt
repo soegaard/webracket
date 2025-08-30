@@ -8888,7 +8888,9 @@
          
 
          (func $raise-argument-error:hash-expected (unreachable))
-         
+
+         (func $raise-hash-ref-key-not-found (param $key (ref eq)) (unreachable))
+
          (func $hash-ref
                (param $ht      (ref eq))   ;; must be a mutable hasheq
                (param $key     (ref eq))
@@ -8910,9 +8912,7 @@
                (param $key     (ref eq))     ;; lookup key
                (param $failure (ref eq))     ;; value to return if not found
                (result         (ref eq))
-               
-               (if (ref.eq (local.get $failure) (global.get $missing))
-                   (then (local.set $failure (global.get $false))))
+
                (return_call $hasheq-ref/plain
                             (local.get $ht) (local.get $key) (local.get $failure)))
 
@@ -8953,6 +8953,9 @@
                (local $hash     i32)
                (local $k        (ref eq))
                (local $slot     i32)
+               (local $proc     (ref $Procedure))
+               (local $inv      (ref $ProcedureInvoker))
+               (local $noargs   (ref $Args))
 
                ;; Get entries and compute capacity
                (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
@@ -8991,8 +8994,22 @@
                             ;; Continue probing
                             (local.set $step (i32.add (local.get $step) (i32.const 1)))
                             (br $probe)))
-               ;; Not found — return failure result
-               (local.get $fail))
+               ;; Not found — handle failure result
+               (if (ref.eq (local.get $fail) (global.get $missing))
+                   (then
+                    (call $raise-hash-ref-key-not-found (local.get $key))
+                    (unreachable))
+                   (else
+                    (if (ref.test (ref $Procedure) (local.get $fail))
+                        (then
+                         (local.set $proc (ref.cast (ref $Procedure) (local.get $fail)))
+                         (local.set $inv  (struct.get $Procedure $invoke (local.get $proc)))
+                         (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                         (return_call_ref $ProcedureInvoker
+                                          (local.get $proc)
+                                          (local.get $noargs)
+                                          (local.get $inv)))
+                        (else (local.get $fail)))))
 
 
          (func $raise-argument-error:mutable-hasheq-expected (unreachable))
