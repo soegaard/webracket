@@ -8564,7 +8564,17 @@
                          (unreachable)))
                ; 4. Split the vector
                (local.set $res (call $array-split-at (struct.get $Vector $arr (local.get $vec)) (local.get $ix)))
-               (struct.new $Vector (i32.const 0) (i32.const 0) (local.get $res)))
+               (array.new_fixed $Values 2
+                                (struct.new $Vector
+                                            (i32.const 0)  ; hash
+                                            (i32.const 0)  ; mutable
+                                            (ref.cast (ref $Array)
+                                                      (array.get $Array (local.get $res) (i32.const 0))))
+                                (struct.new $Vector
+                                            (i32.const 0) ; hash
+                                            (i32.const 0) ; mutable
+                                            (ref.cast (ref $Array)
+                                                      (array.get $Array (local.get $res) (i32.const 1))))))
          
 
          (func $raise-expected-vector (unreachable))
