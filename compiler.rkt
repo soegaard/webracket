@@ -480,7 +480,7 @@
   most-positive-fixnum most-negative-fixnum
 
   fx->fl
-  ; fl->fx
+  fl->fx
   ; fixnum-for-every-system?
 
   flonum?
