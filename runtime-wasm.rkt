@@ -3382,8 +3382,11 @@
 
          (func $fxrshift/logical (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               (ref.i31 (i32.shr_u (i31.get_u (ref.cast i31ref (local.get $x)))
-                                   ,(Half `(i31.get_u (ref.cast i31ref (local.get $y)))))))
+               (ref.i31
+                ,(Double
+                  `(i32.shr_u 
+                    ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $x))))
+                    ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $y))))))))
 
          (func $most-positive-fixnum (type $Prim0) (result (ref eq))
                ,(Imm most-positive-fixnum))

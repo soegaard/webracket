@@ -329,7 +329,8 @@
                     (equal? (fxlshift/wraparound 1 2) 4))
               (list "fxrshift/logical"
                     (and (equal? (fxrshift/logical 4 1) 2)
-                         (equal? (fxrshift/logical -1 1) 536870911)))
+                         (equal? (fxrshift/logical -1 1) (most-positive-fixnum))))
+
 
               ;; (list "fxmin"
               ;;       (equal? (fxmin 3 1 2) 1))
