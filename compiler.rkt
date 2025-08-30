@@ -472,11 +472,11 @@
   ; fxmin fxmax
 
   fxquotient unsafe-fxquotient
-  ; fxremainder fxmodulo fxabs
-  ; fxand fxior fxxor fxnot fxlshift fxrshift
-  ; fxpopcount fxpopcount16 fxpopcount32
-  ; fx+/wraparound fx-/wraparound fx*/wraparound fxlshift/wraparound
-  ; fxrshift/logical
+  fxremainder fxmodulo fxabs
+  fxand fxior fxxor fxnot fxlshift fxrshift
+  fxpopcount fxpopcount16 fxpopcount32
+  fx+/wraparound fx-/wraparound fx*/wraparound fxlshift/wraparound
+  fxrshift/logical
 
   ; fx->fl fl->fx
   ; fixnum-for-every-system?
