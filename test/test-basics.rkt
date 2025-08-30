@@ -273,21 +273,26 @@
                     (equal? (fx- 5 1 1) 3))
               (list "fx*"
                     (equal? (fx* 2 3 4) 24))
-              #;(list "fx="
-                    (and (equal? (fx= 1 1 1) #t)
+              (list "fx="
+                    (and (equal? (fx= 1) #t)
+                         (equal? (fx= 1 1 1) #t)
                          (equal? (fx= 1 2) #f)))
-              ;; (list "fx>"
-              ;;       (and (equal? (fx> 3 2 1) #t)
-              ;;            (equal? (fx> 2 2) #f)))
-              ;; (list "fx<"
-              ;;       (and (equal? (fx< 1 2 3) #t)
-              ;;            (equal? (fx< 2 2) #f)))
-              ;; (list "fx<="
-              ;;       (and (equal? (fx<= 1 1 2) #t)
-              ;;            (equal? (fx<= 2 1) #f)))
-              ;; (list "fx>="
-              ;;       (and (equal? (fx>= 2 2 1) #t)
-              ;;            (equal? (fx>= 1 2) #f)))
+              (list "fx>"
+                    (and (equal? (fx> 3) #t)
+                         (equal? (fx> 3 2 1) #t)
+                         (equal? (fx> 2 2) #f)))
+              (list "fx<"
+                    (and (equal? (fx< 1) #t)
+                         (equal? (fx< 1 2 3) #t)
+                         (equal? (fx< 2 2) #f)))
+              (list "fx<="
+                    (and (equal? (fx<= 1) #t)
+                         (equal? (fx<= 1 1 2) #t)
+                         (equal? (fx<= 2 1) #f)))
+              (list "fx>="
+                    (and (equal? (fx>= 2) #t)
+                         (equal? (fx>= 2 2 1) #t)
+                         (equal? (fx>= 1 2) #f)))
               
               (list "fxquotient"
                     (equal? (fxquotient 13 4) 3))
