@@ -1130,6 +1130,23 @@
             fx>
             fx>=
             fxquotient
+            fxremainder
+            fxmodulo
+            fxabs
+            fxand
+            fxior
+            fxxor
+            fxnot
+            fxlshift
+            fxrshift
+            fxpopcount
+            fxpopcount32
+            fxpopcount16
+            fx+/wraparound
+            fx-/wraparound
+            fx*/wraparound
+            fxlshift/wraparound
+            fxrshift/logical
             fxzero?
             get-output-bytes
             hash-clear!
