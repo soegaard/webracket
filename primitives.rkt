@@ -45,7 +45,9 @@
  inexact->exact round sqrt number->string
  + - * / = < > <= >= zero? positive? negative? add1 sub1
  fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
- flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flround flsin flcos fltan flsqrt
+ flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>=
+ flabs flround flfloor flceiling fltruncate flsingle
+ flsin flcos fltan flasin flacos flatan fllog flexp flsqrt
  byte? 
 
  ;; Fixnum
@@ -82,7 +84,9 @@
  fx->fl
  fl->fx
 
- inexact->exact round sqrt flround flsin flcos fltan flsqrt
+ inexact->exact round sqrt
+ flabs flround flfloor flceiling fltruncate flsingle
+ flsin flcos fltan flasin flacos flatan fllog flexp flsqrt
 
  
  ;; 4.4 Strings
@@ -265,7 +269,11 @@
  namespace-set-variable-value! namespace-undefine-variable!
 
  ;; 17. Unsafe Operations
- unsafe-fx+ unsafe-fl/ unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
+ unsafe-fx+ unsafe-fl/
+ unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
+ unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
+ unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
+ unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
  
 
