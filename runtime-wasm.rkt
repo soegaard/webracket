@@ -3209,20 +3209,92 @@
                             (then (i32.sub (i32.const 0) (local.get $xi)))
                             (else (local.get $xi)))))
 
-         (func $fxand (type $Prim2)
+         (func $fxand/2 (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.and (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
 
-         (func $fxior (type $Prim2)
+         (func $fxand (type $Prim>=0)
+               (param $xs0 (ref eq)) (result (ref eq))
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r ,(Imm -1))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $fxand/2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
+
+         (func $fxior/2 (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.or (i31.get_s (ref.cast i31ref (local.get $x)))
                                 (i31.get_s (ref.cast i31ref (local.get $y))))))
 
-         (func $fxxor (type $Prim2)
+         (func $fxior (type $Prim>=0)
+               (param $xs0 (ref eq)) (result (ref eq))
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r (global.get $zero))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $fxior/2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
+
+         (func $fxxor/2 (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.xor (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
+
+         (func $fxxor (type $Prim>=0)
+               (param $xs0 (ref eq)) (result (ref eq))
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r (global.get $zero))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $fxxor/2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
 
          (func $fxnot (type $Prim1)
                (param $x (ref eq)) (result (ref eq))

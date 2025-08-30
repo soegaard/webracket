@@ -73,7 +73,9 @@ result would not be a fixnum.
 Like @racket[bitwise-and], @racket[bitwise-ior],
 @racket[bitwise-xor], @racket[bitwise-not], and
 @racket[arithmetic-shift], but constrained to consume @tech{fixnums};
-the result is always a @tech{fixnum}. The @racket[unsafe-fxlshift] and
+the result is always a @tech{fixnum}. With no arguments,
+@racket[fxand] produces @racket[-1], and both @racket[fxior] and
+@racket[fxxor] produce @racket[0]. The @racket[unsafe-fxlshift] and
 @racket[unsafe-fxrshift] operations correspond to
 @racket[arithmetic-shift], but require non-negative arguments;
 @racket[unsafe-fxlshift] is a positive (i.e., left) shift, and
