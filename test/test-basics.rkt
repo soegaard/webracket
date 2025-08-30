@@ -660,12 +660,12 @@
                 (equal? v '#(0 1 4 9 16))))
 
         (list "vector->list"
-              (and (equal? (vector->list '#(dah dah didah)) '(dah dah didah))
+              (and (equal? (vector->list '#(foo bar baz)) '(foo bar baz))
                    (equal? (vector->list '#()) '())))
 
         (list "list->vector"
-              (and (equal? (list->vector '(dididit dah))
-                           '#(dididit dah))
+              (and (equal? (list->vector '(foo bar baz))
+                           '#(foo bar baz))
                    (equal? (list->vector '()) '#())))
         
         (list "vector-immutable"
