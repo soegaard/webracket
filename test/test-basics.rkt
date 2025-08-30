@@ -177,6 +177,21 @@
                          (equal? (number->string 1.25)  "1.25")
                          (equal? (number->string 1.0)   "1.0")))))
 
+       (list "4.3.2.4 Trigonometric Functions"
+             (list
+              (list "sin"
+                    (equal? (sin 0) 0))
+              (list "cos"
+                    (equal? (cos 0) 1))
+              (list "tan"
+                    (equal? (tan 0) 0))
+              (list "asin"
+                    (equal? (asin 0) 0))
+              (list "acos"
+                    (equal? (acos 1) 0))
+              (list "atan"
+                    (equal? (atan 0) 0))))
+
        
        (list "4.3.3 Flonums"
              (list
