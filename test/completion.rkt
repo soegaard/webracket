@@ -269,7 +269,53 @@
       vector->pseudo-random-generator!
       zero?
       )
-    
+
+    (racket/fixnum
+      fixnum-for-every-system?
+      fl->fx
+      fx*
+      fx*/wraparound
+      fx+
+      fx+/wraparound
+      fx-
+      fx-/wraparound
+      fx->fl
+      fx<
+      fx<=
+      fx=
+      fx>
+      fx>=
+      fxabs
+      fxand
+      fxior
+      fxlshift
+      fxlshift/wraparound
+      fxmax
+      fxmin
+      fxmodulo
+      fxnot
+      fxpopcount
+      fxpopcount16
+      fxpopcount32
+      fxquotient
+      fxremainder
+      fxrshift
+      fxrshift/logical
+      fxvector
+      fxvector-copy
+      fxvector-length
+      fxvector-ref
+      fxvector-set!
+      fxvector?
+      fxxor
+      in-fxvector
+      make-fxvector
+      make-shared-fxvector
+      most-negative-fixnum
+      most-positive-fixnum
+      shared-fxvector
+      )
+
     (strings
       build-string
       list->string
