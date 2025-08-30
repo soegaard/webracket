@@ -9009,7 +9009,7 @@
                                           (local.get $proc)
                                           (local.get $noargs)
                                           (local.get $inv)))
-                        (else (local.get $fail)))))
+                        (else (local.get $fail))))))
 
 
          (func $raise-argument-error:mutable-hasheq-expected (unreachable))
