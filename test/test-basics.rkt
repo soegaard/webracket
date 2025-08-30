@@ -163,18 +163,180 @@
                     (equal? (immutable? (box 5)) #f)))))
  
  (list "4.3 Numbers"
-       (list
-        (list "number?"
-              (and (equal? (number? 1)   #t)
-                   (equal? (number? 1.5) #t)
-                   (equal? (number? 'a)  #f)
-                   (equal? (number? #f)  #f)
-                   (equal? (procedure-arity number?) 1)))
-        (list "number->string"
-              (and (equal? (number->string 42) "42")
-                   (equal? (number->string 16 16) "10")
-                   (equal? (number->string 1.25) "1.25")
-                   (equal? (number->string 1.0) "1.0")))))
+       (list "4.3.1 Number Types"
+             (list
+              (list "number?"
+                    (and (equal? (number? 1)   #t)
+                         (equal? (number? 1.5) #t)
+                         (equal? (number? 'a)  #f)
+                         (equal? (number? #f)  #f)
+                         (equal? (procedure-arity number?) 1)))
+              (list "number->string"
+                    (and (equal? (number->string 42) "42")
+                         (equal? (number->string 16 16) "10")
+                         (equal? (number->string 1.25) "1.25")
+                         (equal? (number->string 1.0) "1.0")))))
+
+       (list "4.3.3 Flonums"
+             (list
+              (list "flonum?"
+                    (and (equal? (flonum? 1.0) #t)
+                         (equal? (flonum? 1) #f)
+                         (equal? (procedure-arity flonum?) 1)))
+              (list "fl+"
+                    (and (fl= (fl+ 1.0 2.0) 3.0)
+                         (fl= (fl+ 1.0 2.0 3.0) 6.0)))
+              (list "fl-"
+                    (and (fl= (fl- 3.0 1.0) 2.0)
+                         (fl= (fl- 3.0) -3.0)))
+              (list "fl*"
+                    (and (fl= (fl* 2.0 3.0) 6.0)
+                         (fl= (fl* 2.0 3.0 4.0) 24.0)))
+              (list "fl/"
+                    (and (fl= (fl/ 6.0 2.0) 3.0)
+                         (fl= (fl* (fl/ 6.0) 6.0) 1.0)))
+              (list "fl="
+                    (and (equal? (fl= 1.0 1.0) #t)
+                         (equal? (fl= 1.0 2.0) #f)))
+              (list "fl<"
+                    (and (equal? (fl< 1.0 2.0) #t)
+                         (equal? (fl< 2.0 1.0) #f)))
+              (list "fl>"
+                    (and (equal? (fl> 2.0 1.0) #t)
+                         (equal? (fl> 1.0 2.0) #f)))
+              (list "fl<="
+                    (and (equal? (fl<= 1.0 2.0) #t)
+                         (equal? (fl<= 2.0 2.0) #t)
+                         (equal? (fl<= 2.0 1.0) #f)))
+              (list "fl>="
+                    (and (equal? (fl>= 2.0 1.0) #t)
+                         (equal? (fl>= 2.0 2.0) #t)
+                         (equal? (fl>= 1.0 2.0) #f)))
+              (list "flabs"
+                    (and (fl= (flabs -2.5) 2.5)
+                         (fl= (flabs 2.5) 2.5)))
+              (list "flround"
+                    (and (fl= (flround 1.2) 1.0)
+                         (fl= (flround 1.6) 2.0)))
+              (list "flfloor"
+                    (and (fl= (flfloor 1.2) 1.0)
+                         (fl= (flfloor -1.2) -2.0)))
+              (list "flceiling"
+                    (and (fl= (flceiling 1.2) 2.0)
+                         (fl= (flceiling -1.2) -1.0)))
+              (list "fltruncate"
+                    (and (fl= (fltruncate 1.8) 1.0)
+                         (fl= (fltruncate -1.8) -1.0)))
+              (list "flsingle"
+                    (and (flonum? (flsingle 1.0))
+                         (fl= (flsingle 1.5) 1.5)))
+              (list "flsin"
+                    (fl= (flsin 0.0) 0.0))
+              (list "flcos"
+                    (fl= (flcos 0.0) 1.0))
+              (list "fltan"
+                    (fl= (fltan 0.0) 0.0))
+              (list "flasin"
+                    (fl= (flasin 0.0) 0.0))
+              (list "flacos"
+                    (fl= (flacos 1.0) 0.0))
+              (list "flatan"
+                    (fl= (flatan 0.0) 0.0))
+              (list "fllog"
+                    (fl= (fllog 1.0) 0.0))
+              (list "flexp"
+                    (fl= (flexp 0.0) 1.0))
+              (list "flsqrt"
+                    (fl= (flsqrt 9.0) 3.0))
+              ;; (list "flmin" ; TODO
+              ;;       (fl= (flmin 3.0 1.0 2.0) 1.0))
+              ;; (list "flmax" ; TODO
+              ;;       (fl= (flmax 3.0 1.0 2.0) 3.0))
+              (list "flexpt"
+                    (fl= (flexpt 2.0 3.0) 8.0))
+             ))
+       
+       (list "4.3.4 Fixnums"
+             (list
+              (list "fixnum?"
+                    (and (equal? (fixnum? 1) #t)
+                         (equal? (fixnum? 1.0) #f)))
+              (list "fxzero?"
+                    (and (equal? (fxzero? 0) #t)
+                         (equal? (fxzero? 1) #f)))
+              (list "fx+"
+                    (equal? (fx+ 1 2 3) 6))
+              (list "fx-"
+                    (equal? (fx- 5 1 1) 3))
+              (list "fx*"
+                    (equal? (fx* 2 3 4) 24))
+              #;(list "fx="
+                    (and (equal? (fx= 1 1 1) #t)
+                         (equal? (fx= 1 2) #f)))
+              ;; (list "fx>"
+              ;;       (and (equal? (fx> 3 2 1) #t)
+              ;;            (equal? (fx> 2 2) #f)))
+              ;; (list "fx<"
+              ;;       (and (equal? (fx< 1 2 3) #t)
+              ;;            (equal? (fx< 2 2) #f)))
+              ;; (list "fx<="
+              ;;       (and (equal? (fx<= 1 1 2) #t)
+              ;;            (equal? (fx<= 2 1) #f)))
+              ;; (list "fx>="
+              ;;       (and (equal? (fx>= 2 2 1) #t)
+              ;;            (equal? (fx>= 1 2) #f)))
+              
+              (list "fxquotient"
+                    (equal? (fxquotient 13 4) 3))
+              (list "unsafe-fxquotient"
+                    (equal? (unsafe-fxquotient 13 4) 3))
+              (list "fxremainder"
+                    (equal? (fxremainder 13 4) 1))
+              (list "fxmodulo"
+                    (equal? (fxmodulo 13 4) 1))
+              (list "fxabs"
+                    (equal? (fxabs -5) 5))
+              (list "fxand"
+                    (equal? (fxand 12 10) 8))
+              (list "fxior"
+                    (equal? (fxior 12 5) 13))
+              (list "fxxor"
+                    (equal? (fxxor 12 5) 9))
+              (list "fxnot"
+                    (equal? (fxnot 0) -1))
+              (list "fxlshift"
+                    (equal? (fxlshift 1 2) 4))
+              (list "fxrshift"
+                    (and (equal? (fxrshift 4 1) 2)
+                         (equal? (fxrshift -4 1) -2)))
+              (list "fxpopcount"
+                    (equal? (fxpopcount 7) 3))
+              (list "fxpopcount32"
+                    (equal? (fxpopcount32 7) 3))
+              (list "fxpopcount16"
+                    (equal? (fxpopcount16 7) 3))
+              (list "fx+/wraparound"
+                    (equal? (fx+/wraparound 1 2) 3))
+              ;; (list "fx-/wraparound"
+              ;;       (equal? (fx-/wraparound 5 3) 2))
+              ;; (list "fx*/wraparound"
+              ;;       (equal? (fx*/wraparound 2 3) 6))
+              (list "fxlshift/wraparound"
+                    (equal? (fxlshift/wraparound 1 2) 4))
+              (list "fxrshift/logical"
+                    (and (equal? (fxrshift/logical 4 1) 2)
+                         (equal? (fxrshift/logical -1 1) 536870911)))
+
+              ;; (list "fxmin"
+              ;;       (equal? (fxmin 3 1 2) 1))
+              ;; (list "fxmax"
+              ;;       (equal? (fxmax 3 1 2) 3))
+
+              ;; (list "fx->fl"
+              ;;       (equal? (fx->fl 3) 3.0))
+              ;; (list "fl->fx"
+              ;;       (equal? (fl->fx 3.0) 3))
+              )))
 
  (list "4.4 Strings"
        (list
