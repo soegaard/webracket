@@ -3060,6 +3060,9 @@
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
 
+         [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
+
+         
          [(char=? char<? char<=? char>? char>=?
                   char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
           ; variadic, at least one argument

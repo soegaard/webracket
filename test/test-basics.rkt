@@ -738,34 +738,33 @@
                 (hash-set! h 'a 1)
                 (and (equal? (hash-ref h 'a) 1)
                      (equal? (hash-ref h 'b 2) 2)
-                     (equal? (hash-ref h 'b (lambda () 3)) 3)
-                     (equal? (with-handlers ([exn:fail? (λ (_) 'no)])
-                               (hash-ref h 'c))
-                              'no))))
+                     (equal? (hash-ref h 'b (lambda () 3)) 3))))
 
-        ;; (list "hash-remove!"
-        ;;       (let ([h (make-hasheq)])
-        ;;         (hash-set! h 'a 1)
-        ;;         (hash-remove! h 'a)
-        ;;         (equal? (hash-has-key? h 'a) #f)))
+        (list "hash-remove!"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-remove! h 'a)
+                (equal? (hash-has-key? h 'a) #f)))
 
-        ;; (list "hash-clear!"
-        ;;       (let ([h (make-hasheq)])
-        ;;         (hash-set! h 'a 1)
-        ;;         (hash-set! h 'b 2)
-        ;;         (hash-clear! h)
-        ;;         (and (equal? (hash-has-key? h 'a) #f)
-        ;;              (equal? (hash-has-key? h 'b) #f))))
+        (list "hash-clear!"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-set! h 'b 2)
+                (hash-clear! h)
+                (and (equal? (hash-has-key? h 'a) #f)
+                     (equal? (hash-has-key? h 'b) #f))))
 
-        ;; (list "hash-has-key?"
-        ;;       (let ([h (make-hasheq)])
-        ;;         (hash-set! h 'a 1)
-        ;;         (and (equal? (hash-has-key? h 'a) #t)
-        ;;              (equal? (hash-has-key? h 'b) #f))))
+        (list "hash-has-key?"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (and (equal? (hash-has-key? h 'a) #t)
+                     (equal? (hash-has-key? h 'b) #f))))
 
-        ;; (list "eq-hash-code"
-        ;;       (let ([l (list 1 2 3)])
-        ;;         (eq? (eq-hash-code l) (eq-hash-code l))))
+        (list "eq-hash-code"
+              (and (let ([xs (list 1 2 3)]
+                         [ys (list 1 2 4)])                         
+                     (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
+                          (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
         )))
 
