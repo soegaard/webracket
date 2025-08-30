@@ -12510,8 +12510,10 @@
               (result (ref eq))
               (global.get $true))  ; todo: simple implementation for now.
 
-        (func $raise-unbound-variable-reference (type $Prim0)
+        (func $raise-unbound-variable-reference (type $Prim1)
+              (param $name (ref eq))
               (result (ref eq))
+              (drop (call $js-log (local.get $name)))
               (unreachable))
          
          ;; 14.2 Evaluation and compilation

@@ -89,7 +89,8 @@
 ; [ ] Input / output port going to the host.
 
 ; [x] case-lambda
-; [ ] Calling conventions for primitives?
+; [/] Calling conventions for primitives?
+;       - optional and variadic primitives are now possible
 
 ; [x] procedure?, procedure-rename, procedure-arity, etc.
 ; [x] call-with-values
@@ -1339,6 +1340,8 @@
                                                         (displayln (list 'WARNING "unbound?" x))
                                                         (values `(app ,#'here
                                                                       ,(variable #'raise-unbound-variable-reference)
+                                                                      ,`(quote ,(variable-id x)
+                                                                               ,(datum (variable-id x) s))
                                                                       ; Note: `datum` has been eliminated at this point,
                                                                       ;       so a different approach is needed
                                                                       ; ,`(quote ,#'here  ,(datum #'unbound (variable-id x)))
