@@ -3508,14 +3508,43 @@
                (struct.new $Flonum
                            (i32.const 0)                             ;; hash = 0
                            (f64.convert_i32_s (i32.shr_u (local.get $v/i32) (i32.const 1)))))
+        (func $raise-fl->fx (param $x (ref eq)) (unreachable))
 
+        (func $fl->fx (type $Prim1)
+              (param $v (ref eq))
+              (result   (ref eq)) ; a fixnum
 
-         
-         #;(func $fl+
-               (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               ;; Type checks
-               (if (i32.eqz (ref.test (ref $Flonum) (local.get $x)))
-                   (then (call $raise-argument-error:flonum-expected (local.get $x))))
+              (local $v/fl  (ref $Flonum))
+              (local $x/f64 f64)
+              (local $t/f64 f64)
+              (local $i32   i32)
+
+              ;; Check that v is a flonum
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $v)))
+                  (then (call $raise-check-flonum (local.get $v))
+                        (unreachable)))
+              (local.set $v/fl  (ref.cast (ref $Flonum) (local.get $v)))
+              (local.set $x/f64 (struct.get $Flonum $v (local.get $v/fl)))
+              ;; Truncate toward zero
+              (local.set $t/f64 (f64.trunc (local.get $x/f64)))
+              ;; NaN?
+              (if (f64.ne (local.get $t/f64) (local.get $t/f64))
+                  (then (call $raise-fl->fx (local.get $v))
+                        (unreachable)))
+              ;; Check fixnum range
+              (if (i32.or (f64.gt (local.get $t/f64) (f64.const 536870911.0))
+                          (f64.lt (local.get $t/f64) (f64.const -536870912.0)))
+                  (then (call $raise-fl->fx (local.get $v))
+                        (unreachable)))
+              ;; Convert to i32 and box
+              (local.set $i32 (i32.trunc_f64_s (local.get $t/f64)))
+              (ref.i31 (i32.shl (local.get $i32) (i32.const 1))))
+
+        #;(func $fl+
+              (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+              ;; Type checks
+              (if (i32.eqz (ref.test (ref $Flonum) (local.get $x)))
+                  (then (call $raise-argument-error:flonum-expected (local.get $x))))
                (if (i32.eqz (ref.test (ref $Flonum) (local.get $y)))
                    (then (call $raise-argument-error:flonum-expected (local.get $y))))
                ;; Compute and box result
