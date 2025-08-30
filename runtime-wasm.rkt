@@ -2964,7 +2964,7 @@
                                                 (local.get $x) (local.get $y)))
                                     (else (if (result (ref eq)) (call $fl?/i32 (local.get $y))
                                               (then (call ,$fl+
-                                                          (call $fx->fl (local.get $x)) (local.get $y)))
+                                                          (call $fx->fl/precise (local.get $x)) (local.get $y)))
                                               (else (call $raise-expected-number)
                                                     (unreachable))))))
                           (else (if (result (ref eq)) (call $fl?/i32 (local.get $x))
@@ -2973,7 +2973,7 @@
                                                           (local.get $x) (local.get $y)))
                                               (else (if (result (ref eq)) (call $fx?/i32 (local.get $y))
                                                         (then (call ,$fl+
-                                                                    (local.get $x) (call $fx->fl (local.get $y))))
+                                                                    (local.get $x) (call $fx->fl/precise (local.get $y))))
                                                         (else (call $raise-expected-number)
                                                               (unreachable))))))
                                     (else (call $raise-expected-number)
@@ -3007,13 +3007,13 @@
                           (if (result (ref $Flonum))
                               (ref.test (ref $Flonum) (local.get $x))
                               (then (ref.cast (ref $Flonum) (local.get $x)))
-                              (else (call $fx->fl (local.get $x)))))
+                              (else (call $fx->fl/precise (local.get $x)))))
                ;; --- Convert $y to flonum if needed ---
                (local.set $y/fl
                           (if (result (ref $Flonum))
                               (ref.test (ref $Flonum) (local.get $y))
                               (then (ref.cast (ref $Flonum) (local.get $y)))
-                              (else (call $fx->fl (local.get $y)))))
+                              (else (call $fx->fl/precise (local.get $y)))))
                ;; --- Divide using $fl/ ---
                (call $fl/ (local.get $x/fl) (local.get $y/fl)))
 
@@ -3064,10 +3064,10 @@
                       ;; --- Mixed case: promote to flonum as needed ---
                       (if (local.get $x/is-fl)
                           (then (local.set $x-fl (ref.cast (ref $Flonum) (local.get $x))))
-                          (else (local.set $x-fl (call $fx->fl (local.get $x)))))
+                          (else (local.set $x-fl (call $fx->fl/precise (local.get $x)))))
                       (if (local.get $y/is-fl)
                           (then (local.set $y-fl (ref.cast (ref $Flonum) (local.get $y))))
-                          (else (local.set $y-fl (call $fx->fl (local.get $y)))))
+                          (else (local.set $y-fl (call $fx->fl/precise (local.get $y)))))
 
                       (call ,flcmp
                             (ref.as_non_null (local.get $x-fl))
@@ -3476,7 +3476,25 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $fx->fl (param $v (ref eq)) (result (ref $Flonum))
+         (func $fx->fl/precise (param $v (ref eq)) (result (ref $Flonum))
+               (local $v/i32 i32)
+               ;; Check that v is a fixnum (ref i31) and has low bit 0
+               (if (i32.eqz (ref.test (ref i31) (local.get $v)))
+                   (then (call $raise-check-fixnum (local.get $v))
+                         (unreachable)))
+               (local.set $v/i32 (i31.get_u (ref.cast (ref i31) (local.get $v))))
+               (if (i32.and (local.get $v/i32) (i32.const 1))
+                   (then (call $raise-check-fixnum (local.get $v))
+                         (unreachable)))
+               ;; Convert fixnum to flonum
+               (struct.new $Flonum
+                           (i32.const 0)                             ;; hash = 0
+                           (f64.convert_i32_s (i32.shr_u (local.get $v/i32) (i32.const 1)))))
+
+         (func $fx->fl (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))  ; a $Flonum
+
                (local $v/i32 i32)
                ;; Check that v is a fixnum (ref i31) and has low bit 0
                (if (i32.eqz (ref.test (ref i31) (local.get $v)))

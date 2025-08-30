@@ -172,12 +172,10 @@
                          (equal? (number? #f)  #f)
                          (equal? (procedure-arity number?) 1)))
               (list "number->string"
-                    (and (equal? (number->string 42) "42")
+                    (and (equal? (number->string 42)    "42")
                          (equal? (number->string 16 16) "10")
-                         (equal? (number->string 1.25) "1.25")
-                         (equal? (number->string 1.0) "1.0")))))
-
-              (list
+                         (equal? (number->string 1.25)  "1.25")
+                         (equal? (number->string 1.0)   "1.0")))))
 
        
        (list "4.3.3 Flonums"
@@ -331,8 +329,8 @@
               (list "fx-/wraparound"
                     (and (equal? (fx-/wraparound 10 3) 7)
                          (equal? (fx-/wraparound 3) -3)))
-              ;; (list "fx*/wraparound"
-              ;;       (equal? (fx*/wraparound 2 3) 6))
+              (list "fx*/wraparound"
+                    (equal? (fx*/wraparound 2 3) 6))
               (list "fxlshift/wraparound"
                     (equal? (fxlshift/wraparound 1 2) 4))
               (list "fxrshift/logical"
@@ -344,12 +342,11 @@
               ;; (list "fxmax"
               ;;       (equal? (fxmax 3 1 2) 3))
 
-              ;; (list "fx->fl"
-              ;;       (equal? (fx->fl 3) 3.0))
+              (list "fx->fl"
+                    (equal? (fx->fl 3) 3.0))
               ;; (list "fl->fx"
               ;;       (equal? (fl->fx 3.0) 3))
               )))
-        )
 
  (list "4.4 Strings"
        (list

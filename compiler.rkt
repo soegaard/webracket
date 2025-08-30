@@ -479,7 +479,8 @@
   fxrshift/logical
   most-positive-fixnum most-negative-fixnum
 
-  ; fx->fl fl->fx
+  fx->fl
+  ; fl->fx
   ; fixnum-for-every-system?
 
   flonum?
