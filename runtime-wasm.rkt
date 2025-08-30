@@ -3333,10 +3333,34 @@
                (ref.i31 (i32.add (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
 
-         (func $fx-/wraparound (type $Prim2)
-               (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
-                                 (i31.get_s (ref.cast i31ref (local.get $y))))))
+        (func $fx-/wraparound (type $Prim>=1)
+               (param $a1   (ref eq))  ;; either `a` or `b`
+               (param $rest (ref eq))  ;; remaining args
+               (result      (ref eq))
+
+               (local $a    (ref eq))
+               (local $b    (ref eq))
+               (local $node (ref $Pair))
+
+               ;; Determine arguments based on rest list
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   ;; Only one argument provided: treat as (0 - a1)
+                   (then (local.set $a ,(Imm 0))
+                         (local.set $b (local.get $a1)))
+                   ;; Otherwise expect exactly one more argument
+                   (else (if (ref.test (ref $Pair) (local.get $rest))
+                              (then (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                                    (local.set $a    (local.get $a1))
+                                    (local.set $b    (struct.get $Pair $a (local.get $node)))
+                                    ;; Ensure no extra arguments
+                                    (if (ref.eq (struct.get $Pair $d (local.get $node))
+                                                (global.get $null))
+                                        (nop)
+                                        (call $raise-arity-error:exactly)))
+                              (call $raise-arity-error:exactly))))
+
+               (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $a)))
+                                 (i31.get_s (ref.cast i31ref (local.get $b))))))
 
          (func $fx*/wraparound (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))

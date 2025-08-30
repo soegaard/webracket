@@ -174,7 +174,10 @@
               (and (equal? (number->string 42) "42")
                    (equal? (number->string 16 16) "10")
                    (equal? (number->string 1.25) "1.25")
-                   (equal? (number->string 1.0) "1.0")))))
+                   (equal? (number->string 1.0) "1.0")))
+        (list "fx-/wraparound"
+              (and (equal? (fx-/wraparound 10 3) 7)
+                   (equal? (fx-/wraparound 3) -3)))))
 
  (list "4.4 Strings"
        (list
