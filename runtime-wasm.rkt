@@ -654,9 +654,24 @@
          (func $js-math-tan
                (import "math" "tan")
                (param f64) (result f64))
-         (func $js-math-sqrt
-               (import "math" "sqrt")
-               (param f64) (result f64))
+        (func $js-math-sqrt
+              (import "math" "sqrt")
+              (param f64) (result f64))
+        (func $js-math-asin
+              (import "math" "asin")
+              (param f64) (result f64))
+        (func $js-math-acos
+              (import "math" "acos")
+              (param f64) (result f64))
+        (func $js-math-atan
+              (import "math" "atan")
+              (param f64) (result f64))
+        (func $js-math-log
+              (import "math" "log")
+              (param f64) (result f64))
+        (func $js-math-exp
+              (import "math" "exp")
+              (param f64) (result f64))
 
          (func $js-make-callback
                (import "primitives" "make_callback")
@@ -3341,82 +3356,53 @@
                            (f64.div (local.get $x/f64) (local.get $y/f64))))
 
 
-        (func $flround (type $Prim1)
-              (param $a (ref eq))
-              (result (ref eq))
-
-              ;; Type check
-              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
-                  (then (call $raise-argument-error:flonum-expected (local.get $a))
-                        (unreachable)))
-
-              ;; Compute and box result
-         (struct.new $Flonum
-                         (i32.const 0)
-                          (f64.nearest
-                           (struct.get $Flonum $v
-                                       (ref.cast (ref $Flonum) (local.get $a))))) )
-
-        (func $flsin (type $Prim1)
-              (param $a (ref eq))
-              (result (ref eq))
-
-              (local $a/fl (ref $Flonum))
-              (local $a/f64 f64)
-              ;; Type check
-              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
-                  (then (call $raise-argument-error:flonum-expected (local.get $a))
-                        (unreachable)))
-              ;; Extract and compute
-              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
-              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
-              (struct.new $Flonum
-                          (i32.const 0)
-                          (call $js-math-sin (local.get $a/f64))))
-
-        (func $flcos (type $Prim1)
-              (param $a (ref eq))
-              (result (ref eq))
-
-              (local $a/fl (ref $Flonum))
-              (local $a/f64 f64)
-              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
-                  (then (call $raise-argument-error:flonum-expected (local.get $a))
-                        (unreachable)))
-              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
-              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
-              (struct.new $Flonum
-                          (i32.const 0)
-                          (call $js-math-cos (local.get $a/f64))))
-
-        (func $fltan (type $Prim1)
-              (param $a (ref eq))
-              (result (ref eq))
-
-              (local $a/fl (ref $Flonum))
-              (local $a/f64 f64)
-              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
-                  (then (call $raise-argument-error:flonum-expected (local.get $a))
-                        (unreachable)))
-              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
-              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
-              (struct.new $Flonum
-                          (i32.const 0)
-                          (call $js-math-tan (local.get $a/f64))))
-        (func $flsqrt (type $Prim1)
-              (param $a (ref eq))
-              (result (ref eq))
-
-              (local $a/fl (ref $Flonum))
-              (local $a/f64 f64)
-              (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
-                  (then (call $raise-argument-error:flonum-expected (local.get $a))
-                        (unreachable)))
-              (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
-              (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
-              (struct.new $Flonum
-                          (i32.const 0)
-                          (call $js-math-sqrt (local.get $a/f64))))
+        ,@(let ([ops '((flabs      (f64.abs (local.get $a/f64)))
+                       (flround    (f64.nearest (local.get $a/f64)))
+                       (flfloor    (f64.floor (local.get $a/f64)))
+                       (flceiling  (f64.ceil (local.get $a/f64)))
+                       (fltruncate (f64.trunc (local.get $a/f64)))
+                       (flsingle   (f64.promote_f32 (f32.demote_f64 (local.get $a/f64))))
+                       (flsin      (call $js-math-sin  (local.get $a/f64)))
+                       (flcos      (call $js-math-cos  (local.get $a/f64)))
+                       (fltan      (call $js-math-tan  (local.get $a/f64)))
+                       (flasin     (call $js-math-asin (local.get $a/f64)))
+                       (flacos     (call $js-math-acos (local.get $a/f64)))
+                       (flatan     (call $js-math-atan (local.get $a/f64)))
+                       (fllog      (call $js-math-log  (local.get $a/f64)))
+                       (flexp      (call $js-math-exp  (local.get $a/f64)))
+                       (flsqrt     (call $js-math-sqrt (local.get $a/f64))))])
+             (append
+              (for/list ([p ops])
+                (define name (car p))
+                (define expr (cadr p))
+                `(func ,(string->symbol (format "$~a" name))
+                       (type $Prim1)
+                       (param $a (ref eq))
+                       (result (ref eq))
+                       (local $a/fl (ref $Flonum))
+                       (local $a/f64 f64)
+                       (if (i32.eqz (ref.test (ref $Flonum) (local.get $a)))
+                           (then (call $raise-argument-error:flonum-expected (local.get $a))
+                                 (unreachable)))
+                       (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+                       (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+                       (struct.new $Flonum
+                                   (i32.const 0)
+                                   ,expr)))
+              (for/list ([p ops])
+                (define name (car p))
+                (define expr (cadr p))
+                `(func ,(string->symbol (format "$unsafe-~a" name))
+                       (type $Prim1)
+                       (param $a (ref eq))
+                       (result (ref eq))
+                       (local $a/fl (ref $Flonum))
+                       (local $a/f64 f64)
+                       (local.set $a/fl (ref.cast (ref $Flonum) (local.get $a)))
+                       (local.set $a/f64 (struct.get $Flonum $v (local.get $a/fl)))
+                       (struct.new $Flonum
+                                   (i32.const 0)
+                                   ,expr)))))
 
         ,@(let ()
              (define (fl-cmp flname flcmp)

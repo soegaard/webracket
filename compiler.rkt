@@ -483,7 +483,9 @@
 
   flonum?
   fl+ fl- fl* fl/
-  fl= fl< fl> fl<= fl>= flround flsin flcos fltan flsqrt
+  fl= fl< fl> fl<= fl>=
+  flabs flround flfloor flceiling fltruncate flsingle
+  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt
 
   byte?
 
@@ -574,6 +576,9 @@
   ;; 17. Unsafe Operations
   unsafe-fx+
   unsafe-fl/
+  unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
+  unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
+  unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
 
   unsafe-fx=
   unsafe-fx<
