@@ -8535,7 +8535,11 @@
                            (i32.const 0)
                            (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
 
-         (func $vector-split-at (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
+         (func $vector-split-at (type $Prim2)
+               (param $v (ref eq))
+               (param $i (ref eq))
+               (result   (ref eq))  ; returns two values
+               
                (local $vec (ref $Vector))
                (local $ix  i32)
                (local $len i32)
