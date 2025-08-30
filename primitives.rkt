@@ -1,23 +1,18 @@
 #lang racket/base
  (require racket/bool
-         racket/fasl
-         (rename-in racket/fixnum
-                    [fx=  racket:fx=]
-                    [fx>  racket:fx>]
-                    [fx<  racket:fx<]
-                    [fx<= racket:fx<=]
-                    [fx>= racket:fx>=])
-         racket/flonum
-         racket/hash
-         racket/keyword
-         racket/list
-         ; racket/namespace
-         racket/port
-         racket/string
-         racket/symbol
-         racket/vector
-         racket/unsafe/ops
-         (prefix-in imm: "immediates.rkt"))
+          racket/fasl
+          racket/fixnum
+          racket/flonum
+          racket/hash
+          racket/keyword
+          racket/list
+          ; racket/namespace
+          racket/port
+          racket/string
+          racket/symbol
+          racket/vector
+          racket/unsafe/ops
+          (prefix-in imm: "immediates.rkt"))
 
 ;; The primitives are 
 
@@ -331,80 +326,6 @@
 (define (most-negative-fixnum)
   imm:most-negative-fixnum)
 
-(define (fx=/2 a b)
-  (racket:fx= a b))
-
-(define (fx>/2 a b)
-  (racket:fx> a b))
-
-(define (fx</2 a b)
-  (racket:fx< a b))
-
-(define (fx<=/2 a b)
-  (racket:fx<= a b))
-
-(define (fx>=/2 a b)
-  (racket:fx>= a b))
-
-(define (fx= x . xs)
-  (unless (fixnum? x)
-    (raise-argument-error 'fx= "fixnum?" x))
-  (let loop ([prev x] [rest xs])
-    (cond
-      [(null? rest) #t]
-      [else (define y (car rest))
-            (unless (fixnum? y)
-              (raise-argument-error 'fx= "fixnum?" y))
-            (and (fx=/2 prev y)
-                 (loop y (cdr rest)))])))
-
-(define (fx> x . xs)
-  (unless (fixnum? x)
-    (raise-argument-error 'fx> "fixnum?" x))
-  (let loop ([prev x] [rest xs])
-    (cond
-      [(null? rest) #t]
-      [else (define y (car rest))
-            (unless (fixnum? y)
-              (raise-argument-error 'fx> "fixnum?" y))
-            (and (fx>/2 prev y)
-                 (loop y (cdr rest)))])))
-
-(define (fx< x . xs)
-  (unless (fixnum? x)
-    (raise-argument-error 'fx< "fixnum?" x))
-  (let loop ([prev x] [rest xs])
-    (cond
-      [(null? rest) #t]
-      [else (define y (car rest))
-            (unless (fixnum? y)
-              (raise-argument-error 'fx< "fixnum?" y))
-            (and (fx</2 prev y)
-                 (loop y (cdr rest)))])))
-
-(define (fx<= x . xs)
-  (unless (fixnum? x)
-    (raise-argument-error 'fx<= "fixnum?" x))
-  (let loop ([prev x] [rest xs])
-    (cond
-      [(null? rest) #t]
-      [else (define y (car rest))
-            (unless (fixnum? y)
-              (raise-argument-error 'fx<= "fixnum?" y))
-            (and (fx<=/2 prev y)
-                 (loop y (cdr rest)))])))
-
-(define (fx>= x . xs)
-  (unless (fixnum? x)
-    (raise-argument-error 'fx>= "fixnum?" x))
-  (let loop ([prev x] [rest xs])
-    (cond
-      [(null? rest) #t]
-      [else (define y (car rest))
-            (unless (fixnum? y)
-              (raise-argument-error 'fx>= "fixnum?" y))
-            (and (fx>=/2 prev y)
-                 (loop y (cdr rest)))])))
 
 (define (string-take s n)
   (define l (string-length s))

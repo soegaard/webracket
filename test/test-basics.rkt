@@ -267,32 +267,34 @@
               (list "fxzero?"
                     (and (equal? (fxzero? 0) #t)
                          (equal? (fxzero? 1) #f)))
+
               (list "fx+"
                     (equal? (fx+ 1 2 3) 6))
               (list "fx-"
                     (equal? (fx- 5 1 1) 3))
               (list "fx*"
                     (equal? (fx* 2 3 4) 24))
+
               (list "fx="
-                    (and (equal? (fx= 1) #t)
+                    (and (equal? (fx= 1)     #t)
                          (equal? (fx= 1 1 1) #t)
-                         (equal? (fx= 1 2) #f)))
+                         (equal? (fx= 1 2)   #f)))
               (list "fx>"
-                    (and (equal? (fx> 3) #t)
+                    (and (equal? (fx> 3)     #t)
                          (equal? (fx> 3 2 1) #t)
-                         (equal? (fx> 2 2) #f)))
+                         (equal? (fx> 2 2)   #f)))
               (list "fx<"
-                    (and (equal? (fx< 1) #t)
+                    (and (equal? (fx< 1)     #t)
                          (equal? (fx< 1 2 3) #t)
-                         (equal? (fx< 2 2) #f)))
+                         (equal? (fx< 2 2)   #f)))
               (list "fx<="
-                    (and (equal? (fx<= 1) #t)
+                    (and (equal? (fx<= 1)     #t)
                          (equal? (fx<= 1 1 2) #t)
-                         (equal? (fx<= 2 1) #f)))
+                         (equal? (fx<= 2 1)   #f)))
               (list "fx>="
-                    (and (equal? (fx>= 2) #t)
+                    (and (equal? (fx>= 2)     #t)
                          (equal? (fx>= 2 2 1) #t)
-                         (equal? (fx>= 1 2) #f)))
+                         (equal? (fx>= 1 2)   #f)))
               
               (list "fxquotient"
                     (equal? (fxquotient 13 4) 3))
@@ -302,6 +304,7 @@
                     (equal? (fxremainder 13 4) 1))
               (list "fxmodulo"
                     (equal? (fxmodulo 13 4) 1))
+              
               (list "fxabs"
                     (equal? (fxabs -5) 5))
               (list "fxand"
@@ -335,7 +338,6 @@
               (list "fxrshift/logical"
                     (and (equal? (fxrshift/logical 4 1) 2)
                          (equal? (fxrshift/logical -1 1) (most-positive-fixnum))))
-
 
               ;; (list "fxmin"
               ;;       (equal? (fxmin 3 1 2) 1))
