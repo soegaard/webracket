@@ -323,15 +323,15 @@
           ;; Raw primitive function types
           (type $Prim0    (func                                   (result (ref eq))))
           (type $Prim1    (func (param (ref eq))                  (result (ref eq))))
-         (type $Prim2    (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
-         (type $Prim3    (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+          (type $Prim2    (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
+          (type $Prim3    (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
-         (type $Prim4    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+          (type $Prim4    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
-         (type $Prim5    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+          (type $Prim5    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
 
-         (type $Prim>=0  (func (param (ref eq))      ;; list of args
+          (type $Prim>=0  (func (param (ref eq))      ;; list of args
                                 (result (ref eq))))
           (type $Prim>=1  (func (param (ref eq))      ;; first arg
                                 (param (ref eq))      ;; rest list
@@ -3333,10 +3333,42 @@
                (ref.i31 (i32.add (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
 
-         (func $fx-/wraparound (type $Prim2)
-               (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
-                                 (i31.get_s (ref.cast i31ref (local.get $y))))))
+         (func $fx-/wraparound (type $Prim>=1)
+               (param $a1   (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))
+
+               (local $a    (ref eq))
+               (local $b    (ref eq))
+               (local $node (ref $Pair))
+
+               ;; Eager init so locals are definitely assigned before any possible get.
+               (local.set $a (ref.i31 (i32.const 0)))
+               (local.set $b (local.get $a1))
+               ;; Determine arguments based on rest list
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then
+                    ;; (0 - a1)
+                    (local.set $a (ref.i31 (i32.const 0)))
+                    (local.set $b (local.get $a1)))
+                   (else
+                    (if (ref.test (ref $Pair) (local.get $rest))
+                        (then
+                         (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                         (local.set $a    (local.get $a1))
+                         (local.set $b    (struct.get $Pair $a (local.get $node)))
+                         ;; Ensure no extra arguments
+                         (if (ref.eq (struct.get $Pair $d (local.get $node))
+                                     (global.get $null))
+                             (then (nop))
+                             (else (call $raise-arity-error:exactly) (unreachable))))
+                        (else (call $raise-arity-error:exactly) (unreachable)))))
+               (ref.i31
+                (i32.sub
+                 (i31.get_s (ref.cast (ref i31) (local.get $a)))
+                 (i31.get_s (ref.cast (ref i31) (local.get $b))))))
+
+
 
          (func $fx*/wraparound (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))

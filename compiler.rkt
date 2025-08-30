@@ -3070,7 +3070,7 @@
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
-
+         [(fx-/wraparound)             (inline-prim/variadic sym ae1 1 1)] ; actual arity: 1,2
          
         [(char=? char<? char<=? char>? char>=?
                  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
