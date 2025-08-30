@@ -477,6 +477,7 @@
   fxpopcount fxpopcount16 fxpopcount32
   fx+/wraparound fx-/wraparound fx*/wraparound fxlshift/wraparound
   fxrshift/logical
+  most-positive-fixnum most-negative-fixnum
 
   ; fx->fl fl->fx
   ; fixnum-for-every-system?

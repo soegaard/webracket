@@ -11,7 +11,8 @@
          racket/string
          racket/symbol
          racket/vector
-         racket/unsafe/ops)
+         racket/unsafe/ops
+         (prefix-in imm: "immediates.rkt"))
 
 ;; The primitives are 
 
@@ -83,6 +84,8 @@
 
  fx->fl
  fl->fx
+ most-positive-fixnum
+ most-negative-fixnum
 
  inexact->exact round sqrt
  flabs flround flfloor flceiling fltruncate flsingle
@@ -316,6 +319,12 @@
 (define (fxzero? x)
   (and (fixnum? x)
        (zero? x)))
+
+(define (most-positive-fixnum)
+  imm:most-positive-fixnum)
+
+(define (most-negative-fixnum)
+  imm:most-negative-fixnum)
 
 (define (string-take s n)
   (define l (string-length s))
