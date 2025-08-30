@@ -3385,6 +3385,12 @@
                (ref.i31 (i32.shr_u (i31.get_u (ref.cast i31ref (local.get $x)))
                                    ,(Half `(i31.get_u (ref.cast i31ref (local.get $y)))))))
 
+         (func $most-positive-fixnum (type $Prim0) (result (ref eq))
+               ,(Imm most-positive-fixnum))
+
+         (func $most-negative-fixnum (type $Prim0) (result (ref eq))
+               ,(Imm most-negative-fixnum))
+
          (func $fx= (type $Prim2) (param $v1 (ref eq)) (param $v2 (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (call $fixnum? (local.get $v1))
