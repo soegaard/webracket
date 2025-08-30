@@ -226,7 +226,7 @@
  box unbox set-box!
 
  ;; 4.15 Hash Tables
- make-empty-hasheq make-hasheq hash-ref hash-set! hash-remove! hash-clear!
+ hash? make-empty-hasheq make-hasheq hash-ref hash-set! hash-remove! hash-clear!
  hash-has-key? eq-hash-code
  
  ;; 4.20 Procedures

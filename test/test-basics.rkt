@@ -645,6 +645,15 @@
               (and (equal? (make-vector 5) '#(0 0 0 0 0))
                    (equal? (make-vector 5 0) '#(0 0 0 0 0))))
 
+        (list "vector"
+              (and (equal? (vector 1 2 3) '#(1 2 3))
+                   (equal? (vector) '#())))
+
+        (list "vector-ref"
+              (let ([v (vector 'a 'b 'c)])
+                (and (equal? (vector-ref v 0) 'a)
+                     (equal? (vector-ref v 2) 'c))))
+        
         (list "vector-copy!"
               (and (let ([b (vector 1 2 3)])
                      (vector-copy! b 0 b 1)
@@ -671,10 +680,89 @@
         (list "vector-immutable"
               (let ([v (vector-immutable 5 'a)])
                 (and (equal? v '#(5 a))
-                     (equal? (immutable? v) #t)))))
+                     (equal? (immutable? v) #t))))
 
        (list "vector-copy"
               (and (equal? (vector-copy '#(1 2 3 4))     '#(1 2 3 4))
                    (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
-                   (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))))
+                   (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))
+
+
+        (list "vector-length"
+              (and (equal? (vector-length '#(1 2 3)) 3)
+                   (equal? (vector-length '#()) 0)))
+
+        (list "vector-fill!"
+              (let ([v (vector 1 2 3)])
+                (vector-fill! v 9)
+                (equal? v '#(9 9 9))))
+
+        (list "vector-empty?"
+              (and (equal? (vector-empty? '#()) #t)
+                   (equal? (vector-empty? '#(1)) #f)))
+
+        (list "vector-take"
+              (equal? (vector-take '#(a b c d) 2) '#(a b)))
+
+        (list "vector-drop"
+              (equal? (vector-drop '#(a b c d) 2) '#(c d)))
+
+        (list "vector-drop-right"
+              (and (equal? (vector-drop-right '#(1 2 3 4) 1) '#(1 2 3))
+                   (equal? (vector-drop-right '#(1 2 3 4) 3) '#(1))))
+
+
+        (list "vector-split-at"
+              (and (let-values ([(v1 v2) (vector-split-at '#(a b c d) 2)])
+                     (and (equal? v1 '#(a b))
+                          (equal? v2 '#(c d))))
+                   (let-values ([(a b) (vector-split-at '#(1 2 3 4 5) 2)])
+                     (and (equal? a '#(1 2))
+                          (equal? b '#(3 4 5))))))
+        ))
+
+ (list "4.15 Hash Tables"
+       (list
+        (list "make-empty-hasheq"
+              (let ([h (make-empty-hasheq)])
+                (and (hash? h)
+                     (equal? (hash-has-key? h 'a) #f))))
+
+        (list "hash-set!"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (equal? (hash-ref h 'a) 1)))
+
+        ;; (list "hash-ref"
+        ;;       (let ([h (make-hasheq)])
+        ;;         (hash-set! h 'a 1)
+        ;;         (and (equal? (hash-ref h 'a) 1)
+        ;;              (equal? (hash-ref h 'b 2) 2)
+        ;;              (equal? (hash-ref h 'b (lambda () 3)) 3))))
+
+        ;; (list "hash-remove!"
+        ;;       (let ([h (make-hasheq)])
+        ;;         (hash-set! h 'a 1)
+        ;;         (hash-remove! h 'a)
+        ;;         (equal? (hash-has-key? h 'a) #f)))
+
+        ;; (list "hash-clear!"
+        ;;       (let ([h (make-hasheq)])
+        ;;         (hash-set! h 'a 1)
+        ;;         (hash-set! h 'b 2)
+        ;;         (hash-clear! h)
+        ;;         (and (equal? (hash-has-key? h 'a) #f)
+        ;;              (equal? (hash-has-key? h 'b) #f))))
+
+        ;; (list "hash-has-key?"
+        ;;       (let ([h (make-hasheq)])
+        ;;         (hash-set! h 'a 1)
+        ;;         (and (equal? (hash-has-key? h 'a) #t)
+        ;;              (equal? (hash-has-key? h 'b) #f))))
+
+        ;; (list "eq-hash-code"
+        ;;       (let ([l (list 1 2 3)])
+        ;;         (eq? (eq-hash-code l) (eq-hash-code l))))
+
+        )))
 

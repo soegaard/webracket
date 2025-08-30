@@ -535,7 +535,8 @@
   fasl->s-exp
 
   make-empty-hasheq ; not in Racket
-  make-hasheq 
+  make-hasheq
+  hash?
   hash-ref
   hash-set!
   hash-remove!

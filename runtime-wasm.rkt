@@ -8801,6 +8801,19 @@
 
 
          ;;;
+         ;;; HASH TABLES
+         ;;;
+
+         (func $hash? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+               
+               (if (result (ref eq))
+                   (ref.test (ref $Hash) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+         
+         ;;;
          ;;; MUTABLE HASHEQ
          ;;;
 
