@@ -1360,73 +1360,61 @@
 
          ;;  array-copy! : $Array i32        $Array i32       i32      -> 
          ;; (array-copy!   dest   dest-start src    src-start src-end) -> 
-         ;;   Traps on error
-         (func $array-copy! (export "array-copy!")
-               (param $dest (ref $Array))
-               (param $dest-start i32)
-               (param $src (ref $Array))
-               (param $src-start i32)
-               (param $src-end i32)
-               (local $i i32)
-               (local $src-len i32)
-               (local $dest-len i32)
-               ;; Bounds checks
-               (local.set $src-len (array.len (local.get $src)))
-               (local.set $dest-len (array.len (local.get $dest)))
-               (if (i32.or
-                    (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
-                            (i32.gt_u (local.get $src-end) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $dest-start)
-                                       (i32.sub (local.get $src-end) (local.get $src-start)))
-                              (local.get $dest-len)))
-                   (then (unreachable)))
-               ;; Copy loop
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get $Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy))))
+        ;;   Traps on error
+        (func $array-copy! (export "array-copy!")
+              (param $dest (ref $Array))
+              (param $dest-start i32)
+              (param $src (ref $Array))
+              (param $src-start i32)
+              (param $src-end i32)
+              (local $src-len i32)
+              (local $dest-len i32)
+              (local $len i32)
+              ;; Bounds checks
+              (local.set $src-len (array.len (local.get $src)))
+              (local.set $dest-len (array.len (local.get $dest)))
+              (if (i32.or
+                   (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
+                           (i32.gt_u (local.get $src-end) (local.get $src-len)))
+                   (i32.gt_u (i32.add (local.get $dest-start)
+                                      (i32.sub (local.get $src-end) (local.get $src-start)))
+                             (local.get $dest-len)))
+                  (then (unreachable)))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $Array $Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len)))
          
          ;;  array-copy!/error : $Array i32        $Array i32       i32      -> i32
          ;; (array-copy!/error   dest   dest-start src    src-start src-end) -> i32
          ;;   Returns 1 on success, 0 on error.
-         (func $array-copy!/error (export "array-copy!/error")
-               (param $dest (ref $Array))
-               (param $dest-start i32)
-               (param $src (ref $Array))
-               (param $src-start i32)
-               (param $src-end i32)
-               (result i32)
-               (local $i i32)
-               (local $src-len i32)
-               (local $dest-len i32)
-               ;; Bounds checks
-               (local.set $src-len (array.len (local.get $src)))
-               (local.set $dest-len (array.len (local.get $dest)))
-               (if (i32.or
-                    (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
-                            (i32.gt_u (local.get $src-end) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $dest-start)
-                                       (i32.sub (local.get $src-end) (local.get $src-start)))
-                              (local.get $dest-len)))
-                   (then (return (i32.const 0))))
-               ;; Copy loop
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get $Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy)))
-               (i32.const 1))
+        (func $array-copy!/error (export "array-copy!/error")
+              (param $dest (ref $Array))
+              (param $dest-start i32)
+              (param $src (ref $Array))
+              (param $src-start i32)
+              (param $src-end i32)
+              (result i32)
+              (local $src-len i32)
+              (local $dest-len i32)
+              (local $len i32)
+              ;; Bounds checks
+              (local.set $src-len (array.len (local.get $src)))
+              (local.set $dest-len (array.len (local.get $dest)))
+              (if (i32.or
+                   (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
+                           (i32.gt_u (local.get $src-end) (local.get $src-len)))
+                   (i32.gt_u (i32.add (local.get $dest-start)
+                                      (i32.sub (local.get $src-end) (local.get $src-start)))
+                             (local.get $dest-len)))
+                  (then (return (i32.const 0))))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $Array $Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len))
+              (i32.const 1))
 
          ; array-append : $Array $Array -> $Array
          ;  Append the arrays.
@@ -1861,50 +1849,40 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $fill))))
 
-         (func $i32array-copy!
-               (param $dest       (ref $I32Array))
-               (param $dest-start i32)
-               (param $src        (ref $I32Array))
-               (param $src-start  i32)
-               (param $src-end    i32)
-               (local $i          i32)
-               
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $I32Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get $I32Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy))))
+        (func $i32array-copy!
+              (param $dest       (ref $I32Array))
+              (param $dest-start i32)
+              (param $src        (ref $I32Array))
+              (param $src-start  i32)
+              (param $src-end    i32)
+              (local $len        i32)
 
-         (func $i32array-copy!/error (param $dest (ref $I32Array)) (param $dest-start i32)
-               (param $src (ref $I32Array)) (param $src-start i32) (param $src-end i32)
-               (result i32)
-               (local $i i32)
-               (local $src-len i32)
-               (local $dest-len i32)
-               (local.set $src-len (array.len (local.get $src)))
-               (local.set $dest-len (array.len (local.get $dest)))
-               (if (i32.or
-                    (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
-                            (i32.gt_u (local.get $src-end) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $dest-start) (i32.sub (local.get $src-end) (local.get $src-start)))
-                              (local.get $dest-len)))
-                   (then (return (i32.const 0))))
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $I32Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get $I32Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy)))
-               (i32.const 1))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $I32Array $I32Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len)))
+
+        (func $i32array-copy!/error (param $dest (ref $I32Array)) (param $dest-start i32)
+              (param $src (ref $I32Array)) (param $src-start i32) (param $src-end i32)
+              (result i32)
+              (local $src-len i32)
+              (local $dest-len i32)
+              (local $len i32)
+              (local.set $src-len (array.len (local.get $src)))
+              (local.set $dest-len (array.len (local.get $dest)))
+              (if (i32.or
+                   (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
+                           (i32.gt_u (local.get $src-end) (local.get $src-len)))
+                   (i32.gt_u (i32.add (local.get $dest-start) (i32.sub (local.get $src-end) (local.get $src-start)))
+                             (local.get $dest-len)))
+                  (then (return (i32.const 0))))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $I32Array $I32Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len))
+              (i32.const 1))
 
          (func $i32array-copy (param $arr (ref $I32Array)) (param $start i32) (param $end i32) (result (ref $I32Array))
                (local $res (ref $I32Array))
@@ -2044,65 +2022,55 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $fill))))
 
-         (func $i8array-copy! (export "i8array-copy!")
-               (param $dest (ref $I8Array))
-               (param $dest-start i32)
-               (param $src (ref $I8Array))
-               (param $src-start i32)
-               (param $src-end i32)
-               (local $i i32)
-               (local $src-len i32)
-               (local $dest-len i32)
-               (local.set $src-len (array.len (local.get $src)))
-               (local.set $dest-len (array.len (local.get $dest)))
-               (if (i32.or
-                    (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
-                            (i32.gt_u (local.get $src-end) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $dest-start)
-                                       (i32.sub (local.get $src-end) (local.get $src-start)))
-                              (local.get $dest-len)))
-                   (then (unreachable)))
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $I8Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get_u $I8Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy))))
+        (func $i8array-copy! (export "i8array-copy!")
+              (param $dest (ref $I8Array))
+              (param $dest-start i32)
+              (param $src (ref $I8Array))
+              (param $src-start i32)
+              (param $src-end i32)
+              (local $src-len i32)
+              (local $dest-len i32)
+              (local $len i32)
+              (local.set $src-len (array.len (local.get $src)))
+              (local.set $dest-len (array.len (local.get $dest)))
+              (if (i32.or
+                   (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
+                           (i32.gt_u (local.get $src-end) (local.get $src-len)))
+                   (i32.gt_u (i32.add (local.get $dest-start)
+                                      (i32.sub (local.get $src-end) (local.get $src-start)))
+                             (local.get $dest-len)))
+                  (then (unreachable)))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $I8Array $I8Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len)))
 
-         (func $i8array-copy!/error (export "i8array-copy!/error")
-               (param $dest (ref $I8Array))
-               (param $dest-start i32)
-               (param $src (ref $I8Array))
-               (param $src-start i32)
-               (param $src-end i32)
-               (result i32)
-               (local $i i32)
-               (local $src-len i32)
-               (local $dest-len i32)
-               (local.set $src-len (array.len (local.get $src)))
-               (local.set $dest-len (array.len (local.get $dest)))
-               (if (i32.or
-                    (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
-                            (i32.gt_u (local.get $src-end) (local.get $src-len)))
-                    (i32.gt_u (i32.add (local.get $dest-start)
-                                       (i32.sub (local.get $src-end) (local.get $src-start)))
-                              (local.get $dest-len)))
-                   (then (return (i32.const 0))))
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $copy
-                            (br_if $done (i32.ge_u (local.get $i) (i32.sub (local.get $src-end) (local.get $src-start))))
-                            (array.set $I8Array
-                                       (local.get $dest)
-                                       (i32.add (local.get $dest-start) (local.get $i))
-                                       (array.get_u $I8Array (local.get $src) (i32.add (local.get $src-start) (local.get $i))))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $copy)))
-               (i32.const 1))
+        (func $i8array-copy!/error (export "i8array-copy!/error")
+              (param $dest (ref $I8Array))
+              (param $dest-start i32)
+              (param $src (ref $I8Array))
+              (param $src-start i32)
+              (param $src-end i32)
+              (result i32)
+              (local $src-len i32)
+              (local $dest-len i32)
+              (local $len i32)
+              (local.set $src-len (array.len (local.get $src)))
+              (local.set $dest-len (array.len (local.get $dest)))
+              (if (i32.or
+                   (i32.or (i32.lt_u (local.get $src-start) (i32.const 0))
+                           (i32.gt_u (local.get $src-end) (local.get $src-len)))
+                   (i32.gt_u (i32.add (local.get $dest-start)
+                                      (i32.sub (local.get $src-end) (local.get $src-start)))
+                             (local.get $dest-len)))
+                  (then (return (i32.const 0))))
+              (local.set $len (i32.sub (local.get $src-end) (local.get $src-start)))
+              (array.copy $I8Array $I8Array
+                          (local.get $dest) (local.get $dest-start)
+                          (local.get $src)  (local.get $src-start)
+                          (local.get $len))
+              (i32.const 1))
 
          (func $i8array-copy (param $arr (ref $I8Array)) (param $start i32) (param $end i32) (result (ref $I8Array))
                (local $res (ref $I8Array))
