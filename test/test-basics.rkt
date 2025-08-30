@@ -345,7 +345,10 @@
               (list "fx->fl"
                     (equal? (fx->fl 3) 3.0))
               (list "fl->fx"
-                    (equal? (fl->fx 3.0) 3))
+                    (equal? (fl->fx 3.0) 3)
+                    (equal? (fl->fx 3.1) 3)
+                    (equal? (fl->fx 3.9) 3)
+                    (equal? (fl->fx -0.1) 0))
               )))
 
  (list "4.4 Strings"

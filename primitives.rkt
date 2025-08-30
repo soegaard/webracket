@@ -46,6 +46,7 @@
  inexact->exact round sqrt number->string
  + - * / = < > <= >= zero? positive? negative? add1 sub1
  fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
+ fx->fl fl->fx
  flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>=
  flabs flround flfloor flceiling fltruncate flsingle
  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
