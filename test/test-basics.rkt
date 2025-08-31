@@ -254,7 +254,16 @@
                          (equal? (acos 1.) 0.)))
               (list "atan"
                     (and (equal? (atan 0) 0)
-                         (equal? (atan 0.) 0.)))))
+                         (equal? (atan 0.) 0.)))
+              (list "sinh"
+                    (and (equal? (sinh 0) 0)
+                         (equal? (sinh 0.) 0.)))
+              (list "cosh"
+                    (and (equal? (cosh 0) 1)
+                         (equal? (cosh 0.) 1.)))
+              (list "tanh"
+                    (and (equal? (tanh 0) 0)
+                         (equal? (tanh 0.) 0.)))))
 
        
        (list "4.3.3 Flonums"
