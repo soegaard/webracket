@@ -3411,9 +3411,12 @@
                        (asin $js-math-asin 0      0)    ; asin(0) = 0
                        (acos $js-math-acos 2      0)    ; acos(1) = 0
                        (atan $js-math-atan 0      0)    ; atan(0) = 0
-                       (sinh $js-math-sinh 0      0)    ; sinh(0) = 0
-                       (cosh $js-math-cosh 0      2)    ; cosh(0) = 1
-                       (tanh $js-math-tanh 0      0))]) ; tanh(0) = 0
+                       (sinh  $js-math-sinh  0      0) ;  sinh(0) = 0
+                       (cosh  $js-math-cosh  0      2) ;  cosh(0) = 1
+                       (tanh  $js-math-tanh  0      0) ;  tanh(0) = 0
+                       (asinh $js-math-asinh 0      0) ; asinh(0) = 0
+                       (acosh $js-math-acosh 2      0) ; acosh(1) = 0
+                       (atanh $js-math-atanh 0      0))]) ; atanh(0) = 0
             ;; inbits and outbits are raw i31 fixnum encodings.
             ;; They mark trivial exact identities of trig functions
             ;; (e.g. sin 0 = 0, cos 0 = 1, acos 1 = 0).  

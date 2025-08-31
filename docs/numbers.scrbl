@@ -1365,6 +1365,18 @@ Returns the hyperbolic cosine of @racket[z].}
 
 Returns the hyperbolic tangent of @racket[z].}
 
+@defproc[(asinh [z number?]) number?]{
+
+Returns the inverse hyperbolic sine of @racket[z].}
+
+@defproc[(acosh [z number?]) number?]{
+
+Returns the inverse hyperbolic cosine of @racket[z].}
+
+@defproc[(atanh [z number?]) number?]{
+
+Returns the inverse hyperbolic tangent of @racket[z].}
+
 @defproc[(exact-round [x rational?]) exact-integer?]{
 
 Equivalent to @racket[(inexact->exact (round x))].

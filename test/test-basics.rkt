@@ -268,7 +268,16 @@
                          (equal? (cosh 0.) 1.)))
               (list "tanh"
                     (and (equal? (tanh 0) 0)
-                         (equal? (tanh 0.) 0.)))))
+                         (equal? (tanh 0.) 0.)))
+              (list "asinh"
+                    (and (equal? (asinh 0) 0)
+                         (equal? (asinh 0.) 0.)))
+              (list "acosh"
+                    (and (equal? (acosh 1) 0)
+                         (equal? (acosh 1.) 0.)))
+              (list "atanh"
+                    (and (equal? (atanh 0) 0)
+                         (equal? (atanh 0.) 0.)))))
 
        
        (list "4.3.3 Flonums"

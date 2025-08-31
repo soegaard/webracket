@@ -467,7 +467,7 @@
   inexact->exact
   exact->inexact
   round floor ceiling truncate
-  sin cos tan asin acos atan sinh cosh tanh
+  sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh
   abs sqrt integer-sqrt integer-sqrt/remainder expt exp log
   
   fixnum? fxzero?

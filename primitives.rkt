@@ -95,6 +95,9 @@
  sinh
  cosh
  tanh
+ asinh
+ acosh
+ atanh
 ;; 4.3.2.5 Complex Numbers
  ;; 4.3.2.6 Bitwise Operations
  ;; 4.3.2.7 Random Numbers
