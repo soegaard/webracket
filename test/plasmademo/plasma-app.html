@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+	<title>PlasmaJS</title>
+	<meta name="viewport" content="initial-scale=1">
+	<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+	<link rel="manifest" href="/img/site.webmanifest">
+
+<style type="text/css">
+	body {
+		background-color: #000;
+		color: #fff;
+		font-family: "Gill Sans", sans-serif;
+		font-weight: normal;
+	}
+	h1, h2, h3, h4 {
+		padding: 0;
+		margin: 0;
+		text-shadow: 3px 3px 3px black;
+		font-weight: 600;
+	}
+	a.link {
+		text-decoration: none;
+		border-bottom: 1px dotted;
+		color: #fff;
+	}
+	a.link:visited {
+		color: #ccc;
+	}
+	a.link:hover {
+		border-bottom: 1px solid;
+	}
+
+	canvas {
+		background-color: #000;
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: -1;
+		width: 100vw;
+		height: 100vh;
+	}
+	.top-left-frame {
+		position: fixed;
+		top: 1em;
+		left: 1em;
+	}
+	.top-right-frame {
+		position: fixed;
+		top: 1em;
+		right: 1em;
+	}
+	.bottom-left-frame {
+		position: fixed;
+		bottom: 1em;
+		left: 1em;
+	}
+	.bottom-right-frame {
+		position: fixed;
+		bottom: 1em;
+		right: 1em;
+	}
+</style>
+</head>
+<body>
+	<canvas id="plasma-canvas" width="600" height="600"></canvas>
+
+	<div class="top-left-frame">
+		<h2>PlasmaJS</h2>
+	</div>
+
+	<div class="top-right-frame">
+		<select id="pallete-combo" onchange="selectPalette()">
+			<option value="rainbow">Rainbow</option>
+			<option value="nebula">Nebula</option>
+			<option value="fire">Fire</option>
+			<option value="bluegreen" selected>BlueGreen</option>
+			<option value="rgb">RGB</option>
+		</select>
+	</div>
+
+	<div class="bottom-left-frame">
+		<a href="https://github.com/cgorringe/PlasmaJS" target="_blank"><img src="img/badge_github.png" alt="Source Code on Github"  style="height:40px"></a><br>
+		<a href="https://itunes.apple.com/app/id1449127483" target="_blank"><img src="img/badge_appstore.png" alt="Download on the App Store" style="height:40px"></a>
+	</div>
+
+	<div class="bottom-right-frame">
+		<h4>by <a href="https://carl.gorringe.org/apps/" target="_blank" class="link">Carl Gorringe</a></h4>
+	</div>
+
+	<script src="plasma.js"></script>
+	<script>
+		var plasma = new PlasmaJS({ canvasId: 'plasma-canvas' });
+		function selectPalette() {
+			let pal = document.getElementById('pallete-combo').value;
+			plasma.setPalette(pal)
+		}
+		selectPalette();
+		plasma.start();
+	</script>
+</body>
+</html>
