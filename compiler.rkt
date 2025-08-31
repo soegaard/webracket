@@ -409,7 +409,7 @@
   cons car cdr
   list              ; not first order yet
   list? length list-ref list-tail
-  append ; two arguments
+  append ; variadic list primitive
   reverse memq
   alt-reverse ; used in expansion of for/list
   map for-each
@@ -3132,7 +3132,15 @@
                 [else      '(global.get $zero)])]
              [(list ae0) ae0]
              [(list* ae0 ae1 aes*)
-              `(call ,$op (call ,$op ,ae0 ,ae1) ,(loop aes*))]))]
+             `(call ,$op (call ,$op ,ae0 ,ae1) ,(loop aes*))]))]
+
+        [(append)
+         (let loop ([aes (AExpr* ae1)])
+           (match aes
+             [(list)        '(global.get $null)]
+             [(list v)      v]
+             [(list v1 v2)  `(call $append/2 ,v1 ,v2)]
+             [(list* vs)    `(call $append ,(build-rest-args aes))]))]
 
         [(string-append)
          (let loop ([aes (AExpr* ae1)])
