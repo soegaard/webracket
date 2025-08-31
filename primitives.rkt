@@ -3,6 +3,7 @@
           racket/fasl
           racket/fixnum
           racket/flonum
+          racket/math
           racket/hash
           racket/keyword
           racket/list
