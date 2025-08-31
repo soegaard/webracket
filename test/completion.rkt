@@ -1272,6 +1272,8 @@
             vector?
             vector
             byte?
+            fl->exact-integer
+            ->fl
             flexpt
             flmax
             flmin
@@ -1335,6 +1337,11 @@
             fx+
             fxzero?
             fixnum?
+            log
+            exp
+            expt
+            integer-sqrt/remainder
+            integer-sqrt
             sqrt
             abs
             atan
@@ -1436,6 +1443,7 @@
             make-struct-field-accessor
             make-struct-type
             raise-unbound-variable-reference)
+
 
 
 
