@@ -81,7 +81,7 @@
 
  fx= fx< fx>
  fx<= fx>=
- fxmin fxmax
+ fxmin fxmax ; variadic
 
  fx->fl
  fl->fx
