@@ -815,15 +815,19 @@
        (list
         (list
          "append"
-         (and (equal? (append '(x) '(y))               '(x y))
+         (and (equal? (append)                         '())
+              (equal? (append '(x))                    '(x))
+              (equal? (append '(x) '(y))               '(x y))
               (equal? (append '(a) '(b c d))           '(a b c d))
               (equal? (append '(a (b)) '((c)))         '(a (b) (c)))
-              #;(equal? (append)                         '())            ; todo - only two argument append for now
               (equal? (append '(a b) '(c . d))         '(a b c . d))
               (equal? (append '() 'a)                  'a)
-              #; (equal? (append 1)                       1)             ; todo - ditto
+              (equal? (append 1)                       1)
               (equal? (append '(1) 2)                  '(1 . 2))
               (equal? (append '(1) 2)                  '(1 . 2))
+              (let ([xs '(x)] [ys '(y)])
+                (let ([zs (append xs ys)])
+                  (eq? (cdr zs) ys)))
               
               ;; error cases
               #;(with-handlers ([exn:fail? (λ _ #t)])

@@ -1133,8 +1133,7 @@
 
 (define implemented-primitives
   (append implemented-constants
-          '(sin cos tan asin acos atan
-            namespace-undefine-variable!
+          '(namespace-undefine-variable!
             namespace-set-variable-value!
             namespace-variable-value-simple
             make-empty-namespace
@@ -1276,15 +1275,15 @@
             flexpt
             flmax
             flmin
-            flsqrt
-            flexp
-            fllog
             flatan
             flacos
             flasin
             fltan
             flcos
             flsin
+            flsqrt
+            flexp
+            fllog
             flsingle
             fltruncate
             flceiling
@@ -1301,6 +1300,7 @@
             fl-
             fl+
             flonum?
+            fl->fx
             fx->fl
             most-negative-fixnum
             most-positive-fixnum
@@ -1323,6 +1323,8 @@
             fxremainder
             unsafe-fxquotient
             fxquotient
+            fxmax
+            fxmin
             fx>=
             fx<=
             fx<
@@ -1334,6 +1336,16 @@
             fxzero?
             fixnum?
             sqrt
+            abs
+            atan
+            acos
+            asin
+            tan
+            cos
+            sin
+            truncate
+            ceiling
+            floor
             round
             inexact->exact
             exact-positive-integer?
@@ -1424,6 +1436,7 @@
             make-struct-field-accessor
             make-struct-type
             raise-unbound-variable-reference)
+
 
 
 
