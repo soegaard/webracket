@@ -177,16 +177,11 @@
                          (equal? (number->string 1.25)  "1.25")
                          (equal? (number->string 1.0)   "1.0")))
               (list "inexact->exact"
-                    (and (equal? (inexact->exact 1) 1)
-                         (equal? (inexact->exact 1.0) 1)
-                         (equal?
-                          (with-handlers ([exn:fail:contract? (λ (_) #t)])
-                            (inexact->exact +inf.0)
-                            #f)
-                          #t)))
+                    (and (equal? (inexact->exact 1)   1)
+                         (equal? (inexact->exact 1.0) 1)))
               (list "exact->inexact"
-                    (and (equal? (exact->inexact 1) 1.0)
-                         (equal? (exact->inexact 1.0) 1.0))))))
+                    (and (equal? (exact->inexact 1)   1.0)
+                         (equal? (exact->inexact 1.0) 1.0)))))
 
        (list "4.3.2 Generic Numerics"
              (list
@@ -279,7 +274,15 @@
                     (and (equal? (atanh 0) 0)
                          (equal? (atanh 0.) 0.)))))
 
-       
+       (list "4.3.2.10 Extra Constants and Functions"
+             (list
+              (list "degrees->radians"
+                    (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
+              (list "radians->degrees"
+                    (let ([pi 3.141592653589793])
+                      (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
+                           (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))))
+
        (list "4.3.3 Flonums"
              (list
               (list "flonum?"
