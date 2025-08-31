@@ -3409,6 +3409,56 @@
                      (call $raise-expected-number (local.get $x))
                      (unreachable))))
 
+        ;; Exact integer rounding functions
+        ;; Implements: $exact-round $exact-floor $exact-ceiling $exact-truncate
+        ,@(let ([ops '((exact-round   f64.nearest)
+                       (exact-floor   f64.floor)
+                       (exact-ceiling f64.ceil)
+                       (exact-truncate f64.trunc))])
+            (for/list ([p ops])
+              (define name (car p))
+              (define expr (cadr p))
+              `(func ,(string->symbol (format "$~a" name))
+                     (type $Prim1)
+                     (param $x (ref eq))
+                     (result (ref eq))
+
+                     (local $bits i32)
+                     (local $fl (ref $Flonum))
+                     (local $f64 f64)
+
+                     ;; Fixnum case
+                     (if (ref.test (ref i31) (local.get $x))
+                         (then
+                          (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                          (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                              (then (return (local.get $x)))
+                              (else (call $raise-expected-number (local.get $x))
+                                    (unreachable)))))
+
+                     ;; Flonum case
+                     (if (ref.test (ref $Flonum) (local.get $x))
+                         (then
+                          (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                          (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                          (if (f64.ne (local.get $f64) (local.get $f64))
+                              (then (call $raise-expected-number (local.get $x)) (unreachable)))
+                          (if (f64.eq (local.get $f64) (f64.const +inf))
+                              (then (call $raise-expected-number (local.get $x)) (unreachable)))
+                          (if (f64.eq (local.get $f64) (f64.const -inf))
+                              (then (call $raise-expected-number (local.get $x)) (unreachable)))
+                          (local.set $f64 (,expr (local.get $f64)))
+                          (if (f64.gt (local.get $f64) (f64.const 1073741823.0))
+                              (then (call $raise-expected-number (local.get $x)) (unreachable)))
+                          (if (f64.lt (local.get $f64) (f64.const -1073741824.0))
+                              (then (call $raise-expected-number (local.get $x)) (unreachable)))
+                          (local.set $bits (i32.trunc_f64_s (local.get $f64)))
+                          (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1))))))
+
+                     ;; Not a number
+                     (call $raise-expected-number (local.get $x))
+                     (unreachable))))
+
         ;; Trigonometric functions
         ;               name js            inbits outbits
         ,@(let ([ops '((sin  $js-math-sin  0      0)    ;  sin(0) = 0

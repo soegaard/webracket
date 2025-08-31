@@ -466,6 +466,7 @@
   exact-positive-integer?
   inexact->exact
   exact->inexact
+  exact-round exact-floor exact-ceiling exact-truncate
   round floor ceiling truncate
   sin  cos  tan  asin  acos  atan 
   sinh cosh tanh asinh acosh atanh

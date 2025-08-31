@@ -201,6 +201,18 @@
               (list "truncate"
                     (and (equal? (truncate 1.8) 1.)
                          (equal? (truncate -1.8) -1.)))
+              (list "exact-round"
+                    (and (equal? (exact-round 1.2) 1)
+                         (equal? (exact-round 2.5) 2)))
+              (list "exact-floor"
+                    (and (equal? (exact-floor 1.2) 1)
+                         (equal? (exact-floor -1.2) -2)))
+              (list "exact-ceiling"
+                    (and (equal? (exact-ceiling 1.2) 2)
+                         (equal? (exact-ceiling -1.2) -1)))
+              (list "exact-truncate"
+                    (and (equal? (exact-truncate 1.8) 1)
+                         (equal? (exact-truncate -1.8) -1)))
               (list "even?"
                     (and (equal? (even? 10) #t)
                          (equal? (even? 11) #f)
