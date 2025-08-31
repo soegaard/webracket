@@ -40,7 +40,7 @@
  boolean?
  immutable?
 
-;; 4.3 Numbers
+ ;; 4.3 Numbers
 
  ;; 4.3.1 Number Types
  number?
@@ -459,6 +459,3 @@ bytes->string/utf-8
 
 (define (namespace-variable-value-simple ns sym)
   (namespace-variable-value sym #t #f ns))
-
-
-
