@@ -69,6 +69,7 @@
  add1
  sub1
  abs
+ exact-round exact-floor exact-ceiling exact-truncate
  round
  floor
  ceiling
