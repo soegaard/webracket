@@ -89,7 +89,10 @@
  asin
  acos
  atan
- ;; 4.3.2.5 Complex Numbers
+ sinh
+ cosh
+ tanh
+;; 4.3.2.5 Complex Numbers
  ;; 4.3.2.6 Bitwise Operations
  ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
