@@ -492,8 +492,8 @@
   flabs flround flfloor flceiling fltruncate flsingle
   fllog flexp flsqrt 
   flsin flcos fltan flasin flacos flatan
-  flmin flmax flexpt
-  
+  flmin flmax flexpt ->fl fl->exact-integer
+
   byte?
 
   vector 

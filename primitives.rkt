@@ -56,7 +56,7 @@
  flsin flcos fltan flasin flacos flatan
  flround flfloor flceiling fltruncate flsingle
  flexpt
- flmin flmax
+ flmin flmax ->fl fl->exact-integer
  
  byte? 
 
