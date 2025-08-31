@@ -3260,7 +3260,76 @@
          ;; [ ] denominator
          ;; [ ] rationalize
          ;; TODO  Implement arithmetic functions.
-         
+
+         (func $remainder (type $Prim2)
+               (param $n (ref eq))
+               (param $m (ref eq))
+               (result (ref eq))
+
+               (local $nu i32) (local $mu i32)
+               (local $fl (ref $Flonum))
+               (local $nf f64) (local $mf f64) (local $rf f64)
+
+               ;; Case 1: both fixnums
+               (if (ref.test (ref i31) (local.get $n))
+                   (then (local.set $nu (i31.get_s (ref.cast i31ref (local.get $n))))
+                         (if (i32.eqz (i32.and (local.get $nu) (i32.const 1)))
+                             (then (if (ref.test (ref i31) (local.get $m))
+                                       (then (local.set $mu (i31.get_s (ref.cast i31ref (local.get $m))))
+                                             (if (i32.eqz (i32.and (local.get $mu) (i32.const 1)))
+                                                 (then (if (i32.eqz (local.get $mu))
+                                                           (then (call $raise-division-by-zero) (unreachable)))
+                                                       (return (ref.i31 (i32.rem_s (local.get $nu) (local.get $mu)))))))))
+
+               ;; Case 2: flonum/inexact
+               ;; convert n to f64
+               (if (ref.test (ref $Flonum) (local.get $n))
+                   (then (local.set $fl (ref.cast (ref $Flonum) (local.get $n)))
+                         (local.set $nf (struct.get $Flonum $v (local.get $fl))))
+                   (else (if (ref.test (ref i31) (local.get $n))
+                             (then (local.set $nu (i31.get_s (ref.cast i31ref (local.get $n))))
+                                   (if (i32.eqz (i32.and (local.get $nu) (i32.const 1)))
+                                       (then (local.set $nf (f64.convert_i32_s (i32.shr_s (local.get $nu) (i32.const 1)))))
+                                       (else (call $raise-expected-number (local.get $n)) (unreachable))))
+                             (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+
+               ;; ensure n is a finite integer
+               (if (f64.eq (local.get $nf) (f64.const inf))
+                   (then (call $raise-expected-number (local.get $n)) (unreachable)))
+               (if (f64.eq (local.get $nf) (f64.const -inf))
+                   (then (call $raise-expected-number (local.get $n)) (unreachable)))
+               (if (f64.eq (f64.floor (local.get $nf)) (local.get $nf))
+                   (then)
+                   (else (call $raise-expected-number (local.get $n)) (unreachable)))
+
+               ;; convert m to f64
+               (if (ref.test (ref $Flonum) (local.get $m))
+                   (then (local.set $fl (ref.cast (ref $Flonum) (local.get $m)))
+                         (local.set $mf (struct.get $Flonum $v (local.get $fl))))
+                   (else (if (ref.test (ref i31) (local.get $m))
+                             (then (local.set $mu (i31.get_s (ref.cast i31ref (local.get $m))))
+                                   (if (i32.eqz (i32.and (local.get $mu) (i32.const 1)))
+                                       (then (local.set $mf (f64.convert_i32_s (i32.shr_s (local.get $mu) (i32.const 1)))))
+                                       (else (call $raise-expected-number (local.get $m)) (unreachable))))
+                             (else (call $raise-expected-number (local.get $m)) (unreachable)))))
+
+               ;; ensure m is a finite integer
+               (if (f64.eq (local.get $mf) (f64.const inf))
+                   (then (call $raise-expected-number (local.get $m)) (unreachable)))
+               (if (f64.eq (local.get $mf) (f64.const -inf))
+                   (then (call $raise-expected-number (local.get $m)) (unreachable)))
+               (if (f64.eq (f64.floor (local.get $mf)) (local.get $mf))
+                   (then)
+                   (else (call $raise-expected-number (local.get $m)) (unreachable)))
+
+               ;; divide by zero?
+               (if (f64.eq (local.get $mf) (f64.const 0.0))
+                   (then (call $raise-division-by-zero) (unreachable)))
+
+               ;; compute remainder in flonum
+               (local.set $rf (f64.rem (local.get $nf) (local.get $mf)))
+               (return (struct.new $Flonum (i32.const 0) (local.get $rf))))
+
          (func $add1 (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
