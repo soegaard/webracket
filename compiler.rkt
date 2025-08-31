@@ -468,11 +468,12 @@
   exact->inexact
   exact-round exact-floor exact-ceiling exact-truncate
   round floor ceiling truncate
-  sin  cos  tan  asin  acos  atan 
+  sin  cos  tan  asin  acos  atan
   sinh cosh tanh asinh acosh atanh
   degrees->radians radians->degrees
   abs sqrt integer-sqrt integer-sqrt/remainder expt exp log
-  
+  bitwise-ior bitwise-and bitwise-xor
+
   fixnum? fxzero?
   fx+ fx- fx*
   fx= fx> fx< fx<= fx>=
@@ -3122,6 +3123,23 @@
                                   ,(first aes)
                                   ,(loop (rest aes))))))
             `(call ,$cmp ,c0 ,xs)])]
+
+        [(bitwise-and bitwise-ior bitwise-xor)
+         (define aes (AExpr* ae1))
+         (when (null? aes) (error 'primapp "too few arguments: ~a" sym))
+         (define $op (case sym
+                        [(bitwise-and) '$bitwise-and/2]
+                        [(bitwise-ior) '$bitwise-ior/2]
+                        [(bitwise-xor) '$bitwise-xor/2]))
+         (let loop ([aes aes])
+           (match aes
+             [(list)
+              (case sym
+                [(bitwise-and) (Imm -1)]
+                [else           '(global.get $zero)])]
+             [(list ae0) ae0]
+             [(list* ae0 ae1 aes*)
+              `(call ,$op (call ,$op ,ae0 ,ae1) ,(loop aes*))]))]
 
         [(fxand fxior fxxor)
          (define aes (AExpr* ae1))

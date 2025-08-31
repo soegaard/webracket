@@ -107,8 +107,11 @@
  acosh
  atanh
 ;; 4.3.2.5 Complex Numbers
- ;; 4.3.2.6 Bitwise Operations
- ;; 4.3.2.7 Random Numbers
+;; 4.3.2.6 Bitwise Operations
+ bitwise-ior
+ bitwise-and
+ bitwise-xor
+;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
  ;; 4.3.2.9 Number–String Conversions
  number->string

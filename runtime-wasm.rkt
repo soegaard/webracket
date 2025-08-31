@@ -3763,9 +3763,43 @@
                    (gencmp '$<  '$fx</2  '$fl<)
                    (gencmp '$>  '$fx>/2  '$fl>)
                    (gencmp '$<= '$fx<=/2 '$fl<=)
-                   (gencmp '$>= '$fx>=/2 '$fl>=)))
+                     (gencmp '$>= '$fx>=/2 '$fl>=)))
 
-         
+        ,@(let ()
+            (define (gen-bitop name fxop)
+              (define $name/2 (string->symbol (~a "$" name "/2")))
+              (define $name   (string->symbol (~a "$" name)))
+              `((func ,$name/2 (type $Prim2)
+                      (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+                      (call ,fxop (local.get $x) (local.get $y)))
+                (func ,$name (type $Prim>=1)
+                      (param $x0 (ref eq)) (param $xs0 (ref eq)) (result (ref eq))
+                      (local $xs   (ref eq))
+                      (local $node (ref $Pair))
+                      (local $v    (ref eq))
+                      (local $r    (ref eq))
+                      (local.set $xs
+                                 (if (result (ref eq))
+                                     (ref.test (ref $Args) (local.get $xs0))
+                                     (then (call $rest-arguments->list
+                                                 (ref.cast (ref $Args) (local.get $xs0))
+                                                 (i32.const 0)))
+                                     (else (local.get $xs0))))
+                      (local.set $r (local.get $x0))
+                      (block $done
+                             (loop $loop
+                                   (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                   (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                   (local.set $v    (struct.get $Pair $a (local.get $node)))
+                                   (local.set $r    (call ,$name/2 (local.get $r) (local.get $v)))
+                                   (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                                   (br $loop)))
+                      (local.get $r))))
+            (append (gen-bitop 'bitwise-and '$fxand/2)
+                    (gen-bitop 'bitwise-ior '$fxior/2)
+                    (gen-bitop 'bitwise-xor '$fxxor/2)))
+
+
          ;;;
          ;;;  4.3.4 Fixnums
          ;;;
