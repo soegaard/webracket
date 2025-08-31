@@ -456,7 +456,7 @@
 
   + - * /
   = < > <= >=
-  zero? positive? negative? 
+  zero? positive? negative? even? odd?
   add1 sub1
 
   number?
