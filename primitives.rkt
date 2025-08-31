@@ -56,6 +56,8 @@
  zero?
  positive?
  negative?
+ even?
+ odd?
 
  ;; 4.3.2 Generic Numerics
  ;; 4.3.2.1 Arithmetic

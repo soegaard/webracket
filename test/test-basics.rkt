@@ -205,7 +205,15 @@
                          (equal? (ceiling -1.2) -1.)))
               (list "truncate"
                     (and (equal? (truncate 1.8) 1.)
-                         (equal? (truncate -1.8) -1.)))))
+                         (equal? (truncate -1.8) -1.)))
+              (list "even?"
+                    (and (equal? (even? 10) #t)
+                         (equal? (even? 11) #f)
+                         (equal? (even? 10.0) #t)))
+              (list "odd?"
+                    (and (equal? (odd? 10) #f)
+                         (equal? (odd? 11) #t)
+                         (equal? (odd? 10.0) #f)))))
 
       (list "4.3.2.3 Powers and Roots"
             (list

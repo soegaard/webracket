@@ -2527,8 +2527,8 @@
          ;; [x] zero?
          ;; [x] positive?
          ;; [x] negative?
-         ;; [ ] even?
-         ;; [ ] odd?
+         ;; [x] even?
+         ;; [x] odd?
          ;; [x] exact?
          ;; [ ] inexact?
          ;; [x] inexact->exact
@@ -3055,6 +3055,59 @@
                ;; Not a number
                (call $raise-expected-number (local.get $x))
                (unreachable))
+
+         (func $even? (type $Prim1)
+               (param $n (ref eq))
+               (result (ref eq))
+
+               (local $bits i32)
+               (local $fl (ref $Flonum))
+               (local $f64 f64)
+               (local $i32 i32)
+
+               ;; Fixnum case
+               (if (ref.test (ref i31) (local.get $n))
+                   (then
+                    (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $n))))
+                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                        (then
+                         (local.set $i32 (i32.shr_s (local.get $bits) (i32.const 1)))
+                         (if (i32.eqz (i32.and (local.get $i32) (i32.const 1)))
+                             (then (return (global.get $true)))
+                             (else (return (global.get $false)))))
+                        (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+
+               ;; Flonum case
+               (if (ref.test (ref $Flonum) (local.get $n))
+                   (then
+                    (local.set $fl (ref.cast (ref $Flonum) (local.get $n)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                    (if (f64.ne (local.get $f64) (local.get $f64))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (local.get $f64) (f64.const +inf))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (local.get $f64) (f64.const -inf))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                        (then
+                         (local.set $i32 (i32.trunc_f64_s (local.get $f64)))
+                         (if (i32.eqz (i32.and (local.get $i32) (i32.const 1)))
+                             (then (return (global.get $true)))
+                             (else (return (global.get $false)))))
+                        (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+
+               ;; Not an integer
+               (call $raise-expected-number (local.get $n))
+               (unreachable))
+
+         (func $odd? (type $Prim1)
+               (param $n (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $even? (local.get $n)) (global.get $true))
+                   (then (global.get $false))
+                   (else (global.get $true))))
 
 
          (func $integer? (type $Prim1)
