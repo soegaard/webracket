@@ -3077,8 +3077,10 @@
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
-         [(fx-/wraparound)             (inline-prim/variadic sym ae1 1 1)] ; actual arity: 1,2
+         [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
+         [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
+         
         [(fx= fx< fx> fx<= fx>=)
           ; variadic, at least one argument
           (define n   (length ae1))
