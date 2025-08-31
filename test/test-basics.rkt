@@ -162,7 +162,7 @@
                     (equal? (immutable? (make-hasheq)) #f)
                     (equal? (immutable? (box 5)) #f)))))
  
- (list "4.3 Numbers"
+       (list "4.3 Numbers"
        (list "4.3.1 Number Types"
              (list
               (list "number?"
@@ -176,6 +176,31 @@
                          (equal? (number->string 16 16) "10")
                          (equal? (number->string 1.25)  "1.25")
                          (equal? (number->string 1.0)   "1.0")))))
+
+       (list "4.3.2 Generic Numerics"
+             (list
+              (list "abs"
+                    (and (equal? (abs 1) 1)
+                         (equal? (abs -1) 1)
+                         (equal? (abs 1.0) 1.0)))
+              (list "round"
+                    (and (equal? (round 1.2) 1)
+                         (equal? (round 2.5) 2)))
+              (list "floor"
+                    (and (equal? (floor 1.2) 1)
+                         (equal? (floor -1.2) -2)))
+              (list "ceiling"
+                    (and (equal? (ceiling 1.2) 2)
+                         (equal? (ceiling -1.2) -1)))
+              (list "truncate"
+                    (and (equal? (truncate 1.8) 1)
+                         (equal? (truncate -1.8) -1)))
+              (list "fllog"
+                    (fl= (fllog 1.0) 0.0))
+              (list "flexp"
+                    (fl= (flexp 0.0) 1.0))
+              (list "flsqrt"
+                    (fl= (flsqrt 9.0) 3.0))))
 
        (list "4.3.2.4 Trigonometric Functions"
              (list
