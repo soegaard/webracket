@@ -7971,12 +7971,44 @@
                (call $list-tail/checked (local.get $pair) (local.get $idx)))
 
 
+         (func $append (type $Prim>=0)
+               (param $xs (ref eq))        ;; list of arguments
+               (result    (ref eq))
 
-         (func $append #;(type $Prim>=0)  ; todo: make $append variadic and add correct type
+               (local $rev (ref eq))
+               (local $node (ref $Pair))
+               (local $arg (ref eq))
+               (local $acc (ref eq))
+
+               ;; Zero arguments -> null
+               (if (ref.eq (local.get $xs) (global.get $null))
+                   (then (return (global.get $null))))
+
+               ;; Reverse argument list to process from last to first
+               (local.set $rev (call $reverse (local.get $xs)))
+
+               ;; Initialize accumulator with last argument
+               (local.set $node (ref.cast (ref $Pair) (local.get $rev)))
+               (local.set $acc  (struct.get $Pair $a (local.get $node)))
+               (local.set $rev  (struct.get $Pair $d (local.get $node)))
+
+               ;; Fold over remaining arguments with $append/2
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $rev) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $rev)))
+                            (local.set $arg  (struct.get $Pair $a (local.get $node)))
+                            (local.set $acc  (call $append/2 (local.get $arg) (local.get $acc)))
+                            (local.set $rev  (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+
+               (local.get $acc))
+
+         (func $append/2
                (param $xs (ref eq))
                (param $ys (ref eq))
                (result    (ref eq))
-               
+
                (if (result (ref eq))
                    (ref.eq (local.get $xs) (global.get $null))
                    (then (local.get $ys))  ; "the last list is used directly in the output"
@@ -7985,26 +8017,7 @@
                              (then
                               (struct.new $Pair (i32.const 0)
                                           (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
-                                          (call $append
-                                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))
-                                                (local.get $ys))))
-                             (else (call $raise-pair-expected (local.get $xs))
-                                   (unreachable))))))
-
-         (func $append/2  ; Binary version of $append
-               (param $xs (ref eq))
-               (param $ys (ref eq))
-               (result    (ref eq))
-               
-               (if (result (ref eq))
-                   (ref.eq (local.get $xs) (global.get $null))
-                   (then (local.get $ys))  ; "the last list is used directly in the output"
-                   (else (if (result (ref eq))
-                             (ref.test (ref $Pair) (local.get $xs))
-                             (then
-                              (struct.new $Pair (i32.const 0)
-                                          (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
-                                          (call $append
+                                          (call $append/2
                                                 (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))
                                                 (local.get $ys))))
                              (else (call $raise-pair-expected (local.get $xs))
@@ -10967,20 +10980,20 @@
                     (local.set $stfc (struct.get $StructType $field-count (local.get $super-typed)))
 
                     (local.set $init-indices
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $init-indices (local.get $super-typed))
                                      (call $list-from-range/checked
                                            (local.get $stfc)
-                                           (i32.add (local.get $stfc) (local.get $ifc)))))                    
+                                           (i32.add (local.get $stfc) (local.get $ifc)))))
                     (local.set $auto-indices
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $auto-indices (local.get $super-typed))
                                      (call $list-from-range/checked
                                            (i32.add (local.get $stfc) (local.get $ifc))
                                            (i32.add (local.get $stfc) (i32.add (local.get $ifc) (local.get $afc))))))
 
                     (local.set $auto-values
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $auto-values (local.get $super-typed))
                                      (call $make-list/checked (local.get $afc) (local.get $auto-value)))))
                    (else
@@ -11053,17 +11066,17 @@
                     (local.set $super-typed (ref.cast (ref $StructType) (local.get $super)))
                     (local.set $stfc (struct.get $StructType $field-count (local.get $super-typed)))
                     (local.set $init-indices
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $init-indices (local.get $super-typed))
                                      (call $list-from-range/checked (local.get $stfc) (local.get $ifc))))
                     (local.set $auto-indices
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $auto-indices (local.get $super-typed))
                                      (call $list-from-range/checked
                                            (i32.add (local.get $stfc) (local.get $ifc))
                                            (local.get $afc))))
                     (local.set $auto-values
-                               (call $append
+                               (call $append/2
                                      (struct.get $StructType $auto-values (local.get $super-typed))
                                      (call $make-list/checked (local.get $afc) (local.get $auto-value)))))
                    (else
