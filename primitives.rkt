@@ -4,6 +4,11 @@
           racket/fixnum
           racket/flonum
           racket/math
+          math/flonum          
+          (only-in math/base
+                   asinh acosh atanh
+                    
+                   float-complex?)
           racket/hash
           racket/keyword
           racket/list
@@ -477,3 +482,27 @@ bytes->string/utf-8
 
 (define (namespace-variable-value-simple ns sym)
   (namespace-variable-value sym #t #f ns))
+
+;; The inverse hyperbolic functions are from
+;;   math/private/base/base-functions.rkt
+
+(define (asinh x)
+  (cond [(flonum? x)  (flasinh x)]
+        [(eqv? x 0)  0]
+        [(real? x)  (flasinh (fl x))]
+        [(float-complex? x)  (log (+ x (sqrt (+ (* x x) 1.0))))]
+        [else  (log (+ x (sqrt (+ (* x x) 1))))]))
+
+(define (acosh x)
+  (cond [(flonum? x)  (flacosh x)]
+        [(eqv? x 1)  0]
+        [(and (real? x) (x . >= . 1))  (flacosh (fl x))]
+        [(float-complex? x)  (log (+ x (* (sqrt (+ x 1.0)) (sqrt (- x 1.0)))))]
+        [else  (log (+ x (* (sqrt (+ x 1)) (sqrt (- x 1)))))]))
+
+(define (atanh x)
+  (cond [(flonum? x)  (flatanh x)]
+        [(eqv? x 0)  0]
+        [(real? x)  (flatanh (fl x))]
+        [(float-complex? x)  (* 0.5 (- (log (+ 1.0 x)) (log (- 1.0 x))))]
+        [else  (* 1/2 (- (log (+ 1 x)) (log (- 1 x))))]))
