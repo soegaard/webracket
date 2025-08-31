@@ -40,87 +40,129 @@
  boolean?
  immutable?
 
- ;; 4.3 Numbers
+;; 4.3 Numbers
+
+ ;; 4.3.1 Number Types
+ number?
+ integer?
+ exact?
+ exact-integer?
+ exact-nonnegative-integer?
+ exact-positive-integer?
+ inexact->exact
+ fixnum?
+ flonum?
+ zero?
+ positive?
+ negative?
 
  ;; 4.3.2 Generic Numerics
  ;; 4.3.2.1 Arithmetic
+ +
+ -
+ *
+ /
+ add1
+ sub1
+ abs
+ round
+ floor
+ ceiling
+ truncate
  ;; 4.3.2.2 Number Comparison
+ =
+ <
+ >
+ <=
+ >=
  ;; 4.3.2.3 Powers and Roots
+ sqrt
  ;; 4.3.2.4 Trigonometric Functions
+ sin
+ cos
+ tan
+ asin
+ acos
+ atan
  ;; 4.3.2.5 Complex Numbers
  ;; 4.3.2.6 Bitwise Operations
  ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
  ;; 4.3.2.9 Number–String Conversions
+ number->string
  ;; 4.3.2.10 Extra Constants and Functions (racket/math)
- 
+
  ;; 4.3.3 Flonums (racket/flonum)
  ;; 4.3.3.1 Flonum Arithmetic
+ fl+
+ fl-
+ fl*
+ fl/
+ fl=
+ fl<
+ fl>
+ fl<=
+ fl>=
+ flabs
+ fllog
+ flexp
+ flsqrt
+ flsin
+ flcos
+ fltan
+ flasin
+ flacos
+ flatan
+ flround
+ flfloor
+ flceiling
+ fltruncate
+ flsingle
+ flexpt
+ flmin
+ flmax
+ ->fl
+ fl->exact-integer
  ;; 4.3.3.2 Flonum Vectors
 
  ;; 4.3.4 Fixnums (racket/fixnum)
  ;; 4.3.4.1 Fixnum Arithmetic
- ;; 4.3.4.2 Fixnum Vectors
- ;; 4.3.4.3 Fixnum Range
- 
- number? integer? exact? exact-integer?
- exact-nonnegative-integer? exact-positive-integer?
- inexact->exact number->string
- round floor ceiling truncate
- abs sqrt
- sin cos tan asin acos atan 
- + - * / = < > <= >= zero? positive? negative? add1 sub1
-
- fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
- fx->fl fl->fx
- flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>=
- flabs fllog flexp flsqrt
- flsin flcos fltan flasin flacos flatan
- flround flfloor flceiling fltruncate flsingle
- flexpt
- flmin flmax ->fl fl->exact-integer
- 
- byte? 
-
- ;; Fixnum
+ fxzero?
  fx+
  fx-
  fx*
  fxquotient
+ unsafe-fxquotient
  fxremainder
  fxmodulo
  fxabs
-
  fxand
  fxior
  fxxor
  fxnot
  fxlshift
  fxrshift
-
  fxpopcount
  fxpopcount32
  fxpopcount16
-
  fx+/wraparound
  fx-/wraparound
  fx*/wraparound
  fxlshift/wraparound
-
  fxrshift/logical
-
- fx= fx< fx>
- fx<= fx>=
- fxmin fxmax ; variadic
-
+ fx=
+ fx<
+ fx>
+ fx<=
+ fx>=
+ fxmin
+ fxmax
  fx->fl
  fl->fx
+ ;; 4.3.4.2 Fixnum Vectors
+ ;; 4.3.4.3 Fixnum Range
  most-positive-fixnum
  most-negative-fixnum
-
-   inexact->exact abs round floor ceiling truncate sqrt sin cos tan asin acos atan
- flabs flround flfloor flceiling fltruncate flsingle
- flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
 
  
  ;; 4.4 Strings
@@ -163,12 +205,13 @@
  bytes-copy!
  bytes-copy
  bytes-fill!
- bytes-append
- bytes->immutable-bytes
- bytes->list
- list->bytes
- bytes=?
- bytes->string/utf-8
+bytes-append
+bytes->immutable-bytes
+ byte?
+bytes->list
+list->bytes
+bytes=?
+bytes->string/utf-8
 
  ;; 4.6 Characters
  char? char->integer integer->char
