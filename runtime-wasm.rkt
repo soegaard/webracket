@@ -3239,7 +3239,7 @@
          ;; [ ] quotient
          ;; TODO  Implement `quotient` using `fxquotient`.
          
-         ;; [ ] remainder
+         ;; [x] remainder
          ;; [ ] quotient/remainder
          ;; [ ] modulo
          ;; TODO  Implement `remainder`, quotient/remainder` and `modulo`.
@@ -3264,11 +3264,14 @@
          (func $remainder (type $Prim2)
                (param $n (ref eq))
                (param $m (ref eq))
-               (result (ref eq))
+               (result   (ref eq))
 
-               (local $nu i32) (local $mu i32)
+               (local $nu i32)
+               (local $mu i32)
                (local $fl (ref $Flonum))
-               (local $nf f64) (local $mf f64) (local $rf f64)
+               (local $nf f64)
+               (local $mf f64)
+               (local $rf f64)
 
                ;; Case 1: both fixnums
                (if (ref.test (ref i31) (local.get $n))
@@ -3279,7 +3282,7 @@
                                              (if (i32.eqz (i32.and (local.get $mu) (i32.const 1)))
                                                  (then (if (i32.eqz (local.get $mu))
                                                            (then (call $raise-division-by-zero) (unreachable)))
-                                                       (return (ref.i31 (i32.rem_s (local.get $nu) (local.get $mu)))))))))
+                                                       (return (ref.i31 (i32.rem_s (local.get $nu) (local.get $mu))))))))))))
 
                ;; Case 2: flonum/inexact
                ;; convert n to f64
@@ -3327,7 +3330,11 @@
                    (then (call $raise-division-by-zero) (unreachable)))
 
                ;; compute remainder in flonum
-               (local.set $rf (f64.rem (local.get $nf) (local.get $mf)))
+               (local.set $rf (f64.sub
+                               (local.get $nf)
+                               (f64.mul
+                                (f64.trunc (f64.div (local.get $nf) (local.get $mf)))
+                                (local.get $mf))))
                (return (struct.new $Flonum (i32.const 0) (local.get $rf))))
 
          (func $add1 (type $Prim1)

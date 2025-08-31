@@ -183,6 +183,18 @@
                     (and (equal? (exact->inexact 1)   1.0)
                          (equal? (exact->inexact 1.0) 1.0)))))
 
+       (list "4.3.2.1 Arithmetic"
+             (list
+              (list "remainder"
+                    (and (equal? (remainder 10 3) 1)
+                         (equal? (remainder -10.0 3) -1.0)
+                         (equal? (remainder 10.0 -3) 1.0)
+                         (equal? (remainder -10 -3) -1)))))
+
+       (list "4.3.2.2 Number Comparison"
+             (list
+              (list)))
+       
        (list "4.3.2 Generic Numerics"
              (list
               (list "abs"
@@ -221,13 +233,9 @@
                     (and (equal? (odd? 10) #f)
                          (equal? (odd? 11) #t)
                          (equal? (odd? 10.0) #f)))
-              (list "remainder"
-                    (and (equal? (remainder 10 3) 1)
-                         (equal? (remainder -10.0 3) -1.0)
-                         (equal? (remainder 10.0 -3) 1.0)
-                         (equal? (remainder -10 -3) -1))))
+              ))
 
-      (list "4.3.2.3 Powers and Roots"
+       (list "4.3.2.3 Powers and Roots"
             (list
              (list "sqrt"
                    (and (equal? (sqrt 9) 3)
