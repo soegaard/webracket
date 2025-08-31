@@ -2693,6 +2693,283 @@
                (call $raise-expected-number (local.get $x))
                (unreachable))
 
+        (func $integer-sqrt (type $Prim1)
+              (param $n (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+              (local $i32 i32)
+
+              ;; Fixnum case
+              (if (ref.test (ref i31) (local.get $n))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $n))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $i32 (i32.shr_s (local.get $bits) (i32.const 1)))
+                        (local.set $f64 (f64.floor (call $js-math-sqrt (f64.convert_i32_s (local.get $i32)))))
+                        (if (i32.ge_s (local.get $i32) (i32.const 0))
+                            (then
+                             (local.set $i32 (i32.trunc_f64_s (local.get $f64)))
+                             (return (ref.i31 (i32.shl (local.get $i32) (i32.const 1)))))
+                            (else
+                             (return (struct.new $Flonum (i32.const 0) (local.get $f64))))))
+                       (else (call $raise-expected-number (local.get $n))
+                             (unreachable)))))
+
+              ;; Flonum case
+              (if (ref.test (ref $Flonum) (local.get $n))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $n)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                       (then
+                        (return (struct.new $Flonum
+                                            (i32.const 0)
+                                            (f64.floor (call $js-math-sqrt (local.get $f64))))))
+                       (else (call $raise-expected-number (local.get $n))
+                             (unreachable)))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $n))
+              (unreachable))
+
+        (func $integer-sqrt/remainder (type $Prim1)
+              (param $n (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+              (local $i32 i32)
+              (local $sqrtf f64)
+              (local $remf f64)
+              (local $sq i32)
+              (local $rem i32)
+
+              ;; Fixnum case
+              (if (ref.test (ref i31) (local.get $n))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $n))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $i32 (i32.shr_s (local.get $bits) (i32.const 1)))
+                        (local.set $sqrtf (f64.floor (call $js-math-sqrt (f64.convert_i32_s (local.get $i32)))))
+                        (if (i32.ge_s (local.get $i32) (i32.const 0))
+                            (then
+                             (local.set $sq   (i32.trunc_f64_s (local.get $sqrtf)))
+                             (local.set $rem  (i32.sub (local.get $i32) (i32.mul (local.get $sq) (local.get $sq))))
+                             (return (array.new_fixed $Values 2
+                                                       (ref.i31 (i32.shl (local.get $sq) (i32.const 1)))
+                                                       (ref.i31 (i32.shl (local.get $rem) (i32.const 1))))))
+                            (else
+                             (local.set $remf (f64.sub (f64.convert_i32_s (local.get $i32))
+                                                       (f64.mul (local.get $sqrtf) (local.get $sqrtf))))
+                             (return (array.new_fixed $Values 2
+                                                       (struct.new $Flonum (i32.const 0) (local.get $sqrtf))
+                                                       (struct.new $Flonum (i32.const 0) (local.get $remf))))))
+                       (else (call $raise-expected-number (local.get $n))
+                             (unreachable)))))
+
+              ;; Flonum case
+              (if (ref.test (ref $Flonum) (local.get $n))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $n)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                       (then
+                        (local.set $sqrtf (f64.floor (call $js-math-sqrt (local.get $f64))))
+                        (local.set $remf (f64.sub (local.get $f64) (f64.mul (local.get $sqrtf) (local.get $sqrtf))))
+                        (return (array.new_fixed $Values 2
+                                                  (struct.new $Flonum (i32.const 0) (local.get $sqrtf))
+                                                  (struct.new $Flonum (i32.const 0) (local.get $remf)))))
+                       (else (call $raise-expected-number (local.get $n))
+                             (unreachable)))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $n))
+              (unreachable))
+
+        (func $expt (type $Prim2)
+              (param $z (ref eq))
+              (param $w (ref eq))
+              (result (ref eq))
+
+              (local $zbits i32)
+              (local $wbits i32)
+              (local $zf64 f64)
+              (local $wf64 f64)
+              (local $res f64)
+              (local $exactz i32)
+              (local $exactw i32)
+
+              ;; Decode z
+              (if (ref.test (ref i31) (local.get $z))
+                  (then
+                   (local.set $zbits (i31.get_s (ref.cast (ref i31) (local.get $z))))
+                   (if (i32.eqz (i32.and (local.get $zbits) (i32.const 1)))
+                       (then
+                        (local.set $zf64 (f64.convert_i32_s (i32.shr_s (local.get $zbits) (i32.const 1))))
+                        (local.set $exactz (i32.const 1)))
+                       (else (call $raise-expected-number (local.get $z)) (unreachable))))
+                  (else
+                   (if (ref.test (ref $Flonum) (local.get $z))
+                       (then
+                        (local.set $zf64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $z))))
+                        (local.set $exactz (i32.const 0)))
+                       (else (call $raise-expected-number (local.get $z)) (unreachable)))))
+
+              ;; Decode w
+              (if (ref.test (ref i31) (local.get $w))
+                  (then
+                   (local.set $wbits (i31.get_s (ref.cast (ref i31) (local.get $w))))
+                   (if (i32.eqz (i32.and (local.get $wbits) (i32.const 1)))
+                       (then
+                        (local.set $wf64 (f64.convert_i32_s (i32.shr_s (local.get $wbits) (i32.const 1))))
+                        (local.set $exactw (i32.const 1)))
+                       (else (call $raise-expected-number (local.get $w)) (unreachable))))
+                  (else
+                   (if (ref.test (ref $Flonum) (local.get $w))
+                       (then
+                        (local.set $wf64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $w))))
+                        (local.set $exactw (i32.const 0)))
+                       (else (call $raise-expected-number (local.get $w)) (unreachable)))))
+
+              ;; Special cases for exact results
+              (if (i32.and (local.get $exactw)
+                           (i32.eqz (i32.shr_s (local.get $wbits) (i32.const 1))))
+                  (then (return (ref.i31 (i32.const 2)))))
+              (if (i32.and (local.get $exactz)
+                           (i32.eq (i32.shr_s (local.get $zbits) (i32.const 1)) (i32.const 1)))
+                  (then (return (ref.i31 (i32.const 2)))))
+
+              ;; Compute using JS pow
+              (local.set $res (call $js-math-pow (local.get $zf64) (local.get $wf64)))
+
+              ;; If both operands exact and result integral within range, return fixnum
+              (if (i32.and (local.get $exactz) (local.get $exactw))
+                  (then
+                       (if (f64.eq (f64.floor (local.get $res)) (local.get $res))
+                       (then
+                        ;; 1073741823.0 = 2^30-1 and -1073741824.0 = -2^30
+                        ;; ensure result fits in fixnum range before converting
+                        (if (f64.le (local.get $res) (f64.const 1073741823.0))
+                            (then
+                             (if (f64.ge (local.get $res) (f64.const -1073741824.0))
+                                 (then
+                                  (return (ref.i31 (i32.shl (i32.trunc_f64_s (local.get $res)) (i32.const 1)))))))))))
+
+              (struct.new $Flonum (i32.const 0) (local.get $res)))
+
+        (func $exp (type $Prim1)
+              (param $x (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+
+              ;; Fixnum case
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                        (if (i32.eqz (local.get $bits))
+                            (then (return (ref.i31 (i32.const 2))))
+                            (else
+                             (local.set $f64 (call $js-math-exp (f64.convert_i32_s (local.get $bits))))
+                             (return (struct.new $Flonum (i32.const 0) (local.get $f64))))))
+                       (else (call $raise-expected-number (local.get $x))
+                             (unreachable)))))
+
+              ;; Flonum case
+              (if (ref.test (ref $Flonum) (local.get $x))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (return (struct.new $Flonum (i32.const 0) (call $js-math-exp (local.get $f64))))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $x))
+              (unreachable))
+
+        (func $log (type $Prim2)
+              (param $z (ref eq))
+              (param $b (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl (ref $Flonum))
+              (local $zf64 f64)
+              (local $bf64 f64)
+              (local $res f64)
+
+              ;; Natural log when base is missing
+              (if (ref.eq (local.get $b) (global.get $missing))
+                  (then
+                   (if (ref.test (ref i31) (local.get $z))
+                       (then
+                        (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $z))))
+                        (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                            (then
+                             (local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                             (if (i32.eqz (local.get $bits))
+                                 (then (call $raise-division-by-zero) (unreachable)))
+                             (if (i32.eq (local.get $bits) (i32.const 1))
+                                 (then (return (ref.i31 (i32.const 0)))))
+                             (local.set $res (call $js-math-log (f64.convert_i32_s (local.get $bits))))
+                             (return (struct.new $Flonum (i32.const 0) (local.get $res))))
+                            (else (call $raise-expected-number (local.get $z)) (unreachable))))
+                   (if (ref.test (ref $Flonum) (local.get $z))
+                       (then
+                        (local.set $fl (ref.cast (ref $Flonum) (local.get $z)))
+                        (local.set $zf64 (struct.get $Flonum $v (local.get $fl)))
+                        (return (struct.new $Flonum (i32.const 0) (call $js-math-log (local.get $zf64))))))
+                   (call $raise-expected-number (local.get $z))
+                   (unreachable))
+                  (else
+                   ;; Log with base
+                   (if (ref.test (ref i31) (local.get $z))
+                       (then
+                        (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $z))))
+                        (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                            (then
+                             (local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                             (if (i32.eqz (local.get $bits))
+                                 (then (call $raise-division-by-zero) (unreachable)))
+                             (local.set $zf64 (f64.convert_i32_s (local.get $bits))))
+                            (else (call $raise-expected-number (local.get $z)) (unreachable))))
+                       (else
+                        (if (ref.test (ref $Flonum) (local.get $z))
+                            (then
+                             (local.set $fl (ref.cast (ref $Flonum) (local.get $z)))
+                             (local.set $zf64 (struct.get $Flonum $v (local.get $fl))) )
+                            (else (call $raise-expected-number (local.get $z)) (unreachable)))))
+                   (if (ref.test (ref i31) (local.get $b))
+                       (then
+                        (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $b))))
+                        (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                            (then
+                             (local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                             (if (i32.eq (local.get $bits) (i32.const 1))
+                                 (then (call $raise-division-by-zero) (unreachable)))
+                             (local.set $bf64 (f64.convert_i32_s (local.get $bits))))
+                            (else (call $raise-expected-number (local.get $b)) (unreachable))))
+                       (else
+                        (if (ref.test (ref $Flonum) (local.get $b))
+                            (then
+                             (local.set $fl (ref.cast (ref $Flonum) (local.get $b)))
+                             (local.set $bf64 (struct.get $Flonum $v (local.get $fl))) )
+                            (else (call $raise-expected-number (local.get $b)) (unreachable)))))
+                   (local.set $res (f64.div (call $js-math-log (local.get $zf64))
+                                            (call $js-math-log (local.get $bf64))))
+                   (return (struct.new $Flonum (i32.const 0) (local.get $res))))) )
+
+        ;; Generic numeric unary functions
          (func $positive? (type $Prim1)
                (param $x (ref eq))
                (result   (ref eq))
