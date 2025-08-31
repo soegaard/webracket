@@ -3856,28 +3856,38 @@
                                    ,expr)))))
 
         ;; variadic flonum min/max built on binary helpers
-        ,@(for/list ([name '( $flmin $flmax )]
-                     [cmp  '( $flmin/2 $flmax/2)])
-            `(func ,name (param $x0 (ref eq)) (param $xs (ref eq)) (result (ref eq))
-                   (local $node (ref $Pair))
-                   (local $fx   (ref eq))
-                   (local $best (ref eq))
-                   (if (i32.eqz (ref.test (ref $Flonum) (local.get $x0)))
-                       (then (call $raise-argument-error:flonum-expected (local.get $x0))
-                             (unreachable)))
-                   (local.set $best (local.get $x0))
-                   (block $done
-                          (loop $loop
-                                (br_if $done (ref.eq (local.get $xs) (global.get $null)))
-                                (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-                                (local.set $fx   (struct.get $Pair $a (local.get $node)))
-                                (if (i32.eqz (ref.test (ref $Flonum) (local.get $fx)))
-                                    (then (call $raise-argument-error:flonum-expected (local.get $fx))
-                                          (unreachable)))
-                                (local.set $best (call ,cmp (local.get $best) (local.get $fx)))
-                                (local.set $xs (struct.get $Pair $d (local.get $node)))
-                                (br $loop)))
-                   (local.get $best)))
+        ,@(let ()
+             (define (fl-min/max name cmp unsafe?)
+               `(func ,name (param $x0 (ref eq)) (param $xs (ref eq)) (result (ref eq))
+                      (local $node (ref $Pair))
+                      (local $fx   (ref eq))
+                      (local $best (ref eq))
+                      ,@(if unsafe?
+                            '()
+                            `((if (i32.eqz (ref.test (ref $Flonum) (local.get $x0)))
+                                  (then (call $raise-argument-error:flonum-expected (local.get $x0))
+                                        (unreachable)))))
+                      (local.set $best (local.get $x0))
+                      (block $done
+                             (loop $loop
+                                   (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                   (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                   (local.set $fx   (struct.get $Pair $a (local.get $node)))
+                                   ,@(if unsafe?
+                                         '()
+                                         `((if (i32.eqz (ref.test (ref $Flonum) (local.get $fx)))
+                                               (then (call $raise-argument-error:flonum-expected (local.get $fx))
+                                                     (unreachable)))))
+                                   (local.set $best (call ,cmp (local.get $best) (local.get $fx)))
+                                   (local.set $xs (struct.get $Pair $d (local.get $node)))
+                                   (br $loop)))
+                      (local.get $best)))
+             (append (for/list ([name '( $flmin $flmax )]
+                                [cmp  '( $flmin/2 $flmax/2)])
+                       (fl-min/max name cmp #f))
+                     (for/list ([name '( $unsafe-flmin $unsafe-flmax )]
+                                [cmp  '( $unsafe-flmin/2 $unsafe-flmax/2)])
+                       (fl-min/max name cmp #t))))
 
         ,@(let ()
              (define (fl-cmp flname flcmp)
