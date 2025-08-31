@@ -3944,14 +3944,14 @@
                ;; --- check $x is a fixnum ---
                (if (i32.eqz (ref.test (ref i31) (local.get $x)))
                    (then (call $raise-check-fixnum (local.get $x)) (unreachable)))
-               (local.set $xu (i31.get_u (ref.cast (ref i31) (local.get $x))))
+               (local.set $xu (i31.get_s (ref.cast (ref i31) (local.get $x))))
                (if (i32.and (local.get $xu) (i32.const 1))
                    (then (call $raise-check-fixnum (local.get $x)) (unreachable)))
                (local.set $xi (i32.shr_s (local.get $xu) (i32.const 1)))
                ;; --- check $y is a fixnum ---
                (if (i32.eqz (ref.test (ref i31) (local.get $y)))
                    (then (call $raise-check-fixnum (local.get $y)) (unreachable)))
-               (local.set $yu (i31.get_u (ref.cast (ref i31) (local.get $y))))
+               (local.set $yu (i31.get_s (ref.cast (ref i31) (local.get $y))))
                (if (i32.and (local.get $yu) (i32.const 1))
                    (then (call $raise-check-fixnum (local.get $y)) (unreachable)))
                (local.set $yi (i32.shr_s (local.get $yu) (i32.const 1)))
