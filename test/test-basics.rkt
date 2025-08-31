@@ -246,14 +246,22 @@
               (list "asin"
                     (and (equal? (asin 0) 0)
                          (equal? (asin 0.) 0.)))
-              (list "acos"
-                    (and (equal? (acos 1) 0)
-                         (equal? (acos 1.) 0.)))
-              (list "atan"
-                    (and (equal? (atan 0) 0)
-                         (equal? (atan 0.) 0.)))))
+               (list "acos"
+                     (and (equal? (acos 1) 0)
+                          (equal? (acos 1.) 0.)))
+               (list "atan"
+                     (and (equal? (atan 0) 0)
+                          (equal? (atan 0.) 0.)))))
 
-       
+       (list "4.3.2.10 Extra Constants and Functions"
+             (list
+              (list "degrees->radians"
+                    (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
+              (list "radians->degrees"
+                    (let ([pi 3.141592653589793])
+                      (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
+                           (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))))
+
        (list "4.3.3 Flonums"
              (list
               (list "flonum?"

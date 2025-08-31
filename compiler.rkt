@@ -467,7 +467,7 @@
   inexact->exact
   exact->inexact
   round floor ceiling truncate
-  sin cos tan asin acos atan
+  sin cos tan asin acos atan degrees->radians radians->degrees
   abs sqrt integer-sqrt integer-sqrt/remainder expt exp log
   
   fixnum? fxzero?
