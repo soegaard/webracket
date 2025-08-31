@@ -644,37 +644,112 @@
                (import "primitives" "char_foldcase")
                (param i32) (result i32))
 
-         ;; Math functions
-         (func $js-math-sin
-               (import "math" "sin")
-               (param f64) (result f64))
-         (func $js-math-cos
-               (import "math" "cos")
-               (param f64) (result f64))
-         (func $js-math-tan
-               (import "math" "tan")
-               (param f64) (result f64))
-        (func $js-math-sqrt
-              (import "math" "sqrt")
-              (param f64) (result f64))
-        (func $js-math-asin
-              (import "math" "asin")
+        ;; Math functions
+        (func $js-math-abs
+              (import "math" "abs")
               (param f64) (result f64))
         (func $js-math-acos
               (import "math" "acos")
               (param f64) (result f64))
+        (func $js-math-acosh
+              (import "math" "acosh")
+              (param f64) (result f64))
+        (func $js-math-asin
+              (import "math" "asin")
+              (param f64) (result f64))
+        (func $js-math-asinh
+              (import "math" "asinh")
+              (param f64) (result f64))
         (func $js-math-atan
               (import "math" "atan")
               (param f64) (result f64))
-        (func $js-math-log
-              (import "math" "log")
+        (func $js-math-atan2
+              (import "math" "atan2")
+              (param f64) (param f64) (result f64))
+        (func $js-math-atanh
+              (import "math" "atanh")
+              (param f64) (result f64))
+        (func $js-math-cbrt
+              (import "math" "cbrt")
+              (param f64) (result f64))
+        (func $js-math-ceil
+              (import "math" "ceil")
+              (param f64) (result f64))
+        (func $js-math-clz32
+              (import "math" "clz32")
+              (param i32) (result i32))
+        (func $js-math-cos
+              (import "math" "cos")
+              (param f64) (result f64))
+        (func $js-math-cosh
+              (import "math" "cosh")
               (param f64) (result f64))
         (func $js-math-exp
               (import "math" "exp")
               (param f64) (result f64))
+        (func $js-math-expm1
+              (import "math" "expm1")
+              (param f64) (result f64))
+        (func $js-math-floor
+              (import "math" "floor")
+              (param f64) (result f64))
+        (func $js-math-fround
+              (import "math" "fround")
+              (param f64) (result f64))
+        (func $js-math-hypot
+              (import "math" "hypot")
+              (param f64) (param f64) (result f64))
+        (func $js-math-imul
+              (import "math" "imul")
+              (param i32) (param i32) (result i32))
+        (func $js-math-log
+              (import "math" "log")
+              (param f64) (result f64))
+        (func $js-math-log10
+              (import "math" "log10")
+              (param f64) (result f64))
+        (func $js-math-log1p
+              (import "math" "log1p")
+              (param f64) (result f64))
+        (func $js-math-log2
+              (import "math" "log2")
+              (param f64) (result f64))
+        (func $js-math-max
+              (import "math" "max")
+              (param f64) (param f64) (result f64))
+        (func $js-math-min
+              (import "math" "min")
+              (param f64) (param f64) (result f64))
         (func $js-math-pow
               (import "math" "pow")
               (param f64) (param f64) (result f64))
+        (func $js-math-random
+              (import "math" "random")
+              (result f64))
+        (func $js-math-round
+              (import "math" "round")
+              (param f64) (result f64))
+        (func $js-math-sign
+              (import "math" "sign")
+              (param f64) (result f64))
+        (func $js-math-sin
+              (import "math" "sin")
+              (param f64) (result f64))
+        (func $js-math-sinh
+              (import "math" "sinh")
+              (param f64) (result f64))
+        (func $js-math-sqrt
+              (import "math" "sqrt")
+              (param f64) (result f64))
+        (func $js-math-tan
+              (import "math" "tan")
+              (param f64) (result f64))
+        (func $js-math-tanh
+              (import "math" "tanh")
+              (param f64) (result f64))
+        (func $js-math-trunc
+              (import "math" "trunc")
+              (param f64) (result f64))
 
          (func $js-make-callback
                (import "primitives" "make_callback")
