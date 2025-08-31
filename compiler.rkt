@@ -467,7 +467,7 @@
   inexact->exact 
   round floor ceiling truncate
   sin cos tan asin acos atan
-  abs sqrt
+  abs sqrt integer-sqrt integer-sqrt/remainder expt exp log
   
   fixnum? fxzero?
   fx+ fx- fx*
@@ -3072,6 +3072,7 @@
          [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
+         [(log)                        (inline-prim/optional sym ae1 1 2)]
          ; Todo: map and for-each needs to check that the first argument is a procedure
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]

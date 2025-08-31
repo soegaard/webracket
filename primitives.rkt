@@ -77,6 +77,11 @@
  >=
  ;; 4.3.2.3 Powers and Roots
  sqrt
+ integer-sqrt
+ integer-sqrt/remainder
+ expt
+ exp
+ log
  ;; 4.3.2.4 Trigonometric Functions
  sin
  cos
