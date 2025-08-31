@@ -103,6 +103,9 @@
  number->string
  ;; 4.3.2.10 Extra Constants and Functions (racket/math)
 
+ degrees->radians
+ radians->degrees
+
  ;; 4.3.3 Flonums (racket/flonum)
  ;; 4.3.3.1 Flonum Arithmetic
  fl+

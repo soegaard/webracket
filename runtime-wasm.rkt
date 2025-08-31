@@ -3457,8 +3457,50 @@
 
                      (call $raise-expected-number (local.get $x))
                      (unreachable))))
-        
-         (func $raise-expected-number (unreachable))
+
+        ;; Angle conversion functions
+        ,@(let ([ops '((degrees->radians 0.017453292519943295)
+                       (radians->degrees 57.29577951308232))])
+            (for/list ([p ops])
+              (define name (car p))
+              (define factor (cadr p))
+              `(func ,(string->symbol (format "$~a" name))
+                     (type $Prim1)
+                     (param $x (ref eq))
+                     (result (ref eq))
+
+                     (local $bits i32)
+                     (local $fl (ref $Flonum))
+                     (local $f64 f64)
+
+                     (if (ref.test (ref i31) (local.get $x))
+                         (then
+                          (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                          (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                              (then
+                               (local.set $f64
+                                          (f64.mul
+                                           (f64.convert_i32_s
+                                            (i32.shr_s (local.get $bits) (i32.const 1)))
+                                           (f64.const ,factor)))
+                               (return (struct.new $Flonum
+                                                   (i32.const 0)
+                                                   (local.get $f64))))
+                              (else (call $raise-expected-number (local.get $x))
+                                    (unreachable)))))
+
+                     (if (ref.test (ref $Flonum) (local.get $x))
+                         (then
+                          (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                          (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                          (return (struct.new $Flonum
+                                               (i32.const 0)
+                                               (f64.mul (local.get $f64) (f64.const ,factor))))))
+
+                     (call $raise-expected-number (local.get $x))
+                     (unreachable))))
+
+        (func $raise-expected-number (unreachable))
 
          ,@(let ()
              (define (binop $+ $fx+ $fl+)
