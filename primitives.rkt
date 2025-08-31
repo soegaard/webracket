@@ -48,8 +48,12 @@
  fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
  fx->fl fl->fx
  flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>=
- flabs flround flfloor flceiling fltruncate flsingle
- flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
+ flabs fllog flexp flsqrt
+ flsin flcos fltan flasin flacos flatan
+ flround flfloor flceiling fltruncate flsingle
+ flexpt
+ flmin flmax
+ 
  byte? 
 
  ;; Fixnum

@@ -180,17 +180,23 @@
        (list "4.3.2.4 Trigonometric Functions"
              (list
               (list "sin"
-                    (equal? (sin 0) 0))
+                    (and (equal? (sin 0) 0)
+                         (equal? (sin 0.) 0.)))
               (list "cos"
-                    (equal? (cos 0) 1))
+                    (and (equal? (cos 0) 1)
+                         (equal? (cos 0.) 1.)))
               (list "tan"
-                    (equal? (tan 0) 0))
+                    (and (equal? (tan 0) 0)
+                         (equal? (tan 0.) 0.)))
               (list "asin"
-                    (equal? (asin 0) 0))
+                    (and (equal? (asin 0) 0)
+                         (equal? (asin 0.) 0.)))
               (list "acos"
-                    (equal? (acos 1) 0))
+                    (and (equal? (acos 1) 0)
+                         (equal? (acos 1.) 0.)))
               (list "atan"
-                    (equal? (atan 0) 0))))
+                    (and (equal? (atan 0) 0)
+                         (equal? (atan 0.) 0.)))))
 
        
        (list "4.3.3 Flonums"

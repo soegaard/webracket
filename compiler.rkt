@@ -464,7 +464,9 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
-  inexact->exact round sqrt sin cos tan asin acos atan
+  inexact->exact 
+  round sqrt
+  sin cos tan asin acos atan
 
   fixnum? fxzero?
   fx+ fx- fx*
@@ -487,8 +489,10 @@
   fl+ fl- fl* fl/
   fl= fl< fl> fl<= fl>=
   flabs flround flfloor flceiling fltruncate flsingle
-  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
-
+  fllog flexp flsqrt 
+  flsin flcos fltan flasin flacos flatan
+  flmin flmax flexpt
+  
   byte?
 
   vector 
