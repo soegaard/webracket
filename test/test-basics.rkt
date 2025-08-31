@@ -196,6 +196,31 @@
                     (and (equal? (truncate 1.8) 1.)
                          (equal? (truncate -1.8) -1.)))))
 
+      (list "4.3.2.3 Powers and Roots"
+            (list
+             (list "sqrt"
+                   (and (equal? (sqrt 9) 3)
+                        (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-12)))
+             (list "integer-sqrt"
+                   (and (equal? (integer-sqrt 9) 3)
+                        (equal? (integer-sqrt 9.0) 3.0)))
+             (list "integer-sqrt/remainder"
+                   (and (let-values ([(s r) (integer-sqrt/remainder 9)])
+                          (and (= s 3) (= r 0)))
+                        (let-values ([(s r) (integer-sqrt/remainder 15.0)])
+                          (and (= s 3.0) (= r 6.0)))))
+             (list "expt"
+                   (and (equal? (expt 2 5) 32)
+                        (equal? (expt 9.0 0.5) 3.0)))
+             (list "exp"
+                   (and (equal? (exp 0) 1)
+                        (< (abs (- (exp 1.0) 2.718281828459045)) 1e-12)))
+             (list "log"
+                   (and (equal? (log 1) 0)
+                        (equal? (log 8 2) 3)
+                        (< (abs (- (log (exp 1.0)) 1.0)) 1e-12)
+                        (< (abs (- (log 10.0) 2.302585092994046)) 1e-12)))))
+
        (list "4.3.2.4 Trigonometric Functions"
              (list
               (list "sin"
