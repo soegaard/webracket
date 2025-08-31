@@ -1,5 +1,5 @@
-(define width  256)
-(define height 256)
+(define width  (* 1 256))
+(define height (* 1 256))
 
 (define canvas (js-create-element "canvas"))
 (js-set-canvas-width!  canvas width)
@@ -8,8 +8,14 @@
 
 (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
 
+(define (clamp x)
+  (remainder (exact-floor x) 256))
+
+(define i 0)
 (define (draw t)
-  (define ft (* 0.02 (exact->inexact t)))
+  ; (js-log t) ; t is a floating point adds 500-1000 each time.
+  (set! i (+ i 1))
+  (define ft  (* 0.0004 (exact->inexact t)))
   (define img (js-canvas2d-create-image-data ctx
                                              (exact->inexact width)
                                              (exact->inexact height)))
@@ -22,12 +28,12 @@
           (define fx (exact->inexact x))
           (define fy (exact->inexact y))
           (define intensity (+ 2.
-                               (flsin (/ (+ fx ft) 16.))
-                               (flsin (/ (+ fy (* 2. ft)) 8.))))
-          (define c (inexact->exact (floor (* 64. intensity))))
-          (define r (remainder    c      256))
-          (define g (remainder (+ c  85) 256))
-          (define b (remainder (+ c 170) 256))
+                               (flsin (/ (+ fx (* 10. ft)) 16.))
+                               (flcos (/ (+ fy (* 20. ft)) 8.))))
+          (define c   (inexact->exact (floor (* 64. intensity))))
+          (define r   (clamp    c ))
+          (define g   (clamp (+ c (* 256. (flsin (- ft (* 0.01 fx)))))))
+          (define b   (clamp (+ c (* 256. (flcos (- ft (* 2. 0.01 fy)))))))
           (define idx (* 4 (+ (* y width) x)))
           (js-set-property! data idx r)
           (js-set-property! data (add1 idx) g)
