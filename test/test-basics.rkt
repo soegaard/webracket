@@ -162,7 +162,7 @@
                     (equal? (immutable? (make-hasheq)) #f)
                     (equal? (immutable? (box 5)) #f)))))
  
-       (list "4.3 Numbers"
+ (list "4.3 Numbers"
        (list "4.3.1 Number Types"
              (list
               (list "number?"
@@ -290,13 +290,15 @@
               (list "flsqrt"
                     (fl= (flsqrt 9.0) 3.0))
               
-              ;; (list "flmin" ; TODO
-              ;;       (fl= (flmin 3.0 1.0 2.0) 1.0))
-              ;; (list "flmax" ; TODO
-              ;;       (fl= (flmax 3.0 1.0 2.0) 3.0))
+              (list "flmin" 
+                    (and (fl= (flmin 3.0 1.0 2.0) 1.0)
+                         (fl= (flmin 3.0)         3.0)))
+              (list "flmax" ; 
+                    (and (fl= (flmax 3.0 1.0 2.0) 3.0)
+                         (fl= (flmax 3.0)         3.0)))
               (list "flexpt"
                     (fl= (flexpt 2.0 3.0) 8.0))
-             ))
+              ))
        
        (list "4.3.4 Fixnums"
              (list
@@ -378,10 +380,12 @@
                     (and (equal? (fxrshift/logical 4 1) 2)
                          (equal? (fxrshift/logical -1 1) (most-positive-fixnum))))
 
-              ;; (list "fxmin"
-              ;;       (equal? (fxmin 3 1 2) 1))
-              ;; (list "fxmax"
-              ;;       (equal? (fxmax 3 1 2) 3))
+              (list "fxmin"
+                    (and (equal? (fxmin 3 1 2) 1)
+                         (equal? (fxmin 3) 3)))
+              (list "fxmax"
+                    (and (equal? (fxmax 3 1 2) 3)
+                         (equal? (fxmax 3) 3)))
 
               (list "fx->fl"
                     (equal? (fx->fl 3) 3.0))
@@ -870,12 +874,8 @@
 
                    (equal? (memq (list->string (string->list "apple"))
                                  '("apple"))
-                           #f)
-                   
-                   ; todo - this one is peculiar
-                   ; (comp+ (equal? (procedure-arity memq) 2)) works
-                   ; but not as part in this file
-                   #; (equal? (procedure-arity memq) 2)))))
+                           #f)                   
+                   (equal? (procedure-arity memq) 2)))))
 
  (list "4.12 Vectors"
        (list

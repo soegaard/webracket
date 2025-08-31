@@ -3080,6 +3080,7 @@
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
+         [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          
         [(fx= fx< fx> fx<= fx>=)
           ; variadic, at least one argument

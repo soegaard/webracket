@@ -7991,6 +7991,25 @@
                              (else (call $raise-pair-expected (local.get $xs))
                                    (unreachable))))))
 
+         (func $append/2  ; Binary version of $append
+               (param $xs (ref eq))
+               (param $ys (ref eq))
+               (result    (ref eq))
+               
+               (if (result (ref eq))
+                   (ref.eq (local.get $xs) (global.get $null))
+                   (then (local.get $ys))  ; "the last list is used directly in the output"
+                   (else (if (result (ref eq))
+                             (ref.test (ref $Pair) (local.get $xs))
+                             (then
+                              (struct.new $Pair (i32.const 0)
+                                          (struct.get $Pair $a (ref.cast (ref $Pair) (local.get $xs)))
+                                          (call $append
+                                                (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs)))
+                                                (local.get $ys))))
+                             (else (call $raise-pair-expected (local.get $xs))
+                                   (unreachable))))))
+
          (func $reverse (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $acc (ref eq))
                (local.set $acc (global.get $null))
