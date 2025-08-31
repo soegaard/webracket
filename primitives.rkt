@@ -41,6 +41,28 @@
  immutable?
 
  ;; 4.3 Numbers
+
+ ;; 4.3.2 Generic Numerics
+ ;; 4.3.2.1 Arithmetic
+ ;; 4.3.2.2 Number Comparison
+ ;; 4.3.2.3 Powers and Roots
+ ;; 4.3.2.4 Trigonometric Functions
+ ;; 4.3.2.5 Complex Numbers
+ ;; 4.3.2.6 Bitwise Operations
+ ;; 4.3.2.7 Random Numbers
+ ;; 4.3.2.8 Other Randomness Utilities (racket/random)
+ ;; 4.3.2.9 Number–String Conversions
+ ;; 4.3.2.10 Extra Constants and Functions (racket/math)
+ 
+ ;; 4.3.3 Flonums (racket/flonum)
+ ;; 4.3.3.1 Flonum Arithmetic
+ ;; 4.3.3.2 Flonum Vectors
+
+ ;; 4.3.4 Fixnums (racket/fixnum)
+ ;; 4.3.4.1 Fixnum Arithmetic
+ ;; 4.3.4.2 Fixnum Vectors
+ ;; 4.3.4.3 Fixnum Range
+ 
  number? integer? exact? exact-integer?
  exact-nonnegative-integer? exact-positive-integer?
  inexact->exact number->string
