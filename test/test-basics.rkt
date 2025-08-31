@@ -299,6 +299,18 @@
                     (and (equal? (atanh 0) 0)
                          (equal? (atanh 0.) 0.)))))
 
+       (list "4.3.2.6 Bitwise Operations"
+             (list
+              (list "bitwise-ior"
+                    (and (equal? (bitwise-ior 1 2) 3)
+                         (equal? (bitwise-ior -32 1) -31)))
+              (list "bitwise-and"
+                    (and (equal? (bitwise-and 1 2) 0)
+                         (equal? (bitwise-and -32 -1) -32)))
+              (list "bitwise-xor"
+                    (and (equal? (bitwise-xor 1 5) 4)
+                         (equal? (bitwise-xor -32 -1) 31)))))
+
        (list "4.3.2.10 Extra Constants and Functions"
              (list
               (list "degrees->radians"
