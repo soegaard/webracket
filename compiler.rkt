@@ -464,7 +464,8 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
-  inexact->exact 
+  inexact->exact
+  exact->inexact
   round floor ceiling truncate
   sin cos tan asin acos atan
   abs sqrt integer-sqrt integer-sqrt/remainder expt exp log

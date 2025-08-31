@@ -175,7 +175,18 @@
                     (and (equal? (number->string 42)    "42")
                          (equal? (number->string 16 16) "10")
                          (equal? (number->string 1.25)  "1.25")
-                         (equal? (number->string 1.0)   "1.0")))))
+                         (equal? (number->string 1.0)   "1.0")))
+              (list "inexact->exact"
+                    (and (equal? (inexact->exact 1) 1)
+                         (equal? (inexact->exact 1.0) 1)
+                         (equal?
+                          (with-handlers ([exn:fail:contract? (λ (_) #t)])
+                            (inexact->exact +inf.0)
+                            #f)
+                          #t)))
+              (list "exact->inexact"
+                    (and (equal? (exact->inexact 1) 1.0)
+                         (equal? (exact->inexact 1.0) 1.0))))))
 
        (list "4.3.2 Generic Numerics"
              (list
