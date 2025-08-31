@@ -472,7 +472,7 @@
   fixnum? fxzero?
   fx+ fx- fx*
   fx= fx> fx< fx<= fx>=
-  ; fxmin fxmax
+  fxmin fxmax
 
   fxquotient unsafe-fxquotient
   fxremainder fxmodulo fxabs
