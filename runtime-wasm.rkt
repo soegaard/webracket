@@ -2878,76 +2878,100 @@
                (unreachable))
 
 
-        (func $sqrt (type $Prim1)
-              (param $x (ref eq))
-              (result (ref eq))
+         (func $sqrt (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
 
-              (local $bits i32)
-              (local $fl (ref $Flonum))
-              (local $f64 f64)
+               (local $bits i32)
+               (local $fl (ref $Flonum))
+               (local $f64 f64)
 
-              ;; If x is a fixnum, compute sqrt and return fixnum if integral
-              (if (ref.test (ref i31) (local.get $x))
-                  (then
-                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
-                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
-                       (then
-                        (local.set $f64
-                                   (call $js-math-sqrt
-                                         (f64.convert_i32_s
-                                          (i32.shr_s (local.get $bits) (i32.const 1)))))
-                        (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
-                            (then
-                             (local.set $bits (i32.trunc_f64_s (local.get $f64)))
-                             (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1)))))
-                            (else
-                             (return (struct.new $Flonum (i32.const 0) (local.get $f64))))))
-                       (else (call $raise-expected-number (local.get $x))
-                             (unreachable)))))
+               ;; If x is a fixnum, compute sqrt and return fixnum if integral
+               (if (ref.test (ref i31) (local.get $x))
+                   (then
+                    (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                        (then
+                         (local.set $f64
+                                    (call $js-math-sqrt
+                                          (f64.convert_i32_s
+                                           (i32.shr_s (local.get $bits) (i32.const 1)))))
+                         (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                             (then
+                              (local.set $bits (i32.trunc_f64_s (local.get $f64)))
+                              (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1)))))
+                             (else
+                              (return (struct.new $Flonum (i32.const 0) (local.get $f64))))))
+                        (else (call $raise-expected-number (local.get $x))
+                              (unreachable)))))
 
-              ;; If x is a flonum, compute sqrt and box
-              (if (ref.test (ref $Flonum) (local.get $x))
-                  (then
-                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
-                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
-                   (return (struct.new $Flonum
+               ;; If x is a flonum, compute sqrt and box
+               (if (ref.test (ref $Flonum) (local.get $x))
+                   (then
+                    (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                    (return (struct.new $Flonum
                                         (i32.const 0)
                                         (call $js-math-sqrt (local.get $f64))))))
 
-              ;; Not a number
-              (call $raise-expected-number (local.get $x))
-              (unreachable))
+               ;; Not a number
+               (call $raise-expected-number (local.get $x))
+               (unreachable))
 
 
-        (func $round (type $Prim1)
-              (param $x (ref eq))
-              (result   (ref eq))
+        ;; Generic numeric unary functions
+        ;               name      kind    flonum-expr
+        ; Implements: $abs $round $floor $ceiling $truncate
+        ,@(let ([ops '((abs     fx-abs   (f64.abs     (local.get $f64)))
+                       (round   fx-id    (f64.nearest (local.get $f64)))
+                       (floor   fx-id    (f64.floor   (local.get $f64)))
+                       (ceiling fx-id    (f64.ceil    (local.get $f64)))
+                       (truncate fx-id   (f64.trunc   (local.get $f64))))])
+            (for/list ([p ops])
+              (define name (car p))
+              (define kind (cadr p))
+              (define expr (caddr p))
+              (define fixstmts
+                (case kind
+                  [(fx-id)  `((return (local.get $x)))]
+                  [(fx-abs) `((local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                              (if (i32.lt_s (local.get $bits) (i32.const 0))
+                                  (then (local.set $bits (i32.sub (i32.const 0) (local.get $bits)))))
+                              (if (i32.lt_u (local.get $bits) (i32.const 1073741824))
+                                  (then (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1)))))
+                                  (else (return (struct.new $Flonum
+                                                            (i32.const 0)
+                                                            (f64.convert_i32_s (local.get $bits)))))))]))
+              `(func ,(string->symbol (format "$~a" name))
+                     (type $Prim1)
+                     (param $x (ref eq))
+                     (result (ref eq))
 
-              (local $bits i32)
-              (local $fl (ref $Flonum))
-              (local $f64 f64)
+                     (local $bits i32)
+                     (local $fl (ref $Flonum))
+                     (local $f64 f64)
 
-              ;; If x is a fixnum, ensure LSB = 0 and return it
-              (if (ref.test (ref i31) (local.get $x))
-                  (then
-                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $x))))
-                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
-                       (then (return (local.get $x)))
-                       (else (call $raise-expected-number (local.get $x))
-                             (unreachable)))))
+                     ;; Fixnum case
+                     (if (ref.test (ref i31) (local.get $x))
+                         (then
+                          (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                          (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                              (then ,@fixstmts)
+                              (else (call $raise-expected-number (local.get $x))
+                                    (unreachable)))))
 
-              ;; If x is a flonum, round using ties-to-even
-              (if (ref.test (ref $Flonum) (local.get $x))
-                  (then
-                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
-                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
-                   (return (struct.new $Flonum
-                                       (i32.const 0)
-                                       (f64.nearest (local.get $f64))))))
+                     ;; Flonum case
+                     (if (ref.test (ref $Flonum) (local.get $x))
+                         (then
+                          (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                          (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                          (return (struct.new $Flonum
+                                              (i32.const 0)
+                                              ,expr))))
 
-              ;; Not a number
-              (call $raise-expected-number (local.get $x))
-              (unreachable))
+                     ;; Not a number
+                     (call $raise-expected-number (local.get $x))
+                     (unreachable))))
 
         ;; Trigonometric functions
         ;               name js            inbits outbits

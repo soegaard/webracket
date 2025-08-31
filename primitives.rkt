@@ -43,8 +43,12 @@
  ;; 4.3 Numbers
  number? integer? exact? exact-integer?
  exact-nonnegative-integer? exact-positive-integer?
- inexact->exact round sqrt sin cos tan asin acos atan number->string
+ inexact->exact number->string
+ round floor ceiling truncate
+ abs sqrt
+ sin cos tan asin acos atan 
  + - * / = < > <= >= zero? positive? negative? add1 sub1
+
  fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient unsafe-fxquotient
  fx->fl fl->fx
  flonum? fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>=
@@ -92,7 +96,7 @@
  most-positive-fixnum
  most-negative-fixnum
 
- inexact->exact round sqrt sin cos tan asin acos atan
+   inexact->exact abs round floor ceiling truncate sqrt sin cos tan asin acos atan
  flabs flround flfloor flceiling fltruncate flsingle
  flsin flcos fltan flasin flacos flatan fllog flexp flsqrt flmin flmax flexpt
 

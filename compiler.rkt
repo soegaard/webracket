@@ -465,9 +465,10 @@
   exact-nonnegative-integer?
   exact-positive-integer?
   inexact->exact 
-  round sqrt
+  round floor ceiling truncate
   sin cos tan asin acos atan
-
+  abs sqrt
+  
   fixnum? fxzero?
   fx+ fx- fx*
   fx= fx> fx< fx<= fx>=
