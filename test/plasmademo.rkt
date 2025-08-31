@@ -8,14 +8,13 @@
 
 (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
 
-(define (color-string r g b)
-  (string-append "rgb("
-                 (number->string r) ","
-                 (number->string g) ","
-                 (number->string b) ")"))
-
 (define (draw t)
   (define ft (* 0.02 (exact->inexact t)))
+  (define img (js-canvas2d-create-image-data ctx
+                                             (exact->inexact width)
+                                             (exact->inexact height)))
+  (js-set-property! (js-global-this) "imgData" img)
+  (define data (js-eval "imgData.data"))
   (let loop-y ([y 0])
     (when (< y height)
       (let loop-x ([x 0])
@@ -29,10 +28,16 @@
           (define r (remainder    c      256))
           (define g (remainder (+ c  85) 256))
           (define b (remainder (+ c 170) 256))
-          (js-set-canvas2d-fill-style! ctx (color-string r g b))
-          (js-canvas2d-fill-rect ctx fx fy 1. 1.)
+          (define idx (* 4 (+ (* y width) x)))
+          (js-set-property! data idx r)
+          (js-set-property! data (add1 idx) g)
+          (js-set-property! data (+ idx 2) b)
+          (js-set-property! data (+ idx 3) 255)
           (loop-x (add1 x))))
       (loop-y (add1 y))))
+  (js-canvas2d-put-image-data ctx img 0. 0.
+                              (js-undefined) (js-undefined)
+                              (js-undefined) (js-undefined))
   (js-window-request-animation-frame (procedure->external draw)))
 
 (js-window-request-animation-frame (procedure->external draw))
