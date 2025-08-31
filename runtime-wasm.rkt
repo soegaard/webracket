@@ -644,37 +644,112 @@
                (import "primitives" "char_foldcase")
                (param i32) (result i32))
 
-         ;; Math functions
-         (func $js-math-sin
-               (import "math" "sin")
-               (param f64) (result f64))
-         (func $js-math-cos
-               (import "math" "cos")
-               (param f64) (result f64))
-         (func $js-math-tan
-               (import "math" "tan")
-               (param f64) (result f64))
-        (func $js-math-sqrt
-              (import "math" "sqrt")
-              (param f64) (result f64))
-        (func $js-math-asin
-              (import "math" "asin")
+        ;; Math functions
+        (func $js-math-abs
+              (import "math" "abs")
               (param f64) (result f64))
         (func $js-math-acos
               (import "math" "acos")
               (param f64) (result f64))
+        (func $js-math-acosh
+              (import "math" "acosh")
+              (param f64) (result f64))
+        (func $js-math-asin
+              (import "math" "asin")
+              (param f64) (result f64))
+        (func $js-math-asinh
+              (import "math" "asinh")
+              (param f64) (result f64))
         (func $js-math-atan
               (import "math" "atan")
               (param f64) (result f64))
-        (func $js-math-log
-              (import "math" "log")
+        (func $js-math-atan2
+              (import "math" "atan2")
+              (param f64) (param f64) (result f64))
+        (func $js-math-atanh
+              (import "math" "atanh")
+              (param f64) (result f64))
+        (func $js-math-cbrt
+              (import "math" "cbrt")
+              (param f64) (result f64))
+        (func $js-math-ceil
+              (import "math" "ceil")
+              (param f64) (result f64))
+        (func $js-math-clz32
+              (import "math" "clz32")
+              (param i32) (result i32))
+        (func $js-math-cos
+              (import "math" "cos")
+              (param f64) (result f64))
+        (func $js-math-cosh
+              (import "math" "cosh")
               (param f64) (result f64))
         (func $js-math-exp
               (import "math" "exp")
               (param f64) (result f64))
+        (func $js-math-expm1
+              (import "math" "expm1")
+              (param f64) (result f64))
+        (func $js-math-floor
+              (import "math" "floor")
+              (param f64) (result f64))
+        (func $js-math-fround
+              (import "math" "fround")
+              (param f64) (result f64))
+        (func $js-math-hypot
+              (import "math" "hypot")
+              (param f64) (param f64) (result f64))
+        (func $js-math-imul
+              (import "math" "imul")
+              (param i32) (param i32) (result i32))
+        (func $js-math-log
+              (import "math" "log")
+              (param f64) (result f64))
+        (func $js-math-log10
+              (import "math" "log10")
+              (param f64) (result f64))
+        (func $js-math-log1p
+              (import "math" "log1p")
+              (param f64) (result f64))
+        (func $js-math-log2
+              (import "math" "log2")
+              (param f64) (result f64))
+        (func $js-math-max
+              (import "math" "max")
+              (param f64) (param f64) (result f64))
+        (func $js-math-min
+              (import "math" "min")
+              (param f64) (param f64) (result f64))
         (func $js-math-pow
               (import "math" "pow")
               (param f64) (param f64) (result f64))
+        (func $js-math-random
+              (import "math" "random")
+              (result f64))
+        (func $js-math-round
+              (import "math" "round")
+              (param f64) (result f64))
+        (func $js-math-sign
+              (import "math" "sign")
+              (param f64) (result f64))
+        (func $js-math-sin
+              (import "math" "sin")
+              (param f64) (result f64))
+        (func $js-math-sinh
+              (import "math" "sinh")
+              (param f64) (result f64))
+        (func $js-math-sqrt
+              (import "math" "sqrt")
+              (param f64) (result f64))
+        (func $js-math-tan
+              (import "math" "tan")
+              (param f64) (result f64))
+        (func $js-math-tanh
+              (import "math" "tanh")
+              (param f64) (result f64))
+        (func $js-math-trunc
+              (import "math" "trunc")
+              (param f64) (result f64))
 
          (func $js-make-callback
                (import "primitives" "make_callback")
@@ -2527,8 +2602,8 @@
          ;; [x] zero?
          ;; [x] positive?
          ;; [x] negative?
-         ;; [ ] even?
-         ;; [ ] odd?
+         ;; [x] even?
+         ;; [x] odd?
          ;; [x] exact?
          ;; [ ] inexact?
          ;; [x] inexact->exact
@@ -3056,6 +3131,59 @@
                (call $raise-expected-number (local.get $x))
                (unreachable))
 
+         (func $even? (type $Prim1)
+               (param $n (ref eq))
+               (result (ref eq))
+
+               (local $bits i32)
+               (local $fl (ref $Flonum))
+               (local $f64 f64)
+               (local $i32 i32)
+
+               ;; Fixnum case
+               (if (ref.test (ref i31) (local.get $n))
+                   (then
+                    (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $n))))
+                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                        (then
+                         (local.set $i32 (i32.shr_s (local.get $bits) (i32.const 1)))
+                         (if (i32.eqz (i32.and (local.get $i32) (i32.const 1)))
+                             (then (return (global.get $true)))
+                             (else (return (global.get $false)))))
+                        (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+
+               ;; Flonum case
+               (if (ref.test (ref $Flonum) (local.get $n))
+                   (then
+                    (local.set $fl (ref.cast (ref $Flonum) (local.get $n)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                    (if (f64.ne (local.get $f64) (local.get $f64))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (local.get $f64) (f64.const +inf))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (local.get $f64) (f64.const -inf))
+                        (then (call $raise-expected-number (local.get $n)) (unreachable)))
+                    (if (f64.eq (f64.floor (local.get $f64)) (local.get $f64))
+                        (then
+                         (local.set $i32 (i32.trunc_f64_s (local.get $f64)))
+                         (if (i32.eqz (i32.and (local.get $i32) (i32.const 1)))
+                             (then (return (global.get $true)))
+                             (else (return (global.get $false)))))
+                        (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+
+               ;; Not an integer
+               (call $raise-expected-number (local.get $n))
+               (unreachable))
+
+         (func $odd? (type $Prim1)
+               (param $n (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $even? (local.get $n)) (global.get $true))
+                   (then (global.get $false))
+                   (else (global.get $true))))
+
 
          (func $integer? (type $Prim1)
                (param $v (ref eq))
@@ -3282,9 +3410,12 @@
                        (tan  $js-math-tan  0      0)    ;  tan(0) = 0
                        (asin $js-math-asin 0      0)    ; asin(0) = 0
                        (acos $js-math-acos 2      0)    ; acos(1) = 0
-                       (atan $js-math-atan 0      0))]) ; atan(0) = 0
-            ;; inbits and outbits are raw i31 fixnum encodings.  
-            ;; They mark trivial exact identities of trig functions  
+                       (atan $js-math-atan 0      0)    ; atan(0) = 0
+                       (sinh $js-math-sinh 0      0)    ; sinh(0) = 0
+                       (cosh $js-math-cosh 0      2)    ; cosh(0) = 1
+                       (tanh $js-math-tanh 0      0))]) ; tanh(0) = 0
+            ;; inbits and outbits are raw i31 fixnum encodings.
+            ;; They mark trivial exact identities of trig functions
             ;; (e.g. sin 0 = 0, cos 0 = 1, acos 1 = 0).  
             ;; This avoids JS calls and flonum allocation in those cases.  
             (for/list ([p ops])

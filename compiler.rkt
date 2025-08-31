@@ -456,7 +456,7 @@
 
   + - * /
   = < > <= >=
-  zero? positive? negative? 
+  zero? positive? negative? even? odd?
   add1 sub1
 
   number?
@@ -467,7 +467,8 @@
   inexact->exact
   exact->inexact
   round floor ceiling truncate
-  sin cos tan asin acos atan degrees->radians radians->degrees
+  sin cos tan asin acos atan sinh cosh tanh
+  degrees->radians radians->degrees
   abs sqrt integer-sqrt integer-sqrt/remainder expt exp log
   
   fixnum? fxzero?

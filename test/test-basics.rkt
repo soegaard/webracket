@@ -205,7 +205,15 @@
                          (equal? (ceiling -1.2) -1.)))
               (list "truncate"
                     (and (equal? (truncate 1.8) 1.)
-                         (equal? (truncate -1.8) -1.)))))
+                         (equal? (truncate -1.8) -1.)))
+              (list "even?"
+                    (and (equal? (even? 10) #t)
+                         (equal? (even? 11) #f)
+                         (equal? (even? 10.0) #t)))
+              (list "odd?"
+                    (and (equal? (odd? 10) #f)
+                         (equal? (odd? 11) #t)
+                         (equal? (odd? 10.0) #f)))))
 
       (list "4.3.2.3 Powers and Roots"
             (list
@@ -246,12 +254,21 @@
               (list "asin"
                     (and (equal? (asin 0) 0)
                          (equal? (asin 0.) 0.)))
-               (list "acos"
-                     (and (equal? (acos 1) 0)
-                          (equal? (acos 1.) 0.)))
-               (list "atan"
-                     (and (equal? (atan 0) 0)
-                          (equal? (atan 0.) 0.)))))
+              (list "acos"
+                    (and (equal? (acos 1) 0)
+                         (equal? (acos 1.) 0.)))
+              (list "atan"
+                    (and (equal? (atan 0) 0)
+                         (equal? (atan 0.) 0.)))
+              (list "sinh"
+                    (and (equal? (sinh 0) 0)
+                         (equal? (sinh 0.) 0.)))
+              (list "cosh"
+                    (and (equal? (cosh 0) 1)
+                         (equal? (cosh 0.) 1.)))
+              (list "tanh"
+                    (and (equal? (tanh 0) 0)
+                         (equal? (tanh 0.) 0.)))))
 
        (list "4.3.2.10 Extra Constants and Functions"
              (list
