@@ -24,10 +24,10 @@
           (define fy (exact->inexact y))
           (define intensity (+ 2.
                                (flsin (/ (+ fx ft) 16.))
-                               (flsin (/ (+ fy ft) 8.))))
+                               (flsin (/ (+ fy (* 2. ft)) 8.))))
           (define c (inexact->exact (floor (* 64. intensity))))
-          (define r (remainder c 256))
-          (define g (remainder (+ c 85) 256))
+          (define r (remainder    c      256))
+          (define g (remainder (+ c  85) 256))
           (define b (remainder (+ c 170) 256))
           (js-set-canvas2d-fill-style! ctx (color-string r g b))
           (js-canvas2d-fill-rect ctx fx fy 1. 1.)
