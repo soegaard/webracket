@@ -50,6 +50,7 @@
  exact-nonnegative-integer?
  exact-positive-integer?
  inexact->exact
+ exact->inexact
  fixnum?
  flonum?
  zero?
