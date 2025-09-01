@@ -182,7 +182,7 @@
                          (equal? (number->string -1.0)   "-1.0")
                          (equal? (number->string 0.0001) "0.0001")))
               (list "string->number"
-                    (list (equal? (string->number "42")     42)
+                    (and (equal? (string->number "42")     42)
                          (equal? (string->number "111" 7)  57)
                          (equal? (string->number "-42")    -42)
                          (equal? (string->number "-111" 7) -57)                         

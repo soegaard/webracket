@@ -5365,10 +5365,13 @@
         (func $raise-string->number:bad-radix (unreachable))
 
         (func $string->number:parse-integer
-              (param $s (ref $String))
-              (param $i i32)
+              (param $s     (ref $String))  
+              (param $i     i32)           
               (param $radix i32)
-              (result (ref eq) i32)
+              ; two return values
+              ;  1. Either a fixnum or #f
+              ;  2. Either the number of parsed characters or 0.
+              (result       (ref eq) i32)  
 
               (local $arr   (ref $I32Array))
               (local $len   i32)
@@ -5377,10 +5380,10 @@
               (local $acc   i32)
               (local $start i32)
 
-              (local.set $arr (struct.get $String $codepoints (local.get $s)))
-              (local.set $len (call $i32array-length (local.get $arr)))
+              (local.set $arr   (struct.get $String $codepoints (local.get $s)))
+              (local.set $len   (call $i32array-length (local.get $arr)))
               (local.set $start (local.get $i))
-              (local.set $acc (i32.const 0))
+              (local.set $acc   (i32.const 0))
 
               (block $done
                      (loop $loop
@@ -5414,11 +5417,13 @@
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
                            (br $loop)))
 
-              (if (i32.eq (local.get $i) (local.get $start))
-                  (then (return (global.get $false) (i32.const 0)))
-                  (else (return (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))
-                                (i32.sub (local.get $i) (local.get $start))))))
-
+              ; Return the two results
+              (if (result (ref eq) i32)
+                  (i32.eq (local.get $i) (local.get $start))
+                  (then (global.get $false) (i32.const 0))
+                  (else (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))
+                        (i32.sub (local.get $i) (local.get $start)))))
+              
 
         
 

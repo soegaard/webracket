@@ -454,6 +454,7 @@
   equal?
 
   number->string
+  string->number
 
   + - * / quotient remainder modulo quotient/remainder
   = < > <= >=
