@@ -272,9 +272,19 @@
                         (eqv? (sgn 0.0) 0.0)
                         (eqv? (sgn -0.0) -0.0)
                         (nan? (sgn +nan.0))))
-             (list "round"
-                   (and (equal? (round 1.2) 1.)
-                        (equal? (round 2.5) 2.)))
+            (list "max"
+                  (and (equal? (max 1 3 2) 3)
+                       (equal? (max 1 3 2.0) 3.0)
+                       (eqv? (max -0.0 0.0) 0.0)
+                       (nan? (max 1.0 +nan.0))))
+            (list "min"
+                  (and (equal? (min 1 3 2) 1)
+                       (equal? (min 1 3 2.0) 1.0)
+                       (eqv? (min -0.0 0.0) -0.0)
+                       (nan? (min 1.0 +nan.0))))
+            (list "round"
+                  (and (equal? (round 1.2) 1.)
+                       (equal? (round 2.5) 2.)))
               (list "floor"
                     (and (equal? (floor 1.2) 1.)
                          (equal? (floor -1.2) -2.)))
