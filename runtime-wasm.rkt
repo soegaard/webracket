@@ -5384,70 +5384,101 @@
 
               ;; Validate string argument
               (if (ref.test (ref $String) (local.get $s-raw))
-                  (then (local.set $s (ref.cast (ref $String) (local.get $s-raw))))
-                  (else (call $raise-string->number:bad-argument)))
+                  (then (nop))
+                  (else (call $raise-string->number:bad-argument)
+                        (unreachable)))
+              (local.set $s (ref.cast (ref $String) (local.get $s-raw)))
 
               ;; Decode optional radix
               (if (ref.eq (local.get $radix-raw) (global.get $missing))
                   (then (local.set $radix (i32.const 10)))
-                  (else (if (ref.test (ref i31) (local.get $radix-raw))
-                            (then (local.set $radix
-                                             (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $radix-raw)))
-                                                        (i32.const 1))))
-                            (else (call $raise-string->number:bad-radix)))))
+                  (else
+                   (if (ref.test (ref i31) (local.get $radix-raw))
+                       (then
+                        (local.set $radix
+                                   (i32.shr_u
+                                    (i31.get_u (ref.cast (ref i31) (local.get $radix-raw)))
+                                    (i32.const 1))))
+                       (else
+                        (call $raise-string->number:bad-radix)
+                        (unreachable)))))
 
               ;; Ensure radix within [2,16]
-              (if (i32.or (i32.lt_u (local.get $radix) (i32.const 2))
-                          (i32.gt_u (local.get $radix) (i32.const 16)))
-                  (then (call $raise-string->number:bad-radix)))
+              (if (i32.or
+                   (i32.lt_u (local.get $radix) (i32.const 2))
+                   (i32.gt_u (local.get $radix) (i32.const 16)))
+                  (then
+                   (call $raise-string->number:bad-radix)
+                   (unreachable))
+                  (else (nop)))
 
               ;; Extract codepoints array and length
               (local.set $arr (struct.get $String $codepoints (local.get $s)))
               (local.set $len (call $i32array-length (local.get $arr)))
+
               ;; Empty string -> #f
               (if (i32.eqz (local.get $len))
-                  (then (return (global.get $false))))
+                  (then (return (global.get $false)))
+                  (else (nop)))
 
               ;; Handle optional sign
               (local.set $i   (i32.const 0))
               (local.set $neg (i32.const 0))
               (local.set $acc (i32.const 0))
               (local.set $cp (call $i32array-ref (local.get $arr) (i32.const 0)))
-              (if (i32.eq (local.get $cp) (i32.const 45))
+              (if (i32.eq (local.get $cp) (i32.const 45))  ;; '-'
                   (then (local.set $neg (i32.const 1))
                         (local.set $i (i32.const 1)))
-                  (else (if (i32.eq (local.get $cp) (i32.const 43))
-                            (then (local.set $i (i32.const 1))))))
+                  (else
+                   (if (i32.eq (local.get $cp) (i32.const 43)) ;; '+'
+                       (then (local.set $i (i32.const 1)))
+                       (else (nop)))))
 
               ;; Parse digits
               (block $done
                      (loop $loop
                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
                            (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+
+                           ;; Try '0'..'9'
                            (local.set $digit (i32.sub (local.get $cp) (i32.const 48)))
                            (if (i32.lt_u (local.get $digit) (i32.const 10))
                                (then (nop))
                                (else
+                                ;; Try 'a'..'z'
                                 (local.set $digit (i32.sub (local.get $cp) (i32.const 87)))
                                 (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                    (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
+                                    (then (local.set $digit
+                                                     (i32.add (local.get $digit) (i32.const 10))))
                                     (else
+                                     ;; Try 'A'..'Z'
                                      (local.set $digit (i32.sub (local.get $cp) (i32.const 55)))
                                      (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                         (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
+                                         (then (local.set $digit
+                                                          (i32.add (local.get $digit) (i32.const 10))))
                                          (else (return (global.get $false))))))))
+
                            (if (i32.ge_u (local.get $digit) (local.get $radix))
-                               (then (return (global.get $false))))
-                           (local.set $acc (i32.add (i32.mul (local.get $acc) (local.get $radix)) (local.get $digit)))
+                               (then (return (global.get $false)))
+                               (else (nop)))
+
+                           (local.set $acc
+                                      (i32.add
+                                       (i32.mul (local.get $acc) (local.get $radix))
+                                       (local.get $digit)))
+
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
                            (br $loop)))
 
               ;; Apply sign
               (if (local.get $neg)
-                  (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc)))))
+                  (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
+                  (else (nop)))
 
               ;; Return fixnum result
               (ref.i31 (i32.shl (local.get $acc) (i32.const 1))))
+
+
 
 
          
