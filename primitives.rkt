@@ -55,6 +55,7 @@
  exact-integer?
  exact-nonnegative-integer?
  exact-positive-integer?
+ inexact?
  inexact->exact
  exact->inexact
  fixnum?

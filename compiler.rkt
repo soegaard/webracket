@@ -464,6 +464,7 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
+  inexact?
   inexact->exact
   exact->inexact
   exact-round exact-floor exact-ceiling exact-truncate

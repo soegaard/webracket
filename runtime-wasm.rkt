@@ -2605,7 +2605,7 @@
          ;; [x] even?
          ;; [x] odd?
          ;; [x] exact?
-         ;; [ ] inexact?
+         ;; [x] inexact?
          ;; [x] inexact->exact
          ;; [x] exact->inexact
          ;; [ ] real->single-flonum
@@ -2631,7 +2631,7 @@
                (param $z (ref eq))
                (result   (ref eq))
 
-               (local $bits i32)               
+               (local $bits i32)
                (if (result (ref eq))
                    (ref.test (ref i31) (local.get $z))
                    (then (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $z))))
@@ -2641,9 +2641,19 @@
                              (else (global.get $false))))
                    (else (global.get $false))))
 
-         (func $exact-integer? (type $Prim1)
-               (param $v (ref eq))
+         (func $inexact? (type $Prim1)
+               ;; A number is inexact if it's a flonum
+               (param $z (ref eq))
                (result   (ref eq))
+
+               (if (result (ref eq))
+                   (ref.test (ref $Flonum) (local.get $z))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $exact-integer? (type $Prim1)
+              (param $v (ref eq))
+              (result   (ref eq))
 
                (local $bits i32)
                
