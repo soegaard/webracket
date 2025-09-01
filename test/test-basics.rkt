@@ -256,11 +256,17 @@
                          (equal? (gcd 10 20 6) 2)
                          (equal? (gcd 12 81.0) 3.0)))
               (list "lcm"
-                    (list (equal? (lcm) 1)            ; ok
-                          (equal? (lcm 10)  10)       ; fails
-                          (equal? (lcm 10.) 10.)      ; ok
-                          (equal? (lcm 10)  10)       ; fails
-                          (equal? (lcm 3 4.0) 12.0))) ; ok
+                    (list (equal? (lcm) 1)            
+                          (equal? (lcm 10)  10)       
+                          (equal? (lcm 10.) 10.)      
+                          (equal? (lcm 10)  10)       
+                          (equal? (lcm 3  4)  12)
+                          (equal? (lcm 3  4.) 12.0)
+                          (equal? (lcm 3. 4)  12.0)
+                          (equal? (lcm 3. 4.) 12.0)
+                          (equal? (lcm 10  3 4)  60)
+                          (equal? (lcm 10  3 4.) 60.)
+                          (equal? (lcm 10. 3 4)  60.)))
               ))
 
        (list "4.3.2.3 Powers and Roots"
