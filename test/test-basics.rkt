@@ -413,7 +413,7 @@
                     (and (bitwise-bit-set? 5 0)
                          (bitwise-bit-set? 5 2)
                          (bitwise-bit-set? -5 20)))
-              #;(list "bitwise-first-bit-set"  ; todo - added in Racket 8.16
+              (list "bitwise-first-bit-set"  ; added in Racket 8.16
                     (and (equal? (bitwise-first-bit-set 128) 7)
                          (equal? (bitwise-first-bit-set -8) 3)))
               (list "integer-length"

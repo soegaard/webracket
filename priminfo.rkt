@@ -1,6 +1,7 @@
 #lang racket
 ;; This module reports information on primitives using reflection on
 ;; Racket builtins.
+(require racket/runtime-path)
 
 (provide primitive->description
          (struct-out primitive-description))
@@ -34,8 +35,6 @@
   #;(namespace-require 'racket/bool)       ; symbol=?
   #;(namespace-require 'racket/vector)
   )
-
-
 
 
 (define not-primitives-in-racket
@@ -81,6 +80,12 @@
                          (set! syms (foreigns->primitive-names fs))
                          syms]))))
 
+
+(require (prefix-in primitives: "primitives.rkt")) ; avoid clashes, instantiates
+(define-runtime-path primitives.rkt "primitives.rkt")
+(define primitives-ns (module->namespace primitives.rkt))
+
+
 (define (primitive->description sym-or-primitive)
   (cond
     [(and (symbol? sym-or-primitive)
@@ -88,9 +93,14 @@
               (member sym-or-primitive (ffi-primitives))))
      #f]
     [else
-     (define x (if (primitive? sym-or-primitive)
+     #;(define x (if (primitive? sym-or-primitive)
                    sym-or-primitive
                    (eval sym-or-primitive ns)))
+
+     (define x (namespace-variable-value sym-or-primitive
+                                         #t ; use-mapping?
+                                         #f ; failure-thunk
+                                         primitives-ns))
      
      (unless (procedure? x)
        (error 'primitive->description "got: ~a" sym-or-primitive))

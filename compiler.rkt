@@ -482,7 +482,7 @@
   abs sgn sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
 
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
-  #; bitwise-first-bit-set  ; todo : added in 8.16
+  bitwise-first-bit-set  ; note : added in 8.16
   integer-length
 
   fixnum? fxzero?

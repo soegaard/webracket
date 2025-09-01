@@ -1,24 +1,25 @@
 #lang racket/base
- (require racket/bool
-          racket/fasl
-          racket/fixnum
-          racket/flonum
-          racket/math
-          math/flonum          
-          (only-in math/base
-                   asinh acosh atanh
-                    
-                   float-complex?)
-          racket/hash
-          racket/keyword
-          racket/list
-          ; racket/namespace
-          racket/port
-          racket/string
-          racket/symbol
-          racket/vector
-          racket/unsafe/ops
-          (prefix-in imm: "immediates.rkt"))
+(require ; version-case
+         racket/bool
+         racket/fasl
+         racket/fixnum
+         racket/flonum
+         racket/math
+         math/flonum          
+         (only-in math/base
+                  asinh acosh atanh
+                  
+                  float-complex?)
+         racket/hash
+         racket/keyword
+         racket/list
+         ; racket/namespace
+         racket/port
+         racket/string
+         racket/symbol
+         racket/vector
+         racket/unsafe/ops
+         (prefix-in imm: "immediates.rkt"))
 
 ;; The primitives are 
 
@@ -128,7 +129,7 @@
  bitwise-xor
  bitwise-not
  bitwise-bit-set?
- #; bitwise-first-bit-set  ; todo : added in version 8.16
+ bitwise-first-bit-set  ; added in version 8.16
  integer-length 
  ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
@@ -433,7 +434,6 @@ bytes->string/utf-8
 
 ;; Changed in version 8.15.0.7: Added string-find.
 
-
 (define (string-find s contained)
   (define m
     (regexp-match-positions (regexp (regexp-quote contained)) s))
@@ -532,3 +532,32 @@ bytes->string/utf-8
         [(real? x)  (flatanh (fl x))]
         [(float-complex? x)  (* 0.5 (- (log (+ 1.0 x)) (log (- 1.0 x))))]
         [else  (* 1/2 (- (log (+ 1 x)) (log (- 1 x))))]))
+
+
+;; (require (for-syntax racket/base))  ; for version-case
+;; (version-case
+;;  [(version< (version) "8.16")
+;;   (define (bitwise-first-bit-set n)
+;;     (unless (exact-integer? n)
+;;       (raise-argument-error 'bitwise-first-bit-set
+;;                             "exact-integer?" n))
+;;     (if (zero? n)
+;;         -1
+;;         (sub1 (integer-length (bitwise-and n (- n))))))])
+
+(define (bitwise-first-bit-set n)
+  (unless (exact-integer? n)
+    (raise-argument-error 'bitwise-first-bit-set
+                          "exact-integer?" n))
+  (if (zero? n)
+      -1
+      (sub1 (integer-length (bitwise-and n (- n))))))
+
+; The "real" apply is a macro (due to keyword arguments)
+; This defines a plain apply as a procedure.
+; (the machinery in `priminfo.rkt` expects a procedure)
+(require (prefix-in racket: racket/base))
+(define (apply proc . xss)
+  (racket:apply racket:apply proc xss))
+
+  

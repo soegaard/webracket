@@ -4383,11 +4383,9 @@
               ;; --- Validate $x ---
               (if (i32.eqz (call $fx?/i32 (local.get $x)))
                   (then (call $raise-expected-number (local.get $x)) (unreachable)))
-
               ;; --- Extract $x/i ---
               (local.set $x/fx (i31.get_u (ref.cast (ref i31) (local.get $x))))
-              (local.set $x/i (i32.shr_s (local.get $x/fx) (i32.const 1)))
-
+              (local.set $x/i  (i32.shr_s (local.get $x/fx) (i32.const 1)))
               ;; --- Compute ---
               (ref.i31 (i32.shl (i32.xor (local.get $x/i) (i32.const -1))
                                  (i32.const 1))))
@@ -4407,13 +4405,11 @@
                   (then (call $raise-expected-number (local.get $n)) (unreachable)))
               (if (i32.eqz (call $fx?/i32 (local.get $m)))
                   (then (call $raise-expected-number (local.get $m)) (unreachable)))
-
               ;; --- Extract values ---
               (local.set $n/fx (i31.get_u (ref.cast (ref i31) (local.get $n))))
               (local.set $m/fx (i31.get_u (ref.cast (ref i31) (local.get $m))))
               (local.set $n/i  (i32.shr_s (local.get $n/fx) (i32.const 1)))
               (local.set $m/i  (i32.shr_u (local.get $m/fx) (i32.const 1)))
-
               ;; --- Compute ---
               (if (result (ref eq)) (i32.ge_u (local.get $m/i) (i32.const 30))
                   (then (if (result (ref eq)) (i32.lt_s (local.get $n/i) (i32.const 0))
@@ -4426,21 +4422,21 @@
                             (else (global.get $true))))))
 
         (func $bitwise-first-bit-set (type $Prim1)
-              (param $n (ref eq)) (result (ref eq))
-
+              (param $n (ref eq))
+              (result   (ref eq))
+              
               (local $n/fx i32)
               (local $n/i  i32)
 
               ;; --- Validate $n ---
               (if (i32.eqz (call $fx?/i32 (local.get $n)))
                   (then (call $raise-expected-number (local.get $n)) (unreachable)))
-
               ;; --- Extract $n/i ---
               (local.set $n/fx (i31.get_u (ref.cast (ref i31) (local.get $n))))
-              (local.set $n/i (i32.shr_s (local.get $n/fx) (i32.const 1)))
-
+              (local.set $n/i  (i32.shr_s (local.get $n/fx) (i32.const 1)))
               ;; --- Compute ---
-              (if (i32.eqz (local.get $n/i))
+              (if (result (ref eq))
+                  (i32.eqz (local.get $n/i))
                   (then (ref.i31 (i32.const -2)))
                   (else (ref.i31 (i32.shl (i32.ctz (local.get $n/i))
                                          (i32.const 1))))))
