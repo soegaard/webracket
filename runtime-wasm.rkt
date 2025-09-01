@@ -3816,6 +3816,48 @@
                      (call $raise-expected-number (local.get $x))
                      (unreachable))))
 
+        (func $sgn (type $Prim1)
+              (param $x (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $fl   (ref $Flonum))
+              (local $f64  f64)
+
+              ;; Fixnum case
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $bits (i32.shr_s (local.get $bits) (i32.const 1)))
+                        (if (i32.eqz (local.get $bits))
+                            (then (return (local.get $x)))
+                            (else (if (i32.gt_s (local.get $bits) (i32.const 0))
+                                      (then (return ,(Imm 1)))
+                                      (else (return ,(Imm -1)))))))
+                       (else (call $raise-expected-number (local.get $x))
+                             (unreachable)))))
+
+              ;; Flonum case
+              (if (ref.test (ref $Flonum) (local.get $x))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x)))
+                   (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                   (if (f64.eq (local.get $f64) (f64.const 0.0))
+                       (then (return (local.get $x)))
+                       (else (if (f64.gt (local.get $f64) (f64.const 0.0))
+                                 (then (return (struct.new $Flonum (i32.const 0) (f64.const 1.0))))
+                                 (else (if (f64.lt (local.get $f64) (f64.const 0.0))
+                                           (then (return (struct.new $Flonum (i32.const 0) (f64.const -1.0))))
+                                           (else (return (struct.new $Flonum (i32.const 0)
+                                                                     (f64.div (f64.const 0.0)
+                                                                              (f64.const 0.0))))))))))))
+                  
+              ;; Not a number
+              (call $raise-expected-number (local.get $x))
+              (unreachable))
+
         ;; Exact integer rounding functions
         ;; Implements: $exact-round $exact-floor $exact-ceiling $exact-truncate
         ,@(let ([ops '((exact-round   f64.nearest)
