@@ -126,6 +126,9 @@
  bitwise-ior
  bitwise-and
  bitwise-xor
+ bitwise-not
+ bitwise-bit-set?
+ bitwise-first-bit-set
  integer-length
 ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)

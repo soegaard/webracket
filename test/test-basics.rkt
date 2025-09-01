@@ -406,6 +406,16 @@
               (list "bitwise-xor"
                     (and (equal? (bitwise-xor 1 5) 4)
                          (equal? (bitwise-xor -32 -1) 31)))
+              (list "bitwise-not"
+                    (and (equal? (bitwise-not 5) -6)
+                         (equal? (bitwise-not -1) 0)))
+              (list "bitwise-bit-set?"
+                    (and (bitwise-bit-set? 5 0)
+                         (bitwise-bit-set? 5 2)
+                         (bitwise-bit-set? -5 20)))
+              (list "bitwise-first-bit-set"
+                    (and (equal? (bitwise-first-bit-set 128) 7)
+                         (equal? (bitwise-first-bit-set -8) 3)))
               (list "integer-length"
                     (and (equal? (integer-length 8) 4)
                          (equal? (integer-length -8) 3)

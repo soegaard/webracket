@@ -481,7 +481,7 @@
   order-of-magnitude
   abs sgn sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
 
-  bitwise-ior bitwise-and bitwise-xor
+  bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set? bitwise-first-bit-set
   integer-length
 
   fixnum? fxzero?
