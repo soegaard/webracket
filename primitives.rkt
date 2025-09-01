@@ -77,6 +77,8 @@
  quotient/remainder
  add1
  sub1
+ gcd
+ lcm
  abs
  exact-round exact-floor exact-ceiling exact-truncate
  round
