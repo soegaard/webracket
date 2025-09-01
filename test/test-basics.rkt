@@ -215,7 +215,7 @@
                     (and (equal? (natural? 0)   #t)
                          (equal? (natural? 1)   #t)
                          (equal? (natural? 1.0) #f)
-                         (equal? (natural? -1)  #f))))
+                         (equal? (natural? -1)  #f)))))
 
        (list "4.3.2.1 Arithmetic"
              (list

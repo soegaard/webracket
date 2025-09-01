@@ -8,6 +8,7 @@
          "runtime-wasm.rkt"   ;
          "define-foreign.rkt"
          "parameters.rkt"
+         ; "wasm-data.rkt"
          nanopass/base
          racket/match
          racket/port 
@@ -2877,7 +2878,10 @@
                            (cond
                              ; We keep these for now, to get a more readable output.
                              ; In all likelyhood (Imm '()), (Imm (void)), etc. are better.
-                             [(flonum? v)  (define l (case v [(+nan.0) 'nan] [(-nan.0) '-nan] [else v]))
+                             [(flonum? v)  (define l (case v
+                                                       [(+nan.0) 'nan] [(-nan.0) '-nan]
+                                                       [(+inf.0) 'inf] [(-inf.0) '-inf]
+                                                       [else v]))
                                            `(struct.new $Flonum (i32.const 0) (f64.const ,l))]
                              [(null? v)    '(global.get $null)]
                              [(void? v)    '(global.get $void)]
