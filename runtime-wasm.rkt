@@ -5381,6 +5381,11 @@
               (local $cp    i32)
               (local $digit i32)
               (local $acc   i32)
+              (local $frac  i32)
+              (local $div   i32)
+              (local $has-dot i32)
+              (local $parsed i32)
+              (local $res   f64)
 
               ;; Validate string argument
               (if (ref.test (ref $String) (local.get $s-raw))
@@ -5425,6 +5430,10 @@
               (local.set $i   (i32.const 0))
               (local.set $neg (i32.const 0))
               (local.set $acc (i32.const 0))
+              (local.set $frac (i32.const 0))
+              (local.set $div (i32.const 1))
+              (local.set $has-dot (i32.const 0))
+              (local.set $parsed (i32.const 0))
               (local.set $cp (call $i32array-ref (local.get $arr) (i32.const 0)))
               (if (i32.eq (local.get $cp) (i32.const 45))  ;; '-'
                   (then (local.set $neg (i32.const 1))
@@ -5434,11 +5443,21 @@
                        (then (local.set $i (i32.const 1)))
                        (else (nop)))))
 
-              ;; Parse digits
+              ;; Parse digits and optional decimal point
               (block $done
                      (loop $loop
                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
                            (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+
+                           (if (i32.eq (local.get $cp) (i32.const 46)) ;; '.'
+                               (then (if (i32.eqz (local.get $has-dot))
+                                         (then (if (i32.ne (local.get $radix) (i32.const 10))
+                                                   (then (return (global.get $false)))
+                                                   (else (nop)))
+                                               (local.set $has-dot (i32.const 1))
+                                               (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                               (br $loop))
+                                         (else (return (global.get $false)))))
 
                            ;; Try '0'..'9'
                            (local.set $digit (i32.sub (local.get $cp) (i32.const 48)))
@@ -5448,35 +5467,63 @@
                                 ;; Try 'a'..'z'
                                 (local.set $digit (i32.sub (local.get $cp) (i32.const 87)))
                                 (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                    (then (local.set $digit
-                                                     (i32.add (local.get $digit) (i32.const 10))))
+                                    (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
                                     (else
                                      ;; Try 'A'..'Z'
                                      (local.set $digit (i32.sub (local.get $cp) (i32.const 55)))
                                      (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                         (then (local.set $digit
-                                                          (i32.add (local.get $digit) (i32.const 10))))
+                                         (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
                                          (else (return (global.get $false))))))))
 
                            (if (i32.ge_u (local.get $digit) (local.get $radix))
                                (then (return (global.get $false)))
                                (else (nop)))
 
-                           (local.set $acc
-                                      (i32.add
-                                       (i32.mul (local.get $acc) (local.get $radix))
-                                       (local.get $digit)))
+                           (if (local.get $has-dot)
+                               (then (local.set $frac
+                                                (i32.add
+                                                 (i32.mul (local.get $frac) (local.get $radix))
+                                                 (local.get $digit)))
+                                     (local.set $div
+                                                (i32.mul (local.get $div) (local.get $radix))))
+                               (else (local.set $acc
+                                                (i32.add
+                                                 (i32.mul (local.get $acc) (local.get $radix))
+                                                 (local.get $digit)))))
 
+                           (local.set $parsed (i32.const 1))
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
                            (br $loop)))
 
-              ;; Apply sign
-              (if (local.get $neg)
-                  (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
+              ;; Require at least one digit
+              (if (i32.eqz (local.get $parsed))
+                  (then (return (global.get $false)))
                   (else (nop)))
 
-              ;; Return fixnum result
-              (ref.i31 (i32.shl (local.get $acc) (i32.const 1))))
+              ;; If decimal present, ensure fraction digits exist
+              (if (local.get $has-dot)
+                  (then (if (i32.eq (local.get $div) (i32.const 1))
+                            (then (return (global.get $false)))
+                            (else (nop)))
+                  (else (nop)))
+
+              ;; Compute result
+              (if (local.get $has-dot)
+                  (then
+                   (local.set $res
+                              (f64.add
+                               (f64.convert_i32_s (local.get $acc))
+                               (f64.div (f64.convert_i32_s (local.get $frac))
+                                        (f64.convert_i32_s (local.get $div)))))
+                   (if (local.get $neg)
+                       (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
+                       (else (nop)))
+                   (struct.new $Flonum (i32.const 0) (local.get $res)))
+                  (else
+                   (if (local.get $neg)
+                       (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
+                       (else (nop)))
+                   (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))))
 
 
 
