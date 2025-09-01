@@ -72,6 +72,7 @@
  *
  /
  remainder
+ quotient/remainder
  add1
  sub1
  abs

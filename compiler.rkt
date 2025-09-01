@@ -454,7 +454,7 @@
 
   number->string
 
-  + - * / remainder
+  + - * / remainder quotient/remainder
   = < > <= >=
   zero? positive? negative? even? odd?
   add1 sub1
