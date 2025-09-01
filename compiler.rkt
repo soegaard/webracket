@@ -3087,6 +3087,7 @@
 
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
+         [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0
          
         [(fx= fx< fx> fx<= fx>=)
           ; variadic, at least one argument
