@@ -5365,12 +5365,12 @@
         (func $raise-string->number:bad-radix (unreachable))
 
         (func $string->number (type $Prim5)
-              (param $s-raw (ref eq))
-              (param $radix-raw (ref eq))
+              (param $s-raw        (ref eq))
+              (param $radix-raw    (ref eq))
               (param $convert-mode (ref eq))
               (param $decimal-mode (ref eq))
-              (param $single-mode (ref eq))
-              (result (ref eq))
+              (param $single-mode  (ref eq))
+              (result              (ref eq))
 
               (local $s     (ref $String))
               (local $radix i32)
@@ -5457,7 +5457,7 @@
                                                (local.set $has-dot (i32.const 1))
                                                (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                                (br $loop))
-                                         (else (return (global.get $false)))))
+                                         (else (return (global.get $false))))))
 
                            ;; Try '0'..'9'
                            (local.set $digit (i32.sub (local.get $cp) (i32.const 48)))
@@ -5505,7 +5505,7 @@
                   (then (if (i32.eq (local.get $div) (i32.const 1))
                             (then (return (global.get $false)))
                             (else (nop)))
-                  (else (nop)))
+                  (else (nop))))
 
               ;; Compute result
               (if (local.get $has-dot)
@@ -5523,7 +5523,7 @@
                    (if (local.get $neg)
                        (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
                        (else (nop)))
-                   (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))))
+                   (ref.i31 (i32.shl (local.get $acc) (i32.const 1))))))
 
 
 
