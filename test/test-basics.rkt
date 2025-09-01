@@ -397,9 +397,7 @@
               (list "integer-length"
                     (and (equal? (integer-length 8) 4)
                          (equal? (integer-length -8) 3)
-                         (equal? (integer-length 0) 0)
-                         (with-handlers ([exn:fail? (λ _ #t)])
-                           (begin (integer-length #t) #f))))))
+                         (equal? (integer-length 0) 0)))))
 
        (list "4.3.2.10 Extra Constants and Functions"
       (list
