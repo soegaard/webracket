@@ -481,6 +481,7 @@
   abs sgn sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
 
   bitwise-ior bitwise-and bitwise-xor
+  integer-length
 
   fixnum? fxzero?
   fx+ fx- fx*

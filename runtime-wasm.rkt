@@ -4373,6 +4373,45 @@
                     (gen-bitop 'bitwise-xor '$fxxor/2)))
 
 
+        (func $integer-length (type $Prim1)
+              (param $n (ref eq))
+              (result (ref eq))
+
+              (local $bits  i32)
+              (local $n/fx i32)
+              (local $len   i32)
+
+              (if (ref.test (ref i31) (local.get $n))
+                  (then
+                   ;; 1. If the argument is a non-number then raise.
+                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $n))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        ;; 2. Extract the number.
+                        (local.set $n/fx (i32.shr_s (i32.shl (local.get $bits) (i32.const 1))
+                                                   (i32.const 2)))
+                        ;; 3. Compute the integer length.
+                        (if (i32.ge_s (local.get $n/fx) (i32.const 0))
+                            (then
+                             (if (i32.eqz (local.get $n/fx))
+                                 (then (ref.i31 (i32.const 0)))
+                                 (else
+                                  (local.set $len (i32.sub (i32.const 32)
+                                                           (i32.clz (local.get $n/fx))))
+                                  (ref.i31 (i32.shl (local.get $len)
+                                                    (i32.const 1))))))
+                            (else
+                             (local.set $len (i32.sub (i32.const 32)
+                                                      (i32.clz (i32.xor (local.get $n/fx)
+                                                                         (i32.const -1)))))
+                             (ref.i31 (i32.shl (local.get $len)
+                                               (i32.const 1))))))
+                       (else (call $raise-expected-number (local.get $n))
+                             (unreachable))))
+                  (else (call $raise-expected-number (local.get $n))
+                        (unreachable))))
+
+
          ;;;
          ;;;  4.3.4 Fixnums
          ;;;

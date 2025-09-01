@@ -393,7 +393,13 @@
                          (equal? (bitwise-and -32 -1) -32)))
               (list "bitwise-xor"
                     (and (equal? (bitwise-xor 1 5) 4)
-                         (equal? (bitwise-xor -32 -1) 31)))))
+                         (equal? (bitwise-xor -32 -1) 31)))
+              (list "integer-length"
+                    (and (equal? (integer-length 8) 4)
+                         (equal? (integer-length -8) 3)
+                         (equal? (integer-length 0) 0)
+                         (with-handlers ([exn:fail? (λ _ #t)])
+                           (begin (integer-length #t) #f))))))
 
        (list "4.3.2.10 Extra Constants and Functions"
       (list
