@@ -134,6 +134,7 @@
 
  degrees->radians
  radians->degrees
+ order-of-magnitude
 
  ;; 4.3.3 Flonums (racket/flonum)
  ;; 4.3.3.1 Flonum Arithmetic

@@ -396,13 +396,18 @@
                          (equal? (bitwise-xor -32 -1) 31)))))
 
        (list "4.3.2.10 Extra Constants and Functions"
-             (list
-              (list "degrees->radians"
-                    (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
-              (list "radians->degrees"
-                    (let ([pi 3.141592653589793])
-                      (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
-                           (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))))
+      (list
+       (list "degrees->radians"
+             (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
+       (list "radians->degrees"
+             (let ([pi 3.141592653589793])
+               (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
+                    (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))
+       (list "order-of-magnitude"
+             (and (= (order-of-magnitude 999) 2)
+                  (= (order-of-magnitude 1000) 3)
+                  (= (order-of-magnitude 0.01) -2)
+                  (= (order-of-magnitude 0.009) -3)))))
 
        (list "4.3.3 Flonums"
              (list
