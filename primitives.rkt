@@ -90,6 +90,8 @@
  lcm
  abs
  sgn
+ max
+ min
  exact-round exact-floor exact-ceiling exact-truncate
  round
  floor
