@@ -245,6 +245,12 @@
                     (and (equal? (odd? 10) #f)
                          (equal? (odd? 11) #t)
                          (equal? (odd? 10.0) #f)))
+              (list "gcd"
+                    (and (equal? (gcd 10) 10)
+                         (equal? (gcd 12 81.0) 3.0)))
+              (list "lcm"
+                    (and (equal? (lcm 10) 10)
+                         (equal? (lcm 3 4.0) 12.0)))
               ))
 
        (list "4.3.2.3 Powers and Roots"
