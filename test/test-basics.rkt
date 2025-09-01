@@ -246,11 +246,21 @@
                          (equal? (odd? 11) #t)
                          (equal? (odd? 10.0) #f)))
               (list "gcd"
-                    (and (equal? (gcd 10) 10)
+                    (and (equal? (gcd) 0)
+                         (equal? (gcd 10)  10)
+                         (equal? (gcd 10.) 10.)
+                         (equal? (gcd 10  15)  5)
+                         (equal? (gcd 10. 15)  5.)
+                         (equal? (gcd 10  15.) 5.)
+                         (equal? (gcd 10. 15.) 5.)
+                         (equal? (gcd 10 20 6) 2)
                          (equal? (gcd 12 81.0) 3.0)))
               (list "lcm"
-                    (and (equal? (lcm 10) 10)
-                         (equal? (lcm 3 4.0) 12.0)))
+                    (list (equal? (lcm) 1)            ; ok
+                          (equal? (lcm 10)  10)       ; fails
+                          (equal? (lcm 10.) 10.)      ; ok
+                          (equal? (lcm 10)  10)       ; fails
+                          (equal? (lcm 3 4.0) 12.0))) ; ok
               ))
 
        (list "4.3.2.3 Powers and Roots"

@@ -3834,99 +3834,117 @@
                ;; --- Divide using $fl/ ---
                (call $fl/ (local.get $x/fl) (local.get $y/fl)))
 
-        (func $gcd/2 (type $Prim2)
-              (param $n (ref eq))
-              (param $m (ref eq))
-              (result (ref eq))
+         (func $gcd/2 (type $Prim2)
+               (param $n (ref eq))
+               (param $m (ref eq))
+               (result (ref eq))
 
-              (local $tmp (ref eq))
+               (local $tmp (ref eq))
 
-              (local.set $n (call $abs (local.get $n)))
-              (local.set $m (call $abs (local.get $m)))
-              (block $done
-                     (loop $loop
-                           (br_if $done (ref.eq (call $zero? (local.get $m)) (global.get $true)))
-                           (local.set $tmp (local.get $m))
-                           (local.set $m (call $remainder (local.get $n) (local.get $m)))
-                           (local.set $n (local.get $tmp))
-                           (br $loop)))
-              (local.get $n))
+               (local.set $n (call $abs (local.get $n)))
+               (local.set $m (call $abs (local.get $m)))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (call $zero? (local.get $m)) (global.get $true)))
+                            (local.set $tmp (local.get $m))
+                            (local.set $m (call $remainder (local.get $n) (local.get $m)))
+                            (local.set $n (local.get $tmp))
+                            (br $loop)))
+               (local.get $n))
 
-        (func $gcd (type $Prim>=0)
-              (param $xs0 (ref eq))
-              (result (ref eq))
+         (func $gcd (type $Prim>=0)
+               (param $xs0 (ref eq))
+               (result (ref eq))
 
-              (local $xs   (ref eq))
-              (local $node (ref $Pair))
-              (local $v    (ref eq))
-              (local $r    (ref eq))
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
 
-              (local.set $xs
-                         (if (result (ref eq))
-                             (ref.test (ref $Args) (local.get $xs0))
-                             (then (call $rest-arguments->list
-                                         (ref.cast (ref $Args) (local.get $xs0))
-                                         (i32.const 0)))
-                             (else (local.get $xs0))))
-              (local.set $r ,(Imm 0))
-              (block $done
-                     (loop $loop
-                           (br_if $done (ref.eq (local.get $xs) (global.get $null)))
-                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-                           (local.set $v    (struct.get $Pair $a (local.get $node)))
-                           (local.set $r    (call $gcd/2 (local.get $r) (local.get $v)))
-                           (local.set $xs   (struct.get $Pair $d (local.get $node)))
-                           (br $loop)))
-              (local.get $r))
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r ,(Imm 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $gcd/2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
+         
+         (func $lcm/2 (type $Prim2)
+               (param $n (ref eq))
+               (param $m (ref eq))
+               (result (ref eq))
 
-        (func $lcm/2 (type $Prim2)
-              (param $n (ref eq))
-              (param $m (ref eq))
-              (result (ref eq))
+               (local $g (ref eq))
 
-              (local $g (ref eq))
+               ;; Work with absolute values.
+               (local.set $n (call $abs (local.get $n)))
+               (local.set $m (call $abs (local.get $m)))
 
-              (local.set $n (call $abs (local.get $n)))
-              (local.set $m (call $abs (local.get $m)))
-              (if (ref.eq (call $zero? (local.get $n)) (global.get $true))
-                  (then (if (ref.eq (call $zero? (local.get $m)) (global.get $true))
-                            (then (if (ref.eq (call $exact? (local.get $n)) (global.get $true))
-                                      (return (local.get $n))
-                                      (if (ref.eq (call $exact? (local.get $m)) (global.get $true))
-                                          (return (local.get $m))
-                                          (return (local.get $n)))))
-                            (else (return (local.get $n)))))
-              (if (ref.eq (call $zero? (local.get $m)) (global.get $true))
-                  (then (return (local.get $m))))
-              (local.set $g (call $gcd/2 (local.get $n) (local.get $m)))
-              (call $/ (call $* (local.get $n) (local.get $m)) (local.get $g)))
+               ;; Expression style: the top-level IF yields the final (ref eq).
+               (if (result (ref eq))
+                   (ref.eq (call $zero? (local.get $n)) (global.get $true))
+                   ;; THEN: n = 0
+                   (then (if (result (ref eq))
+                             (ref.eq (call $zero? (local.get $m)) (global.get $true))
+                             ;; both zero: prefer inexact if any is inexact
+                             (then (if (result (ref eq))
+                                       (ref.eq (call $exact? (local.get $n)) (global.get $true))
+                                       (then (if (result (ref eq))
+                                                 (ref.eq (call $exact? (local.get $m)) (global.get $true))
+                                                 (then (local.get $n))                    ;; both exact zeros → n (exact 0)
+                                                 (else (local.get $m))))                  ;; m is inexact zero → m
+                                       (else (local.get $n))))                            ;; n is inexact zero → n
+                             ;; n = 0, m ≠ 0 → 0 (preserve n’s zero)
+                             (else (local.get $n))))
+                   ;; ELSE: n ≠ 0
+                   (else (if (result (ref eq))
+                             (ref.eq (call $zero? (local.get $m)) (global.get $true))
+                             ;; m = 0, n ≠ 0 → 0 (preserve m’s zero)
+                             (then (local.get $m))
+                             ;; general case: lcm(n,m) = (n / gcd(n,m)) * m
+                             (else (block (result (ref eq))
+                                          (local.set $g (call $gcd/2 (local.get $n) (local.get $m)))
+                                          (call $* (call $/ (local.get $n) (local.get $g))
+                                                (local.get $m))))))))
 
-        (func $lcm (type $Prim>=0)
-              (param $xs0 (ref eq))
-              (result (ref eq))
 
-              (local $xs   (ref eq))
-              (local $node (ref $Pair))
-              (local $v    (ref eq))
-              (local $r    (ref eq))
 
-              (local.set $xs
-                         (if (result (ref eq))
-                             (ref.test (ref $Args) (local.get $xs0))
-                             (then (call $rest-arguments->list
-                                         (ref.cast (ref $Args) (local.get $xs0))
-                                         (i32.const 0)))
-                             (else (local.get $xs0))))
-              (local.set $r ,(Imm 1))
-              (block $done
-                     (loop $loop
-                           (br_if $done (ref.eq (local.get $xs) (global.get $null)))
-                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
-                           (local.set $v    (struct.get $Pair $a (local.get $node)))
-                           (local.set $r    (call $lcm/2 (local.get $r) (local.get $v)))
-                           (local.set $xs   (struct.get $Pair $d (local.get $node)))
-                           (br $loop)))
-              (local.get $r))
+         (func $lcm (type $Prim>=0)
+               (param $xs0 (ref eq))
+               (result (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r ,(Imm 1))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $lcm/2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
 
         ,@(let ()
              (define (gencmp cmp fxcmp flcmp)
