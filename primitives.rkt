@@ -55,6 +55,13 @@
  exact-integer?
  exact-nonnegative-integer?
  exact-positive-integer?
+ nan?
+ infinite?
+ positive-integer?
+ negative-integer?
+ nonpositive-integer?
+ nonnegative-integer?
+ natural?
  inexact?
  inexact->exact
  exact->inexact
