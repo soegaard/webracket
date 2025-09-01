@@ -101,6 +101,7 @@
  <=
  >=
  ;; 4.3.2.3 Powers and Roots
+ sqr
  sqrt
  integer-sqrt
  integer-sqrt/remainder

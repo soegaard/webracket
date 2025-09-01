@@ -3702,6 +3702,24 @@
                (call $raise-expected-number (local.get $v))
                (unreachable))
 
+         (func $sqr (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (local $bits i32)
+
+               ;; Case 1: Fixnum
+               (if (ref.test (ref i31) (local.get $x))
+                   (then (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                         (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                             (then (return (call $fx* (local.get $x) (local.get $x)))))))
+               ;; Case 2: Flonum
+               (if (ref.test (ref $Flonum) (local.get $x))
+                   (then (return (call $fl* (local.get $x) (local.get $x)))))
+               ;; Not a number
+               (call $raise-expected-number (local.get $x))
+               (unreachable))
+
 
          (func $sqrt (type $Prim1)
                (param $x (ref eq))

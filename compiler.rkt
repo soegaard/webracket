@@ -477,7 +477,8 @@
   sin  cos  tan  asin  acos  atan
   sinh cosh tanh asinh acosh atanh
   degrees->radians radians->degrees
-  abs sgn sqrt integer-sqrt integer-sqrt/remainder expt exp log
+  abs sgn sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
+
   bitwise-ior bitwise-and bitwise-xor
 
   fixnum? fxzero?
