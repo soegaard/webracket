@@ -556,16 +556,17 @@ bytes->string/utf-8
       -1
       (sub1 (integer-length (bitwise-and n (- n))))))
 
+; This simplified version of random doesn't allow passing
+; a random number generator.
 (define random
   ;; Simple wrapper around Racket's `random` that exposes the same
   ;; optional argument behaviour to the rest of the system.  The RNG
   ;; state itself lives in `runtime-wasm.rkt` and is shared across
   ;; invocations of the Wasm primitive.
-  (let ([rb random])
-    (case-lambda
-      [() (rb)]
-      [(k) (rb k)]
-      [(min max) (rb min max)])))
+  (case-lambda
+    [()        (racket:random)]
+    [(k)       (racket:random k)]
+    [(min max) (racket:random min max)]))
 
 ; The "real" apply is a macro (due to keyword arguments)
 ; This defines a plain apply as a procedure.
