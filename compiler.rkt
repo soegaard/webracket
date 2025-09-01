@@ -479,7 +479,7 @@
   sinh cosh tanh asinh acosh atanh
   degrees->radians radians->degrees
   order-of-magnitude
-  abs sgn sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
+  abs sgn max min sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
 
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
@@ -3100,6 +3100,7 @@
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
+         [(min max)                      (inline-prim/variadic sym ae1 2)]
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0

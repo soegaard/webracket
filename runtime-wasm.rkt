@@ -4328,15 +4328,91 @@
                           (then (local.set $y-fl (ref.cast (ref $Flonum) (local.get $y))))
                           (else (local.set $y-fl (call $fx->fl/precise (local.get $y)))))
 
-                      (call ,flcmp
+                     (call ,flcmp
                             (ref.as_non_null (local.get $x-fl))
                             (ref.as_non_null (local.get $y-fl)))))
 
-             (list (gencmp '$=  '$fx=/2  '$fl=)   ; maybe specialize this one?
-                   (gencmp '$<  '$fx</2  '$fl<)
-                   (gencmp '$>  '$fx>/2  '$fl>)
-                   (gencmp '$<= '$fx<=/2 '$fl<=)
-                     (gencmp '$>= '$fx>=/2 '$fl>=)))
+            (list (gencmp '$=  '$fx=/2  '$fl=)   ; maybe specialize this one?
+                  (gencmp '$<  '$fx</2  '$fl<)
+                  (gencmp '$>  '$fx>/2  '$fl>)
+                  (gencmp '$<= '$fx<=/2 '$fl<=)
+                  (gencmp '$>= '$fx>=/2 '$fl>=)))
+
+        ,@(let ()
+            (define (gen-minmax name fxop flop)
+              (define $name/2 (string->symbol (~a "$" name "/2")))
+              (define $name   (string->symbol (~a "$" name)))
+              `((func ,$name/2 (type $Prim2)
+                      (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+
+                      (local $x/is-fx i32)
+                      (local $x/is-fl i32)
+                      (local $x-fx i32)
+                      (local $x-fl (ref $Flonum))
+
+                      (local $y/is-fx i32)
+                      (local $y/is-fl i32)
+                      (local $y-fx i32)
+                      (local $y-fl (ref $Flonum))
+
+                      (local.set $x/is-fx (ref.test (ref i31) (local.get $x)))
+                      (if (local.get $x/is-fx)
+                          (then (local.set $x-fx (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                                (if (i32.and (local.get $x-fx) (i32.const 1))
+                                    (then (call $raise-check-fixnum (local.get $x)) (unreachable)))))
+                      (local.set $x/is-fl (ref.test (ref $Flonum) (local.get $x)))
+                      (if (i32.eqz (i32.or (local.get $x/is-fx) (local.get $x/is-fl)))
+                          (then (call $raise-expected-number (local.get $x)) (unreachable)))
+
+                      (local.set $y/is-fx (ref.test (ref i31) (local.get $y)))
+                      (if (local.get $y/is-fx)
+                          (then (local.set $y-fx (i31.get_u (ref.cast (ref i31) (local.get $y))))
+                                (if (i32.and (local.get $y-fx) (i32.const 1))
+                                    (then (call $raise-check-fixnum (local.get $y)) (unreachable)))))
+                      (local.set $y/is-fl (ref.test (ref $Flonum) (local.get $y)))
+                      (if (i32.eqz (i32.or (local.get $y/is-fx) (local.get $y/is-fl)))
+                          (then (call $raise-expected-number (local.get $y)) (unreachable)))
+
+                      (if (i32.and (local.get $x/is-fx) (local.get $y/is-fx))
+                          (then (return (call ,fxop (local.get $x) (local.get $y)))))
+
+                      (if (local.get $x/is-fl)
+                          (then (local.set $x-fl (ref.cast (ref $Flonum) (local.get $x))))
+                          (else (local.set $x-fl (call $fx->fl/precise (local.get $x)))))
+                      (if (local.get $y/is-fl)
+                          (then (local.set $y-fl (ref.cast (ref $Flonum) (local.get $y))))
+                          (else (local.set $y-fl (call $fx->fl/precise (local.get $y)))))
+
+                      (call ,flop
+                            (ref.as_non_null (local.get $x-fl))
+                            (ref.as_non_null (local.get $y-fl))))
+
+                (func ,$name (type $Prim>=2)
+                      (param $x0 (ref eq)) (param $x1 (ref eq)) (param $xs0 (ref eq)) (result (ref eq))
+                      (local $xs   (ref eq))
+                      (local $node (ref $Pair))
+                      (local $v    (ref eq))
+                      (local $r    (ref eq))
+                      (local.set $xs
+                                 (if (result (ref eq))
+                                     (ref.test (ref $Args) (local.get $xs0))
+                                     (then (call $rest-arguments->list
+                                                 (ref.cast (ref $Args) (local.get $xs0))
+                                                 (i32.const 0)))
+                                     (else (local.get $xs0))))
+                      (local.set $r (call ,$name/2 (local.get $x0) (local.get $x1)))
+                      (block $done
+                             (loop $loop
+                                   (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                   (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                   (local.set $v    (struct.get $Pair $a (local.get $node)))
+                                   (local.set $r    (call ,$name/2 (local.get $r) (local.get $v)))
+                                   (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                                   (br $loop)))
+                      (local.get $r))))
+
+            (append (gen-minmax 'min '$fxmin/2 '$unsafe-flmin/2)
+                    (gen-minmax 'max '$fxmax/2 '$unsafe-flmax/2)))
 
         ,@(let ()
             (define (gen-bitop name fxop)
