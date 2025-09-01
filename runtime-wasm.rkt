@@ -4005,8 +4005,89 @@
                                                (i32.const 0)
                                                (f64.mul (local.get $f64) (f64.const ,factor))))))
 
-                     (call $raise-expected-number (local.get $x))
-                     (unreachable))))
+                    (call $raise-expected-number (local.get $x))
+                    (unreachable))))
+
+        (func $order-of-magnitude (type $Prim1)
+              (param $r (ref eq))
+              (result (ref eq))
+
+              (local $bits i32)
+              (local $i i32)
+              (local $fl (ref $Flonum))
+              (local $f64 f64)
+              (local $m i32)
+              (local $p f64)
+              (local $u f64)
+              (local $ok i32)
+
+              (local.set $ok (i32.const 0))
+
+              (if (ref.test (ref i31) (local.get $r))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $r))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then
+                        (local.set $i (i32.shr_s (local.get $bits) (i32.const 1)))
+                        (if (i32.gt_s (local.get $i) (i32.const 0))
+                            (then
+                             (local.set $f64 (f64.convert_i32_s (local.get $i)))
+                             (local.set $ok (i32.const 1)))
+                            (else (call $raise-argument-error (local.get $r))
+                                  (unreachable))))
+                       (else (call $raise-argument-error (local.get $r))
+                             (unreachable)))))
+
+              (if (i32.eqz (local.get $ok))
+                  (then
+                   (if (ref.test (ref $Flonum) (local.get $r))
+                       (then
+                        (local.set $fl (ref.cast (ref $Flonum) (local.get $r)))
+                        (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                        (if (f64.le (local.get $f64) (f64.const 0))
+                            (then (call $raise-argument-error (local.get $r))
+                                  (unreachable)))
+                        (if (f64.eq (local.get $f64) (f64.const inf))
+                            (then (call $raise-argument-error (local.get $r))
+                                  (unreachable)))
+                        (if (f64.ne (local.get $f64) (local.get $f64))
+                            (then (call $raise-argument-error (local.get $r))
+                                  (unreachable)))
+                        (local.set $ok (i32.const 1))))))
+
+              (if (i32.eqz (local.get $ok))
+                  (then (call $raise-argument-error (local.get $r))
+                        (unreachable)))
+
+              (local.set $m
+                         (i32.trunc_f64_s
+                          (f64.floor
+                           (f64.mul
+                            (call $js-math-log (local.get $f64))
+                            (f64.const 0.4342944819032518)))))
+              (local.set $p
+                         (call $js-math-pow
+                               (f64.const 10)
+                               (f64.convert_i32_s (local.get $m))))
+
+              (block $down
+                     (loop $loop-down
+                           (br_if $down (f64.le (local.get $p) (local.get $f64)))
+                           (local.set $m (i32.sub (local.get $m) (i32.const 1)))
+                           (local.set $p (f64.mul (local.get $p) (f64.const 0.1)))
+                           (br $loop-down)))
+
+              (local.set $u (f64.mul (local.get $p) (f64.const 10)))
+
+              (block $up
+                     (loop $loop-up
+                           (br_if $up (f64.lt (local.get $f64) (local.get $u)))
+                           (local.set $m (i32.add (local.get $m) (i32.const 1)))
+                           (local.set $p (local.get $u))
+                           (local.set $u (f64.mul (local.get $u) (f64.const 10)))
+                           (br $loop-up)))
+
+              (ref.i31 (i32.shl (local.get $m) (i32.const 1))))
 
         (func $raise-expected-number (unreachable))
 
