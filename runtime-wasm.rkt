@@ -3914,7 +3914,14 @@
                              ;; general case: lcm(n,m) = (n / gcd(n,m)) * m
                              (else (block (result (ref eq))
                                           (local.set $g (call $gcd/2 (local.get $n) (local.get $m)))
-                                          (call $* (call $/ (local.get $n) (local.get $g))
+                                          (call $*
+                                                (if (result (ref eq))
+                                                    (i32.and (call $fx?/i32 (local.get $n))
+                                                             (call $fx?/i32 (local.get $g)))
+                                                    (then (call $quotient (local.get $n)
+                                                                          (local.get $g)))
+                                                    (else (call $/ (local.get $n)
+                                                                  (local.get $g))))
                                                 (local.get $m))))))))
 
 
