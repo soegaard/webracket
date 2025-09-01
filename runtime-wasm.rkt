@@ -4343,18 +4343,25 @@
               (define $name/2 (string->symbol (~a "$" name "/2")))
               (define $name   (string->symbol (~a "$" name)))
               `((func ,$name/2 (type $Prim2)
-                      (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-
+                      (param $x (ref eq))
+                      (param $y (ref eq))
+                      (result   (ref eq))
+                      
                       (local $x/is-fx i32)
                       (local $x/is-fl i32)
-                      (local $x-fx i32)
-                      (local $x-fl (ref $Flonum))
+                      (local $x-fx    i32)
+                      (local $x-fl    (ref $Flonum))
 
                       (local $y/is-fx i32)
                       (local $y/is-fl i32)
-                      (local $y-fx i32)
-                      (local $y-fl (ref $Flonum))
+                      (local $y-fx    i32)
+                      (local $y-fl    (ref $Flonum))
 
+                      ; Initialize non-defaultable locals
+                      (local.set $x-fl (ref.cast (ref $Flonum) (global.get $flzero))) 
+                      (local.set $y-fl (ref.cast (ref $Flonum) (global.get $flzero)))
+
+                      ;; Type check $x
                       (local.set $x/is-fx (ref.test (ref i31) (local.get $x)))
                       (if (local.get $x/is-fx)
                           (then (local.set $x-fx (i31.get_u (ref.cast (ref i31) (local.get $x))))
@@ -4364,6 +4371,7 @@
                       (if (i32.eqz (i32.or (local.get $x/is-fx) (local.get $x/is-fl)))
                           (then (call $raise-expected-number (local.get $x)) (unreachable)))
 
+                      ;; Type check $y
                       (local.set $y/is-fx (ref.test (ref i31) (local.get $y)))
                       (if (local.get $y/is-fx)
                           (then (local.set $y-fx (i31.get_u (ref.cast (ref i31) (local.get $y))))
