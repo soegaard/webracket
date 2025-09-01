@@ -201,12 +201,12 @@
                         (equal? (modulo 10.0 -3) -2.0)
                         (equal? (modulo -10 -3) -1)))
              (list "quotient/remainder"
-                   (list (let-values ([(q r) (quotient/remainder 10 3)])
-                           (list #;q r (equal? q 3) (equal? r 1)))
-                         (let-values ([(q r) (quotient/remainder -10.0 3)])
-                           (and (equal? q -3.0) (equal? r -1.0)))
-                         (let-values ([(q r) (quotient/remainder 10.0 -3)])
-                           (and (equal? q -3.0) (equal? r 1.0)))))))
+                   (and (let-values ([(q r) (quotient/remainder 10 3)])
+                          (and (equal? q 3) (equal? r 1)))
+                        (let-values ([(q r) (quotient/remainder -10.0 3)])
+                          (and (equal? q -3.0) (equal? r -1.0)))
+                        (let-values ([(q r) (quotient/remainder 10.0 -3)])
+                          (and (equal? q -3.0) (equal? r 1.0)))))))
 
        (list "4.3.2.2 Number Comparison"
              (list
