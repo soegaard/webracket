@@ -5494,11 +5494,29 @@
                   (then (local.set $neg (i32.const 1))
                         (local.set $i (i32.const 1)))
                   (else
-                   (if (i32.eq (local.get $cp) (i32.const 43))
-                       (then (local.set $i (i32.const 1)))
-                       (else (nop)))))
+                  (if (i32.eq (local.get $cp) (i32.const 43))
+                      (then (local.set $i (i32.const 1)))
+                      (else (nop)))))
 
-              ;; SOMETHING IS MISSING HERE
+              ;; Parse integer part
+              (call $string->number:parse-integer
+                    (local.get $s)
+                    (local.get $i)
+                    (local.get $radix))
+              (local.set $n) (local.set $int)
+              (if (ref.eq (local.get $int) (global.get $false))
+                  (then (return (global.get $false)))
+                  (else (nop)))
+              (local.set $i (i32.add (local.get $i) (local.get $n)))
+              ;; No fractional part
+              (if (i32.eq (local.get $i) (local.get $len))
+                  (then
+                   (local.set $acc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $int))) (i32.const 1)))
+                   (if (local.get $neg)
+                       (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
+                       (else (nop)))
+                   (return (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))))
+                  (else (nop)))
 
               ;; Expect decimal point
               (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
