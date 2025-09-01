@@ -3899,7 +3899,10 @@
               (if (ref.eq (call $zero? (local.get $m)) (global.get $true))
                   (then (return (local.get $m))))
               (local.set $g (call $gcd/2 (local.get $n) (local.get $m)))
-              (call $/ (call $* (local.get $n) (local.get $m)) (local.get $g)))
+              ;; Use `quotient` instead of `/` so that purely integer inputs
+              ;; produce an exact integer result instead of an exact rational
+              ;; (e.g. 10 instead of 10/1).
+              (call $quotient (call $* (local.get $n) (local.get $m)) (local.get $g)))
 
         (func $lcm (type $Prim>=0)
               (param $xs0 (ref eq))
