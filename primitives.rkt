@@ -62,6 +62,7 @@
  nonpositive-integer?
  nonnegative-integer?
  natural?
+ inexact?
  inexact->exact
  exact->inexact
  fixnum?

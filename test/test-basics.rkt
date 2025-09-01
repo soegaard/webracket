@@ -176,6 +176,10 @@
                          (equal? (number->string 16 16) "10")
                          (equal? (number->string 1.25)  "1.25")
                          (equal? (number->string 1.0)   "1.0")))
+              (list "inexact?"
+                    (and (equal? (inexact? 1.0) #t)
+                         (equal? (inexact? 1)   #f)
+                         (equal? (procedure-arity inexact?) 1)))
               (list "inexact->exact"
                     (and (equal? (inexact->exact 1)   1)
                          (equal? (inexact->exact 1.0) 1)))

@@ -468,6 +468,7 @@
   positive-integer? negative-integer?
   nonpositive-integer? nonnegative-integer?
   natural?
+  inexact?
   inexact->exact
   exact->inexact
   exact-round exact-floor exact-ceiling exact-truncate
