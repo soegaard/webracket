@@ -195,6 +195,11 @@
                         (equal? (remainder -10.0 3) -1.0)
                         (equal? (remainder 10.0 -3) 1.0)
                          (equal? (remainder -10 -3) -1)))
+             (list "modulo"
+                   (and (equal? (modulo 10 3) 1)
+                        (equal? (modulo -10.0 3) 2.0)
+                        (equal? (modulo 10.0 -3) -2.0)
+                        (equal? (modulo -10 -3) -1)))
              (list "quotient/remainder"
                    (list (let-values ([(q r) (quotient/remainder 10 3)])
                            (list #;q r (equal? q 3) (equal? r 1)))

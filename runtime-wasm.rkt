@@ -3240,7 +3240,7 @@
         ;; [x] remainder
         ;; [x] quotient
         ;; [x] quotient/remainder
-        ;; [ ] modulo
+        ;; [x] modulo
          
          ;; [x] add1
          ;; [x] sub1
@@ -3404,7 +3404,50 @@
                                (f64.mul
                                 (f64.trunc (f64.div (local.get $nf) (local.get $mf)))
                                 (local.get $mf))))
-               (return (struct.new $Flonum (i32.const 0) (local.get $rf))))
+                (return (struct.new $Flonum (i32.const 0) (local.get $rf))))
+
+         (func $modulo (type $Prim2)
+               (param $n (ref eq))
+               (param $m (ref eq))
+               (result   (ref eq))
+
+               (local $r  (ref eq))
+               (local $ru i32)
+               (local $mu i32)
+               (local $fl (ref $Flonum))
+               (local $mf f64)
+               (local $rf f64)
+
+               ;; compute remainder; validates arguments and zero
+               (local.set $r (call $remainder (local.get $n) (local.get $m)))
+
+               ;; convert m to f64 for sign comparison
+               (if (ref.test (ref i31) (local.get $m))
+                   (then (local.set $mu (i31.get_s (ref.cast i31ref (local.get $m))))
+                         (if (i32.eqz (i32.and (local.get $mu) (i32.const 1)))
+                             (then (local.set $mf (f64.convert_i32_s (i32.shr_s (local.get $mu) (i32.const 1)))))
+                             (else (call $raise-expected-number (local.get $m)) (unreachable))))
+                   (else (local.set $fl (ref.cast (ref $Flonum) (local.get $m)))
+                         (local.set $mf (struct.get $Flonum $v (local.get $fl)))))
+
+               ;; adjust remainder to have sign of m
+               (if (ref.test (ref i31) (local.get $r))
+                   (then (local.set $ru (i31.get_s (ref.cast i31ref (local.get $r))))
+                         (if (i32.eqz (local.get $ru))
+                             (return (local.get $r))
+                             (if (i32.eq (i32.lt_s (local.get $ru) (i32.const 0))
+                                         (i32.lt_s (local.get $mu) (i32.const 0)))
+                                 (return (local.get $r))
+                                 (return (ref.i31 (i32.add (local.get $ru) (local.get $mu)))))))
+                   (else (local.set $fl (ref.cast (ref $Flonum) (local.get $r)))
+                         (local.set $rf (struct.get $Flonum $v (local.get $fl)))
+                         (if (f64.eq (local.get $rf) (f64.const 0.0))
+                             (local.set $rf (f64.mul (f64.const 0.0) (local.get $mf)))
+                             (if (i32.eq (f64.lt (local.get $rf) (f64.const 0.0))
+                                         (f64.lt (local.get $mf) (f64.const 0.0)))
+                                 (then)
+                                 (else (local.set $rf (f64.add (local.get $rf) (local.get $mf))))))
+                         (return (struct.new $Flonum (i32.const 0) (local.get $rf)))))
 
          (func $quotient/remainder (type $Prim2)
                (param $n (ref eq))

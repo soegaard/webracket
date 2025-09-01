@@ -73,6 +73,7 @@
  /
  quotient
  remainder
+ modulo
  quotient/remainder
  add1
  sub1
