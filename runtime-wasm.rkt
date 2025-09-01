@@ -3430,9 +3430,10 @@
                                              (if (i32.eqz (i32.and (local.get $mu) (i32.const 1)))
                                                  (then (if (i32.eqz (local.get $mu))
                                                            (then (call $raise-division-by-zero) (unreachable)))
-                                                       (local.set $q (i32.div_s (local.get $nu) (local.get $mu)))
-                                                       (local.set $r (i32.rem_s (local.get $nu) (local.get $mu)))
-                                                       (return (array.new_fixed $Values 2
+                                                      (local.set $q (i32.shl (i32.div_s (local.get $nu) (local.get $mu))
+                                                                            (i32.const 1)))
+                                                      (local.set $r (i32.rem_s (local.get $nu) (local.get $mu)))
+                                                      (return (array.new_fixed $Values 2
                                                                               (ref.i31 (local.get $q))
                                                                               (ref.i31 (local.get $r))))))))))))
 
