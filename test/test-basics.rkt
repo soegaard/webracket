@@ -431,6 +431,23 @@
                          (equal? (integer-length -8) 3)
                          (equal? (integer-length 0) 0)))))
 
+        (list "4.3.2.7 Random Numbers"
+              ;; Basic sanity checks for the `random` primitive.  These
+              ;; tests intentionally avoid relying on a particular
+              ;; sequence and instead just validate the ranges and
+              ;; result types.
+              (list
+               (list "random"
+                     (let ([v (random)])
+                       (and (inexact? v) (> v 0.0) (< v 1.0))))
+               (list "random k"
+                     (let ([v (random 5)])
+                       (and (exact-integer? v) (<= 0 v) (< v 5))))
+               (list "random k edge" (= (random 1) 0))
+               (list "random min max"
+                     (let ([v (random -5 5)])
+                       (and (exact-integer? v) (<= -5 v) (< v 5))))))
+
        (list "4.3.2.10 Extra Constants and Functions"
       (list
        (list "degrees->radians"

@@ -4573,10 +4573,86 @@
                         (call $raise-expected-number (local.get $n))
                         (unreachable))))
                   (else
-                   (call $raise-expected-number (local.get $n))
-                   (unreachable))))
+                  (call $raise-expected-number (local.get $n))
+                  (unreachable))))
 
 
+
+        ;; Shared state for the pseudo-random number generator.
+        ;; The initial value is chosen arbitrarily and can be replaced
+        ;; with a fixed seed if reproducibility is needed.
+        (global $random-state (mut i32) (i32.const 0x9E3779B9))
+
+        ;; A simple SplitMix32 generator that produces uniformly
+        ;; distributed 32-bit integers.  It is fast and has a large
+        ;; period, which is sufficient for the primitives implemented
+        ;; here.  The algorithm is the 32-bit variant of the SplitMix
+        ;; step used by multiple languages as an initialization phase
+        ;; for stronger generators.
+        (func $random-u32 (result i32)
+              (local $z i32)
+              (local.set $z (i32.add (global.get $random-state)
+                                     (i32.const 0x9E3779B9)))
+              (global.set $random-state (local.get $z))
+              (local.set $z (i32.xor (local.get $z)
+                                      (i32.shr_u (local.get $z) (i32.const 16))))
+              (local.set $z (i32.mul (local.get $z) (i32.const 0x85EBCA6B)))
+              (local.set $z (i32.xor (local.get $z)
+                                      (i32.shr_u (local.get $z) (i32.const 13))))
+              (local.set $z (i32.mul (local.get $z) (i32.const 0xC2B2AE35)))
+              (local.set $z (i32.xor (local.get $z)
+                                      (i32.shr_u (local.get $z) (i32.const 16))))
+              (local.get $z))
+
+        ;; Implements Racket's `random` primitive.  Dispatches on the
+        ;; number of arguments at runtime and mirrors the host
+        ;; semantics:
+        ;;   - (random)       -> flonum in (0,1)
+        ;;   - (random k)     -> exact integer in [0,k)
+        ;;   - (random min max) -> exact integer in [min,max)
+        (func $random (type $Prim2)
+              (param $a (ref eq)) (param $b (ref eq))
+              (result (ref eq))
+
+              (local $k i32)
+              (local $min i32)
+              (local $max i32)
+              (local $range i32)
+              (local $r i32)
+
+              (if (ref.eq (local.get $a) (global.get $missing))
+                  (then
+                   (local.set $r (call $random-u32))
+                   (struct.new $Flonum
+                                (i32.const 0)
+                                (f64.div
+                                 (f64.add (f64.convert_i32_u (local.get $r))
+                                          (f64.const 1))
+                                 (f64.const 4294967298.0))))
+                  (else
+                   (if (ref.eq (local.get $b) (global.get $missing))
+                       (then
+                        (if (i32.eqz (call $fx?/i32 (local.get $a)))
+                            (then (call $raise-expected-number (local.get $a)) (unreachable)))
+                        (local.set $k ,(Half `(i31.get_s (ref.cast i31ref (local.get $a)))))
+                        (if (i32.le_s (local.get $k) (i32.const 0))
+                            (then (call $raise-argument-error (local.get $a)) (unreachable)))
+                        (local.set $r (i32.rem_u (call $random-u32) (local.get $k)))
+                        (ref.i31 (i32.shl (local.get $r) (i32.const 1))))
+                       (else
+                        (if (i32.eqz (call $fx?/i32 (local.get $a)))
+                            (then (call $raise-expected-number (local.get $a)) (unreachable)))
+                        (if (i32.eqz (call $fx?/i32 (local.get $b)))
+                            (then (call $raise-expected-number (local.get $b)) (unreachable)))
+                        (local.set $min ,(Half `(i31.get_s (ref.cast i31ref (local.get $a)))))
+                        (local.set $max ,(Half `(i31.get_s (ref.cast i31ref (local.get $b)))))
+                        (local.set $range (i32.sub (local.get $max) (local.get $min)))
+                        (if (i32.le_s (local.get $range) (i32.const 0))
+                            (then (call $raise-argument-error (local.get $b)) (unreachable)))
+                        (local.set $r (i32.add (local.get $min)
+                                               (i32.rem_u (call $random-u32)
+                                                          (local.get $range))))
+                        (ref.i31 (i32.shl (local.get $r) (i32.const 1)))))))
 
          ;;;
          ;;;  4.3.4 Fixnums
