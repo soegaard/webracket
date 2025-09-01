@@ -130,7 +130,8 @@
  bitwise-not
  bitwise-bit-set?
  bitwise-first-bit-set  ; added in version 8.16
- integer-length 
+ integer-length
+ random
  ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
  ;; 4.3.2.9 Number–String Conversions
@@ -552,6 +553,17 @@ bytes->string/utf-8
   (if (zero? n)
       -1
       (sub1 (integer-length (bitwise-and n (- n))))))
+
+(define random
+  ;; Simple wrapper around Racket's `random` that exposes the same
+  ;; optional argument behaviour to the rest of the system.  The RNG
+  ;; state itself lives in `runtime-wasm.rkt` and is shared across
+  ;; invocations of the Wasm primitive.
+  (let ([rb random])
+    (case-lambda
+      [() (rb)]
+      [(k) (rb k)]
+      [(min max) (rb min max)])))
 
 ; The "real" apply is a macro (due to keyword arguments)
 ; This defines a plain apply as a procedure.

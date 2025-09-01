@@ -484,6 +484,7 @@
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
   integer-length
+  random
 
   fixnum? fxzero?
   fx+ fx- fx*
@@ -3098,6 +3099,7 @@
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
+        [(random)                      (inline-prim/optional sym ae1 0 2)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
