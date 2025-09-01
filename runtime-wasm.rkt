@@ -5364,6 +5364,64 @@
         (func $raise-string->number:bad-argument (unreachable))
         (func $raise-string->number:bad-radix (unreachable))
 
+        (func $string->number:parse-integer
+              (param $s (ref $String))
+              (param $i i32)
+              (param $radix i32)
+              (result (ref eq) i32)
+
+              (local $arr   (ref $I32Array))
+              (local $len   i32)
+              (local $cp    i32)
+              (local $digit i32)
+              (local $acc   i32)
+              (local $start i32)
+
+              (local.set $arr (struct.get $String $codepoints (local.get $s)))
+              (local.set $len (call $i32array-length (local.get $arr)))
+              (local.set $start (local.get $i))
+              (local.set $acc (i32.const 0))
+
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                           (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+
+                           ;; Try '0'..'9'
+                           (local.set $digit (i32.sub (local.get $cp) (i32.const 48)))
+                           (if (i32.lt_u (local.get $digit) (i32.const 10))
+                               (then (nop))
+                               (else
+                                ;; Try 'a'..'z'
+                                (local.set $digit (i32.sub (local.get $cp) (i32.const 87)))
+                                (if (i32.lt_u (local.get $digit) (i32.const 26))
+                                    (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
+                                    (else
+                                     ;; Try 'A'..'Z'
+                                     (local.set $digit (i32.sub (local.get $cp) (i32.const 55)))
+                                     (if (i32.lt_u (local.get $digit) (i32.const 26))
+                                         (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
+                                         (else (br $done)))))))
+
+                           (if (i32.ge_u (local.get $digit) (local.get $radix))
+                               (then (br $done))
+                               (else (nop)))
+
+                           (local.set $acc
+                                      (i32.add
+                                       (i32.mul (local.get $acc) (local.get $radix))
+                                       (local.get $digit)))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $loop)))
+
+              (if (i32.eq (local.get $i) (local.get $start))
+                  (then (return (global.get $false) (i32.const 0)))
+                  (else (return (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))
+                                (i32.sub (local.get $i) (local.get $start))))))
+
+
+        
+
         (func $string->number (type $Prim5)
               (param $s-raw        (ref eq))
               (param $radix-raw    (ref eq))
@@ -5379,12 +5437,14 @@
               (local $i     i32)
               (local $neg   i32)
               (local $cp    i32)
-              (local $digit i32)
+              (local $int   (ref eq))
+              (local $n     i32)
+              (local $frac  (ref eq))
+              (local $m     i32)
               (local $acc   i32)
-              (local $frac  i32)
+              (local $frac-i32 i32)
               (local $div   i32)
-              (local $has-dot i32)
-              (local $parsed i32)
+              (local $pow   i32)
               (local $res   f64)
 
               ;; Validate string argument
@@ -5429,102 +5489,67 @@
               ;; Handle optional sign
               (local.set $i   (i32.const 0))
               (local.set $neg (i32.const 0))
-              (local.set $acc (i32.const 0))
-              (local.set $frac (i32.const 0))
-              (local.set $div (i32.const 1))
-              (local.set $has-dot (i32.const 0))
-              (local.set $parsed (i32.const 0))
               (local.set $cp (call $i32array-ref (local.get $arr) (i32.const 0)))
-              (if (i32.eq (local.get $cp) (i32.const 45))  ;; '-'
+              (if (i32.eq (local.get $cp) (i32.const 45))
                   (then (local.set $neg (i32.const 1))
                         (local.set $i (i32.const 1)))
                   (else
-                   (if (i32.eq (local.get $cp) (i32.const 43)) ;; '+'
+                   (if (i32.eq (local.get $cp) (i32.const 43))
                        (then (local.set $i (i32.const 1)))
                        (else (nop)))))
 
-              ;; Parse digits and optional decimal point
-              (block $done
-                     (loop $loop
-                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                           (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+              ;; SOMETHING IS MISSING HERE
 
-                           (if (i32.eq (local.get $cp) (i32.const 46)) ;; '.'
-                               (then (if (i32.eqz (local.get $has-dot))
-                                         (then (if (i32.ne (local.get $radix) (i32.const 10))
-                                                   (then (return (global.get $false)))
-                                                   (else (nop)))
-                                               (local.set $has-dot (i32.const 1))
-                                               (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                               (br $loop))
-                                         (else (return (global.get $false))))))
-
-                           ;; Try '0'..'9'
-                           (local.set $digit (i32.sub (local.get $cp) (i32.const 48)))
-                           (if (i32.lt_u (local.get $digit) (i32.const 10))
-                               (then (nop))
-                               (else
-                                ;; Try 'a'..'z'
-                                (local.set $digit (i32.sub (local.get $cp) (i32.const 87)))
-                                (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                    (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
-                                    (else
-                                     ;; Try 'A'..'Z'
-                                     (local.set $digit (i32.sub (local.get $cp) (i32.const 55)))
-                                     (if (i32.lt_u (local.get $digit) (i32.const 26))
-                                         (then (local.set $digit (i32.add (local.get $digit) (i32.const 10))))
-                                         (else (return (global.get $false))))))))
-
-                           (if (i32.ge_u (local.get $digit) (local.get $radix))
-                               (then (return (global.get $false)))
-                               (else (nop)))
-
-                           (if (local.get $has-dot)
-                               (then (local.set $frac
-                                                (i32.add
-                                                 (i32.mul (local.get $frac) (local.get $radix))
-                                                 (local.get $digit)))
-                                     (local.set $div
-                                                (i32.mul (local.get $div) (local.get $radix))))
-                               (else (local.set $acc
-                                                (i32.add
-                                                 (i32.mul (local.get $acc) (local.get $radix))
-                                                 (local.get $digit)))))
-
-                           (local.set $parsed (i32.const 1))
-                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                           (br $loop)))
-
-              ;; Require at least one digit
-              (if (i32.eqz (local.get $parsed))
+              ;; Expect decimal point
+              (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+              (if (i32.ne (local.get $cp) (i32.const 46))
                   (then (return (global.get $false)))
                   (else (nop)))
 
-              ;; If decimal present, ensure fraction digits exist
-              (if (local.get $has-dot)
-                  (then (if (i32.eq (local.get $div) (i32.const 1))
-                            (then (return (global.get $false)))
-                            (else (nop)))
-                  (else (nop))))
+              ;; Decimal only allowed in radix 10
+              (if (i32.ne (local.get $radix) (i32.const 10))
+                  (then (return (global.get $false)))
+                  (else (nop)))
+
+              ;; Parse fractional part
+              (call $string->number:parse-integer
+                    (local.get $s)
+                    (i32.add (local.get $i) (i32.const 1))
+                    (local.get $radix))
+              (local.set $m) (local.set $frac)
+              (if (ref.eq (local.get $frac) (global.get $false))
+                  (then (return (global.get $false)))
+                  (else (nop)))
+
+              ;; Require digits after '.' and consume all characters
+              (if (i32.eqz (local.get $m))
+                  (then (return (global.get $false)))
+                  (else (nop)))
+              (if (i32.ne (i32.add (local.get $i) (i32.add (local.get $m) (i32.const 1))) (local.get $len))
+                  (then (return (global.get $false)))
+                  (else (nop)))
 
               ;; Compute result
-              (if (local.get $has-dot)
-                  (then
-                   (local.set $res
-                              (f64.add
-                               (f64.convert_i32_s (local.get $acc))
-                               (f64.div (f64.convert_i32_s (local.get $frac))
-                                        (f64.convert_i32_s (local.get $div)))))
-                   (if (local.get $neg)
-                       (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
-                       (else (nop)))
-                   (struct.new $Flonum (i32.const 0) (local.get $res)))
-                  (else
-                   (if (local.get $neg)
-                       (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
-                       (else (nop)))
-                   (ref.i31 (i32.shl (local.get $acc) (i32.const 1))))))
+              (local.set $acc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $int))) (i32.const 1)))
+              (local.set $frac-i32 (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $frac))) (i32.const 1)))
+              (local.set $div (i32.const 1))
+              (local.set $pow (local.get $m))
+              (block $pow-done
+                     (loop $pow-loop
+                           (br_if $pow-done (i32.eqz (local.get $pow)))
+                           (local.set $div (i32.mul (local.get $div) (local.get $radix)))
+                           (local.set $pow (i32.add (local.get $pow) (i32.const -1)))
+                           (br $pow-loop)))
 
+              (local.set $res
+                         (f64.add
+                          (f64.convert_i32_s (local.get $acc))
+                          (f64.div (f64.convert_i32_s (local.get $frac-i32))
+                                   (f64.convert_i32_s (local.get $div)))))
+              (if (local.get $neg)
+                  (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
+                  (else (nop)))
+              (struct.new $Flonum (i32.const 0) (local.get $res)))
 
 
 
