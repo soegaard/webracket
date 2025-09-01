@@ -185,6 +185,11 @@
 
        (list "4.3.2.1 Arithmetic"
              (list
+              (list "quotient"
+                    (list (equal? (quotient 10 3) 3)
+                         (equal? (quotient -10.0 3) -3.0)
+                         (equal? (quotient 10.0 -3) -3.0)
+                         (equal? (quotient -10 -3) 3)))
              (list "remainder"
                    (and (equal? (remainder 10 3) 1)
                         (equal? (remainder -10.0 3) -1.0)

@@ -1145,12 +1145,15 @@
             >=
             abs
             acos
+            acosh
             add1
             alt-reverse
             append
             apply
             asin
+            asinh
             atan
+            atanh
             boolean?
             box
             boxed
@@ -1201,9 +1204,13 @@
             eqv?
             even?
             exact->inexact
+            exact-ceiling
+            exact-floor
             exact-integer?
             exact-nonnegative-integer?
             exact-positive-integer?
+            exact-round
+            exact-truncate
             exact?
             exp
             expt
@@ -1451,13 +1458,6 @@
             void?
             write-byte
             zero?)
-
-
-
-
-
-
-
 
           ))
 

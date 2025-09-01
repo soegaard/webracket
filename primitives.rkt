@@ -71,6 +71,7 @@
  -
  *
  /
+ quotient
  remainder
  quotient/remainder
  add1
