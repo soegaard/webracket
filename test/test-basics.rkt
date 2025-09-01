@@ -248,13 +248,21 @@
        
        (list "4.3.2 Generic Numerics"
              (list
-              (list "abs"
-                    (and (equal? (abs 1) 1)
-                         (equal? (abs -1) 1)
-                         (equal? (abs 1.0) 1.0)))
-              (list "round"
-                    (and (equal? (round 1.2) 1.)
-                         (equal? (round 2.5) 2.)))
+             (list "abs"
+                   (and (equal? (abs 1) 1)
+                        (equal? (abs -1) 1)
+                        (equal? (abs 1.0) 1.0)))
+             (list "sgn"
+                   (and (equal? (sgn 10) 1)
+                        (equal? (sgn -10) -1)
+                        (equal? (sgn 10.0) 1.0)
+                        (equal? (sgn -10.0) -1.0)
+                        (eqv? (sgn 0.0) 0.0)
+                        (eqv? (sgn -0.0) -0.0)
+                        (nan? (sgn +nan.0))))
+             (list "round"
+                   (and (equal? (round 1.2) 1.)
+                        (equal? (round 2.5) 2.)))
               (list "floor"
                     (and (equal? (floor 1.2) 1.)
                          (equal? (floor -1.2) -2.)))

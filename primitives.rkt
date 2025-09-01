@@ -88,6 +88,7 @@
  gcd
  lcm
  abs
+ sgn
  exact-round exact-floor exact-ceiling exact-truncate
  round
  floor
