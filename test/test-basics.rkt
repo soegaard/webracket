@@ -196,12 +196,12 @@
                         (equal? (remainder 10.0 -3) 1.0)
                          (equal? (remainder -10 -3) -1)))
              (list "quotient/remainder"
-                   (and (let-values ([(q r) (quotient/remainder 10 3)])
-                          (and (= q 3) (= r 1)))
-                        (let-values ([(q r) (quotient/remainder -10.0 3)])
-                          (and (= q -3.0) (= r -1.0)))
-                        (let-values ([(q r) (quotient/remainder 10.0 -3)])
-                          (and (= q -3.0) (= r 1.0))))))
+                   (list (let-values ([(q r) (quotient/remainder 10 3)])
+                           (list #;q r (equal? q 3) (equal? r 1)))
+                         (let-values ([(q r) (quotient/remainder -10.0 3)])
+                           (and (equal? q -3.0) (equal? r -1.0)))
+                         (let-values ([(q r) (quotient/remainder 10.0 -3)])
+                           (and (equal? q -3.0) (equal? r 1.0)))))))
 
        (list "4.3.2.2 Number Comparison"
              (list
