@@ -3236,28 +3236,6 @@
          ;; [/] /
          ;; TODO  The functions + - * / currently uses 2 arguments. Make them variadic.
                   
-        ;; TODO  Implement `remainder`, quotient/remainder` and `modulo`.
-        ;; [x] remainder
-        ;; [x] quotient
-        ;; [x] quotient/remainder
-        ;; [ ] modulo
-         
-         ;; [x] add1
-         ;; [x] sub1
-
-         ;; [ ] abs
-         ;; [ ] max
-         ;; [ ] min
-         ;; [ ] gcd
-         ;; [ ] lcm
-         ;; [x] round
-         ;; [ ] floor
-         ;; [ ] ceiling
-         ;; [ ] truncate
-         ;; [ ] numerator
-         ;; [ ] denominator
-         ;; [ ] rationalize
-         ;; TODO  Implement arithmetic functions.
 
          (func $quotient (type $Prim2)
                (param $n (ref eq))
