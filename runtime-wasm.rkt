@@ -2591,25 +2591,32 @@
          ;; [ ] rational?
          ;; [x] integer?
          ;; [x] exact-integer?
-         ;; [x] exact-nonnegative-integer?
-         ;; [x] exact-positive-integer?
-         ;; [ ] inexact-real?
-         ;; [ ] fixnum?
-         ;; [ ] flonum?
-         ;; [ ] double-flonum?
-         ;; [ ] single-flonum?
-         ;; [ ] single-flonum-available?
-         ;; [x] zero?
-         ;; [x] positive?
-         ;; [x] negative?
-         ;; [x] even?
-         ;; [x] odd?
-         ;; [x] exact?
-         ;; [ ] inexact?
-         ;; [x] inexact->exact
-         ;; [x] exact->inexact
-         ;; [ ] real->single-flonum
-         ;; [ ] real->double-flonum
+        ;; [x] exact-nonnegative-integer?
+        ;; [x] exact-positive-integer?
+        ;; [x] positive-integer?
+        ;; [x] negative-integer?
+        ;; [x] nonpositive-integer?
+        ;; [x] nonnegative-integer?
+        ;; [x] natural?
+        ;; [x] nan?
+        ;; [x] infinite?
+        ;; [ ] inexact-real?
+        ;; [ ] fixnum?
+        ;; [ ] flonum?
+        ;; [ ] double-flonum?
+        ;; [ ] single-flonum?
+        ;; [ ] single-flonum-available?
+        ;; [x] zero?
+        ;; [x] positive?
+        ;; [x] negative?
+        ;; [x] even?
+        ;; [x] odd?
+        ;; [x] exact?
+        ;; [ ] inexact?
+        ;; [x] inexact->exact
+        ;; [x] exact->inexact
+        ;; [ ] real->single-flonum
+        ;; [ ] real->double-flonum
 
          (func $number? (type $Prim1)
                (param $v (ref eq))
@@ -3223,6 +3230,104 @@
                         (else (return (global.get $false))))))
                ;; Not a number
                (return (global.get $false)))
+
+         (func $nan? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (local $x/fl (ref $Flonum))
+               (local $f64 f64)
+
+               ;; Fixnum -> #f
+               (if (ref.test (ref i31) (local.get $x))
+                   (then (return (global.get $false))))
+
+               ;; Flonum -> check NaN
+               (if (ref.test (ref $Flonum) (local.get $x))
+                   (then
+                    (local.set $x/fl (ref.cast (ref $Flonum) (local.get $x)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $x/fl)))
+                    (if (f64.ne (local.get $f64) (local.get $f64))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
+
+               ;; Not a number
+               (call $raise-expected-number (local.get $x))
+               (unreachable))
+
+         (func $infinite? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (local $x/fl (ref $Flonum))
+               (local $f64 f64)
+
+               ;; Fixnum -> #f
+               (if (ref.test (ref i31) (local.get $x))
+                   (then (return (global.get $false))))
+
+               ;; Flonum -> check ±inf
+               (if (ref.test (ref $Flonum) (local.get $x))
+                   (then
+                    (local.set $x/fl (ref.cast (ref $Flonum) (local.get $x)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $x/fl)))
+                    (if (f64.eq (local.get $f64) (f64.const +inf))
+                        (then (return (global.get $true))))
+                    (if (f64.eq (local.get $f64) (f64.const -inf))
+                        (then (return (global.get $true))))
+                    (return (global.get $false))))
+
+               ;; Not a number
+               (call $raise-expected-number (local.get $x))
+               (unreachable))
+
+         (func $positive-integer? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $integer? (local.get $x)) (global.get $true))
+                   (then (call $positive? (local.get $x)))
+                   (else (global.get $false))))
+
+         (func $negative-integer? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $integer? (local.get $x)) (global.get $true))
+                   (then (call $negative? (local.get $x)))
+                   (else (global.get $false))))
+
+         (func $nonpositive-integer? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $integer? (local.get $x)) (global.get $true))
+                   (then (if (result (ref eq))
+                             (ref.eq (call $positive? (local.get $x)) (global.get $true))
+                             (then (global.get $false))
+                             (else (global.get $true))))
+                   (else (global.get $false))))
+
+         (func $nonnegative-integer? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $integer? (local.get $x)) (global.get $true))
+                   (then (if (result (ref eq))
+                             (ref.eq (call $negative? (local.get $x)) (global.get $true))
+                             (then (global.get $false))
+                             (else (global.get $true))))
+                   (else (global.get $false))))
+
+         (func $natural? (type $Prim1)
+               (param $x (ref eq))
+               (result (ref eq))
+
+               (call $exact-nonnegative-integer? (local.get $x)))
 
          ;; 4.3.2 Generic Numerics
          ;;     https://docs.racket-lang.org/reference/generic-numbers.html

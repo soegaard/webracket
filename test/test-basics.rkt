@@ -181,7 +181,37 @@
                          (equal? (inexact->exact 1.0) 1)))
               (list "exact->inexact"
                     (and (equal? (exact->inexact 1)   1.0)
-                         (equal? (exact->inexact 1.0) 1.0)))))
+                         (equal? (exact->inexact 1.0) 1.0)))
+              (list "nan?"
+                    (and (equal? (nan? +nan.0) #t)
+                         (equal? (nan? 0.0)   #f)))
+              (list "infinite?"
+                    (and (equal? (infinite? +inf.0) #t)
+                         (equal? (infinite? -inf.0) #t)
+                         (equal? (infinite? 0.0)    #f)))
+              (list "positive-integer?"
+                    (and (equal? (positive-integer? 1)   #t)
+                         (equal? (positive-integer? 1.0) #t)
+                         (equal? (positive-integer? 1.5) #f)
+                         (equal? (positive-integer? -1)  #f)))
+              (list "negative-integer?"
+                    (and (equal? (negative-integer? -1)   #t)
+                         (equal? (negative-integer? -1.0) #t)
+                         (equal? (negative-integer? -1.5) #f)
+                         (equal? (negative-integer? 1)    #f)))
+              (list "nonpositive-integer?"
+                    (and (equal? (nonpositive-integer? -1) #t)
+                         (equal? (nonpositive-integer? 0)  #t)
+                         (equal? (nonpositive-integer? 1)  #f)))
+              (list "nonnegative-integer?"
+                    (and (equal? (nonnegative-integer? 0)  #t)
+                         (equal? (nonnegative-integer? 1)  #t)
+                         (equal? (nonnegative-integer? -1) #f)))
+              (list "natural?"
+                    (and (equal? (natural? 0)   #t)
+                         (equal? (natural? 1)   #t)
+                         (equal? (natural? 1.0) #f)
+                         (equal? (natural? -1)  #f))))
 
        (list "4.3.2.1 Arithmetic"
              (list

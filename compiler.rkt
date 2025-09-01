@@ -464,6 +464,10 @@
   exact? exact-integer?
   exact-nonnegative-integer?
   exact-positive-integer?
+  nan? infinite?
+  positive-integer? negative-integer?
+  nonpositive-integer? nonnegative-integer?
+  natural?
   inexact->exact
   exact->inexact
   exact-round exact-floor exact-ceiling exact-truncate
