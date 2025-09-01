@@ -176,6 +176,10 @@
                          (equal? (number->string 16 16) "10")
                          (equal? (number->string 1.25)  "1.25")
                          (equal? (number->string 1.0)   "1.0")))
+              (list "string->number"
+                    (and (equal? (string->number "42") 42)
+                         (equal? (string->number "111" 7) 57)
+                         (equal? (string->number "hello") #f)))
               (list "inexact?"
                     (and (equal? (inexact? 1.0) #t)
                          (equal? (inexact? 1)   #f)
