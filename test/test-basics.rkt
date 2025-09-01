@@ -310,6 +310,9 @@
 
        (list "4.3.2.3 Powers and Roots"
             (list
+             (list "sqr"
+                   (and (equal? (sqr 5) 25)
+                        (equal? (sqr 2.0) 4.0)))
              (list "sqrt"
                    (and (equal? (sqrt 9) 3)
                         (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-12)))
