@@ -1130,6 +1130,52 @@
                    (equal? (list-tail 1 0)             1)
                    (equal? (procedure-arity list-tail) 2)))
 
+        (list "first"
+              (and (equal? (first '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 1)
+                   (equal? (procedure-arity first) 1)))
+        (list "second"
+              (and (equal? (second '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 2)
+                   (equal? (procedure-arity second) 1)))
+        (list "third"
+              (and (equal? (third '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 3)
+                   (equal? (procedure-arity third) 1)))
+        (list "fourth"
+              (and (equal? (fourth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 4)
+                   (equal? (procedure-arity fourth) 1)))
+        (list "fifth"
+              (and (equal? (fifth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 5)
+                   (equal? (procedure-arity fifth) 1)))
+        (list "sixth"
+              (and (equal? (sixth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 6)
+                   (equal? (procedure-arity sixth) 1)))
+        (list "seventh"
+              (and (equal? (seventh '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 7)
+                   (equal? (procedure-arity seventh) 1)))
+        (list "eighth"
+              (and (equal? (eighth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 8)
+                   (equal? (procedure-arity eighth) 1)))
+        (list "ninth"
+              (and (equal? (ninth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 9)
+                   (equal? (procedure-arity ninth) 1)))
+        (list "tenth"
+              (and (equal? (tenth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 10)
+                   (equal? (procedure-arity tenth) 1)))
+        (list "eleventh"
+              (and (equal? (eleventh '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 11)
+                   (equal? (procedure-arity eleventh) 1)))
+        (list "twelfth"
+              (and (equal? (twelfth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 12)
+                   (equal? (procedure-arity twelfth) 1)))
+        (list "thirteenth"
+              (and (equal? (thirteenth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 13)
+                   (equal? (procedure-arity thirteenth) 1)))
+        (list "fourteenth"
+              (and (equal? (fourteenth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 14)
+                   (equal? (procedure-arity fourteenth) 1)))
+        (list "fifteenth"
+              (and (equal? (fifteenth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 15)
+                   (equal? (procedure-arity fifteenth) 1)))
+
         (list "list*"
               (and (equal? (list* 1 2 3) (cons 1 (cons 2 3)))
                    (equal? (list* 1 2 (list 3 4)) '(1 2 3 4))))

@@ -312,6 +312,21 @@ bytes->string/utf-8
  length
  list-ref
  list-tail
+ first
+ second
+ third
+ fourth
+ fifth
+ sixth
+ seventh
+ eighth
+ ninth
+ tenth
+ eleventh
+ twelfth
+ thirteenth
+ fourteenth
+ fifteenth
  append
  reverse
 
