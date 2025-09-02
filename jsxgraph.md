@@ -56,8 +56,7 @@ the JavaScript snippet above:
 (define (init-board _)
   (define jxg (js-var "JXG"))
   (define jsx (js-ref jxg "JSXGraph"))
-  (define init-fn (js-ref jsx "initBoard"))
-  (js-operator 'call (vector init-fn jsx "box" options)))
+  (js-send jsx "initBoard" (vector "box" options)))
 
 (define script (js-create-element "script"))
 (js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
@@ -66,5 +65,5 @@ the JavaScript snippet above:
 ```
 
 This code constructs the board setup using WebRacket primitives, showing how
-`js-var`, `js-ref`, `js-operator`, and related functions remove the need for
+`js-var`, `js-ref`, `js-send`, and related functions remove the need for
 evaluating raw JavaScript strings.
