@@ -522,7 +522,7 @@ var imports = {
                                      const entries = from_fasl(fields) || [];
                                      const o = {};
                                      for (const [k, v] of entries) {
-                                       o[from_fasl(k)] = from_fasl(v);
+                                       o[k] = v;
                                      }
                                      return o;
                                    }),
