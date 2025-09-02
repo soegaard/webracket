@@ -1140,6 +1140,12 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "build-list"
+              (and (equal? (build-list 10 values)
+                           '(0 1 2 3 4 5 6 7 8 9))
+                   (equal? (build-list 5 (lambda (x) (* x x)))
+                           '(0 1 4 9 16))))
+
         (list "memq"
               (and (equal? (memq 'a '(a b c))   '(a b c))
                    (equal? (memq 'b '(a b c))   '(b c))

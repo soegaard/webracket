@@ -307,7 +307,7 @@ bytes->string/utf-8
  list
  list*
  make-list     ; racket/list
- ; build-list
+ build-list
 
  length
  list-ref
