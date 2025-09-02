@@ -1087,6 +1087,8 @@ var imports = {
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Document
     'document': hasDOM ? {
+        'document':                 (()                               => document),
+        'head':                     (()                               => document.head),
         'body':                     (()                               => document.body),
         'create-element':           ((local_name)                     => document.createElement(from_fasl(local_name))),
         'create-text-node':         ((fasl_start)                     => document.createTextNode(from_fasl(fasl_start))),
@@ -1139,6 +1141,8 @@ var imports = {
         // 'writeln':                  ((text)                           => document.writeln(from_fasl(text))),
     }
     : { // Node
+        'document'()                 { throw new Error('DOM not available in this environment'); },
+        'head'()                     { throw new Error('DOM not available in this environment'); },
         'body'()                     { throw new Error('DOM not available in this environment'); },
         'create-element'()           { throw new Error('DOM not available in this environment'); },
         'create-text-node'()         { throw new Error('DOM not available in this environment'); },
