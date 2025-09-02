@@ -417,6 +417,7 @@
   list*
   filter
   make-list
+  build-list
 
   void?
   make-void  ; zero arguments

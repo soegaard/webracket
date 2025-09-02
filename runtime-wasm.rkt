@@ -9889,6 +9889,68 @@
                (local.get $acc))
 
 
+         (func $build-list (type $Prim2)
+               (param $n-raw (ref eq))  ;; exact-nonnegative integer
+               (param $proc  (ref eq))  ;; procedure
+               (result (ref eq))
+
+               (local $n   i32)
+               (local $f   (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+
+               ;; Check and unwrap n
+               (if (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
+                   (then (call $raise-expected-fixnum (local.get $n-raw))))
+               (local.set $n
+                          (i32.shr_s
+                           (i31.get_s (ref.cast (ref i31) (local.get $n-raw)))
+                           (i32.const 1)))
+               (if (i32.lt_s (local.get $n) (i32.const 0))
+                   (then (call $raise-argument-error (local.get $n-raw))))
+
+               ;; Check procedure and fetch invoker
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               ;; Delegate
+               (call $build-list/checked (local.get $n) (local.get $f) (local.get $finv)))
+
+         (func $build-list/checked
+               (param $n   i32)
+               (param $f   (ref $Procedure))
+               (param $finv (ref $ProcedureInvoker))
+               (result (ref eq))
+
+               (local $args (ref $Args))
+               (local $acc  (ref eq))
+               (local $r    (ref eq))
+               (local $i    i32)
+
+               ;; Prepare argument array and accumulator
+               (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $acc  (global.get $null))
+               (local.set $i    (local.get $n))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.eqz (local.get $i)))
+                            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                            (array.set $Args
+                                       (local.get $args)
+                                       (i32.const 0)
+                                       (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+                            (local.set $r
+                                       (call_ref $ProcedureInvoker
+                                                 (local.get $f)
+                                                 (local.get $args)
+                                                 (local.get $finv)))
+                            (local.set $acc (call $cons (local.get $r) (local.get $acc)))
+                            (br $loop)))
+               (local.get $acc))
+
 
          (func $raise-argument-error  (param $x (ref eq)) (unreachable))
          (func $raise-expected-fixnum (param $x (ref eq)) (unreachable))
