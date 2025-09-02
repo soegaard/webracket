@@ -100,9 +100,9 @@
   #:name   "ref"
   (-> (extern string/symbol) (extern)))
 
-(define-foreign js-set-property!
+(define-foreign js-set!
   #:module "standard"
-  #:name   "set-property!"
+  #:name   "set!"
   (-> (extern value value) ()))
 
 ;;;
