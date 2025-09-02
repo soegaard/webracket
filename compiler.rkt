@@ -416,7 +416,7 @@
   alt-reverse ; used in expansion of for/list
   map andmap ormap for-each
   list*
-  filter
+  filter remove
   make-list
   build-list
 
@@ -3104,6 +3104,8 @@
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
          [(ormap)                      (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
+
+         [(remove)                     (inline-prim/optional sym ae1 2 3)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
         [(random)                      (inline-prim/optional sym ae1 0 2)]

@@ -10738,6 +10738,88 @@
                      (br $loop))
                (unreachable))
 
+         (func $remove (type $Prim3)
+               (param $v    (ref eq))   ;; value to remove
+               (param $lst  (ref eq))   ;; list
+               (param $proc (ref eq))   ;; optional comparator
+               (result      (ref eq))
+
+               (local $f       (ref $Procedure))
+               (local $finv    (ref $ProcedureInvoker))
+               (local $call    (ref $Args))
+               (local $cur     (ref eq))
+               (local $pair    (ref $Pair))
+               (local $elem    (ref eq))
+               (local $acc     (ref eq))
+               (local $res     (ref eq))
+               (local $r       (ref eq))
+               (local $tail    (ref eq))
+               (local $use-proc i32)
+
+               ;; 1) Handle optional comparator
+               (if (ref.eq (local.get $proc) (global.get $missing))
+                   (then (local.set $use-proc (i32.const 0)))
+                   (else
+                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                        (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                              (unreachable)))
+                    (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                    (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                    (local.set $call (array.new $Args (global.get $null) (i32.const 2)))
+                    (local.set $use-proc (i32.const 1))))
+
+               ;; 2) Iterate through list until match found
+               (local.set $cur (local.get $lst))
+               (local.set $acc (global.get $null))
+               (loop $loop
+                     (if (ref.eq (local.get $cur) (global.get $null))
+                         (then (return (local.get $lst))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                         (then (call $raise-pair-expected (local.get $cur))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                     (local.set $tail (struct.get $Pair $d (local.get $pair)))
+                     (block $found
+                            (if (i32.eqz (local.get $use-proc))
+                                (then
+                                 (if (ref.eq (call $equal? (local.get $v) (local.get $elem))
+                                              (global.get $false))
+                                     (then
+                                      (local.set $acc (call $cons (local.get $elem) (local.get $acc)))
+                                      (local.set $cur (local.get $tail))
+                                      (br $loop))
+                                     (else (br $found))))
+                                (else
+                                 (array.set $Args (local.get $call) (i32.const 0) (local.get $v))
+                                 (array.set $Args (local.get $call) (i32.const 1) (local.get $elem))
+                                 (local.set $r
+                                            (call_ref $ProcedureInvoker
+                                                      (local.get $f)
+                                                      (local.get $call)
+                                                      (local.get $finv)))
+                                 (if (ref.eq (local.get $r) (global.get $false))
+                                     (then
+                                      (local.set $acc (call $cons (local.get $elem) (local.get $acc)))
+                                      (local.set $cur (local.get $tail))
+                                      (br $loop))
+                                     (else (br $found)))))
+
+                            ;; found match, fallthrough
+                            )
+                     (local.set $cur (local.get $tail))
+                     (local.set $res (local.get $cur))
+                     (local.set $cur (local.get $acc))
+                     (loop $rev
+                           (if (ref.eq (local.get $cur) (global.get $null))
+                               (then (return (local.get $res))))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                           (local.set $res (call $cons (struct.get $Pair $a (local.get $pair))
+                                                     (local.get $res)))
+                           (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                           (br $rev)))
+               (unreachable))
+
 
 
          ;;;
