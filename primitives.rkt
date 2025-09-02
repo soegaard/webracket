@@ -297,12 +297,14 @@ bytes->string/utf-8
  keyword->immutable-string
  
  
- ;; 4.10 Pairs and Lists
- pair?
- null?
- cons
- car
- cdr
+  ;; 4.10 Pairs and Lists
+  pair?
+  cons?
+  null?
+  empty?
+  cons
+  car
+  cdr
  list?
  list
  list*

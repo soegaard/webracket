@@ -406,7 +406,7 @@
   bytes             ; used in datum construction
   string            ; used in datum construction
 
-  pair? null? 
+  pair? cons? null? empty?
   cons car cdr
   list              ; not first order yet
   list? length list-ref list-tail

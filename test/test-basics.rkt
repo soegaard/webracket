@@ -1084,8 +1084,18 @@
 
                    #;(equal? (procedure-arity keyword<?) 2)))))
 
- (list "4.10 Pairs and Lists"
+(list "4.10 Pairs and Lists"
        (list
+        (list
+         "cons?"
+         (and (equal? (cons? '(1 2)) #t)
+              (equal? (cons? '())   #f)
+              (equal? (procedure-arity cons?) 1)))
+        (list
+         "empty?"
+         (and (equal? (empty? '(1 2)) #f)
+              (equal? (empty? '())   #t)
+              (equal? (procedure-arity empty?) 1)))
         (list
          "append"
          (and (equal? (append)                         '())

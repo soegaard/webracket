@@ -9557,15 +9557,21 @@
          (func $raise-bad-list-ref-index
                (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
                (unreachable))
-         (func $pair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+          (func $pair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
+                    (then (global.get $true))
+                    (else (global.get $false))))
 
-         (func $null? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+          (func $cons? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+                (call $pair? (local.get $v)))
+
+          (func $null? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+                (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
+                    (then (global.get $true))
+                    (else (global.get $false))))
+
+          (func $empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+                (call $null? (local.get $v)))
 
          (func $cons (type $Prim2) (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
