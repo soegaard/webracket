@@ -335,10 +335,10 @@ bytes->string/utf-8
  append
  reverse
 
- map
- ; andmap
- ormap
- for-each
+map
+ andmap
+ormap
+for-each
  ; foldl
  ; foldr
 
