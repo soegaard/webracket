@@ -4197,12 +4197,12 @@
                          (local.get $r))))
 
 
-         ;; Note: fx/ doesn't exist, but fxquotient do.
+        ;; Note: fx/ doesn't exist, but fxquotient do.
 
-         (func $/ (type $Prim2)
-               (param $x (ref eq))
-               (param $y (ref eq))
-               (result   (ref eq))
+        (func $/2 (type $Prim2)
+              (param $x (ref eq))
+              (param $y (ref eq))
+              (result   (ref eq))
 
                (local $x/fl (ref $Flonum))
                (local $y/fl (ref $Flonum))
@@ -4245,7 +4245,33 @@
                                         (else (call $fx->fl/precise (local.get $y)))))
                          (call $fl/ (local.get $x/fl) (local.get $y/fl)))))
 
-         (func $gcd/2 (type $Prim2)
+        (func $/ (type $Prim>=1)
+               (param $a1   (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+
+               (local.set $xs (local.get $rest))
+               (if (result (ref eq))
+                   (ref.eq (local.get $xs) (global.get $null))
+                   (then (call $/2 (global.get $one) (local.get $a1)))
+                   (else (local.set $r (local.get $a1))
+                         (block $done
+                                (loop $loop
+                                      (br_if $done
+                                             (ref.eq (local.get $xs) (global.get $null)))
+                                      (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                      (local.set $v    (struct.get $Pair $a (local.get $node)))
+                                      (local.set $r    (call $/2 (local.get $r) (local.get $v)))
+                                      (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                                      (br $loop)))
+                         (local.get $r))))
+
+        (func $gcd/2 (type $Prim2)
                (param $n (ref eq))
                (param $m (ref eq))
                (result (ref eq))
@@ -4331,8 +4357,8 @@
                                                              (call $fx?/i32 (local.get $g)))
                                                     (then (call $quotient (local.get $n)
                                                                           (local.get $g)))
-                                                    (else (call $/ (local.get $n)
-                                                                  (local.get $g))))
+                                                    (else (call $/2 (local.get $n)
+                                                                   (local.get $g))))
                                                 (local.get $m))))))))
 
 

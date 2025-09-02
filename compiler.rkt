@@ -3074,6 +3074,7 @@
         [(+)                         (inline-prim/variadic sym ae1 0)]
         [(*)                         (inline-prim/variadic sym ae1 0)]
         [(-)                         (inline-prim/variadic sym ae1 1)]
+        [(/)                         (inline-prim/variadic sym ae1 1)]
         [(s-exp->fasl) ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
          [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
