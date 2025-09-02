@@ -1,0 +1,6338 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<meta name="generator" content="JsDoc Toolkit">
+         <link rel="stylesheet" type="text/css" href="../static/jsxgraph.css">
+         <script src="../static/jquery.min.js"></script>
+         <script src="../static/jsxgraphcore.js"></script>
+		
+		<title>JSXGraph Reference - JXG.AbstractRenderer</title>
+
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800">
+		<style>
+			/* default.css */
+
+/*
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+}
+*/
+
+/* ----------------------- */
+.jxgbox {
+    border-color: #DDDDDD;
+    background-color: #f5f5f5;
+}
+
+body {
+  font-family: 'Lora', 'Times New Roman', serif;
+  color: #404040;
+  position: relative;
+  background: #FFF;
+  /*width: 1028px;*/
+  margin: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 800;
+}
+
+p {
+  line-height: 1.5;
+  margin: 30px 0;
+}
+
+/* ----------------------- */
+
+#header h1 {
+    font-size: 2.5em; 
+    background-image:url(static/logo.png); 
+    background-repeat:no-repeat;
+    height: 72px;
+    padding-left: 84px;
+}
+
+
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	/*font-weight: bold;*/
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 220px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 260px;
+	width: 800px;
+}
+
+.wrapper {
+	display: flex; 
+}
+
+.details {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.summary {
+    font-family: arial, sans-serif;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 1.5;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 1.5;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 1.5;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+    margin-left: 260px;
+	text-align: left;
+	font-size: 10px;
+}
+
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->
+		<!-- begin static/header.html -->
+		<div id="header">
+<h1>JSXGraph 1.11.1 Reference</h1>
+</div>
+<div id="jsdeactivated_hint" style="background-color: #fcc; border: solid 1px red; padding: 3px">
+<h2>JavaScript must be enabled in order for you to use JSXGraph and JSXGraph reference.
+However, it seems JavaScript is either disabled or not supported by your browser.</h2>
+</div>
+<script>
+ /* <![CDATA[ */
+   document.getElementById("jsdeactivated_hint").style.display = 'none';
+ /* ]]> */
+</script>
+
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div class="wrapper">
+			<div id="index">
+				<!-- begin publish.classesIndex -->
+				<div style="text-align:center;"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr>
+<details id="myElList" open class="details">
+    <summary onClick="switchList('myElList')" class="summary">Elements</summary>
+    <ul class="classList">
+    	
+        	<li></li>
+	    
+        	<li><a href="../symbols/Angle.html">Angle</a></li>
+	    
+        	<li><a href="../symbols/Arc.html">Arc</a></li>
+	    
+        	<li><a href="../symbols/Arrow.html">Arrow</a></li>
+	    
+        	<li><a href="../symbols/Arrowparallel.html">Arrowparallel</a></li>
+	    
+        	<li><a href="../symbols/Axes3D.html">Axes3D</a></li>
+	    
+        	<li><a href="../symbols/Axis.html">Axis</a></li>
+	    
+        	<li><a href="../symbols/Axis3D.html">Axis3D</a></li>
+	    
+        	<li><a href="../symbols/Bisector.html">Bisector</a></li>
+	    
+        	<li><a href="../symbols/Bisectorlines.html">Bisectorlines</a></li>
+	    
+        	<li><a href="../symbols/Boxplot.html">Boxplot</a></li>
+	    
+        	<li><a href="../symbols/Button.html">Button</a></li>
+	    
+        	<li><a href="../symbols/Cardinalspline.html">Cardinalspline</a></li>
+	    
+        	<li><a href="../symbols/Chart.html">Chart</a></li>
+	    
+        	<li><a href="../symbols/Checkbox.html">Checkbox</a></li>
+	    
+        	<li><a href="../symbols/Circle.html">Circle</a></li>
+	    
+        	<li><a href="../symbols/Circle3D.html">Circle3D</a></li>
+	    
+        	<li><a href="../symbols/Circumcenter.html">Circumcenter</a></li>
+	    
+        	<li><a href="../symbols/Circumcircle.html">Circumcircle</a></li>
+	    
+        	<li><a href="../symbols/CircumcircleArc.html">CircumcircleArc</a></li>
+	    
+        	<li><a href="../symbols/CircumcircleSector.html">CircumcircleSector</a></li>
+	    
+        	<li><a href="../symbols/Comb.html">Comb</a></li>
+	    
+        	<li><a href="../symbols/Conic.html">Conic</a></li>
+	    
+        	<li><a href="../symbols/Curve.html">Curve</a></li>
+	    
+        	<li><a href="../symbols/Curve3D.html">Curve3D</a></li>
+	    
+        	<li><a href="../symbols/CurveDifference.html">CurveDifference</a></li>
+	    
+        	<li><a href="../symbols/CurveIntersection.html">CurveIntersection</a></li>
+	    
+        	<li><a href="../symbols/CurveUnion.html">CurveUnion</a></li>
+	    
+        	<li><a href="../symbols/Derivative.html">Derivative</a></li>
+	    
+        	<li><a href="../symbols/Ellipse.html">Ellipse</a></li>
+	    
+        	<li><a href="../symbols/Face3D.html">Face3D</a></li>
+	    
+        	<li><a href="../symbols/ForeignObject.html">ForeignObject</a></li>
+	    
+        	<li><a href="../symbols/Functiongraph.html">Functiongraph</a></li>
+	    
+        	<li><a href="../symbols/Functiongraph3D.html">Functiongraph3D</a></li>
+	    
+        	<li><a href="../symbols/Glider.html">Glider</a></li>
+	    
+        	<li><a href="../symbols/Grid.html">Grid</a></li>
+	    
+        	<li><a href="../symbols/Group.html">Group</a></li>
+	    
+        	<li><a href="../symbols/Hatch.html">Hatch</a></li>
+	    
+        	<li><a href="../symbols/Hyperbola.html">Hyperbola</a></li>
+	    
+        	<li><a href="../symbols/Image.html">Image</a></li>
+	    
+        	<li><a href="../symbols/ImplicitCurve.html">ImplicitCurve</a></li>
+	    
+        	<li><a href="../symbols/Incenter.html">Incenter</a></li>
+	    
+        	<li><a href="../symbols/Incircle.html">Incircle</a></li>
+	    
+        	<li><a href="../symbols/Inequality.html">Inequality</a></li>
+	    
+        	<li><a href="../symbols/Input.html">Input</a></li>
+	    
+        	<li><a href="../symbols/Integral.html">Integral</a></li>
+	    
+        	<li><a href="../symbols/Intersection.html">Intersection</a></li>
+	    
+        	<li><a href="../symbols/IntersectionCircle3D.html">IntersectionCircle3D</a></li>
+	    
+        	<li><a href="../symbols/IntersectionLine3D.html">IntersectionLine3D</a></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li><a href="../symbols/Label.html">Label</a></li>
+	    
+        	<li><a href="../symbols/Legend.html">Legend</a></li>
+	    
+        	<li><a href="../symbols/Line.html">Line</a></li>
+	    
+        	<li><a href="../symbols/Line3D.html">Line3D</a></li>
+	    
+        	<li><a href="../symbols/MajorArc.html">MajorArc</a></li>
+	    
+        	<li><a href="../symbols/MajorSector.html">MajorSector</a></li>
+	    
+        	<li><a href="../symbols/Measurement.html">Measurement</a></li>
+	    
+        	<li><a href="../symbols/Mesh3D.html">Mesh3D</a></li>
+	    
+        	<li><a href="../symbols/Metapostspline.html">Metapostspline</a></li>
+	    
+        	<li><a href="../symbols/Midpoint.html">Midpoint</a></li>
+	    
+        	<li><a href="../symbols/MinorArc.html">MinorArc</a></li>
+	    
+        	<li><a href="../symbols/MinorSector.html">MinorSector</a></li>
+	    
+        	<li><a href="../symbols/MirrorElement.html">MirrorElement</a></li>
+	    
+        	<li><a href="../symbols/MirrorPoint.html">MirrorPoint</a></li>
+	    
+        	<li><a href="../symbols/NonReflexAngle.html">NonReflexAngle</a></li>
+	    
+        	<li><a href="../symbols/Normal.html">Normal</a></li>
+	    
+        	<li><a href="../symbols/Orthogonalprojection.html">Orthogonalprojection</a></li>
+	    
+        	<li><a href="../symbols/OtherIntersection.html">OtherIntersection</a></li>
+	    
+        	<li><a href="../symbols/Parabola.html">Parabola</a></li>
+	    
+        	<li><a href="../symbols/Parallel.html">Parallel</a></li>
+	    
+        	<li><a href="../symbols/Parallelogram.html">Parallelogram</a></li>
+	    
+        	<li><a href="../symbols/Parallelpoint.html">Parallelpoint</a></li>
+	    
+        	<li><a href="../symbols/ParametricSurface3D.html">ParametricSurface3D</a></li>
+	    
+        	<li><a href="../symbols/Perpendicular.html">Perpendicular</a></li>
+	    
+        	<li><a href="../symbols/PerpendicularPoint.html">PerpendicularPoint</a></li>
+	    
+        	<li><a href="../symbols/PerpendicularSegment.html">PerpendicularSegment</a></li>
+	    
+        	<li><a href="../symbols/Plane3D.html">Plane3D</a></li>
+	    
+        	<li><a href="../symbols/Point.html">Point</a></li>
+	    
+        	<li><a href="../symbols/Point3D.html">Point3D</a></li>
+	    
+        	<li><a href="../symbols/PolarLine.html">PolarLine</a></li>
+	    
+        	<li><a href="../symbols/PolePoint.html">PolePoint</a></li>
+	    
+        	<li><a href="../symbols/Polygon.html">Polygon</a></li>
+	    
+        	<li><a href="../symbols/Polygon3D.html">Polygon3D</a></li>
+	    
+        	<li><a href="../symbols/PolygonalChain.html">PolygonalChain</a></li>
+	    
+        	<li><a href="../symbols/Polyhedron3D.html">Polyhedron3D</a></li>
+	    
+        	<li><a href="../symbols/RadicalAxis.html">RadicalAxis</a></li>
+	    
+        	<li><a href="../symbols/Reflection.html">Reflection</a></li>
+	    
+        	<li><a href="../symbols/ReflexAngle.html">ReflexAngle</a></li>
+	    
+        	<li><a href="../symbols/RegularPolygon.html">RegularPolygon</a></li>
+	    
+        	<li><a href="../symbols/Riemannsum.html">Riemannsum</a></li>
+	    
+        	<li><a href="../symbols/Sector.html">Sector</a></li>
+	    
+        	<li><a href="../symbols/Segment.html">Segment</a></li>
+	    
+        	<li><a href="../symbols/Semicircle.html">Semicircle</a></li>
+	    
+        	<li><a href="../symbols/Slider.html">Slider</a></li>
+	    
+        	<li><a href="../symbols/Slopefield.html">Slopefield</a></li>
+	    
+        	<li><a href="../symbols/Slopetriangle.html">Slopetriangle</a></li>
+	    
+        	<li><a href="../symbols/Smartlabel.html">Smartlabel</a></li>
+	    
+        	<li><a href="../symbols/Sphere3D.html">Sphere3D</a></li>
+	    
+        	<li><a href="../symbols/Spline.html">Spline</a></li>
+	    
+        	<li><a href="../symbols/Stepfunction.html">Stepfunction</a></li>
+	    
+        	<li><a href="../symbols/Tangent.html">Tangent</a></li>
+	    
+        	<li><a href="../symbols/TangentTo.html">TangentTo</a></li>
+	    
+        	<li><a href="../symbols/Tapemeasure.html">Tapemeasure</a></li>
+	    
+        	<li><a href="../symbols/Text.html">Text</a></li>
+	    
+        	<li><a href="../symbols/Text3D.html">Text3D</a></li>
+	    
+        	<li><a href="../symbols/Ticks.html">Ticks</a></li>
+	    
+        	<li><a href="../symbols/Ticks3D.html">Ticks3D</a></li>
+	    
+        	<li><a href="../symbols/Tracecurve.html">Tracecurve</a></li>
+	    
+        	<li><a href="../symbols/Transformation.html">Transformation</a></li>
+	    
+        	<li><a href="../symbols/Transformation3D.html">Transformation3D</a></li>
+	    
+        	<li><a href="../symbols/Turtle.html">Turtle</a></li>
+	    
+        	<li><a href="../symbols/Vectorfield.html">Vectorfield</a></li>
+	    
+        	<li><a href="../symbols/Vectorfield3D.html">Vectorfield3D</a></li>
+	    
+        	<li><a href="../symbols/View3D.html">View3D</a></li>
+	    
+    </ul>
+</details>
+<details id="myClList" open class="details">
+    <summary onClick="switchList('myClList')" class="summary">Classes</summary>
+    <ul class="classList">
+    	
+	      <li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li><a href="../symbols/JXG.html">JXG</a></li>
+	    
+	      <li><a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Board.html">JXG.Board</a></li>
+	    
+	      <li><a href="../symbols/JXG.Board.infobox.html">JXG.Board.infobox</a></li>
+	    
+	      <li><a href="../symbols/JXG.C.html">JXG.C</a></li>
+	    
+	      <li><a href="../symbols/JXG.CA.html">JXG.CA</a></li>
+	    
+	      <li><a href="../symbols/JXG.CanvasRenderer.html">JXG.CanvasRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Chart.html">JXG.Chart</a></li>
+	    
+	      <li><a href="../symbols/JXG.Circle.html">JXG.Circle</a></li>
+	    
+	      <li><a href="../symbols/JXG.Circle3D.html">JXG.Circle3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Complex.html">JXG.Complex</a></li>
+	    
+	      <li><a href="../symbols/JXG.Composition.html">JXG.Composition</a></li>
+	    
+	      <li><a href="../symbols/JXG.Coords.html">JXG.Coords</a></li>
+	    
+	      <li><a href="../symbols/JXG.CoordsElement.html">JXG.CoordsElement</a></li>
+	    
+	      <li><a href="../symbols/JXG.Curve.html">JXG.Curve</a></li>
+	    
+	      <li><a href="../symbols/JXG.Curve3D.html">JXG.Curve3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Dump.html">JXG.Dump</a></li>
+	    
+	      <li><a href="../symbols/JXG.EventEmitter.html">JXG.EventEmitter</a></li>
+	    
+	      <li><a href="../symbols/JXG.Expect.html">JXG.Expect</a></li>
+	    
+	      <li><a href="../symbols/JXG.Face3D.html">JXG.Face3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.ForeignObject.html">JXG.ForeignObject</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeometryElement3D.html">JXG.GeometryElement3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeonextParser.html">JXG.GeonextParser</a></li>
+	    
+	      <li><a href="../symbols/JXG.Group.html">JXG.Group</a></li>
+	    
+	      <li><a href="../symbols/JXG.Image.html">JXG.Image</a></li>
+	    
+	      <li><a href="../symbols/JXG.JessieCode.html">JXG.JessieCode</a></li>
+	    
+	      <li><a href="../symbols/JXG.JSXGraph.html">JXG.JSXGraph</a></li>
+	    
+	      <li><a href="../symbols/JXG.Legend.html">JXG.Legend</a></li>
+	    
+	      <li><a href="../symbols/JXG.Line.html">JXG.Line</a></li>
+	    
+	      <li><a href="../symbols/JXG.Line3D.html">JXG.Line3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.html">JXG.Math</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.BoxQuadtree.html">JXG.Math.BoxQuadtree</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Clip.html">JXG.Math.Clip</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Extrapolate.html">JXG.Math.Extrapolate</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Geometry.html">JXG.Math.Geometry</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.ImplicitPlot.html">JXG.Math.ImplicitPlot</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.IntervalArithmetic.html">JXG.Math.IntervalArithmetic</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Metapost.html">JXG.Math.Metapost</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Nlp.html">JXG.Math.Nlp</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Numerics.html">JXG.Math.Numerics</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Plot.html">JXG.Math.Plot</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.html">JXG.Math.Poly</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Monomial.html">JXG.Math.Poly.Monomial</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Polynomial.html">JXG.Math.Poly.Polynomial</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Ring.html">JXG.Math.Poly.Ring</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.ProbFuncs.html">JXG.Math.ProbFuncs</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Quadtree.html">JXG.Math.Quadtree</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Statistics.html">JXG.Math.Statistics</a></li>
+	    
+	      <li><a href="../symbols/JXG.NoRenderer.html">JXG.NoRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Options.html">JXG.Options</a></li>
+	    
+	      <li><a href="../symbols/JXG.Plane3D.html">JXG.Plane3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Point.html">JXG.Point</a></li>
+	    
+	      <li><a href="../symbols/JXG.Point3D.html">JXG.Point3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Polygon.html">JXG.Polygon</a></li>
+	    
+	      <li><a href="../symbols/JXG.Polygon3D.html">JXG.Polygon3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.PrefixParser.html">JXG.PrefixParser</a></li>
+	    
+	      <li><a href="../symbols/JXG.Sphere3D.html">JXG.Sphere3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Surface3D.html">JXG.Surface3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.SVGRenderer.html">JXG.SVGRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Text.html">JXG.Text</a></li>
+	    
+	      <li><a href="../symbols/JXG.Text3D.html">JXG.Text3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Ticks.html">JXG.Ticks</a></li>
+	    
+	      <li><a href="../symbols/JXG.Transformation.html">JXG.Transformation</a></li>
+	    
+	      <li><a href="../symbols/JXG.Turtle.html">JXG.Turtle</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.html">JXG.Util</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.Base64.html">JXG.Util.Base64</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.Unzip.html">JXG.Util.Unzip</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.UTF8.html">JXG.Util.UTF8</a></li>
+	    
+	      <li><a href="../symbols/JXG.View3D.html">JXG.View3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.VMLRenderer.html">JXG.VMLRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.XML.html">JXG.XML</a></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+    </ul>
+</details>
+<hr>
+
+<script>
+  /* <![CDATA[ */
+
+	function initList(id) {
+      var val, c,
+        cookieList = document.cookie.split('; ');
+
+     // console.log(document.cookie);
+      for(c = 0; c < cookieList.length; c++) {
+        if(cookieList[c].indexOf(id.toLowerCase() + 'open') != -1) {
+          val = cookieList[c].split('=')[1];
+          if (val === '1') {
+            document.getElementById(id).setAttribute('open', '');
+            console.log(id, "open");
+          } else {
+            document.getElementById(id).removeAttribute('open');
+            console.log(id, 'close')
+          }
+        }
+      }
+  	};
+
+   	function switchList(id) {
+        var val = document.getElementById(id).getAttribute('open');
+        if (val === null) {
+            val = '1';
+        } else {
+            val = '0';
+        }
+        // document.cookie = id.toLowerCase() + 'open=' + val + ';max-age=0';
+        document.cookie = id.toLowerCase() + 'open=' + val + '';
+  	};
+
+  	initList('myElList');
+    initList('myClList');
+  /* ]]> */
+</script>
+
+				<!-- end publish.classesIndex -->
+			</div>
+		</div>
+
+		<div class="wrapper">
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class JXG.AbstractRenderer
+			</h1>
+
+<!-- ============================== Inheritance tree ========================== -->
+
+<p>
+ <strong></strong><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x21b3; <strong>JXG.AbstractRenderer</strong><br><br></p>
+
+
+<!-- ============================== class summary ========================== -->
+			<p class="description">
+				JXG.AbstractRenderer
+
+				
+					<br><br><i>Defined in: </i> <a href="../symbols/src/src_renderer_abstract.js.html">abstract.js</a>.
+				
+
+                
+			</p>
+
+<!-- ============================== constructor summary ==================== -->
+			
+			<table class="summaryTable">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#constructor">JXG.AbstractRenderer</a></b>()
+							</div>
+							<div class="description"><p>This class defines the interface to the graphics part of JSXGraph.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== attributes summary ===================== -->
+			
+				
+				
+
+				
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#container">container</a></b>
+								</div>
+								<div class="description">The HTML element that stores the JSXGraph board in it.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#dashArray">dashArray</a></b>
+								</div>
+								<div class="description">Defines dash patterns.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">enhancedRendering</a></b>
+								</div>
+								<div class="description">If this property is set to <tt>true</tt> the visual properties of the elements are updated
+on every update.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#supportsForeignObject">supportsForeignObject</a></b>
+								</div>
+								<div class="description">True if the browsers' SVG engine supports foreignObject.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#type">type</a></b>
+								</div>
+								<div class="description">This is used to easily determine which renderer we are using</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/JXG.AbstractRenderer.html#vOffsetText">vOffsetText</a></b>
+								</div>
+								<div class="description">The vertical offset for <a href="../symbols/Text.html">Text</a> elements.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#_css2js">_css2js</a></b>(cssString)
+								</div>
+								<div class="description">Converts string containing CSS properties into
+array with key-value pair objects.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#_getHighlighted">_getHighlighted</a></b>(el)
+								</div>
+								<div class="description">Get information if element is highlighted.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#_setArrowWidth">_setArrowWidth</a></b>(node, width, parentNode)
+								</div>
+								<div class="description">Updates width of an arrow DOM node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#_updateVisual">_updateVisual</a></b>(el, not, enhanced)
+								</div>
+								<div class="description">Update visual properties, but only if <a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">JXG.AbstractRenderer#enhancedRendering</a> or <tt>enhanced</tt> is set to true.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#appendChildPrim">appendChildPrim</a></b>(node, level)
+								</div>
+								<div class="description">Appends a node to a specific layer level.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#appendNodesToElement">appendNodesToElement</a></b>(el, type)
+								</div>
+								<div class="description">Stores the rendering nodes.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#changePointStyle">changePointStyle</a></b>(el)
+								</div>
+								<div class="description">Changes the style of a <a href="../symbols/JXG.Point.html">JXG.Point</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#createPrim">createPrim</a></b>(type, id)
+								</div>
+								<div class="description">Creates a node of a given type with a given id.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#createTouchpoints">createTouchpoints</a></b>(n)
+								</div>
+								<div class="description">Create crosshair elements (Fadenkreuz) for presentations.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#display">display</a></b>(el, value)
+								</div>
+								<div class="description">Shows or hides an element on the canvas; Only a stub, requires implementation in the derived renderer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#displayCopyright">displayCopyright</a></b>(str, fontsize)
+								</div>
+								<div class="description">Shows a small copyright notice in the top left corner of the board.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawCurve">drawCurve</a></b>(el)
+								</div>
+								<div class="description">Draws a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawEllipse">drawEllipse</a></b>(el)
+								</div>
+								<div class="description">Draws a <a href="../symbols/JXG.Circle.html">JXG.Circle</a></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawImage">drawImage</a></b>(el)
+								</div>
+								<div class="description">Draws an <a href="../symbols/JXG.Image.html">JXG.Image</a> on a board; This is just a template that has to be implemented by special
+renderers.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">drawInternalText</a></b>(el)
+								</div>
+								<div class="description">An internal text is a <a href="../symbols/JXG.Text.html">JXG.Text</a> element which is drawn using only
+the given renderer but no HTML.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawLine">drawLine</a></b>(el)
+								</div>
+								<div class="description">Draws a line on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawNavigationBar">drawNavigationBar</a></b>(board, attr)
+								</div>
+								<div class="description">The tiny zoom bar shown on the bottom of a board (if board attribute "showNavigation" is true).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawPoint">drawPoint</a></b>(el)
+								</div>
+								<div class="description">Draws a point on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawPolygon">drawPolygon</a></b>(el)
+								</div>
+								<div class="description">Draws a <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawText">drawText</a></b>(el)
+								</div>
+								<div class="description">Displays a <a href="../symbols/JXG.Text.html">JXG.Text</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a> by putting a HTML div over it.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#drawTicks">drawTicks</a></b>(el)
+								</div>
+								<div class="description">Creates a rendering node for ticks added to a line.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#dumpToCanvas">dumpToCanvas</a></b>(canvasId, w, h, _ignoreTexts)
+								</div>
+								<div class="description">Convert SVG construction to canvas.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#dumpToDataURI">dumpToDataURI</a></b>(_ignoreTexts)
+								</div>
+								<div class="description">Convert SVG construction to base64 encoded SVG data URL.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">getArrowHeadData</a></b>(el, strokewidth, hl)
+								</div>
+								<div class="description">This method determines some data about the line endings of this element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#getElementById">getElementById</a></b>(id)
+								</div>
+								<div class="description">Wrapper for getElementById for maybe other renderers which elements are not directly accessible by DOM
+methods like document.getElementById().</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#getPositionArrowHead">getPositionArrowHead</a></b>(el, c1, c2, a)
+								</div>
+								<div class="description">Shorten the length of a line element such that the arrow head touches
+the start or end point and such that the arrow head ends exactly
+at the start / end position of the line.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#handleTouchpoints">handleTouchpoints</a></b>(el, c1, c2, a)
+								</div>
+								<div class="description">Handle touchlastpoint / touchfirstpoint</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#hide">hide</a></b>(el)
+								</div>
+								<div class="description">Hides an element on the canvas; Only a stub, requires implementation in the derived renderer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#hideTouchpoint">hideTouchpoint</a></b>(i)
+								</div>
+								<div class="description">Hide a specific crosshair.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#highlight">highlight</a></b>(el, suppressHighlightStrokeWidth)
+								</div>
+								<div class="description">Highlights an object, i.e.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#joinTransforms">joinTransforms</a></b>(el, transformations)
+								</div>
+								<div class="description">Multiplication of transformations without updating.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#makeArrows">makeArrows</a></b>(el, arrowData)
+								</div>
+								<div class="description">Can be used to create the nodes to display arrows.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#noHighlight">noHighlight</a></b>(el)
+								</div>
+								<div class="description">Uses the normal colors of an object, i.e.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#remove">remove</a></b>(node)
+								</div>
+								<div class="description">Removes an element node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#removeDraft">removeDraft</a></b>(el)
+								</div>
+								<div class="description">Puts an object from draft mode back into normal mode.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#removeToInsertLater">removeToInsertLater</a></b>(el)
+								</div>
+								<div class="description">Remove an element and provide a function that inserts it into its original position.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#resize">resize</a></b>(w, h)
+								</div>
+								<div class="description">Resizes the rendering element</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#screenshot">screenshot</a></b>(board)
+								</div>
+								<div class="description">Display SVG image in html img-tag which enables
+easy download for the user.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setARIA">setARIA</a></b>(el)
+								</div>
+								<div class="description">Set ARIA related properties of an element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setArrowSize">setArrowSize</a></b>(el, arrowData)
+								</div>
+								<div class="description">Set the arrow head size.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setBuffering">setBuffering</a></b>(node, type)
+								</div>
+								<div class="description">Sets the buffering as recommended by SVGWG.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setCssClass">setCssClass</a></b>(el, cssClass)
+								</div>
+								<div class="description">Sets CSS classes for elements (relevant for SVG only).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setDashStyle">setDashStyle</a></b>(el)
+								</div>
+								<div class="description">Sets an element's dash style.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setDraft">setDraft</a></b>(el)
+								</div>
+								<div class="description">Puts an object into draft mode, i.e.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setGradient">setGradient</a></b>(el)
+								</div>
+								<div class="description">Sets up nodes for rendering a gradient fill.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setLayer">setLayer</a></b>(el, value)
+								</div>
+								<div class="description">Move element into new layer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setLineCap">setLineCap</a></b>(element)
+								</div>
+								<div class="description">Update the line endings (linecap) of a straight line from its attribute
+'linecap'.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setObjectFillColor">setObjectFillColor</a></b>(el, color, opacity)
+								</div>
+								<div class="description">Sets an objects fill color.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setObjectStrokeColor">setObjectStrokeColor</a></b>(el, color, opacity)
+								</div>
+								<div class="description">Changes an objects stroke color to the given color.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setObjectStrokeWidth">setObjectStrokeWidth</a></b>(el, width)
+								</div>
+								<div class="description">Sets an element's stroke width.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setObjectTransition">setObjectTransition</a></b>(el, duration)
+								</div>
+								<div class="description">Sets the transition duration (in milliseconds) for fill color and stroke
+color and opacity.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setPropertyPrim">setPropertyPrim</a></b>(node, key, val)
+								</div>
+								<div class="description">Sets a node's attribute.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setShadow">setShadow</a></b>(el)
+								</div>
+								<div class="description">Sets the shadow properties to a geometry element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#setTabindex">setTabindex</a></b>(el)
+								</div>
+								<div class="description">Set the attribute `tabindex` to the attribute `tabindex` of an element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#show">show</a></b>(el)
+								</div>
+								<div class="description">Shows a hidden element on the canvas; Only a stub, requires implementation in the derived renderer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#showTouchpoint">showTouchpoint</a></b>(i)
+								</div>
+								<div class="description">Show a specific crosshair.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#suspendRedraw">suspendRedraw</a></b>()
+								</div>
+								<div class="description">Stop redraw.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#transformRect">transformRect</a></b>(el, transformations)
+								</div>
+								<div class="description">Applies transformations on images and text elements.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#unsuspendRedraw">unsuspendRedraw</a></b>()
+								</div>
+								<div class="description">Restart redraw.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateCurve">updateCurve</a></b>(el)
+								</div>
+								<div class="description">Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Curve.html">JXG.Curve</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateEllipse">updateEllipse</a></b>(el)
+								</div>
+								<div class="description">Updates visual appearance of a given <a href="../symbols/JXG.Circle.html">JXG.Circle</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateEllipsePrim">updateEllipsePrim</a></b>(node, x, y, rx, ry)
+								</div>
+								<div class="description">Updates an ellipse node primitive.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateGradient">updateGradient</a></b>(el)
+								</div>
+								<div class="description">Updates the gradient fill.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateImage">updateImage</a></b>(el)
+								</div>
+								<div class="description">Updates the properties of an <a href="../symbols/JXG.Image.html">JXG.Image</a> element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateImageStyle">updateImageStyle</a></b>(el, doHighlight)
+								</div>
+								<div class="description">Updates CSS style properties of a <a href="../symbols/JXG.Image.html">JXG.Image</a> node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateImageURL">updateImageURL</a></b>(el)
+								</div>
+								<div class="description">If the URL of the image is provided by a function the URL has to be updated during updateImage()</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">updateInternalText</a></b>(el)
+								</div>
+								<div class="description">Updates visual properties of an already existing <a href="../symbols/JXG.Text.html">JXG.Text</a> element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateInternalTextStyle">updateInternalTextStyle</a></b>(el, strokeColor, strokeOpacity)
+								</div>
+								<div class="description">Set color and opacity of internal texts.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateLine">updateLine</a></b>(el)
+								</div>
+								<div class="description">Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Line.html">JXG.Line</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateLinePrim">updateLinePrim</a></b>(node, p1x, p1y, p2x, p2y, board)
+								</div>
+								<div class="description">Refreshes a line node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateLineWithEndings">updateLineWithEndings</a></b>(el, arrowData)
+								</div>
+								<div class="description">Corrects the line length if there are arrow heads, such that
+the arrow ends exactly at the intended position.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePath">updatePath</a></b>(el)
+								</div>
+								<div class="description">Calls the renderer method to draw a curve.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePathPrim">updatePathPrim</a></b>(node, pathString, board)
+								</div>
+								<div class="description">Updates a path element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePathStringBezierPrim">updatePathStringBezierPrim</a></b>(el)
+								</div>
+								<div class="description">Builds a path data string from a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> element such that the curve looks like hand drawn.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePathStringPoint">updatePathStringPoint</a></b>(el, size, type)
+								</div>
+								<div class="description">Builds a path data string to draw a point with a face other than <em>rect</em> and <em>circle</em>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePathStringPrim">updatePathStringPrim</a></b>(el)
+								</div>
+								<div class="description">Builds a path data string from a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePathWithArrowHeads">updatePathWithArrowHeads</a></b>(el, doHighlight)
+								</div>
+								<div class="description">Handles arrow heads of a line or curve element and calls the renderer primitive.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePoint">updatePoint</a></b>(el)
+								</div>
+								<div class="description">Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Point.html">JXG.Point</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePolygon">updatePolygon</a></b>(el)
+								</div>
+								<div class="description">Updates properties of a <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a>'s rendering node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updatePolygonPrim">updatePolygonPrim</a></b>(node, el)
+								</div>
+								<div class="description">Update a polygon primitive.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateRectPrim">updateRectPrim</a></b>(node, x, y, w, h)
+								</div>
+								<div class="description">Update a rectangle primitive.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateText">updateText</a></b>(el)
+								</div>
+								<div class="description">Updates visual properties of an already existing <a href="../symbols/JXG.Text.html">JXG.Text</a> element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">updateTextStyle</a></b>(el, doHighlight)
+								</div>
+								<div class="description">Updates font-size, color and opacity propertiey and CSS style properties of a <a href="../symbols/JXG.Text.html">JXG.Text</a> node.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateTicks">updateTicks</a></b>(el)
+								</div>
+								<div class="description">Update <a href="../symbols/Ticks.html">Ticks</a> on a <a href="../symbols/JXG.Line.html">JXG.Line</a>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.AbstractRenderer.html#updateTouchpoint">updateTouchpoint</a></b>(i, pos)
+								</div>
+								<div class="description">Move a specific crosshair.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+
+				<div class="fixedFont">
+						<b>JXG.AbstractRenderer</b>()
+				</div>
+
+				<div class="description">
+					<p>This class defines the interface to the graphics part of JSXGraph. This class is an abstract class, it
+actually does not render anything. This is up to the <a href="../symbols/JXG.SVGRenderer.html">JXG.SVGRenderer</a>, <a href="../symbols/JXG.VMLRenderer.html">JXG.VMLRenderer</a>,
+and <a href="../symbols/JXG.CanvasRenderer.html">JXG.CanvasRenderer</a> classes. We strongly discourage you from using the methods in these classes
+directly. Only the methods which are defined in this class and are not marked as private are guaranteed
+to exist in any renderer instance you can access via <a href="../symbols/JXG.Board.html#renderer">JXG.Board#renderer</a>. But not all methods may
+work as expected.</p>
+<p>The methods of this renderer can be divided into different categories:
+<dl>
+    <dt>Draw basic elements</dt>
+    <dd>In this category we find methods to draw basic elements like <a href="../symbols/JXG.Point.html">JXG.Point</a>, <a href="../symbols/JXG.Line.html">JXG.Line</a>,
+    and <a href="../symbols/JXG.Curve.html">JXG.Curve</a> as well as assisting methods tightly bound to these basic painters. You do not
+    need to implement these methods in a descendant renderer but instead implement the primitive drawing
+    methods described below. This approach is encouraged when you're using a XML based rendering engine
+    like VML and SVG. If you want to use a bitmap based rendering technique you are supposed to override
+    these methods instead of the primitive drawing methods.</dd>
+    <dt>Draw primitives</dt>
+    <dd>This category summarizes methods to handle primitive nodes. As creation and management of these nodes
+    is different among different the rendering techniques most of these methods are purely virtual and need
+    proper implementation if you choose to not overwrite the basic element drawing methods.</dd>
+    <dt>Attribute manipulation</dt>
+    <dd>In XML based renders you have to manipulate XML nodes and their attributes to change the graphics.
+    For that purpose attribute manipulation methods are defined to set the color, opacity, and other things.
+    Please note that some of these methods are required in bitmap based renderers, too, because some elements
+    like <a href="../symbols/JXG.Text.html">JXG.Text</a> can be HTML nodes floating over the construction.</dd>
+    <dt>Renderer control</dt>
+    <dd>Methods to clear the drawing board or to stop and to resume the rendering engine.</dd>
+</dl></p>
+					
+				</div>
+
+
+					
+					
+					
+					
+					
+					
+					
+						<dl class="detailList">
+						<dt class="heading">See:</dt>
+						
+							<dd><a href="../symbols/JXG.SVGRenderer.html">JXG.SVGRenderer</a></dd>
+						
+							<dd><a href="../symbols/JXG.VMLRenderer.html">JXG.VMLRenderer</a></dd>
+						
+							<dd><a href="../symbols/JXG.CanvasRenderer.html">JXG.CanvasRenderer</a></dd>
+						
+						</dl>
+					
+
+				
+
+
+			</div>
+			
+
+<!-- ============================== attributes details ========================== -->
+			
+
+<!-- ============================== field details ========================== -->
+			
+				<div class="sectionTitle">
+                     Field Detail
+				</div>
+				
+					<a name="container"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Node}</span>
+					<b>container</b>
+
+					</div>
+					<div class="description">
+						The HTML element that stores the JSXGraph board in it.
+						
+						
+					</div>
+
+					
+
+						
+						
+						
+						
+
+					<hr>
+				
+					<a name="dashArray"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Array}</span>
+					<b>dashArray</b>
+
+					</div>
+					<div class="description">
+						Defines dash patterns. Sizes are in pixel.
+Defined styles are:
+<ol>
+<li> 2 dash, 2 space</li>
+<li> 5 dash, 5 space</li>
+<li> 10 dash, 10 space</li>
+<li> 20 dash, 20 space</li>
+<li> 20 dash, 10 space, 10 dash, 10 space</li>
+<li> 20 dash, 5 space, 10 dash, 5 space</li>
+<li> 0 dash, 5 space (dotted line)</li>
+</ol>
+This means, the numbering is <b>1-based</b>.
+Solid lines are set with dash:0.
+If the object's attribute "dashScale:true" the dash pattern is multiplied by
+strokeWidth / 2.
+						
+						
+					</div>
+
+					
+
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+							<dd><a href="../symbols/JXG.GeometryElement.html#dash">JXG.GeometryElement#dash</a></dd>
+							
+							<dd><a href="../symbols/JXG.GeometryElement.html#dashScale">JXG.GeometryElement#dashScale</a></dd>
+							
+							</dl>
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								[[2, 2], [5, 5], [10, 10], [20, 20], [20, 10, 10, 10], [20, 5, 10, 5], [0, 5]]
+							</dd>
+							</dl>
+						
+
+					<hr>
+				
+					<a name="enhancedRendering"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Boolean}</span>
+					<b>enhancedRendering</b>
+
+					</div>
+					<div class="description">
+						If this property is set to <tt>true</tt> the visual properties of the elements are updated
+on every update. Visual properties means: All the stuff stored in the
+<a href="../symbols/JXG.GeometryElement.html#visProp">JXG.GeometryElement#visProp</a> property won't be set if enhancedRendering is <tt>false</tt>
+						
+						
+					</div>
+
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								true
+							</dd>
+							</dl>
+						
+
+					<hr>
+				
+					<a name="supportsForeignObject"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Boolean}</span>
+					<b>supportsForeignObject</b>
+
+					</div>
+					<div class="description">
+						True if the browsers' SVG engine supports foreignObject.
+Not supported browsers are IE 9 - 11.
+It is tested in svg renderer.
+						
+						
+					</div>
+
+					
+
+						
+						
+						
+						
+
+					<hr>
+				
+					<a name="type"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{String}</span>
+					<b>type</b>
+
+					</div>
+					<div class="description">
+						This is used to easily determine which renderer we are using
+						
+						
+					</div>
+
+					
+					
+					<pre class="code">if (board.renderer.type === 'vml') {
+    // do something
+}</pre>
+					
+					
+
+						
+						
+						
+						
+
+					<hr>
+				
+					<a name="vOffsetText"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Number}</span>
+					<b>vOffsetText</b>
+
+					</div>
+					<div class="description">
+						The vertical offset for <a href="../symbols/Text.html">Text</a> elements. Every <a href="../symbols/Text.html">Text</a> element will
+be placed this amount of pixels below the user given coordinates.
+						
+						
+					</div>
+
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								0
+							</dd>
+							</dl>
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="_css2js"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Array}</span>
+					<b>_css2js</b>(cssString)
+
+					</div>
+					<div class="description">
+						Converts string containing CSS properties into
+array with key-value pair objects.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>cssString</b>
+									
+								</dt>
+								<dd>String containing CSS properties</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> Array of CSS key-value pairs</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+					<dl class="detailList">
+					<dt class="heading">Examples:</dt>
+					
+					<pre class="code">"color:blue; background-color:yellow" is converted to
+[{'color': 'blue'}, {'backgroundColor': 'yellow'}]</pre>
+					
+					</dl>
+					
+
+					<hr>
+				
+					<a name="_getHighlighted"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{String}</span>
+					<b>_getHighlighted</b>(el)
+
+					</div>
+					<div class="description">
+						Get information if element is highlighted.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>The element which is tested for being highlighted.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{String}</span> 'highlight' if highlighted, otherwise the ampty string '' is returned.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_setArrowWidth"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>_setArrowWidth</b>(node, width, parentNode)
+
+					</div>
+					<div class="description">
+						Updates width of an arrow DOM node. Used in
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The arrow node.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>width</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>parentNode</b>
+									
+								</dt>
+								<dd>Used in IE only</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_updateVisual"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>_updateVisual</b>(el, not, enhanced)
+
+					</div>
+					<div class="description">
+						Update visual properties, but only if <a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">JXG.AbstractRenderer#enhancedRendering</a> or <tt>enhanced</tt> is set to true.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>The element to update</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>not</b>
+									<i>Optional, Default: {}</i>
+								</dt>
+								<dd>Select properties you don't want to be updated: <tt>{fill: true, dash: true}</tt> updates
+everything except for fill and dash. Possible values are <tt>stroke, fill, dash, shadow, gradient</tt>.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>enhanced</b>
+									<i>Optional, Default: false</i>
+								</dt>
+								<dd>If true, <a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">JXG.AbstractRenderer#enhancedRendering</a> is assumed to be true.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="appendChildPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>appendChildPrim</b>(node, level)
+
+					</div>
+					<div class="description">
+						Appends a node to a specific layer level. This is just an abstract method and has to be implemented
+in all renderers that want to use the <tt>createPrim</tt> model to draw.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>A DOM tree node.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>level</b>
+									
+								</dt>
+								<dd>The layer the node is attached to. This is the index of the layer in
+<a href="../symbols/JXG.SVGRenderer.html#layer">JXG.SVGRenderer#layer</a> or the <tt>z-index</tt> style property of the node in VMLRenderer.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="appendNodesToElement"> </a>
+					<div class="fixedFont">
+
+					
+					<b>appendNodesToElement</b>(el, type)
+
+					</div>
+					<div class="description">
+						Stores the rendering nodes. This is an abstract method which has to be implemented in all renderers that use
+the <tt>createPrim</tt> method.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>A JSXGraph element.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									
+								</dt>
+								<dd>The XML node name. Only used in VMLRenderer.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="changePointStyle"> </a>
+					<div class="fixedFont">
+
+					
+					<b>changePointStyle</b>(el)
+
+					</div>
+					<div class="description">
+						Changes the style of a <a href="../symbols/JXG.Point.html">JXG.Point</a>. This is required because the point styles differ in what
+elements have to be drawn, e.g. if the point is marked by a "x" or a "+" two lines are drawn, if
+it's marked by spot a circle is drawn. This method removes the old renderer element(s) and creates
+the new one(s).
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Point.html">JXG.Point</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Point.html">JXG.Point</a> object, that's style is changed.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Point.html">Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.Point.html">JXG.Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updatePoint">JXG.AbstractRenderer#updatePoint</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawPoint">JXG.AbstractRenderer#drawPoint</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="createPrim"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Node}</span>
+					<b>createPrim</b>(type, id)
+
+					</div>
+					<div class="description">
+						Creates a node of a given type with a given id.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									
+								</dt>
+								<dd>The type of the node to create.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>id</b>
+									
+								</dt>
+								<dd>Set the id attribute to this.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Node}</span> Reference to the created node.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="createTouchpoints"> </a>
+					<div class="fixedFont">
+
+					
+					<b>createTouchpoints</b>(n)
+
+					</div>
+					<div class="description">
+						Create crosshair elements (Fadenkreuz) for presentations.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>n</b>
+									
+								</dt>
+								<dd>Number of crosshairs.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="display"> </a>
+					<div class="fixedFont">
+
+					
+					<b>display</b>(el, value)
+
+					</div>
+					<div class="description">
+						Shows or hides an element on the canvas; Only a stub, requires implementation in the derived renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the object that has to appear.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>value</b>
+									
+								</dt>
+								<dd>true to show the element, false to hide the element.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="displayCopyright"> </a>
+					<div class="fixedFont">
+
+					
+					<b>displayCopyright</b>(str, fontsize)
+
+					</div>
+					<div class="description">
+						Shows a small copyright notice in the top left corner of the board.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>str</b>
+									
+								</dt>
+								<dd>The copyright notice itself</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>fontsize</b>
+									
+								</dt>
+								<dd>Size of the font the copyright notice is written in</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="drawCurve"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawCurve</b>(el)
+
+					</div>
+					<div class="description">
+						Draws a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Curve.html">JXG.Curve</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a graph object, that has to be plotted.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Curve.html">Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.Curve.html">JXG.Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateCurve">JXG.AbstractRenderer#updateCurve</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawEllipse"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawEllipse</b>(el)
+
+					</div>
+					<div class="description">
+						Draws a <a href="../symbols/JXG.Circle.html">JXG.Circle</a>
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Circle.html">JXG.Circle</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Circle.html">JXG.Circle</a> object that has to be drawn.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Circle.html">Circle</a></dd>
+							
+								<dd><a href="../symbols/JXG.Circle.html">JXG.Circle</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateEllipse">JXG.AbstractRenderer#updateEllipse</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawImage"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawImage</b>(el)
+
+					</div>
+					<div class="description">
+						Draws an <a href="../symbols/JXG.Image.html">JXG.Image</a> on a board; This is just a template that has to be implemented by special
+renderers.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Image.html">JXG.Image</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the image object that is to be drawn</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Image.html">Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.Image.html">JXG.Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateImage">JXG.AbstractRenderer#updateImage</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawInternalText"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawInternalText</b>(el)
+
+					</div>
+					<div class="description">
+						An internal text is a <a href="../symbols/JXG.Text.html">JXG.Text</a> element which is drawn using only
+the given renderer but no HTML. This method is only a stub, the drawing
+is done in the special renderers.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Text.html">JXG.Text</a> object</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Text.html">Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.Text.html">JXG.Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">JXG.AbstractRenderer#updateInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawText">JXG.AbstractRenderer#drawText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateText">JXG.AbstractRenderer#updateText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawLine"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawLine</b>(el)
+
+					</div>
+					<div class="description">
+						Draws a line on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a line object, that has to be drawn.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateLine">JXG.AbstractRenderer#updateLine</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawNavigationBar"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>drawNavigationBar</b>(board, attr)
+
+					</div>
+					<div class="description">
+						The tiny zoom bar shown on the bottom of a board (if board attribute "showNavigation" is true).
+It is a div element and gets the CSS class "JXG_navigation" and the id {board id}_navigationbar.
+<p>
+The buttons get the CSS class "JXG_navigation_button" and the id {board_id}_name where name is
+one of [top, down, left, right, out, 100, in, fullscreen, screenshot, reload, cleartraces].
+<p>
+The symbols for zoom, navigation and reload are hard-coded.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Board.html">JXG.Board</a>}</span> <b>board</b>
+									
+								</dt>
+								<dd>Reference to a JSXGraph board.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>attr</b>
+									
+								</dt>
+								<dd>Attributes of the navigation bar</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="drawPoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawPoint</b>(el)
+
+					</div>
+					<div class="description">
+						Draws a point on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Point.html">JXG.Point</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Point.html">JXG.Point</a> object that has to be drawn.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Point.html">Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.Point.html">JXG.Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updatePoint">JXG.AbstractRenderer#updatePoint</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#changePointStyle">JXG.AbstractRenderer#changePointStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawPolygon"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawPolygon</b>(el)
+
+					</div>
+					<div class="description">
+						Draws a <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Polygon.html">JXG.Polygon</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a Polygon object, that is to be drawn.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Polygon.html">Polygon</a></dd>
+							
+								<dd><a href="../symbols/JXG.Polygon.html">JXG.Polygon</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updatePolygon">JXG.AbstractRenderer#updatePolygon</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawText"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawText</b>(el)
+
+					</div>
+					<div class="description">
+						Displays a <a href="../symbols/JXG.Text.html">JXG.Text</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a> by putting a HTML div over it.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to an <a href="../symbols/JXG.Text.html">JXG.Text</a> object, that has to be displayed</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Text.html">Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.Text.html">JXG.Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">JXG.AbstractRenderer#drawInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateText">JXG.AbstractRenderer#updateText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">JXG.AbstractRenderer#updateInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="drawTicks"> </a>
+					<div class="fixedFont">
+
+					
+					<b>drawTicks</b>(el)
+
+					</div>
+					<div class="description">
+						Creates a rendering node for ticks added to a line.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>A arbitrary line.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/Ticks.html">Ticks</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Ticks.html">JXG.Ticks</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTicks">JXG.AbstractRenderer#updateTicks</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="dumpToCanvas"> </a>
+					<div class="fixedFont">
+
+					
+					<b>dumpToCanvas</b>(canvasId, w, h, _ignoreTexts)
+
+					</div>
+					<div class="description">
+						Convert SVG construction to canvas.
+Only available on SVGRenderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>canvasId</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>w</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>h</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>_ignoreTexts</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.SVGRenderer.html#dumpToCanvas">JXG.SVGRenderer#dumpToCanvas</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="dumpToDataURI"> </a>
+					<div class="fixedFont">
+
+					
+					<b>dumpToDataURI</b>(_ignoreTexts)
+
+					</div>
+					<div class="description">
+						Convert SVG construction to base64 encoded SVG data URL.
+Only available on SVGRenderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>_ignoreTexts</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.SVGRenderer.html#dumpToDataURI">JXG.SVGRenderer#dumpToDataURI</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="getArrowHeadData"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Object}</span>
+					<b>getArrowHeadData</b>(el, strokewidth, hl)
+
+					</div>
+					<div class="description">
+						This method determines some data about the line endings of this element.
+If there are arrow heads, the offset is determined so that no parts of the line stroke
+lap over the arrow head.
+<p>
+The returned object also contains the types of the arrow heads.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>JSXGraph line or curve element</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>strokewidth</b>
+									
+								</dt>
+								<dd>strokewidth of the element</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>hl</b>
+									
+								</dt>
+								<dd>Ither 'highlight' or empty string</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Object}</span> object containing the data</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="getElementById"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Object}</span>
+					<b>getElementById</b>(id)
+
+					</div>
+					<div class="description">
+						Wrapper for getElementById for maybe other renderers which elements are not directly accessible by DOM
+methods like document.getElementById().
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>id</b>
+									
+								</dt>
+								<dd>Unique identifier for element.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Object}</span> Reference to a JavaScript object. In case of SVG/VMLRenderer it's a reference to a SVG/VML node.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="getPositionArrowHead"> </a>
+					<div class="fixedFont">
+
+					
+					<b>getPositionArrowHead</b>(el, c1, c2, a)
+
+					</div>
+					<div class="description">
+						Shorten the length of a line element such that the arrow head touches
+the start or end point and such that the arrow head ends exactly
+at the start / end position of the line.
+<p>
+The Coords objects c1 and c2 are changed in place. In object a, the Boolean properties
+'showFirst' and 'showLast' are set.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the line object that gets arrow heads.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Coords.html">JXG.Coords</a>}</span> <b>c1</b>
+									
+								</dt>
+								<dd>Coords of the first point of the line (after JXG.Math.Geometry#calcStraight).</dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Coords.html">JXG.Coords</a>}</span> <b>c2</b>
+									
+								</dt>
+								<dd>Coords of the second point of the line (after JXG.Math.Geometry#calcStraight).</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>a</b>
+									
+								</dt>
+								<dd>Object { evFirst: Boolean, evLast: Boolean} containing information about arrow heads.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">JXG.AbstractRenderer#getArrowHeadData</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="handleTouchpoints"> </a>
+					<div class="fixedFont">
+
+					
+					<b>handleTouchpoints</b>(el, c1, c2, a)
+
+					</div>
+					<div class="description">
+						Handle touchlastpoint / touchfirstpoint
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Coords.html">JXG.Coords</a>}</span> <b>c1</b>
+									
+								</dt>
+								<dd>Coordinates of the start of the line. The coordinates are changed in place.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Coords.html">JXG.Coords</a>}</span> <b>c2</b>
+									
+								</dt>
+								<dd>Coordinates of the end of the line. The coordinates are changed in place.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>a</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">JXG.AbstractRenderer#getArrowHeadData</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="hide"> </a>
+					<div class="fixedFont">
+
+					
+					<b>hide</b>(el)
+
+					</div>
+					<div class="description">
+						Hides an element on the canvas; Only a stub, requires implementation in the derived renderer.
+
+Please use JXG.AbstractRenderer#display instead
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the geometry element that has to disappear.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#show">JXG.AbstractRenderer#show</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="hideTouchpoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>hideTouchpoint</b>(i)
+
+					</div>
+					<div class="description">
+						Hide a specific crosshair.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>i</b>
+									
+								</dt>
+								<dd>Number of the crosshair to show</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="highlight"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span>
+					<b>highlight</b>(el, suppressHighlightStrokeWidth)
+
+					</div>
+					<div class="description">
+						Highlights an object, i.e. changes the current colors of the object to its highlighting colors
+and highlighting strokewidth.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that will be highlighted.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>suppressHighlightStrokeWidth</b>
+									<i>Optional, Default: undefined</i>
+								</dt>
+								<dd>If undefined or false, highlighting also changes strokeWidth. This might not be
+the cases for polygon borders. Thus, if a polygon is highlighted, its polygon borders change strokeWidth only if the polygon attribute
+highlightByStrokeWidth == true.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span> Reference to the renderer</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="joinTransforms"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Array}</span>
+					<b>joinTransforms</b>(el, transformations)
+
+					</div>
+					<div class="description">
+						Multiplication of transformations without updating. That means, at that point it is expected that the
+matrices contain numbers only. First, the origin in user coords is translated to <tt>(0,0)</tt> in screen
+coords. Then, the stretch factors are divided out. After the transformations in user coords, the stretch
+factors are multiplied in again, and the origin in user coords is translated back to its position. This
+method does not have to be implemented in a new renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>A JSXGraph element. We only need its board property.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>transformations</b>
+									
+								</dt>
+								<dd>An array of JXG.Transformations.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> A matrix represented by a two dimensional array of numbers.</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#transformRect">JXG.AbstractRenderer#transformRect</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="makeArrows"> </a>
+					<div class="fixedFont">
+
+					
+					<b>makeArrows</b>(el, arrowData)
+
+					</div>
+					<div class="description">
+						Can be used to create the nodes to display arrows. This is an abstract method which has to be implemented
+in any descendant renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>The element the arrows are to be attached to.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>arrowData</b>
+									
+								</dt>
+								<dd>Data concerning possible arrow heads</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="noHighlight"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span>
+					<b>noHighlight</b>(el)
+
+					</div>
+					<div class="description">
+						Uses the normal colors of an object, i.e. the opposite of <a href="../symbols/JXG.AbstractRenderer.html#highlight">JXG.AbstractRenderer#highlight</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that will get its normal colors.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span> Reference to the renderer</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="remove"> </a>
+					<div class="fixedFont">
+
+					
+					<b>remove</b>(node)
+
+					</div>
+					<div class="description">
+						Removes an element node. Just a stub.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The node to remove.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="removeDraft"> </a>
+					<div class="fixedFont">
+
+					
+					<b>removeDraft</b>(el)
+
+					</div>
+					<div class="description">
+						Puts an object from draft mode back into normal mode.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that no longer is in draft mode.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="removeToInsertLater"> </a>
+					<div class="fixedFont">
+
+					<span class="light">{Function}</span>
+					<b>removeToInsertLater</b>(el)
+
+					</div>
+					<div class="description">
+						Remove an element and provide a function that inserts it into its original position. This method
+is taken from this article https://developers.google.com/speed/articles/javascript-dom.
+						
+						<br><i>Author: </i>KeeKim Heng, Google Web Developer.
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Element}</span> <b>el</b>
+									
+								</dt>
+								<dd>The element to be temporarily removed</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Function}</span> A function that inserts the element into its original position</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="resize"> </a>
+					<div class="fixedFont">
+
+					
+					<b>resize</b>(w, h)
+
+					</div>
+					<div class="description">
+						Resizes the rendering element
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>w</b>
+									
+								</dt>
+								<dd>New width</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>h</b>
+									
+								</dt>
+								<dd>New height</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="screenshot"> </a>
+					<div class="fixedFont">
+
+					
+					<b>screenshot</b>(board)
+
+					</div>
+					<div class="description">
+						Display SVG image in html img-tag which enables
+easy download for the user.
+
+See JXG.SVGRenderer#screenshot
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>board</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setARIA"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setARIA</b>(el)
+
+					</div>
+					<div class="description">
+						Set ARIA related properties of an element. The attribute "aria" of an element contains at least the
+properties "enabled", "label", and "live". Additionally, all available properties from
+https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA may be set.
+<p>
+In JSXGraph, the available properties are used without the leading 'aria-'.
+For example, the value of the JSXGraph attribute 'aria.label' will be set to the
+HTML attribute 'aria-label'.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that wants new
+       ARIA attributes.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setArrowSize"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span>
+					<b>setArrowSize</b>(el, arrowData)
+
+					</div>
+					<div class="description">
+						Set the arrow head size.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a line or curve object that has to be drawn.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>arrowData</b>
+									
+								</dt>
+								<dd>Data concerning possible arrow heads</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span> Reference to the renderer</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/Curve.html">Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.Curve.html">JXG.Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updatePathWithArrowHeads">JXG.AbstractRenderer#updatePathWithArrowHeads</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">JXG.AbstractRenderer#getArrowHeadData</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="setBuffering"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setBuffering</b>(node, type)
+
+					</div>
+					<div class="description">
+						Sets the buffering as recommended by SVGWG. Until now only Opera supports this and will be ignored by other
+browsers. Although this feature is only supported by SVG we have this method in <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>
+because it is called from outside the renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The SVG DOM Node which buffering type to update.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									
+								</dt>
+								<dd>Either 'auto', 'dynamic', or 'static'. For an explanation see
+  https://www.w3.org/TR/SVGTiny12/painting.html#BufferedRenderingProperty.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setCssClass"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setCssClass</b>(el, cssClass)
+
+					</div>
+					<div class="description">
+						Sets CSS classes for elements (relevant for SVG only).
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that wants a
+        new set of CSS classes.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>cssClass</b>
+									
+								</dt>
+								<dd>String containing a space separated list of CSS classes.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setDashStyle"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setDashStyle</b>(el)
+
+					</div>
+					<div class="description">
+						Sets an element's dash style.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>An JSXGraph element.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setDraft"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setDraft</b>(el)
+
+					</div>
+					<div class="description">
+						Puts an object into draft mode, i.e. it's visual appearance will be changed. For GEONE<sub>x</sub>T backwards
+compatibility.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that is in draft mode.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setGradient"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setGradient</b>(el)
+
+					</div>
+					<div class="description">
+						Sets up nodes for rendering a gradient fill.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object which gets the gradient</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setLayer"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>setLayer</b>(el, value)
+
+					</div>
+					<div class="description">
+						Move element into new layer. This is trivial for canvas, but needs more effort in SVG.
+Does not work dynamically, i.e. if level is a function.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Element which is put into different layer</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>value</b>
+									
+								</dt>
+								<dd>Layer number</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setLineCap"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setLineCap</b>(element)
+
+					</div>
+					<div class="description">
+						Update the line endings (linecap) of a straight line from its attribute
+'linecap'.
+Possible values for the attribute 'linecap' are: 'butt', 'round', 'square'.
+The default value is 'butt'. Not available for VML renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>element</b>
+									
+								</dt>
+								<dd>A arbitrary line.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateLine">JXG.AbstractRenderer#updateLine</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="setObjectFillColor"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setObjectFillColor</b>(el, color, opacity)
+
+					</div>
+					<div class="description">
+						Sets an objects fill color.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that wants a new fill color.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>color</b>
+									
+								</dt>
+								<dd>Color in a HTML/CSS compatible format. If you don't want any fill color at all, choose
+'none'.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>opacity</b>
+									
+								</dt>
+								<dd>Opacity of the fill color. Must be between 0 and 1.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setObjectStrokeColor"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setObjectStrokeColor</b>(el, color, opacity)
+
+					</div>
+					<div class="description">
+						Changes an objects stroke color to the given color.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the <a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a> that gets a new stroke
+color.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>color</b>
+									
+								</dt>
+								<dd>Color value in a HTML compatible format, e.g. <strong>#00ff00</strong> or
+<strong>green</strong> for green.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>opacity</b>
+									
+								</dt>
+								<dd>Opacity of the fill color. Must be between 0 and 1.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setObjectStrokeWidth"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setObjectStrokeWidth</b>(el, width)
+
+					</div>
+					<div class="description">
+						Sets an element's stroke width.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the geometry element.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>width</b>
+									
+								</dt>
+								<dd>The new stroke width to be assigned to the element.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setObjectTransition"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setObjectTransition</b>(el, duration)
+
+					</div>
+					<div class="description">
+						Sets the transition duration (in milliseconds) for fill color and stroke
+color and opacity.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of the object that wants a
+        new transition duration.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>duration</b>
+									
+								</dt>
+								<dd>(Optional) duration in milliseconds. If not given,
+       element.visProp.transitionDuration is taken. This is the default.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setPropertyPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setPropertyPrim</b>(node, key, val)
+
+					</div>
+					<div class="description">
+						Sets a node's attribute.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The node that is to be updated.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>key</b>
+									
+								</dt>
+								<dd>Name of the attribute.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>val</b>
+									
+								</dt>
+								<dd>New value for the attribute.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setShadow"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setShadow</b>(el)
+
+					</div>
+					<div class="description">
+						Sets the shadow properties to a geometry element. This method is only a stub, it is implemented in the actual
+renderers.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a geometry object, that should get a shadow</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="setTabindex"> </a>
+					<div class="fixedFont">
+
+					
+					<b>setTabindex</b>(el)
+
+					</div>
+					<div class="description">
+						Set the attribute `tabindex` to the attribute `tabindex` of an element.
+This is only relevant for the SVG renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="show"> </a>
+					<div class="fixedFont">
+
+					
+					<b>show</b>(el)
+
+					</div>
+					<div class="description">
+						Shows a hidden element on the canvas; Only a stub, requires implementation in the derived renderer.
+
+Please use JXG.AbstractRenderer#display instead
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the object that has to appear.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#hide">JXG.AbstractRenderer#hide</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="showTouchpoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>showTouchpoint</b>(i)
+
+					</div>
+					<div class="description">
+						Show a specific crosshair.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>i</b>
+									
+								</dt>
+								<dd>Number of the crosshair to show</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="suspendRedraw"> </a>
+					<div class="fixedFont">
+
+					
+					<b>suspendRedraw</b>()
+
+					</div>
+					<div class="description">
+						Stop redraw. This method is called before every update, so a non-vector-graphics based renderer can use this
+method to delete the contents of the drawing panel. This is an abstract method every descendant renderer
+should implement, if appropriate.
+						
+						
+					</div>
+
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#unsuspendRedraw">JXG.AbstractRenderer#unsuspendRedraw</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="transformRect"> </a>
+					<div class="fixedFont">
+
+					
+					<b>transformRect</b>(el, transformations)
+
+					</div>
+					<div class="description">
+						Applies transformations on images and text elements. This method has to implemented in
+all descendant classes where text and image transformations are to be supported.
+<p>
+Only affine transformation are supported, no proper projective transformations. This means, the
+respective entries of the transformation matrix are simply ignored.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Image.html">JXG.Image</a>|<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>A <a href="../symbols/JXG.Image.html">JXG.Image</a> or <a href="../symbols/JXG.Text.html">JXG.Text</a> object.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>transformations</b>
+									
+								</dt>
+								<dd>An array of <a href="../symbols/JXG.Transformation.html">JXG.Transformation</a> objects. This is usually the
+transformations property of the given element <tt>el</tt>.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="unsuspendRedraw"> </a>
+					<div class="fixedFont">
+
+					
+					<b>unsuspendRedraw</b>()
+
+					</div>
+					<div class="description">
+						Restart redraw. This method is called after updating all the rendering node attributes.
+						
+						
+					</div>
+
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#suspendRedraw">JXG.AbstractRenderer#suspendRedraw</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateCurve"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateCurve</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Curve.html">JXG.Curve</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Curve.html">JXG.Curve</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Curve.html">Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.Curve.html">JXG.Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawCurve">JXG.AbstractRenderer#drawCurve</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateEllipse"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateEllipse</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual appearance of a given <a href="../symbols/JXG.Circle.html">JXG.Circle</a> on the <a href="../symbols/JXG.Board.html">JXG.Board</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Circle.html">JXG.Circle</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Circle.html">JXG.Circle</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Circle.html">Circle</a></dd>
+							
+								<dd><a href="../symbols/JXG.Circle.html">JXG.Circle</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawEllipse">JXG.AbstractRenderer#drawEllipse</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateEllipsePrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateEllipsePrim</b>(node, x, y, rx, ry)
+
+					</div>
+					<div class="description">
+						Updates an ellipse node primitive. This is an abstract method which has to be implemented in all renderers
+that use the <tt>createPrim</tt> method.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>Reference to the node.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>Centre X coordinate</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>Centre Y coordinate</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>rx</b>
+									
+								</dt>
+								<dd>The x-axis radius.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>ry</b>
+									
+								</dt>
+								<dd>The y-axis radius.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateGradient"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateGradient</b>(el)
+
+					</div>
+					<div class="description">
+						Updates the gradient fill.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>An JSXGraph element with an area that can be filled.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateImage"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateImage</b>(el)
+
+					</div>
+					<div class="description">
+						Updates the properties of an <a href="../symbols/JXG.Image.html">JXG.Image</a> element.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Image.html">JXG.Image</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to an <a href="../symbols/JXG.Image.html">JXG.Image</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Image.html">Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.Image.html">JXG.Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawImage">JXG.AbstractRenderer#drawImage</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateImageStyle"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateImageStyle</b>(el, doHighlight)
+
+					</div>
+					<div class="description">
+						Updates CSS style properties of a <a href="../symbols/JXG.Image.html">JXG.Image</a> node.
+In SVGRenderer opacity is the only available style element.
+This function is called by highlight() and nohighlight().
+This function works for VML.
+It does not work for Canvas.
+SVGRenderer overwrites this method.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the <a href="../symbols/JXG.Image.html">JXG.Image</a> object, that has to be updated.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>doHighlight</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Image.html">Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.Image.html">JXG.Image</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#highlight">JXG.AbstractRenderer#highlight</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#noHighlight">JXG.AbstractRenderer#noHighlight</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateImageURL"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateImageURL</b>(el)
+
+					</div>
+					<div class="description">
+						If the URL of the image is provided by a function the URL has to be updated during updateImage()
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Image.html">JXG.Image</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to an image object.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateImage">JXG.AbstractRenderer#updateImage</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateInternalText"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateInternalText</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual properties of an already existing <a href="../symbols/JXG.Text.html">JXG.Text</a> element.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to an <a href="../symbols/JXG.Text.html">JXG.Text</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Text.html">Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.Text.html">JXG.Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">JXG.AbstractRenderer#drawInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawText">JXG.AbstractRenderer#drawText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateText">JXG.AbstractRenderer#updateText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateInternalTextStyle"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>updateInternalTextStyle</b>(el, strokeColor, strokeOpacity)
+
+					</div>
+					<div class="description">
+						Set color and opacity of internal texts.
+This method is used for Canvas and VML.
+SVG needs its own version.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>el</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>strokeColor</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>strokeOpacity</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+								<dd><a href="../symbols/JXG.SVGRenderer.html#updateInternalTextStyle">JXG.SVGRenderer#updateInternalTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateLine"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateLine</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Line.html">JXG.Line</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the <a href="../symbols/JXG.Line.html">JXG.Line</a> object that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawLine">JXG.AbstractRenderer#drawLine</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateLinePrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateLinePrim</b>(node, p1x, p1y, p2x, p2y, board)
+
+					</div>
+					<div class="description">
+						Refreshes a line node. This is an abstract method which has to be implemented in all renderers that use
+the <tt>createPrim</tt> method.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The node to be refreshed.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>p1x</b>
+									
+								</dt>
+								<dd>The first point's x coordinate.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>p1y</b>
+									
+								</dt>
+								<dd>The first point's y coordinate.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>p2x</b>
+									
+								</dt>
+								<dd>The second point's x coordinate.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>p2y</b>
+									
+								</dt>
+								<dd>The second point's y coordinate.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Board.html">JXG.Board</a>}</span> <b>board</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateLineWithEndings"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span>
+					<b>updateLineWithEndings</b>(el, arrowData)
+
+					</div>
+					<div class="description">
+						Corrects the line length if there are arrow heads, such that
+the arrow ends exactly at the intended position.
+Calls the renderer method to draw the line.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Line.html">JXG.Line</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a line object, that has to be drawn</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Object}</span> <b>arrowData</b>
+									
+								</dt>
+								<dd>Data concerning possible arrow heads</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span> Reference to the renderer</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateLine">JXG.AbstractRenderer#updateLine</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#getPositionArrowHead">JXG.AbstractRenderer#getPositionArrowHead</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePath"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span>
+					<b>updatePath</b>(el)
+
+					</div>
+					<div class="description">
+						Calls the renderer method to draw a curve.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a line object, that has to be drawn.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{<a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>}</span> Reference to the renderer</dd>
+							
+							</dl>
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Curve.html">Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.Curve.html">JXG.Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateCurve">JXG.AbstractRenderer#updateCurve</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePathPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePathPrim</b>(node, pathString, board)
+
+					</div>
+					<div class="description">
+						Updates a path element. This is an abstract method which has to be implemented in all renderers that use
+the <tt>createPrim</tt> method.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The path node.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>pathString</b>
+									
+								</dt>
+								<dd>A string formatted like e.g. <em>'M 1,2 L 3,1 L5,5'</em>. The format of the string
+depends on the rendering engine.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Board.html">JXG.Board</a>}</span> <b>board</b>
+									
+								</dt>
+								<dd>Reference to the element's board.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePathStringBezierPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePathStringBezierPrim</b>(el)
+
+					</div>
+					<div class="description">
+						Builds a path data string from a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> element such that the curve looks like hand drawn. Since
+the path data strings heavily depend on the underlying rendering technique this method is just a stub.
+Although such a path string is of no use for the CanvasRenderer, this method is used there to draw a path
+directly.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePathStringPoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePathStringPoint</b>(el, size, type)
+
+					</div>
+					<div class="description">
+						Builds a path data string to draw a point with a face other than <em>rect</em> and <em>circle</em>. Since
+the format of such a string usually depends on the renderer this method
+is only an abstract method. Therefore, it has to be implemented in the descendant renderer itself unless
+the renderer does not use the createPrim interface but the draw* interfaces to paint.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Point.html">JXG.Point</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>The point element</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>size</b>
+									
+								</dt>
+								<dd>A positive number describing the size. Usually the half of the width and height of
+the drawn point.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									
+								</dt>
+								<dd>A string describing the point's face. This method only accepts the shortcut version of
+each possible face: <tt>x, +, |, -, [], <>, <<>>,^, v, >, < </tt></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePathStringPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePathStringPrim</b>(el)
+
+					</div>
+					<div class="description">
+						Builds a path data string from a <a href="../symbols/JXG.Curve.html">JXG.Curve</a> element. Since the path data strings heavily depend on the
+underlying rendering technique this method is just a stub. Although such a path string is of no use for the
+CanvasRenderer, this method is used there to draw a path directly.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePathWithArrowHeads"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>updatePathWithArrowHeads</b>(el, doHighlight)
+
+					</div>
+					<div class="description">
+						Handles arrow heads of a line or curve element and calls the renderer primitive.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a line or curve object that has to be drawn.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>doHighlight</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/Curve.html">Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.Curve.html">JXG.Curve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateLine">JXG.AbstractRenderer#updateLine</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateCurve">JXG.AbstractRenderer#updateCurve</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#makeArrows">JXG.AbstractRenderer#makeArrows</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">JXG.AbstractRenderer#getArrowHeadData</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePoint</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual appearance of the renderer element assigned to the given <a href="../symbols/JXG.Point.html">JXG.Point</a>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Point.html">JXG.Point</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Point.html">JXG.Point</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Point.html">Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.Point.html">JXG.Point</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawPoint">JXG.AbstractRenderer#drawPoint</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#changePointStyle">JXG.AbstractRenderer#changePointStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePolygon"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePolygon</b>(el)
+
+					</div>
+					<div class="description">
+						Updates properties of a <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a>'s rendering node.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Polygon.html">JXG.Polygon</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to a <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Polygon.html">Polygon</a></dd>
+							
+								<dd><a href="../symbols/JXG.Polygon.html">JXG.Polygon</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawPolygon">JXG.AbstractRenderer#drawPolygon</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updatePolygonPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updatePolygonPrim</b>(node, el)
+
+					</div>
+					<div class="description">
+						Update a polygon primitive.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Polygon.html">JXG.Polygon</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>A JSXGraph element of type <a href="../symbols/JXG.Polygon.html">JXG.Polygon</a></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateRectPrim"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateRectPrim</b>(node, x, y, w, h)
+
+					</div>
+					<div class="description">
+						Update a rectangle primitive. This is used only for points with face of type 'rect'.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Node}</span> <b>node</b>
+									
+								</dt>
+								<dd>The node yearning to be updated.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>x coordinate of the top left vertex.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>y coordinate of the top left vertex.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>w</b>
+									
+								</dt>
+								<dd>Width of the rectangle.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>h</b>
+									
+								</dt>
+								<dd>The rectangle's height.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateText"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateText</b>(el)
+
+					</div>
+					<div class="description">
+						Updates visual properties of an already existing <a href="../symbols/JXG.Text.html">JXG.Text</a> element.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to an <a href="../symbols/JXG.Text.html">JXG.Text</a> object, that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Text.html">Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.Text.html">JXG.Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawText">JXG.AbstractRenderer#drawText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">JXG.AbstractRenderer#drawInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">JXG.AbstractRenderer#updateInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">JXG.AbstractRenderer#updateTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateTextStyle"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateTextStyle</b>(el, doHighlight)
+
+					</div>
+					<div class="description">
+						Updates font-size, color and opacity propertiey and CSS style properties of a <a href="../symbols/JXG.Text.html">JXG.Text</a> node.
+This function is also called by highlight() and nohighlight().
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Text.html">JXG.Text</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference to the <a href="../symbols/JXG.Text.html">JXG.Text</a> object, that has to be updated.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Boolean}</span> <b>doHighlight</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Text.html">Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.Text.html">JXG.Text</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawText">JXG.AbstractRenderer#drawText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">JXG.AbstractRenderer#drawInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateText">JXG.AbstractRenderer#updateText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">JXG.AbstractRenderer#updateInternalText</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#updateInternalTextStyle">JXG.AbstractRenderer#updateInternalTextStyle</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateTicks"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateTicks</b>(el)
+
+					</div>
+					<div class="description">
+						Update <a href="../symbols/Ticks.html">Ticks</a> on a <a href="../symbols/JXG.Line.html">JXG.Line</a>. This method is only a stub and has to be implemented
+in any descendant renderer class.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.Ticks.html">JXG.Ticks</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Reference of a ticks object that has to be updated.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/Line.html">Line</a></dd>
+							
+								<dd><a href="../symbols/Ticks.html">Ticks</a></dd>
+							
+								<dd><a href="../symbols/JXG.Line.html">JXG.Line</a></dd>
+							
+								<dd><a href="../symbols/JXG.Ticks.html">JXG.Ticks</a></dd>
+							
+								<dd><a href="../symbols/JXG.AbstractRenderer.html#drawTicks">JXG.AbstractRenderer#drawTicks</a></dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="updateTouchpoint"> </a>
+					<div class="fixedFont">
+
+					
+					<b>updateTouchpoint</b>(i, pos)
+
+					</div>
+					<div class="description">
+						Move a specific crosshair.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>i</b>
+									
+								</dt>
+								<dd>Number of the crosshair to show</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>pos</b>
+									
+								</dt>
+								<dd>New positon in screen coordinates</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					
+				
+			
+
+<!-- ============================== event details ========================= -->
+			
+
+			<hr>
+
+			
+
+		</div>
+		</div>
+
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="https://www.npmjs.com/package/jsdoc-toolkit" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Sep 02 2025 11:30:01 GMT+0200 (Central European Summer Time)
+		</div>
+	</body>
+</html>

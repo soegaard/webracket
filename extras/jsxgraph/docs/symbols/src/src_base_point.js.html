@@ -1,0 +1,1030 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true, console: true, window: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview The geometry object Point is defined in this file. Point stores all
+<span class='line'> 37</span>  * style and functional properties that are required to draw and move a point on
+<span class='line'> 38</span>  * a board.
+<span class='line'> 39</span>  */</span><span class="WHIT">
+<span class='line'> 40</span> 
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Options</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../options.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/math.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Geometry</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/geometry.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 45</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Const</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"./constants.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">GeometryElement</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"./element.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 47</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">CoordsElement</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"./coordselement.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 49</span> 
+<span class='line'> 50</span> </span><span class="COMM">/**
+<span class='line'> 51</span>  * A point is the basic geometric element. Based on points lines and circles can be constructed which can be intersected
+<span class='line'> 52</span>  * which in turn are points again which can be used to construct new lines, circles, polygons, etc. This class holds methods for
+<span class='line'> 53</span>  * all kind of points like free points, gliders, and intersection points.
+<span class='line'> 54</span>  * @class Creates a new point object. Do not use this constructor to create a point. Use {@link JXG.Board#create} with
+<span class='line'> 55</span>  * type {@link Point}, {@link Glider}, or {@link Intersection} instead.
+<span class='line'> 56</span>  * @augments JXG.GeometryElement
+<span class='line'> 57</span>  * @augments JXG.CoordsElement
+<span class='line'> 58</span>  * @param {string|JXG.Board} board The board the new point is drawn on.
+<span class='line'> 59</span>  * @param {Array} coordinates An array with the user coordinates of the point.
+<span class='line'> 60</span>  * @param {Object} attributes An object containing visual properties like in {@link JXG.Options#point} and
+<span class='line'> 61</span>  * {@link JXG.Options#elements}, and optional a name and an id.
+<span class='line'> 62</span>  * @see JXG.Board#generateName
+<span class='line'> 63</span>  */</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="NAME">JXG.Point</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coordinates</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">    </span><span class="NAME">this.constructor</span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_POINT</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">    </span><span class="NAME">this.element</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">attributes.anchor</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="WHIT">    </span><span class="NAME">this.coordsConstructor</span><span class="PUNC">(</span><span class="NAME">coordinates</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 68</span> 
+<span class='line'> 69</span> </span><span class="WHIT">    </span><span class="NAME">this.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"point"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 70</span> 
+<span class='line'> 71</span> </span><span class="WHIT">    </span><span class="COMM">/* Register point at board. */</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">    </span><span class="NAME">this.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.setId</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"P"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="WHIT">    </span><span class="NAME">this.board.renderer.drawPoint</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">    </span><span class="NAME">this.board.finalizeAdding</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 75</span> 
+<span class='line'> 76</span> </span><span class="WHIT">    </span><span class="NAME">this.createGradient</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">    </span><span class="NAME">this.createLabel</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 79</span> 
+<span class='line'> 80</span> </span><span class="COMM">/**
+<span class='line'> 81</span>  * Inherits here from {@link JXG.GeometryElement}.
+<span class='line'> 82</span>  */</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="NAME">JXG.Point.prototype</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">GeometryElement</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="NAME">Type.copyPrototypeMethods</span><span class="PUNC">(</span><span class="NAME">JXG.Point</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">CoordsElement</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"coordsConstructor"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 85</span> 
+<span class='line'> 86</span> </span><span class="NAME">JXG.extend</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="WHIT">    </span><span class="NAME">JXG.Point.prototype</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">    </span><span class="COMM">/** @lends JXG.Point.prototype */</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'> 90</span>          * Checks whether (x,y) is near the point.
+<span class='line'> 91</span>          * @param {Number} x Coordinate in x direction, screen coordinates.
+<span class='line'> 92</span>          * @param {Number} y Coordinate in y direction, screen coordinates.
+<span class='line'> 93</span>          * @returns {Boolean} True if (x,y) is near the point, False otherwise.
+<span class='line'> 94</span>          * @private
+<span class='line'> 95</span>          */</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">        </span><span class="NAME">hasPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">coordsScr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords.scrCoords</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">                </span><span class="NAME">r</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">                </span><span class="NAME">prec</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>100</span> </span><span class="WHIT">                </span><span class="NAME">type</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>101</span> </span><span class="WHIT">                </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'sizeunit'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>102</span> 
+<span class='line'>103</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isObject</span><span class="PUNC">(</span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'precision'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="WHIT">                </span><span class="NAME">type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board._inputDevice</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">                </span><span class="NAME">prec</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'precision.'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">                </span><span class="COMM">// 'inherit'</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">                </span><span class="NAME">prec</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.options.precision.hasPoint</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">            </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'size'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"user"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>112</span> </span><span class="WHIT">                </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.sqrt</span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">this.board.unitX</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.board.unitY</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>113</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>114</span> 
+<span class='line'>115</span> </span><span class="WHIT">            </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'strokewidth'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>116</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">prec</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">                </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">prec</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>119</span> 
+<span class='line'>120</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">coordsScr</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">coordsScr</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>122</span> 
+<span class='line'>123</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>124</span>          * Updates the position of the point.
+<span class='line'>125</span>          */</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">        </span><span class="NAME">update</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">fromParent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>127</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.needsUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>130</span> 
+<span class='line'>131</span> </span><span class="WHIT">            </span><span class="NAME">this.updateCoords</span><span class="PUNC">(</span><span class="NAME">fromParent</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>132</span> 
+<span class='line'>133</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'trace'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">                </span><span class="NAME">this.cloneToBackground</span><span class="PUNC">(</span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>136</span> 
+<span class='line'>137</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>139</span> 
+<span class='line'>140</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>141</span>          * Applies the transformations of the element to {@link JXG.Point#baseElement}.
+<span class='line'>142</span>          * Point transformations are relative to a base element.
+<span class='line'>143</span>          * @param {Boolean} fromParent True if the drag comes from a child element. This is the case if a line
+<span class='line'>144</span>          *    through two points is dragged. Otherwise, the element is the drag element and we apply the
+<span class='line'>145</span>          *    the inverse transformation to the baseElement if is different from the element.
+<span class='line'>146</span>          * @returns {JXG.CoordsElement} Reference to this object.
+<span class='line'>147</span>          */</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">        </span><span class="NAME">updateTransform</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">fromParent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>149</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>150</span> 
+<span class='line'>151</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.transformations.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">this.baseElement</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>154</span> 
+<span class='line'>155</span> </span><span class="WHIT">            </span><span class="NAME">this.transformations</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">this</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">this.baseElement</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">                </span><span class="COMM">// Case of bindTo</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.transformations</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">apply</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"self"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>159</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.transformations</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">apply</span><span class="PUNC">(</span><span class="NAME">this.baseElement</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>161</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>162</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.transformations.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="WHIT">                </span><span class="NAME">this.transformations</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.matVecMult</span><span class="PUNC">(</span><span class="NAME">this.transformations</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">matrix</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">            </span><span class="NAME">this.coords.setCoordinates</span><span class="PUNC">(</span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>167</span> 
+<span class='line'>168</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>170</span> 
+<span class='line'>171</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>172</span>          * Calls the renderer to update the drawing.
+<span class='line'>173</span>          * @private
+<span class='line'>174</span>          */</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">        </span><span class="NAME">updateRenderer</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">            </span><span class="NAME">this.updateRendererGeneric</span><span class="PUNC">(</span><span class="STRN">"updatePoint"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>179</span> 
+<span class='line'>180</span> </span><span class="WHIT">        </span><span class="COMM">// documented in JXG.GeometryElement</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">        </span><span class="NAME">bounds</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">concat</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>183</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>184</span> 
+<span class='line'>185</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>186</span>          * Convert the point to intersection point and update the construction.
+<span class='line'>187</span>          * To move the point visual onto the intersection, a call of board update is necessary.
+<span class='line'>188</span>          *
+<span class='line'>189</span>          * @param {String|Object} el1, el2, i, j The intersecting objects and the numbers.
+<span class='line'>190</span>          **/</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">        </span><span class="NAME">makeIntersection</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">j</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> 
+<span class='line'>194</span> </span><span class="WHIT">            </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">el1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="WHIT">            </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">el2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>196</span> 
+<span class='line'>197</span> </span><span class="WHIT">            </span><span class="NAME">func</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.intersectionFunction</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>198</span> </span><span class="WHIT">                </span><span class="NAME">this.board</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>199</span> </span><span class="WHIT">                </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">                </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">                </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">                </span><span class="NAME">j</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">                </span><span class="NAME">this.visProp.alwaysintersect</span><span class="WHIT">
+<span class='line'>204</span> </span><span class="WHIT">            </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>205</span> </span><span class="WHIT">            </span><span class="NAME">this.addConstraint</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">func</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>206</span> 
+<span class='line'>207</span> </span><span class="WHIT">            </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">                </span><span class="NAME">el1.addChild</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">                </span><span class="NAME">el2.addChild</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">                </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="WHIT">                    </span><span class="STRN">"JSXGraph: Can't create 'intersection' with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="WHIT">                        </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">                        </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">                        </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>216</span> </span><span class="WHIT">                        </span><span class="STRN">"'."</span><span class="WHIT">
+<span class='line'>217</span> </span><span class="WHIT">                </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>218</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>219</span> 
+<span class='line'>220</span> </span><span class="WHIT">            </span><span class="NAME">this.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_INTERSECTION</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>221</span> </span><span class="WHIT">            </span><span class="NAME">this.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"intersection"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">            </span><span class="NAME">this.parents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">el1.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">j</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>223</span> 
+<span class='line'>224</span> </span><span class="WHIT">            </span><span class="NAME">this.generatePolynomial</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">poly1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el1.generatePolynomial</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">                    </span><span class="NAME">poly2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el2.generatePolynomial</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> 
+<span class='line'>228</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">poly1.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">poly2.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>231</span> 
+<span class='line'>232</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">poly1</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">poly2</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>234</span> 
+<span class='line'>235</span> </span><span class="WHIT">            </span><span class="NAME">this.prepareUpdate</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>237</span> 
+<span class='line'>238</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>239</span>          * Set the style of a point.
+<span class='line'>240</span>          * Used for GEONExT import and should not be used to set the point's face and size.
+<span class='line'>241</span>          * @param {Number} i Integer to determine the style.
+<span class='line'>242</span>          * @private
+<span class='line'>243</span>          */</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">        </span><span class="NAME">setStyle</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>245</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">facemap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>246</span> </span><span class="WHIT">                    </span><span class="COMM">// 0-2</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">                    </span><span class="STRN">"cross"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">                    </span><span class="STRN">"cross"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">                    </span><span class="STRN">"cross"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">                    </span><span class="COMM">// 3-6</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">                    </span><span class="STRN">"circle"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">                    </span><span class="STRN">"circle"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">                    </span><span class="STRN">"circle"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">                    </span><span class="STRN">"circle"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">                    </span><span class="COMM">// 7-9</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">                    </span><span class="STRN">"square"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">                    </span><span class="STRN">"square"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">                    </span><span class="STRN">"square"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">                    </span><span class="COMM">// 10-12</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">                    </span><span class="STRN">"plus"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">                    </span><span class="STRN">"plus"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>262</span> </span><span class="WHIT">                    </span><span class="STRN">"plus"</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">                </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">                </span><span class="NAME">sizemap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">                    </span><span class="COMM">// 0-2</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">                    </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">                    </span><span class="COMM">// 3-6</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">                    </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="WHIT">                    </span><span class="COMM">// 7-9</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="WHIT">                    </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">                    </span><span class="COMM">// 10-12</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">                    </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">                </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>274</span> 
+<span class='line'>275</span> </span><span class="WHIT">            </span><span class="NAME">this.visProp.face</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">facemap</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">            </span><span class="NAME">this.visProp.size</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">sizemap</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>277</span> 
+<span class='line'>278</span> </span><span class="WHIT">            </span><span class="NAME">this.board.renderer.changePointStyle</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>279</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>280</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>281</span> 
+<span class='line'>282</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>283</span>          * @deprecated Use JXG#normalizePointFace instead
+<span class='line'>284</span>          * @param s
+<span class='line'>285</span>          * @returns {*}
+<span class='line'>286</span>          */</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">        </span><span class="NAME">normalizeFace</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">s</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">            </span><span class="NAME">JXG.deprecated</span><span class="PUNC">(</span><span class="STRN">"Point.normalizeFace()"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"JXG.normalizePointFace()"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Options.normalizePointFace</span><span class="PUNC">(</span><span class="NAME">s</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>291</span> 
+<span class='line'>292</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>293</span>          * Set the face of a point element.
+<span class='line'>294</span>          * @param {String} f String which determines the face of the point. See {@link JXG.GeometryElement#face} for a list of available faces.
+<span class='line'>295</span>          * @see JXG.GeometryElement#face
+<span class='line'>296</span>          * @deprecated Use setAttribute()
+<span class='line'>297</span>          */</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">        </span><span class="NAME">face</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">f</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">            </span><span class="NAME">JXG.deprecated</span><span class="PUNC">(</span><span class="STRN">"Point.face()"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Point.setAttribute()"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">            </span><span class="NAME">this.setAttribute</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">face</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">f</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>302</span> 
+<span class='line'>303</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>304</span>          * Set the size of a point element
+<span class='line'>305</span>          * @param {Number} s Integer which determines the size of the point.
+<span class='line'>306</span>          * @see JXG.GeometryElement#size
+<span class='line'>307</span>          * @deprecated Use setAttribute()
+<span class='line'>308</span>          */</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="WHIT">        </span><span class="NAME">size</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">s</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">            </span><span class="NAME">JXG.deprecated</span><span class="PUNC">(</span><span class="STRN">"Point.size()"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Point.setAttribute()"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">            </span><span class="NAME">this.setAttribute</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">size</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>313</span> 
+<span class='line'>314</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>315</span>          * Test if the point is on (is incident with) element "el".
+<span class='line'>316</span>          *
+<span class='line'>317</span>          * @param {JXG.GeometryElement} el
+<span class='line'>318</span>          * @param {Number} tol
+<span class='line'>319</span>          * @returns {Boolean}
+<span class='line'>320</span>          *
+<span class='line'>321</span>          * @example
+<span class='line'>322</span>          * var circ = board.create('circle', [[-2, -2], 1]);
+<span class='line'>323</span>          * var seg = board.create('segment', [[-1, -3], [0,0]]);
+<span class='line'>324</span>          * var line = board.create('line', [[1, 3], [2, -2]]);
+<span class='line'>325</span>          * var po = board.create('point', [-1, 0], {color: 'blue'});
+<span class='line'>326</span>          * var curve = board.create('functiongraph', ['sin(x)'], {strokeColor: 'blue'});
+<span class='line'>327</span>          * var pol = board.create('polygon', [[2,2], [4,2], [4,3]], {strokeColor: 'blue'});
+<span class='line'>328</span>          *
+<span class='line'>329</span>          * var point = board.create('point', [-1, 1], {
+<span class='line'>330</span>          *               attractors: [line, seg, circ, po, curve, pol],
+<span class='line'>331</span>          *               attractorDistance: 0.2
+<span class='line'>332</span>          *             });
+<span class='line'>333</span>          *
+<span class='line'>334</span>          * var txt = board.create('text', [-4, 3, function() {
+<span class='line'>335</span>          *              return 'point on line: ' + point.isOn(line) + '&lt;br>' +
+<span class='line'>336</span>          *                 'point on seg: ' + point.isOn(seg) + '&lt;br>' +
+<span class='line'>337</span>          *                 'point on circ = ' + point.isOn(circ) + '&lt;br>' +
+<span class='line'>338</span>          *                 'point on point = ' + point.isOn(po) + '&lt;br>' +
+<span class='line'>339</span>          *                 'point on curve = ' + point.isOn(curve) + '&lt;br>' +
+<span class='line'>340</span>          *                 'point on polygon = ' + point.isOn(pol) + '&lt;br>';
+<span class='line'>341</span>          * }]);
+<span class='line'>342</span>          *
+<span class='line'>343</span>          * &lt;/pre>&lt;div id="JXG6c7d7404-758a-44eb-802c-e9644b9fab71" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>344</span>          * &lt;script type="text/javascript">
+<span class='line'>345</span>          *     (function() {
+<span class='line'>346</span>          *         var board = JXG.JSXGraph.initBoard('JXG6c7d7404-758a-44eb-802c-e9644b9fab71',
+<span class='line'>347</span>          *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>348</span>          *     var circ = board.create('circle', [[-2, -2], 1]);
+<span class='line'>349</span>          *     var seg = board.create('segment', [[-1, -3], [0,0]]);
+<span class='line'>350</span>          *     var line = board.create('line', [[1, 3], [2, -2]]);
+<span class='line'>351</span>          *     var po = board.create('point', [-1, 0], {color: 'blue'});
+<span class='line'>352</span>          *     var curve = board.create('functiongraph', ['sin(x)'], {strokeColor: 'blue'});
+<span class='line'>353</span>          *     var pol = board.create('polygon', [[2,2], [4,2], [4,3]], {strokeColor: 'blue'});
+<span class='line'>354</span>          *
+<span class='line'>355</span>          *     var point = board.create('point', [-1, 1], {
+<span class='line'>356</span>          *                   attractors: [line, seg, circ, po, curve, pol],
+<span class='line'>357</span>          *                   attractorDistance: 0.2
+<span class='line'>358</span>          *                 });
+<span class='line'>359</span>          *
+<span class='line'>360</span>          *     var txt = board.create('text', [-4, 3, function() {
+<span class='line'>361</span>          *             return 'point on line: ' + point.isOn(line) + '&lt;br>' +
+<span class='line'>362</span>          *                     'point on seg: ' + point.isOn(seg) + '&lt;br>' +
+<span class='line'>363</span>          *                     'point on circ = ' + point.isOn(circ) + '&lt;br>' +
+<span class='line'>364</span>          *                     'point on point = ' + point.isOn(po) + '&lt;br>' +
+<span class='line'>365</span>          *                     'point on curve = ' + point.isOn(curve) + '&lt;br>' +
+<span class='line'>366</span>          *                     'point on polygon = ' + point.isOn(pol) + '&lt;br>';
+<span class='line'>367</span>          *     }]);
+<span class='line'>368</span>          *
+<span class='line'>369</span>          *     })();
+<span class='line'>370</span>          *
+<span class='line'>371</span>          * &lt;/script>&lt;pre>
+<span class='line'>372</span>          *
+<span class='line'>373</span>          */</span><span class="WHIT">
+<span class='line'>374</span> </span><span class="WHIT">        </span><span class="NAME">isOn</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">arr</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">crds</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>376</span> 
+<span class='line'>377</span> </span><span class="WHIT">            </span><span class="NAME">tol</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>378</span> 
+<span class='line'>379</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isPoint</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.Dist</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_LINE</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.elType</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"segment"</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'alwaysintersect'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="WHIT">                    </span><span class="NAME">arr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">JXG.Math.Geometry.projectCoordsToSegment</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>384</span> </span><span class="WHIT">                        </span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>385</span> </span><span class="WHIT">                        </span><span class="NAME">el.point1.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">                        </span><span class="NAME">el.point2.coords.usrCoords</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>388</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">                        </span><span class="NAME">arr</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">                        </span><span class="NAME">arr</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">&lt;=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">                        </span><span class="NAME">Geometry.distPointLine</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el.stdform</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="WHIT">
+<span class='line'>392</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>393</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>394</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>395</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>396</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>398</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Geometry.distPointLine</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el.stdform</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>399</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>400</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'hasinnerpoints'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.Dist</span><span class="PUNC">(</span><span class="NAME">el.center</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">el.Radius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>403</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>404</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">this.Dist</span><span class="PUNC">(</span><span class="NAME">el.center</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">el.Radius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CURVE</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>406</span> </span><span class="WHIT">                </span><span class="NAME">crds</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.projectPointToCurve</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.board</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>407</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">crds.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>408</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.type</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_POLYGON</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>409</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'hasinnerpoints'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>410</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>411</span> </span><span class="WHIT">                        </span><span class="NAME">el.pnpoly</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>412</span> </span><span class="WHIT">                            </span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>413</span> </span><span class="WHIT">                            </span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">                            </span><span class="NAME">JXG.COORDS_BY_USER</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">                        </span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">                </span><span class="NAME">arr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.projectCoordsToPolygon</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">arr</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.type</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_TURTLE</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">                </span><span class="NAME">crds</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.projectPointToTurtle</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.board</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">this.coords.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">crds.usrCoords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">tol</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>426</span> 
+<span class='line'>427</span> </span><span class="WHIT">            </span><span class="COMM">// TODO: Arc, Sector</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>430</span> 
+<span class='line'>431</span> </span><span class="WHIT">        </span><span class="COMM">// Already documented in GeometryElement</span><span class="WHIT">
+<span class='line'>432</span> </span><span class="WHIT">        </span><span class="NAME">cloneToBackground</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>433</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">copy</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.getCloneObject</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>434</span> 
+<span class='line'>435</span> </span><span class="WHIT">            </span><span class="NAME">this.board.renderer.drawPoint</span><span class="PUNC">(</span><span class="NAME">copy</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">            </span><span class="NAME">this.traces</span><span class="PUNC">[</span><span class="NAME">copy.id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">copy.rendNode</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>437</span> 
+<span class='line'>438</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>439</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>442</span> 
+<span class='line'>443</span> </span><span class="COMM">/**
+<span class='line'>444</span>  * @class Construct a free or a fixed point. A free point is created if the given parent elements are all numbers
+<span class='line'>445</span>  * and the property fixed is not set or set to false. If one or more parent elements is not a number but a string containing a GEONE&lt;sub>x&lt;/sub>T
+<span class='line'>446</span>  * constraint or a function the point will be considered as constrained). That means that the user won't be able to change the point's
+<span class='line'>447</span>  * position directly.
+<span class='line'>448</span>  * @see Glider for a non-free point that is attached to another geometric element.
+<span class='line'>449</span>  * @pseudo
+<span class='line'>450</span>  * @name Point
+<span class='line'>451</span>  * @augments JXG.Point
+<span class='line'>452</span>  * @constructor
+<span class='line'>453</span>  * @type JXG.Point
+<span class='line'>454</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>455</span>  * @param {Number,string,function_Number,string,function_Number,string,function} z_,x,y Parent elements can be two or three elements of type number, a string containing a GEONE&lt;sub>x&lt;/sub>T
+<span class='line'>456</span>  * constraint, or a function which takes no parameter and returns a number. Every parent element determines one coordinate. If a coordinate is
+<span class='line'>457</span>  * given by a number, the number determines the initial position of a free point. If given by a string or a function that coordinate will be constrained
+<span class='line'>458</span>  * that means the user won't be able to change the point's position directly by mouse because it will be calculated automatically depending on the string
+<span class='line'>459</span>  * or the function's return value. If two parent elements are given the coordinates will be interpreted as 2D affine Euclidean coordinates, if three such
+<span class='line'>460</span>  * parent elements are given they will be interpreted as homogeneous coordinates.
+<span class='line'>461</span>  * @param {JXG.Point_JXG.Transformation_Array} Point,Transformation A point can also be created providing a transformation or an array of transformations.
+<span class='line'>462</span>  * The resulting point is a clone of the base point transformed by the given Transformation. {@see JXG.Transformation}.
+<span class='line'>463</span>  *
+<span class='line'>464</span>  * @example
+<span class='line'>465</span>  * // Create a free point using affine Euclidean coordinates
+<span class='line'>466</span>  * var p1 = board.create('point', [3.5, 2.0]);
+<span class='line'>467</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG672f1764-7dfa-4abc-a2c6-81fbbf83e44b" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'>468</span>  * &lt;script type="text/javascript">
+<span class='line'>469</span>  *   var board = JXG.JSXGraph.initBoard('JXG672f1764-7dfa-4abc-a2c6-81fbbf83e44b', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>470</span>  *   var p1 = board.create('point', [3.5, 2.0]);
+<span class='line'>471</span>  * &lt;/script>&lt;pre>
+<span class='line'>472</span>  * @example
+<span class='line'>473</span>  * // Create a constrained point using anonymous function
+<span class='line'>474</span>  * var p2 = board.create('point', [3.5, function () { return p1.X(); }]);
+<span class='line'>475</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG4fd4410c-3383-4e80-b1bb-961f5eeef224" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'>476</span>  * &lt;script type="text/javascript">
+<span class='line'>477</span>  *   var fpex1_board = JXG.JSXGraph.initBoard('JXG4fd4410c-3383-4e80-b1bb-961f5eeef224', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>478</span>  *   var fpex1_p1 = fpex1_board.create('point', [3.5, 2.0]);
+<span class='line'>479</span>  *   var fpex1_p2 = fpex1_board.create('point', [3.5, function () { return fpex1_p1.X(); }]);
+<span class='line'>480</span>  * &lt;/script>&lt;pre>
+<span class='line'>481</span>  * @example
+<span class='line'>482</span>  * // Create a point using transformations
+<span class='line'>483</span>  * var trans = board.create('transform', [2, 0.5], {type:'scale'});
+<span class='line'>484</span>  * var p3 = board.create('point', [p2, trans]);
+<span class='line'>485</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG630afdf3-0a64-46e0-8a44-f51bd197bb8d" style="width: 400px; height: 400px;">&lt;/div>
+<span class='line'>486</span>  * &lt;script type="text/javascript">
+<span class='line'>487</span>  *   var fpex2_board = JXG.JSXGraph.initBoard('JXG630afdf3-0a64-46e0-8a44-f51bd197bb8d', {boundingbox: [-1, 9, 9, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>488</span>  *   var fpex2_trans = fpex2_board.create('transform', [2, 0.5], {type:'scale'});
+<span class='line'>489</span>  *   var fpex2_p2 = fpex2_board.create('point', [3.5, 2.0]);
+<span class='line'>490</span>  *   var fpex2_p3 = fpex2_board.create('point', [fpex2_p2, fpex2_trans]);
+<span class='line'>491</span>  * &lt;/script>&lt;pre>
+<span class='line'>492</span>  */</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="NAME">JXG.createPoint</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>495</span> 
+<span class='line'>496</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"point"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>497</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">CoordsElement.create</span><span class="PUNC">(</span><span class="NAME">JXG.Point</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">el</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>500</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create point with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>501</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">                </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">                </span><span class="STRN">"'."</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>505</span> </span><span class="WHIT">                </span><span class="STRN">"\nPossible parent types: [x,y], [z,x,y], [element,transformation]"</span><span class="WHIT">
+<span class='line'>506</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>508</span> 
+<span class='line'>509</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>511</span> 
+<span class='line'>512</span> </span><span class="COMM">/**
+<span class='line'>513</span>  * @class A glider is a point bound to a line, circle or curve or even another point.
+<span class='line'>514</span>  * @pseudo
+<span class='line'>515</span>  * @description A glider is a point which lives on another geometric element like a line, circle, curve, turtle.
+<span class='line'>516</span>  * @name Glider
+<span class='line'>517</span>  * @augments JXG.Point
+<span class='line'>518</span>  * @constructor
+<span class='line'>519</span>  * @type JXG.Point
+<span class='line'>520</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>521</span>  * @param {Number_Number_Number_JXG.GeometryElement} z_,x_,y_,GlideObject Parent elements can be two or three elements of type number and the object the glider lives on.
+<span class='line'>522</span>  * The coordinates are completely optional. If not given the origin is used. If you provide two numbers for coordinates they will be interpreted as affine Euclidean
+<span class='line'>523</span>  * coordinates, otherwise they will be interpreted as homogeneous coordinates. In any case the point will be projected on the glide object.
+<span class='line'>524</span>  * @example
+<span class='line'>525</span>  * // Create a glider with user defined coordinates. If the coordinates are not on
+<span class='line'>526</span>  * // the circle (like in this case) the point will be projected onto the circle.
+<span class='line'>527</span>  * var p1 = board.create('point', [2.0, 2.0]);
+<span class='line'>528</span>  * var c1 = board.create('circle', [p1, 2.0]);
+<span class='line'>529</span>  * var p2 = board.create('glider', [2.0, 1.5, c1]);
+<span class='line'>530</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG4f65f32f-e50a-4b50-9b7c-f6ec41652930" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>531</span>  * &lt;script type="text/javascript">
+<span class='line'>532</span>  *   var gpex1_board = JXG.JSXGraph.initBoard('JXG4f65f32f-e50a-4b50-9b7c-f6ec41652930', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>533</span>  *   var gpex1_p1 = gpex1_board.create('point', [2.0, 2.0]);
+<span class='line'>534</span>  *   var gpex1_c1 = gpex1_board.create('circle', [gpex1_p1, 2.0]);
+<span class='line'>535</span>  *   var gpex1_p2 = gpex1_board.create('glider', [2.0, 1.5, gpex1_c1]);
+<span class='line'>536</span>  * &lt;/script>&lt;pre>
+<span class='line'>537</span>  * @example
+<span class='line'>538</span>  * // Create a glider with default coordinates (1,0,0). Same premises as above.
+<span class='line'>539</span>  * var p1 = board.create('point', [2.0, 2.0]);
+<span class='line'>540</span>  * var c1 = board.create('circle', [p1, 2.0]);
+<span class='line'>541</span>  * var p2 = board.create('glider', [c1]);
+<span class='line'>542</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG4de7f181-631a-44b1-a12f-bc4d995609e8" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'>543</span>  * &lt;script type="text/javascript">
+<span class='line'>544</span>  *   var gpex2_board = JXG.JSXGraph.initBoard('JXG4de7f181-631a-44b1-a12f-bc4d995609e8', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>545</span>  *   var gpex2_p1 = gpex2_board.create('point', [2.0, 2.0]);
+<span class='line'>546</span>  *   var gpex2_c1 = gpex2_board.create('circle', [gpex2_p1, 2.0]);
+<span class='line'>547</span>  *   var gpex2_p2 = gpex2_board.create('glider', [gpex2_c1]);
+<span class='line'>548</span>  * &lt;/script>&lt;pre>
+<span class='line'>549</span>  *@example
+<span class='line'>550</span>  * //animate example 2
+<span class='line'>551</span>  * var p1 = board.create('point', [2.0, 2.0]);
+<span class='line'>552</span>  * var c1 = board.create('circle', [p1, 2.0]);
+<span class='line'>553</span>  * var p2 = board.create('glider', [c1]);
+<span class='line'>554</span>  * var button1 = board.create('button', [1, 7, 'start animation',function(){p2.startAnimation(1,4)}]);
+<span class='line'>555</span>  * var button2 = board.create('button', [1, 5, 'stop animation',function(){p2.stopAnimation()}]);
+<span class='line'>556</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG4de7f181-631a-44b1-a12f-bc4d133709e8" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'>557</span>  * &lt;script type="text/javascript">
+<span class='line'>558</span>  *   var gpex3_board = JXG.JSXGraph.initBoard('JXG4de7f181-631a-44b1-a12f-bc4d133709e8', {boundingbox: [-1, 10, 10, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>559</span>  *   var gpex3_p1 = gpex3_board.create('point', [2.0, 2.0]);
+<span class='line'>560</span>  *   var gpex3_c1 = gpex3_board.create('circle', [gpex3_p1, 2.0]);
+<span class='line'>561</span>  *   var gpex3_p2 = gpex3_board.create('glider', [gpex3_c1]);
+<span class='line'>562</span>  *   gpex3_board.create('button', [1, 7, 'start animation',function(){gpex3_p2.startAnimation(1,4)}]);
+<span class='line'>563</span>  *   gpex3_board.create('button', [1, 5, 'stop animation',function(){gpex3_p2.stopAnimation()}]);
+<span class='line'>564</span>  * &lt;/script>&lt;pre>
+<span class='line'>565</span>  */</span><span class="WHIT">
+<span class='line'>566</span> </span><span class="NAME">JXG.createGlider</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>567</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>568</span> </span><span class="WHIT">        </span><span class="NAME">coords</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>569</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"glider"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>570</span> 
+<span class='line'>571</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>572</span> </span><span class="WHIT">        </span><span class="NAME">coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>573</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>574</span> </span><span class="WHIT">        </span><span class="NAME">coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents.slice</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>575</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>576</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>577</span> 
+<span class='line'>578</span> </span><span class="WHIT">    </span><span class="COMM">// eltype is set in here</span><span class="WHIT">
+<span class='line'>579</span> </span><span class="WHIT">    </span><span class="NAME">el.makeGlider</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>580</span> 
+<span class='line'>581</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>582</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>583</span> 
+<span class='line'>584</span> </span><span class="COMM">/**
+<span class='line'>585</span>  * @class A point intersecting two 1-dimensional elements.
+<span class='line'>586</span>  * It is one point of the set  * consisting of the intersection points of the two elements.
+<span class='line'>587</span>  * The following element types can be (mutually) intersected: line, circle,
+<span class='line'>588</span>  * curve, polygon, polygonal chain.
+<span class='line'>589</span>  *
+<span class='line'>590</span>  * @pseudo
+<span class='line'>591</span>  * @name Intersection
+<span class='line'>592</span>  * @augments JXG.Point
+<span class='line'>593</span>  * @constructor
+<span class='line'>594</span>  * @type JXG.Point
+<span class='line'>595</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>596</span>  * @param {JXG.Line,JXG.Circle_JXG.Line,JXG.Circle_Number|Function} el1,el2,i The result will be a intersection point on el1 and el2. i determines the
+<span class='line'>597</span>  * intersection point if two points are available: &lt;ul>
+<span class='line'>598</span>  *   &lt;li>i==0: use the positive square root,&lt;/li>
+<span class='line'>599</span>  *   &lt;li>i==1: use the negative square root.&lt;/li>&lt;/ul>
+<span class='line'>600</span>  * @example
+<span class='line'>601</span>  * // Create an intersection point of circle and line
+<span class='line'>602</span>  * var p1 = board.create('point', [4.0, 4.0]);
+<span class='line'>603</span>  * var c1 = board.create('circle', [p1, 2.0]);
+<span class='line'>604</span>  *
+<span class='line'>605</span>  * var p2 = board.create('point', [1.0, 1.0]);
+<span class='line'>606</span>  * var p3 = board.create('point', [5.0, 3.0]);
+<span class='line'>607</span>  * var l1 = board.create('line', [p2, p3]);
+<span class='line'>608</span>  *
+<span class='line'>609</span>  * var i = board.create('intersection', [c1, l1, 0]);
+<span class='line'>610</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGe5b0e190-5200-4bc3-b995-b6cc53dc5dc0" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>611</span>  * &lt;script type="text/javascript">
+<span class='line'>612</span>  *   var ipex1_board = JXG.JSXGraph.initBoard('JXGe5b0e190-5200-4bc3-b995-b6cc53dc5dc0', {boundingbox: [-1, 7, 7, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>613</span>  *   var ipex1_p1 = ipex1_board.create('point', [4.0, 4.0]);
+<span class='line'>614</span>  *   var ipex1_c1 = ipex1_board.create('circle', [ipex1_p1, 2.0]);
+<span class='line'>615</span>  *   var ipex1_p2 = ipex1_board.create('point', [1.0, 1.0]);
+<span class='line'>616</span>  *   var ipex1_p3 = ipex1_board.create('point', [5.0, 3.0]);
+<span class='line'>617</span>  *   var ipex1_l1 = ipex1_board.create('line', [ipex1_p2, ipex1_p3]);
+<span class='line'>618</span>  *   var ipex1_i = ipex1_board.create('intersection', [ipex1_c1, ipex1_l1, 0]);
+<span class='line'>619</span>  * &lt;/script>&lt;pre>
+<span class='line'>620</span>  */</span><span class="WHIT">
+<span class='line'>621</span> </span><span class="NAME">JXG.createIntersectionPoint</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>622</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>623</span> </span><span class="WHIT">        </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">j</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>624</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"intersection"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>625</span> 
+<span class='line'>626</span> </span><span class="WHIT">    </span><span class="COMM">// make sure we definitely have the indices</span><span class="WHIT">
+<span class='line'>627</span> </span><span class="WHIT">    </span><span class="NAME">parents.push</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>628</span> 
+<span class='line'>629</span> </span><span class="WHIT">    </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>630</span> </span><span class="WHIT">    </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>631</span> 
+<span class='line'>632</span> </span><span class="WHIT">    </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>633</span> </span><span class="WHIT">    </span><span class="NAME">j</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>634</span> 
+<span class='line'>635</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>636</span> 
+<span class='line'>637</span> </span><span class="WHIT">    </span><span class="COMM">// el.visProp.alwaysintersect is evaluated as late as in the returned function</span><span class="WHIT">
+<span class='line'>638</span> </span><span class="WHIT">    </span><span class="NAME">func</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.intersectionFunction</span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">j</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el.visProp.alwaysintersect</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>639</span> </span><span class="WHIT">    </span><span class="NAME">el.addConstraint</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">func</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>640</span> 
+<span class='line'>641</span> </span><span class="WHIT">    </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>642</span> </span><span class="WHIT">        </span><span class="NAME">el1.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>643</span> </span><span class="WHIT">        </span><span class="NAME">el2.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>644</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>645</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>646</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create 'intersection' with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>647</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>648</span> </span><span class="WHIT">                </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>649</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>650</span> </span><span class="WHIT">                </span><span class="STRN">"'."</span><span class="WHIT">
+<span class='line'>651</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>652</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>653</span> 
+<span class='line'>654</span> </span><span class="WHIT">    </span><span class="NAME">el.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_INTERSECTION</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>655</span> </span><span class="WHIT">    </span><span class="NAME">el.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"intersection"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>656</span> </span><span class="WHIT">    </span><span class="NAME">el.setParents</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">el1.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2.id</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>657</span> 
+<span class='line'>658</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>659</span>      * Array of length 2 containing the numbers i and j.
+<span class='line'>660</span>      * The intersection point is i-th intersection point.
+<span class='line'>661</span>      * j is unused.
+<span class='line'>662</span>      * @type Array
+<span class='line'>663</span>      * @name intersectionNumbers
+<span class='line'>664</span>      * @memberOf Intersection
+<span class='line'>665</span>      * @private
+<span class='line'>666</span>      */</span><span class="WHIT">
+<span class='line'>667</span> </span><span class="WHIT">    </span><span class="NAME">el.intersectionNumbers</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">j</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>668</span> </span><span class="WHIT">    </span><span class="NAME">el.getParents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>669</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.parents.concat</span><span class="PUNC">(</span><span class="NAME">this.intersectionNumbers</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>670</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>671</span> 
+<span class='line'>672</span> </span><span class="WHIT">    </span><span class="NAME">el.generatePolynomial</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>673</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">poly1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el1.generatePolynomial</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>674</span> </span><span class="WHIT">            </span><span class="NAME">poly2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el2.generatePolynomial</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>675</span> 
+<span class='line'>676</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">poly1.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">poly2.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>677</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>678</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>679</span> 
+<span class='line'>680</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">poly1</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">poly2</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>681</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>682</span> 
+<span class='line'>683</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>684</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>685</span> 
+<span class='line'>686</span> </span><span class="COMM">/**
+<span class='line'>687</span>  * @class Given a set of intersection points, this is another ("other") intersection point,
+<span class='line'>688</span>  * @pseudo
+<span class='line'>689</span>  * @description If two elements of type curve, circle or line intersect in more than one point, with this element it is possible
+<span class='line'>690</span>  * to construct the "other" intersection. This is a an intersection which is different from a supplied point or different from any
+<span class='line'>691</span>  * point in an array of supplied points. This might be helpful in situtations where one intersection point is already part of the construction
+<span class='line'>692</span>  * or in situtation where the order of the intersection points changes while interacting with the construction.
+<span class='line'>693</span>  *
+<span class='line'>694</span>  * @name OtherIntersection
+<span class='line'>695</span>  * @augments JXG.Point
+<span class='line'>696</span>  * @constructor
+<span class='line'>697</span>  * @type JXG.Point
+<span class='line'>698</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>699</span>  * @param {JXG.Line,JXG.Circle_JXG.Line,JXG.Circle_JXG.Point,Array} el1,el2,p Two elements which are intersected and a point or an array of points
+<span class='line'>700</span>  * which have to be different from the new intersection point.
+<span class='line'>701</span>  *
+<span class='line'>702</span>  * @example
+<span class='line'>703</span>  * // Create an intersection point of circle and line
+<span class='line'>704</span>  * var p1 = board.create('point', [2.0, 2.0]);
+<span class='line'>705</span>  * var c1 = board.create('circle', [p1, 2.0]);
+<span class='line'>706</span>  *
+<span class='line'>707</span>  * var p2 = board.create('point', [2.0, 2.0]);
+<span class='line'>708</span>  * var p3 = board.create('point', [2.0, 2.0]);
+<span class='line'>709</span>  * var l1 = board.create('line', [p2, p3]);
+<span class='line'>710</span>  *
+<span class='line'>711</span>  * var p1 = board.create('intersection', [c1, l1, 0]);
+<span class='line'>712</span>  * var p2 = board.create('otherintersection', [c1, l1, p1]);
+<span class='line'>713</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG45e25f12-a1de-4257-a466-27a2ae73614c" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>714</span>  * &lt;script type="text/javascript">
+<span class='line'>715</span>  *   var ipex2_board = JXG.JSXGraph.initBoard('JXG45e25f12-a1de-4257-a466-27a2ae73614c', {boundingbox: [-1, 7, 7, -1], axis: false, showcopyright: false, shownavigation: false});
+<span class='line'>716</span>  *   var ipex2_p1 = ipex2_board.create('point', [4.0, 4.0]);
+<span class='line'>717</span>  *   var ipex2_c1 = ipex2_board.create('circle', [ipex2_p1, 2.0]);
+<span class='line'>718</span>  *   var ipex2_p2 = ipex2_board.create('point', [1.0, 1.0]);
+<span class='line'>719</span>  *   var ipex2_p3 = ipex2_board.create('point', [5.0, 3.0]);
+<span class='line'>720</span>  *   var ipex2_l1 = ipex2_board.create('line', [ipex2_p2, ipex2_p3]);
+<span class='line'>721</span>  *   var ipex2_i = ipex2_board.create('intersection', [ipex2_c1, ipex2_l1, 0], {name:'D'});
+<span class='line'>722</span>  *   var ipex2_j = ipex2_board.create('otherintersection', [ipex2_c1, ipex2_l1, ipex2_i], {name:'E'});
+<span class='line'>723</span>  * &lt;/script>&lt;pre>
+<span class='line'>724</span>  *
+<span class='line'>725</span>  * @example
+<span class='line'>726</span>  *  // circle / circle
+<span class='line'>727</span>  *  var c1 = board.create('circle', [[0, 0], 3]);
+<span class='line'>728</span>  *  var c2 = board.create('circle', [[2, 2], 3]);
+<span class='line'>729</span>  *
+<span class='line'>730</span>  *  var p1 = board.create('intersection', [c1, c2, 0]);
+<span class='line'>731</span>  *  var p2 = board.create('otherintersection', [c1, c2, p1]);
+<span class='line'>732</span>  *
+<span class='line'>733</span>  * &lt;/pre>&lt;div id="JXGdb5c974c-3092-4cdf-b5ef-d0af4a912581" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>734</span>  * &lt;script type="text/javascript">
+<span class='line'>735</span>  *     (function() {
+<span class='line'>736</span>  *         var board = JXG.JSXGraph.initBoard('JXGdb5c974c-3092-4cdf-b5ef-d0af4a912581',
+<span class='line'>737</span>  *             {boundingbox: [-8, 8, 8,-8], axis: false, showcopyright: false, shownavigation: false});
+<span class='line'>738</span>  *           var c1 = board.create('circle', [[0, 0], 3]);
+<span class='line'>739</span>  *           var c2 = board.create('circle', [[2, 2], 3]);
+<span class='line'>740</span>  *
+<span class='line'>741</span>  *           var p1 = board.create('intersection', [c1, c2, 0]);
+<span class='line'>742</span>  *           var p2 = board.create('otherintersection', [c1, c2, p1]);
+<span class='line'>743</span>  *     })();
+<span class='line'>744</span>  * &lt;/script>&lt;pre>
+<span class='line'>745</span>  *
+<span class='line'>746</span>  * @example
+<span class='line'>747</span>  *  // curve / line
+<span class='line'>748</span>  *  var curve = board.create('implicitcurve', ['-(y**2) + x**3 - 2 * x + 1'], { strokeWidth: 2 });
+<span class='line'>749</span>  *  var A = board.create('glider', [-1.5, 1, curve]);
+<span class='line'>750</span>  *  var B = board.create('glider', [0.5, 0.5, curve]);
+<span class='line'>751</span>  *  var line = board.create('line', [A, B], { color: 'black', strokeWidth: 1 });
+<span class='line'>752</span>  *  var C = board.create('otherintersection', [curve, line, [A, B]], {precision: 0.01});
+<span class='line'>753</span>  *  var D = board.create('point', [() => C.X(), () => -C.Y()], { name: '-C = A + B' });
+<span class='line'>754</span>  *
+<span class='line'>755</span>  * &lt;/pre>&lt;div id="JXG033f15b0-f5f1-4003-ab6a-b7e13e867fbd" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>756</span>  * &lt;script type="text/javascript">
+<span class='line'>757</span>  *     (function() {
+<span class='line'>758</span>  *         var board = JXG.JSXGraph.initBoard('JXG033f15b0-f5f1-4003-ab6a-b7e13e867fbd',
+<span class='line'>759</span>  *             {boundingbox: [-2, 2, 2, -2], axis: false, showcopyright: false, shownavigation: false});
+<span class='line'>760</span>  *           var curve = board.create('implicitcurve', ['-(y**2) + x**3 - 2 * x + 1'], { strokeWidth: 2 });
+<span class='line'>761</span>  *           var A = board.create('glider', [-1.5, 1, curve]);
+<span class='line'>762</span>  *           var B = board.create('glider', [0.5, 0.5, curve]);
+<span class='line'>763</span>  *           var line = board.create('line', [A, B], { color: 'black', strokeWidth: 1 });
+<span class='line'>764</span>  *           var C = board.create('otherintersection', [curve, line, [A, B]], {precision: 0.01});
+<span class='line'>765</span>  *           var D = board.create('point', [() => C.X(), () => -C.Y()], { name: '-C = A + B' });
+<span class='line'>766</span>  *     })();
+<span class='line'>767</span>  * &lt;/script>&lt;pre>
+<span class='line'>768</span>  *
+<span class='line'>769</span>  * @example
+<span class='line'>770</span>  *  // curve / curve
+<span class='line'>771</span>  *  var c1 = board.create('functiongraph', ['x**2 - 3'], { strokeWidth: 2 });
+<span class='line'>772</span>  *  var A = board.create('point', [0, 2]);
+<span class='line'>773</span>  *  var c2 = board.create('functiongraph', [(x) => -(x**2) + 2 * A.X() * x + A.Y() - A.X()**2], { strokeWidth: 2 });
+<span class='line'>774</span>  *  var p1 = board.create('intersection', [c1, c2]);
+<span class='line'>775</span>  *  var p2 = board.create('otherintersection', [c1, c2, [p1]]);
+<span class='line'>776</span>  *
+<span class='line'>777</span>  * &lt;/pre>&lt;div id="JXG29359aa9-3066-4f45-9e5d-d74201b991d3" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>778</span>  * &lt;script type="text/javascript">
+<span class='line'>779</span>  *     (function() {
+<span class='line'>780</span>  *         var board = JXG.JSXGraph.initBoard('JXG29359aa9-3066-4f45-9e5d-d74201b991d3',
+<span class='line'>781</span>  *             {boundingbox: [-5, 5, 5, -5], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>782</span>  *           var c1 = board.create('functiongraph', ['x**2 - 3'], { strokeWidth: 2 });
+<span class='line'>783</span>  *           var A = board.create('point', [0, 2]);
+<span class='line'>784</span>  *           var c2 = board.create('functiongraph', [(x) => -(x**2) + 2 * A.X() * x + A.Y() - A.X()**2], { strokeWidth: 2 });
+<span class='line'>785</span>  *           var p1 = board.create('intersection', [c1, c2]);
+<span class='line'>786</span>  *           var p2 = board.create('otherintersection', [c1, c2, [p1]]);
+<span class='line'>787</span>  *     })();
+<span class='line'>788</span>  * &lt;/script>&lt;pre>
+<span class='line'>789</span>  *
+<span class='line'>790</span>  */</span><span class="WHIT">
+<span class='line'>791</span> </span><span class="NAME">JXG.createOtherIntersectionPoint</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>792</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>793</span> </span><span class="WHIT">    </span><span class="NAME">others</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">input</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>794</span> </span><span class="WHIT">    </span><span class="NAME">isGood</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>795</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'otherintersection'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>796</span> 
+<span class='line'>797</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>798</span> </span><span class="WHIT">        </span><span class="NAME">isGood</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>799</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>800</span> </span><span class="WHIT">        </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>801</span> </span><span class="WHIT">        </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>802</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>803</span> </span><span class="WHIT">            </span><span class="NAME">others</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>804</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>805</span> </span><span class="WHIT">            </span><span class="NAME">others</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>806</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>807</span> 
+<span class='line'>808</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">others.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>809</span> </span><span class="WHIT">            </span><span class="NAME">others</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">others</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>810</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.isPoint</span><span class="PUNC">(</span><span class="NAME">others</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>811</span> </span><span class="WHIT">                </span><span class="NAME">isGood</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>812</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>813</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>814</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>815</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">isGood</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>816</span> </span><span class="WHIT">            </span><span class="NAME">input</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>817</span> </span><span class="WHIT">            </span><span class="COMM">// Sort parent elements in order: curve, circle, line</span><span class="WHIT">
+<span class='line'>818</span> </span><span class="WHIT">            </span><span class="NAME">input.sort</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">b</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">b.elementClass</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">a.elementClass</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>819</span> 
+<span class='line'>820</span> </span><span class="WHIT">            </span><span class="COMM">// Two lines are forbidden:</span><span class="WHIT">
+<span class='line'>821</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CURVE</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">indexOf</span><span class="PUNC">(</span><span class="NAME">input</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>822</span> </span><span class="WHIT">                </span><span class="NAME">isGood</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>823</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CURVE</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_LINE</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">indexOf</span><span class="PUNC">(</span><span class="NAME">input</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>824</span> </span><span class="WHIT">                </span><span class="NAME">isGood</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>825</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>826</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>827</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>828</span> 
+<span class='line'>829</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isGood</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>830</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>831</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create 'other intersection point' with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>832</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"',  '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"'and  '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"'."</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>833</span> </span><span class="WHIT">                </span><span class="STRN">"\nPossible parent types: [circle|curve|line,circle|curve|line, point], not two lines"</span><span class="WHIT">
+<span class='line'>834</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>835</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>836</span> 
+<span class='line'>837</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">'point'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>838</span> </span><span class="WHIT">    </span><span class="COMM">// el.visProp.alwaysintersect is evaluated as late as in the returned function</span><span class="WHIT">
+<span class='line'>839</span> </span><span class="WHIT">    </span><span class="NAME">func</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.otherIntersectionFunction</span><span class="PUNC">(</span><span class="NAME">input</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">others</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el.visProp.alwaysintersect</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el.visProp.precision</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>840</span> </span><span class="WHIT">    </span><span class="NAME">el.addConstraint</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">func</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>841</span> 
+<span class='line'>842</span> </span><span class="WHIT">    </span><span class="NAME">el.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_INTERSECTION</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>843</span> </span><span class="WHIT">    </span><span class="NAME">el.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"otherintersection"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>844</span> </span><span class="WHIT">    </span><span class="NAME">el.setParents</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">el1.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2.id</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>845</span> </span><span class="WHIT">    </span><span class="NAME">el.addParents</span><span class="PUNC">(</span><span class="NAME">others</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>846</span> 
+<span class='line'>847</span> </span><span class="WHIT">    </span><span class="NAME">el1.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>848</span> </span><span class="WHIT">    </span><span class="NAME">el2.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>849</span> 
+<span class='line'>850</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el1.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>851</span> </span><span class="WHIT">        </span><span class="COMM">// circle, circle|line</span><span class="WHIT">
+<span class='line'>852</span> </span><span class="WHIT">        </span><span class="NAME">el.generatePolynomial</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>853</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">poly1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el1.generatePolynomial</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>854</span> </span><span class="WHIT">                </span><span class="NAME">poly2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el2.generatePolynomial</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>855</span> 
+<span class='line'>856</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">poly1.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">poly2.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>857</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>858</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>859</span> 
+<span class='line'>860</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">poly1</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">poly2</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>861</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>862</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>863</span> 
+<span class='line'>864</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>865</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>866</span> 
+<span class='line'>867</span> </span><span class="COMM">/**
+<span class='line'>868</span>  * @class This element is used to provide a constructor for the pole point of a line with respect to a conic or a circle.
+<span class='line'>869</span>  * @pseudo
+<span class='line'>870</span>  * @description The pole point is the unique reciprocal relationship of a line with respect to a conic.
+<span class='line'>871</span>  * The lines tangent to the intersections of a conic and a line intersect at the pole point of that line with respect to that conic.
+<span class='line'>872</span>  * A line tangent to a conic has the pole point of that line with respect to that conic as the tangent point.
+<span class='line'>873</span>  * See {@link https://en.wikipedia.org/wiki/Pole_and_polar} for more information on pole and polar.
+<span class='line'>874</span>  * @name PolePoint
+<span class='line'>875</span>  * @augments JXG.Point
+<span class='line'>876</span>  * @constructor
+<span class='line'>877</span>  * @type JXG.Point
+<span class='line'>878</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>879</span>  * @param {JXG.Conic,JXG.Circle_JXG.Point} el1,el2 or
+<span class='line'>880</span>  * @param {JXG.Point_JXG.Conic,JXG.Circle} el1,el2 The result will be the pole point of the line with respect to the conic or the circle.
+<span class='line'>881</span>  * @example
+<span class='line'>882</span>  * // Create the pole point of a line with respect to a conic
+<span class='line'>883</span>  * var p1 = board.create('point', [-1, 2]);
+<span class='line'>884</span>  * var p2 = board.create('point', [ 1, 4]);
+<span class='line'>885</span>  * var p3 = board.create('point', [-1,-2]);
+<span class='line'>886</span>  * var p4 = board.create('point', [ 0, 0]);
+<span class='line'>887</span>  * var p5 = board.create('point', [ 4,-2]);
+<span class='line'>888</span>  * var c1 = board.create('conic',[p1,p2,p3,p4,p5]);
+<span class='line'>889</span>  * var p6 = board.create('point', [-1, 4]);
+<span class='line'>890</span>  * var p7 = board.create('point', [2, -2]);
+<span class='line'>891</span>  * var l1 = board.create('line', [p6, p7]);
+<span class='line'>892</span>  * var p8 = board.create('polepoint', [c1, l1]);
+<span class='line'>893</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG7b7233a0-f363-47dd-9df5-8018d0d17a98" class="jxgbox" style="width:400px; height:400px;">&lt;/div>
+<span class='line'>894</span>  * &lt;script type='text/javascript'>
+<span class='line'>895</span>  * var ppex1_board = JXG.JSXGraph.initBoard('JXG7b7233a0-f363-47dd-9df5-8018d0d17a98', {boundingbox: [-3, 5, 5, -3], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>896</span>  * var ppex1_p1 = ppex1_board.create('point', [-1, 2]);
+<span class='line'>897</span>  * var ppex1_p2 = ppex1_board.create('point', [ 1, 4]);
+<span class='line'>898</span>  * var ppex1_p3 = ppex1_board.create('point', [-1,-2]);
+<span class='line'>899</span>  * var ppex1_p4 = ppex1_board.create('point', [ 0, 0]);
+<span class='line'>900</span>  * var ppex1_p5 = ppex1_board.create('point', [ 4,-2]);
+<span class='line'>901</span>  * var ppex1_c1 = ppex1_board.create('conic',[ppex1_p1,ppex1_p2,ppex1_p3,ppex1_p4,ppex1_p5]);
+<span class='line'>902</span>  * var ppex1_p6 = ppex1_board.create('point', [-1, 4]);
+<span class='line'>903</span>  * var ppex1_p7 = ppex1_board.create('point', [2, -2]);
+<span class='line'>904</span>  * var ppex1_l1 = ppex1_board.create('line', [ppex1_p6, ppex1_p7]);
+<span class='line'>905</span>  * var ppex1_p8 = ppex1_board.create('polepoint', [ppex1_c1, ppex1_l1]);
+<span class='line'>906</span>  * &lt;/script>&lt;pre>
+<span class='line'>907</span>  * @example
+<span class='line'>908</span>  * // Create the pole point of a line with respect to a circle
+<span class='line'>909</span>  * var p1 = board.create('point', [1, 1]);
+<span class='line'>910</span>  * var p2 = board.create('point', [2, 3]);
+<span class='line'>911</span>  * var c1 = board.create('circle',[p1,p2]);
+<span class='line'>912</span>  * var p3 = board.create('point', [-1, 4]);
+<span class='line'>913</span>  * var p4 = board.create('point', [4, -1]);
+<span class='line'>914</span>  * var l1 = board.create('line', [p3, p4]);
+<span class='line'>915</span>  * var p5 = board.create('polepoint', [c1, l1]);
+<span class='line'>916</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG7b7233a0-f363-47dd-9df5-9018d0d17a98" class="jxgbox" style="width:400px; height:400px;">&lt;/div>
+<span class='line'>917</span>  * &lt;script type='text/javascript'>
+<span class='line'>918</span>  * var ppex2_board = JXG.JSXGraph.initBoard('JXG7b7233a0-f363-47dd-9df5-9018d0d17a98', {boundingbox: [-3, 7, 7, -3], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>919</span>  * var ppex2_p1 = ppex2_board.create('point', [1, 1]);
+<span class='line'>920</span>  * var ppex2_p2 = ppex2_board.create('point', [2, 3]);
+<span class='line'>921</span>  * var ppex2_c1 = ppex2_board.create('circle',[ppex2_p1,ppex2_p2]);
+<span class='line'>922</span>  * var ppex2_p3 = ppex2_board.create('point', [-1, 4]);
+<span class='line'>923</span>  * var ppex2_p4 = ppex2_board.create('point', [4, -1]);
+<span class='line'>924</span>  * var ppex2_l1 = ppex2_board.create('line', [ppex2_p3, ppex2_p4]);
+<span class='line'>925</span>  * var ppex2_p5 = ppex2_board.create('polepoint', [ppex2_c1, ppex2_l1]);
+<span class='line'>926</span>  * &lt;/script>&lt;pre>
+<span class='line'>927</span>  */</span><span class="WHIT">
+<span class='line'>928</span> </span><span class="NAME">JXG.createPolePoint</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>929</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>930</span> </span><span class="WHIT">        </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>931</span> </span><span class="WHIT">        </span><span class="NAME">el2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>932</span> </span><span class="WHIT">        </span><span class="NAME">firstParentIsConic</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>933</span> </span><span class="WHIT">        </span><span class="NAME">secondParentIsConic</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>934</span> </span><span class="WHIT">        </span><span class="NAME">firstParentIsLine</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>935</span> </span><span class="WHIT">        </span><span class="NAME">secondParentIsLine</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>936</span> 
+<span class='line'>937</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>938</span> </span><span class="WHIT">        </span><span class="NAME">firstParentIsConic</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT">
+<span class='line'>939</span> </span><span class="WHIT">            </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">type</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_CONIC</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>940</span> </span><span class="WHIT">            </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>941</span> </span><span class="WHIT">        </span><span class="NAME">secondParentIsConic</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT">
+<span class='line'>942</span> </span><span class="WHIT">            </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">type</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_CONIC</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>943</span> </span><span class="WHIT">            </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_CIRCLE</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>944</span> 
+<span class='line'>945</span> </span><span class="WHIT">        </span><span class="NAME">firstParentIsLine</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_LINE</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>946</span> </span><span class="WHIT">        </span><span class="NAME">secondParentIsLine</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_LINE</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>947</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>948</span> 
+<span class='line'>949</span> </span><span class="WHIT">    </span><span class="COMM">/*        if (parents.length !== 2 || !((
+<span class='line'>950</span>                 parents[0].type === Const.OBJECT_TYPE_CONIC ||
+<span class='line'>951</span>                 parents[0].elementClass === Const.OBJECT_CLASS_CIRCLE) &&
+<span class='line'>952</span>                 parents[1].elementClass === Const.OBJECT_CLASS_LINE ||
+<span class='line'>953</span>                 parents[0].elementClass === Const.OBJECT_CLASS_LINE && (
+<span class='line'>954</span>                 parents[1].type === Const.OBJECT_TYPE_CONIC ||
+<span class='line'>955</span>                 parents[1].elementClass === Const.OBJECT_CLASS_CIRCLE))) {*/</span><span class="WHIT">
+<span class='line'>956</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>957</span> </span><span class="WHIT">        </span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>958</span> </span><span class="WHIT">        </span><span class="PUNC">!</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>959</span> </span><span class="WHIT">            </span><span class="PUNC">(</span><span class="NAME">firstParentIsConic</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">secondParentIsLine</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>960</span> </span><span class="WHIT">            </span><span class="PUNC">(</span><span class="NAME">firstParentIsLine</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">secondParentIsConic</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>961</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>962</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>963</span> </span><span class="WHIT">        </span><span class="COMM">// Failure</span><span class="WHIT">
+<span class='line'>964</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>965</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create 'pole point' with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>966</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>967</span> </span><span class="WHIT">                </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>968</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>969</span> </span><span class="WHIT">                </span><span class="STRN">"'."</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>970</span> </span><span class="WHIT">                </span><span class="STRN">"\nPossible parent type: [conic|circle,line], [line,conic|circle]"</span><span class="WHIT">
+<span class='line'>971</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>972</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>973</span> 
+<span class='line'>974</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">secondParentIsLine</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>975</span> </span><span class="WHIT">        </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>976</span> </span><span class="WHIT">        </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>977</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>978</span> </span><span class="WHIT">        </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>979</span> </span><span class="WHIT">        </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>980</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>981</span> 
+<span class='line'>982</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>983</span> </span><span class="WHIT">        </span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>984</span> </span><span class="WHIT">        </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>985</span> </span><span class="WHIT">            </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>986</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">q</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el1.quadraticform</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>987</span> </span><span class="WHIT">                    </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el2.stdform.slice</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>988</span> 
+<span class='line'>989</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>990</span> </span><span class="WHIT">                    </span><span class="NAME">JXG.Math.Numerics.det</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">s</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>991</span> </span><span class="WHIT">                    </span><span class="NAME">JXG.Math.Numerics.det</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">s</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>992</span> </span><span class="WHIT">                    </span><span class="NAME">JXG.Math.Numerics.det</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">s</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>993</span> </span><span class="WHIT">                </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>994</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>995</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>996</span> </span><span class="WHIT">        </span><span class="NAME">attributes</span><span class="WHIT">
+<span class='line'>997</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>998</span> 
+<span class='line'>999</span> </span><span class="WHIT">    </span><span class="NAME">el.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"polepoint"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1000</span> </span><span class="WHIT">    </span><span class="NAME">el.setParents</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">el1.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2.id</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1001</span> 
+<span class='line'>1002</span> </span><span class="WHIT">    </span><span class="NAME">el1.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1003</span> </span><span class="WHIT">    </span><span class="NAME">el2.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1004</span> 
+<span class='line'>1005</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1006</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1007</span> 
+<span class='line'>1008</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createPoint</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1009</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"glider"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createGlider</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1010</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"intersection"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createIntersectionPoint</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1011</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"otherintersection"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createOtherIntersectionPoint</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1012</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"polepoint"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createPolePoint</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1013</span> 
+<span class='line'>1014</span> </span><span class="NAME">export</span><span class="WHIT"> </span><span class="KEYW">default</span><span class="WHIT"> </span><span class="NAME">JXG.Point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1015</span> </span><span class="COMM">// export default {</span><span class="WHIT">
+<span class='line'>1016</span> </span><span class="COMM">//     Point: JXG.Point,</span><span class="WHIT">
+<span class='line'>1017</span> </span><span class="COMM">//     createPoint: JXG.createPoint,</span><span class="WHIT">
+<span class='line'>1018</span> </span><span class="COMM">//     createGlider: JXG.createGlider,</span><span class="WHIT">
+<span class='line'>1019</span> </span><span class="COMM">//     createIntersection: JXG.createIntersectionPoint,</span><span class="WHIT">
+<span class='line'>1020</span> </span><span class="COMM">//     createOtherIntersection: JXG.createOtherIntersectionPoint,</span><span class="WHIT">
+<span class='line'>1021</span> </span><span class="COMM">//     createPolePoint: JXG.createPolePoint</span><span class="WHIT">
+<span class='line'>1022</span> </span><span class="COMM">// };</span><span class="WHIT">
+<span class='line'>1023</span> </span></pre></body></html>

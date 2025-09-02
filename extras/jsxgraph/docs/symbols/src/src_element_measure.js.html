@@ -1,0 +1,512 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview Geometry objects for measurements are defined in this file. This file stores all
+<span class='line'> 37</span>  * style and functional properties that are required to use a tape measure on
+<span class='line'> 38</span>  * a board.
+<span class='line'> 39</span>  */</span><span class="WHIT">
+<span class='line'> 40</span> 
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">GeometryElement</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/element.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Prefix</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../parser/prefix.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 45</span> 
+<span class='line'> 46</span> </span><span class="COMM">/**
+<span class='line'> 47</span>  * @class A tape measure can be used to measure distances between points.
+<span class='line'> 48</span>  * &lt;p>
+<span class='line'> 49</span>  * The two defining points of the tape measure (which is a segment) do not inherit by default the attribute "visible" from
+<span class='line'> 50</span>  * the segment. Otherwise the tape meassure would be inaccessible if the two points coincide and the segment is hidden.
+<span class='line'> 51</span>  *
+<span class='line'> 52</span>  * @pseudo
+<span class='line'> 53</span>  * @name Tapemeasure
+<span class='line'> 54</span>  * @augments Segment
+<span class='line'> 55</span>  * @constructor
+<span class='line'> 56</span>  * @type JXG.Segment
+<span class='line'> 57</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'> 58</span>  * @param {Array_Array} start,end, The two arrays give the initial position where the tape measure
+<span class='line'> 59</span>  * is drawn on the board.
+<span class='line'> 60</span>  * @example
+<span class='line'> 61</span>  * // Create a tape measure
+<span class='line'> 62</span>  * var p1 = board.create('point', [0,0]);
+<span class='line'> 63</span>  * var p2 = board.create('point', [1,1]);
+<span class='line'> 64</span>  * var p3 = board.create('point', [3,1]);
+<span class='line'> 65</span>  * var tape = board.create('tapemeasure', [[1, 2], [4, 2]], {name:'dist'});
+<span class='line'> 66</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG6d9a2cda-22fe-4cd1-9d94-34283b1bdc01" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'> 67</span>  * &lt;script type="text/javascript">
+<span class='line'> 68</span>  *   (function () {
+<span class='line'> 69</span>  *     var board = JXG.JSXGraph.initBoard('JXG6d9a2cda-22fe-4cd1-9d94-34283b1bdc01', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 70</span>  *     var p1 = board.create('point', [0,0]);
+<span class='line'> 71</span>  *     var p2 = board.create('point', [1,1]);
+<span class='line'> 72</span>  *     var p3 = board.create('point', [3,1]);
+<span class='line'> 73</span>  *     var tape = board.create('tapemeasure', [[1, 2], [4, 2]], {name:'dist'} );
+<span class='line'> 74</span>  *   })();
+<span class='line'> 75</span>  * &lt;/script>&lt;pre>
+<span class='line'> 76</span>  */</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="NAME">JXG.createTapemeasure</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">pos1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">withTicks</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">withText</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">li</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">n</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">ti</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 79</span> 
+<span class='line'> 80</span> </span><span class="WHIT">    </span><span class="NAME">pos0</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="NAME">pos1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 82</span> 
+<span class='line'> 83</span> </span><span class="WHIT">    </span><span class="COMM">// start point</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"tapemeasure"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"point1"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">    </span><span class="NAME">p1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> 
+<span class='line'> 87</span> </span><span class="WHIT">    </span><span class="COMM">// end point</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"tapemeasure"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"point2"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">    </span><span class="NAME">p2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">pos1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 90</span> 
+<span class='line'> 91</span> </span><span class="WHIT">    </span><span class="NAME">p1.setAttribute</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">ignoredSnapToPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">p2.id</span><span class="PUNC">]</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">    </span><span class="NAME">p2.setAttribute</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="NAME">ignoredSnapToPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">p1.id</span><span class="PUNC">]</span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> 
+<span class='line'> 94</span> </span><span class="WHIT">    </span><span class="COMM">// tape measure line</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"tapemeasure"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">    </span><span class="NAME">withTicks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.withticks</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">    </span><span class="NAME">withText</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.withlabel</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">    </span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.digits</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 99</span> 
+<span class='line'>100</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">attr.precision</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>101</span> </span><span class="WHIT">        </span><span class="COMM">// Backward compatibility</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="WHIT">        </span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.precision</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>104</span> 
+<span class='line'>105</span> </span><span class="WHIT">    </span><span class="COMM">// Below, we will replace the label by the measurement function.</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withText</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">        </span><span class="NAME">attr.withlabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">    </span><span class="NAME">li</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"segment"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="COMM">// p1, p2 are already added to li.inherits</span><span class="WHIT">
+<span class='line'>111</span> 
+<span class='line'>112</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withText</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>113</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">attributes.name</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">attributes.name</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>114</span> </span><span class="WHIT">            </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attributes.name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">" = "</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>115</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>116</span> </span><span class="WHIT">            </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">        </span><span class="NAME">li.label.setText</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">li.label.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'digits'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>120</span> 
+<span class='line'>121</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">li.label.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">li.label.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">p1.Dist</span><span class="PUNC">(</span><span class="NAME">p2</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">Type.toFixed</span><span class="PUNC">(</span><span class="NAME">p1.Dist</span><span class="PUNC">(</span><span class="NAME">p2</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>127</span> 
+<span class='line'>128</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"tapemeasure"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"ticks"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>130</span> </span><span class="WHIT">        </span><span class="COMM">//ticks  = 2;</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">        </span><span class="NAME">ti</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"ticks"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">li</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0.1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">        </span><span class="NAME">li.inherits.push</span><span class="PUNC">(</span><span class="NAME">ti</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>134</span> 
+<span class='line'>135</span> </span><span class="WHIT">    </span><span class="COMM">// override the segments's remove method to ensure the removal of all elements</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">    </span><span class="COMM">/** @ignore */</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">    </span><span class="NAME">li.remove</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">            </span><span class="NAME">li.removeTicks</span><span class="PUNC">(</span><span class="NAME">ti</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>141</span> 
+<span class='line'>142</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">p2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">p1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>144</span> 
+<span class='line'>145</span> </span><span class="WHIT">        </span><span class="NAME">GeometryElement.prototype.remove.call</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> 
+<span class='line'>148</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>149</span>      * Returns the length of the tape measure.
+<span class='line'>150</span>      * @name Value
+<span class='line'>151</span>      * @memberOf Tapemeasure.prototype
+<span class='line'>152</span>      * @function
+<span class='line'>153</span>      * @returns {Number} length of tape measure.
+<span class='line'>154</span>      */</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="WHIT">    </span><span class="NAME">li.Value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">p1.Dist</span><span class="PUNC">(</span><span class="NAME">p2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>158</span> 
+<span class='line'>159</span> </span><span class="WHIT">    </span><span class="NAME">p1.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">    </span><span class="NAME">p2.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>161</span> 
+<span class='line'>162</span> </span><span class="WHIT">    </span><span class="NAME">li.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"tapemeasure"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="WHIT">    </span><span class="NAME">li.getParents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">            </span><span class="PUNC">[</span><span class="NAME">p1.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p1.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">            </span><span class="PUNC">[</span><span class="NAME">p2.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>169</span> 
+<span class='line'>170</span> </span><span class="WHIT">    </span><span class="NAME">li.subs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">        </span><span class="NAME">point1</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">        </span><span class="NAME">point2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>174</span> 
+<span class='line'>175</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">        </span><span class="NAME">ti.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>178</span> 
+<span class='line'>179</span> </span><span class="WHIT">    </span><span class="NAME">li.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">JXG.deepCopy</span><span class="PUNC">(</span><span class="NAME">li.methodMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">        </span><span class="NAME">Value</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"Value"</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>182</span> 
+<span class='line'>183</span> </span><span class="WHIT">    </span><span class="NAME">li.prepareUpdate</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">board.isSuspendedUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">        </span><span class="NAME">li.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="WHIT">        </span><span class="COMM">// The point updates are necessary in case of snapToGrid==true</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">        </span><span class="NAME">li.point1.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">        </span><span class="NAME">li.point2.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>190</span> 
+<span class='line'>191</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">li</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> 
+<span class='line'>194</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"tapemeasure"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createTapemeasure</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> 
+<span class='line'>196</span> </span><span class="COMM">/**
+<span class='line'>197</span>  * @class Display measurements of geometric elements and the arithmetic operations of measurements.
+<span class='line'>198</span>  * Under the hood this is a text element which has a method Value. The text to be displayed
+<span class='line'>199</span>  * is the result of the evaluation of a prefix expression, see {@link JXG.PrefixParser}.
+<span class='line'>200</span>  * &lt;p>
+<span class='line'>201</span>  * The purpose of this element is to display values of measurements of geometric objects, like the radius of a circle,
+<span class='line'>202</span>  * as well as expressions consisting of measurements.
+<span class='line'>203</span>  *
+<span class='line'>204</span>  * @pseudo
+<span class='line'>205</span>  * @name Measurement
+<span class='line'>206</span>  * @augments Text
+<span class='line'>207</span>  * @constructor
+<span class='line'>208</span>  * @type JXG.Text
+<span class='line'>209</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>210</span>  * @param {Point|Array_Point|Array_Array} x,y,expression
+<span class='line'>211</span>  * Here, expression is a prefix expression, see {@link JXG.PrefixParser}.
+<span class='line'>212</span>  * @example
+<span class='line'>213</span>  * var p1 = board.create('point', [1, 1]);
+<span class='line'>214</span>  * var p2 = board.create('point', [1, 3]);
+<span class='line'>215</span>  * var ci1 = board.create('circle', [p1, p2]);
+<span class='line'>216</span>  *
+<span class='line'>217</span>  * var m1 = board.create('measurement', [1, -2, ['Area', ci1]], {
+<span class='line'>218</span>  *     visible: true,
+<span class='line'>219</span>  *     prefix: 'area: ',
+<span class='line'>220</span>  *     baseUnit: 'cm'
+<span class='line'>221</span>  * });
+<span class='line'>222</span>  *
+<span class='line'>223</span>  * var m2 = board.create('measurement', [1, -4, ['Radius', ci1]], {
+<span class='line'>224</span>  *     prefix: 'radius: ',
+<span class='line'>225</span>  *     baseUnit: 'cm'
+<span class='line'>226</span>  * });
+<span class='line'>227</span>  *
+<span class='line'>228</span>  * &lt;/pre>&lt;div id="JXG6359237a-79bc-4689-92fc-38d3ebeb769d" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>229</span>  * &lt;script type="text/javascript">
+<span class='line'>230</span>  *     (function() {
+<span class='line'>231</span>  *         var board = JXG.JSXGraph.initBoard('JXG6359237a-79bc-4689-92fc-38d3ebeb769d',
+<span class='line'>232</span>  *             {boundingbox: [-5, 5, 5, -5], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>233</span>  *     var p1 = board.create('point', [1, 1]);
+<span class='line'>234</span>  *     var p2 = board.create('point', [1, 3]);
+<span class='line'>235</span>  *     var ci1 = board.create('circle', [p1, p2]);
+<span class='line'>236</span>  *
+<span class='line'>237</span>  *     var m1 = board.create('measurement', [1, -2, ['Area', ci1]], {
+<span class='line'>238</span>  *         visible: true,
+<span class='line'>239</span>  *         prefix: 'area: ',
+<span class='line'>240</span>  *         baseUnit: 'cm'
+<span class='line'>241</span>  *     });
+<span class='line'>242</span>  *
+<span class='line'>243</span>  *     var m2 = board.create('measurement', [1, -4, ['Radius', ci1]], {
+<span class='line'>244</span>  *         prefix: 'radius: ',
+<span class='line'>245</span>  *         baseUnit: 'cm'
+<span class='line'>246</span>  *     });
+<span class='line'>247</span>  *
+<span class='line'>248</span>  *     })();
+<span class='line'>249</span>  *
+<span class='line'>250</span>  * &lt;/script>&lt;pre>
+<span class='line'>251</span>  *
+<span class='line'>252</span>  * @example
+<span class='line'>253</span>  * var p1 = board.create('point', [1, 1]);
+<span class='line'>254</span>  * var p2 = board.create('point', [1, 3]);
+<span class='line'>255</span>  * var ci1 = board.create('circle', [p1, p2]);
+<span class='line'>256</span>  * var seg = board.create('segment', [[-2,-3], [-2, 3]], { firstArrow: true, lastArrow: true});
+<span class='line'>257</span>  * var sli = board.create('slider', [[-4, 4], [-1.5, 4], [-10, 1, 10]], {name:'a'});
+<span class='line'>258</span>  *
+<span class='line'>259</span>  * var m1 = board.create('measurement', [-6, -2, ['Radius', ci1]], {
+<span class='line'>260</span>  *     prefix: 'm1: ',
+<span class='line'>261</span>  *     baseUnit: 'cm'
+<span class='line'>262</span>  * });
+<span class='line'>263</span>  *
+<span class='line'>264</span>  * var m2 = board.create('measurement', [-6, -4, ['L', seg]], {
+<span class='line'>265</span>  *     prefix: 'm2: ',
+<span class='line'>266</span>  *     baseUnit: 'cm'
+<span class='line'>267</span>  * });
+<span class='line'>268</span>  *
+<span class='line'>269</span>  * var m3 = board.create('measurement', [-6, -6, ['V', sli]], {
+<span class='line'>270</span>  *     prefix: 'm3: ',
+<span class='line'>271</span>  *     baseUnit: 'cm',
+<span class='line'>272</span>  *     dim: 1
+<span class='line'>273</span>  * });
+<span class='line'>274</span>  *
+<span class='line'>275</span>  * var m4 = board.create('measurement', [2, -6,
+<span class='line'>276</span>  *         ['+', ['V', m1], ['V', m2], ['V', m3]]
+<span class='line'>277</span>  *     ], {
+<span class='line'>278</span>  *     prefix: 'm4: ',
+<span class='line'>279</span>  *     baseUnit: 'cm'
+<span class='line'>280</span>  * });
+<span class='line'>281</span>  *
+<span class='line'>282</span>  * &lt;/pre>&lt;div id="JXG49903663-6450-401e-b0d9-f025a6677d4a" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>283</span>  * &lt;script type="text/javascript">
+<span class='line'>284</span>  *     (function() {
+<span class='line'>285</span>  *         var board = JXG.JSXGraph.initBoard('JXG49903663-6450-401e-b0d9-f025a6677d4a',
+<span class='line'>286</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>287</span>  *     var p1 = board.create('point', [1, 1]);
+<span class='line'>288</span>  *     var p2 = board.create('point', [1, 3]);
+<span class='line'>289</span>  *     var ci1 = board.create('circle', [p1, p2]);
+<span class='line'>290</span>  *     var seg = board.create('segment', [[-2,-3], [-2, 3]], { firstArrow: true, lastArrow: true});
+<span class='line'>291</span>  *     var sli = board.create('slider', [[-4, 4], [-1.5, 4], [-10, 1, 10]], {name:'a'});
+<span class='line'>292</span>  *
+<span class='line'>293</span>  * var m1 = board.create('measurement', [-6, -2, ['Radius', ci1]], {
+<span class='line'>294</span>  *     prefix: 'm1: ',
+<span class='line'>295</span>  *     baseUnit: 'cm'
+<span class='line'>296</span>  * });
+<span class='line'>297</span>  *
+<span class='line'>298</span>  * var m2 = board.create('measurement', [-6, -4, ['L', seg]], {
+<span class='line'>299</span>  *     prefix: 'm2: ',
+<span class='line'>300</span>  *     baseUnit: 'cm'
+<span class='line'>301</span>  * });
+<span class='line'>302</span>  *
+<span class='line'>303</span>  * var m3 = board.create('measurement', [-6, -6, ['V', sli]], {
+<span class='line'>304</span>  *     prefix: 'm3: ',
+<span class='line'>305</span>  *     baseUnit: 'cm',
+<span class='line'>306</span>  *     dim: 1
+<span class='line'>307</span>  * });
+<span class='line'>308</span>  *
+<span class='line'>309</span>  * var m4 = board.create('measurement', [2, -6,
+<span class='line'>310</span>  *         ['+', ['V', m1], ['V', m2], ['V', m3]]
+<span class='line'>311</span>  *     ], {
+<span class='line'>312</span>  *     prefix: 'm4: ',
+<span class='line'>313</span>  *     baseUnit: 'cm'
+<span class='line'>314</span>  * });
+<span class='line'>315</span>  *
+<span class='line'>316</span>  *     })();
+<span class='line'>317</span>  *
+<span class='line'>318</span>  * &lt;/script>&lt;pre>
+<span class='line'>319</span>  *
+<span class='line'>320</span>  */</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="NAME">JXG.createMeasurement</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">        </span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">term</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">        </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>325</span> 
+<span class='line'>326</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"measurement"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>327</span> 
+<span class='line'>328</span> </span><span class="WHIT">    </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="WHIT">    </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">    </span><span class="NAME">term</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>331</span> 
+<span class='line'>332</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"text"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>333</span> </span><span class="WHIT">    </span><span class="NAME">el.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.OBJECT_TYPE_MEASUREMENT</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>334</span> </span><span class="WHIT">    </span><span class="NAME">el.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'measurement'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>335</span> 
+<span class='line'>336</span> </span><span class="WHIT">    </span><span class="NAME">el.Value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>337</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Prefix.parse</span><span class="PUNC">(</span><span class="NAME">term</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'execute'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>339</span> 
+<span class='line'>340</span> </span><span class="WHIT">    </span><span class="NAME">el.Dimension</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'dim'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>342</span> 
+<span class='line'>343</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">d</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Prefix.dimension</span><span class="PUNC">(</span><span class="NAME">term</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>348</span> 
+<span class='line'>349</span> </span><span class="WHIT">    </span><span class="NAME">el.Unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dimension</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">            </span><span class="NAME">units</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'units'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">            </span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">dimension</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">            </span><span class="NAME">dims</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>354</span> 
+<span class='line'>355</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">dim</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">            </span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.Dimension</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>358</span> 
+<span class='line'>359</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">dimension</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">dimension.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">                </span><span class="NAME">dims</span><span class="PUNC">[</span><span class="STRN">'dim'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">dimension</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.Unit</span><span class="PUNC">(</span><span class="NAME">dimension</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>362</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>363</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">dims</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>364</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>365</span> 
+<span class='line'>366</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isObject</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">[</span><span class="NAME">dim</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">units</span><span class="PUNC">[</span><span class="NAME">dim</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">            </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.eval</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">[</span><span class="NAME">dim</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isObject</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">[</span><span class="STRN">'dim'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">dim</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">units</span><span class="PUNC">[</span><span class="STRN">'dim'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">dim</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>369</span> </span><span class="WHIT">            </span><span class="COMM">// In some cases, object keys must not be numbers. This allows key 'dim1' instead of '1'.</span><span class="WHIT">
+<span class='line'>370</span> </span><span class="WHIT">            </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.eval</span><span class="PUNC">(</span><span class="NAME">units</span><span class="PUNC">[</span><span class="STRN">'dim'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">dim</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>371</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">            </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'baseunit'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>373</span> 
+<span class='line'>374</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">                </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">1</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="WHIT">                </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'^{'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'}'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>378</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>380</span> 
+<span class='line'>381</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">unit</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>383</span> 
+<span class='line'>384</span> </span><span class="WHIT">    </span><span class="NAME">el.getTerm</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>385</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">term</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>387</span> 
+<span class='line'>388</span> </span><span class="WHIT">    </span><span class="NAME">el.getMethod</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">method</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">term</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">method</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"V"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">            </span><span class="NAME">method</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"Value"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>392</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>393</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">method</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>394</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>395</span> 
+<span class='line'>396</span> </span><span class="WHIT">    </span><span class="NAME">el.toPrefix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Prefix.toPrefix</span><span class="PUNC">(</span><span class="NAME">term</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>398</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>399</span> 
+<span class='line'>400</span> </span><span class="WHIT">    </span><span class="NAME">el.getParents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Prefix.getParents</span><span class="PUNC">(</span><span class="NAME">term</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>403</span> </span><span class="WHIT">    </span><span class="NAME">el.addParents</span><span class="PUNC">(</span><span class="NAME">el.getParents</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>404</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">el.parents.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="WHIT">        </span><span class="NAME">board.select</span><span class="PUNC">(</span><span class="NAME">el.parents</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>406</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>407</span> 
+<span class='line'>408</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>409</span>      * @class
+<span class='line'>410</span>      * @ignore
+<span class='line'>411</span>      */</span><span class="WHIT">
+<span class='line'>412</span> </span><span class="WHIT">    </span><span class="NAME">el.setText</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>413</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">prefix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">            </span><span class="NAME">suffix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">''</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">            </span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.Dimension</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">            </span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'digits'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">            </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.Unit</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">            </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.Value</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">            </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>420</span> 
+<span class='line'>421</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'showprefix'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">            </span><span class="NAME">prefix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'prefix'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'showsuffix'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">            </span><span class="NAME">suffix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'suffix'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>427</span> 
+<span class='line'>428</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isNumber</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'none'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>430</span> </span><span class="WHIT">                </span><span class="COMM">// do nothing</span><span class="WHIT">
+<span class='line'>431</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'auto'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>432</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>433</span> </span><span class="WHIT">                    </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>435</span> </span><span class="WHIT">                    </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.autoDigits</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>438</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>439</span> </span><span class="WHIT">                    </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="WHIT">                    </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.toFixed</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>445</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">val.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>446</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.isNumber</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>447</span> </span><span class="WHIT">                    </span><span class="KEYW">continue</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'none'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>450</span> </span><span class="WHIT">                    </span><span class="COMM">// do nothing</span><span class="WHIT">
+<span class='line'>451</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">digits</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'auto'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>452</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>453</span> </span><span class="WHIT">                        </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>454</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>455</span> </span><span class="WHIT">                        </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.autoDigits</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>456</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">                        </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>460</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">                        </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.toFixed</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">digits</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>463</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>464</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>465</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>466</span> 
+<span class='line'>467</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'coords'</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">val.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>469</span> </span><span class="WHIT">                </span><span class="NAME">val.unshift</span><span class="PUNC">(</span><span class="NAME">undefined</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>470</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>471</span> </span><span class="WHIT">            </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.visProp.formatcoords</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>472</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>473</span> 
+<span class='line'>474</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dim</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">'direction'</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>475</span> </span><span class="WHIT">            </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.visProp.formatdirection</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>477</span> 
+<span class='line'>478</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isString</span><span class="PUNC">(</span><span class="NAME">dim</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>479</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">prefix</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">suffix</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>480</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>481</span> 
+<span class='line'>482</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">isNaN</span><span class="PUNC">(</span><span class="NAME">dim</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>483</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">prefix</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'NaN'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">suffix</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>484</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>485</span> 
+<span class='line'>486</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">prefix</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">unit</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">suffix</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>487</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>488</span> 
+<span class='line'>489</span> </span><span class="WHIT">    </span><span class="NAME">el.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.deepCopy</span><span class="PUNC">(</span><span class="NAME">el.methodMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="WHIT">        </span><span class="NAME">Value</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"Value"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>491</span> </span><span class="WHIT">        </span><span class="NAME">Dimension</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"Dimension"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>492</span> </span><span class="WHIT">        </span><span class="NAME">Unit</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"Unit"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="WHIT">        </span><span class="NAME">getTerm</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getTerm"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">        </span><span class="NAME">Term</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getTerm"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">        </span><span class="NAME">getMethod</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getMethod"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>496</span> </span><span class="WHIT">        </span><span class="NAME">Method</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getMethod"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>497</span> </span><span class="WHIT">        </span><span class="NAME">getParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getParents"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">        </span><span class="NAME">Parents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"getParents"</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>500</span> 
+<span class='line'>501</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>503</span> 
+<span class='line'>504</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"measurement"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createMeasurement</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>505</span> </span></pre></body></html>

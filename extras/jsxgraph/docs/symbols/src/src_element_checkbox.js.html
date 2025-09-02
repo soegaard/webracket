@@ -1,0 +1,257 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true, window: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview In this file the Text element is defined.
+<span class='line'> 37</span>  */</span><span class="WHIT">
+<span class='line'> 38</span> 
+<span class='line'> 39</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 40</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Env</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/env.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> 
+<span class='line'> 43</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">priv</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 45</span>      * @class
+<span class='line'> 46</span>      * @ignore
+<span class='line'> 47</span>      */</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="WHIT">    </span><span class="NAME">CheckboxChangeEventHandler</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 49</span> </span><span class="WHIT">        </span><span class="NAME">this._value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.rendNodeCheckbox.checked</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="WHIT">        </span><span class="NAME">this.board.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 53</span> 
+<span class='line'> 54</span> </span><span class="COMM">/**
+<span class='line'> 55</span>  * @class A text element that contains an HTML checkbox tag.
+<span class='line'> 56</span>  * For this element, the attribute "display" has to have the value 'html' (which is the default).
+<span class='line'> 57</span>  *
+<span class='line'> 58</span>  * &lt;p>&lt;b>Setting a CSS class:&lt;/b> The attribute &lt;tt>cssClass&lt;/tt> affects the HTML div element that contains the checkbox element. To change the CSS properties of the HTML checkbox element a selector of the form
+<span class='line'> 59</span>  * &lt;tt>.mycheck > checkbox { ... }&lt;/tt> has to be used. See the analog example for buttons:
+<span class='line'> 60</span>  * {@link Button}.
+<span class='line'> 61</span>  *
+<span class='line'> 62</span>  * &lt;p>&lt;b>Access the checkbox element with JavaScript:&lt;/b>
+<span class='line'> 63</span>  * The underlying HTML checkbox element can be accessed through the sub-object 'rendNodeCheck', e.g. to
+<span class='line'> 64</span>  * add event listeners.
+<span class='line'> 65</span>  *
+<span class='line'> 66</span>  * @pseudo
+<span class='line'> 67</span>  * @name Checkbox
+<span class='line'> 68</span>  * @augments Text
+<span class='line'> 69</span>  * @constructor
+<span class='line'> 70</span>  * @type JXG.Text
+<span class='line'> 71</span>  *
+<span class='line'> 72</span>  * @param {number,function_number,function_String,function} x,y,label Parent elements for checkbox elements.
+<span class='line'> 73</span>  *   &lt;p>
+<span class='line'> 74</span>  *   x and y are the coordinates of the lower left corner of the text box.
+<span class='line'> 75</span>  *    The position of the text is fixed,
+<span class='line'> 76</span>  *   x and y are numbers. The position is variable if x or y are functions.
+<span class='line'> 77</span>  *   &lt;p>
+<span class='line'> 78</span>  *   The label of the input element may be given as string or function.
+<span class='line'> 79</span>  *   &lt;p>
+<span class='line'> 80</span>  *   The value of the checkbox can be controlled with the attribute &lt;tt>checked&lt;/tt>
+<span class='line'> 81</span>  *   &lt;p>The HTML node can be accessed with &lt;tt>element.rendNodeCheckbox&lt;/tt>
+<span class='line'> 82</span>  *
+<span class='line'> 83</span>  * @example
+<span class='line'> 84</span>  *   // Create a checkbox element at position [0,3].
+<span class='line'> 85</span>  *   var checkbox = board.create('checkbox', [0, 3, 'Change Y'], {});
+<span class='line'> 86</span>  *   var p = board.create('point', [
+<span class='line'> 87</span>  *       function(){ return 0.5;}, // X-coordinate
+<span class='line'> 88</span>  *       function() {
+<span class='line'> 89</span>  *           y = 0.5;
+<span class='line'> 90</span>  *           if (checkbox.Value()) {
+<span class='line'> 91</span>  *               y += 0.5;
+<span class='line'> 92</span>  *           }
+<span class='line'> 93</span>  *           return y;
+<span class='line'> 94</span>  *       }]);
+<span class='line'> 95</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG0e835e0b-ed0c-4b85-b682-78158c0e6f5c" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'> 96</span>  * &lt;script type="text/javascript">
+<span class='line'> 97</span>  * (function() {
+<span class='line'> 98</span>  *   var t1_board = JXG.JSXGraph.initBoard('JXG0e835e0b-ed0c-4b85-b682-78158c0e6f5c', {boundingbox: [-3, 6, 5, -3], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 99</span>  *   var checkbox = t1_board.create('checkbox', [0, 3, 'Change Y'], {});
+<span class='line'>100</span>  *   var p = t1_board.create('point', [
+<span class='line'>101</span>  *       function(){ return 0.5;}, // X-coordinate
+<span class='line'>102</span>  *       function() {
+<span class='line'>103</span>  *           y = 0.5;
+<span class='line'>104</span>  *           if (checkbox.Value()) {
+<span class='line'>105</span>  *               y += 0.5;
+<span class='line'>106</span>  *           }
+<span class='line'>107</span>  *           return y;
+<span class='line'>108</span>  *       }]);
+<span class='line'>109</span>  * })();
+<span class='line'>110</span>  * &lt;/script>&lt;pre>
+<span class='line'>111</span>  *
+<span class='line'>112</span>  * The checkbox can be supplied with custom-made events by using the property rendNodeCheckbox.
+<span class='line'>113</span>  * @example
+<span class='line'>114</span>  * var checkbox = board.create('checkbox', [0, 4, 'Click me']),
+<span class='line'>115</span>  *     p = board.create('point', [1, 1]);
+<span class='line'>116</span>  *
+<span class='line'>117</span>  * JXG.addEvent(checkbox.rendNodeCheckbox, 'change', function() {
+<span class='line'>118</span>  *     if (this.Value()) {
+<span class='line'>119</span>  *         p.moveTo([4, 1]);
+<span class='line'>120</span>  *     } else {
+<span class='line'>121</span>  *         p.moveTo([1, 1]);
+<span class='line'>122</span>  *     }
+<span class='line'>123</span>  * }, checkbox);
+<span class='line'>124</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGb2f2345a-057d-44ce-bd7a-6aaff70bc810" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>125</span>  * &lt;script type="text/javascript">
+<span class='line'>126</span>  * (function() {
+<span class='line'>127</span>  * var board = JXG.JSXGraph.initBoard('JXGb2f2345a-057d-44ce-bd7a-6aaff70bc810', {boundingbox: [-3, 6, 5, -3], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>128</span>  * var checkbox = board.create('checkbox', [0, 4, 'Click me']),
+<span class='line'>129</span>  *     p = board.create('point', [1, 1]);
+<span class='line'>130</span>  *
+<span class='line'>131</span>  * JXG.addEvent(checkbox.rendNodeCheckbox, 'change', function() {
+<span class='line'>132</span>  *     if (this.Value()) {
+<span class='line'>133</span>  *         p.moveTo([4, 1]);
+<span class='line'>134</span>  *     } else {
+<span class='line'>135</span>  *         p.moveTo([1, 1]);
+<span class='line'>136</span>  *     }
+<span class='line'>137</span>  * }, checkbox);
+<span class='line'>138</span>  * })();
+<span class='line'>139</span>  * &lt;/script>&lt;pre>
+<span class='line'>140</span>  * @example
+<span class='line'>141</span>  *     var i1 = board.create('input', [1, 5, 'sin(x)', 'f(x)='], {cssStyle: 'width:4em', maxlength: 2});
+<span class='line'>142</span>  *         var c1 = board.create('checkbox', [1, 3, 'label 1'], {});
+<span class='line'>143</span>  *         var b1 = board.create('button', [1, 1, 'Change texts', function () {
+<span class='line'>144</span>  *                 i1.setText('g(x)=');
+<span class='line'>145</span>  *                 i1.set('cos(x)');
+<span class='line'>146</span>  *                 c1.setText('label 2');
+<span class='line'>147</span>  *                 b1.setText('Texts are changed');
+<span class='line'>148</span>  *             }],
+<span class='line'>149</span>  *             {cssStyle: 'width:200px'});
+<span class='line'>150</span>  *
+<span class='line'>151</span>  * &lt;/pre>&lt;div id="JXG31c6d070-354b-4f09-aab9-9aaa796f730c" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>152</span>  * &lt;script type="text/javascript">
+<span class='line'>153</span>  *     (function() {
+<span class='line'>154</span>  *         var board = JXG.JSXGraph.initBoard('JXG31c6d070-354b-4f09-aab9-9aaa796f730c',
+<span class='line'>155</span>  *             {boundingbox: [-1, 7, 7, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>156</span>  *         var i1 = board.create('input', [1, 5, 'sin(x)', 'f(x)='], {cssStyle: 'width:4em', maxlength: 2});
+<span class='line'>157</span>  *             var c1 = board.create('checkbox', [1, 3, 'label 1'], {});
+<span class='line'>158</span>  *             var b1 = board.create('button', [1, 1, 'Change texts', function () {
+<span class='line'>159</span>  *                     i1.setText('g(x)=');
+<span class='line'>160</span>  *                     i1.set('cos(x)');
+<span class='line'>161</span>  *                     c1.setText('label 2');
+<span class='line'>162</span>  *                     b1.setText('Texts are changed');
+<span class='line'>163</span>  *                 }],
+<span class='line'>164</span>  *                 {cssStyle: 'width:200px'});
+<span class='line'>165</span>  *
+<span class='line'>166</span>  *     })();
+<span class='line'>167</span>  *
+<span class='line'>168</span>  * &lt;/script>&lt;pre>
+<span class='line'>169</span>  *
+<span class='line'>170</span>  */</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="NAME">JXG.createCheckbox</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">        </span><span class="NAME">par</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"checkbox"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>175</span> 
+<span class='line'>176</span> </span><span class="WHIT">    </span><span class="COMM">//if (parents.length !== 3) {</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">    </span><span class="COMM">//throw new Error("JSXGraph: Can't create checkbox with parent types '" +</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">    </span><span class="COMM">//    (typeof parents[0]) + "' and '" + (typeof parents[1]) + "'." +</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">    </span><span class="COMM">//    "\nPossible parents are: [[x,y], label]");</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">    </span><span class="COMM">//}</span><span class="WHIT">
+<span class='line'>181</span> 
+<span class='line'>182</span> </span><span class="WHIT">    </span><span class="NAME">par</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>183</span> </span><span class="WHIT">        </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">        </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">        </span><span class="STRN">'&lt;span style="display:inline">'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="WHIT">            </span><span class="STRN">'&lt;input type="checkbox" />&lt;label for="">&lt;/label>'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">            </span><span class="STRN">"&lt;/span>"</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> 
+<span class='line'>190</span> </span><span class="WHIT">    </span><span class="COMM">// 1. Create checkbox element with empty label</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">    </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"text"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">par</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">    </span><span class="NAME">t.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.OBJECT_TYPE_CHECKBOX</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> 
+<span class='line'>194</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeCheckbox</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.childNodes</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">childNodes</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeLabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.childNodes</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">childNodes</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>196</span> 
+<span class='line'>197</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeTag</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNodeCheckbox</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// Needed for unified treatment in setAttribute</span><span class="WHIT">
+<span class='line'>198</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeTag.disabled</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="PUNC">!</span><span class="NAME">attr.disabled</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>199</span> 
+<span class='line'>200</span> </span><span class="WHIT">    </span><span class="COMM">// t.rendNodeLabel.innerHTML = parents[2];</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeCheckbox.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.id</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"_checkbox"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeLabel.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.id</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"_label"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeLabel.setAttribute</span><span class="PUNC">(</span><span class="STRN">"for"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t.rendNodeCheckbox.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> 
+<span class='line'>205</span> </span><span class="WHIT">    </span><span class="COMM">// 2. Set parents[2] (string|function) as label of the checkbox element.</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="WHIT">    </span><span class="COMM">// abstract.js selects the correct DOM element for the update</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">    </span><span class="NAME">t.setText</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> 
+<span class='line'>209</span> </span><span class="WHIT">    </span><span class="COMM">// This sets the font-size of the checkbox itself</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">    </span><span class="NAME">t.visPropOld.fontsize</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"0px"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">    </span><span class="NAME">board.renderer.updateTextStyle</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>212</span> 
+<span class='line'>213</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeCheckbox.checked</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.checked</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>214</span> 
+<span class='line'>215</span> </span><span class="WHIT">    </span><span class="NAME">t._value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.checked</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>216</span> 
+<span class='line'>217</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>218</span>      * Returns the value of the checkbox element
+<span class='line'>219</span>      * @name Value
+<span class='line'>220</span>      * @memberOf Checkbox.prototype
+<span class='line'>221</span>      * @function
+<span class='line'>222</span>      * @returns {String} value of the checkbox.
+<span class='line'>223</span>      */</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">    </span><span class="NAME">t.Value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._value</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> 
+<span class='line'>228</span> </span><span class="WHIT">     </span><span class="COMM">/**
+<span class='line'>229</span>      * @class
+<span class='line'>230</span>      * @ignore
+<span class='line'>231</span>      */</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">    </span><span class="NAME">t.update</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.needsUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">            </span><span class="NAME">JXG.Text.prototype.update.call</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">            </span><span class="NAME">this._value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.rendNodeCheckbox.checked</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>239</span> 
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="NAME">Env.addEvent</span><span class="PUNC">(</span><span class="NAME">t.rendNodeCheckbox</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"change"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">priv.CheckboxChangeEventHandler</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>241</span> 
+<span class='line'>242</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> 
+<span class='line'>245</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"checkbox"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createCheckbox</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>246</span> 
+<span class='line'>247</span> </span><span class="COMM">// export default {</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="COMM">//     createCheckbox: JXG.createCheckbox</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="COMM">// };</span><span class="WHIT">
+<span class='line'>250</span> </span></pre></body></html>

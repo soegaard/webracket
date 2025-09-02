@@ -1,0 +1,576 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview The geometry object slider is defined in this file. Slider stores all
+<span class='line'> 37</span>  * style and functional properties that are required to draw and use a slider on
+<span class='line'> 38</span>  * a board.
+<span class='line'> 39</span>  */</span><span class="WHIT">
+<span class='line'> 40</span> 
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/math.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Const</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/constants.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Coords</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/coords.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 45</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Point</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/point.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 47</span> 
+<span class='line'> 48</span> </span><span class="COMM">/**
+<span class='line'> 49</span>  * @class A slider can be used to choose values from a given range of numbers.
+<span class='line'> 50</span>  * @pseudo
+<span class='line'> 51</span>  * @name Slider
+<span class='line'> 52</span>  * @augments Glider
+<span class='line'> 53</span>  * @constructor
+<span class='line'> 54</span>  * @type JXG.Point
+<span class='line'> 55</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'> 56</span>  * @param {Array_Array_Array} start,end,range The first two arrays give the start and the end where the slider is drawn
+<span class='line'> 57</span>  * on the board. The third array gives the start and the end of the range the slider operates as the first resp. the
+<span class='line'> 58</span>  * third component of the array. The second component of the third array gives its start value.
+<span class='line'> 59</span>  *
+<span class='line'> 60</span>  * @example
+<span class='line'> 61</span>  * // Create a slider with values between 1 and 10, initial position is 5.
+<span class='line'> 62</span>  * var s = board.create('slider', [[1, 2], [3, 2], [1, 5, 10]]);
+<span class='line'> 63</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGcfb51cde-2603-4f18-9cc4-1afb452b374d" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'> 64</span>  * &lt;script type="text/javascript">
+<span class='line'> 65</span>  *   (function () {
+<span class='line'> 66</span>  *     var board = JXG.JSXGraph.initBoard('JXGcfb51cde-2603-4f18-9cc4-1afb452b374d', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 67</span>  *     var s = board.create('slider', [[1, 2], [3, 2], [1, 5, 10]]);
+<span class='line'> 68</span>  *   })();
+<span class='line'> 69</span>  * &lt;/script>&lt;pre>
+<span class='line'> 70</span>  * @example
+<span class='line'> 71</span>  * // Create a slider taking integer values between 1 and 50. Initial value is 50.
+<span class='line'> 72</span>  * var s = board.create('slider', [[1, 3], [3, 1], [0, 10, 50]], {snapWidth: 1, ticks: { drawLabels: true }});
+<span class='line'> 73</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGe17128e6-a25d-462a-9074-49460b0d66f4" style="width: 200px; height: 200px;">&lt;/div>
+<span class='line'> 74</span>  * &lt;script type="text/javascript">
+<span class='line'> 75</span>  *   (function () {
+<span class='line'> 76</span>  *     var board = JXG.JSXGraph.initBoard('JXGe17128e6-a25d-462a-9074-49460b0d66f4', {boundingbox: [-1, 5, 5, -1], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 77</span>  *     var s = board.create('slider', [[1, 3], [3, 1], [1, 10, 50]], {snapWidth: 1, ticks: { drawLabels: true }});
+<span class='line'> 78</span>  *   })();
+<span class='line'> 79</span>  * &lt;/script>&lt;pre>
+<span class='line'> 80</span>  * @example
+<span class='line'> 81</span>  *     // Draggable slider
+<span class='line'> 82</span>  *     var s1 = board.create('slider', [[-3,1], [2,1],[-10,1,10]], {
+<span class='line'> 83</span>  *         visible: true,
+<span class='line'> 84</span>  *         snapWidth: 2,
+<span class='line'> 85</span>  *         point1: {fixed: false},
+<span class='line'> 86</span>  *         point2: {fixed: false},
+<span class='line'> 87</span>  *         baseline: {fixed: false, needsRegularUpdate: true}
+<span class='line'> 88</span>  *     });
+<span class='line'> 89</span>  *
+<span class='line'> 90</span>  * &lt;/pre>&lt;div id="JXGbfc67817-2827-44a1-bc22-40bf312e76f8" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'> 91</span>  * &lt;script type="text/javascript">
+<span class='line'> 92</span>  *     (function() {
+<span class='line'> 93</span>  *         var board = JXG.JSXGraph.initBoard('JXGbfc67817-2827-44a1-bc22-40bf312e76f8',
+<span class='line'> 94</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 95</span>  *         var s1 = board.create('slider', [[-3,1], [2,1],[-10,1,10]], {
+<span class='line'> 96</span>  *             visible: true,
+<span class='line'> 97</span>  *             snapWidth: 2,
+<span class='line'> 98</span>  *             point1: {fixed: false},
+<span class='line'> 99</span>  *             point2: {fixed: false},
+<span class='line'>100</span>  *             baseline: {fixed: false, needsRegularUpdate: true}
+<span class='line'>101</span>  *         });
+<span class='line'>102</span>  *
+<span class='line'>103</span>  *     })();
+<span class='line'>104</span>  *
+<span class='line'>105</span>  * &lt;/script>&lt;pre>
+<span class='line'>106</span>  *
+<span class='line'>107</span>  * @example
+<span class='line'>108</span>  *     // Set the slider by clicking on the base line: attribute 'moveOnUp'
+<span class='line'>109</span>  *     var s1 = board.create('slider', [[-3,1], [2,1],[-10,1,10]], {
+<span class='line'>110</span>  *         snapWidth: 2,
+<span class='line'>111</span>  *         moveOnUp: true // default value
+<span class='line'>112</span>  *     });
+<span class='line'>113</span>  *
+<span class='line'>114</span>  * &lt;/pre>&lt;div id="JXGc0477c8a-b1a7-4111-992e-4ceb366fbccc" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>115</span>  * &lt;script type="text/javascript">
+<span class='line'>116</span>  *     (function() {
+<span class='line'>117</span>  *         var board = JXG.JSXGraph.initBoard('JXGc0477c8a-b1a7-4111-992e-4ceb366fbccc',
+<span class='line'>118</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>119</span>  *         var s1 = board.create('slider', [[-3,1], [2,1],[-10,1,10]], {
+<span class='line'>120</span>  *             snapWidth: 2,
+<span class='line'>121</span>  *             moveOnUp: true // default value
+<span class='line'>122</span>  *         });
+<span class='line'>123</span>  *
+<span class='line'>124</span>  *     })();
+<span class='line'>125</span>  *
+<span class='line'>126</span>  * &lt;/script>&lt;pre>
+<span class='line'>127</span>  *
+<span class='line'>128</span>  * @example
+<span class='line'>129</span>  * // Set colors
+<span class='line'>130</span>  * var sl = board.create('slider', [[-3, 1], [1, 1], [-10, 1, 10]], {
+<span class='line'>131</span>  *
+<span class='line'>132</span>  *   baseline: { strokeColor: 'blue'},
+<span class='line'>133</span>  *   highline: { strokeColor: 'red'},
+<span class='line'>134</span>  *   fillColor: 'yellow',
+<span class='line'>135</span>  *   label: {fontSize: 24, strokeColor: 'orange'},
+<span class='line'>136</span>  *   name: 'xyz', // Not shown, if suffixLabel is set
+<span class='line'>137</span>  *   suffixLabel: 'x = ',
+<span class='line'>138</span>  *   postLabel: ' u'
+<span class='line'>139</span>  *
+<span class='line'>140</span>  * });
+<span class='line'>141</span>  *
+<span class='line'>142</span>  * &lt;/pre>&lt;div id="JXGd96c9e2c-2c25-4131-b6cf-9dbb80819401" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>143</span>  * &lt;script type="text/javascript">
+<span class='line'>144</span>  *     (function() {
+<span class='line'>145</span>  *         var board = JXG.JSXGraph.initBoard('JXGd96c9e2c-2c25-4131-b6cf-9dbb80819401',
+<span class='line'>146</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>147</span>  *     var sl = board.create('slider', [[-3, 1], [1, 1], [-10, 1, 10]], {
+<span class='line'>148</span>  *
+<span class='line'>149</span>  *       baseline: { strokeColor: 'blue'},
+<span class='line'>150</span>  *       highline: { strokeColor: 'red'},
+<span class='line'>151</span>  *       fillColor: 'yellow',
+<span class='line'>152</span>  *       label: {fontSize: 24, strokeColor: 'orange'},
+<span class='line'>153</span>  *       name: 'xyz', // Not shown, if suffixLabel is set
+<span class='line'>154</span>  *       suffixLabel: 'x = ',
+<span class='line'>155</span>  *       postLabel: ' u'
+<span class='line'>156</span>  *
+<span class='line'>157</span>  *     });
+<span class='line'>158</span>  *
+<span class='line'>159</span>  *     })();
+<span class='line'>160</span>  *
+<span class='line'>161</span>  * &lt;/script>&lt;pre>
+<span class='line'>162</span>  *
+<span class='line'>163</span>  * @example
+<span class='line'>164</span>  * // Create a "frozen" slider
+<span class='line'>165</span>  * var sli = board.create('slider', [[-4, 4], [-1.5, 4], [-10, 1, 10]], {
+<span class='line'>166</span>  *     name:'a',
+<span class='line'>167</span>  *     point1: {frozen: true},
+<span class='line'>168</span>  *     point2: {frozen: true}
+<span class='line'>169</span>  * });
+<span class='line'>170</span>  *
+<span class='line'>171</span>  * &lt;/pre>&lt;div id="JXG23afea4f-2e91-4006-a505-2895033cf1fc" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>172</span>  * &lt;script type="text/javascript">
+<span class='line'>173</span>  *     (function() {
+<span class='line'>174</span>  *         var board = JXG.JSXGraph.initBoard('JXG23afea4f-2e91-4006-a505-2895033cf1fc',
+<span class='line'>175</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>176</span>  *     var sli = board.create('slider', [[-4, 4], [-1.5, 4], [-10, 1, 10]], {
+<span class='line'>177</span>  *         name:'a',
+<span class='line'>178</span>  *         point1: {frozen: true},
+<span class='line'>179</span>  *         point2: {frozen: true}
+<span class='line'>180</span>  *     });
+<span class='line'>181</span>  *
+<span class='line'>182</span>  *     })();
+<span class='line'>183</span>  *
+<span class='line'>184</span>  * &lt;/script>&lt;pre>
+<span class='line'>185</span>  *
+<span class='line'>186</span>  *
+<span class='line'>187</span>  */</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="NAME">JXG.createSlider</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">pos1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="WHIT">        </span><span class="NAME">smin</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">start</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">smax</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">diff</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">        </span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">l1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">l2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">        </span><span class="NAME">ticks</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">ti</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="WHIT">        </span><span class="NAME">startx</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">starty</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="WHIT">        </span><span class="NAME">withText</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">withTicks</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="WHIT">        </span><span class="NAME">snapValues</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">snapValueDistance</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>196</span> </span><span class="WHIT">        </span><span class="NAME">snapWidth</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sw</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">s</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>197</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>198</span> 
+<span class='line'>199</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"slider"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">    </span><span class="NAME">withTicks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.withticks</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">    </span><span class="NAME">withText</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.withlabel</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">    </span><span class="NAME">snapWidth</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.snapwidth</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">    </span><span class="NAME">snapValues</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.snapvalues</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> </span><span class="WHIT">    </span><span class="NAME">snapValueDistance</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attr.snapvaluedistance</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>205</span> 
+<span class='line'>206</span> </span><span class="WHIT">    </span><span class="COMM">// Start point</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">    </span><span class="NAME">p1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.point1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> 
+<span class='line'>209</span> </span><span class="WHIT">    </span><span class="COMM">// End point</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">    </span><span class="NAME">p2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"point"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.point2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">    </span><span class="COMM">//g = board.create('group', [p1, p2]);</span><span class="WHIT">
+<span class='line'>212</span> 
+<span class='line'>213</span> </span><span class="WHIT">    </span><span class="COMM">// Base line</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">    </span><span class="NAME">l1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"segment"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.baseline</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> 
+<span class='line'>216</span> </span><span class="WHIT">    </span><span class="COMM">// This is required for a correct projection of the glider onto the segment below</span><span class="WHIT">
+<span class='line'>217</span> </span><span class="WHIT">    </span><span class="NAME">l1.updateStdform</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>218</span> 
+<span class='line'>219</span> </span><span class="WHIT">    </span><span class="NAME">pos0</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p1.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>220</span> </span><span class="WHIT">    </span><span class="NAME">pos1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p2.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>221</span> </span><span class="WHIT">    </span><span class="NAME">smin</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">    </span><span class="NAME">start</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>223</span> </span><span class="WHIT">    </span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">    </span><span class="NAME">diff</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>225</span> 
+<span class='line'>226</span> </span><span class="WHIT">    </span><span class="NAME">sw</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">snapWidth</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">    </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">sw</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">        </span><span class="NAME">start</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">        </span><span class="NAME">Math.round</span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">start</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">sw</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">sw</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">        </span><span class="COMM">// Math.round(start / sw) * sw;</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">    </span><span class="NAME">startx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">pos1</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">    </span><span class="NAME">starty</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">pos1</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">pos0</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>233</span> 
+<span class='line'>234</span> </span><span class="WHIT">    </span><span class="COMM">// glider point</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">    </span><span class="COMM">// attr = Type.copyAttributes(attributes, board.options, "slider");</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">    </span><span class="COMM">// overwrite this in any case; the sliders label is a special text element, not the gliders label.</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">    </span><span class="COMM">// this will be set back to true after the text was created (and only if withlabel was true initially).</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">    </span><span class="NAME">attr.withlabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">    </span><span class="COMM">// gliders set snapwidth=-1 by default (i.e. deactivate them)</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="NAME">p3</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"glider"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">startx</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">starty</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">l1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">    </span><span class="NAME">p3.setAttribute</span><span class="PUNC">(</span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">snapwidth</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">snapWidth</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">snapvalues</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">snapValues</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">snapvaluedistance</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">snapValueDistance</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>242</span> 
+<span class='line'>243</span> </span><span class="WHIT">    </span><span class="COMM">// Segment from start point to glider point: highline</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">    </span><span class="COMM">// attr = Type.copyAttributes(attributes, board.options, "slider", "highline");</span><span class="WHIT">
+<span class='line'>245</span> </span><span class="WHIT">    </span><span class="NAME">l2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"segment"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p3</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.highline</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>246</span> 
+<span class='line'>247</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>248</span>      * Returns the current slider value.
+<span class='line'>249</span>      * @memberOf Slider.prototype
+<span class='line'>250</span>      * @name Value
+<span class='line'>251</span>      * @function
+<span class='line'>252</span>      * @returns {Number}
+<span class='line'>253</span>      */</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">    </span><span class="NAME">p3.Value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this._smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">            </span><span class="NAME">ev_sw</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'snapwidth'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>257</span> 
+<span class='line'>258</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">ev_sw</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">            </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">            </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">Math.round</span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">d</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">ev_sw</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">ev_sw</span><span class="WHIT">  </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>262</span> 
+<span class='line'>263</span> </span><span class="WHIT">    </span><span class="NAME">p3.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.deepCopy</span><span class="PUNC">(</span><span class="NAME">p3.methodMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">        </span><span class="NAME">Value</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"Value"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">        </span><span class="NAME">setValue</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setValue"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">        </span><span class="NAME">smax</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"_smax"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">        </span><span class="COMM">// Max: "_smax",</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">        </span><span class="NAME">smin</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"_smin"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="WHIT">        </span><span class="COMM">// Min: "_smin",</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="WHIT">        </span><span class="NAME">setMax</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setMax"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">        </span><span class="NAME">setMin</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setMin"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">        </span><span class="NAME">point1</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"point1"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">        </span><span class="NAME">point2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"point2"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>274</span> </span><span class="WHIT">        </span><span class="NAME">baseline</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"baseline"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">        </span><span class="NAME">highline</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"highline"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">        </span><span class="NAME">ticks</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"ticks"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>277</span> </span><span class="WHIT">        </span><span class="NAME">label</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"label"</span><span class="WHIT">
+<span class='line'>278</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>279</span> 
+<span class='line'>280</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>281</span>      * End value of the slider range.
+<span class='line'>282</span>      * @memberOf Slider.prototype
+<span class='line'>283</span>      * @name _smax
+<span class='line'>284</span>      * @type Number
+<span class='line'>285</span>      */</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">    </span><span class="NAME">p3._smax</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">smax</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>287</span> 
+<span class='line'>288</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>289</span>      * Start value of the slider range.
+<span class='line'>290</span>      * @memberOf Slider.prototype
+<span class='line'>291</span>      * @name _smin
+<span class='line'>292</span>      * @type Number
+<span class='line'>293</span>      */</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">    </span><span class="NAME">p3._smin</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>295</span> 
+<span class='line'>296</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>297</span>      * Sets the maximum value of the slider.
+<span class='line'>298</span>      * @memberOf Slider.prototype
+<span class='line'>299</span>      * @function
+<span class='line'>300</span>      * @name setMax
+<span class='line'>301</span>      * @param {Number} val New maximum value
+<span class='line'>302</span>      * @returns {Object} this object
+<span class='line'>303</span>      */</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">    </span><span class="NAME">p3.setMax</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">        </span><span class="NAME">this._smax</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>308</span> 
+<span class='line'>309</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>310</span>      * Sets the value of the slider. This call must be followed
+<span class='line'>311</span>      * by a board update call.
+<span class='line'>312</span>      * @memberOf Slider.prototype
+<span class='line'>313</span>      * @name setValue
+<span class='line'>314</span>      * @function
+<span class='line'>315</span>      * @param {Number} val New value
+<span class='line'>316</span>      * @returns {Object} this object
+<span class='line'>317</span>      */</span><span class="WHIT">
+<span class='line'>318</span> </span><span class="WHIT">    </span><span class="NAME">p3.setValue</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>319</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this._smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>320</span> 
+<span class='line'>321</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">d</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">            </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">d</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">            </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0.0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">//this._smin;</span><span class="WHIT">
+<span class='line'>325</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>326</span> </span><span class="WHIT">        </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.max</span><span class="PUNC">(</span><span class="NUMB">0.0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Math.min</span><span class="PUNC">(</span><span class="NUMB">1.0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.position</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>327</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>328</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>329</span> 
+<span class='line'>330</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>331</span>      * Sets the minimum value of the slider.
+<span class='line'>332</span>      * @memberOf Slider.prototype
+<span class='line'>333</span>      * @name setMin
+<span class='line'>334</span>      * @function
+<span class='line'>335</span>      * @param {Number} val New minimum value
+<span class='line'>336</span>      * @returns {Object} this object
+<span class='line'>337</span>      */</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">    </span><span class="NAME">p3.setMin</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">        </span><span class="NAME">this._smin</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">val</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>342</span> 
+<span class='line'>343</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withText</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="WHIT">        </span><span class="COMM">// attr = Type.copyAttributes(attributes, board.options, 'slider', 'label');</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="WHIT">        </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">'text'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="WHIT">            </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p2.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">p1.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">0.05</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">p2.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>348</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>349</span> </span><span class="WHIT">            </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p2.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">p1.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">0.05</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">p2.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">            </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">n</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>354</span> </span><span class="WHIT">                    </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'digits'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>355</span> </span><span class="WHIT">                    </span><span class="NAME">sl</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'suffixlabel'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">                    </span><span class="NAME">ul</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'unitlabel'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="WHIT">                    </span><span class="NAME">pl</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'postlabel'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>358</span> 
+<span class='line'>359</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'precision'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">                    </span><span class="COMM">// Backwards compatibility</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">                    </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'precision'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>362</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>363</span> 
+<span class='line'>364</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">sl</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">sl</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p3.name</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">p3.name</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">" = "</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>369</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>370</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>371</span> 
+<span class='line'>372</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p3.useLocale</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>373</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.formatNumberLocale</span><span class="PUNC">(</span><span class="NAME">p3.Value</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">d</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>374</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.toFixed</span><span class="PUNC">(</span><span class="NAME">p3.Value</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">d</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>377</span> 
+<span class='line'>378</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">ul</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ul</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">pl</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">                    </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">pl</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>384</span> 
+<span class='line'>385</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">n</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>388</span> </span><span class="WHIT">            </span><span class="NAME">attr.label</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>390</span> 
+<span class='line'>391</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>392</span>          * The text element to the right of the slider, indicating its current value.
+<span class='line'>393</span>          * @memberOf Slider.prototype
+<span class='line'>394</span>          * @name label
+<span class='line'>395</span>          * @type JXG.Text
+<span class='line'>396</span>          */</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">        </span><span class="NAME">p3.label</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>398</span> 
+<span class='line'>399</span> </span><span class="WHIT">        </span><span class="COMM">// reset the withlabel attribute</span><span class="WHIT">
+<span class='line'>400</span> </span><span class="WHIT">        </span><span class="NAME">p3.visProp.withlabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">        </span><span class="NAME">p3.hasLabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>403</span> 
+<span class='line'>404</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>405</span>      * Start point of the base line.
+<span class='line'>406</span>      * @memberOf Slider.prototype
+<span class='line'>407</span>      * @name point1
+<span class='line'>408</span>      * @type JXG.Point
+<span class='line'>409</span>      */</span><span class="WHIT">
+<span class='line'>410</span> </span><span class="WHIT">    </span><span class="NAME">p3.point1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>411</span> 
+<span class='line'>412</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>413</span>      * End point of the base line.
+<span class='line'>414</span>      * @memberOf Slider.prototype
+<span class='line'>415</span>      * @name point2
+<span class='line'>416</span>      * @type JXG.Point
+<span class='line'>417</span>      */</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">    </span><span class="NAME">p3.point2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>419</span> 
+<span class='line'>420</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>421</span>      * The baseline the glider is bound to.
+<span class='line'>422</span>      * @memberOf Slider.prototype
+<span class='line'>423</span>      * @name baseline
+<span class='line'>424</span>      * @type JXG.Line
+<span class='line'>425</span>      */</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">    </span><span class="NAME">p3.baseline</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">l1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>427</span> 
+<span class='line'>428</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>429</span>      * A line on top of the baseline, indicating the slider's progress.
+<span class='line'>430</span>      * @memberOf Slider.prototype
+<span class='line'>431</span>      * @name highline
+<span class='line'>432</span>      * @type JXG.Line
+<span class='line'>433</span>      */</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">    </span><span class="NAME">p3.highline</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">l2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>435</span> 
+<span class='line'>436</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">        </span><span class="COMM">// Function to generate correct label texts</span><span class="WHIT">
+<span class='line'>438</span> 
+<span class='line'>439</span> </span><span class="WHIT">        </span><span class="COMM">// attr = Type.copyAttributes(attributes, board.options, "slider", "ticks");</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">attr.generatelabeltext</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="WHIT">            </span><span class="NAME">attr.ticks.generateLabelText</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">tick</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">zero</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">value</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">labelText</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">                    </span><span class="NAME">dFull</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.point1.Dist</span><span class="PUNC">(</span><span class="NAME">p3.point2</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">                    </span><span class="NAME">smin</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3._smin</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>445</span> </span><span class="WHIT">                    </span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3._smax</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>446</span> </span><span class="WHIT">                    </span><span class="NAME">val</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.getDistanceFromZero</span><span class="PUNC">(</span><span class="NAME">zero</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">tick</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">dFull</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>447</span> 
+<span class='line'>448</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dFull</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">                    </span><span class="COMM">// Point is zero</span><span class="WHIT">
+<span class='line'>450</span> </span><span class="WHIT">                    </span><span class="NAME">labelText</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"0"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>451</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>452</span> </span><span class="WHIT">                    </span><span class="NAME">labelText</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.formatLabelText</span><span class="PUNC">(</span><span class="NAME">val</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>453</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>454</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">labelText</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>455</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>456</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">        </span><span class="NAME">ticks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">        </span><span class="NAME">ti</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">            </span><span class="STRN">"ticks"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>460</span> </span><span class="WHIT">            </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">                </span><span class="NAME">p3.baseline</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">                </span><span class="NAME">p3.point1.Dist</span><span class="PUNC">(</span><span class="NAME">p1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">ticks</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>463</span> 
+<span class='line'>464</span> </span><span class="WHIT">                </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">tick</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>465</span> </span><span class="WHIT">                    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">dFull</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.point1.Dist</span><span class="PUNC">(</span><span class="NAME">p3.point2</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>466</span> </span><span class="WHIT">                        </span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">p3.point1.coords.distance</span><span class="PUNC">(</span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">tick</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>467</span> 
+<span class='line'>468</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">dFull</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>469</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>470</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>471</span> 
+<span class='line'>472</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">d</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">dFull</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">diff</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">smin</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>473</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>474</span> </span><span class="WHIT">            </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>475</span> </span><span class="WHIT">            </span><span class="NAME">attr.ticks</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>477</span> 
+<span class='line'>478</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>479</span>          * Ticks give a rough indication about the slider's current value.
+<span class='line'>480</span>          * @memberOf Slider.prototype
+<span class='line'>481</span>          * @name ticks
+<span class='line'>482</span>          * @type JXG.Ticks
+<span class='line'>483</span>          */</span><span class="WHIT">
+<span class='line'>484</span> </span><span class="WHIT">        </span><span class="NAME">p3.ticks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ti</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>485</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>486</span> 
+<span class='line'>487</span> </span><span class="WHIT">    </span><span class="COMM">// override the point's remove method to ensure the removal of all elements</span><span class="WHIT">
+<span class='line'>488</span> </span><span class="WHIT">    </span><span class="NAME">p3.remove</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>489</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withText</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="WHIT">            </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>491</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>492</span> 
+<span class='line'>493</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">l2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">l1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">p2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>496</span> </span><span class="WHIT">        </span><span class="NAME">board.removeObject</span><span class="PUNC">(</span><span class="NAME">p1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>497</span> 
+<span class='line'>498</span> </span><span class="WHIT">        </span><span class="NAME">Point.prototype.remove.call</span><span class="PUNC">(</span><span class="NAME">p3</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>500</span> 
+<span class='line'>501</span> </span><span class="WHIT">    </span><span class="NAME">p1.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">    </span><span class="NAME">p2.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">    </span><span class="NAME">l1.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">    </span><span class="NAME">l2.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>505</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withText</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>506</span> </span><span class="WHIT">        </span><span class="NAME">t.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>508</span> 
+<span class='line'>509</span> </span><span class="WHIT">    </span><span class="COMM">// p3.type = Const.OBJECT_TYPE_SLIDER; // No! type has to be Const.OBJECT_TYPE_GLIDER</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="WHIT">    </span><span class="NAME">p3.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"slider"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>511</span> </span><span class="WHIT">    </span><span class="NAME">p3.parents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>512</span> </span><span class="WHIT">    </span><span class="NAME">p3.subs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>513</span> </span><span class="WHIT">        </span><span class="NAME">point1</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>514</span> </span><span class="WHIT">        </span><span class="NAME">point2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>515</span> </span><span class="WHIT">        </span><span class="NAME">baseLine</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">l1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>516</span> </span><span class="WHIT">        </span><span class="NAME">highLine</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">l2</span><span class="WHIT">
+<span class='line'>517</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>518</span> </span><span class="WHIT">    </span><span class="NAME">p3.inherits.push</span><span class="PUNC">(</span><span class="NAME">p1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">l1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">l2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>519</span> </span><span class="WHIT">    </span><span class="COMM">// Remove inherits to avoid circular inherits.</span><span class="WHIT">
+<span class='line'>520</span> </span><span class="WHIT">    </span><span class="NAME">l1.inherits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>521</span> </span><span class="WHIT">    </span><span class="NAME">l2.inherits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>522</span> 
+<span class='line'>523</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>524</span> </span><span class="WHIT">        </span><span class="NAME">ti.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>525</span> </span><span class="WHIT">        </span><span class="NAME">p3.subs.ticks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ti</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>526</span> </span><span class="WHIT">        </span><span class="NAME">p3.inherits.push</span><span class="PUNC">(</span><span class="NAME">ti</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>527</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>528</span> 
+<span class='line'>529</span> </span><span class="WHIT">    </span><span class="NAME">p3.getParents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>530</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>531</span> </span><span class="WHIT">            </span><span class="NAME">this.point1.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>532</span> </span><span class="WHIT">            </span><span class="NAME">this.point2.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>533</span> </span><span class="WHIT">            </span><span class="PUNC">[</span><span class="NAME">this._smin</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this._smax</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this._smin</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this._smax</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>534</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>535</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>536</span> 
+<span class='line'>537</span> </span><span class="WHIT">    </span><span class="NAME">p3.baseline.on</span><span class="PUNC">(</span><span class="STRN">"up"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">evt</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>538</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">pos</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>539</span> 
+<span class='line'>540</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'moveonup'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">p3.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'fixed'</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>541</span> </span><span class="WHIT">            </span><span class="NAME">pos</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">l1.board.getMousePosition</span><span class="PUNC">(</span><span class="NAME">evt</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>542</span> </span><span class="WHIT">            </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Coords</span><span class="PUNC">(</span><span class="NAME">Const.COORDS_BY_SCREEN</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">pos</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.board</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>543</span> </span><span class="WHIT">            </span><span class="NAME">p3.moveTo</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">c.usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c.usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>544</span> </span><span class="WHIT">            </span><span class="NAME">p3.triggerEventHandlers</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="STRN">'drag'</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">evt</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>545</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>546</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>547</span> 
+<span class='line'>548</span> </span><span class="WHIT">    </span><span class="COMM">// This is necessary to show baseline, highline and ticks</span><span class="WHIT">
+<span class='line'>549</span> </span><span class="WHIT">    </span><span class="COMM">// when opening the board in case the visible attributes are set</span><span class="WHIT">
+<span class='line'>550</span> </span><span class="WHIT">    </span><span class="COMM">// to 'inherit'.</span><span class="WHIT">
+<span class='line'>551</span> </span><span class="WHIT">    </span><span class="NAME">p3.prepareUpdate</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>552</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">board.isSuspendedUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>553</span> </span><span class="WHIT">        </span><span class="NAME">p3.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>554</span> </span><span class="WHIT">        </span><span class="NAME">p3.baseline.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>555</span> </span><span class="WHIT">        </span><span class="NAME">p3.highline.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>556</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">withTicks</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>557</span> </span><span class="WHIT">            </span><span class="NAME">p3.ticks.updateVisibility</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">updateRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>558</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>559</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>560</span> 
+<span class='line'>561</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">p3</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>562</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>563</span> 
+<span class='line'>564</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"slider"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createSlider</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>565</span> 
+<span class='line'>566</span> </span><span class="COMM">// export default {</span><span class="WHIT">
+<span class='line'>567</span> </span><span class="COMM">//     createSlider: JXG.createSlider</span><span class="WHIT">
+<span class='line'>568</span> </span><span class="COMM">// };</span><span class="WHIT">
+<span class='line'>569</span> </span></pre></body></html>

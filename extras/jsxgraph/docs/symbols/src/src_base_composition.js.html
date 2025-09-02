@@ -1,0 +1,286 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>  Copyright 2008-2025
+<span class='line'>  3</span>  Matthias Ehmann,
+<span class='line'>  4</span>  Michael Gerhaeuser,
+<span class='line'>  5</span>  Carsten Miller,
+<span class='line'>  6</span>  Bianca Valentin,
+<span class='line'>  7</span>  Alfred Wassermann,
+<span class='line'>  8</span>  Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>  This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>  JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>  You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>  * GNU Lesser General Public License as published by
+<span class='line'> 17</span>  the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>  (at your option) any later version
+<span class='line'> 19</span>  OR
+<span class='line'> 20</span>  * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>  JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>  but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>  GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>  You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>  the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>  and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 37</span> 
+<span class='line'> 38</span> </span><span class="COMM">/**
+<span class='line'> 39</span>  * A composition is a simple container that manages none or more {@link JXG.GeometryElement}s.
+<span class='line'> 40</span>  * @param {Object} elements A list of elements with a descriptive name for the element as the key and a reference
+<span class='line'> 41</span>  * to the element as the value of every list entry. The name is used to access the element later on.
+<span class='line'> 42</span>  * @example
+<span class='line'> 43</span>  * var p1 = board.create('point', [1, 2]),
+<span class='line'> 44</span>  *     p2 = board.create('point', [2, 3]),
+<span class='line'> 45</span>  *     c = new JXG.Composition({
+<span class='line'> 46</span>  *         start: p1,
+<span class='line'> 47</span>  *         end: p2
+<span class='line'> 48</span>  *     });
+<span class='line'> 49</span>  *
+<span class='line'> 50</span>  * // moves p1 to [3, 3]
+<span class='line'> 51</span>  * c.start.moveTo([3, 3]);
+<span class='line'> 52</span>  * @class JXG.Composition
+<span class='line'> 53</span>  */</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="NAME">JXG.Composition</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">elements</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">e</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">        </span><span class="NAME">that</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">        </span><span class="NAME">genericMethods</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 59</span>              * Invokes setAttribute for every stored element with a setAttribute method and hands over the given arguments.
+<span class='line'> 60</span>              * See {@link JXG.GeometryElement#setAttribute} for further description, valid parameters and return values.
+<span class='line'> 61</span>              * @name setAttribute
+<span class='line'> 62</span>              * @memberOf JXG.Composition.prototype
+<span class='line'> 63</span>              * @function
+<span class='line'> 64</span>              */</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">            </span><span class="STRN">"setAttribute"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 66</span> 
+<span class='line'> 67</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 68</span>              * Invokes setParents for every stored element with a setParents method and hands over the given arguments.
+<span class='line'> 69</span>              * See {@link JXG.GeometryElement#setParents} for further description, valid parameters and return values.
+<span class='line'> 70</span>              * @name setParents
+<span class='line'> 71</span>              * @memberOf JXG.Composition.prototype
+<span class='line'> 72</span>              * @function
+<span class='line'> 73</span>              */</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">            </span><span class="STRN">"setParents"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 75</span> 
+<span class='line'> 76</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 77</span>              * Invokes prepareUpdate for every stored element with a prepareUpdate method and hands over the given arguments.
+<span class='line'> 78</span>              * See {@link JXG.GeometryElement#prepareUpdate} for further description, valid parameters and return values.
+<span class='line'> 79</span>              * @name prepareUpdate
+<span class='line'> 80</span>              * @memberOf JXG.Composition.prototype
+<span class='line'> 81</span>              * @function
+<span class='line'> 82</span>              */</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="WHIT">            </span><span class="STRN">"prepareUpdate"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 84</span> 
+<span class='line'> 85</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 86</span>              * Invokes updateRenderer for every stored element with a updateRenderer method and hands over the given arguments.
+<span class='line'> 87</span>              * See {@link JXG.GeometryElement#updateRenderer} for further description, valid parameters and return values.
+<span class='line'> 88</span>              * @name updateRenderer
+<span class='line'> 89</span>              * @memberOf JXG.Composition.prototype
+<span class='line'> 90</span>              * @function
+<span class='line'> 91</span>              */</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">            </span><span class="STRN">"updateRenderer"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 93</span> 
+<span class='line'> 94</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 95</span>              * Invokes update for every stored element with a update method and hands over the given arguments.
+<span class='line'> 96</span>              * See {@link JXG.GeometryElement#update} for further description, valid parameters and return values.
+<span class='line'> 97</span>              * @name update
+<span class='line'> 98</span>              * @memberOf JXG.Composition.prototype
+<span class='line'> 99</span>              * @function
+<span class='line'>100</span>              */</span><span class="WHIT">
+<span class='line'>101</span> </span><span class="WHIT">            </span><span class="STRN">"update"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>102</span> 
+<span class='line'>103</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'>104</span>              * Invokes fullUpdate for every stored element with a fullUpdate method and hands over the given arguments.
+<span class='line'>105</span>              * See {@link JXG.GeometryElement#fullUpdate} for further description, valid parameters and return values.
+<span class='line'>106</span>              * @name fullUpdate
+<span class='line'>107</span>              * @memberOf JXG.Composition.prototype
+<span class='line'>108</span>              * @function
+<span class='line'>109</span>              */</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">            </span><span class="STRN">"fullUpdate"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>111</span> 
+<span class='line'>112</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'>113</span>              * Invokes highlight for every stored element with a highlight method and hands over the given arguments.
+<span class='line'>114</span>              * See {@link JXG.GeometryElement#highlight} for further description, valid parameters and return values.
+<span class='line'>115</span>              * @name highlight
+<span class='line'>116</span>              * @memberOf JXG.Composition.prototype
+<span class='line'>117</span>              * @function
+<span class='line'>118</span>              */</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">            </span><span class="STRN">"highlight"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>120</span> 
+<span class='line'>121</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'>122</span>              * Invokes noHighlight for every stored element with a noHighlight method and hands over the given arguments.
+<span class='line'>123</span>              * See {@link JXG.GeometryElement#noHighlight} for further description, valid parameters and return values.
+<span class='line'>124</span>              * @name noHighlight
+<span class='line'>125</span>              * @memberOf JXG.Composition.prototype
+<span class='line'>126</span>              * @function
+<span class='line'>127</span>              */</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="WHIT">            </span><span class="STRN">"noHighlight"</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>130</span> </span><span class="WHIT">        </span><span class="NAME">generateMethod</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">what</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> 
+<span class='line'>134</span> </span><span class="WHIT">                </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">that.elements</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">that.elements.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">that.elements</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">                            </span><span class="NAME">that.elements</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">apply</span><span class="PUNC">(</span><span class="NAME">that.elements</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">arguments</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">that</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>144</span> 
+<span class='line'>145</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">e</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">genericMethods.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">e</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">        </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">genericMethods</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">generateMethod</span><span class="PUNC">(</span><span class="NAME">genericMethods</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>148</span> 
+<span class='line'>149</span> </span><span class="WHIT">    </span><span class="NAME">this.elements</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">    </span><span class="NAME">this.objects</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.elements</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>151</span> 
+<span class='line'>152</span> </span><span class="WHIT">    </span><span class="NAME">this.elementsByName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">    </span><span class="NAME">this.objectsList</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>154</span> 
+<span class='line'>155</span> </span><span class="WHIT">    </span><span class="COMM">// unused, required for select()</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">    </span><span class="NAME">this.groups</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> 
+<span class='line'>158</span> </span><span class="WHIT">    </span><span class="NAME">this.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>159</span> </span><span class="WHIT">        </span><span class="NAME">setAttribute</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setAttribute"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">        </span><span class="NAME">setProperty</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setAttribute"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>161</span> </span><span class="WHIT">        </span><span class="NAME">setParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setParents"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>162</span> </span><span class="WHIT">        </span><span class="NAME">add</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"add"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="WHIT">        </span><span class="NAME">remove</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"remove"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">        </span><span class="NAME">select</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"select"</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>166</span> 
+<span class='line'>167</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">elements</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">elements.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="WHIT">            </span><span class="NAME">this.add</span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">elements</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>172</span> 
+<span class='line'>173</span> </span><span class="WHIT">    </span><span class="NAME">this.dump</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">    </span><span class="NAME">this.subs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>176</span> 
+<span class='line'>177</span> </span><span class="NAME">JXG.extend</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">    </span><span class="NAME">JXG.Composition.prototype</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">    </span><span class="COMM">/** @lends JXG.Composition.prototype */</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>181</span>          * Adds an element to the composition container.
+<span class='line'>182</span>          * @param {String} what Descriptive name for the element, e.g. &lt;em>startpoint&lt;/em> or &lt;em>area&lt;/em>. This is used to
+<span class='line'>183</span>          * access the element later on. There are some reserved names: &lt;em>elements, add, remove, update, prepareUpdate,
+<span class='line'>184</span>          * updateRenderer, highlight, noHighlight&lt;/em>, and all names that would form invalid object property names in
+<span class='line'>185</span>          * JavaScript.
+<span class='line'>186</span>          * @param {JXG.GeometryElement|JXG.Composition} element A reference to the element that is to be added. This can be
+<span class='line'>187</span>          * another composition, too.
+<span class='line'>188</span>          * @returns {Boolean} True, if the element was added successfully. Reasons why adding the element failed include
+<span class='line'>189</span>          * using a reserved name and providing an invalid element.
+<span class='line'>190</span>          */</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">        </span><span class="NAME">add</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">what</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">element.id</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="WHIT">                    </span><span class="NAME">this.elements</span><span class="PUNC">[</span><span class="NAME">element.id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>196</span> </span><span class="WHIT">                    </span><span class="NAME">this.elements</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>197</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>198</span> 
+<span class='line'>199</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">element.name</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">                    </span><span class="NAME">this.elementsByName</span><span class="PUNC">[</span><span class="NAME">element.name</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>202</span> 
+<span class='line'>203</span> </span><span class="WHIT">                </span><span class="NAME">element.on</span><span class="PUNC">(</span><span class="STRN">"attribute:name"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.nameListener</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> 
+<span class='line'>205</span> </span><span class="WHIT">                </span><span class="NAME">this.objectsList.push</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="WHIT">                </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">                </span><span class="NAME">this.methodMap</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">element</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> 
+<span class='line'>209</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>211</span> 
+<span class='line'>212</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>214</span> 
+<span class='line'>215</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>216</span>          * Remove an element from the composition container.
+<span class='line'>217</span>          * @param {String} what The name used to access the element.
+<span class='line'>218</span>          * @returns {Boolean} True, if the element has been removed successfully.
+<span class='line'>219</span>          */</span><span class="WHIT">
+<span class='line'>220</span> </span><span class="WHIT">        </span><span class="NAME">remove</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">what</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>221</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">found</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">                </span><span class="NAME">e</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>223</span> 
+<span class='line'>224</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.elements</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.elements.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.elements</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">                        </span><span class="NAME">found</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">                        </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>232</span> 
+<span class='line'>233</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">found</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">                </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.elements</span><span class="PUNC">[</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">                </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">what</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>237</span> 
+<span class='line'>238</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">found</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>240</span> 
+<span class='line'>241</span> </span><span class="WHIT">        </span><span class="NAME">nameListener</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">oval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">nval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">            </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.elementsByName</span><span class="PUNC">[</span><span class="NAME">oval</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">            </span><span class="NAME">this.elementsByName</span><span class="PUNC">[</span><span class="NAME">nval</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>245</span> 
+<span class='line'>246</span> </span><span class="WHIT">        </span><span class="NAME">select</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">filter</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">            </span><span class="COMM">// for now, hijack JXG.Board's select() method</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">JXG.Board</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">JXG.Board.prototype.select.call</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">filter</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>251</span> 
+<span class='line'>252</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.Composition</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>254</span> 
+<span class='line'>255</span> </span><span class="WHIT">        </span><span class="NAME">getParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.parents</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>258</span> 
+<span class='line'>259</span> </span><span class="WHIT">        </span><span class="NAME">getType</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.elType</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>262</span> 
+<span class='line'>263</span> </span><span class="WHIT">        </span><span class="NAME">getAttributes</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">                </span><span class="NAME">e</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>266</span> 
+<span class='line'>267</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.subs</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.subs.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="WHIT">                    </span><span class="NAME">attr</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.subs</span><span class="PUNC">[</span><span class="NAME">e</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">visProp</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>272</span> 
+<span class='line'>273</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.attr</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>274</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>277</span> 
+<span class='line'>278</span> </span><span class="NAME">export</span><span class="WHIT"> </span><span class="KEYW">default</span><span class="WHIT"> </span><span class="NAME">JXG.Composition</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>279</span> </span></pre></body></html>

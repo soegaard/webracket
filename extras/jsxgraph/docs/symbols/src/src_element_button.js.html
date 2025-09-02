@@ -1,0 +1,330 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true, window: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview In this file the Text element is defined.
+<span class='line'> 37</span>  */</span><span class="WHIT">
+<span class='line'> 38</span> 
+<span class='line'> 39</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 40</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Env</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/env.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> 
+<span class='line'> 43</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">priv</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="WHIT">    </span><span class="NAME">ButtonClickEventHandler</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 45</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this._handler</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="WHIT">            </span><span class="NAME">this._handler</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 47</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="WHIT">        </span><span class="NAME">this.board.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 49</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 51</span> 
+<span class='line'> 52</span> </span><span class="COMM">/**
+<span class='line'> 53</span>  * @class A text element that contains an HTML button tag.
+<span class='line'> 54</span>  * For this element, the attribute "display" has to have the value 'html' (which is the default).
+<span class='line'> 55</span>  *
+<span class='line'> 56</span>  * &lt;p>&lt;b>Setting a CSS class:&lt;/b> The attribute &lt;tt>cssClass&lt;/tt> affects the HTML div element that contains the button element. To change the CSS properties of the HTML button element a selector of the form
+<span class='line'> 57</span>  * &lt;tt>.mybutton > button { ... }&lt;/tt> has to be used. See the example below.
+<span class='line'> 58</span>  *
+<span class='line'> 59</span>  * &lt;p>&lt;b>Access the button element with JavaScript:&lt;/b>
+<span class='line'> 60</span>  * The underlying HTML button element can be accessed through the sub-object 'rendNodeButton', e.g. to
+<span class='line'> 61</span>  * add event listeners.
+<span class='line'> 62</span>  *
+<span class='line'> 63</span>  * @pseudo
+<span class='line'> 64</span>  * @name Button
+<span class='line'> 65</span>  * @augments Text
+<span class='line'> 66</span>  * @constructor
+<span class='line'> 67</span>  * @type JXG.Text
+<span class='line'> 68</span>  *
+<span class='line'> 69</span>  * @param {number,function_number,function_String,function_function} x,y,label,handler Parent elements for button elements.
+<span class='line'> 70</span>  *  &lt;p>
+<span class='line'> 71</span>  *  x and y are the coordinates of the lower left corner of the text box.
+<span class='line'> 72</span>  *   The position of the text is fixed,
+<span class='line'> 73</span>  *  x and y are numbers. The position is variable if x or y are functions.
+<span class='line'> 74</span>  *  &lt;p>
+<span class='line'> 75</span>  *  The label of the input element may be given  as string.
+<span class='line'> 76</span>  *  &lt;p>
+<span class='line'> 77</span>  *  The (optional) handler function which is called when the button is pressed.
+<span class='line'> 78</span>  *
+<span class='line'> 79</span>  * @example
+<span class='line'> 80</span>  *  var p = board.create('point', [0.5, 0.5], {id: 'p1'});
+<span class='line'> 81</span>  *
+<span class='line'> 82</span>  *  // Create a button element at position [1,2].
+<span class='line'> 83</span>  *  var button1 = board.create('button', [1, 2, 'Change Y with JavaScript', function() {
+<span class='line'> 84</span>  *      p.moveTo([p.X(), p.Y() + 0.5], 100);
+<span class='line'> 85</span>  *  }], {});
+<span class='line'> 86</span>  *
+<span class='line'> 87</span>  *  // Create a button element at position [1,4].
+<span class='line'> 88</span>  *  var button2 = board.create('button', [1, 4, 'Change Y with JessieCode',
+<span class='line'> 89</span>  *      "$('p1').Y = $('p1').Y() - 0.5;"
+<span class='line'> 90</span>  *  ], {});
+<span class='line'> 91</span>  *
+<span class='line'> 92</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGf19b1bce-dd00-4e35-be97-ff1817d11514" style="width: 500px; height: 300px;">&lt;/div>
+<span class='line'> 93</span>  * &lt;script type="text/javascript">
+<span class='line'> 94</span>  *  var t1_board = JXG.JSXGraph.initBoard('JXGf19b1bce-dd00-4e35-be97-ff1817d11514', {boundingbox: [-3, 6, 5, -3], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'> 95</span>  *  var p = t1_board.create('point', [0, -1], {id: 'p1'});
+<span class='line'> 96</span>  *
+<span class='line'> 97</span>  *  // Create a button element at position [1,2].
+<span class='line'> 98</span>  *  var button1 = t1_board.create('button', [1, 2, 'Change Y with JavaScript', function() {
+<span class='line'> 99</span>  *      p.moveTo([p.X(), p.Y() + 0.5], 100);
+<span class='line'>100</span>  *  }], {});
+<span class='line'>101</span>  *
+<span class='line'>102</span>  *  // Create a button element at position [1,4].
+<span class='line'>103</span>  *  var button2 = t1_board.create('button', [1, 4, 'Change Y with JessieCode',
+<span class='line'>104</span>  *      "$('p1').Y = $('p1').Y() - 0.5;"
+<span class='line'>105</span>  *  ], {});
+<span class='line'>106</span>  *
+<span class='line'>107</span>  * &lt;/script>&lt;pre>
+<span class='line'>108</span>  *
+<span class='line'>109</span>  * @example
+<span class='line'>110</span>  * // A toggle button
+<span class='line'>111</span>  * var butt = board.create('button', [-2, -2, 'Off', function() {
+<span class='line'>112</span>  *   var txt;
+<span class='line'>113</span>  *   butt.value = !butt.value;
+<span class='line'>114</span>  *   if (butt.value) {
+<span class='line'>115</span>  *   	txt = 'On';
+<span class='line'>116</span>  *   } else {
+<span class='line'>117</span>  *   	txt = 'Off';
+<span class='line'>118</span>  *   }
+<span class='line'>119</span>  * 	butt.rendNodeButton.innerHTML = txt;
+<span class='line'>120</span>  * }]);
+<span class='line'>121</span>  *
+<span class='line'>122</span>  * // Set initial value for the button
+<span class='line'>123</span>  * if (!JXG.exists(butt.value)) {
+<span class='line'>124</span>  * 	butt.value = false;
+<span class='line'>125</span>  * }
+<span class='line'>126</span>  *
+<span class='line'>127</span>  * var p = board.create('point', [2, -2], {
+<span class='line'>128</span>  * 	visible: () => butt.value
+<span class='line'>129</span>  * });
+<span class='line'>130</span>  *
+<span class='line'>131</span>  *
+<span class='line'>132</span>  *
+<span class='line'>133</span>  * &lt;/pre>&lt;div id="JXGa1eaab8f-c73b-4660-96ce-4ca17bcac4d6" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>134</span>  * &lt;script type="text/javascript">
+<span class='line'>135</span>  *     (function() {
+<span class='line'>136</span>  *         var board = JXG.JSXGraph.initBoard('JXGa1eaab8f-c73b-4660-96ce-4ca17bcac4d6',
+<span class='line'>137</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>138</span>  *     var butt = board.create('button', [-2, -2, 'Off', function() {
+<span class='line'>139</span>  *       var txt;
+<span class='line'>140</span>  *       butt.value = !butt.value;
+<span class='line'>141</span>  *       if (butt.value) {
+<span class='line'>142</span>  *       	txt = 'On';
+<span class='line'>143</span>  *       } else {
+<span class='line'>144</span>  *       	txt = 'Off';
+<span class='line'>145</span>  *       }
+<span class='line'>146</span>  *     	butt.rendNodeButton.innerHTML = txt;
+<span class='line'>147</span>  *     }]);
+<span class='line'>148</span>  *
+<span class='line'>149</span>  *     // Set initial value for the button
+<span class='line'>150</span>  *     if (!JXG.exists(butt.value)) {
+<span class='line'>151</span>  *     	butt.value = false;
+<span class='line'>152</span>  *     }
+<span class='line'>153</span>  *
+<span class='line'>154</span>  *     var p = board.create('point', [2, -2], {
+<span class='line'>155</span>  *     	visible: () => butt.value
+<span class='line'>156</span>  *     });
+<span class='line'>157</span>  *
+<span class='line'>158</span>  *     })();
+<span class='line'>159</span>  *
+<span class='line'>160</span>  * &lt;/script>&lt;pre>
+<span class='line'>161</span>  *
+<span class='line'>162</span>  * @example
+<span class='line'>163</span>  * var i1 = board.create('input', [-3, 4, 'sin(x)', 'f(x)='], {cssStyle: 'width:4em', maxlength: 2});
+<span class='line'>164</span>  * var c1 = board.create('checkbox', [-3, 2, 'label 1'], {});
+<span class='line'>165</span>  * var b1 = board.create('button', [-3, -1, 'Change texts', function () {
+<span class='line'>166</span>  *         i1.setText('g(x)');
+<span class='line'>167</span>  *         i1.set('cos(x)');
+<span class='line'>168</span>  *         c1.setText('label 2');
+<span class='line'>169</span>  *         b1.setText('Texts are changed');
+<span class='line'>170</span>  *     }],
+<span class='line'>171</span>  *     {cssStyle: 'width:200px'});
+<span class='line'>172</span>  *
+<span class='line'>173</span>  * &lt;/pre>&lt;div id="JXG11cac8ff-2354-47e7-9da4-eb928e53de05" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>174</span>  * &lt;script type="text/javascript">
+<span class='line'>175</span>  *     (function() {
+<span class='line'>176</span>  *         var board = JXG.JSXGraph.initBoard('JXG11cac8ff-2354-47e7-9da4-eb928e53de05',
+<span class='line'>177</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>178</span>  *             var i1 = board.create('input', [-3, 4, 'sin(x)', 'f(x)='], {cssStyle: 'width:4em', maxlength: 2});
+<span class='line'>179</span>  *             var c1 = board.create('checkbox', [-3, 2, 'label 1'], {});
+<span class='line'>180</span>  *             var b1 = board.create('button', [-3, -1, 'Change texts', function () {
+<span class='line'>181</span>  *                     i1.setText('g(x)');
+<span class='line'>182</span>  *                     i1.set('cos(x)');
+<span class='line'>183</span>  *                     c1.setText('label 2');
+<span class='line'>184</span>  *                     b1.setText('Texts are changed');
+<span class='line'>185</span>  *                 }],
+<span class='line'>186</span>  *                 {cssStyle: 'width:200px'});
+<span class='line'>187</span>  *
+<span class='line'>188</span>  *     })();
+<span class='line'>189</span>  *
+<span class='line'>190</span>  * &lt;/script>&lt;pre>
+<span class='line'>191</span>  *
+<span class='line'>192</span>  * @example
+<span class='line'>193</span>  * // Set the CSS class of the button
+<span class='line'>194</span>  *
+<span class='line'>195</span>  * // CSS:
+<span class='line'>196</span>  * &lt;style&gt;
+<span class='line'>197</span>  * .mybutton > button {
+<span class='line'>198</span>  *   background-color: #04AA6D;
+<span class='line'>199</span>  *   border: none;
+<span class='line'>200</span>  *   color: white;
+<span class='line'>201</span>  *   padding: 1px 3px;
+<span class='line'>202</span>  *   text-align: center;
+<span class='line'>203</span>  *   text-decoration: none;
+<span class='line'>204</span>  *   display: inline-block;
+<span class='line'>205</span>  *   font-size: 16px;
+<span class='line'>206</span>  * }
+<span class='line'>207</span>  * &lt;/style&gt;
+<span class='line'>208</span>  *
+<span class='line'>209</span>  * // JavaScript:
+<span class='line'>210</span>  * var button = board.create('button',
+<span class='line'>211</span>  *     [1, 4, 'answers', function () {}],
+<span class='line'>212</span>  *     {cssClass:'mybutton', highlightCssClass: 'mybutton'});
+<span class='line'>213</span>  *
+<span class='line'>214</span>  * &lt;/pre>
+<span class='line'>215</span>  * &lt;style>
+<span class='line'>216</span>  * .mybutton > button {
+<span class='line'>217</span>  *   background-color: #04AA6D;
+<span class='line'>218</span>  *   border: none;
+<span class='line'>219</span>  *   color: white;
+<span class='line'>220</span>  *   padding: 1px 3px;
+<span class='line'>221</span>  *   text-align: center;
+<span class='line'>222</span>  *   text-decoration: none;
+<span class='line'>223</span>  *   display: inline-block;
+<span class='line'>224</span>  *   font-size: 16px;
+<span class='line'>225</span>  * }
+<span class='line'>226</span>  * &lt;/style>
+<span class='line'>227</span>  * &lt;div id="JXG2da6cf73-8c2e-495c-bd31-42de43b71cf8" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>228</span>  * &lt;script type="text/javascript">
+<span class='line'>229</span>  *     (function() {
+<span class='line'>230</span>  *         var board = JXG.JSXGraph.initBoard('JXG2da6cf73-8c2e-495c-bd31-42de43b71cf8',
+<span class='line'>231</span>  *             {boundingbox: [-8, 8, 8,-8], axis: true, showcopyright: false, shownavigation: false});
+<span class='line'>232</span>  *       var button = board.create('button', [1, 4, 'answers', function () {
+<span class='line'>233</span>  *       }], {cssClass:'mybutton', highlightCssClass: 'mybutton'});
+<span class='line'>234</span>  *
+<span class='line'>235</span>  *     })();
+<span class='line'>236</span>  *
+<span class='line'>237</span>  * &lt;/script>&lt;pre>
+<span class='line'>238</span>  *
+<span class='line'>239</span>  */</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="NAME">JXG.createButton</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">        </span><span class="NAME">par</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"button"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> 
+<span class='line'>245</span> </span><span class="WHIT">    </span><span class="COMM">//if (parents.length &lt; 3) {</span><span class="WHIT">
+<span class='line'>246</span> </span><span class="WHIT">    </span><span class="COMM">//throw new Error("JSXGraph: Can't create button with parent types '" +</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">    </span><span class="COMM">//    (typeof parents[0]) + "' and '" + (typeof parents[1]) + "'." +</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">    </span><span class="COMM">//    "\nPossible parents are: [x, y, label, handler]");</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">    </span><span class="COMM">//}</span><span class="WHIT">
+<span class='line'>250</span> 
+<span class='line'>251</span> </span><span class="WHIT">    </span><span class="COMM">// 1. Create empty button</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">    </span><span class="NAME">par</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'&lt;button type="button" style="width:100%;" tabindex="0">&lt;/button>'</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">    </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board.create</span><span class="PUNC">(</span><span class="STRN">"text"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">par</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">    </span><span class="NAME">t.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.OBJECT_TYPE_BUTTON</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>255</span> 
+<span class='line'>256</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeButton</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.childNodes</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeButton.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNode.id</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"_button"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">    </span><span class="COMM">// t.rendNodeButton.innerHTML = parents[2];</span><span class="WHIT">
+<span class='line'>259</span> 
+<span class='line'>260</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeTag</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">t.rendNodeButton</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// Needed for unified treatment in setAttribute</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">    </span><span class="NAME">t.rendNodeTag.disabled</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="PUNC">!</span><span class="NAME">attr.disabled</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>262</span> 
+<span class='line'>263</span> </span><span class="WHIT">    </span><span class="COMM">// 2. Set parents[2] (string|function) as content of the button.</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">    </span><span class="COMM">// abstract.js selects the correct DOM element for the update</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">    </span><span class="NAME">t.setText</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>266</span> 
+<span class='line'>267</span> </span><span class="WHIT">    </span><span class="COMM">// This sets the font-size of the button text</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">    </span><span class="NAME">t.visPropOld.fontsize</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"0px"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="WHIT">    </span><span class="NAME">board.renderer.updateTextStyle</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>270</span> 
+<span class='line'>271</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isString</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">            </span><span class="NAME">t._jc</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.JessieCode</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>274</span> </span><span class="WHIT">            </span><span class="NAME">t._jc.use</span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">            </span><span class="NAME">t._handler</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">                </span><span class="NAME">t._jc.parse</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>277</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>278</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>279</span> </span><span class="WHIT">            </span><span class="NAME">t._handler</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>280</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>281</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>282</span> 
+<span class='line'>283</span> </span><span class="WHIT">    </span><span class="NAME">Env.addEvent</span><span class="PUNC">(</span><span class="NAME">t.rendNodeButton</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"click"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">priv.ButtonClickEventHandler</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">    </span><span class="NAME">Env.addEvent</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">        </span><span class="NAME">t.rendNodeButton</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">        </span><span class="STRN">"mousedown"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">        </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">evt</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">evt.stopPropagation</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">                </span><span class="NAME">evt.stopPropagation</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="WHIT">        </span><span class="NAME">t</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">    </span><span class="NAME">Env.addEvent</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>295</span> </span><span class="WHIT">        </span><span class="NAME">t.rendNodeButton</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">        </span><span class="STRN">"touchstart"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">        </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">evt</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">evt.stopPropagation</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">                </span><span class="NAME">evt.stopPropagation</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">        </span><span class="NAME">t</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">    </span><span class="NAME">Env.addEvent</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">        </span><span class="NAME">t.rendNodeButton</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">        </span><span class="STRN">"pointerdown"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="WHIT">        </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">evt</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>308</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">evt.stopPropagation</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="WHIT">                </span><span class="NAME">evt.stopPropagation</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">        </span><span class="NAME">t</span><span class="WHIT">
+<span class='line'>313</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>314</span> 
+<span class='line'>315</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>317</span> 
+<span class='line'>318</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"button"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createButton</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>319</span> 
+<span class='line'>320</span> </span><span class="COMM">// export default {</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="COMM">//     createButton: JXG.createButton</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="COMM">// };</span><span class="WHIT">
+<span class='line'>323</span> </span></pre></body></html>

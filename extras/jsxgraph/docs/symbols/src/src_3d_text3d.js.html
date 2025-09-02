@@ -1,0 +1,480 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Carsten Miller,
+<span class='line'>  5</span>         Andreas Walter,
+<span class='line'>  6</span>         Alfred Wassermann
+<span class='line'>  7</span> 
+<span class='line'>  8</span>     This file is part of JSXGraph.
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 13</span> 
+<span class='line'> 14</span>       * GNU Lesser General Public License as published by
+<span class='line'> 15</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 16</span>         (at your option) any later version
+<span class='line'> 17</span>       OR
+<span class='line'> 18</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 19</span> 
+<span class='line'> 20</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 21</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 22</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 23</span>     GNU Lesser General Public License for more details.
+<span class='line'> 24</span> 
+<span class='line'> 25</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 26</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 27</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 28</span>  */</span><span class="WHIT">
+<span class='line'> 29</span> </span><span class="COMM">/*global JXG:true, define: true*/</span><span class="WHIT">
+<span class='line'> 30</span> 
+<span class='line'> 31</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 32</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Const</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/constants.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/math.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Geometry</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/geometry.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> </span><span class="COMM">//, GeometryElement3D) {</span><span class="WHIT">
+<span class='line'> 37</span> 
+<span class='line'> 38</span> </span><span class="COMM">/**
+<span class='line'> 39</span>  * A 3D text is a basic geometric element.
+<span class='line'> 40</span>  * @class Creates a new 3D point object. Do not use this constructor to create a 3D point. Use {@link JXG.View3D#create} with
+<span class='line'> 41</span>  * type {@link Point3D} instead.
+<span class='line'> 42</span>  * @augments JXG.GeometryElement3D
+<span class='line'> 43</span>  * @augments JXG.GeometryElement
+<span class='line'> 44</span>  * @param {JXG.View3D} view The 3D view the point is drawn on.
+<span class='line'> 45</span>  * @param {Function|Array} F Array of numbers, array of functions or function returning an array with defines the user coordinates of the point.
+<span class='line'> 46</span>  * @param {JXG.GeometryElement3D} slide Object the 3D point should be bound to. If null, the point is a free point.
+<span class='line'> 47</span>  * @param {Object} attributes An object containing visual properties like in {@link JXG.Options#point3d} and
+<span class='line'> 48</span>  * {@link JXG.Options#elements}, and optional a name and an id.
+<span class='line'> 49</span>  * @see JXG.Board#generateName
+<span class='line'> 50</span>  */</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="NAME">JXG.Text3D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">F</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">text</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">slide</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="WHIT">    </span><span class="NAME">this.constructor</span><span class="PUNC">(</span><span class="NAME">view.board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_TEXT3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_3D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">    </span><span class="NAME">this.constructor3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"text3d"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 54</span> 
+<span class='line'> 55</span> </span><span class="WHIT">    </span><span class="NAME">this.board.finalizeAdding</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 56</span> 
+<span class='line'> 57</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 58</span>      * Homogeneous coordinates of a Point3D, i.e. array of length 4: [w, x, y, z]. Usually, w=1 for finite points and w=0 for points
+<span class='line'> 59</span>      * which are infinitely far.
+<span class='line'> 60</span>      *
+<span class='line'> 61</span>      * @example
+<span class='line'> 62</span>      *   p.coords;
+<span class='line'> 63</span>      *
+<span class='line'> 64</span>      * @name Point3D#coords
+<span class='line'> 65</span>      * @type Array
+<span class='line'> 66</span>      * @private
+<span class='line'> 67</span>      */</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">    </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 69</span> 
+<span class='line'> 70</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 71</span>      * Function or array of functions or array of numbers defining the coordinates of the point, used in {@link updateCoords}.
+<span class='line'> 72</span>      *
+<span class='line'> 73</span>      * @name Point3D#F
+<span class='line'> 74</span>      * @function
+<span class='line'> 75</span>      * @private
+<span class='line'> 76</span>      *
+<span class='line'> 77</span>      * @see updateCoords
+<span class='line'> 78</span>      */</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">    </span><span class="NAME">this.F</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">F</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> 
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 82</span>      * Optional slide element, i.e. element the Point3D lives on.
+<span class='line'> 83</span>      *
+<span class='line'> 84</span>      * @example
+<span class='line'> 85</span>      *   p.slide;
+<span class='line'> 86</span>      *
+<span class='line'> 87</span>      * @name Point3D#slide
+<span class='line'> 88</span>      * @type JXG.GeometryElement3D
+<span class='line'> 89</span>      * @default null
+<span class='line'> 90</span>      * @private
+<span class='line'> 91</span>      *
+<span class='line'> 92</span>      */</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">    </span><span class="NAME">this.slide</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">slide</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 94</span> 
+<span class='line'> 95</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 96</span>      * Get x-coordinate of a 3D point.
+<span class='line'> 97</span>      *
+<span class='line'> 98</span>      * @name X
+<span class='line'> 99</span>      * @memberOf Point3D
+<span class='line'>100</span>      * @function
+<span class='line'>101</span>      * @returns {Number}
+<span class='line'>102</span>      *
+<span class='line'>103</span>      * @example
+<span class='line'>104</span>      *   p.X();
+<span class='line'>105</span>      */</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">    </span><span class="NAME">this.X</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>109</span> 
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>111</span>      * Get y-coordinate of a 3D point.
+<span class='line'>112</span>      *
+<span class='line'>113</span>      * @name Y
+<span class='line'>114</span>      * @memberOf Point3D
+<span class='line'>115</span>      * @function
+<span class='line'>116</span>      * @returns Number
+<span class='line'>117</span>      *
+<span class='line'>118</span>      * @example
+<span class='line'>119</span>      *   p.Y();
+<span class='line'>120</span>      */</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">    </span><span class="NAME">this.Y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>124</span> 
+<span class='line'>125</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>126</span>      * Get z-coordinate of a 3D point.
+<span class='line'>127</span>      *
+<span class='line'>128</span>      * @name Z
+<span class='line'>129</span>      * @memberOf Point3D
+<span class='line'>130</span>      * @function
+<span class='line'>131</span>      * @returns Number
+<span class='line'>132</span>      *
+<span class='line'>133</span>      * @example
+<span class='line'>134</span>      *   p.Z();
+<span class='line'>135</span>      */</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">    </span><span class="NAME">this.Z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>139</span> 
+<span class='line'>140</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>141</span>      * Store the last position of the 2D point for the optimizer.
+<span class='line'>142</span>      *
+<span class='line'>143</span>      * @type Array
+<span class='line'>144</span>      * @private
+<span class='line'>145</span>      */</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">    </span><span class="NAME">this.position</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> 
+<span class='line'>148</span> </span><span class="WHIT">    </span><span class="NAME">this._c2d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>149</span> 
+<span class='line'>150</span> </span><span class="WHIT">    </span><span class="NAME">this.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.deepCopy</span><span class="PUNC">(</span><span class="NAME">this.methodMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">        </span><span class="COMM">// TODO</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="NAME">JXG.Text3D.prototype</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.GeometryElement</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="NAME">Type.copyPrototypeMethods</span><span class="PUNC">(</span><span class="NAME">JXG.Text3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.GeometryElement3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"constructor3D"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>156</span> 
+<span class='line'>157</span> </span><span class="NAME">JXG.extend</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="WHIT">    </span><span class="NAME">JXG.Text3D.prototype</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>159</span> </span><span class="WHIT">    </span><span class="COMM">/** @lends JXG.Text3D.prototype */</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>161</span>          * Update the homogeneous coords array.
+<span class='line'>162</span>          *
+<span class='line'>163</span>          * @name updateCoords
+<span class='line'>164</span>          * @memberOf Text3D
+<span class='line'>165</span>          * @function
+<span class='line'>166</span>          * @returns {Object} Reference to the Text3D object
+<span class='line'>167</span>          * @private
+<span class='line'>168</span>          * @example
+<span class='line'>169</span>          *    p.updateCoords();
+<span class='line'>170</span>          */</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">        </span><span class="NAME">updateCoords</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>173</span> 
+<span class='line'>174</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isFunction</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">                </span><span class="COMM">// this.coords = [1].concat(Type.evaluate(this.F));</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">                </span><span class="NAME">this.coords.unshift</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">                </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">                    </span><span class="COMM">// Attention: if F is array of numbers, coords are not updated.</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">                    </span><span class="COMM">// Otherwise, dragging will not work anymore.</span><span class="WHIT">
+<span class='line'>183</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isFunction</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">                        </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>190</span> 
+<span class='line'>191</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>192</span>          * Initialize the coords array.
+<span class='line'>193</span>          *
+<span class='line'>194</span>          * @private
+<span class='line'>195</span>          * @returns {Object} Reference to the Text3D object
+<span class='line'>196</span>          */</span><span class="WHIT">
+<span class='line'>197</span> </span><span class="WHIT">        </span><span class="NAME">initCoords</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>198</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>199</span> 
+<span class='line'>200</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isFunction</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">                </span><span class="COMM">// this.coords = [1].concat(Type.evaluate(this.F));</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">                </span><span class="NAME">this.coords.unshift</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>205</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="WHIT">                </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">                    </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">this.F</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>212</span> 
+<span class='line'>213</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>214</span>          * Normalize homogeneous coordinates such the the first coordinate (the w-coordinate is equal to 1 or 0)-
+<span class='line'>215</span>          *
+<span class='line'>216</span>          * @name normalizeCoords
+<span class='line'>217</span>          * @memberOf Text3D
+<span class='line'>218</span>          * @function
+<span class='line'>219</span>          * @returns {Object} Reference to the Text3D object
+<span class='line'>220</span>          * @private
+<span class='line'>221</span>          * @example
+<span class='line'>222</span>          *    p.normalizeCoords();
+<span class='line'>223</span>          */</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">        </span><span class="NAME">normalizeCoords</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>233</span> 
+<span class='line'>234</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>235</span>          * Set the position of a 3D point.
+<span class='line'>236</span>          *
+<span class='line'>237</span>          * @name setPosition
+<span class='line'>238</span>          * @memberOf Text3D
+<span class='line'>239</span>          * @function
+<span class='line'>240</span>          * @param {Array} coords 3D coordinates. Either of the form [x,y,z] (Euclidean) or [w,x,y,z] (homogeneous).
+<span class='line'>241</span>          * @param {Boolean} [noevent] If true, no events are triggered.
+<span class='line'>242</span>          * @returns {Object} Reference to the Text3D object
+<span class='line'>243</span>          *
+<span class='line'>244</span>          * @example
+<span class='line'>245</span>          *    p.setPosition([1, 3, 4]);
+<span class='line'>246</span>          */</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">        </span><span class="NAME">setPosition</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">coords</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">noevent</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">                </span><span class="COMM">// oc = this.coords.slice(); // Copy of original values</span><span class="WHIT">
+<span class='line'>250</span> 
+<span class='line'>251</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">coords.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">                </span><span class="COMM">// Euclidean coordinates</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">                </span><span class="COMM">// Homogeneous coordinates (normalized)</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>262</span> </span><span class="WHIT">                </span><span class="NAME">c</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">                </span><span class="NAME">this.normalizeCoords</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>265</span> 
+<span class='line'>266</span> </span><span class="WHIT">            </span><span class="COMM">// console.log(el.emitter, !noevent, oc[0] !== c[0] || oc[1] !== c[1] || oc[2] !== c[2] || oc[3] !== c[3]);</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">            </span><span class="COMM">// Not yet working TODO</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">            </span><span class="COMM">// if (el.emitter && !noevent &&</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="WHIT">            </span><span class="COMM">//     (oc[0] !== c[0] || oc[1] !== c[1] || oc[2] !== c[2] || oc[3] !== c[3])) {</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="WHIT">            </span><span class="COMM">//     this.triggerEventHandlers(['update3D'], [oc]);</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">            </span><span class="COMM">// }</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>274</span> 
+<span class='line'>275</span> </span><span class="WHIT">        </span><span class="NAME">update</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">c3d</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">foot</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">res</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>277</span> 
+<span class='line'>278</span> </span><span class="WHIT">            </span><span class="COMM">// Update is called from board.updateElements.</span><span class="WHIT">
+<span class='line'>279</span> </span><span class="WHIT">            </span><span class="COMM">// See Point3D.update() for the logic.</span><span class="WHIT">
+<span class='line'>280</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>281</span> </span><span class="WHIT">                </span><span class="NAME">this.element2D.draggable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT">
+<span class='line'>282</span> </span><span class="WHIT">                </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">this._c2d</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.element2D.coords.usrCoords</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT">
+<span class='line'>283</span> </span><span class="WHIT">            </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.view.isVerticalDrag</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">                    </span><span class="COMM">// Drag the text in its vertical to the xy plane</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">                    </span><span class="COMM">// If the text is outside of bbox3d,</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">                    </span><span class="COMM">// c3d is already corrected.</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">                    </span><span class="NAME">c3d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.view.project2DTo3DVertical</span><span class="PUNC">(</span><span class="NAME">this.element2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">                    </span><span class="COMM">// Drag the text in its xy plane</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">                    </span><span class="NAME">foot</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="WHIT">                    </span><span class="NAME">c3d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.view.project2DTo3DPlane</span><span class="PUNC">(</span><span class="NAME">this.element2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">foot</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>294</span> 
+<span class='line'>295</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">c3d</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">                    </span><span class="COMM">// Check if c3d is inside of view.bbox3d</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">                    </span><span class="COMM">// Otherwise, the coords are now corrected.</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">                    </span><span class="NAME">res</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.view.project3DToCube</span><span class="PUNC">(</span><span class="NAME">c3d</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">                    </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">res</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>300</span> 
+<span class='line'>301</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">res</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">                        </span><span class="COMM">// The 3D coordinates have been corrected, now</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">                        </span><span class="COMM">// also correct the 2D element.</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">                        </span><span class="NAME">this.element2D.coords.setCoordinates</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">                            </span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">                            </span><span class="NAME">this.view.project3DTo2D</span><span class="PUNC">(</span><span class="NAME">this.coords</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="WHIT">                        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>308</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>309</span> 
+<span class='line'>310</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.slide</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">                        </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.slide.projectCoords</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Z</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.position</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">                        </span><span class="NAME">this.element2D.coords.setCoordinates</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>313</span> </span><span class="WHIT">                            </span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>314</span> </span><span class="WHIT">                            </span><span class="NAME">this.view.project3DTo2D</span><span class="PUNC">(</span><span class="NAME">this.coords</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">                        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>317</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>318</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>319</span> </span><span class="WHIT">                </span><span class="NAME">this.updateCoords</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>320</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.slide</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="WHIT">                    </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.slide.projectCoords</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.X</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Y</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Z</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.position</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">                </span><span class="COMM">// Update 2D text from its 3D view</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">                </span><span class="NAME">c3d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>325</span> </span><span class="WHIT">                </span><span class="NAME">this.element2D.coords.setCoordinates</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>326</span> </span><span class="WHIT">                    </span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>327</span> </span><span class="WHIT">                    </span><span class="NAME">this.view.project3DTo2D</span><span class="PUNC">(</span><span class="NAME">c3d</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>328</span> </span><span class="WHIT">                </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="WHIT">                </span><span class="NAME">this.zIndex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.matVecMult</span><span class="PUNC">(</span><span class="NAME">this.view.matrix3DRotShift</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c3d</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">                </span><span class="NAME">this.element2D.prepareUpdate</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>331</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>332</span> </span><span class="WHIT">            </span><span class="NAME">this._c2d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.element2D.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>333</span> 
+<span class='line'>334</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>336</span> 
+<span class='line'>337</span> </span><span class="WHIT">        </span><span class="NAME">updateRenderer</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">            </span><span class="NAME">this.needsUpdate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>341</span> 
+<span class='line'>342</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>343</span>          * Check whether a text's position is finite, i.e. the first entry is not zero.
+<span class='line'>344</span>          * @returns {Boolean} True if the first entry of the coordinate vector is not zero; false otherwise.
+<span class='line'>345</span>          */</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="WHIT">        </span><span class="NAME">testIfFinite</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>348</span> </span><span class="WHIT">            </span><span class="COMM">// return Type.cmpArrays(this.coords, [0, 0, 0, 0]);</span><span class="WHIT">
+<span class='line'>349</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>350</span> 
+<span class='line'>351</span> </span><span class="WHIT">        </span><span class="COMM">// Not yet working</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">        </span><span class="NAME">__evt__update3D</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">oc</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>354</span> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>355</span> 
+<span class='line'>356</span> </span><span class="COMM">/**
+<span class='line'>357</span>  * @class Construct a text element in a 3D view.
+<span class='line'>358</span>  * @pseudo
+<span class='line'>359</span>  * @description A Text3D object is defined by 3 coordinates [x, y, z, text] or an array / function for the position of the text
+<span class='line'>360</span>  * and a string or function defining the text.
+<span class='line'>361</span>  * &lt;p>
+<span class='line'>362</span>  * That is, all numbers can also be provided as functions returning a number.
+<span class='line'>363</span>  * &lt;p>
+<span class='line'>364</span>  * At the time being, text display is independent from the camera view.
+<span class='line'>365</span>  *
+<span class='line'>366</span>  * @name Text3D
+<span class='line'>367</span>  * @augments JXG.Text3D
+<span class='line'>368</span>  * @augments Text
+<span class='line'>369</span>  * @constructor
+<span class='line'>370</span>  * @throws {Exception} If the element cannot be constructed with the given parent
+<span class='line'>371</span>  * objects an exception is thrown.
+<span class='line'>372</span>  * @param {number,function_number,function_number,function_String,function_JXG.GeometryElement3D} x,y,z,txt,[slide=undefined]
+<span class='line'>373</span>  * The coordinates are given as x, y, z consisting of numbers of functions and the text.
+<span class='line'>374</span>  * If an optional 3D element "slide" is supplied, the point is a glider on that element.
+<span class='line'>375</span>  * @param {array,function_string_JXG.GeometryElement3D}} F,txt,[slide=undefined] Alternatively, the coordinates can be supplied as array or function returning an array.
+<span class='line'>376</span>  * If an optional 3D element "slide" is supplied, the point is a glider on that element.
+<span class='line'>377</span>  *
+<span class='line'>378</span>  * @example
+<span class='line'>379</span>  *     var bound = [-4, 6];
+<span class='line'>380</span>  *     var view = board.create('view3d',
+<span class='line'>381</span>  *         [[-4, -3], [8, 8],
+<span class='line'>382</span>  *         [bound, bound, bound]],
+<span class='line'>383</span>  *         {
+<span class='line'>384</span>  *             projection: 'central'
+<span class='line'>385</span>  *         });
+<span class='line'>386</span>  *
+<span class='line'>387</span>  *     var txt1 = view.create('text3d', [[1, 2, 1], 'hello'], {
+<span class='line'>388</span>  *         fontSize: 20,
+<span class='line'>389</span>  *     });
+<span class='line'>390</span>  *
+<span class='line'>391</span>  * &lt;/pre>&lt;div id="JXGb61d7c50-617a-4bed-9a45-13c949f90e94" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>392</span>  * &lt;script type="text/javascript">
+<span class='line'>393</span>  *     (function() {
+<span class='line'>394</span>  *         var board = JXG.JSXGraph.initBoard('JXGb61d7c50-617a-4bed-9a45-13c949f90e94',
+<span class='line'>395</span>  *             {boundingbox: [-8, 8, 8,-8], axis: false, pan: {enabled: false}, showcopyright: false, shownavigation: false});
+<span class='line'>396</span>  *         var bound = [-4, 6];
+<span class='line'>397</span>  *         var view = board.create('view3d',
+<span class='line'>398</span>  *             [[-4, -3], [8, 8],
+<span class='line'>399</span>  *             [bound, bound, bound]],
+<span class='line'>400</span>  *             {
+<span class='line'>401</span>  *                 projection: 'central'
+<span class='line'>402</span>  *             });
+<span class='line'>403</span>  *
+<span class='line'>404</span>  *         var txt1 = view.create('text3d', [[1, 2, 1], 'hello'], {
+<span class='line'>405</span>  *             fontSize: 20,
+<span class='line'>406</span>  *         });
+<span class='line'>407</span>  *
+<span class='line'>408</span>  *     })();
+<span class='line'>409</span>  *
+<span class='line'>410</span>  * &lt;/script>&lt;pre>
+<span class='line'>411</span>  *
+<span class='line'>412</span>  */</span><span class="WHIT">
+<span class='line'>413</span> </span><span class="NAME">JXG.createText3D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">view</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">F</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">slide</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">        </span><span class="NAME">text</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">        </span><span class="NAME">c2d</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>418</span> 
+<span class='line'>419</span> </span><span class="WHIT">    </span><span class="COMM">// If the last element of parents is a 3D object,</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">    </span><span class="COMM">// the point is a glider on that element.</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">is3D</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">        </span><span class="NAME">slide</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents.pop</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">        </span><span class="NAME">slide</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>426</span> 
+<span class='line'>427</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">        </span><span class="COMM">// [view, array|fun, text] (Array [x, y, z] | function) returning [x, y, z] and string | function</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">        </span><span class="NAME">F</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>430</span> </span><span class="WHIT">        </span><span class="NAME">text</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>431</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>432</span> </span><span class="WHIT">        </span><span class="COMM">// [view, x, y, z, text], (3 numbers | functions) sand string | function</span><span class="WHIT">
+<span class='line'>433</span> </span><span class="WHIT">        </span><span class="NAME">F</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">        </span><span class="NAME">text</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>435</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create text3d with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>438</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>439</span> </span><span class="WHIT">                </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>440</span> </span><span class="WHIT">                </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>441</span> </span><span class="WHIT">                </span><span class="STRN">"'."</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">                </span><span class="STRN">"\nPossible parent types: [[x,y,z], text], [x,y,z, text]"</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">        </span><span class="COMM">//  "\nPossible parent types: [[x,y,z]], [x,y,z], [element,transformation]"); // TODO</span><span class="WHIT">
+<span class='line'>445</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>446</span> 
+<span class='line'>447</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'text3d'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.Text3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">F</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">text</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">slide</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">    </span><span class="NAME">el.initCoords</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>450</span> 
+<span class='line'>451</span> </span><span class="WHIT">    </span><span class="NAME">c2d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view.project3DTo2D</span><span class="PUNC">(</span><span class="NAME">el.coords</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>452</span> 
+<span class='line'>453</span> </span><span class="WHIT">    </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.setAttr2D</span><span class="PUNC">(</span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>454</span> </span><span class="WHIT">    </span><span class="NAME">el.element2D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view.create</span><span class="PUNC">(</span><span class="STRN">'text'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">c2d</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c2d</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">text</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>455</span> 
+<span class='line'>456</span> </span><span class="WHIT">    </span><span class="NAME">el.element2D.view</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">    </span><span class="NAME">el.addChild</span><span class="PUNC">(</span><span class="NAME">el.element2D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">    </span><span class="NAME">el.inherits.push</span><span class="PUNC">(</span><span class="NAME">el.element2D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">    </span><span class="NAME">el.element2D.setParents</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>460</span> 
+<span class='line'>461</span> </span><span class="WHIT">    </span><span class="COMM">// If this point is a glider, record that in the update tree</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el.slide</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>463</span> </span><span class="WHIT">        </span><span class="NAME">el.slide.addChild</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>464</span> </span><span class="WHIT">        </span><span class="NAME">el.setParents</span><span class="PUNC">(</span><span class="NAME">el.slide</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>465</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>466</span> 
+<span class='line'>467</span> </span><span class="WHIT">    </span><span class="NAME">el._c2d</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">el.element2D.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// Store a copy of the coordinates to detect dragging</span><span class="WHIT">
+<span class='line'>468</span> 
+<span class='line'>469</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>470</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>471</span> 
+<span class='line'>472</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"text3d"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createText3D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>473</span> </span></pre></body></html>

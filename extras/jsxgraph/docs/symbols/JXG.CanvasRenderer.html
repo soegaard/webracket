@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<meta name="generator" content="JsDoc Toolkit">
+         <link rel="stylesheet" type="text/css" href="../static/jsxgraph.css">
+         <script src="../static/jquery.min.js"></script>
+         <script src="../static/jsxgraphcore.js"></script>
+		
+		<title>JSXGraph Reference - JXG.CanvasRenderer</title>
+
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800">
+		<style>
+			/* default.css */
+
+/*
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+}
+*/
+
+/* ----------------------- */
+.jxgbox {
+    border-color: #DDDDDD;
+    background-color: #f5f5f5;
+}
+
+body {
+  font-family: 'Lora', 'Times New Roman', serif;
+  color: #404040;
+  position: relative;
+  background: #FFF;
+  /*width: 1028px;*/
+  margin: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 800;
+}
+
+p {
+  line-height: 1.5;
+  margin: 30px 0;
+}
+
+/* ----------------------- */
+
+#header h1 {
+    font-size: 2.5em; 
+    background-image:url(static/logo.png); 
+    background-repeat:no-repeat;
+    height: 72px;
+    padding-left: 84px;
+}
+
+
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	/*font-weight: bold;*/
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 220px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 260px;
+	width: 800px;
+}
+
+.wrapper {
+	display: flex; 
+}
+
+.details {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.summary {
+    font-family: arial, sans-serif;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 1.5;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 1.5;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 1.5;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+    margin-left: 260px;
+	text-align: left;
+	font-size: 10px;
+}
+
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->
+		<!-- begin static/header.html -->
+		<div id="header">
+<h1>JSXGraph 1.11.1 Reference</h1>
+</div>
+<div id="jsdeactivated_hint" style="background-color: #fcc; border: solid 1px red; padding: 3px">
+<h2>JavaScript must be enabled in order for you to use JSXGraph and JSXGraph reference.
+However, it seems JavaScript is either disabled or not supported by your browser.</h2>
+</div>
+<script>
+ /* <![CDATA[ */
+   document.getElementById("jsdeactivated_hint").style.display = 'none';
+ /* ]]> */
+</script>
+
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div class="wrapper">
+			<div id="index">
+				<!-- begin publish.classesIndex -->
+				<div style="text-align:center;"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr>
+<details id="myElList" open class="details">
+    <summary onClick="switchList('myElList')" class="summary">Elements</summary>
+    <ul class="classList">
+    	
+        	<li></li>
+	    
+        	<li><a href="../symbols/Angle.html">Angle</a></li>
+	    
+        	<li><a href="../symbols/Arc.html">Arc</a></li>
+	    
+        	<li><a href="../symbols/Arrow.html">Arrow</a></li>
+	    
+        	<li><a href="../symbols/Arrowparallel.html">Arrowparallel</a></li>
+	    
+        	<li><a href="../symbols/Axes3D.html">Axes3D</a></li>
+	    
+        	<li><a href="../symbols/Axis.html">Axis</a></li>
+	    
+        	<li><a href="../symbols/Axis3D.html">Axis3D</a></li>
+	    
+        	<li><a href="../symbols/Bisector.html">Bisector</a></li>
+	    
+        	<li><a href="../symbols/Bisectorlines.html">Bisectorlines</a></li>
+	    
+        	<li><a href="../symbols/Boxplot.html">Boxplot</a></li>
+	    
+        	<li><a href="../symbols/Button.html">Button</a></li>
+	    
+        	<li><a href="../symbols/Cardinalspline.html">Cardinalspline</a></li>
+	    
+        	<li><a href="../symbols/Chart.html">Chart</a></li>
+	    
+        	<li><a href="../symbols/Checkbox.html">Checkbox</a></li>
+	    
+        	<li><a href="../symbols/Circle.html">Circle</a></li>
+	    
+        	<li><a href="../symbols/Circle3D.html">Circle3D</a></li>
+	    
+        	<li><a href="../symbols/Circumcenter.html">Circumcenter</a></li>
+	    
+        	<li><a href="../symbols/Circumcircle.html">Circumcircle</a></li>
+	    
+        	<li><a href="../symbols/CircumcircleArc.html">CircumcircleArc</a></li>
+	    
+        	<li><a href="../symbols/CircumcircleSector.html">CircumcircleSector</a></li>
+	    
+        	<li><a href="../symbols/Comb.html">Comb</a></li>
+	    
+        	<li><a href="../symbols/Conic.html">Conic</a></li>
+	    
+        	<li><a href="../symbols/Curve.html">Curve</a></li>
+	    
+        	<li><a href="../symbols/Curve3D.html">Curve3D</a></li>
+	    
+        	<li><a href="../symbols/CurveDifference.html">CurveDifference</a></li>
+	    
+        	<li><a href="../symbols/CurveIntersection.html">CurveIntersection</a></li>
+	    
+        	<li><a href="../symbols/CurveUnion.html">CurveUnion</a></li>
+	    
+        	<li><a href="../symbols/Derivative.html">Derivative</a></li>
+	    
+        	<li><a href="../symbols/Ellipse.html">Ellipse</a></li>
+	    
+        	<li><a href="../symbols/Face3D.html">Face3D</a></li>
+	    
+        	<li><a href="../symbols/ForeignObject.html">ForeignObject</a></li>
+	    
+        	<li><a href="../symbols/Functiongraph.html">Functiongraph</a></li>
+	    
+        	<li><a href="../symbols/Functiongraph3D.html">Functiongraph3D</a></li>
+	    
+        	<li><a href="../symbols/Glider.html">Glider</a></li>
+	    
+        	<li><a href="../symbols/Grid.html">Grid</a></li>
+	    
+        	<li><a href="../symbols/Group.html">Group</a></li>
+	    
+        	<li><a href="../symbols/Hatch.html">Hatch</a></li>
+	    
+        	<li><a href="../symbols/Hyperbola.html">Hyperbola</a></li>
+	    
+        	<li><a href="../symbols/Image.html">Image</a></li>
+	    
+        	<li><a href="../symbols/ImplicitCurve.html">ImplicitCurve</a></li>
+	    
+        	<li><a href="../symbols/Incenter.html">Incenter</a></li>
+	    
+        	<li><a href="../symbols/Incircle.html">Incircle</a></li>
+	    
+        	<li><a href="../symbols/Inequality.html">Inequality</a></li>
+	    
+        	<li><a href="../symbols/Input.html">Input</a></li>
+	    
+        	<li><a href="../symbols/Integral.html">Integral</a></li>
+	    
+        	<li><a href="../symbols/Intersection.html">Intersection</a></li>
+	    
+        	<li><a href="../symbols/IntersectionCircle3D.html">IntersectionCircle3D</a></li>
+	    
+        	<li><a href="../symbols/IntersectionLine3D.html">IntersectionLine3D</a></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li></li>
+	    
+        	<li><a href="../symbols/Label.html">Label</a></li>
+	    
+        	<li><a href="../symbols/Legend.html">Legend</a></li>
+	    
+        	<li><a href="../symbols/Line.html">Line</a></li>
+	    
+        	<li><a href="../symbols/Line3D.html">Line3D</a></li>
+	    
+        	<li><a href="../symbols/MajorArc.html">MajorArc</a></li>
+	    
+        	<li><a href="../symbols/MajorSector.html">MajorSector</a></li>
+	    
+        	<li><a href="../symbols/Measurement.html">Measurement</a></li>
+	    
+        	<li><a href="../symbols/Mesh3D.html">Mesh3D</a></li>
+	    
+        	<li><a href="../symbols/Metapostspline.html">Metapostspline</a></li>
+	    
+        	<li><a href="../symbols/Midpoint.html">Midpoint</a></li>
+	    
+        	<li><a href="../symbols/MinorArc.html">MinorArc</a></li>
+	    
+        	<li><a href="../symbols/MinorSector.html">MinorSector</a></li>
+	    
+        	<li><a href="../symbols/MirrorElement.html">MirrorElement</a></li>
+	    
+        	<li><a href="../symbols/MirrorPoint.html">MirrorPoint</a></li>
+	    
+        	<li><a href="../symbols/NonReflexAngle.html">NonReflexAngle</a></li>
+	    
+        	<li><a href="../symbols/Normal.html">Normal</a></li>
+	    
+        	<li><a href="../symbols/Orthogonalprojection.html">Orthogonalprojection</a></li>
+	    
+        	<li><a href="../symbols/OtherIntersection.html">OtherIntersection</a></li>
+	    
+        	<li><a href="../symbols/Parabola.html">Parabola</a></li>
+	    
+        	<li><a href="../symbols/Parallel.html">Parallel</a></li>
+	    
+        	<li><a href="../symbols/Parallelogram.html">Parallelogram</a></li>
+	    
+        	<li><a href="../symbols/Parallelpoint.html">Parallelpoint</a></li>
+	    
+        	<li><a href="../symbols/ParametricSurface3D.html">ParametricSurface3D</a></li>
+	    
+        	<li><a href="../symbols/Perpendicular.html">Perpendicular</a></li>
+	    
+        	<li><a href="../symbols/PerpendicularPoint.html">PerpendicularPoint</a></li>
+	    
+        	<li><a href="../symbols/PerpendicularSegment.html">PerpendicularSegment</a></li>
+	    
+        	<li><a href="../symbols/Plane3D.html">Plane3D</a></li>
+	    
+        	<li><a href="../symbols/Point.html">Point</a></li>
+	    
+        	<li><a href="../symbols/Point3D.html">Point3D</a></li>
+	    
+        	<li><a href="../symbols/PolarLine.html">PolarLine</a></li>
+	    
+        	<li><a href="../symbols/PolePoint.html">PolePoint</a></li>
+	    
+        	<li><a href="../symbols/Polygon.html">Polygon</a></li>
+	    
+        	<li><a href="../symbols/Polygon3D.html">Polygon3D</a></li>
+	    
+        	<li><a href="../symbols/PolygonalChain.html">PolygonalChain</a></li>
+	    
+        	<li><a href="../symbols/Polyhedron3D.html">Polyhedron3D</a></li>
+	    
+        	<li><a href="../symbols/RadicalAxis.html">RadicalAxis</a></li>
+	    
+        	<li><a href="../symbols/Reflection.html">Reflection</a></li>
+	    
+        	<li><a href="../symbols/ReflexAngle.html">ReflexAngle</a></li>
+	    
+        	<li><a href="../symbols/RegularPolygon.html">RegularPolygon</a></li>
+	    
+        	<li><a href="../symbols/Riemannsum.html">Riemannsum</a></li>
+	    
+        	<li><a href="../symbols/Sector.html">Sector</a></li>
+	    
+        	<li><a href="../symbols/Segment.html">Segment</a></li>
+	    
+        	<li><a href="../symbols/Semicircle.html">Semicircle</a></li>
+	    
+        	<li><a href="../symbols/Slider.html">Slider</a></li>
+	    
+        	<li><a href="../symbols/Slopefield.html">Slopefield</a></li>
+	    
+        	<li><a href="../symbols/Slopetriangle.html">Slopetriangle</a></li>
+	    
+        	<li><a href="../symbols/Smartlabel.html">Smartlabel</a></li>
+	    
+        	<li><a href="../symbols/Sphere3D.html">Sphere3D</a></li>
+	    
+        	<li><a href="../symbols/Spline.html">Spline</a></li>
+	    
+        	<li><a href="../symbols/Stepfunction.html">Stepfunction</a></li>
+	    
+        	<li><a href="../symbols/Tangent.html">Tangent</a></li>
+	    
+        	<li><a href="../symbols/TangentTo.html">TangentTo</a></li>
+	    
+        	<li><a href="../symbols/Tapemeasure.html">Tapemeasure</a></li>
+	    
+        	<li><a href="../symbols/Text.html">Text</a></li>
+	    
+        	<li><a href="../symbols/Text3D.html">Text3D</a></li>
+	    
+        	<li><a href="../symbols/Ticks.html">Ticks</a></li>
+	    
+        	<li><a href="../symbols/Ticks3D.html">Ticks3D</a></li>
+	    
+        	<li><a href="../symbols/Tracecurve.html">Tracecurve</a></li>
+	    
+        	<li><a href="../symbols/Transformation.html">Transformation</a></li>
+	    
+        	<li><a href="../symbols/Transformation3D.html">Transformation3D</a></li>
+	    
+        	<li><a href="../symbols/Turtle.html">Turtle</a></li>
+	    
+        	<li><a href="../symbols/Vectorfield.html">Vectorfield</a></li>
+	    
+        	<li><a href="../symbols/Vectorfield3D.html">Vectorfield3D</a></li>
+	    
+        	<li><a href="../symbols/View3D.html">View3D</a></li>
+	    
+    </ul>
+</details>
+<details id="myClList" open class="details">
+    <summary onClick="switchList('myClList')" class="summary">Classes</summary>
+    <ul class="classList">
+    	
+	      <li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li><a href="../symbols/JXG.html">JXG</a></li>
+	    
+	      <li><a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Board.html">JXG.Board</a></li>
+	    
+	      <li><a href="../symbols/JXG.Board.infobox.html">JXG.Board.infobox</a></li>
+	    
+	      <li><a href="../symbols/JXG.C.html">JXG.C</a></li>
+	    
+	      <li><a href="../symbols/JXG.CA.html">JXG.CA</a></li>
+	    
+	      <li><a href="../symbols/JXG.CanvasRenderer.html">JXG.CanvasRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Chart.html">JXG.Chart</a></li>
+	    
+	      <li><a href="../symbols/JXG.Circle.html">JXG.Circle</a></li>
+	    
+	      <li><a href="../symbols/JXG.Circle3D.html">JXG.Circle3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Complex.html">JXG.Complex</a></li>
+	    
+	      <li><a href="../symbols/JXG.Composition.html">JXG.Composition</a></li>
+	    
+	      <li><a href="../symbols/JXG.Coords.html">JXG.Coords</a></li>
+	    
+	      <li><a href="../symbols/JXG.CoordsElement.html">JXG.CoordsElement</a></li>
+	    
+	      <li><a href="../symbols/JXG.Curve.html">JXG.Curve</a></li>
+	    
+	      <li><a href="../symbols/JXG.Curve3D.html">JXG.Curve3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Dump.html">JXG.Dump</a></li>
+	    
+	      <li><a href="../symbols/JXG.EventEmitter.html">JXG.EventEmitter</a></li>
+	    
+	      <li><a href="../symbols/JXG.Expect.html">JXG.Expect</a></li>
+	    
+	      <li><a href="../symbols/JXG.Face3D.html">JXG.Face3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.ForeignObject.html">JXG.ForeignObject</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeometryElement3D.html">JXG.GeometryElement3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.GeonextParser.html">JXG.GeonextParser</a></li>
+	    
+	      <li><a href="../symbols/JXG.Group.html">JXG.Group</a></li>
+	    
+	      <li><a href="../symbols/JXG.Image.html">JXG.Image</a></li>
+	    
+	      <li><a href="../symbols/JXG.JessieCode.html">JXG.JessieCode</a></li>
+	    
+	      <li><a href="../symbols/JXG.JSXGraph.html">JXG.JSXGraph</a></li>
+	    
+	      <li><a href="../symbols/JXG.Legend.html">JXG.Legend</a></li>
+	    
+	      <li><a href="../symbols/JXG.Line.html">JXG.Line</a></li>
+	    
+	      <li><a href="../symbols/JXG.Line3D.html">JXG.Line3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.html">JXG.Math</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.BoxQuadtree.html">JXG.Math.BoxQuadtree</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Clip.html">JXG.Math.Clip</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Extrapolate.html">JXG.Math.Extrapolate</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Geometry.html">JXG.Math.Geometry</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.ImplicitPlot.html">JXG.Math.ImplicitPlot</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.IntervalArithmetic.html">JXG.Math.IntervalArithmetic</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Metapost.html">JXG.Math.Metapost</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Nlp.html">JXG.Math.Nlp</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Numerics.html">JXG.Math.Numerics</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Plot.html">JXG.Math.Plot</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.html">JXG.Math.Poly</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Monomial.html">JXG.Math.Poly.Monomial</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Polynomial.html">JXG.Math.Poly.Polynomial</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Poly.Ring.html">JXG.Math.Poly.Ring</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.ProbFuncs.html">JXG.Math.ProbFuncs</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Quadtree.html">JXG.Math.Quadtree</a></li>
+	    
+	      <li><a href="../symbols/JXG.Math.Statistics.html">JXG.Math.Statistics</a></li>
+	    
+	      <li><a href="../symbols/JXG.NoRenderer.html">JXG.NoRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Options.html">JXG.Options</a></li>
+	    
+	      <li><a href="../symbols/JXG.Plane3D.html">JXG.Plane3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Point.html">JXG.Point</a></li>
+	    
+	      <li><a href="../symbols/JXG.Point3D.html">JXG.Point3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Polygon.html">JXG.Polygon</a></li>
+	    
+	      <li><a href="../symbols/JXG.Polygon3D.html">JXG.Polygon3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.PrefixParser.html">JXG.PrefixParser</a></li>
+	    
+	      <li><a href="../symbols/JXG.Sphere3D.html">JXG.Sphere3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Surface3D.html">JXG.Surface3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.SVGRenderer.html">JXG.SVGRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.Text.html">JXG.Text</a></li>
+	    
+	      <li><a href="../symbols/JXG.Text3D.html">JXG.Text3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.Ticks.html">JXG.Ticks</a></li>
+	    
+	      <li><a href="../symbols/JXG.Transformation.html">JXG.Transformation</a></li>
+	    
+	      <li><a href="../symbols/JXG.Turtle.html">JXG.Turtle</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.html">JXG.Util</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.Base64.html">JXG.Util.Base64</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.Unzip.html">JXG.Util.Unzip</a></li>
+	    
+	      <li><a href="../symbols/JXG.Util.UTF8.html">JXG.Util.UTF8</a></li>
+	    
+	      <li><a href="../symbols/JXG.View3D.html">JXG.View3D</a></li>
+	    
+	      <li><a href="../symbols/JXG.VMLRenderer.html">JXG.VMLRenderer</a></li>
+	    
+	      <li><a href="../symbols/JXG.XML.html">JXG.XML</a></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+	      <li></li>
+	    
+    </ul>
+</details>
+<hr>
+
+<script>
+  /* <![CDATA[ */
+
+	function initList(id) {
+      var val, c,
+        cookieList = document.cookie.split('; ');
+
+     // console.log(document.cookie);
+      for(c = 0; c < cookieList.length; c++) {
+        if(cookieList[c].indexOf(id.toLowerCase() + 'open') != -1) {
+          val = cookieList[c].split('=')[1];
+          if (val === '1') {
+            document.getElementById(id).setAttribute('open', '');
+            console.log(id, "open");
+          } else {
+            document.getElementById(id).removeAttribute('open');
+            console.log(id, 'close')
+          }
+        }
+      }
+  	};
+
+   	function switchList(id) {
+        var val = document.getElementById(id).getAttribute('open');
+        if (val === null) {
+            val = '1';
+        } else {
+            val = '0';
+        }
+        // document.cookie = id.toLowerCase() + 'open=' + val + ';max-age=0';
+        document.cookie = id.toLowerCase() + 'open=' + val + '';
+  	};
+
+  	initList('myElList');
+    initList('myClList');
+  /* ]]> */
+</script>
+
+				<!-- end publish.classesIndex -->
+			</div>
+		</div>
+
+		<div class="wrapper">
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class JXG.CanvasRenderer
+			</h1>
+
+<!-- ============================== Inheritance tree ========================== -->
+
+<p>
+ <strong><a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a></strong><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x21b3; <strong>JXG.CanvasRenderer</strong><br><br></p>
+
+
+<!-- ============================== class summary ========================== -->
+			<p class="description">
+				JXG.CanvasRenderer
+
+				
+					<br><br><i>Defined in: </i> <a href="../symbols/src/src_renderer_canvas.js.html">canvas.js</a>.
+				
+
+                <br>Extends
+                    <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>.
+                
+			</p>
+
+<!-- ============================== constructor summary ==================== -->
+			
+			<table class="summaryTable">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/JXG.CanvasRenderer.html#constructor">JXG.CanvasRenderer</a></b>(container, dim)
+							</div>
+							<div class="description">Uses HTML Canvas to implement the rendering methods defined in <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>.</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== attributes summary ===================== -->
+			
+				
+				
+
+				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>: </dt><dd><a href="../symbols/JXG.AbstractRenderer.html#container">container</a>, <a href="../symbols/JXG.AbstractRenderer.html#dashArray">dashArray</a>, <a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">enhancedRendering</a>, <a href="../symbols/JXG.AbstractRenderer.html#supportsForeignObject">supportsForeignObject</a>, <a href="../symbols/JXG.AbstractRenderer.html#type">type</a>, <a href="../symbols/JXG.AbstractRenderer.html#vOffsetText">vOffsetText</a></dd>
+				</dl>
+				
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+
+				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>: </dt><dd><a href="../symbols/JXG.AbstractRenderer.html#container">container</a>, <a href="../symbols/JXG.AbstractRenderer.html#dashArray">dashArray</a>, <a href="../symbols/JXG.AbstractRenderer.html#enhancedRendering">enhancedRendering</a>, <a href="../symbols/JXG.AbstractRenderer.html#supportsForeignObject">supportsForeignObject</a>, <a href="../symbols/JXG.AbstractRenderer.html#type">type</a>, <a href="../symbols/JXG.AbstractRenderer.html#vOffsetText">vOffsetText</a></dd>
+				</dl>
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_drawPolygon">_drawPolygon</a></b>(shape, degree, doFill)
+								</div>
+								<div class="description">Draws a filled polygon.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_fill">_fill</a></b>(el)
+								</div>
+								<div class="description">Sets the fill color and fills an area.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_rotatePoint">_rotatePoint</a></b>(angle, x, y)
+								</div>
+								<div class="description">Rotates a point around <tt>(0, 0)</tt> by a given angle.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_rotateShape">_rotateShape</a></b>(shape, angle)
+								</div>
+								<div class="description">Rotates an array of points around <tt>(0, 0)</tt>.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_setColor">_setColor</a></b>(el, type, targetType)
+								</div>
+								<div class="description">Sets color and opacity for filling and stroking.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_stroke">_stroke</a></b>(el)
+								</div>
+								<div class="description">Sets color and opacity for drawing paths and lines and draws the paths and lines.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#_translateShape">_translateShape</a></b>(shape, x, y)
+								</div>
+								<div class="description">Translates a set of points.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#drawArrows">drawArrows</a></b>(el, scr1, scr2, hl, a)
+								</div>
+								<div class="description">Draws arrows of an element (usually a line) in canvas renderer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#updateGradientAngle">updateGradientAngle</a></b>(node, radians)
+								</div>
+								<div class="description">Set the gradient angle for linear color gradients.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;private&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/JXG.CanvasRenderer.html#updateGradientCircle">updateGradientCircle</a></b>(node, cx, cy, r, fx, fy, fr)
+								</div>
+								<div class="description">Set circles for radial color gradients.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+
+				
+				<dl class="inheritsList">
+				<dt>Methods borrowed from class <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>: </dt><dd><a href="../symbols/JXG.AbstractRenderer.html#_css2js">_css2js</a>, <a href="../symbols/JXG.AbstractRenderer.html#_getHighlighted">_getHighlighted</a>, <a href="../symbols/JXG.AbstractRenderer.html#_setArrowWidth">_setArrowWidth</a>, <a href="../symbols/JXG.AbstractRenderer.html#_updateVisual">_updateVisual</a>, <a href="../symbols/JXG.AbstractRenderer.html#appendChildPrim">appendChildPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#appendNodesToElement">appendNodesToElement</a>, <a href="../symbols/JXG.AbstractRenderer.html#changePointStyle">changePointStyle</a>, <a href="../symbols/JXG.AbstractRenderer.html#createPrim">createPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#createTouchpoints">createTouchpoints</a>, <a href="../symbols/JXG.AbstractRenderer.html#display">display</a>, <a href="../symbols/JXG.AbstractRenderer.html#displayCopyright">displayCopyright</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawCurve">drawCurve</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawEllipse">drawEllipse</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawImage">drawImage</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawInternalText">drawInternalText</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawLine">drawLine</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawNavigationBar">drawNavigationBar</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawPoint">drawPoint</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawPolygon">drawPolygon</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawText">drawText</a>, <a href="../symbols/JXG.AbstractRenderer.html#drawTicks">drawTicks</a>, <a href="../symbols/JXG.AbstractRenderer.html#dumpToCanvas">dumpToCanvas</a>, <a href="../symbols/JXG.AbstractRenderer.html#dumpToDataURI">dumpToDataURI</a>, <a href="../symbols/JXG.AbstractRenderer.html#getArrowHeadData">getArrowHeadData</a>, <a href="../symbols/JXG.AbstractRenderer.html#getElementById">getElementById</a>, <a href="../symbols/JXG.AbstractRenderer.html#getPositionArrowHead">getPositionArrowHead</a>, <a href="../symbols/JXG.AbstractRenderer.html#handleTouchpoints">handleTouchpoints</a>, <a href="../symbols/JXG.AbstractRenderer.html#hide">hide</a>, <a href="../symbols/JXG.AbstractRenderer.html#hideTouchpoint">hideTouchpoint</a>, <a href="../symbols/JXG.AbstractRenderer.html#highlight">highlight</a>, <a href="../symbols/JXG.AbstractRenderer.html#joinTransforms">joinTransforms</a>, <a href="../symbols/JXG.AbstractRenderer.html#makeArrows">makeArrows</a>, <a href="../symbols/JXG.AbstractRenderer.html#noHighlight">noHighlight</a>, <a href="../symbols/JXG.AbstractRenderer.html#remove">remove</a>, <a href="../symbols/JXG.AbstractRenderer.html#removeDraft">removeDraft</a>, <a href="../symbols/JXG.AbstractRenderer.html#removeToInsertLater">removeToInsertLater</a>, <a href="../symbols/JXG.AbstractRenderer.html#resize">resize</a>, <a href="../symbols/JXG.AbstractRenderer.html#screenshot">screenshot</a>, <a href="../symbols/JXG.AbstractRenderer.html#setARIA">setARIA</a>, <a href="../symbols/JXG.AbstractRenderer.html#setArrowSize">setArrowSize</a>, <a href="../symbols/JXG.AbstractRenderer.html#setBuffering">setBuffering</a>, <a href="../symbols/JXG.AbstractRenderer.html#setCssClass">setCssClass</a>, <a href="../symbols/JXG.AbstractRenderer.html#setDashStyle">setDashStyle</a>, <a href="../symbols/JXG.AbstractRenderer.html#setDraft">setDraft</a>, <a href="../symbols/JXG.AbstractRenderer.html#setGradient">setGradient</a>, <a href="../symbols/JXG.AbstractRenderer.html#setLayer">setLayer</a>, <a href="../symbols/JXG.AbstractRenderer.html#setLineCap">setLineCap</a>, <a href="../symbols/JXG.AbstractRenderer.html#setObjectFillColor">setObjectFillColor</a>, <a href="../symbols/JXG.AbstractRenderer.html#setObjectStrokeColor">setObjectStrokeColor</a>, <a href="../symbols/JXG.AbstractRenderer.html#setObjectStrokeWidth">setObjectStrokeWidth</a>, <a href="../symbols/JXG.AbstractRenderer.html#setObjectTransition">setObjectTransition</a>, <a href="../symbols/JXG.AbstractRenderer.html#setPropertyPrim">setPropertyPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#setShadow">setShadow</a>, <a href="../symbols/JXG.AbstractRenderer.html#setTabindex">setTabindex</a>, <a href="../symbols/JXG.AbstractRenderer.html#show">show</a>, <a href="../symbols/JXG.AbstractRenderer.html#showTouchpoint">showTouchpoint</a>, <a href="../symbols/JXG.AbstractRenderer.html#suspendRedraw">suspendRedraw</a>, <a href="../symbols/JXG.AbstractRenderer.html#transformRect">transformRect</a>, <a href="../symbols/JXG.AbstractRenderer.html#unsuspendRedraw">unsuspendRedraw</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateCurve">updateCurve</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateEllipse">updateEllipse</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateEllipsePrim">updateEllipsePrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateGradient">updateGradient</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateImage">updateImage</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateImageStyle">updateImageStyle</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateImageURL">updateImageURL</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateInternalText">updateInternalText</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateInternalTextStyle">updateInternalTextStyle</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateLine">updateLine</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateLinePrim">updateLinePrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateLineWithEndings">updateLineWithEndings</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePath">updatePath</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePathPrim">updatePathPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePathStringBezierPrim">updatePathStringBezierPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePathStringPoint">updatePathStringPoint</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePathStringPrim">updatePathStringPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePathWithArrowHeads">updatePathWithArrowHeads</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePoint">updatePoint</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePolygon">updatePolygon</a>, <a href="../symbols/JXG.AbstractRenderer.html#updatePolygonPrim">updatePolygonPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateRectPrim">updateRectPrim</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateText">updateText</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateTextStyle">updateTextStyle</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateTicks">updateTicks</a>, <a href="../symbols/JXG.AbstractRenderer.html#updateTouchpoint">updateTouchpoint</a></dd>
+				</dl>
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+
+				<div class="fixedFont">
+						<b>JXG.CanvasRenderer</b>(container, dim)
+				</div>
+
+				<div class="description">
+					Uses HTML Canvas to implement the rendering methods defined in <a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a>.
+					
+				</div>
+
+
+					
+						<dl class="detailList">
+                        
+                        
+    						<dt class="heading">Parameters:</dt>
+                        
+						
+							<dt>
+                                
+    								<span class="light fixedFont">{Node}</span>  <b>container</b>
+	    							
+                                
+                                
+							</dt>
+								<dd>Reference to a DOM node containing the board.</dd><br><br>
+						
+							<dt>
+                                
+    								<span class="light fixedFont">{Object}</span>  <b>dim</b>
+	    							
+                                
+                                
+							</dt>
+								<dd>The dimensions of the board</dd><br><br>
+						
+							<dt>
+                                
+    								<span class="light fixedFont">{Number}</span>  <b>dim.width</b>
+	    							
+                                
+                                
+							</dt>
+								<dd></dd><br><br>
+						
+							<dt>
+                                
+    								<span class="light fixedFont">{Number}</span>  <b>dim.height</b>
+	    							
+                                
+                                
+							</dt>
+								<dd></dd><br><br>
+						
+						</dl>
+					
+					
+					
+					
+					
+					
+					
+						<dl class="detailList">
+						<dt class="heading">See:</dt>
+						
+							<dd><a href="../symbols/JXG.AbstractRenderer.html">JXG.AbstractRenderer</a></dd>
+						
+						</dl>
+					
+
+				
+
+
+			</div>
+			
+
+<!-- ============================== attributes details ========================== -->
+			
+
+<!-- ============================== field details ========================== -->
+			
+
+<!-- ============================== method details ========================= -->
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="_drawPolygon"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>_drawPolygon</b>(shape, degree, doFill)
+
+					</div>
+					<div class="description">
+						Draws a filled polygon.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>shape</b>
+									
+								</dt>
+								<dd>A matrix presented by a two dimensional array of numbers.</dd>
+							
+								<dt>
+									<b>degree</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>doFill</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd>JXG.AbstractRenderer#drawArrows</dd>
+							
+							</dl>
+						
+
+					
+
+					<hr>
+				
+					<a name="_fill"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>_fill</b>(el)
+
+					</div>
+					<div class="description">
+						Sets the fill color and fills an area.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>An arbitrary JSXGraph element, preferably one with an area.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_rotatePoint"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Array}</span>
+					<b>_rotatePoint</b>(angle, x, y)
+
+					</div>
+					<div class="description">
+						Rotates a point around <tt>(0, 0)</tt> by a given angle.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>angle</b>
+									
+								</dt>
+								<dd>An angle, given in rad.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>X coordinate of the point.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>Y coordinate of the point.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array containing the x and y coordinate of the rotated point.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_rotateShape"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Array}</span>
+					<b>_rotateShape</b>(shape, angle)
+
+					</div>
+					<div class="description">
+						Rotates an array of points around <tt>(0, 0)</tt>.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>shape</b>
+									
+								</dt>
+								<dd>An array of array of point coordinates.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>angle</b>
+									
+								</dt>
+								<dd>The angle in rad the points are rotated by.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> Array of array of two dimensional point coordinates.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_setColor"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Boolean}</span>
+					<b>_setColor</b>(el, type, targetType)
+
+					</div>
+					<div class="description">
+						Sets color and opacity for filling and stroking.
+type is the attribute from visProp and targetType the context[targetTypeStyle].
+This is necessary, because the fill style of a text is set by the stroke attributes of the text element.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Any JSXGraph element.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>type</b>
+									<i>Optional, Default: 'stroke'</i>
+								</dt>
+								<dd>Either <em>fill</em> or <em>stroke</em>.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>targetType</b>
+									<i>Optional, Default: type</i>
+								</dt>
+								<dd>(optional) Either <em>fill</em> or <em>stroke</em>.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Boolean}</span> If the color could be set, <tt>true</tt> is returned.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_stroke"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>_stroke</b>(el)
+
+					</div>
+					<div class="description">
+						Sets color and opacity for drawing paths and lines and draws the paths and lines.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>An JSXGraph element with a stroke.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="_translateShape"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					<span class="light">{Array}</span>
+					<b>_translateShape</b>(shape, x, y)
+
+					</div>
+					<div class="description">
+						Translates a set of points.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>shape</b>
+									
+								</dt>
+								<dd>An array of point coordinates.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>x</b>
+									
+								</dt>
+								<dd>Translation in X direction.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>y</b>
+									
+								</dt>
+								<dd>Translation in Y direction.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Array}</span> An array of translated point coordinates.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="drawArrows"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>drawArrows</b>(el, scr1, scr2, hl, a)
+
+					</div>
+					<div class="description">
+						Draws arrows of an element (usually a line) in canvas renderer.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>el</b>
+									
+								</dt>
+								<dd>Line to be drawn.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>scr1</b>
+									
+								</dt>
+								<dd>Screen coordinates of the start position of the line or curve.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Array}</span> <b>scr2</b>
+									
+								</dt>
+								<dd>Screen coordinates of the end position of the line or curve.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{String}</span> <b>hl</b>
+									
+								</dt>
+								<dd>String which carries information if the element is highlighted. Used for getting the correct attribute.</dd>
+							
+								<dt>
+									<b>a</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateGradientAngle"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>updateGradientAngle</b>(node, radians)
+
+					</div>
+					<div class="description">
+						Set the gradient angle for linear color gradients.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{<a href="../symbols/JXG.GeometryElement.html">JXG.GeometryElement</a>}</span> <b>node</b>
+									
+								</dt>
+								<dd>An arbitrary JSXGraph element, preferably one with an area.</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>radians</b>
+									
+								</dt>
+								<dd>angle value in radians. 0 is horizontal from left to right, Pi/4 is vertical from top to bottom.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					<hr>
+				
+					<a name="updateGradientCircle"> </a>
+					<div class="fixedFont">&lt;private&gt; 
+
+					
+					<b>updateGradientCircle</b>(node, cx, cy, r, fx, fy, fr)
+
+					</div>
+					<div class="description">
+						Set circles for radial color gradients.
+						
+						
+					</div>
+
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<span class="light fixedFont">{SVGnode}</span> <b>node</b>
+									
+								</dt>
+								<dd>SVG gradient node</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>cx</b>
+									
+								</dt>
+								<dd>Canvas value x1 (but value between 0 and 1)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>cy</b>
+									
+								</dt>
+								<dd>Canvas value y1 (but value between 0 and 1)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>r</b>
+									
+								</dt>
+								<dd>Canvas value r1 (but value between 0 and 1)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>fx</b>
+									
+								</dt>
+								<dd>Canvas value x0 (but value between 0 and 1)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>fy</b>
+									
+								</dt>
+								<dd>Canvas value x1 (but value between 0 and 1)</dd>
+							
+								<dt>
+									<span class="light fixedFont">{Number}</span> <b>fr</b>
+									
+								</dt>
+								<dd>Canvas value r0 (but value between 0 and 1)</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+
+					
+				
+			
+
+<!-- ============================== event details ========================= -->
+			
+
+			<hr>
+
+			
+
+		</div>
+		</div>
+
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="https://www.npmjs.com/package/jsdoc-toolkit" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Sep 02 2025 11:30:01 GMT+0200 (Central European Summer Time)
+		</div>
+	</body>
+</html>

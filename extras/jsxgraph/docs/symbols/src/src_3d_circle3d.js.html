@@ -1,0 +1,417 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Aaron Fenyes,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Andreas Walter,
+<span class='line'>  7</span>         Alfred Wassermann
+<span class='line'>  8</span> 
+<span class='line'>  9</span>     This file is part of JSXGraph.
+<span class='line'> 10</span> 
+<span class='line'> 11</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 12</span> 
+<span class='line'> 13</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 14</span> 
+<span class='line'> 15</span>       * GNU Lesser General Public License as published by
+<span class='line'> 16</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 17</span>         (at your option) any later version
+<span class='line'> 18</span>       OR
+<span class='line'> 19</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 20</span> 
+<span class='line'> 21</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 22</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 23</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 24</span>     GNU Lesser General Public License for more details.
+<span class='line'> 25</span> 
+<span class='line'> 26</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 27</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 28</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 29</span>  */</span><span class="WHIT">
+<span class='line'> 30</span> </span><span class="COMM">/*global JXG:true, define: true*/</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Const</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../base/constants.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">'../math/math.js'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Geometry</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">'../math/geometry.js'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 37</span> 
+<span class='line'> 38</span> </span><span class="COMM">/**
+<span class='line'> 39</span>  * In 3D space, a circle consists of all points on a given plane with a given distance from a given point. The given point is called the center, and the given distance is called the radius.
+<span class='line'> 40</span>  * A circle can be constructed by providing a center, a normal vector, and a radius (given as a number or function).
+<span class='line'> 41</span>  * @class Creates a new 3D circle object. Do not use this constructor to create a 3D circle. Use {@link JXG.View3D#create} with
+<span class='line'> 42</span>  * type {@link Circle3D} instead.
+<span class='line'> 43</span>  * @constructor
+<span class='line'> 44</span>  * @augments JXG.Curve3D
+<span class='line'> 45</span>  * @augments JXG.GeometryElement
+<span class='line'> 46</span>  * @param {JXG.View3D} view The 3D view the circle is drawn on.
+<span class='line'> 47</span>  * @param {JXG.Point} center The center of the circle.
+<span class='line'> 48</span>  * @param {Array} normal A normal vector of the plane the circle lies in. Must be either an array of three numbers or an array of three functions returning numbers.
+<span class='line'> 49</span>  * @param {Number|Function} radius The radius of the circle.
+<span class='line'> 50</span>  * @param {Object} attributes
+<span class='line'> 51</span>  * @see JXG.Board#generateName
+<span class='line'> 52</span>  */</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="NAME">JXG.Circle3D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">normal</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">radius</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">altFrame1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">that</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 55</span> 
+<span class='line'> 56</span> </span><span class="WHIT">    </span><span class="NAME">this.constructor</span><span class="PUNC">(</span><span class="NAME">view.board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_CIRCLE3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_3D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">    </span><span class="NAME">this.constructor3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"circle3d"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> 
+<span class='line'> 59</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 60</span>      * The circle's center. Do not set this parameter directly, as that will break JSXGraph's update system.
+<span class='line'> 61</span>      * @type JXG.Point3D
+<span class='line'> 62</span>      */</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">    </span><span class="NAME">this.center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">center</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 64</span> 
+<span class='line'> 65</span> </span><span class="WHIT">    </span><span class="NAME">this.normalFunc</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">normal</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 66</span> 
+<span class='line'> 67</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 68</span>      * A normal vector of the plane the circle lies in. Do not set this parameter directly, as that will break JSXGraph's update system.
+<span class='line'> 69</span>      * @type Array
+<span class='line'> 70</span>      * @private
+<span class='line'> 71</span>      *
+<span class='line'> 72</span>      * @see updateNormal
+<span class='line'> 73</span>      */</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">    </span><span class="NAME">this.normal</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 75</span> 
+<span class='line'> 76</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 77</span>      * The circle's underlying Curve3D.
+<span class='line'> 78</span>      */</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">    </span><span class="NAME">this.curve</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> 
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 82</span>      * The first vector in an orthonormal frame for the plane the circle lies in.
+<span class='line'> 83</span>      * Do not set this parameter directly, as that will break JSXGraph's update system.
+<span class='line'> 84</span>      * @type Array
+<span class='line'> 85</span>      * @private
+<span class='line'> 86</span>      *
+<span class='line'> 87</span>      * @see updateFrame
+<span class='line'> 88</span>      */</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">    </span><span class="NAME">this.frame1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 90</span> 
+<span class='line'> 91</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 92</span>      * The second vector in an orthonormal frame for the plane the circle lies in.
+<span class='line'> 93</span>      * Do not set this parameter directly, as that will break JSXGraph's update system.
+<span class='line'> 94</span>      * @type Array
+<span class='line'> 95</span>      * @private
+<span class='line'> 96</span>      *
+<span class='line'> 97</span>      * @see updateFrame
+<span class='line'> 98</span>      */</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">    </span><span class="NAME">this.frame2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>100</span> 
+<span class='line'>101</span> </span><span class="WHIT">    </span><span class="COMM">// place the circle or its center---whichever is newer---in the scene tree</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">this.center._is_new</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="WHIT">        </span><span class="NAME">this.addChild</span><span class="PUNC">(</span><span class="NAME">this.center</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="WHIT">        </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.center._is_new</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">        </span><span class="NAME">this.center.addChild</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>108</span> 
+<span class='line'>109</span> </span><span class="WHIT">    </span><span class="COMM">// Converts JessieCode syntax into JavaScript syntax and generally ensures that the radius is a function</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="NAME">this.updateRadius</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.createFunction</span><span class="PUNC">(</span><span class="NAME">radius</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.board</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="WHIT">    </span><span class="NAME">this.addParentsFromJCFunctions</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.updateRadius</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>112</span> 
+<span class='line'>113</span> </span><span class="WHIT">    </span><span class="COMM">// initialize normal</span><span class="WHIT">
+<span class='line'>114</span> </span><span class="WHIT">    </span><span class="NAME">this.updateNormal</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>115</span> 
+<span class='line'>116</span> </span><span class="WHIT">    </span><span class="COMM">// initialize the first frame vector by taking the cross product with</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">    </span><span class="COMM">// [1, 0, 0] or [-0.5, sqrt(3)/2, 0]---whichever is further away on the unit</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">    </span><span class="COMM">// sphere. every vector is at least 60 degrees from one of these, which</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">    </span><span class="COMM">// should be good enough to make the frame vector numerically accurate</span><span class="WHIT">
+<span class='line'>120</span> </span><span class="WHIT">    </span><span class="NAME">this.frame1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.crossProduct</span><span class="PUNC">(</span><span class="NAME">this.normal.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">    </span><span class="NAME">this.frame1.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">    </span><span class="NAME">altFrame1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.crossProduct</span><span class="PUNC">(</span><span class="NAME">this.normal.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">-</span><span class="NUMB">0.5</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0.8660254037844386</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// [1/2, sqrt(3)/2, 0]</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">    </span><span class="NAME">altFrame1.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Mat.norm</span><span class="PUNC">(</span><span class="NAME">altFrame1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">Mat.norm</span><span class="PUNC">(</span><span class="NAME">this.frame1</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="WHIT">        </span><span class="NAME">this.frame1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">altFrame1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>127</span> 
+<span class='line'>128</span> </span><span class="WHIT">    </span><span class="COMM">// initialize the second frame vector</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">    </span><span class="NAME">this.frame2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.crossProduct</span><span class="PUNC">(</span><span class="NAME">this.normal.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.frame1.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>130</span> </span><span class="WHIT">    </span><span class="NAME">this.frame2.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>131</span> 
+<span class='line'>132</span> </span><span class="WHIT">    </span><span class="COMM">// scale both frame vectors to unit length</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">    </span><span class="NAME">this.normalizeFrame</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>134</span> 
+<span class='line'>135</span> </span><span class="WHIT">    </span><span class="COMM">// create the underlying curve</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">    </span><span class="NAME">that</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">    </span><span class="NAME">this.curve</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view.create</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">        </span><span class="STRN">'curve3d'</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">        </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">            </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">that.Radius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">                    </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.sin</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">                    </span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.cos</span><span class="PUNC">(</span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>144</span> 
+<span class='line'>145</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">                    </span><span class="NAME">that.center.coords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame1</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame2</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">                    </span><span class="NAME">that.center.coords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame1</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame2</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">                    </span><span class="NAME">that.center.coords</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">r</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">c</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame1</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">that.frame2</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>149</span> </span><span class="WHIT">                </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">            </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.PI</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="COMM">// parameter range</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">        </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">        </span><span class="NAME">attributes</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="WHIT">    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="NAME">JXG.Circle3D.prototype</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.GeometryElement</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="NAME">Type.copyPrototypeMethods</span><span class="PUNC">(</span><span class="NAME">JXG.Circle3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.GeometryElement3D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"constructor3D"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>158</span> 
+<span class='line'>159</span> </span><span class="NAME">JXG.extend</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">    </span><span class="NAME">JXG.Circle3D.prototype</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>161</span> </span><span class="WHIT">    </span><span class="COMM">/** @lends JXG.Circle3D.prototype */</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>162</span> 
+<span class='line'>163</span> </span><span class="WHIT">        </span><span class="COMM">// Already documented in element3d.js</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">        </span><span class="NAME">update</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.needsUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">                </span><span class="NAME">this.updateNormal</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">                    </span><span class="PUNC">.</span><span class="NAME">updateFrame</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>168</span> 
+<span class='line'>169</span> </span><span class="WHIT">                </span><span class="NAME">this.curve.visProp.visible</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">isNaN</span><span class="PUNC">(</span><span class="NAME">this.Radius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// TODO</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>173</span> 
+<span class='line'>174</span> </span><span class="WHIT">        </span><span class="COMM">// Already documented in element3d.js</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">        </span><span class="NAME">updateRenderer</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">            </span><span class="NAME">this.needsUpdate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>179</span> 
+<span class='line'>180</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>181</span>          * Set a new radius, then update the board.
+<span class='line'>182</span>          * @param {String|Number|function} r A string, function or number describing the new radius
+<span class='line'>183</span>          * @returns {JXG.Circle3D} Reference to this sphere
+<span class='line'>184</span>          */</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">        </span><span class="NAME">setRadius</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">r</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="WHIT">            </span><span class="NAME">this.updateRadius</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.createFunction</span><span class="PUNC">(</span><span class="NAME">r</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.board</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">            </span><span class="NAME">this.addParentsFromJCFunctions</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.updateRadius</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">            </span><span class="NAME">this.board.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> 
+<span class='line'>190</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>192</span> 
+<span class='line'>193</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>194</span>          * Calculates the radius of the circle.
+<span class='line'>195</span>          * @param {String|Number|function} [value] Set new radius
+<span class='line'>196</span>          * @returns {Number} The radius of the circle
+<span class='line'>197</span>          */</span><span class="WHIT">
+<span class='line'>198</span> </span><span class="WHIT">        </span><span class="NAME">Radius</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">value</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>199</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">value</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">                </span><span class="NAME">this.setRadius</span><span class="PUNC">(</span><span class="NAME">value</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.Radius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>203</span> 
+<span class='line'>204</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">this.updateRadius</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>205</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>206</span> 
+<span class='line'>207</span> </span><span class="WHIT">        </span><span class="NAME">normalizeFrame</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">            </span><span class="COMM">// normalize frame</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">len1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.norm</span><span class="PUNC">(</span><span class="NAME">this.frame1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">                </span><span class="NAME">len2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.norm</span><span class="PUNC">(</span><span class="NAME">this.frame2</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">                </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>212</span> 
+<span class='line'>213</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">                </span><span class="NAME">this.frame1</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">len1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">                </span><span class="NAME">this.frame2</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">len2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>216</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>217</span> 
+<span class='line'>218</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>219</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>220</span> 
+<span class='line'>221</span> </span><span class="WHIT">        </span><span class="NAME">updateNormal</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">            </span><span class="COMM">// evaluate normal direction</span><span class="WHIT">
+<span class='line'>223</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">                </span><span class="NAME">eps</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">12</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>225</span> 
+<span class='line'>226</span> </span><span class="WHIT">            </span><span class="NAME">this.normal</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.evaluate</span><span class="PUNC">(</span><span class="NAME">this.normalFunc</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>227</span> 
+<span class='line'>228</span> </span><span class="WHIT">            </span><span class="COMM">// scale normal to unit length</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">            </span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.norm</span><span class="PUNC">(</span><span class="NAME">this.normal</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">len</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">                </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">                    </span><span class="NAME">this.normal</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>235</span> 
+<span class='line'>236</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>238</span> 
+<span class='line'>239</span> </span><span class="WHIT">        </span><span class="NAME">updateFrame</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">            </span><span class="NAME">this.frame1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.crossProduct</span><span class="PUNC">(</span><span class="NAME">this.frame2.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.normal.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">            </span><span class="NAME">this.frame1.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">            </span><span class="NAME">this.frame2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.crossProduct</span><span class="PUNC">(</span><span class="NAME">this.normal.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.frame1.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">            </span><span class="NAME">this.frame2.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">            </span><span class="NAME">this.normalizeFrame</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>245</span> 
+<span class='line'>246</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>248</span> 
+<span class='line'>249</span> </span><span class="WHIT">        </span><span class="COMM">// Already documented in element3d.js</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">        </span><span class="NAME">projectCoords</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">params</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">            </span><span class="COMM">// we have to call `this.curve.projectCoords`, i.e. the curve's projectCoords rather</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">            </span><span class="COMM">// than the circle's, to make `this` refer to the curve within the</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">            </span><span class="COMM">// call.</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.curve.projectCoords</span><span class="PUNC">(</span><span class="NAME">p</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">params</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>256</span> 
+<span class='line'>257</span> </span><span class="WHIT">        </span><span class="COMM">// projectScreenCoords: function (pScr, params) {</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">        </span><span class="COMM">//     // we have to call `this.curve.projectScreenCoords` from the curve,</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">        </span><span class="COMM">//     // rather than the circle, to make `this` refer to the curve within</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">        </span><span class="COMM">//     // the call</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">        </span><span class="COMM">//     return this.curve.projectScreenCoords(pScr, params);</span><span class="WHIT">
+<span class='line'>262</span> </span><span class="WHIT">        </span><span class="COMM">// }</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>265</span> 
+<span class='line'>266</span> </span><span class="COMM">/**
+<span class='line'>267</span>  * @class A circle in 3D can be defined by various combinations of points and numbers.
+<span class='line'>268</span>  * @pseudo
+<span class='line'>269</span>  * @description In 3D space, a circle consists of all points on a given plane with a given distance from a given point. The given point is called the center, and the given distance is called the radius.
+<span class='line'>270</span>  * A circle can be constructed by providing a center, a normal vector, and a radius (given as a number or function).
+<span class='line'>271</span>  * &lt;p>
+<span class='line'>272</span>  * If the radius has a negative value, its absolute value is taken. If the radius evaluates to NaN,
+<span class='line'>273</span>  * the circle is not displayed. This is convenient for constructing an intersection circle, which is empty when its parents do not intersect.
+<span class='line'>274</span>  * @name Circle3D
+<span class='line'>275</span>  * @augments JXG.Circle3D
+<span class='line'>276</span>  * @constructor
+<span class='line'>277</span>  * @type JXG.Circle3D
+<span class='line'>278</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>279</span>  * @param {JXG.Point,Array,Function_Array,Function_Number,Function} center,normal,radius The center must be given as a {@link JXG.Point}, array or function (see {@link JXG.providePoints}).
+<span class='line'>280</span>  * The normal vector can be given as an array of four numbers (i.e. homogeneous coordinates [0, x, y, z]) or a function returning an array of length 4
+<span class='line'>281</span>  * and the radius can be given as a number (which will create a circle with a fixed radius) or a function.
+<span class='line'>282</span>  * &lt;p>
+<span class='line'>283</span>  * If the radius is supplied as a number or the output of a function, its absolute value is taken. When the radius evaluates to NaN, the circle does not display.
+<span class='line'>284</span>  */</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="NAME">JXG.createCircle3D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">view</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'circle3d'</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">        </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.providePoints3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">'circle3d'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">'point'</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">        </span><span class="NAME">normal</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">        </span><span class="NAME">radius</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">        </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>292</span> 
+<span class='line'>293</span> </span><span class="WHIT">    </span><span class="COMM">// Create element</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">    </span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.Circle3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">normal</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">radius</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>295</span> 
+<span class='line'>296</span> </span><span class="WHIT">    </span><span class="COMM">// Update scene tree</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">    </span><span class="NAME">el.curve.addParents</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">    </span><span class="NAME">el.addChild</span><span class="PUNC">(</span><span class="NAME">el.curve</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>299</span> 
+<span class='line'>300</span> </span><span class="WHIT">    </span><span class="NAME">el.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>303</span> 
+<span class='line'>304</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"circle3d"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createCircle3D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>305</span> 
+<span class='line'>306</span> </span><span class="COMM">/**
+<span class='line'>307</span>  * @class The circle that is the intersection of two elements (plane3d or sphere3d) in 3D.
+<span class='line'>308</span>  *
+<span class='line'>309</span>  * @pseudo
+<span class='line'>310</span>  * @name IntersectionCircle3D
+<span class='line'>311</span>  * @augments JXG.Circle3D
+<span class='line'>312</span>  * @constructor
+<span class='line'>313</span>  * @type JXG.Circle3D
+<span class='line'>314</span>  * @throws {Exception} If the element cannot be constructed with the given parent objects an exception is thrown.
+<span class='line'>315</span>  * @param {JXG.Sphere3D_JXG.Sphere3D|JXG.Plane3D} el1,el2 The result will be the intersection of el1 and el2.
+<span class='line'>316</span>  * @example
+<span class='line'>317</span>  * // Create the intersection circle of two spheres
+<span class='line'>318</span>  * var view = board.create(
+<span class='line'>319</span>  *     'view3d',
+<span class='line'>320</span>  *     [[-6, -3], [8, 8],
+<span class='line'>321</span>  *     [[0, 3], [0, 3], [0, 3]]],
+<span class='line'>322</span>  *     {
+<span class='line'>323</span>  *         xPlaneRear: {fillOpacity: 0.2, gradient: null},
+<span class='line'>324</span>  *         yPlaneRear: {fillOpacity: 0.2, gradient: null},
+<span class='line'>325</span>  *         zPlaneRear: {fillOpacity: 0.2, gradient: null}
+<span class='line'>326</span>  *     }
+<span class='line'>327</span>  * );
+<span class='line'>328</span>  * var a1 = view.create('point3d', [-1, 0, 0]);
+<span class='line'>329</span>  * var a2 = view.create('point3d', [1, 0, 0]);
+<span class='line'>330</span>  *
+<span class='line'>331</span>  * var s1 = view.create(
+<span class='line'>332</span>  *    'sphere3d',
+<span class='line'>333</span>  *     [a1, 2],
+<span class='line'>334</span>  *     {fillColor: '#00ff80'}
+<span class='line'>335</span>  * );
+<span class='line'>336</span>  * var s2 = view.create(
+<span class='line'>337</span>  *    'sphere3d',
+<span class='line'>338</span>  *     [a2, 2],
+<span class='line'>339</span>  *     {fillColor: '#ff0000'}
+<span class='line'>340</span>  * );
+<span class='line'>341</span>  *
+<span class='line'>342</span>  * var i = view.create('intersectioncircle3d', [s1, s2]);
+<span class='line'>343</span>  *
+<span class='line'>344</span>  * &lt;/pre>&lt;div id="JXG64ede949-8dd6-44d0-b2a9-248a479d3a5d" class="jxgbox" style="width: 300px; height: 300px;">&lt;/div>
+<span class='line'>345</span>  * &lt;script type="text/javascript">
+<span class='line'>346</span>  *     (function() {
+<span class='line'>347</span>  *         var board = JXG.JSXGraph.initBoard('JXG64ede949-8dd6-44d0-b2a9-248a479d3a5d',
+<span class='line'>348</span>  *             {boundingbox: [-8, 8, 8,-8], axis: false, pan: {enabled: false}, showcopyright: false, shownavigation: false});
+<span class='line'>349</span>  *         var view = board.create(
+<span class='line'>350</span>  *            'view3d',
+<span class='line'>351</span>  *            [[-6, -3], [8, 8],
+<span class='line'>352</span>  *            [[0, 3], [0, 3], [0, 3]]],
+<span class='line'>353</span>  *            {
+<span class='line'>354</span>  *                xPlaneRear: {fillOpacity: 0.2, gradient: null},
+<span class='line'>355</span>  *                yPlaneRear: {fillOpacity: 0.2, gradient: null},
+<span class='line'>356</span>  *                zPlaneRear: {fillOpacity: 0.2, gradient: null}
+<span class='line'>357</span>  *            }
+<span class='line'>358</span>  *        );
+<span class='line'>359</span>  *        var a1 = view.create('point3d', [-1, 0, 0]);
+<span class='line'>360</span>  *        var a2 = view.create('point3d', [1, 0, 0]);
+<span class='line'>361</span>  *
+<span class='line'>362</span>  *        var s1 = view.create(
+<span class='line'>363</span>  *           'sphere3d',
+<span class='line'>364</span>  *            [a1, 2],
+<span class='line'>365</span>  *            {fillColor: '#00ff80'}
+<span class='line'>366</span>  *        );
+<span class='line'>367</span>  *        var p2 = view.create(
+<span class='line'>368</span>  *           'sphere3d',
+<span class='line'>369</span>  *            [a2, 2],
+<span class='line'>370</span>  *            {fillColor: '#ff0000'}
+<span class='line'>371</span>  *        );
+<span class='line'>372</span>  *
+<span class='line'>373</span>  *     })();
+<span class='line'>374</span>  *
+<span class='line'>375</span>  * &lt;/script>&lt;pre>
+<span class='line'>376</span>  *
+<span class='line'>377</span>  */</span><span class="WHIT">
+<span class='line'>378</span> </span><span class="NAME">JXG.createIntersectionCircle3D</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">view</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">        </span><span class="NAME">el1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">        </span><span class="NAME">el2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">        </span><span class="NAME">ixnCircle</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="WHIT">        </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"intersectioncircle3d"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>384</span> 
+<span class='line'>385</span> </span><span class="WHIT">    </span><span class="NAME">func</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.intersectionFunction3D</span><span class="PUNC">(</span><span class="NAME">view</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">    </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view.create</span><span class="PUNC">(</span><span class="STRN">'point3d'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">visible</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">    </span><span class="NAME">ixnCircle</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">view.create</span><span class="PUNC">(</span><span class="STRN">'circle3d'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">func</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>388</span> 
+<span class='line'>389</span> </span><span class="WHIT">    </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">        </span><span class="NAME">el1.addChild</span><span class="PUNC">(</span><span class="NAME">ixnCircle</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">        </span><span class="NAME">el2.addChild</span><span class="PUNC">(</span><span class="NAME">ixnCircle</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>392</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">e</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>393</span> </span><span class="WHIT">        </span><span class="KEYW">throw</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Error</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>394</span> </span><span class="WHIT">            </span><span class="STRN">"JSXGraph: Can't create 'intersection' with parent types '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>395</span> </span><span class="WHIT">            </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>396</span> </span><span class="WHIT">            </span><span class="STRN">"' and '"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">            </span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT">
+<span class='line'>398</span> </span><span class="WHIT">            </span><span class="STRN">"'."</span><span class="WHIT">
+<span class='line'>399</span> </span><span class="WHIT">        </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>400</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>401</span> 
+<span class='line'>402</span> </span><span class="WHIT">    </span><span class="NAME">ixnCircle.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_INTERSECTION_CIRCLE3D</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>403</span> </span><span class="WHIT">    </span><span class="NAME">ixnCircle.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'intersectioncircle3d'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>404</span> </span><span class="WHIT">    </span><span class="NAME">ixnCircle.setParents</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">el1.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el2.id</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>405</span> 
+<span class='line'>406</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">ixnCircle</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>407</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>408</span> 
+<span class='line'>409</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">'intersectioncircle3d'</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createIntersectionCircle3D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>410</span> </span></pre></body></html>

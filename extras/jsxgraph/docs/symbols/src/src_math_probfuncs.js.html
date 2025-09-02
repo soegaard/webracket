@@ -1,0 +1,628 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Carsten Miller,
+<span class='line'>  5</span>         Andreas Walter,
+<span class='line'>  6</span>         Alfred Wassermann
+<span class='line'>  7</span> 
+<span class='line'>  8</span>     This file is part of JSXGraph.
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 13</span> 
+<span class='line'> 14</span>       * GNU Lesser General Public License as published by
+<span class='line'> 15</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 16</span>         (at your option) any later version
+<span class='line'> 17</span>       OR
+<span class='line'> 18</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 19</span> 
+<span class='line'> 20</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 21</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 22</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 23</span>     GNU Lesser General Public License for more details.
+<span class='line'> 24</span> 
+<span class='line'> 25</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 26</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 27</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 28</span>  */</span><span class="WHIT">
+<span class='line'> 29</span> 
+<span class='line'> 30</span> </span><span class="COMM">/*global JXG: true, define: true*/</span><span class="WHIT">
+<span class='line'> 31</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 32</span> </span><span class="COMM">/*eslint no-loss-of-precision: off */</span><span class="WHIT">
+<span class='line'> 33</span> 
+<span class='line'> 34</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"./math.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> 
+<span class='line'> 37</span> </span><span class="COMM">/**
+<span class='line'> 38</span>  * Probability functions, e.g. error function,
+<span class='line'> 39</span>  * see: https://en.wikipedia.org/wiki/Error_function
+<span class='line'> 40</span>  * Ported from
+<span class='line'> 41</span>  * by https://github.com/jeremybarnes/cephes/blob/master/cprob/ndtr.c,
+<span class='line'> 42</span>  *
+<span class='line'> 43</span>  * Cephes Math Library Release 2.9:  November, 2000
+<span class='line'> 44</span>  * Copyright 1984, 1987, 1988, 1992, 2000 by Stephen L. Moshier
+<span class='line'> 45</span>  *
+<span class='line'> 46</span>  * @name JXG.Math.ProbFuncs
+<span class='line'> 47</span>  * @exports Mat.ProbFuncs as JXG.Math.ProbFuncs
+<span class='line'> 48</span>  * @namespace
+<span class='line'> 49</span>  */</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="NAME">Mat.ProbFuncs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">    </span><span class="NAME">MAXNUM</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">1.701411834604692317316873</span><span class="NAME">e38</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// 2**127</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="WHIT">    </span><span class="NAME">SQRTH</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">7.07106781186547524401</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// sqrt(2)/2</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">    </span><span class="NAME">SQRT2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">1.4142135623730950488</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// sqrt(2)</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">    </span><span class="NAME">MAXLOG</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">7.08396418532264106224</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// log 2**1022</span><span class="WHIT">
+<span class='line'> 55</span> 
+<span class='line'> 56</span> </span><span class="WHIT">    </span><span class="NAME">P</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">        </span><span class="NUMB">2.46196981473530512524</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">10</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.64189564831068821977</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">7.46321056442269912687</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">        </span><span class="NUMB">4.86371970985681366614</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.96520832956077098242</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.26445194995477358631</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="WHIT">        </span><span class="NUMB">9.3452852717195760754</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.02755188689515710272</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.57535335369399327526</span><span class="NAME">e2</span><span class="WHIT">
+<span class='line'> 60</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 61</span> 
+<span class='line'> 62</span> </span><span class="WHIT">    </span><span class="NAME">Q</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">        </span><span class="NUMB">1.32281951154744992508</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8.67072140885989742329</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.54937778887819891062</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">        </span><span class="NUMB">9.75708501743205489753</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.82390916687909736289</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.24633760818710981792</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">        </span><span class="NUMB">1.65666309194161350182</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.57535340817727675546</span><span class="NAME">e2</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 67</span> 
+<span class='line'> 68</span> </span><span class="WHIT">    </span><span class="NAME">R</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 69</span> </span><span class="WHIT">        </span><span class="NUMB">5.64189583547755073984</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.27536670759978104416</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.01905042251180477414</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 70</span> </span><span class="WHIT">        </span><span class="NUMB">6.16021097993053585195</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">7.4097426995044893916</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.9788666537210024067</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 72</span> 
+<span class='line'> 73</span> </span><span class="WHIT">    </span><span class="NAME">S</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">        </span><span class="NUMB">2.2605286322011727659</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">9.39603524938001434673</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.20489539808096656605</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">        </span><span class="NUMB">1.70814450747565897222</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">9.60896809063285878198</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.3690764510008151605</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 77</span> 
+<span class='line'> 78</span> </span><span class="WHIT">    </span><span class="NAME">T</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">        </span><span class="NUMB">9.60497373987051638749</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">9.00260197203842689217</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.23200534594684319226</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">        </span><span class="NUMB">7.00332514112805075473</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.55923013010394962768</span><span class="NAME">e4</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 82</span> 
+<span class='line'> 83</span> </span><span class="WHIT">    </span><span class="NAME">U</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'> 84</span> </span><span class="WHIT">        </span><span class="NUMB">3.35617141647503099647</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.21357949780152679795</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4.59432382970980127987</span><span class="NAME">e3</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">        </span><span class="NUMB">2.26290000613890934246</span><span class="NAME">e4</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4.92673942608635921086</span><span class="NAME">e4</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 87</span> 
+<span class='line'> 88</span> </span><span class="WHIT">    </span><span class="COMM">// UTHRESH: 37.519379347,</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">    </span><span class="NAME">M</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">128.0</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="WHIT">    </span><span class="NAME">MINV</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">0.0078125</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 91</span> 
+<span class='line'> 92</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 93</span>      *
+<span class='line'> 94</span>      *	Exponential of squared argument
+<span class='line'> 95</span>      *
+<span class='line'> 96</span>      * SYNOPSIS:
+<span class='line'> 97</span>      *
+<span class='line'> 98</span>      * double x, y, expx2();
+<span class='line'> 99</span>      * int sign;
+<span class='line'>100</span>      *
+<span class='line'>101</span>      * y = expx2( x, sign );
+<span class='line'>102</span>      *
+<span class='line'>103</span>      *
+<span class='line'>104</span>      *
+<span class='line'>105</span>      * DESCRIPTION:
+<span class='line'>106</span>      *
+<span class='line'>107</span>      * Computes y = exp(x*x) while suppressing error amplification
+<span class='line'>108</span>      * that would ordinarily arise from the inexactness of the
+<span class='line'>109</span>      * exponential argument x*x.
+<span class='line'>110</span>      *
+<span class='line'>111</span>      * If sign &lt; 0, the result is inverted; i.e., y = exp(-x*x) .
+<span class='line'>112</span>      *
+<span class='line'>113</span>      *
+<span class='line'>114</span>      * ACCURACY:
+<span class='line'>115</span>      *
+<span class='line'>116</span>      *                      Relative error:
+<span class='line'>117</span>      * arithmetic    domain     # trials      peak         rms
+<span class='line'>118</span>      *   IEEE      -26.6, 26.6    10^7       3.9e-16     8.9e-17
+<span class='line'>119</span>      *
+<span class='line'>120</span>      * @private
+<span class='line'>121</span>      * @param  {Number} x
+<span class='line'>122</span>      * @param  {Number} sign (int)
+<span class='line'>123</span>      * @returns {Number}
+<span class='line'>124</span>      */</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="WHIT">    </span><span class="NAME">expx2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sign</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">        </span><span class="COMM">// double x;</span><span class="WHIT">
+<span class='line'>127</span> </span><span class="WHIT">        </span><span class="COMM">// int sign;</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">u</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">u1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">m</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">f</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>129</span> 
+<span class='line'>130</span> </span><span class="WHIT">        </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">sign</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>134</span> 
+<span class='line'>135</span> </span><span class="WHIT">        </span><span class="COMM">// Represent x as an exact multiple of M plus a residual.</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">        </span><span class="COMM">//    M is a power of 2 chosen so that exp(m * m) does not overflow</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">        </span><span class="COMM">//    or underflow and so that |x - m| is small.</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">        </span><span class="NAME">m</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.MINV</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.floor</span><span class="PUNC">(</span><span class="NAME">this.M</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">        </span><span class="NAME">f</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">m</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>140</span> 
+<span class='line'>141</span> </span><span class="WHIT">        </span><span class="COMM">// x^2 = m^2 + 2mf + f^2</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">        </span><span class="NAME">u</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">m</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">m</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">        </span><span class="NAME">u1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">m</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">f</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">f</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">f</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>144</span> 
+<span class='line'>145</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">sign</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">            </span><span class="NAME">u</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">u</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">            </span><span class="NAME">u1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">u1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>149</span> 
+<span class='line'>150</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">u</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">u1</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">this.MAXLOG</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Infinity</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>153</span> 
+<span class='line'>154</span> </span><span class="WHIT">        </span><span class="COMM">// u is exact, u1 is small.</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="WHIT">        </span><span class="NAME">u</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.exp</span><span class="PUNC">(</span><span class="NAME">u</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.exp</span><span class="PUNC">(</span><span class="NAME">u1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">u</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>158</span> 
+<span class='line'>159</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>160</span>      *
+<span class='line'>161</span>      *	Evaluate polynomial
+<span class='line'>162</span>      *
+<span class='line'>163</span>      * SYNOPSIS:
+<span class='line'>164</span>      *
+<span class='line'>165</span>      * int N;
+<span class='line'>166</span>      * double x, y, coef[N+1], polevl[];
+<span class='line'>167</span>      *
+<span class='line'>168</span>      * y = polevl( x, coef, N );
+<span class='line'>169</span>      *
+<span class='line'>170</span>      * DESCRIPTION:
+<span class='line'>171</span>      *
+<span class='line'>172</span>      * Evaluates polynomial of degree N:
+<span class='line'>173</span>      *
+<span class='line'>174</span>      *                     2          N
+<span class='line'>175</span>      * y  =  C  + C x + C x  +...+ C x
+<span class='line'>176</span>      *        0    1     2          N
+<span class='line'>177</span>      *
+<span class='line'>178</span>      * Coefficients are stored in reverse order:
+<span class='line'>179</span>      *
+<span class='line'>180</span>      * coef[0] = C  , ..., coef[N] = C  .
+<span class='line'>181</span>      *            N                   0
+<span class='line'>182</span>      *
+<span class='line'>183</span>      *  The function p1evl() assumes that coef[N] = 1.0 and is
+<span class='line'>184</span>      * omitted from the array.  Its calling arguments are
+<span class='line'>185</span>      * otherwise the same as polevl().
+<span class='line'>186</span>      *
+<span class='line'>187</span>      *
+<span class='line'>188</span>      * SPEED:
+<span class='line'>189</span>      *
+<span class='line'>190</span>      * In the interest of speed, there are no checks for out
+<span class='line'>191</span>      * of bounds arithmetic.  This routine is used by most of
+<span class='line'>192</span>      * the functions in the library.  Depending on available
+<span class='line'>193</span>      * equipment features, the user may wish to rewrite the
+<span class='line'>194</span>      * program in microcode or assembly language.
+<span class='line'>195</span>      *
+<span class='line'>196</span>      * @private
+<span class='line'>197</span>      * @param  {Number} x
+<span class='line'>198</span>      * @param  {Number} coef
+<span class='line'>199</span>      * @param  {Number} N
+<span class='line'>200</span>      * @returns {Number}
+<span class='line'>201</span>      */</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">    </span><span class="NAME">polevl</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coef</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">N</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> 
+<span class='line'>205</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">coef.reduce</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">coef.reduce</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">acc</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">acc</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">        </span><span class="COMM">// Polyfill</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;=</span><span class="WHIT"> </span><span class="NAME">N</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="WHIT">            </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">coef</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>216</span> 
+<span class='line'>217</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>218</span>      * Evaluate polynomial when coefficient of x is 1.0.
+<span class='line'>219</span>      * Otherwise same as polevl.
+<span class='line'>220</span>      *
+<span class='line'>221</span>      * @private
+<span class='line'>222</span>      * @param  {Number} x
+<span class='line'>223</span>      * @param  {Number} coef
+<span class='line'>224</span>      * @param  {Number} N
+<span class='line'>225</span>      * @returns {Number}
+<span class='line'>226</span>      */</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">    </span><span class="NAME">p1evl</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">coef</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">N</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>229</span> 
+<span class='line'>230</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">coef.reduce</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">coef.reduce</span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">acc</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">acc</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">c</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">        </span><span class="COMM">// Polyfill</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">N</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">            </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">coef</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">ans</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>241</span> 
+<span class='line'>242</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>243</span>      *
+<span class='line'>244</span>      *	Normal distribution function
+<span class='line'>245</span>      *
+<span class='line'>246</span>      * SYNOPSIS:
+<span class='line'>247</span>      *
+<span class='line'>248</span>      * y = ndtr( x );
+<span class='line'>249</span>      *
+<span class='line'>250</span>      * DESCRIPTION:
+<span class='line'>251</span>      *
+<span class='line'>252</span>      * Returns the area under the Gaussian probability density
+<span class='line'>253</span>      * function, integrated from minus infinity to x:
+<span class='line'>254</span>      *
+<span class='line'>255</span>      *                            x
+<span class='line'>256</span>      *                             -
+<span class='line'>257</span>      *                   1        | |          2
+<span class='line'>258</span>      *    ndtr(x)  = ---------    |    exp( - t /2 ) dt
+<span class='line'>259</span>      *               sqrt(2pi)  | |
+<span class='line'>260</span>      *                           -
+<span class='line'>261</span>      *                          -inf.
+<span class='line'>262</span>      *
+<span class='line'>263</span>      *             =  ( 1 + erf(z) ) / 2
+<span class='line'>264</span>      *             =  erfc(z) / 2
+<span class='line'>265</span>      *
+<span class='line'>266</span>      * where z = x/sqrt(2). Computation is via the functions
+<span class='line'>267</span>      * erf and erfc with care to avoid error amplification in computing exp(-x^2).
+<span class='line'>268</span>      *
+<span class='line'>269</span>      *
+<span class='line'>270</span>      * ACCURACY:
+<span class='line'>271</span>      *
+<span class='line'>272</span>      *                      Relative error:
+<span class='line'>273</span>      * arithmetic   domain     # trials      peak         rms
+<span class='line'>274</span>      *    IEEE     -13,0        30000       1.3e-15     2.2e-16
+<span class='line'>275</span>      *
+<span class='line'>276</span>      *
+<span class='line'>277</span>      * ERROR MESSAGES:
+<span class='line'>278</span>      *
+<span class='line'>279</span>      *   message         condition         value returned
+<span class='line'>280</span>      * erfc underflow    x > 37.519379347       0.0
+<span class='line'>281</span>      *
+<span class='line'>282</span>      * @param  {Number} a
+<span class='line'>283</span>      * @returns {Number}
+<span class='line'>284</span>      */</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">    </span><span class="NAME">ndtr</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">        </span><span class="COMM">// a: double, return double</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">z</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>288</span> 
+<span class='line'>289</span> </span><span class="WHIT">        </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">a</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.SQRTH</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">        </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>291</span> 
+<span class='line'>292</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.erf</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>295</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.erfce</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">            </span><span class="COMM">/* Multiply by exp(-x^2 / 2)  */</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">            </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.expx2</span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.sqrt</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">                </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>305</span> 
+<span class='line'>306</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>307</span>      * @private
+<span class='line'>308</span>      * @param  {Number} a
+<span class='line'>309</span>      * @returns {Number}
+<span class='line'>310</span>      */</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">    </span><span class="NAME">_underflow</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">        </span><span class="NAME">console.log</span><span class="PUNC">(</span><span class="STRN">"erfc"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"UNDERFLOW"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>313</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>314</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NUMB">2.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NUMB">0.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>317</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>318</span> 
+<span class='line'>319</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>320</span>      *
+<span class='line'>321</span>      *	Complementary error function
+<span class='line'>322</span>      *
+<span class='line'>323</span>      * SYNOPSIS:
+<span class='line'>324</span>      *
+<span class='line'>325</span>      * double x, y, erfc();
+<span class='line'>326</span>      *
+<span class='line'>327</span>      * y = erfc( x );
+<span class='line'>328</span>      *
+<span class='line'>329</span>      *
+<span class='line'>330</span>      *
+<span class='line'>331</span>      * DESCRIPTION:
+<span class='line'>332</span>      *
+<span class='line'>333</span>      *
+<span class='line'>334</span>      *  1 - erf(x) =
+<span class='line'>335</span>      *
+<span class='line'>336</span>      *                           inf.
+<span class='line'>337</span>      *                             -
+<span class='line'>338</span>      *                  2         | |          2
+<span class='line'>339</span>      *   erfc(x)  =  --------     |    exp( - t  ) dt
+<span class='line'>340</span>      *               sqrt(pi)   | |
+<span class='line'>341</span>      *                           -
+<span class='line'>342</span>      *                            x
+<span class='line'>343</span>      *
+<span class='line'>344</span>      *
+<span class='line'>345</span>      * For small x, erfc(x) = 1 - erf(x); otherwise rational
+<span class='line'>346</span>      * approximations are computed.
+<span class='line'>347</span>      *
+<span class='line'>348</span>      * A special function expx2.c is used to suppress error amplification
+<span class='line'>349</span>      * in computing exp(-x^2).
+<span class='line'>350</span>      *
+<span class='line'>351</span>      *
+<span class='line'>352</span>      * ACCURACY:
+<span class='line'>353</span>      *
+<span class='line'>354</span>      *                      Relative error:
+<span class='line'>355</span>      * arithmetic   domain     # trials      peak         rms
+<span class='line'>356</span>      *    IEEE      0,26.6417   30000       1.3e-15     2.2e-16
+<span class='line'>357</span>      *
+<span class='line'>358</span>      *
+<span class='line'>359</span>      * ERROR MESSAGES:
+<span class='line'>360</span>      *
+<span class='line'>361</span>      *   message         condition              value returned
+<span class='line'>362</span>      * erfc underflow    x > 9.231948545 (DEC)       0.0
+<span class='line'>363</span>      *
+<span class='line'>364</span>      * @param  {Number} a
+<span class='line'>365</span>      * @returns {Number}
+<span class='line'>366</span>      */</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">    </span><span class="NAME">erfc</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">z</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>369</span> 
+<span class='line'>370</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>371</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">a</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>373</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">a</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>374</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this.erf</span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>378</span> 
+<span class='line'>379</span> </span><span class="WHIT">        </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">a</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">a</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">this.MAXLOG</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._underflow</span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>383</span> 
+<span class='line'>384</span> </span><span class="WHIT">        </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.expx2</span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// Compute z = exp(z).</span><span class="WHIT">
+<span class='line'>385</span> 
+<span class='line'>386</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">8.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">            </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.P</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>388</span> </span><span class="WHIT">            </span><span class="NAME">q</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Q</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">            </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.R</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">            </span><span class="NAME">q</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.S</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">6</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>392</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>393</span> 
+<span class='line'>394</span> </span><span class="WHIT">        </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>395</span> 
+<span class='line'>396</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">a</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">2.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>398</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>399</span> 
+<span class='line'>400</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._underflow</span><span class="PUNC">(</span><span class="NAME">a</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>403</span> 
+<span class='line'>404</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>406</span> 
+<span class='line'>407</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>408</span>      * Exponentially scaled erfc function
+<span class='line'>409</span>      *   exp(x^2) erfc(x)
+<span class='line'>410</span>      *   valid for x > 1.
+<span class='line'>411</span>      *   Use with ndtr and expx2.
+<span class='line'>412</span>      *
+<span class='line'>413</span>      * @private
+<span class='line'>414</span>      * @param {Number} x
+<span class='line'>415</span>      * @returns {Number}
+<span class='line'>416</span>      */</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">    </span><span class="NAME">erfce</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>419</span> 
+<span class='line'>420</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">8.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">            </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.P</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">            </span><span class="NAME">q</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Q</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">            </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.R</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">            </span><span class="NAME">q</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.S</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">6</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">q</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>429</span> 
+<span class='line'>430</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>431</span>      *	Error function
+<span class='line'>432</span>      *
+<span class='line'>433</span>      * SYNOPSIS:
+<span class='line'>434</span>      *
+<span class='line'>435</span>      * double x, y, erf();
+<span class='line'>436</span>      *
+<span class='line'>437</span>      * y = erf( x );
+<span class='line'>438</span>      *
+<span class='line'>439</span>      *
+<span class='line'>440</span>      *
+<span class='line'>441</span>      * DESCRIPTION:
+<span class='line'>442</span>      *
+<span class='line'>443</span>      * The integral is
+<span class='line'>444</span>      *
+<span class='line'>445</span>      *                           x
+<span class='line'>446</span>      *                            -
+<span class='line'>447</span>      *                 2         | |          2
+<span class='line'>448</span>      *   erf(x)  =  --------     |    exp( - t  ) dt.
+<span class='line'>449</span>      *              sqrt(pi)   | |
+<span class='line'>450</span>      *                          -
+<span class='line'>451</span>      *                           0
+<span class='line'>452</span>      *
+<span class='line'>453</span>      * For 0 &lt;= |x| &lt; 1, erf(x) = x * P4(x**2)/Q5(x**2); otherwise
+<span class='line'>454</span>      * erf(x) = 1 - erfc(x).
+<span class='line'>455</span>      *
+<span class='line'>456</span>      *
+<span class='line'>457</span>      * ACCURACY:
+<span class='line'>458</span>      *
+<span class='line'>459</span>      *                      Relative error:
+<span class='line'>460</span>      * arithmetic   domain     # trials      peak         rms
+<span class='line'>461</span>      *    DEC       0,1         14000       4.7e-17     1.5e-17
+<span class='line'>462</span>      *    IEEE      0,1         30000       3.7e-16     1.0e-16
+<span class='line'>463</span>      *
+<span class='line'>464</span>      * @param  {Number} x
+<span class='line'>465</span>      * @returns {Number}
+<span class='line'>466</span>      */</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="WHIT">    </span><span class="NAME">erf</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">z</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>469</span> 
+<span class='line'>470</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>471</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this.erfc</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>472</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>473</span> </span><span class="WHIT">        </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>474</span> </span><span class="WHIT">        </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.T</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.U</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>475</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>477</span> 
+<span class='line'>478</span> </span><span class="WHIT">    </span><span class="NAME">s2pi</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">2.50662827463100050242</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// sqrt(2pi)</span><span class="WHIT">
+<span class='line'>479</span> 
+<span class='line'>480</span> </span><span class="WHIT">    </span><span class="COMM">// approximation for 0 &lt;= |y - 0.5| &lt;= 3/8 */</span><span class="WHIT">
+<span class='line'>481</span> </span><span class="WHIT">    </span><span class="NAME">P0</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>482</span> </span><span class="WHIT">        </span><span class="PUNC">-</span><span class="NUMB">5.99633501014107895267</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">9.80010754185999661536</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">5.66762857469070293439</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>483</span> </span><span class="WHIT">        </span><span class="NUMB">1.39312609387279679503</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1.23916583867381258016</span><span class="WHIT">
+<span class='line'>484</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>485</span> 
+<span class='line'>486</span> </span><span class="WHIT">    </span><span class="NAME">Q0</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>487</span> </span><span class="WHIT">        </span><span class="NUMB">1.95448858338141759834</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4.67627912898881538453</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8.63602421390890590575</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>488</span> </span><span class="WHIT">        </span><span class="PUNC">-</span><span class="NUMB">2.25462687854119370527</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.00260212380060660359</span><span class="NAME">e2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">8.20372256168333339912</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>489</span> </span><span class="WHIT">        </span><span class="NUMB">1.59056225126211695515</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1.18331621121330003142</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>491</span> 
+<span class='line'>492</span> </span><span class="WHIT">    </span><span class="COMM">//  Approximation for interval z = sqrt(-2 log y ) between 2 and 8</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="WHIT">    </span><span class="COMM">//  i.e., y between exp(-2) = .135 and exp(-32) = 1.27e-14.</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">    </span><span class="NAME">P1</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">        </span><span class="NUMB">4.05544892305962419923</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.15251094599893866154</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5.71628192246421288162</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>496</span> </span><span class="WHIT">        </span><span class="NUMB">4.408050738932008347</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.46849561928858024014</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.18663306850790267539</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>497</span> </span><span class="WHIT">        </span><span class="PUNC">-</span><span class="NUMB">1.40256079171354495875</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">3.50424626827848203418</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">8.57456785154685413611</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">4</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>499</span> 
+<span class='line'>500</span> </span><span class="WHIT">    </span><span class="NAME">Q1</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>501</span> </span><span class="WHIT">        </span><span class="NUMB">1.57799883256466749731</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4.53907635128879210584</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4.1317203825467203044</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">        </span><span class="NUMB">1.50425385692907503408</span><span class="NAME">e1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.50464946208309415979</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1.42182922854787788574</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">        </span><span class="PUNC">-</span><span class="NUMB">3.80806407691578277194</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">9.33259480895457427372</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">4</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>505</span> 
+<span class='line'>506</span> </span><span class="WHIT">    </span><span class="COMM">// Approximation for interval z = sqrt(-2 log y ) between 8 and 64</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">    </span><span class="COMM">// i.e., y between exp(-32) = 1.27e-14 and exp(-2048) = 3.67e-890.</span><span class="WHIT">
+<span class='line'>508</span> </span><span class="WHIT">    </span><span class="NAME">P2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>509</span> </span><span class="WHIT">        </span><span class="NUMB">3.2377489177694603597</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">6.91522889068984211695</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.93881025292474443415</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="WHIT">        </span><span class="NUMB">1.33303460815807542389</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.01485389549179081538</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.23716634817820021358</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>511</span> </span><span class="WHIT">        </span><span class="NUMB">3.01581553508235416007</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2.65806974686737550832</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">6</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">6.2397453918498329373</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">9</span><span class="WHIT">
+<span class='line'>512</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>513</span> 
+<span class='line'>514</span> </span><span class="WHIT">    </span><span class="NAME">Q2</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>515</span> </span><span class="WHIT">        </span><span class="NUMB">6.02427039364742014255</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.67983563856160859403</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.37702099489081330271</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>516</span> </span><span class="WHIT">        </span><span class="NUMB">2.1623699359449663589</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.34204006088543189037</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3.28014464682127739104</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>517</span> </span><span class="WHIT">        </span><span class="NUMB">2.89247864745380683936</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">6</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">6.79019408009981274425</span><span class="NAME">e</span><span class="PUNC">-</span><span class="NUMB">9</span><span class="WHIT">
+<span class='line'>518</span> </span><span class="WHIT">    </span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>519</span> 
+<span class='line'>520</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>521</span>      *
+<span class='line'>522</span>      *	Inverse of Normal distribution function
+<span class='line'>523</span>      *
+<span class='line'>524</span>      * SYNOPSIS:
+<span class='line'>525</span>      *
+<span class='line'>526</span>      * double x, y, ndtri();
+<span class='line'>527</span>      *
+<span class='line'>528</span>      * x = ndtri( y );
+<span class='line'>529</span>      *
+<span class='line'>530</span>      * DESCRIPTION:
+<span class='line'>531</span>      *
+<span class='line'>532</span>      * Returns the argument, x, for which the area under the
+<span class='line'>533</span>      * Gaussian probability density function (integrated from
+<span class='line'>534</span>      * minus infinity to x) is equal to y.
+<span class='line'>535</span>      *
+<span class='line'>536</span>      *
+<span class='line'>537</span>      * For small arguments 0 &lt; y &lt; exp(-2), the program computes
+<span class='line'>538</span>      * z = sqrt( -2.0 * log(y) );  then the approximation is
+<span class='line'>539</span>      * x = z - log(z)/z  - (1/z) P(1/z) / Q(1/z).
+<span class='line'>540</span>      * There are two rational functions P/Q, one for 0 &lt; y &lt; exp(-32)
+<span class='line'>541</span>      * and the other for y up to exp(-2).  For larger arguments,
+<span class='line'>542</span>      * w = y - 0.5, and  x/sqrt(2pi) = w + w**3 R(w**2)/S(w**2)).
+<span class='line'>543</span>      *
+<span class='line'>544</span>      *
+<span class='line'>545</span>      * ACCURACY:
+<span class='line'>546</span>      *
+<span class='line'>547</span>      *                      Relative error:
+<span class='line'>548</span>      * arithmetic   domain        # trials      peak         rms
+<span class='line'>549</span>      *    DEC      0.125, 1         5500       9.5e-17     2.1e-17
+<span class='line'>550</span>      *    DEC      6e-39, 0.135     3500       5.7e-17     1.3e-17
+<span class='line'>551</span>      *    IEEE     0.125, 1        20000       7.2e-16     1.3e-16
+<span class='line'>552</span>      *    IEEE     3e-308, 0.135   50000       4.6e-16     9.8e-17
+<span class='line'>553</span>      *
+<span class='line'>554</span>      *
+<span class='line'>555</span>      * ERROR MESSAGES:
+<span class='line'>556</span>      *
+<span class='line'>557</span>      *   message         condition    value returned
+<span class='line'>558</span>      * ndtri domain       x &lt;= 0        -MAXNUM
+<span class='line'>559</span>      * ndtri domain       x >= 1         MAXNUM
+<span class='line'>560</span>      *
+<span class='line'>561</span>      * @param  {Number} y0
+<span class='line'>562</span>      * @returns {Number}
+<span class='line'>563</span>      */</span><span class="WHIT">
+<span class='line'>564</span> </span><span class="WHIT">    </span><span class="NAME">ndtri</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>565</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">y2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">x0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">x1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">code</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>566</span> 
+<span class='line'>567</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y0</span><span class="WHIT"> </span><span class="PUNC">&lt;=</span><span class="WHIT"> </span><span class="NUMB">0.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>568</span> </span><span class="WHIT">            </span><span class="COMM">//console.log("ndtri", "DOMAIN ");</span><span class="WHIT">
+<span class='line'>569</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">Infinity</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// -this.MAXNUM;</span><span class="WHIT">
+<span class='line'>570</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>571</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y0</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>572</span> </span><span class="WHIT">            </span><span class="COMM">// console.log("ndtri", "DOMAIN");</span><span class="WHIT">
+<span class='line'>573</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Infinity</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// this.MAXNUM;</span><span class="WHIT">
+<span class='line'>574</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>575</span> 
+<span class='line'>576</span> </span><span class="WHIT">        </span><span class="NAME">code</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>577</span> </span><span class="WHIT">        </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">y0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>578</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">0.13533528323661269189</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>579</span> </span><span class="WHIT">            </span><span class="COMM">// 0.135... = exp(-2)</span><span class="WHIT">
+<span class='line'>580</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>581</span> </span><span class="WHIT">            </span><span class="NAME">code</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>582</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>583</span> 
+<span class='line'>584</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0.13533528323661269189</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>585</span> </span><span class="WHIT">            </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>586</span> </span><span class="WHIT">            </span><span class="NAME">y2</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">y</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>587</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">y</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">y2</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">y2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.P0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">y2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Q0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>588</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.s2pi</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>589</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>590</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>591</span> 
+<span class='line'>592</span> </span><span class="WHIT">        </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.sqrt</span><span class="PUNC">(</span><span class="PUNC">-</span><span class="NUMB">2.0</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NAME">y</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>593</span> </span><span class="WHIT">        </span><span class="NAME">x0</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">Math.log</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>594</span> 
+<span class='line'>595</span> </span><span class="WHIT">        </span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>596</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NUMB">8.0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>597</span> </span><span class="WHIT">            </span><span class="COMM">// y > exp(-32) = 1.2664165549e-14</span><span class="WHIT">
+<span class='line'>598</span> </span><span class="WHIT">            </span><span class="NAME">x1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.P1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Q1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>599</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>600</span> </span><span class="WHIT">            </span><span class="NAME">x1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">z</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.polevl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.P2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">this.p1evl</span><span class="PUNC">(</span><span class="NAME">z</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.Q2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">8</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>601</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>602</span> </span><span class="WHIT">        </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">x0</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">x1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>603</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">code</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>604</span> </span><span class="WHIT">            </span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>605</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>606</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">x</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>607</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>608</span> 
+<span class='line'>609</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>610</span>      * Inverse of error function erf.
+<span class='line'>611</span>      *
+<span class='line'>612</span>      * @param  {Number} x
+<span class='line'>613</span>      * @returns {Number}
+<span class='line'>614</span>      */</span><span class="WHIT">
+<span class='line'>615</span> </span><span class="WHIT">    </span><span class="NAME">erfi</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>616</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.ndtri</span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">x</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">0.5</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NAME">this.SQRTH</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>617</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>618</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>619</span> 
+<span class='line'>620</span> </span><span class="NAME">export</span><span class="WHIT"> </span><span class="KEYW">default</span><span class="WHIT"> </span><span class="NAME">Mat.ProbFuncs</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>621</span> </span></pre></body></html>

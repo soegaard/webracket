@@ -1,0 +1,1080 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/*
+<span class='line'>  2</span>     Copyright 2008-2025
+<span class='line'>  3</span>         Matthias Ehmann,
+<span class='line'>  4</span>         Michael Gerhaeuser,
+<span class='line'>  5</span>         Carsten Miller,
+<span class='line'>  6</span>         Bianca Valentin,
+<span class='line'>  7</span>         Alfred Wassermann,
+<span class='line'>  8</span>         Peter Wilfahrt
+<span class='line'>  9</span> 
+<span class='line'> 10</span>     This file is part of JSXGraph.
+<span class='line'> 11</span> 
+<span class='line'> 12</span>     JSXGraph is free software dual licensed under the GNU LGPL or MIT License.
+<span class='line'> 13</span> 
+<span class='line'> 14</span>     You can redistribute it and/or modify it under the terms of the
+<span class='line'> 15</span> 
+<span class='line'> 16</span>       * GNU Lesser General Public License as published by
+<span class='line'> 17</span>         the Free Software Foundation, either version 3 of the License, or
+<span class='line'> 18</span>         (at your option) any later version
+<span class='line'> 19</span>       OR
+<span class='line'> 20</span>       * MIT License: https://github.com/jsxgraph/jsxgraph/blob/master/LICENSE.MIT
+<span class='line'> 21</span> 
+<span class='line'> 22</span>     JSXGraph is distributed in the hope that it will be useful,
+<span class='line'> 23</span>     but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 24</span>     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class='line'> 25</span>     GNU Lesser General Public License for more details.
+<span class='line'> 26</span> 
+<span class='line'> 27</span>     You should have received a copy of the GNU Lesser General Public License and
+<span class='line'> 28</span>     the MIT License along with JSXGraph. If not, see &lt;https://www.gnu.org/licenses/>
+<span class='line'> 29</span>     and &lt;https://opensource.org/licenses/MIT/>.
+<span class='line'> 30</span>  */</span><span class="WHIT">
+<span class='line'> 31</span> 
+<span class='line'> 32</span> </span><span class="COMM">/*global JXG: true, define: true*/</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="COMM">/*jslint nomen: true, plusplus: true*/</span><span class="WHIT">
+<span class='line'> 34</span> 
+<span class='line'> 35</span> </span><span class="COMM">/**
+<span class='line'> 36</span>  * @fileoverview In this file the class Group is defined, a class for
+<span class='line'> 37</span>  * managing grouping of points.
+<span class='line'> 38</span>  */</span><span class="WHIT">
+<span class='line'> 39</span> 
+<span class='line'> 40</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">JXG</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../jxg.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 41</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Const</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"./constants.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Mat</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/math.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Geometry</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../math/geometry.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="NAME">import</span><span class="WHIT"> </span><span class="NAME">Type</span><span class="WHIT"> </span><span class="NAME">from</span><span class="WHIT"> </span><span class="STRN">"../utils/type.js"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 45</span> 
+<span class='line'> 46</span> </span><span class="COMM">/**
+<span class='line'> 47</span>  * Creates a new instance of Group.
+<span class='line'> 48</span>  * @class In this class all group management is done.
+<span class='line'> 49</span>  * @param {JXG.Board} board
+<span class='line'> 50</span>  * @param {String} id Unique identifier for this object.  If null or an empty string is given,
+<span class='line'> 51</span>  * an unique id will be generated by Board
+<span class='line'> 52</span>  * @param {String} name Not necessarily unique name, displayed on the board.  If null or an
+<span class='line'> 53</span>  * empty string is given, an unique name will be generated.
+<span class='line'> 54</span>  * @param {Array} objects Array of points to add to this group.
+<span class='line'> 55</span>  * @param {Object} attributes Defines the visual appearance of the group.
+<span class='line'> 56</span>  * @constructor
+<span class='line'> 57</span>  */</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="NAME">JXG.Group</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">number</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objArray</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 60</span> 
+<span class='line'> 61</span> </span><span class="WHIT">    </span><span class="NAME">this.board</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">board</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="WHIT">    </span><span class="NAME">this.objects</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">    </span><span class="NAME">number</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.numObjects</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">    </span><span class="NAME">this.board.numObjects</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 65</span> 
+<span class='line'> 66</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">""</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="WHIT">        </span><span class="NAME">this.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.id</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"Group"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">number</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 69</span> </span><span class="WHIT">        </span><span class="NAME">this.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 70</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">    </span><span class="NAME">this.board.groups</span><span class="PUNC">[</span><span class="NAME">this.id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 72</span> 
+<span class='line'> 73</span> </span><span class="WHIT">    </span><span class="NAME">this.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_TYPE_POINT</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">    </span><span class="NAME">this.elementClass</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 75</span> 
+<span class='line'> 76</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">""</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">!</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">name</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">        </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"group_"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.board.generateName</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">        </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">name</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.type</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 82</span> 
+<span class='line'> 83</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'> 84</span>      * Cache coordinates of points. From this and the actual position
+<span class='line'> 85</span>      * of the points, the translation is determined.
+<span class='line'> 86</span>      * It has to be kept updated in this class "by hand"-
+<span class='line'> 87</span>      *
+<span class='line'> 88</span>      * @private
+<span class='line'> 89</span>      * @type Object
+<span class='line'> 90</span>      * @see JXG.Group#_updateCoordsCache
+<span class='line'> 91</span>      */</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">    </span><span class="NAME">this.coords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">    </span><span class="NAME">this.needsRegularUpdate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">attributes.needsregularupdate</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 94</span> 
+<span class='line'> 95</span> </span><span class="WHIT">    </span><span class="NAME">this.rotationCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"centroid"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">    </span><span class="NAME">this.scaleCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">    </span><span class="NAME">this.rotationPoints</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">    </span><span class="NAME">this.translationPoints</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">    </span><span class="NAME">this.scalePoints</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>100</span> </span><span class="WHIT">    </span><span class="NAME">this.scaleDirections</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>101</span> 
+<span class='line'>102</span> </span><span class="WHIT">    </span><span class="NAME">this.parents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>103</span> 
+<span class='line'>104</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">        </span><span class="NAME">objArray</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">        </span><span class="NAME">objArray</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Array.prototype.slice.call</span><span class="PUNC">(</span><span class="NAME">arguments</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>109</span> 
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">objArray.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="WHIT">        </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">objArray</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>112</span> 
+<span class='line'>113</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">obj.evalVisProp</span><span class="PUNC">(</span><span class="STRN">'fixed'</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">obj.coords</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>114</span> </span><span class="WHIT">            </span><span class="NAME">this.addPoint</span><span class="PUNC">(</span><span class="NAME">obj</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>115</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>116</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>117</span> 
+<span class='line'>118</span> </span><span class="WHIT">    </span><span class="NAME">this.methodMap</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>119</span> </span><span class="WHIT">        </span><span class="NAME">ungroup</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"ungroup"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>120</span> </span><span class="WHIT">        </span><span class="NAME">add</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"addPoint"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">        </span><span class="NAME">addPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"addPoint"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">        </span><span class="NAME">addPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"addPoints"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">        </span><span class="NAME">addGroup</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"addGroup"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="WHIT">        </span><span class="NAME">remove</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"removePoint"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="WHIT">        </span><span class="NAME">removePoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"removePoint"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">        </span><span class="NAME">setAttribute</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setAttribute"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>127</span> </span><span class="WHIT">        </span><span class="NAME">setProperty</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"setAttribute"</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>130</span> 
+<span class='line'>131</span> </span><span class="NAME">JXG.extend</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">    </span><span class="NAME">JXG.Group.prototype</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">    </span><span class="COMM">/** @lends JXG.Group.prototype */</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>135</span>          * Releases all elements of this group.
+<span class='line'>136</span>          * @returns {JXG.Group} returns this (empty) group
+<span class='line'>137</span>          */</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">        </span><span class="NAME">ungroup</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">                    </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">p.groups</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>144</span> </span><span class="WHIT">                        </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.indexOf</span><span class="PUNC">(</span><span class="NAME">p.groups</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">                            </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">p.groups</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>149</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>151</span> 
+<span class='line'>152</span> </span><span class="WHIT">            </span><span class="NAME">this.objects</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>155</span> 
+<span class='line'>156</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>157</span>          * Adds ids of elements to the array this.parents. This is a copy
+<span class='line'>158</span>          * of {@link Element.addParents}.
+<span class='line'>159</span>          * @param {Array} parents Array of elements or ids of elements.
+<span class='line'>160</span>          * Alternatively, one can give a list of objects as parameters.
+<span class='line'>161</span>          * @returns {JXG.Object} reference to the object itself.
+<span class='line'>162</span>          **/</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="WHIT">        </span><span class="NAME">addParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">par</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>165</span> 
+<span class='line'>166</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">                </span><span class="NAME">par</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="WHIT">                </span><span class="NAME">par</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">arguments</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>171</span> 
+<span class='line'>172</span> </span><span class="WHIT">            </span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">par.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="PUNC">++</span><span class="NAME">i</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isId</span><span class="PUNC">(</span><span class="NAME">this.board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">par</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">                    </span><span class="NAME">this.parents.push</span><span class="PUNC">(</span><span class="NAME">par</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">par</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">                    </span><span class="NAME">this.parents.push</span><span class="PUNC">(</span><span class="NAME">par</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>180</span> 
+<span class='line'>181</span> </span><span class="WHIT">            </span><span class="NAME">this.parents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.uniqueArray</span><span class="PUNC">(</span><span class="NAME">this.parents</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>183</span> 
+<span class='line'>184</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>185</span>          * Sets ids of elements to the array this.parents. This is a copy
+<span class='line'>186</span>          * of {@link Element.setParents}
+<span class='line'>187</span>          * First, this.parents is cleared. See {@link Group#addParents}.
+<span class='line'>188</span>          * @param {Array} parents Array of elements or ids of elements.
+<span class='line'>189</span>          * Alternatively, one can give a list of objects as parameters.
+<span class='line'>190</span>          * @returns {JXG.Object} reference to the object itself.
+<span class='line'>191</span>          **/</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">        </span><span class="NAME">setParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="WHIT">            </span><span class="NAME">this.parents</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="WHIT">            </span><span class="NAME">this.addParents</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>196</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>197</span> 
+<span class='line'>198</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>199</span>          * List of the element ids resp. values used as parents in {@link JXG.Board#create}.
+<span class='line'>200</span>          * @returns {Array}
+<span class='line'>201</span>          */</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="WHIT">        </span><span class="NAME">getParents</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>203</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">this.parents</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">this.parents</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>204</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>205</span> 
+<span class='line'>206</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>207</span>          * Update the cached coordinates of a group element.
+<span class='line'>208</span>          * @param  {String} el element id of the group element whose cached coordinates
+<span class='line'>209</span>          * are going to be updated.
+<span class='line'>210</span>          * @return null
+<span class='line'>211</span>          */</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="WHIT">        </span><span class="NAME">_updateCoordsCache</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="STRN">""</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">                </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>216</span> </span><span class="WHIT">                </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">obj.id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">usrCoords</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">obj.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>217</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>218</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>219</span> 
+<span class='line'>220</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>221</span>          * Sends an update to all group members.
+<span class='line'>222</span>          * This method is called from the points' coords object event listeners
+<span class='line'>223</span>          * and not by the board.
+<span class='line'>224</span>          * @returns {JXG.Group} returns this group
+<span class='line'>225</span>          */</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">        </span><span class="NAME">update</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">drag</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">                </span><span class="NAME">actionCenter</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">                </span><span class="NAME">desc</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">                </span><span class="NAME">s</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sx</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sy</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">                </span><span class="NAME">alpha</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">                </span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">T</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">                </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">                </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>235</span> 
+<span class='line'>236</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.needsUpdate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>239</span> 
+<span class='line'>240</span> </span><span class="WHIT">            </span><span class="NAME">drag</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this._update_find_drag_type</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"nothing"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">                </span><span class="NAME">this._updateCoordsCache</span><span class="PUNC">(</span><span class="NAME">drag.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>245</span> 
+<span class='line'>246</span> </span><span class="WHIT">            </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>247</span> 
+<span class='line'>248</span> </span><span class="WHIT">            </span><span class="COMM">// Prepare translation, scaling or rotation.</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">            </span><span class="COMM">// Scaling and rotation is handled by transformations for all elements.</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">            </span><span class="COMM">// Translation is handled by direct coordinate manipulation for points.</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">            </span><span class="COMM">// For images and texts, all translation, scaling and rotation is</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">            </span><span class="COMM">// done by binding a transformation to the element.</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"translation"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">                </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">                    </span><span class="NAME">obj.coords.usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">                    </span><span class="NAME">obj.coords.usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">                </span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>258</span> 
+<span class='line'>259</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.elementClass</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">                    </span><span class="COMM">// For images and texts we have to update the drag direction</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">                    </span><span class="COMM">// by reapplying all transformations.</span><span class="WHIT">
+<span class='line'>262</span> 
+<span class='line'>263</span> </span><span class="WHIT">                    </span><span class="NAME">t.unshift</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">                    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">obj.transformations.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">                        </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Mat.matVecMult</span><span class="PUNC">(</span><span class="NAME">obj.transformations</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">matrix</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">                    </span><span class="NAME">t.shift</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>269</span> 
+<span class='line'>270</span> </span><span class="WHIT">                </span><span class="COMM">// For images and texts</span><span class="WHIT">
+<span class='line'>271</span> </span><span class="WHIT">                </span><span class="NAME">T</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.create</span><span class="PUNC">(</span><span class="STRN">"transform"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"translate"</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">                </span><span class="NAME">T.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"scaling"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>274</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">                    </span><span class="NAME">actionCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"rotationCenter"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>277</span> </span><span class="WHIT">                    </span><span class="NAME">actionCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"scaleCenter"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>278</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>279</span> 
+<span class='line'>280</span> </span><span class="WHIT">                </span><span class="COMM">// if (Type.isPoint(this.board, this[actionCenter])) {</span><span class="WHIT">
+<span class='line'>281</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">coords</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>282</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>283</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"centroid"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this._update_centroid_center</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isFunction</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">actionCenter</span><span class="PUNC">]</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">                    </span><span class="COMM">// No valid center for this transformation, get out of here.</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">                    </span><span class="NAME">JXG.debug</span><span class="PUNC">(</span><span class="STRN">'Group.update: No valid center for this transformation, get out of here.'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>294</span> 
+<span class='line'>295</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">                    </span><span class="NAME">alpha</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.rad</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">                        </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">                        </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">                        </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">                    </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.create</span><span class="PUNC">(</span><span class="STRN">"transform"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">alpha</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">                        </span><span class="NAME">type</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"rotate"</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">                    </span><span class="NAME">t.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// t.update initializes t.matrix, which is needed if the action element is the first group element.</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"scaling"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">                    </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Math.abs</span><span class="PUNC">(</span><span class="NAME">s</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>308</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">                    </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Geometry.distance</span><span class="PUNC">(</span><span class="NAME">obj.coords.usrCoords.slice</span><span class="PUNC">(</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NAME">s</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">                    </span><span class="NAME">sx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.scaleDirections</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">indexOf</span><span class="PUNC">(</span><span class="STRN">"x"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">                    </span><span class="NAME">sy</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.scaleDirections</span><span class="PUNC">[</span><span class="NAME">drag.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">indexOf</span><span class="PUNC">(</span><span class="STRN">"y"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">s</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NUMB">1.0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>313</span> 
+<span class='line'>314</span> </span><span class="WHIT">                    </span><span class="COMM">// Shift scale center to origin, scale and shift the scale center back.</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">                    </span><span class="NAME">t</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.board.create</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="WHIT">                        </span><span class="STRN">"transform"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>317</span> </span><span class="WHIT">                        </span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NUMB">1</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">sx</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sx</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NUMB">1</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">sy</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sy</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>318</span> </span><span class="WHIT">                        </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">type</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"generic"</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>319</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>320</span> </span><span class="WHIT">                    </span><span class="NAME">t.update</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// This initializes t.matrix, which is needed if the action element is the first group element.</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">                    </span><span class="COMM">// This should not be reached</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>325</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>326</span> 
+<span class='line'>327</span> </span><span class="WHIT">            </span><span class="COMM">// Bind the transformation to any images and texts</span><span class="WHIT">
+<span class='line'>328</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="WHIT">                </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.elementClass</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>331</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">t.board</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>332</span> </span><span class="WHIT">                        </span><span class="COMM">// t itself is a transformation</span><span class="WHIT">
+<span class='line'>333</span> </span><span class="WHIT">                        </span><span class="NAME">t.meltTo</span><span class="PUNC">(</span><span class="NAME">obj</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>334</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">                        </span><span class="COMM">// Drag element is a point, therefore</span><span class="WHIT">
+<span class='line'>336</span> </span><span class="WHIT">                        </span><span class="COMM">// t is an array and we have to use the transformation T.</span><span class="WHIT">
+<span class='line'>337</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.id</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NAME">obj.id</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">                            </span><span class="NAME">T.meltTo</span><span class="PUNC">(</span><span class="NAME">obj</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>342</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>343</span> 
+<span class='line'>344</span> </span><span class="WHIT">            </span><span class="NAME">this._update_apply_transformation</span><span class="PUNC">(</span><span class="NAME">drag</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>345</span> 
+<span class='line'>346</span> </span><span class="WHIT">            </span><span class="NAME">this.needsUpdate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">// This is needed here to prevent infinite recursion because</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">            </span><span class="COMM">// of the board.updateElements call below,</span><span class="WHIT">
+<span class='line'>348</span> 
+<span class='line'>349</span> </span><span class="WHIT">            </span><span class="COMM">// Prepare dependent objects for update</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">                    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">desc</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">descendants</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">descendants.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">desc</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>354</span> </span><span class="WHIT">                            </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">descendants.needsUpdate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT">
+<span class='line'>355</span> </span><span class="WHIT">                                </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">descendants.needsRegularUpdate</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">                                </span><span class="NAME">this.board.needsFullUpdate</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>358</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>359</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">            </span><span class="NAME">this.board.updateElements</span><span class="PUNC">(</span><span class="NAME">drag</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>362</span> 
+<span class='line'>363</span> </span><span class="WHIT">            </span><span class="COMM">// Now, all group elements have their new position and</span><span class="WHIT">
+<span class='line'>364</span> </span><span class="WHIT">            </span><span class="COMM">// we can update the bookkeeping of the coordinates of the group elements.</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">                    </span><span class="NAME">this._updateCoordsCache</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>369</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>370</span> 
+<span class='line'>371</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>373</span> 
+<span class='line'>374</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>375</span>          * @private
+<span class='line'>376</span>         */</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="WHIT">        </span><span class="COMM">//  Determine what the dragging of a group element should do:</span><span class="WHIT">
+<span class='line'>378</span> </span><span class="WHIT">        </span><span class="COMM">//  rotation, translation, scaling or nothing.</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">        </span><span class="NAME">_update_find_drag_type</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>381</span> </span><span class="WHIT">                </span><span class="NAME">obj</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>382</span> </span><span class="WHIT">                </span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"nothing"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="WHIT">                </span><span class="NAME">changed</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>384</span> </span><span class="WHIT">                </span><span class="NAME">dragObjId</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>385</span> 
+<span class='line'>386</span> </span><span class="WHIT">            </span><span class="COMM">// Determine how many elements have changed their position</span><span class="WHIT">
+<span class='line'>387</span> </span><span class="WHIT">            </span><span class="COMM">// If more than one element changed its position, it is a translation.</span><span class="WHIT">
+<span class='line'>388</span> </span><span class="WHIT">            </span><span class="COMM">// If exactly one element changed its position we have to find the type of the point.</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">                    </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>392</span> 
+<span class='line'>393</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.coords.distance</span><span class="PUNC">(</span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NAME">Mat.eps</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>394</span> </span><span class="WHIT">                        </span><span class="NAME">changed.push</span><span class="PUNC">(</span><span class="NAME">obj.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>395</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>396</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>398</span> 
+<span class='line'>399</span> </span><span class="WHIT">            </span><span class="COMM">// Determine type of action: translation, scaling or rotation</span><span class="WHIT">
+<span class='line'>400</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">changed.length</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">                    </span><span class="NAME">action</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>403</span> </span><span class="WHIT">                    </span><span class="NAME">id</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>404</span> </span><span class="WHIT">                    </span><span class="NAME">changed</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">changed</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>406</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>407</span> 
+<span class='line'>408</span> </span><span class="WHIT">            </span><span class="NAME">dragObjId</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">changed</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>409</span> </span><span class="WHIT">            </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">dragObjId</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>410</span> 
+<span class='line'>411</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">changed.length</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>412</span> </span><span class="WHIT">                </span><span class="COMM">// More than one point moved => translation</span><span class="WHIT">
+<span class='line'>413</span> </span><span class="WHIT">                </span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"translation"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">                </span><span class="COMM">// One point moved => we have to determine the type</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">                    </span><span class="NAME">Type.isInArray</span><span class="PUNC">(</span><span class="NAME">this.rotationPoints</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">                    </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">this.rotationCenter</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">                </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">                    </span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">                    </span><span class="NAME">Type.isInArray</span><span class="PUNC">(</span><span class="NAME">this.scalePoints</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">                    </span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">this.scaleCenter</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">                </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">                    </span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"scaling"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isInArray</span><span class="PUNC">(</span><span class="NAME">this.translationPoints</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="WHIT">                    </span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"translation"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>430</span> 
+<span class='line'>431</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>432</span> </span><span class="WHIT">                </span><span class="NAME">action</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>433</span> </span><span class="WHIT">                </span><span class="NAME">id</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">dragObjId</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">                </span><span class="NAME">changed</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">changed</span><span class="WHIT">
+<span class='line'>435</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>437</span> 
+<span class='line'>438</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>439</span>          * Determine the Euclidean (affine) coordinates of the centroid of the group.
+<span class='line'>440</span>          * @private
+<span class='line'>441</span>          * @returns {Array} array of length two,
+<span class='line'>442</span>         */</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">        </span><span class="NAME">_update_centroid_center</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>444</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>445</span> 
+<span class='line'>446</span> </span><span class="WHIT">            </span><span class="NAME">center</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>447</span> </span><span class="WHIT">            </span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.coords.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>450</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>451</span> </span><span class="WHIT">                    </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>452</span> </span><span class="WHIT">                    </span><span class="PUNC">++</span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>453</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>454</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>455</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>456</span> </span><span class="WHIT">                </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">                </span><span class="NAME">center</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>459</span> 
+<span class='line'>460</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">center</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>462</span> 
+<span class='line'>463</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>464</span>          * @private
+<span class='line'>465</span>         */</span><span class="WHIT">
+<span class='line'>466</span> </span><span class="WHIT">        </span><span class="COMM">// Apply the transformation to all elements of the group</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="WHIT">        </span><span class="NAME">_update_apply_transformation</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>469</span> 
+<span class='line'>470</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>471</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>472</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.exists</span><span class="PUNC">(</span><span class="NAME">this.board.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>473</span> </span><span class="WHIT">                        </span><span class="NAME">obj</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>474</span> 
+<span class='line'>475</span> </span><span class="WHIT">                        </span><span class="COMM">// Here, it is important that we change the position</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="WHIT">                        </span><span class="COMM">// of elements by using setCoordinates.</span><span class="WHIT">
+<span class='line'>477</span> </span><span class="WHIT">                        </span><span class="COMM">// Thus, we avoid the call of snapToGrid().</span><span class="WHIT">
+<span class='line'>478</span> </span><span class="WHIT">                        </span><span class="COMM">// This is done in the subsequent call of board.updateElements()</span><span class="WHIT">
+<span class='line'>479</span> </span><span class="WHIT">                        </span><span class="COMM">// in Group.update() above.</span><span class="WHIT">
+<span class='line'>480</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.id</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NAME">drag.id</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>481</span> </span><span class="WHIT">                            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"translation"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>482</span> </span><span class="WHIT">                                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">Type.isInArray</span><span class="PUNC">(</span><span class="NAME">drag.changed</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">obj.id</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>483</span> </span><span class="WHIT">                                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>484</span> </span><span class="WHIT">                                        </span><span class="NAME">obj.coords.setCoordinates</span><span class="PUNC">(</span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="WHIT">
+<span class='line'>485</span> </span><span class="WHIT">                                            </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>486</span> </span><span class="WHIT">                                            </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">t</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>487</span> </span><span class="WHIT">                                        </span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>488</span> </span><span class="WHIT">                                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>489</span> </span><span class="WHIT">                                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="WHIT">                            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>491</span> </span><span class="WHIT">                                </span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT">
+<span class='line'>492</span> </span><span class="WHIT">                                </span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"scaling"</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="WHIT">                            </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">                                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">obj.elementClass</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="NAME">Const.OBJECT_CLASS_POINT</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">                                    </span><span class="NAME">t.applyOnce</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">obj</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>496</span> </span><span class="WHIT">                                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>497</span> </span><span class="WHIT">                            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">                            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="NAME">drag.action</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="STRN">"scaling"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>500</span> </span><span class="WHIT">                                </span><span class="NAME">obj.coords.setCoordinates</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>501</span> </span><span class="WHIT">                                    </span><span class="NAME">Const.COORDS_BY_USER</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">                                    </span><span class="NAME">Mat.matVecMult</span><span class="PUNC">(</span><span class="NAME">t.matrix</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.coords</span><span class="PUNC">[</span><span class="NAME">obj.id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">usrCoords</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">                                </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">                            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>505</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>506</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">                        </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>508</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>509</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>511</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>512</span> 
+<span class='line'>513</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>514</span>          * Adds an Point to this group.
+<span class='line'>515</span>          * @param {JXG.Point} object The point added to the group.
+<span class='line'>516</span>          * @returns {JXG.Group} returns this group
+<span class='line'>517</span>          */</span><span class="WHIT">
+<span class='line'>518</span> </span><span class="WHIT">        </span><span class="NAME">addPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>519</span> </span><span class="WHIT">            </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">object.id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>520</span> </span><span class="WHIT">            </span><span class="NAME">this._updateCoordsCache</span><span class="PUNC">(</span><span class="NAME">object.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>521</span> </span><span class="WHIT">            </span><span class="NAME">this.translationPoints.push</span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>522</span> 
+<span class='line'>523</span> </span><span class="WHIT">            </span><span class="NAME">object.groups.push</span><span class="PUNC">(</span><span class="NAME">this.id</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>524</span> </span><span class="WHIT">            </span><span class="NAME">object.groups</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.uniqueArray</span><span class="PUNC">(</span><span class="NAME">object.groups</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>525</span> 
+<span class='line'>526</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>527</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>528</span> 
+<span class='line'>529</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>530</span>          * Adds multiple points to this group.
+<span class='line'>531</span>          * @param {Array} objects An array of points to add to the group.
+<span class='line'>532</span>          * @returns {JXG.Group} returns this group
+<span class='line'>533</span>          */</span><span class="WHIT">
+<span class='line'>534</span> </span><span class="WHIT">        </span><span class="NAME">addPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>535</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>536</span> 
+<span class='line'>537</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">p</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">objects.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">p</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>538</span> </span><span class="WHIT">                </span><span class="NAME">this.addPoint</span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">[</span><span class="NAME">p</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>539</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>540</span> 
+<span class='line'>541</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>542</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>543</span> 
+<span class='line'>544</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>545</span>          * Adds all points in a group to this group.
+<span class='line'>546</span>          * @param {JXG.Group} group The group added to this group.
+<span class='line'>547</span>          * @returns {JXG.Group} returns this group
+<span class='line'>548</span>          */</span><span class="WHIT">
+<span class='line'>549</span> </span><span class="WHIT">        </span><span class="NAME">addGroup</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">group</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>550</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>551</span> 
+<span class='line'>552</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">group.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>553</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">group.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>554</span> </span><span class="WHIT">                    </span><span class="NAME">this.addPoint</span><span class="PUNC">(</span><span class="NAME">group.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>555</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>556</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>557</span> 
+<span class='line'>558</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>559</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>560</span> 
+<span class='line'>561</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>562</span>          * Removes a point from the group.
+<span class='line'>563</span>          * @param {JXG.Point} point
+<span class='line'>564</span>          * @returns {JXG.Group} returns this group
+<span class='line'>565</span>          */</span><span class="WHIT">
+<span class='line'>566</span> </span><span class="WHIT">        </span><span class="NAME">removePoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>567</span> </span><span class="WHIT">            </span><span class="KEYW">delete</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">point.id</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>568</span> 
+<span class='line'>569</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>570</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>571</span> 
+<span class='line'>572</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>573</span>          * Sets the center of rotation for the group. This is either a point or the centroid of the group.
+<span class='line'>574</span>          * @param {JXG.Point|String|Array|Function} object A point which will be the center of rotation, the string "centroid", or
+<span class='line'>575</span>          * an array of length two, or a function returning an array of length two.
+<span class='line'>576</span>          * @default 'centroid'
+<span class='line'>577</span>          * @returns {JXG.Group} returns this group
+<span class='line'>578</span>          */</span><span class="WHIT">
+<span class='line'>579</span> </span><span class="WHIT">        </span><span class="NAME">setRotationCenter</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>580</span> </span><span class="WHIT">            </span><span class="NAME">this.rotationCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">object</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>581</span> 
+<span class='line'>582</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>583</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>584</span> 
+<span class='line'>585</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>586</span>          * Sets the rotation points of the group. Dragging at one of these points results into a rotation of the whole group around
+<span class='line'>587</span>          * the rotation center of the group {@see JXG.Group#setRotationCenter}.
+<span class='line'>588</span>          * @param {Array|JXG.Point} objects Array of {@link JXG.Point} or arbitrary number of {@link JXG.Point} elements.
+<span class='line'>589</span>          * @returns {JXG.Group} returns this group
+<span class='line'>590</span>          */</span><span class="WHIT">
+<span class='line'>591</span> </span><span class="WHIT">        </span><span class="NAME">setRotationPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>592</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._setActionPoints</span><span class="PUNC">(</span><span class="STRN">"rotation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>593</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>594</span> 
+<span class='line'>595</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>596</span>          * Adds a point to the set of rotation points of the group. Dragging at one of these points results into a rotation of the whole group around
+<span class='line'>597</span>          * the rotation center of the group {@see JXG.Group#setRotationCenter}.
+<span class='line'>598</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>599</span>          * @returns {JXG.Group} returns this group
+<span class='line'>600</span>          */</span><span class="WHIT">
+<span class='line'>601</span> </span><span class="WHIT">        </span><span class="NAME">addRotationPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>602</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._addActionPoint</span><span class="PUNC">(</span><span class="STRN">"rotation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>603</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>604</span> 
+<span class='line'>605</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>606</span>          * Removes the rotation property from a point of the group.
+<span class='line'>607</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>608</span>          * @returns {JXG.Group} returns this group
+<span class='line'>609</span>          */</span><span class="WHIT">
+<span class='line'>610</span> </span><span class="WHIT">        </span><span class="NAME">removeRotationPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>611</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._removeActionPoint</span><span class="PUNC">(</span><span class="STRN">"rotation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>612</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>613</span> 
+<span class='line'>614</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>615</span>          * Sets the translation points of the group. Dragging at one of these points results into a translation of the whole group.
+<span class='line'>616</span>          * @param {Array|JXG.Point} objects Array of {@link JXG.Point} or arbitrary number of {@link JXG.Point} elements.
+<span class='line'>617</span>          *
+<span class='line'>618</span>          * By default, all points of the group are translation points.
+<span class='line'>619</span>          * @returns {JXG.Group} returns this group
+<span class='line'>620</span>          */</span><span class="WHIT">
+<span class='line'>621</span> </span><span class="WHIT">        </span><span class="NAME">setTranslationPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>622</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._setActionPoints</span><span class="PUNC">(</span><span class="STRN">"translation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>623</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>624</span> 
+<span class='line'>625</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>626</span>          * Adds a point to the set of the translation points of the group.
+<span class='line'>627</span>          * Dragging one of these points results into a translation of the whole group.
+<span class='line'>628</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>629</span>          * @returns {JXG.Group} returns this group
+<span class='line'>630</span>          */</span><span class="WHIT">
+<span class='line'>631</span> </span><span class="WHIT">        </span><span class="NAME">addTranslationPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>632</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._addActionPoint</span><span class="PUNC">(</span><span class="STRN">"translation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>633</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>634</span> 
+<span class='line'>635</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>636</span>          * Removes the translation property from a point of the group.
+<span class='line'>637</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>638</span>          * @returns {JXG.Group} returns this group
+<span class='line'>639</span>          */</span><span class="WHIT">
+<span class='line'>640</span> </span><span class="WHIT">        </span><span class="NAME">removeTranslationPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>641</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._removeActionPoint</span><span class="PUNC">(</span><span class="STRN">"translation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>642</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>643</span> 
+<span class='line'>644</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>645</span>          * Sets the center of scaling for the group. This is either a point or the centroid of the group.
+<span class='line'>646</span>          * @param {JXG.Point|String} object A point which will be the center of scaling, the string "centroid", or
+<span class='line'>647</span>          * an array of length two, or a function returning an array of length two.
+<span class='line'>648</span>          * @returns {JXG.Group} returns this group
+<span class='line'>649</span>          */</span><span class="WHIT">
+<span class='line'>650</span> </span><span class="WHIT">        </span><span class="NAME">setScaleCenter</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">object</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>651</span> </span><span class="WHIT">            </span><span class="NAME">this.scaleCenter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">object</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>652</span> 
+<span class='line'>653</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>654</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>655</span> 
+<span class='line'>656</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>657</span>          * Sets the scale points of the group. Dragging at one of these points results into a scaling of the whole group.
+<span class='line'>658</span>          * @param {Array|JXG.Point} objects Array of {@link JXG.Point} or arbitrary number of {@link JXG.Point} elements.
+<span class='line'>659</span>          * @param {String} direction Restricts the directions to be scaled. Possible values are 'x', 'y', 'xy'. Default value is 'xy'.
+<span class='line'>660</span>          *
+<span class='line'>661</span>          * By default, all points of the group are translation points.
+<span class='line'>662</span>          * @returns {JXG.Group} returns this group
+<span class='line'>663</span>          */</span><span class="WHIT">
+<span class='line'>664</span> </span><span class="WHIT">        </span><span class="NAME">setScalePoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">direction</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>665</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">objs</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>666</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>667</span> </span><span class="WHIT">                </span><span class="NAME">objs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>668</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>669</span> </span><span class="WHIT">                </span><span class="NAME">objs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">arguments</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>670</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>671</span> 
+<span class='line'>672</span> </span><span class="WHIT">            </span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">objs.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>673</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="PUNC">++</span><span class="NAME">i</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>674</span> </span><span class="WHIT">                </span><span class="NAME">this.scaleDirections</span><span class="PUNC">[</span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">objs</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">direction</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="STRN">"xy"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>675</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>676</span> 
+<span class='line'>677</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._setActionPoints</span><span class="PUNC">(</span><span class="STRN">"scale"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>678</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>679</span> 
+<span class='line'>680</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>681</span>          * Adds a point to the set of the scale points of the group. Dragging at one of these points results into a scaling of the whole group.
+<span class='line'>682</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>683</span>          * @param {String} direction Restricts the directions to be scaled. Possible values are 'x', 'y', 'xy'. Default value is 'xy'.
+<span class='line'>684</span>          * @returns {JXG.Group} returns this group
+<span class='line'>685</span>          */</span><span class="WHIT">
+<span class='line'>686</span> </span><span class="WHIT">        </span><span class="NAME">addScalePoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">direction</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>687</span> </span><span class="WHIT">            </span><span class="NAME">this._addActionPoint</span><span class="PUNC">(</span><span class="STRN">"scale"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>688</span> </span><span class="WHIT">            </span><span class="NAME">this.scaleDirections</span><span class="PUNC">[</span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">direction</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="STRN">"xy"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>689</span> 
+<span class='line'>690</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>691</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>692</span> 
+<span class='line'>693</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>694</span>          * Removes the scaling property from a point of the group.
+<span class='line'>695</span>          * @param {JXG.Point} point {@link JXG.Point} element.
+<span class='line'>696</span>          * @returns {JXG.Group} returns this group
+<span class='line'>697</span>          */</span><span class="WHIT">
+<span class='line'>698</span> </span><span class="WHIT">        </span><span class="NAME">removeScalePoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>699</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this._removeActionPoint</span><span class="PUNC">(</span><span class="STRN">"scale"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>700</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>701</span> 
+<span class='line'>702</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>703</span>          * Generic method for {@link JXG.Group@setTranslationPoints} and {@link JXG.Group@setRotationPoints}
+<span class='line'>704</span>          * @private
+<span class='line'>705</span>          */</span><span class="WHIT">
+<span class='line'>706</span> </span><span class="WHIT">        </span><span class="NAME">_setActionPoints</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>707</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">objs</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">i</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>708</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Type.isArray</span><span class="PUNC">(</span><span class="NAME">objects</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>709</span> </span><span class="WHIT">                </span><span class="NAME">objs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">objects</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>710</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>711</span> </span><span class="WHIT">                </span><span class="NAME">objs</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">arguments</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>712</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>713</span> 
+<span class='line'>714</span> </span><span class="WHIT">            </span><span class="NAME">len</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">objs.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>715</span> </span><span class="WHIT">            </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"Points"</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>716</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">i</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">len</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="PUNC">++</span><span class="NAME">i</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>717</span> </span><span class="WHIT">                </span><span class="NAME">this._addActionPoint</span><span class="PUNC">(</span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">objs</span><span class="PUNC">[</span><span class="NAME">i</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>718</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>719</span> 
+<span class='line'>720</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>721</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>722</span> 
+<span class='line'>723</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>724</span>          * Generic method for {@link JXG.Group@addTranslationPoint} and {@link JXG.Group@addRotationPoint}
+<span class='line'>725</span>          * @private
+<span class='line'>726</span>          */</span><span class="WHIT">
+<span class='line'>727</span> </span><span class="WHIT">        </span><span class="NAME">_addActionPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>728</span> </span><span class="WHIT">            </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"Points"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">push</span><span class="PUNC">(</span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>729</span> 
+<span class='line'>730</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>731</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>732</span> 
+<span class='line'>733</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>734</span>          * Generic method for {@link JXG.Group@removeTranslationPoint} and {@link JXG.Group@removeRotationPoint}
+<span class='line'>735</span>          * @private
+<span class='line'>736</span>          */</span><span class="WHIT">
+<span class='line'>737</span> </span><span class="WHIT">        </span><span class="NAME">_removeActionPoint</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">action</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">point</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>738</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"Points"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">indexOf</span><span class="PUNC">(</span><span class="NAME">this.board.select</span><span class="PUNC">(</span><span class="NAME">point</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>739</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>740</span> </span><span class="WHIT">                </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">action</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"Points"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">splice</span><span class="PUNC">(</span><span class="NAME">idx</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>741</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>742</span> 
+<span class='line'>743</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>744</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>745</span> 
+<span class='line'>746</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>747</span>          * @deprecated
+<span class='line'>748</span>          * Use setAttribute
+<span class='line'>749</span>          */</span><span class="WHIT">
+<span class='line'>750</span> </span><span class="WHIT">        </span><span class="NAME">setProperty</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>751</span> </span><span class="WHIT">            </span><span class="NAME">JXG.deprecated</span><span class="PUNC">(</span><span class="STRN">"Group.setProperty"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Group.setAttribute()"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>752</span> </span><span class="WHIT">            </span><span class="NAME">this.setAttribute.apply</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">arguments</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>753</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>754</span> 
+<span class='line'>755</span> </span><span class="WHIT">        </span><span class="NAME">setAttribute</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>756</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">el</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>757</span> 
+<span class='line'>758</span> </span><span class="WHIT">            </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">el</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">this.objects</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>759</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.objects.hasOwnProperty</span><span class="PUNC">(</span><span class="NAME">el</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>760</span> </span><span class="WHIT">                    </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point.setAttribute.apply</span><span class="PUNC">(</span><span class="WHIT">
+<span class='line'>761</span> </span><span class="WHIT">                        </span><span class="NAME">this.objects</span><span class="PUNC">[</span><span class="NAME">el</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">point</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>762</span> </span><span class="WHIT">                        </span><span class="NAME">arguments</span><span class="WHIT">
+<span class='line'>763</span> </span><span class="WHIT">                    </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>764</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>765</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>766</span> 
+<span class='line'>767</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>768</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>769</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>770</span> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>771</span> 
+<span class='line'>772</span> </span><span class="COMM">/**
+<span class='line'>773</span>  * @class A container element to control the movement of given set of point, image or text elements simultaneously.
+<span class='line'>774</span>  * The elements of the group and dependent elements can be translated, rotated and scaled by
+<span class='line'>775</span>  * dragging one of the group elements.
+<span class='line'>776</span>  *
+<span class='line'>777</span>  * @pseudo
+<span class='line'>778</span>  * @name Group
+<span class='line'>779</span>  * @augments JXG.Group
+<span class='line'>780</span>  * @constructor
+<span class='line'>781</span>  * @type JXG.Group
+<span class='line'>782</span>  * @param {JXG.Board} board The board the points are on.
+<span class='line'>783</span>  * @param {Array} parents Array of points to group.
+<span class='line'>784</span>  * @param {Object} attributes Visual properties (unused).
+<span class='line'>785</span>  * @returns {JXG.Group}
+<span class='line'>786</span>  *
+<span class='line'>787</span>  * @example
+<span class='line'>788</span>  *
+<span class='line'>789</span>  *  // Create some free points. e.g. A, B, C, D
+<span class='line'>790</span>  *  // Create a group
+<span class='line'>791</span>  *
+<span class='line'>792</span>  *  var p, col, g;
+<span class='line'>793</span>  *  col = 'blue';
+<span class='line'>794</span>  *  p = [];
+<span class='line'>795</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>796</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>797</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>798</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>799</span>  *  g = board.create('group', p);
+<span class='line'>800</span>  *
+<span class='line'>801</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGa2204533-db91-4af9-b720-70394de4d367" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>802</span>  * &lt;script type="text/javascript">
+<span class='line'>803</span>  *  (function () {
+<span class='line'>804</span>  *  var board, p, col, g;
+<span class='line'>805</span>  *  board = JXG.JSXGraph.initBoard('JXGa2204533-db91-4af9-b720-70394de4d367', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>806</span>  *  col = 'blue';
+<span class='line'>807</span>  *  p = [];
+<span class='line'>808</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>809</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>810</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>811</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>812</span>  *  g = board.create('group', p);
+<span class='line'>813</span>  *  })();
+<span class='line'>814</span>  * &lt;/script>&lt;pre>
+<span class='line'>815</span>  *
+<span class='line'>816</span>  *
+<span class='line'>817</span>  * @example
+<span class='line'>818</span>  *
+<span class='line'>819</span>  *  // Create some free points. e.g. A, B, C, D
+<span class='line'>820</span>  *  // Create a group
+<span class='line'>821</span>  *  // If the points define a polygon and the polygon has the attribute hasInnerPoints:true,
+<span class='line'>822</span>  *  // the polygon can be dragged around.
+<span class='line'>823</span>  *
+<span class='line'>824</span>  *  var p, col, pol, g;
+<span class='line'>825</span>  *  col = 'blue';
+<span class='line'>826</span>  *  p = [];
+<span class='line'>827</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>828</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>829</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>830</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>831</span>  *
+<span class='line'>832</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>833</span>  *  g = board.create('group', p);
+<span class='line'>834</span>  *
+<span class='line'>835</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG781b5564-a671-4327-81c6-de915c8f924e" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>836</span>  * &lt;script type="text/javascript">
+<span class='line'>837</span>  *  (function () {
+<span class='line'>838</span>  *  var board, p, col, pol, g;
+<span class='line'>839</span>  *  board = JXG.JSXGraph.initBoard('JXG781b5564-a671-4327-81c6-de915c8f924e', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>840</span>  *  col = 'blue';
+<span class='line'>841</span>  *  p = [];
+<span class='line'>842</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>843</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>844</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>845</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>846</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>847</span>  *  g = board.create('group', p);
+<span class='line'>848</span>  *  })();
+<span class='line'>849</span>  * &lt;/script>&lt;pre>
+<span class='line'>850</span>  *
+<span class='line'>851</span>  *  @example
+<span class='line'>852</span>  *
+<span class='line'>853</span>  *  // Allow rotations:
+<span class='line'>854</span>  *  // Define a center of rotation and declare points of the group as "rotation points".
+<span class='line'>855</span>  *
+<span class='line'>856</span>  *  var p, col, pol, g;
+<span class='line'>857</span>  *  col = 'blue';
+<span class='line'>858</span>  *  p = [];
+<span class='line'>859</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>860</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>861</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>862</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>863</span>  *
+<span class='line'>864</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>865</span>  *  g = board.create('group', p);
+<span class='line'>866</span>  *  g.setRotationCenter(p[0]);
+<span class='line'>867</span>  *  g.setRotationPoints([p[1], p[2]]);
+<span class='line'>868</span>  *
+<span class='line'>869</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGf0491b62-b377-42cb-b55c-4ef5374b39fc" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>870</span>  * &lt;script type="text/javascript">
+<span class='line'>871</span>  *  (function () {
+<span class='line'>872</span>  *  var board, p, col, pol, g;
+<span class='line'>873</span>  *  board = JXG.JSXGraph.initBoard('JXGf0491b62-b377-42cb-b55c-4ef5374b39fc', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>874</span>  *  col = 'blue';
+<span class='line'>875</span>  *  p = [];
+<span class='line'>876</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>877</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>878</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>879</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>880</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>881</span>  *  g = board.create('group', p);
+<span class='line'>882</span>  *  g.setRotationCenter(p[0]);
+<span class='line'>883</span>  *  g.setRotationPoints([p[1], p[2]]);
+<span class='line'>884</span>  *  })();
+<span class='line'>885</span>  * &lt;/script>&lt;pre>
+<span class='line'>886</span>  *
+<span class='line'>887</span>  *  @example
+<span class='line'>888</span>  *
+<span class='line'>889</span>  *  // Allow rotations:
+<span class='line'>890</span>  *  // As rotation center, arbitrary points, coordinate arrays,
+<span class='line'>891</span>  *  // or functions returning coordinate arrays can be given.
+<span class='line'>892</span>  *  // Another possibility is to use the predefined string 'centroid'.
+<span class='line'>893</span>  *
+<span class='line'>894</span>  *  // The methods to define the rotation points can be chained.
+<span class='line'>895</span>  *
+<span class='line'>896</span>  *  var p, col, pol, g;
+<span class='line'>897</span>  *  col = 'blue';
+<span class='line'>898</span>  *  p = [];
+<span class='line'>899</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>900</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>901</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>902</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>903</span>  *
+<span class='line'>904</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>905</span>  *  g = board.create('group', p).setRotationCenter('centroid').setRotationPoints([p[1], p[2]]);
+<span class='line'>906</span>  *
+<span class='line'>907</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXG8785b099-a75e-4769-bfd8-47dd4376fe27" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>908</span>  * &lt;script type="text/javascript">
+<span class='line'>909</span>  *  (function () {
+<span class='line'>910</span>  *  var board, p, col, pol, g;
+<span class='line'>911</span>  *  board = JXG.JSXGraph.initBoard('JXG8785b099-a75e-4769-bfd8-47dd4376fe27', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>912</span>  *  col = 'blue';
+<span class='line'>913</span>  *  p = [];
+<span class='line'>914</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>915</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>916</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>917</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>918</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>919</span>  *  g = board.create('group', p).setRotationCenter('centroid').setRotationPoints([p[1], p[2]]);
+<span class='line'>920</span>  *  })();
+<span class='line'>921</span>  * &lt;/script>&lt;pre>
+<span class='line'>922</span>  *
+<span class='line'>923</span>  *  @example
+<span class='line'>924</span>  *
+<span class='line'>925</span>  *  // Allow scaling:
+<span class='line'>926</span>  *  // As for rotation one can declare points of the group to trigger a scaling operation.
+<span class='line'>927</span>  *  // For this, one has to define a scaleCenter, in analogy to rotations.
+<span class='line'>928</span>  *
+<span class='line'>929</span>  *  // Here, the yellow  point enables scaling, the red point a rotation.
+<span class='line'>930</span>  *
+<span class='line'>931</span>  *  var p, col, pol, g;
+<span class='line'>932</span>  *  col = 'blue';
+<span class='line'>933</span>  *  p = [];
+<span class='line'>934</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>935</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'yellow', fillColor:'yellow'}));
+<span class='line'>936</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>937</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>938</span>  *
+<span class='line'>939</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>940</span>  *  g = board.create('group', p).setRotationCenter('centroid').setRotationPoints([p[2]]);
+<span class='line'>941</span>  *  g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>942</span>  *
+<span class='line'>943</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGc3ca436b-e4fc-4de5-bab4-09790140c675" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>944</span>  * &lt;script type="text/javascript">
+<span class='line'>945</span>  *  (function () {
+<span class='line'>946</span>  *  var board, p, col, pol, g;
+<span class='line'>947</span>  *  board = JXG.JSXGraph.initBoard('JXGc3ca436b-e4fc-4de5-bab4-09790140c675', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>948</span>  *  col = 'blue';
+<span class='line'>949</span>  *  p = [];
+<span class='line'>950</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>951</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'yellow', fillColor:'yellow'}));
+<span class='line'>952</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>953</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>954</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>955</span>  *  g = board.create('group', p).setRotationCenter('centroid').setRotationPoints([p[2]]);
+<span class='line'>956</span>  *  g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>957</span>  *  })();
+<span class='line'>958</span>  * &lt;/script>&lt;pre>
+<span class='line'>959</span>  *
+<span class='line'>960</span>  *  @example
+<span class='line'>961</span>  *
+<span class='line'>962</span>  *  // Allow Translations:
+<span class='line'>963</span>  *  // By default, every point of a group triggers a translation.
+<span class='line'>964</span>  *  // There may be situations, when this is not wanted.
+<span class='line'>965</span>  *
+<span class='line'>966</span>  *  // In this example, E triggers nothing, but itself is rotation center
+<span class='line'>967</span>  *  // and is translated, if other points are moved around.
+<span class='line'>968</span>  *
+<span class='line'>969</span>  *  var p, q, col, pol, g;
+<span class='line'>970</span>  *  col = 'blue';
+<span class='line'>971</span>  *  p = [];
+<span class='line'>972</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>973</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'yellow', fillColor:'yellow'}));
+<span class='line'>974</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>975</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>976</span>  *  q = board.create('point',[0, 0], {size: 5, strokeColor:col, fillColor:col});
+<span class='line'>977</span>  *
+<span class='line'>978</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>979</span>  *  g = board.create('group', p.concat(q)).setRotationCenter('centroid').setRotationPoints([p[2]]);
+<span class='line'>980</span>  *  g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>981</span>  *  g.removeTranslationPoint(q);
+<span class='line'>982</span>  *
+<span class='line'>983</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGd19b800a-57a9-4303-b49a-8f5b7a5488f0" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>984</span>  * &lt;script type="text/javascript">
+<span class='line'>985</span>  *  (function () {
+<span class='line'>986</span>  *  var board, p, q, col, pol, g;
+<span class='line'>987</span>  *  board = JXG.JSXGraph.initBoard('JXGd19b800a-57a9-4303-b49a-8f5b7a5488f0', {boundingbox:[-5,5,5,-5], keepaspectratio:true, axis:true, showcopyright: false});
+<span class='line'>988</span>  *  col = 'blue';
+<span class='line'>989</span>  *  p = [];
+<span class='line'>990</span>  *  p.push(board.create('point',[-2, -1 ], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>991</span>  *  p.push(board.create('point',[2, -1 ], {size: 5, strokeColor:'yellow', fillColor:'yellow'}));
+<span class='line'>992</span>  *  p.push(board.create('point',[2, 1 ], {size: 5, strokeColor:'red', fillColor:'red'}));
+<span class='line'>993</span>  *  p.push(board.create('point',[-2, 1], {size: 5, strokeColor:col, fillColor:col}));
+<span class='line'>994</span>  *  q = board.create('point',[0, 0], {size: 5, strokeColor:col, fillColor:col});
+<span class='line'>995</span>  *
+<span class='line'>996</span>  *  pol = board.create('polygon', p, {hasInnerPoints: true});
+<span class='line'>997</span>  *  g = board.create('group', p.concat(q)).setRotationCenter('centroid').setRotationPoints([p[2]]);
+<span class='line'>998</span>  *  g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>999</span>  *  g.removeTranslationPoint(q);
+<span class='line'>1000</span>  *  })();
+<span class='line'>1001</span>  * &lt;/script>&lt;pre>
+<span class='line'>1002</span>  *
+<span class='line'>1003</span>  *  @example
+<span class='line'>1004</span>  *
+<span class='line'>1005</span>  *        // Add an image and use the group tools to manipulate it
+<span class='line'>1006</span>  *       let urlImg = "https://jsxgraph.org/distrib/images/uccellino.jpg";
+<span class='line'>1007</span>  *       let lowleft = [-2, -1]
+<span class='line'>1008</span>  *
+<span class='line'>1009</span>  *       let col = 'blue';
+<span class='line'>1010</span>  *       let p = [];
+<span class='line'>1011</span>  *       p.push(board.create('point', lowleft, { size: 5, strokeColor: col, fillColor: col }));
+<span class='line'>1012</span>  *       p.push(board.create('point', [2, -1], { size: 5, strokeColor: 'yellow', fillColor: 'yellow', name: 'scale' }));
+<span class='line'>1013</span>  *       p.push(board.create('point', [2, 1], { size: 5, strokeColor: 'red', fillColor: 'red', name: 'rotate' }));
+<span class='line'>1014</span>  *       p.push(board.create('point', [-2, 1], { size: 5, strokeColor: col, fillColor: col, name: 'translate' }));
+<span class='line'>1015</span>  *
+<span class='line'>1016</span>  *       let im = board.create('image', [urlImg, lowleft, [2, 2]]);
+<span class='line'>1017</span>  *       let pol = board.create('polygon', p, { hasInnerPoints: true });
+<span class='line'>1018</span>  *
+<span class='line'>1019</span>  *       let g = board.create('group', p.concat(im))
+<span class='line'>1020</span>  *       // g.addPoint(im)   // image, but adds as a point
+<span class='line'>1021</span>  *
+<span class='line'>1022</span>  *       g.setRotationCenter(lowleft)
+<span class='line'>1023</span>  *       g.setRotationPoints([p[2]]);
+<span class='line'>1024</span>  *
+<span class='line'>1025</span>  *       g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>1026</span>  *
+<span class='line'>1027</span>  * &lt;/pre>&lt;div class="jxgbox" id="JXGd19b800a-57a9-4303-b49a-8f5b7a5489f1" style="width: 400px; height: 300px;">&lt;/div>
+<span class='line'>1028</span>  * &lt;script type="text/javascript">
+<span class='line'>1029</span>  *  (function () {
+<span class='line'>1030</span>  *       let board = JXG.JSXGraph.initBoard('JXGd19b800a-57a9-4303-b49a-8f5b7a5489f1')
+<span class='line'>1031</span>  *
+<span class='line'>1032</span>  *       // Add an image and use the group tools to manipulate it
+<span class='line'>1033</span>  *       let urlImg = "https://jsxgraph.org/distrib/images/uccellino.jpg";
+<span class='line'>1034</span>  *       let lowleft = [-2, -1]
+<span class='line'>1035</span>  *
+<span class='line'>1036</span>  *       let col = 'blue';
+<span class='line'>1037</span>  *       let p = [];
+<span class='line'>1038</span>  *       p.push(board.create('point', lowleft, { size: 5, strokeColor: col, fillColor: col }));
+<span class='line'>1039</span>  *       p.push(board.create('point', [2, -1], { size: 5, strokeColor: 'yellow', fillColor: 'yellow', name: 'scale' }));
+<span class='line'>1040</span>  *       p.push(board.create('point', [2, 1], { size: 5, strokeColor: 'red', fillColor: 'red', name: 'rotate' }));
+<span class='line'>1041</span>  *       p.push(board.create('point', [-2, 1], { size: 5, strokeColor: col, fillColor: col, name: 'translate' }));
+<span class='line'>1042</span>  *
+<span class='line'>1043</span>  *       let im = board.create('image', [urlImg, lowleft, [2, 2]]);
+<span class='line'>1044</span>  *       let pol = board.create('polygon', p, { hasInnerPoints: true });
+<span class='line'>1045</span>  *
+<span class='line'>1046</span>  *       let g = board.create('group', p.concat(im))
+<span class='line'>1047</span>  *       // g.addPoint(im)   // image, but adds as a point
+<span class='line'>1048</span>  *
+<span class='line'>1049</span>  *       g.setRotationCenter(lowleft)
+<span class='line'>1050</span>  *       g.setRotationPoints([p[2]]);
+<span class='line'>1051</span>  *
+<span class='line'>1052</span>  *       g.setScaleCenter(p[0]).setScalePoints(p[1]);
+<span class='line'>1053</span>  *  })();
+<span class='line'>1054</span>  * &lt;/script>&lt;pre>
+<span class='line'>1055</span>  */</span><span class="WHIT">
+<span class='line'>1056</span> </span><span class="NAME">JXG.createGroup</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attributes</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>1057</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Type.copyAttributes</span><span class="PUNC">(</span><span class="NAME">attributes</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">board.options</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"group"</span><span class="PUNC">)</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'>1058</span> </span><span class="WHIT">        </span><span class="NAME">g</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">JXG.Group</span><span class="PUNC">(</span><span class="NAME">board</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">parents</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">attr</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1059</span> 
+<span class='line'>1060</span> </span><span class="WHIT">    </span><span class="NAME">g.elType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"group"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1061</span> </span><span class="WHIT">    </span><span class="NAME">g.setParents</span><span class="PUNC">(</span><span class="NAME">parents</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1062</span> 
+<span class='line'>1063</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">g</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1064</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1065</span> 
+<span class='line'>1066</span> </span><span class="NAME">JXG.registerElement</span><span class="PUNC">(</span><span class="STRN">"group"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">JXG.createGroup</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1067</span> 
+<span class='line'>1068</span> </span><span class="NAME">export</span><span class="WHIT"> </span><span class="KEYW">default</span><span class="WHIT"> </span><span class="NAME">JXG.Group</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>1069</span> </span><span class="COMM">// export default {</span><span class="WHIT">
+<span class='line'>1070</span> </span><span class="COMM">//     Group: JXG.Group,</span><span class="WHIT">
+<span class='line'>1071</span> </span><span class="COMM">//     createGroup: JXG.createGroup</span><span class="WHIT">
+<span class='line'>1072</span> </span><span class="COMM">// };</span><span class="WHIT">
+<span class='line'>1073</span> </span></pre></body></html>
