@@ -4118,9 +4118,9 @@
                                                               (unreachable))))))
                                     (else (call $raise-expected-number)
                                           (unreachable)))))))
-             (list (binop '$+2 '$fx+ '$fl+)
-                   (binop '$- '$fx- '$fl-)
-                   (binop '$* '$fx* '$fl*)))
+            (list (binop '$+2 '$fx+ '$fl+)
+                  (binop '$-2 '$fx- '$fl-)
+                  (binop '$* '$fx* '$fl*)))
 
          (func $+ (type $Prim>=0)
                (param $xs0 (ref eq)) (result (ref eq))
@@ -4146,7 +4146,31 @@
                             (local.set $r    (call $+2 (local.get $r) (local.get $v)))
                             (local.set $xs   (struct.get $Pair $d (local.get $node)))
                             (br $loop)))
-               (local.get $r))
+              (local.get $r))
+
+         (func $- (type $Prim>=1)
+               (param $a1   (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+
+               (local.set $xs (local.get $rest))
+               (if (ref.eq (local.get $xs) (global.get $null))
+                   (then (call $-2 (global.get $zero) (local.get $a1)))
+                   (else (local.set $r (local.get $a1))
+                         (block $done
+                                (loop $loop
+                                      (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                      (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                      (local.set $v    (struct.get $Pair $a (local.get $node)))
+                                      (local.set $r    (call $-2 (local.get $r) (local.get $v)))
+                                      (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                                      (br $loop)))
+                         (local.get $r)))
 
          ;; Note: fx/ doesn't exist, but fxquotient do.
 

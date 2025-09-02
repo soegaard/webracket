@@ -239,11 +239,12 @@
                          (equal? (+ 1  2.) 3.)
                          (equal? (+ 1. 2.) 3.)))
               (list "-"
-                    (and #;(equal? (- 3) -3)
-                         (equal? (- 5 2)   3)
-                         (equal? (- 5 2.)  3.)
-                         (equal? (- 5. 2)  3.)
-                         (equal? (- 5. 2.) 3.)))
+                    (and (equal? (- 1)      -1)
+                         (equal? (- 5 3.0)  2.0)
+                         (equal? (- 5 2)    3)
+                         (equal? (- 5. 2)   3.)
+                         (equal? (- 5. 2.)  3.)
+                         (equal? (- 5 2 1)  2)))
               (list "*"
                     (and #;(equal? (*) 1)
                          #;(equal? (* 2) 2)
