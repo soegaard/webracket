@@ -73,19 +73,22 @@
     (js-send* board "create"
               "point"                           ; element type
               (vector -2 1)                     ; array of parents
-              (js-object '#[#["name" "A"]])))   ; attributes
+              (js-object '#[#["name"  "A"]
+                                 #["color" "blue"]]))) ; attributes
 
   (define B
     (js-send* board "create"
               "point"                           ; element type
               (vector 3 4)                      ; array of parents
-              (js-object '#[#["name" "B"]])))   ; attributes
+              (js-object '#[#["name"  "B"]
+                                 #["color" "blue"]]))) ; attributes
 
   (define C
     (js-send* board "create"
               "point"
               (vector 1 -2)
-              (js-object '#[#["name" "C"]])))   ; attributes
+              (js-object '#[#["name"  "C"]
+                                 #["color" "blue"]]))) ; attributes
 
   (js-send* board "create"
             "line"
@@ -123,7 +126,8 @@
     (js-send* board "create"
               "intersection"
               (vector l BC)
-              (js-object '#[#["name" "P"]])))
+              (js-object '#[#["name"  "P"]
+                                 #["color" "red"]])))
 
   (void))
 
