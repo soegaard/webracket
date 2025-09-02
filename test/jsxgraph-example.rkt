@@ -1,7 +1,7 @@
 (define head (js-document-head))
 
 (define container (js-create-element "div"))
-(js-set-attribute! container "id" "box")
+(js-set-attribute! container "id"    "box")
 (js-set-attribute! container "class" "jxgbox")
 (js-set-attribute! container "style" "width: 500px; height: 400px;")
 (js-append-child! (js-document-body) container)
@@ -11,19 +11,22 @@
 (js-set-attribute! link "href" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
 (js-append-child! head link)
 
-(define options
-  (js-object
-   (vector
-    (vector "boundingbox" (vector -5 5 5 -5))
-    (vector "axis" #t))))
-
+; obj.prop0.prop1 
+(define (dot obj . props)
+  (let loop ([val obj]
+             [ps  props])
+    (cond
+      [(null? ps) val]
+      [else       (loop (js-ref val (car props))
+                        (cdr props))])))
 
 (define (init-board _evt)
-  (define jxg (js-var "JXG"))
-  (define jsx (js-ref jxg "JSXGraph"))
-  (js-send jsx "initBoard" (vector "box" options)))
+  ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
+  (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
+  (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
+                                                            #["axis"        #t]]))))
 
 (define script (js-create-element "script"))
-(js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
+(js-set-attribute!      script "src"  "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
 (js-add-event-listener! script "load" (procedure->external init-board))
-(js-append-child! head script)
+(js-append-child! head  script)
