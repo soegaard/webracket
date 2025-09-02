@@ -30,15 +30,43 @@
   (define board
     (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
                                                               #["axis"        #t]]))))
-  (js-send* board "create"
-            "point"                           ; element type
-            (vector -2 1)                     ; array of parents
-            (js-object '#[#["name" "A"]]))    ; attributes
+  (define A
+    (js-send* board "create"
+              "point"                           ; element type
+              (vector -2 1)                     ; array of parents
+              (js-object '#[#["name" "A"]])))   ; attributes
+
+  (define B
+    (js-send* board "create"
+              "point"                           ; element type
+              (vector 3 4)                      ; array of parents
+              (js-object '#[#["name" "B"]])))   ; attributes
+
+  (define C
+    (js-send* board "create"
+              "point"
+              (vector 1 -2)
+              (js-object '#[#["name" "C"]])))   ; attributes
 
   (js-send* board "create"
-            "point"                           ; element type
-            (vector 3 4)                      ; array of parents
-            (js-object '#[#["name" "B"]]))    ; attributes
+            "line"
+            (vector A B)
+            (js-object '#[]))
+
+  (js-send* board "create"
+            "segment"
+            (vector A B)
+            (js-object '#[]))
+
+  (js-send* board "create"
+            "segment"
+            (vector B C)
+            (js-object '#[]))
+
+  (js-send* board "create"
+            "segment"
+            (vector C A)
+            (js-object '#[]))
   )
 
 (define script (js-create-element "script"))
