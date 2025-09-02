@@ -410,6 +410,7 @@
   cons car cdr
   list              ; not first order yet
   list? length list-ref list-tail
+  first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth
   append ; variadic list primitive
   reverse memq
   alt-reverse ; used in expansion of for/list

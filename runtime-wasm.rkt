@@ -9706,7 +9706,22 @@
                    (else (call $raise-pair-expected (local.get $xs))
                          (unreachable))))
 
-         ;; list-tail/checked: xs is known to be a Pair and i > 0.
+        ,@(for/list ([name '(first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth)]
+                     [idx (in-naturals)])
+            `(func ,(string->symbol (~a "$" name)) (type $Prim1)
+                   (param $xs (ref eq))
+                   (result (ref eq))
+                   ;; Type check: non-empty proper list
+                   (if (ref.eq (local.get $xs) (global.get $null))
+                       (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+                   (if (ref.eq (call $list? (local.get $xs)) (global.get $false))
+                       (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+                   ;; Retrieve element using list-ref
+                   (call $list-ref
+                         (local.get $xs)
+                         (ref.i31 (i32.shl (i32.const ,idx) (i32.const 1))))))
+
+        ;; list-tail/checked: xs is known to be a Pair and i > 0.
          ;; Returns the result of cdr^i(xs). Works with improper lists:
          ;; if the i-th cdr is a non-pair, it is returned. If we need to
          ;; cdr again past a non-pair, raise pair-expected.
