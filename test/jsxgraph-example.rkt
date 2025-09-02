@@ -104,7 +104,8 @@
     (js-send* board "create"
               "line"
               (vector B C)
-              (js-object '#[#["visible" #f]])))
+              (js-object '#[#["visible" #f]
+                                 #["dash"    2]])))
 
   (js-send* board "create"
             "segment"
@@ -128,6 +129,26 @@
               (vector l BC)
               (js-object '#[#["name"  "P"]
                                  #["color" "red"]])))
+
+  (define (update-BC-line _)
+    (define bx (js-send* B "X"))
+    (define by (js-send* B "Y"))
+    (define cx (js-send* C "X"))
+    (define cy (js-send* C "Y"))
+    (define px (js-send* P "X"))
+    (define py (js-send* P "Y"))
+    (define dot1 (+ (* (- px bx) (- cx bx))
+                    (* (- py by) (- cy by))))
+    (define dot2 (+ (* (- px cx) (- bx cx))
+                    (* (- py cy) (- by cy))))
+    (define outside? (not (and (>= dot1 0) (>= dot2 0))))
+    (js-send* BC "setAttribute"
+              (js-object (if outside?
+                                 '#[#["visible" #t]]
+                                 '#[#["visible" #f]]))))
+
+  (js-send* board "on" "update" (procedure->external update-BC-line))
+  (update-BC-line #f)
 
   (void))
 
