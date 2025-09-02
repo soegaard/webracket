@@ -5,6 +5,7 @@
          racket/fixnum
          racket/flonum
          racket/math
+         racket/list
          math/flonum          
          (only-in math/base
                   asinh acosh atanh
@@ -591,5 +592,12 @@ bytes->string/utf-8
 (require (prefix-in racket: racket/base))
 (define (apply proc . xss)
   (racket:apply racket:apply proc xss))
+
+; Added in Racket 8.15.
+(define (eleventh    xs) (list-ref xs 11))
+(define (twelfth     xs) (list-ref xs 12))
+(define (thirteenth  xs) (list-ref xs 13))
+(define (fourteenth  xs) (list-ref xs 14))
+(define (fifteenth   xs) (list-ref xs 15))
 
   
