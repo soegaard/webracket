@@ -4092,35 +4092,61 @@
         (func $raise-expected-number (unreachable))
 
          ,@(let ()
-             (define (binop $+ $fx+ $fl+)
-               `(func ,$+ (type $Prim2)
+             (define (binop $op $fxop $flop)
+               `(func ,$op (type $Prim2)
                       (param $x (ref eq))
                       (param $y (ref eq))
                       (result   (ref eq))
-                      
+
                       (if (result (ref eq)) (call $fx?/i32 (local.get $x))
                           (then (if (result (ref eq)) (call $fx?/i32 (local.get $y))
-                                    (then (call ,$fx+
+                                    (then (call ,$fxop
                                                 (local.get $x) (local.get $y)))
                                     (else (if (result (ref eq)) (call $fl?/i32 (local.get $y))
-                                              (then (call ,$fl+
+                                              (then (call ,$flop
                                                           (call $fx->fl/precise (local.get $x)) (local.get $y)))
                                               (else (call $raise-expected-number)
                                                     (unreachable))))))
                           (else (if (result (ref eq)) (call $fl?/i32 (local.get $x))
                                     (then (if (result (ref eq)) (call $fl?/i32 (local.get $y))
-                                              (then (call ,$fl+
+                                              (then (call ,$flop
                                                           (local.get $x) (local.get $y)))
                                               (else (if (result (ref eq)) (call $fx?/i32 (local.get $y))
-                                                        (then (call ,$fl+
+                                                        (then (call ,$flop
                                                                     (local.get $x) (call $fx->fl/precise (local.get $y))))
                                                         (else (call $raise-expected-number)
                                                               (unreachable))))))
                                     (else (call $raise-expected-number)
                                           (unreachable)))))))
-             (list (binop '$+ '$fx+ '$fl+)
+             (list (binop '$+2 '$fx+ '$fl+)
                    (binop '$- '$fx- '$fl-)
                    (binop '$* '$fx* '$fl*)))
+
+         (func $+ (type $Prim>=0)
+               (param $xs0 (ref eq)) (result (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r (global.get $zero))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $r    (call $+2 (local.get $r) (local.get $v)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $r))
 
          ;; Note: fx/ doesn't exist, but fxquotient do.
 
