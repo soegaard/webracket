@@ -337,7 +337,7 @@ bytes->string/utf-8
 
  map
  ; andmap
- ; ormap
+ ormap
  for-each
  ; foldl
  ; foldr
