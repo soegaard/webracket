@@ -11,8 +11,18 @@
 (js-set-attribute! link "href" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
 (js-append-child! head link)
 
+(define options
+  (js-object
+   (vector
+    (vector "boundingbox" (vector -5 5 5 -5))
+    (vector "axis" #t))))
+
+
 (define (init-board _evt)
-  (js-eval "JXG.JSXGraph.initBoard('box', {boundingbox: [-5, 5, 5, -5], axis: true});"))
+  (define jxg (js-var "JXG"))
+  (define jsx (js-ref jxg "JSXGraph"))
+  (define init-fn (js-ref jsx "initBoard"))
+  (js-operator 'call (vector init-fn jsx "box" options)))
 
 (define script (js-create-element "script"))
 (js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
