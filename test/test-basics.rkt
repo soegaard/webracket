@@ -1186,6 +1186,14 @@
               (and (equal? (fifteenth '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 15)
                    (equal? (procedure-arity fifteenth) 1)))
 
+        (list "last"
+              (and (equal? (last '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 15)
+                   (equal? (procedure-arity last) 1)))
+        (list "last-pair"
+              (and (equal? (last-pair '(1 2 3 4)) '(4))
+                   (equal? (last-pair '(1 2 3 . 4)) '(3 . 4))
+                   (equal? (procedure-arity last-pair) 1)))
+
         (list "list*"
               (and (equal? (list* 1 2 3) (cons 1 (cons 2 3)))
                    (equal? (list* 1 2 (list 3 4)) '(1 2 3 4))))
