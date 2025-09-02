@@ -343,7 +343,7 @@ for-each
  ; foldr
 
  filter
- ; remove
+ remove
  ; remq
  ; remv
  ; remw

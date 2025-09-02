@@ -1223,6 +1223,16 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "remove"
+              (and (equal? (remove 2 (list 1 2 3 2 4)) '(1 3 2 4))
+                   (equal? (remove '(2) (list '(1) '(2) '(3))) '((1) (3)))
+                   (equal? (remove "2" (list "1" "2" "3")) '("1" "3"))
+                   (equal? (remove #\c (list #\a #\b #\c)) '(#\a #\b))
+                   (equal? (remove "B" (list "a" "A" "b" "B") string-ci=?) '("a" "A" "B"))
+                   (let ([lst (list 1 2 3 2 4)])
+                     (and (eq? (remove 5 lst) lst)
+                          (equal? (remove 5 lst) lst)))))
+
         (list "andmap"
               (and (equal? (andmap eq? '(a b c) '(a b c)) #t)
                    (equal? (andmap positive? '(1 2 3)) #t)
