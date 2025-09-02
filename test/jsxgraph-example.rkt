@@ -58,6 +58,12 @@
             (vector A B)
             (js-object '#[]))
 
+  (define BC
+    (js-send* board "create"
+              "line"
+              (vector B C)
+              (js-object '#[#["visible" #f]])))
+
   (js-send* board "create"
             "segment"
             (vector B C)
@@ -67,6 +73,18 @@
             "segment"
             (vector C A)
             (js-object '#[]))
+
+  (define l
+    (js-send* board "create"
+              "perpendicular"
+              (vector BC A)
+              (js-object '#[#["name" "l"]])))
+
+  (define P
+    (js-send* board "create"
+              "intersection"
+              (vector l BC)
+              (js-object '#[#["name" "P"]])))
   )
 
 (define script (js-create-element "script"))
