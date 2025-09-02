@@ -1,4 +1,4 @@
-(define head (js-eval "document.head"))
+(define head (js-document-head))
 
 (define container (js-create-element "div"))
 (js-set-attribute! container "id" "box")
