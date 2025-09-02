@@ -105,13 +105,74 @@
   #:name   "set!"
   (-> (extern value value) ()))
 
-;;;
-;;; Fundamental objects
-;;;
+;; Basic operations
+
+(define-foreign js-index
+  #:module "standard"
+  #:name   "index"
+  (-> (extern value) (extern)))
+
+(define-foreign js-assign
+  #:module "standard"
+  #:name   "assign"
+  (-> (string/symbol value) (extern)))
+
+(define-foreign js-new
+  #:module "standard"
+  #:name   "new"
+  ;; Pass arguments as a list or vector.
+  (-> (extern value) (extern)))
+
+(define-foreign js-throw
+  #:module "standard"
+  #:name   "throw"
+  (-> (value) ()))
+
+(define-foreign js-null
+  #:module "standard"
+  #:name   "null"
+  (-> () (extern)))
+
+(define-foreign js-this
+  #:module "standard"
+  #:name   "this"
+  (-> () (extern)))
 
 (define-foreign js-object
   #:module "standard"
   #:name   "object"
+  ;; Fields should be a list of `[key value]` pairs.
+  (-> (value) (extern)))
+
+(define-foreign js-array
+  #:module "standard"
+  #:name   "array"
+  ;; Arguments should be a list or vector.
+  (-> (value) (extern)))
+
+(define-foreign js-typeof
+  #:module "standard"
+  #:name   "typeof"
+  (-> (extern) (string)))
+
+(define-foreign js-instanceof
+  #:module "standard"
+  #:name   "instanceof"
+  (-> (extern extern) (i32)))
+
+(define-foreign js-operator
+  #:module "standard"
+  #:name   "operator"
+  ;; `operands` should be a list or vector.
+  (-> (string/symbol value) (extern)))
+
+;;;
+;;; Fundamental objects
+;;;
+
+(define-foreign js-object-constructor
+  #:module "standard"
+  #:name   "object-constructor"
   (-> () (extern)))
 
 (define-foreign js-function
