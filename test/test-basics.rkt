@@ -231,6 +231,25 @@
 
        (list "4.3.2.1 Arithmetic"
              (list
+              (list "+"
+                    (and (equal? (+) 0)
+                         (equal? (+ 1) 1)
+                         (equal? (+ 1 2) 3)
+                         (equal? (+ 1 2.0) 3.0)))
+              (list "-"
+                    (and (equal? (- 3) -3)
+                         (equal? (- 5 2) 3)
+                         (equal? (- 5 2.0) 3.0)
+                         (equal? (- 5.0 2) 3.0)))
+              (list "*"
+                    (and (equal? (*) 1)
+                         (equal? (* 2) 2)
+                         (equal? (* 2 3) 6)
+                         (equal? (* 2 3.0) 6.0)))
+              (list "/"
+                    (and (equal? (/ 10 2) 5)
+                         (equal? (/ 10.0 2) 5.0)
+                         (equal? (/ 5 2.0) 2.5)))
               (list "quotient"
                     (list (equal? (quotient 10 3) 3)
                          (equal? (quotient -10.0 3) -3.0)
