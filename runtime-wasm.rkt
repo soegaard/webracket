@@ -3345,13 +3345,6 @@
          ;; 4.3.2.1 Arithmetic
          ;;   https://docs.racket-lang.org/reference/generic-numbers.html#%28part._.Arithmetic%29
 
-         ;; [/] +
-         ;; [/] -
-         ;; [/] *
-         ;; [/] /
-         ;; TODO  The functions + - * / currently uses 2 arguments. Make them variadic.
-                  
-
          (func $quotient (type $Prim2)
                (param $n (ref eq))
                (param $m (ref eq))
@@ -4118,8 +4111,8 @@
                                                               (unreachable))))))
                                     (else (call $raise-expected-number)
                                           (unreachable)))))))
-            (list (binop '$+2 '$fx+ '$fl+)
-                  (binop '$-2 '$fx- '$fl-)
+            (list (binop '$+/2 '$fx+ '$fl+)
+                  (binop '$-/2 '$fx- '$fl-)
                   (binop '$* '$fx* '$fl*)))
 
          (func $+ (type $Prim>=0)
@@ -4143,7 +4136,7 @@
                             (br_if $done (ref.eq (local.get $xs) (global.get $null)))
                             (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                             (local.set $v    (struct.get $Pair $a (local.get $node)))
-                            (local.set $r    (call $+2 (local.get $r) (local.get $v)))
+                            (local.set $r    (call $+/2 (local.get $r) (local.get $v)))
                             (local.set $xs   (struct.get $Pair $d (local.get $node)))
                             (br $loop)))
               (local.get $r))
@@ -4159,18 +4152,21 @@
                (local $r    (ref eq))
 
                (local.set $xs (local.get $rest))
-               (if (ref.eq (local.get $xs) (global.get $null))
-                   (then (call $-2 (global.get $zero) (local.get $a1)))
+               (if (result (ref eq))
+                   (ref.eq (local.get $xs) (global.get $null))
+                   (then (call $-/2 (global.get $zero) (local.get $a1)))
                    (else (local.set $r (local.get $a1))
                          (block $done
                                 (loop $loop
-                                      (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                      (br_if $done
+                                             (ref.eq (local.get $xs) (global.get $null)))
                                       (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                                       (local.set $v    (struct.get $Pair $a (local.get $node)))
-                                      (local.set $r    (call $-2 (local.get $r) (local.get $v)))
+                                      (local.set $r    (call $-/2 (local.get $r) (local.get $v)))
                                       (local.set $xs   (struct.get $Pair $d (local.get $node)))
                                       (br $loop)))
-                         (local.get $r)))
+                         (local.get $r))))
+
 
          ;; Note: fx/ doesn't exist, but fxquotient do.
 
