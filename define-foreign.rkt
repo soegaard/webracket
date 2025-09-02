@@ -52,12 +52,13 @@
 ;; The types are as follows:
 
 ;; Type language (initial)
-;;   string    — Racket string, marshaled as FASL → linear memory.
-;;   value     — arbitrary Racket value, marshaled as FASL → linear memory.
-;;   extern    — $External wrapper around externref.
-;;   i32       — fixnum → i32 ;   signed
-;;   u32       — fixnum → u32 ; unsigned
-;;   f64       — flonum → f64 (checked)
+;;   string        — Racket string, marshaled as FASL → linear memory.
+;;   string/symbol - accepts string or symbol as argument - a string is sent via fasl
+;;   value         — arbitrary Racket value, marshaled as FASL → linear memory.
+;;   extern        — $External wrapper around externref.
+;;   i32           — fixnum → i32 ;   signed
+;;   u32           — fixnum → u32 ; unsigned
+;;   f64           — flonum → f64 (checked)
 
 ;; Using `void` instead of (<result-type> ...) is equivalent to ().
 
@@ -86,13 +87,14 @@
   (eq? (syntax-e x) (syntax-e y)))
 
 (define (validate-base-argument-type who form type)
-  (syntax-case* type (string value extern i32 u32 f64) literal=?
-    [string #t]
-    [value  #t]
-    [extern #t]
-    [i32    #t]
-    [u32    #t]
-    [f64    #t]
+  (syntax-case* type (string string/symbol value extern i32 u32 f64) literal=?
+    [string        #t]
+    [string/symbol #t]
+    [value         #t]
+    [extern        #t]
+    [i32           #t]
+    [u32           #t]
+    [f64           #t]
     [_
      (raise-syntax-error who "expected an argument type, got: "
                          form type)]))
@@ -210,12 +212,13 @@
 
 (define (argument-type->wasm-import-parameter type)
   (case type
-    [(string) 'i32]         ; index into linear memory
-    [(value)  'i32]         ; index into linear memory
-    [(extern) 'externref]
-    [(i32)    'i32]
-    [(u32)    'i32]
-    [(f64)    'f64]
+    [(string)        'i32]         ; index into linear memory
+    [(string/symbol) 'i32]         ; index into linear memory
+    [(value)         'i32]         ; index into linear memory
+    [(extern)        'externref]
+    [(i32)           'i32]
+    [(u32)           'i32]
+    [(f64)           'f64]
     [else
      (error 'argument-type->wasm-import-parameter
             "expected type, got: ~a"
@@ -244,12 +247,13 @@
 
 (define (argument-type->wasm-primtive-expected type)
   (case type
-    [(string) '(ref $String)]         ; index into linear memory
-    [(value)  '(ref eq)]         ; index into linear memory
-    [(extern) '(ref $External)]
-    [(i32)    '(ref i31)]
-    [(u32)    '(ref i31)]
-    [(f64)    '(ref $Flonum)]
+    [(string)        '(ref $String)]    ; index into linear memory
+    [(string/symbol) '(ref eq)]         ; index into linear memory
+    [(value)         '(ref eq)]         ; index into linear memory
+    [(extern)        '(ref $External)]
+    [(i32)           '(ref i31)]
+    [(u32)           '(ref i31)]
+    [(f64)           '(ref $Flonum)]
     [else
      (error argument-type->wasm-primtive-expected
             "expected type, got: ~a"
@@ -333,6 +337,11 @@
                    `(local.set ,(local-index i)
                                (ref.cast (ref $String)
                                          (local.get ,(param-index i))))]
+                  ['string/symbol
+                   ; todo - if the argument is a symbol, convert it to a string first
+                   `(local.set ,(local-index i)
+                               (ref.cast (ref $String)
+                                         (local.get ,(param-index i))))]
                   ['value
                    `(local.set ,(local-index i) (local.get ,(param-index i)))]
                   ['extern
@@ -362,7 +371,7 @@
                   ['f64
                    `(local.set ,(import-index i)
                                (struct.get $Flonum $v (local.get ,(local-index i))))]
-                  ['string
+                  [(or 'string 'string/symbol)
                    ;; 1) FASL-encode directly to a bytes object (port = #f)
                    ;; 2) Copy bytes to linear memory at $fasl-index
                    ;; 3) Store old $fasl-index as the import argument
@@ -446,5 +455,3 @@
 ;; (pretty-print (map foreign->import fs))
 ;; 'PRIMITIVES
 ;; (pretty-print (map foreign->primitive fs))
-
-
