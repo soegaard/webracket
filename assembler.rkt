@@ -511,7 +511,7 @@ var imports = {
       'unescape':                  ((s) => unescape(from_fasl(s))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref':                       ((obj, key) => obj[from_fasl(key)]),
-      'set-property!':             ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
+      'set!':                      ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
       'object':                    (() => Object),
       'function':                  (() => Function),
       'boolean':                   (() => Boolean),

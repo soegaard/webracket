@@ -35,11 +35,11 @@
 (define count 0)
 
 (define (update)
-  (js-set-property! (js-get-element-by-id "message")
-                    "textContent"
-                    (string-append "You have pressed the button "
-                                   (number->string count)
-                                   " times")))
+  (js-set! (js-get-element-by-id "message")
+           "textContent"
+           (string-append "You have pressed the button "
+                          (number->string count)
+                          " times")))
 
 (define (on-click _event)
   (js-log count)

@@ -19,7 +19,7 @@
   (define img (js-canvas2d-create-image-data ctx
                                              (exact->inexact width)
                                              (exact->inexact height)))
-  (js-set-property! (js-global-this) "imgData" img)
+  (js-set! (js-global-this) "imgData" img)
   (define data (js-eval "imgData.data"))
   (let loop-y ([y 0])
     (when (< y height)
@@ -35,10 +35,10 @@
           (define g   (clamp (+ c (* 256. (flsin (- ft (* 0.01 fx)))))))
           (define b   (clamp (+ c (* 256. (flcos (- ft (* 2. 0.01 fy)))))))
           (define idx (* 4 (+ (* y width) x)))
-          (js-set-property! data idx r)
-          (js-set-property! data (add1 idx) g)
-          (js-set-property! data (+ idx 2) b)
-          (js-set-property! data (+ idx 3) 255)
+          (js-set! data idx r)
+          (js-set! data (add1 idx) g)
+          (js-set! data (+ idx 2) b)
+          (js-set! data (+ idx 3) 255)
           (loop-x (add1 x))))
       (loop-y (add1 y))))
   (js-canvas2d-put-image-data ctx img 0. 0.
