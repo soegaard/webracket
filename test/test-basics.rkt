@@ -232,8 +232,8 @@
        (list "4.3.2.1 Arithmetic"
              (list
               (list "+"
-                    (and #;(equal? (+) 0)
-                         #;(equal? (+ 1) 1)
+                    (and (equal? (+) 0)
+                         (equal? (+ 1) 1)
                          (equal? (+ 1  2)  3)
                          (equal? (+ 1. 2)  3.)
                          (equal? (+ 1  2.) 3.)
