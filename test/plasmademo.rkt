@@ -4,6 +4,12 @@
 (define canvas (js-create-element "canvas"))
 (js-set-canvas-width!  canvas width)
 (js-set-canvas-height! canvas height)
+(js-set-attribute! canvas "style"
+                   (string-append "image-rendering: pixelated; width: "
+                                  (number->string (* 3 width))
+                                  "px; height: "
+                                  (number->string (* 3 height))
+                                  "px;"))
 (js-append-child! (js-document-body) canvas)
 
 (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
@@ -13,7 +19,7 @@
 
 (define i 0)
 (define (draw t)
-  ; (js-log t) ; t is a floating point adds 500-1000 each time.
+  ; t is a floating point adds 500-1000 each time.
   (set! i (+ i 1))
   (define ft  (* 0.0004 (exact->inexact t)))
   (define img (js-canvas2d-create-image-data ctx
