@@ -123,6 +123,12 @@
   ;; Pass arguments as a list or vector.
   (-> (extern value) (extern)))
 
+(define-foreign js-send
+  #:module "standard"
+  #:name   "send"
+  ;; Pass arguments as a list or vector.
+  (-> (extern string/symbol value) (extern)))
+
 (define-foreign js-throw
   #:module "standard"
   #:name   "throw"

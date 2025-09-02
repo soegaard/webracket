@@ -21,8 +21,7 @@
 (define (init-board _evt)
   (define jxg (js-var "JXG"))
   (define jsx (js-ref jxg "JSXGraph"))
-  (define init-fn (js-ref jsx "initBoard"))
-  (js-operator 'call (vector init-fn jsx "box" options)))
+  (js-send jsx "initBoard" (vector "box" options)))
 
 (define script (js-create-element "script"))
 (js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")

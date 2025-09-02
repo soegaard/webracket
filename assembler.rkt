@@ -515,6 +515,7 @@ var imports = {
       'index':                     ((obj, prop) => obj[from_fasl(prop)]),
       'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
       'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
+      'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || []))),
       'throw':                     (exn => { throw from_fasl(exn); }),
       'null':                      (() => null),
       'this':                      (function () { return this; }),
