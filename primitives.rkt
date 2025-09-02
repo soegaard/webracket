@@ -327,11 +327,13 @@ bytes->string/utf-8
  tenth
  eleventh
  twelfth
- thirteenth
- fourteenth
- fifteenth
- append
- reverse
+  thirteenth
+  fourteenth
+  fifteenth
+  last
+  last-pair
+  append
+  reverse
 
  map
  ; andmap
