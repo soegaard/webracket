@@ -512,7 +512,35 @@ var imports = {
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref':                       ((obj, key) => obj[from_fasl(key)]),
       'set!':                      ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
-      'object':                    (() => Object),
+      'index':                     ((obj, prop) => obj[from_fasl(prop)]),
+      'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
+      'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
+      'throw':                     (exn => { throw from_fasl(exn); }),
+      'null':                      (() => null),
+      'this':                      (function () { return this; }),
+      'object':                    (fields => {
+                                     const entries = from_fasl(fields) || [];
+                                     const o = {};
+                                     for (const [k, v] of entries) {
+                                       o[from_fasl(k)] = from_fasl(v);
+                                     }
+                                     return o;
+                                   }),
+      'array':                     (args => [...(from_fasl(args) || [])]),
+      'typeof':                    (obj => typeof obj),
+      'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
+      'operator':                  ((op, operands) => {
+                                     const o = from_fasl(op);
+                                     const args = from_fasl(operands) || [];
+                                     if (args.length === 1) {
+                                       return Function('a', `return ${o} a;`)(args[0]);
+                                     } else if (args.length === 2) {
+                                       return Function('a','b', `return a ${o} b;`)(args[0], args[1]);
+                                     } else {
+                                       return Function('args', `return args.reduce((a,b)=>a ${o} b);`)(args);
+                                     }
+                                   }),
+      'object-constructor':        (() => Object),
       'function':                  (() => Function),
       'boolean':                   (() => Boolean),
       'symbol':                    (() => Symbol),
