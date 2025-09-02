@@ -10361,8 +10361,7 @@
                                   (array.set $Args
                                              (local.get $lists) (local.get $i) (local.get $cur))
                                   (if (ref.eq (local.get $cur) (global.get $null))
-                                      (then (local.set $stop (i32.const 1)))
-                                      (nop))
+                                      (then (local.set $stop (i32.const 1))))
                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                   (br $cars)))
 
