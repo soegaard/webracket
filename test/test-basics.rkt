@@ -1196,6 +1196,13 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "ormap"
+              (and (equal? (ormap eq? '(a b c) '(a b c)) #t)
+                   (equal? (ormap positive? '(1 2 a)) #t)
+                   (equal? (ormap positive? '(-1 -2 -3)) #f)
+                   (equal? (ormap + '(1 2 3) '(4 5 6)) 5)
+                   (equal? (ormap positive? '()) #f)))
+
         (list "build-list"
               (and (equal? (build-list 10 values)
                            '(0 1 2 3 4 5 6 7 8 9))
