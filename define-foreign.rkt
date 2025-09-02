@@ -348,10 +348,11 @@
                   ['string/symbol
                    ; todo - if the argument is a symbol, convert it to a string first
                    `(local.set ,(local-index i)
-                               (if (ref.test (ref $Symbol) (local.get ,(param-index i)))
-                                   (ref.cast (ref $String) (call $symbol->string
-                                                                 (local.get ,(param-index i))))
-                                   (ref.cast (ref $String) (local.get ,(param-index i)))))]
+                               (if (result (ref $String))
+                                   (ref.test (ref $Symbol) (local.get ,(param-index i)))
+                                   (then (ref.cast (ref $String) (call $symbol->string
+                                                                       (local.get ,(param-index i)))))
+                                   (else (ref.cast (ref $String) (local.get ,(param-index i))))))]
                   ['value
                    `(local.set ,(local-index i) (local.get ,(param-index i)))]
                   ['extern
