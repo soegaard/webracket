@@ -266,7 +266,7 @@
      (define $racket-name          (string->symbol (~a "$" racket-name)))
      (define $racket-name/imported (string->symbol (~a $racket-name "/imported")))
 
-     (define (fasl-needed? t) (member t '(string value)))       
+     (define (fasl-needed? t) (member t '(string string/symbol value)))
      (define fasl-needed-for-arguments? (ormap fasl-needed? argument-types))
      (define fasl-needed-for-results?   (ormap fasl-needed? result-types))
 
@@ -313,11 +313,19 @@
             
             ;; 0. Type check - fail early
             ,@(for/list ([t argument-types] [i (in-naturals)])
-                (define expected (argument-type->wasm-primtive-expected t))
-                `(if (i32.eqz (ref.test ,expected (local.get ,(param-index i))))
-                     ; TODO  Call a more specific error function that includes the type.
-                     (then (call $raise-unexpected-argument (local.get ,(param-index i)))
-                           (unreachable))))
+                (match t
+                  ['string/symbol
+                   `(if (i32.eqz (i32.or (ref.test (ref $String) (local.get ,(param-index i)))
+                                         (ref.test (ref $Symbol) (local.get ,(param-index i)))))
+                        ; TODO  Call a more specific error function that includes the type.
+                        (then (call $raise-unexpected-argument (local.get ,(param-index i)))
+                              (unreachable)))]
+                  [_
+                   (define expected (argument-type->wasm-primtive-expected t))
+                   `(if (i32.eqz (ref.test ,expected (local.get ,(param-index i))))
+                        ; TODO  Call a more specific error function that includes the type.
+                        (then (call $raise-unexpected-argument (local.get ,(param-index i)))
+                              (unreachable)))]))
 
             ;; 1. Extract the values from the parameters and store them in the locals.
             ;;    I.e. extract (param-index i) and store into (local-index i)            
@@ -340,8 +348,10 @@
                   ['string/symbol
                    ; todo - if the argument is a symbol, convert it to a string first
                    `(local.set ,(local-index i)
-                               (ref.cast (ref $String)
-                                         (local.get ,(param-index i))))]
+                               (if (ref.test (ref $Symbol) (local.get ,(param-index i)))
+                                   (ref.cast (ref $String) (call $symbol->string
+                                                                 (local.get ,(param-index i))))
+                                   (ref.cast (ref $String) (local.get ,(param-index i)))))]
                   ['value
                    `(local.set ,(local-index i) (local.get ,(param-index i)))]
                   ['extern
