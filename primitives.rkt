@@ -333,7 +333,7 @@ bytes->string/utf-8
  reverse
 
  map
- ; andmap
+ andmap
  ; ormap
  for-each
  ; foldl

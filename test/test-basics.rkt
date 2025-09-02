@@ -1196,6 +1196,12 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "andmap"
+              (and (equal? (andmap positive? '(1 2 3)) #t)
+                   (equal? (andmap positive? '(1 -2 a)) #f)
+                   (equal? (andmap + '(1 2 3) '(4 5 6)) 9)
+                   (equal? (andmap (λ (x) (positive? x)) '()) #t)))
+
         (list "build-list"
               (and (equal? (build-list 10 values)
                            '(0 1 2 3 4 5 6 7 8 9))

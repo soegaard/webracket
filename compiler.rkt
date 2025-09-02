@@ -3099,6 +3099,7 @@
          [(log)                        (inline-prim/optional sym ae1 1 2)]
          ; Todo: map and for-each needs to check that the first argument is a procedure
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
+         [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
