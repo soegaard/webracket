@@ -4113,9 +4113,9 @@
                                           (unreachable)))))))
             (list (binop '$+/2 '$fx+ '$fl+)
                   (binop '$-/2 '$fx- '$fl-)
-                  (binop '$* '$fx* '$fl*)))
+                  (binop '$*/2 '$fx* '$fl*)))
 
-         (func $+ (type $Prim>=0)
+        (func $+ (type $Prim>=0)
                (param $xs0 (ref eq)) (result (ref eq))
 
                (local $xs   (ref eq))
@@ -4141,7 +4141,36 @@
                             (br $loop)))
               (local.get $r))
 
-         (func $- (type $Prim>=1)
+        (func $* (type $Prim>=0)
+               (param $xs0 (ref eq)) (result (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $r    (ref eq))
+
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $r (global.get $one))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (if (ref.eq (call $fxzero? (local.get $v)) (global.get $true))
+                                (then (local.set $r (global.get $zero))
+                                      (br $done))
+                                (else (local.set $r (call $*/2 (local.get $r) (local.get $v)))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+              (local.get $r))
+
+        (func $- (type $Prim>=1)
                (param $a1   (ref eq))
                (param $rest (ref eq))
                (result      (ref eq))
@@ -4296,7 +4325,7 @@
                              ;; general case: lcm(n,m) = (n / gcd(n,m)) * m
                              (else (block (result (ref eq))
                                           (local.set $g (call $gcd/2 (local.get $n) (local.get $m)))
-                                          (call $*
+                                          (call $*/2
                                                 (if (result (ref eq))
                                                     (i32.and (call $fx?/i32 (local.get $n))
                                                              (call $fx?/i32 (local.get $g)))

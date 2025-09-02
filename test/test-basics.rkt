@@ -246,12 +246,14 @@
                          (equal? (- 5. 2.)  3.)
                          (equal? (- 5 2 1)  2)))
               (list "*"
-                    (and #;(equal? (*) 1)
-                         #;(equal? (* 2) 2)
+                    (and (equal? (*)        1)
+                         (equal? (* 2)      2)
                          (equal? (* 2  3)   6)
+                         (equal? (* 2  3 4) 24)
                          (equal? (* 2. 3)   6.)
                          (equal? (* 2  3.)  6.)
-                         (equal? (* 2. 3.)  6.)))
+                         (equal? (* 2. 3.)  6.)
+                         (equal? (* 0 8.0)  0)))
               (list "/"
                     (and (equal? (/ 10  2)  5)
                          (equal? (/ 10. 2)  5.)
