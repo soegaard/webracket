@@ -95,6 +95,11 @@
   #:name   "var"
   (-> (string) (extern)))
 
+(define-foreign js-ref
+  #:module "standard"
+  #:name   "ref"
+  (-> (extern string/symbol) (extern)))
+
 (define-foreign js-set-property!
   #:module "standard"
   #:name   "set-property!"
