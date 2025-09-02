@@ -3072,6 +3072,7 @@
 
         ;;; Standard Inlining
         [(+)                         (inline-prim/variadic sym ae1 0)]
+        [(*)                         (inline-prim/variadic sym ae1 0)]
         [(-)                         (inline-prim/variadic sym ae1 1)]
         [(s-exp->fasl) ; 1 to 2 arguments (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
@@ -3255,11 +3256,10 @@
                  [(-)        '(global.get $zero)]
                  [(fx+ fx-)  '(global.get $zero)]
                  [(fl+ fl-)  '(global.get $flzero)]
-                 [(* fx*)    '(global.get $one)]
+                 [(fx*)      '(global.get $one)]
                  [(fl*)      '(global.get $flone)]
                  [else       `(call ,(Prim pr))])]
             [1 (case sym
-                 [(*)        (AExpr (first ae1))]
                  [(fx+ fx*)  (AExpr (first ae1))]
                  [(fl+ fl*)  (AExpr (first ae1))]
                  [(fx-)      `(call ,(Prim pr) (global.get $zero)   ,(AExpr (first ae1)))]
@@ -3268,7 +3268,7 @@
                  [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
                  [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
             [2 (case sym
-                 [(- *)         `(call ,(Prim pr)
+                 [(-)           `(call ,(Prim pr)
                                        ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                  [(fx+ fx- fx*) `(call ,(Prim pr)
                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
@@ -3279,7 +3279,7 @@
                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
             [_ (case sym
                  [(fx+ fl+
-                     * fx* fl*
+                     fx* fl*
                      - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
                   (let loop ([aes (AExpr* ae1)])
                     (match aes
