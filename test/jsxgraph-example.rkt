@@ -23,8 +23,15 @@
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
   (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
-  (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
-                                                            #["axis"        #t]]))))
+  (define board
+    (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
+                                                              #["axis"        #t]]))))
+  (js-send board "create"
+           (vector "point" (vector -2 1)
+                   (js-object '#[#["name" "A"]])))
+  (js-send board "create"
+           (vector "point" (vector 2 -1)
+                   (js-object '#[#["name" "B"]])))
 
 (define script (js-create-element "script"))
 (js-set-attribute!      script "src"  "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
