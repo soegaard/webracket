@@ -414,7 +414,7 @@
   append ; variadic list primitive
   reverse memq
   alt-reverse ; used in expansion of for/list
-  map for-each
+  map for-each ormap
   list*
   filter
   make-list

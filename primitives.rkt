@@ -299,13 +299,13 @@ bytes->string/utf-8
  
  
   ;; 4.10 Pairs and Lists
-  pair?
-  cons?
-  null?
-  empty?
-  cons
-  car
-  cdr
+ pair?
+ cons?
+ null?
+ empty?
+ cons
+ car
+ cdr
  list?
  list
  list*
@@ -327,13 +327,13 @@ bytes->string/utf-8
  tenth
  eleventh
  twelfth
-  thirteenth
-  fourteenth
-  fifteenth
-  last
-  last-pair
-  append
-  reverse
+ thirteenth
+ fourteenth
+ fifteenth
+ last
+ last-pair
+ append
+ reverse
 
  map
  ; andmap
