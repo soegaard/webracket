@@ -475,7 +475,17 @@
 ; The various functions in this section are documented here:   
 ;                                                              
 ;     https://developer.mozilla.org/en-US/docs/Web/API/Document
-;                                                               
+;
+
+(define-foreign js-document
+  #:module "document"
+  #:name   "document"
+  (-> () (extern)))
+
+(define-foreign js-document-head
+  #:module "document"
+  #:name   "head"
+  (-> () (extern)))
 
 (define-foreign js-document-body
   #:module "document"
