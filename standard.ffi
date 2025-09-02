@@ -291,7 +291,8 @@
 ;;; Indexed collections
 ;;;
 
-(define-foreign js-array
+; todo - extend js-array above to accept zero arguments
+#;(define-foreign js-array
   #:module "standard"
   #:name   "array"
   (-> () (extern)))
