@@ -4082,7 +4082,31 @@
 
               (ref.i31 (i32.shl (local.get $m) (i32.const 1))))
 
-        (func $raise-expected-number (unreachable))
+        (func $raise-expected-number
+              (param $x (ref eq))
+              (call $js-log (local.get $x))
+              (unreachable))
+        (func $raise-expected-number1
+              (param $x (ref eq))
+              (call $js-log (local.get $x))
+              (unreachable))
+        (func $raise-expected-number2
+              (param $x (ref eq))
+              (call $js-log (local.get $x))
+              (unreachable))
+        (func $raise-expected-number3
+              (param $x (ref eq))              
+              (call $js-log (local.get $x))
+              (call $js-log (call $fixnum? (local.get $x)))
+              (call $js-log (call $flonum? (local.get $x)))
+              (call $js-log (call $string? (local.get $x)))
+              (call $js-log (call $external? (local.get $x)))
+              (call $js-log (local.get $x))
+              (unreachable))
+        (func $raise-expected-number4
+              (param $x (ref eq))
+              (call $js-log (local.get $x))
+              (unreachable))
 
          ,@(let ()
              (define (binop $op $fxop $flop)
@@ -4091,25 +4115,43 @@
                       (param $y (ref eq))
                       (result   (ref eq))
 
-                      (if (result (ref eq)) (call $fx?/i32 (local.get $x))
-                          (then (if (result (ref eq)) (call $fx?/i32 (local.get $y))
+                      (if (result (ref eq))
+                          (call $fx?/i32 (local.get $x))
+                          ; x fixnum
+                          (then (if (result (ref eq))
+                                    (call $fx?/i32 (local.get $y))
+                                    ; x and y fixnums
                                     (then (call ,$fxop
                                                 (local.get $x) (local.get $y)))
-                                    (else (if (result (ref eq)) (call $fl?/i32 (local.get $y))
+                                    ; x fixnum, y non-fixnum
+                                    (else (if (result (ref eq))
+                                              (call $fl?/i32 (local.get $y))
+                                              ; x fixnum, y flonum
                                               (then (call ,$flop
                                                           (call $fx->fl/precise (local.get $x)) (local.get $y)))
-                                              (else (call $raise-expected-number)
+                                              ; x fixnum, y not a number
+                                              (else (call $raise-expected-number1 (local.get $y))
                                                     (unreachable))))))
-                          (else (if (result (ref eq)) (call $fl?/i32 (local.get $x))
-                                    (then (if (result (ref eq)) (call $fl?/i32 (local.get $y))
+                          ; x not fixnum
+                          (else (if (result (ref eq))                                    
+                                    (call $fl?/i32 (local.get $x))
+                                    ; x flonum
+                                    (then (if (result (ref eq))
+                                              (call $fl?/i32 (local.get $y))
+                                              ; x flonum, y flonum
                                               (then (call ,$flop
                                                           (local.get $x) (local.get $y)))
-                                              (else (if (result (ref eq)) (call $fx?/i32 (local.get $y))
+                                              ; x flonum, y not flonum
+                                              (else (if (result (ref eq))
+                                                        (call $fx?/i32 (local.get $y))
+                                                        ; x flonum, y fixnum
                                                         (then (call ,$flop
                                                                     (local.get $x) (call $fx->fl/precise (local.get $y))))
-                                                        (else (call $raise-expected-number)
+                                                        ; x flonum, y not a number
+                                                        (else (call $raise-expected-number2 (local.get $y))
                                                               (unreachable))))))
-                                    (else (call $raise-expected-number)
+                                    ; x is not a number
+                                    (else (call $raise-expected-number3 (local.get $x))
                                           (unreachable)))))))
             (list (binop '$+/2 '$fx+ '$fl+)
                   (binop '$-/2 '$fx- '$fl-)
@@ -6279,11 +6321,13 @@
         ;;; - External host values
         ;;;
 
-        (func $external? (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $External) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+         (func $external? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $External) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
 
         (func $external-null? (param $v (ref eq)) (result (ref eq))
               (if (result (ref eq))
@@ -10770,81 +10814,98 @@
                (param $proc (ref eq))   ;; optional comparator
                (result      (ref eq))
 
-               (local $f       (ref $Procedure))
-               (local $finv    (ref $ProcedureInvoker))
-               (local $call    (ref $Args))
-               (local $cur     (ref eq))
-               (local $pair    (ref $Pair))
-               (local $elem    (ref eq))
-               (local $acc     (ref eq))
-               (local $res     (ref eq))
-               (local $r       (ref eq))
-               (local $tail    (ref eq))
+               (local $cur      (ref eq))
+               (local $pair     (ref $Pair))
+               (local $elem     (ref eq))
+               (local $acc      (ref eq))
+               (local $res      (ref eq))
+               (local $r        (ref eq))
+               (local $tail     (ref eq))
+               (local $args     (ref $Args))
                (local $use-proc i32)
 
-               ;; 1) Handle optional comparator
+               ;; 1) Handle optional comparator (fail early + flag)
                (if (ref.eq (local.get $proc) (global.get $missing))
                    (then (local.set $use-proc (i32.const 0)))
                    (else
+                    ;; Type check $proc
                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
-                        (then (call $raise-argument-error:procedure-expected (local.get $proc))
-                              (unreachable)))
-                    (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
-                    (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
-                    (local.set $call (array.new $Args (global.get $null) (i32.const 2)))
+                        (then
+                         (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable))
+                        (else))
                     (local.set $use-proc (i32.const 1))))
 
                ;; 2) Iterate through list until match found
-               (local.set $cur (local.get $lst))
-               (local.set $acc (global.get $null))
+               (local.set $cur  (local.get $lst))
+               (local.set $acc  (global.get $null))
                (loop $loop
                      (if (ref.eq (local.get $cur) (global.get $null))
-                         (then (return (local.get $lst))))
+                         (then (return (local.get $lst)))
+                         (else))
                      (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
-                         (then (call $raise-pair-expected (local.get $cur))
-                               (unreachable)))
+                         (then
+                          (call $raise-pair-expected (local.get $cur))
+                          (unreachable))
+                         (else))
                      (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                      (local.set $elem (struct.get $Pair $a (local.get $pair)))
                      (local.set $tail (struct.get $Pair $d (local.get $pair)))
+
                      (block $found
                             (if (i32.eqz (local.get $use-proc))
                                 (then
+                                 ;; No comparator: use equal?
                                  (if (ref.eq (call $equal? (local.get $v) (local.get $elem))
-                                              (global.get $false))
+                                             (global.get $false))
                                      (then
-                                      (local.set $acc (call $cons (local.get $elem) (local.get $acc)))
+                                      (local.set $acc
+                                                 (call $cons (local.get $elem) (local.get $acc)))
                                       (local.set $cur (local.get $tail))
                                       (br $loop))
                                      (else (br $found))))
                                 (else
-                                 (array.set $Args (local.get $call) (i32.const 0) (local.get $v))
-                                 (array.set $Args (local.get $call) (i32.const 1) (local.get $elem))
+                                 ;; With comparator: build args and call via invoker, all on the stack.
+                                 ;; args := [v, elem]
                                  (local.set $r
                                             (call_ref $ProcedureInvoker
-                                                      (local.get $f)
-                                                      (local.get $call)
-                                                      (local.get $finv)))
+                                                      ;; f : (ref $Procedure)
+                                                      (ref.cast (ref $Procedure) (local.get $proc))
+                                                      ;; call args : (ref $Args)  (size 2)
+                                                      (block (result (ref $Args))
+                                                             (local.set $args
+                                                                        (array.new $Args (global.get $null) (i32.const 2)))
+                                                             (array.set $Args (local.get $args) (i32.const 0)
+                                                                        (local.get $v))
+                                                             (array.set $Args (local.get $args) (i32.const 1)
+                                                                        (local.get $elem))
+                                                             (local.get $args))
+                                                      ;; finv : (ref $ProcedureInvoker)
+                                                      (struct.get $Procedure $invoke
+                                                                  (ref.cast (ref $Procedure) (local.get $proc)))))
                                  (if (ref.eq (local.get $r) (global.get $false))
                                      (then
-                                      (local.set $acc (call $cons (local.get $elem) (local.get $acc)))
+                                      (local.set $acc
+                                                 (call $cons (local.get $elem) (local.get $acc)))
                                       (local.set $cur (local.get $tail))
                                       (br $loop))
-                                     (else (br $found)))))
+                                     (else (br $found))))))
 
-                            ;; found match, fallthrough
-                            )
+                     ;; found match, fallthrough: rebuild with accumulator
                      (local.set $cur (local.get $tail))
                      (local.set $res (local.get $cur))
                      (local.set $cur (local.get $acc))
                      (loop $rev
                            (if (ref.eq (local.get $cur) (global.get $null))
-                               (then (return (local.get $res))))
+                               (then (return (local.get $res)))
+                               (else))
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
-                           (local.set $res (call $cons (struct.get $Pair $a (local.get $pair))
-                                                     (local.get $res)))
+                           (local.set $res
+                                      (call $cons (struct.get $Pair $a (local.get $pair)) (local.get $res)))
                            (local.set $cur (struct.get $Pair $d (local.get $pair)))
                            (br $rev)))
                (unreachable))
+
 
 
 

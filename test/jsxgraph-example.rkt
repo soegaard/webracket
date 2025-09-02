@@ -105,7 +105,7 @@
               "line"
               (vector B C)
               (js-object '#[#["visible" #f]
-                                 #["dash"    2]])))
+                            #["dash"    2]])))
 
   (js-send* board "create"
             "segment"
@@ -131,12 +131,30 @@
                                  #["color" "red"]])))
 
   (define (update-BC-line _)
-    (define bx (js-send* B "X"))
-    (define by (js-send* B "Y"))
-    (define cx (js-send* C "X"))
-    (define cy (js-send* C "Y"))
-    (define px (js-send* P "X"))
-    (define py (js-send* P "Y"))
+    (define (fl x)
+      (if (external? x)
+          (js-send* x "valueOf")
+          x))
+    
+    (define bx (fl (js-send* B "X")))
+    (define by (fl (js-send* B "Y")))
+    (define cx (fl (js-send* C "X")))
+    (define cy (fl (js-send* C "Y")))
+    (define px (fl (js-send* P "X")))
+    (define py (fl (js-send* P "Y")))
+    (js-log (vector bx by cx cy px py))
+    (js-log "here")
+    (js-log (external? bx))
+    (js-log "here1")
+    (js-log px)
+    (js-log bx)
+    (js-log (- px bx))
+    (js-log "here2")
+    (js-log (- cx bx))
+    (js-log "here3")
+    (js-log (vector (- px bx) (- cx bx)))
+    (js-log "here4")
+    
     (define dot1 (+ (* (- px bx) (- cx bx))
                     (* (- py by) (- cy by))))
     (define dot2 (+ (* (- px cx) (- bx cx))

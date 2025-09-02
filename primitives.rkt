@@ -443,6 +443,7 @@ for-each
  fasl->s-exp
  procedure->external
  js_log
+ external?
 
 )
 
@@ -602,4 +603,7 @@ for-each
 (define (fourteenth  xs) (list-ref xs 14))
 (define (fifteenth   xs) (list-ref xs 15))
 
+
+; FFI
+(define (external? x) #f)
   

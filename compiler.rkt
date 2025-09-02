@@ -627,7 +627,9 @@
   ;; support for `for`
   ; The functions below will be removed, when `webracket` implements `for`
   ; grow-vector
-  ; shrink-vector  
+  ; shrink-vector
+
+  external?
   )
 
 ;;;
