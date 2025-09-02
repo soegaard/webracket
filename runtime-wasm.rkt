@@ -4131,6 +4131,7 @@
 
                (local $x/fl (ref $Flonum))
                (local $y/fl (ref $Flonum))
+               (local $xi i32) (local $yi i32) (local $r i32)
                ;; --- Check that $x is a number ---
                ; Note: $x is not a number if: it is not a fixnum and not a flonum
                (if (i32.and
@@ -4142,20 +4143,32 @@
                     (i32.eqz (ref.test (ref i31) (local.get $y)))
                     (i32.eqz (ref.test (ref $Flonum) (local.get $y))))
                    (then (call $raise-expected-number (local.get $y)) (unreachable)))
-               ;; --- Convert $x to flonum if needed ---
-               (local.set $x/fl
-                          (if (result (ref $Flonum))
-                              (ref.test (ref $Flonum) (local.get $x))
-                              (then (ref.cast (ref $Flonum) (local.get $x)))
-                              (else (call $fx->fl/precise (local.get $x)))))
-               ;; --- Convert $y to flonum if needed ---
-               (local.set $y/fl
-                          (if (result (ref $Flonum))
-                              (ref.test (ref $Flonum) (local.get $y))
-                              (then (ref.cast (ref $Flonum) (local.get $y)))
-                              (else (call $fx->fl/precise (local.get $y)))))
-               ;; --- Divide using $fl/ ---
-               (call $fl/ (local.get $x/fl) (local.get $y/fl)))
+               ;; --- Both fixnums? try exact division ---
+               (if (result (ref eq))
+                   (i32.and (ref.test (ref i31) (local.get $x))
+                            (ref.test (ref i31) (local.get $y)))
+                   (then (local.set $xi ,(Half `(i31.get_s (ref.cast i31ref (local.get $x)))))
+                         (local.set $yi ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))
+                         (if (i32.eqz (local.get $yi))
+                             (then (call $raise-division-by-zero) (unreachable)))
+                         (local.set $r (i32.rem_s (local.get $xi) (local.get $yi)))
+                         (if (result (ref eq))
+                             (i32.eqz (local.get $r))
+                             (then (ref.i31 ,(Double `(i32.div_s (local.get $xi) (local.get $yi)))))
+                             (else (local.set $x/fl (call $fx->fl/precise (local.get $x)))
+                                   (local.set $y/fl (call $fx->fl/precise (local.get $y)))
+                                   (call $fl/ (local.get $x/fl) (local.get $y/fl)))))
+                   (else (local.set $x/fl
+                                    (if (result (ref $Flonum))
+                                        (ref.test (ref $Flonum) (local.get $x))
+                                        (then (ref.cast (ref $Flonum) (local.get $x)))
+                                        (else (call $fx->fl/precise (local.get $x)))))
+                         (local.set $y/fl
+                                    (if (result (ref $Flonum))
+                                        (ref.test (ref $Flonum) (local.get $y))
+                                        (then (ref.cast (ref $Flonum) (local.get $y)))
+                                        (else (call $fx->fl/precise (local.get $y)))))
+                         (call $fl/ (local.get $x/fl) (local.get $y/fl)))))
 
          (func $gcd/2 (type $Prim2)
                (param $n (ref eq))
