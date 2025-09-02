@@ -9722,9 +9722,13 @@
                         (ref.i31 (i32.shl (i32.const ,idx) (i32.const 1))))))
 
         ;; last-pair/checked: takes a Pair and returns the last Pair in the chain
-        (func $last-pair/checked (param $p (ref $Pair)) (result (ref $Pair))
+        (func $last-pair/checked
+              (param $p (ref $Pair))
+              (result   (ref $Pair))
+              
               (local $node (ref $Pair))
               (local $next (ref eq))
+
               (local.set $node (local.get $p))
               (loop $loop
                     (local.set $next (struct.get $Pair $d (local.get $node)))
@@ -9732,6 +9736,7 @@
                         (then (local.set $node (ref.cast (ref $Pair) (local.get $next)))
                               (br $loop))
                         (else (return (local.get $node)))))
+              (unreachable))
 
         (func $last (type $Prim1) (param $xs (ref eq)) (result (ref eq))
               (local $p (ref $Pair))
@@ -9746,9 +9751,9 @@
 
         (func $last-pair (type $Prim1) (param $xs (ref eq)) (result (ref eq))
               ;; Type check: pair?
-              (if (ref.test (ref $Pair) (local.get $xs))
-                  (then (call $last-pair/checked (ref.cast (ref $Pair) (local.get $xs))))
-                  (else (call $raise-pair-expected (local.get $xs)) (unreachable))))
+              (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                  (then (call $raise-pair-expected (local.get $xs)) (unreachable)))
+              (call $last-pair/checked (ref.cast (ref $Pair) (local.get $xs))))
 
         ;; list-tail/checked: xs is known to be a Pair and i > 0.
          ;; Returns the result of cdr^i(xs). Works with improper lists:
