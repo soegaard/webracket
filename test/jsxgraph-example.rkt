@@ -20,18 +20,26 @@
       [else       (loop (js-ref val (car props))
                         (cdr props))])))
 
+; invoke the `method-name` method of the object `obj` with arguments `args`.
+(define (js-send* obj method-name . args)
+  (js-send obj method-name (apply vector args)))
+
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
   (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
   (define board
     (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
                                                               #["axis"        #t]]))))
-  (js-send board "create"
-           (vector "point" (vector -2 1)
-                   (js-object '#[#["name" "A"]])))
-  (js-send board "create"
-           (vector "point" (vector 2 -1)
-                   (js-object '#[#["name" "B"]])))
+  (js-send* board "create"
+            "point"                           ; element type
+            (vector -2 1)                     ; array of parents
+            (js-object '#[#["name" "A"]]))    ; attributes
+
+  (js-send* board "create"
+            "point"                           ; element type
+            (vector 3 4)                      ; array of parents
+            (js-object '#[#["name" "B"]]))    ; attributes
+  )
 
 (define script (js-create-element "script"))
 (js-set-attribute!      script "src"  "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
