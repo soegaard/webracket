@@ -1205,6 +1205,13 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "andmap"
+              (and (equal? (andmap eq? '(a b c) '(a b c)) #t)
+                   (equal? (andmap positive? '(1 2 3)) #t)
+                   (equal? (andmap positive? '(1 -2 a)) #f)
+                   (equal? (andmap + '(1 2 3) '(4 5 6)) 9)
+                   (equal? (andmap positive? '()) #t)))
+
         (list "ormap"
               (and (equal? (ormap eq? '(a b c) '(a b c)) #t)
                    (equal? (ormap positive? '(1 2 a)) #t)
