@@ -91,7 +91,7 @@
               "point"                           ; element type
               (vector 3 4)                      ; array of parents
               (js-object '#[#["name"  "B"]
-                                 #["color" "blue"]]))) ; attributes
+                            #["color" "blue"]]))) ; attributes
 
   (define C
     (js-send* board "create"
