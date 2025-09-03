@@ -629,6 +629,7 @@
   ; grow-vector
   ; shrink-vector
 
+  external-number->flonum
   external?
   )
 

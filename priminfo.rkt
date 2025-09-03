@@ -62,6 +62,7 @@
     raise-unbound-variable-reference ; used for unbound variables outside modules
     js-log
     procedure->external
+    external-number->flonum
     ))
 
 

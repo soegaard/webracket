@@ -1397,9 +1397,18 @@
 
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
-                         [ys (list 1 2 4)])                         
+                         [ys (list 1 2 4)])
                      (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
                           (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
-        )))
+        )
+
+ (list "FFI"
+       (list
+        (list "external-number->flonum"
+              (let ([e (js-eval "new Number(42)")])
+                (equal? (external-number->flonum e) 42.0))))
+       )
+
+ )
 
