@@ -637,6 +637,8 @@
 ;;; FFI Primitives
 ;;;
 
+;; An FFI Primitive is a primitive that is defined in an .ffi file.
+
 (define ffi-primitives '()) ; list of symbols
 
 (define (define-ffi-primitive name)

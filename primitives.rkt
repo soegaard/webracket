@@ -443,7 +443,7 @@ for-each
  fasl->s-exp
  procedure->external
  external-number->flonum
- js_log
+ js-log
  external?
 
 )
@@ -611,4 +611,7 @@ for-each
 
 ; FFI
 (define (external? x) #f)
-  
+
+(define (js-log x)
+  (displayln x))
+
