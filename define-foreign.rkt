@@ -285,7 +285,7 @@
             ;; Locals
             
             ;;   - each argument will be type checked and converted
-            ;;     they are stoed in (local-index i)
+            ;;     they are stored in (local-index i)
             ,@(for/list ([t argument-types])
                 (define expected (argument-type->wasm-primtive-expected t))
                 `(local ,expected))
@@ -313,19 +313,16 @@
             
             ;; 0. Type check - fail early
             ,@(for/list ([t argument-types] [i (in-naturals)])
-                (match t
-                  ['string/symbol
-                   `(if (i32.eqz (i32.or (ref.test (ref $String) (local.get ,(param-index i)))
-                                         (ref.test (ref $Symbol) (local.get ,(param-index i)))))
-                        ; TODO  Call a more specific error function that includes the type.
-                        (then (call $raise-unexpected-argument (local.get ,(param-index i)))
-                              (unreachable)))]
-                  [_
-                   (define expected (argument-type->wasm-primtive-expected t))
-                   `(if (i32.eqz (ref.test ,expected (local.get ,(param-index i))))
-                        ; TODO  Call a more specific error function that includes the type.
-                        (then (call $raise-unexpected-argument (local.get ,(param-index i)))
-                              (unreachable)))]))
+                (define test
+                  (match t
+                    ['string/symbol `(i32.or (ref.test (ref $String) (local.get ,(param-index i)))
+                                             (ref.test (ref $Symbol) (local.get ,(param-index i))))]
+                    [_              (define expected (argument-type->wasm-primtive-expected t))
+                                    `(ref.test ,expected (local.get ,(param-index i)))]))
+                `(if (i32.eqz ,test)
+                     ; TODO  Call a more specific error function that includes the type.
+                     (then (call $raise-unexpected-argument (local.get ,(param-index i)))
+                           (unreachable))))
 
             ;; 1. Extract the values from the parameters and store them in the locals.
             ;;    I.e. extract (param-index i) and store into (local-index i)            

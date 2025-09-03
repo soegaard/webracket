@@ -55,8 +55,13 @@
                         (cdr props))])))
 
 ; invoke the `method-name` method of the object `obj` with arguments `args`.
+; js-send* returns an external object
 (define (js-send* obj method-name . args)
   (js-send obj method-name (apply vector args)))
+
+; js-send/flonum* returns a flonum
+(define (js-send/flonum* obj method-name . args)
+  (js-send/flonum obj method-name (apply vector args)))
 
 ;;;
 ;;; The Construction
@@ -65,17 +70,22 @@
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
   (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
-
+  
+  (js-log "board")
+  (js-log JSXGraph)
   (define board
     (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
                                                               #["axis"        #t]]))))
+
+  (js-log "A")
   (define A
     (js-send* board "create"
               "point"                           ; element type
               (vector -2 1)                     ; array of parents
               (js-object '#[#["name"  "A"]
-                                 #["color" "blue"]]))) ; attributes
+                            #["color" "blue"]]))) ; attributes
 
+  (js-log "B")
   (define B
     (js-send* board "create"
               "point"                           ; element type
@@ -129,45 +139,28 @@
               (vector l BC)
               (js-object '#[#["name"  "P"]
                                  #["color" "red"]])))
+  
+  (define (update-BC-line)
+    (define bx (js-send/flonum* B "X"))
+    (define by (js-send/flonum* B "Y"))
+    (define cx (js-send/flonum* C "X"))
+    (define cy (js-send/flonum* C "Y"))
+    (define px (js-send/flonum* P "X"))
+    (define py (js-send/flonum* P "Y"))
 
-  (define (update-BC-line _)
-    (define (fl x)
-      (if (external? x)
-          (js-send* x "valueOf")
-          x))
-    
-    (define bx (fl (js-send* B "X")))
-    (define by (fl (js-send* B "Y")))
-    (define cx (fl (js-send* C "X")))
-    (define cy (fl (js-send* C "Y")))
-    (define px (fl (js-send* P "X")))
-    (define py (fl (js-send* P "Y")))
-    (js-log (vector bx by cx cy px py))
-    (js-log "here")
-    (js-log (external? bx))
-    (js-log "here1")
-    (js-log px)
-    (js-log bx)
-    (js-log (- px bx))
-    (js-log "here2")
-    (js-log (- cx bx))
-    (js-log "here3")
-    (js-log (vector (- px bx) (- cx bx)))
-    (js-log "here4")
-    
-    (define dot1 (+ (* (- px bx) (- cx bx))
-                    (* (- py by) (- cy by))))
-    (define dot2 (+ (* (- px cx) (- bx cx))
-                    (* (- py cy) (- by cy))))
+    (define dot1 (+ (* (- px bx) (- cx bx)) (* (- py by) (- cy by))))
+    (define dot2 (+ (* (- px cx) (- bx cx)) (* (- py cy) (- by cy))))
     (define outside? (not (and (>= dot1 0) (>= dot2 0))))
+    
     (js-send* BC "setAttribute"
               (js-object (if outside?
                                  '#[#["visible" #t]]
                                  '#[#["visible" #f]]))))
 
+  ;; 
+  
+  (update-BC-line)
   (js-send* board "on" "update" (procedure->external update-BC-line))
-  (update-BC-line #f)
-
   (void))
 
 ;;;

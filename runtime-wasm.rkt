@@ -6344,21 +6344,29 @@
 
         (func $external-number->flonum (type $Prim1)
               (param $v (ref eq))
-              (result (ref eq))
-
-              (local $e (ref $External))
-              (local $f f64)
-
+              (result   (ref eq))
+              
+              (local $e   (ref $External))
+              (local $raw externref)
+              (local $f   f64)
+              ;; Check that $v is an $External
               (if (i32.eqz (ref.test (ref $External) (local.get $v)))
-                  (then (call $raise-argument-error (local.get $v))
-                        (unreachable)))
-
+                  (then (call $raise-argument-error (local.get $v)) (unreachable)))
+              ;; Cast to $External
               (local.set $e (ref.cast (ref $External) (local.get $v)))
+              ;; Extract underlying JS value
+              (local.set $raw (struct.get $External $v (local.get $e)))
+              ;; If null, return #f
+              (if (ref.is_null (local.get $raw))
+                  (then (return (global.get $false))))
+              ;; Non-null now: pass as (ref extern) directly
               (local.set $f (call $js-external-number->f64
-                                    (struct.get $External $v (local.get $e))))
-              (struct.new $Flonum
-                          (i32.const 0)
-                          (local.get $f)))
+                                  (ref.as_non_null (local.get $raw))))
+              (struct.new $Flonum (i32.const 0) (local.get $f)))
+
+
+
+
 
         ;;;
         ;;; 4.3 Byte Strings
@@ -12985,10 +12993,10 @@
                (local.get $i))
 
          (func $callback (export "callback")
-               (param $id i32)
-               (param $fasl i32)
-               (result i32)
-
+               (param $id   i32)
+               (param $fasl i32) ; index into linear memory
+               (result      i32)
+               
                (local $proc  (ref $Procedure))
                (local $vec   (ref $Vector))
                (local $args  (ref $Args))
@@ -15371,7 +15379,7 @@
               (local $arr (ref $I8Array))
               (local $len i32)
               (local $val (ref eq))
-
+              
               (call $copy-memory-to-i8array (local.get $start))
               (local.set $len) (local.set $arr)
               (call $fasl:read-s-exp (local.get $arr) (local.get $len) (i32.const 0))

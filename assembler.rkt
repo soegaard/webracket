@@ -252,8 +252,6 @@ function js_value_to_fasl(v) {
 
   // --- main dispatcher (mirrors fasl_to_js_value mapping) ---
   function writeAny(x) {
-    console.log( ["foo", x])
-
     // Fast paths by JS type
     if (typeof x === "number") {
       if (Number.isInteger(x) && x >= -(1 << 29) && x <= ((1 << 29) - 1)) {
@@ -265,7 +263,6 @@ function js_value_to_fasl(v) {
     }
     // Number object
     if ( (typeof x === "object") && (x instanceof Number) ) {
-      console.log("HERE!!!")
       writeFlonum(x.valueOf());
       return;
     }
@@ -305,11 +302,17 @@ function js_value_to_fasl(v) {
       writeBytesVal(x);
       return;
     }
-    // Accept raw byte arrays too
-    if (Array.isArray(x) && x.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
-      writeBytesVal(Uint8Array.from(x));
-      return;
-    }
+    // TODO
+    //   - an empty array -- is than an vector or a byte string?
+    //   - no way to produce a vector with small integers
+    //   - do something else to return byte strings.
+      
+    // // Accept raw byte arrays too
+    // if (Array.isArray(x) && x.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
+    //   console.log("writeAny - array with bytes => bytes")
+    //   writeBytesVal(Uint8Array.from(x));
+    //   return;
+    // }
     // Vector: plain JS Array (distinct from bytes above)
     if (Array.isArray(x)) {
       writeVector(x);
@@ -532,6 +535,10 @@ var imports = {
       'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
       'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
       'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
+      'send/flonum':               ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []))
+                                    return (( (typeof x === "object") && (x instanceof Number) ) ? x.valueOf() : x)
+                                    }),
       'throw':                     (exn => { throw from_fasl(exn); }),
       'null':                      (() => null),
       'this':                      (function () { return this; }),

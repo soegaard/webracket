@@ -129,6 +129,12 @@
   ;; Pass arguments as a list or vector.
   (-> (extern string/symbol value) (extern)))
 
+(define-foreign js-send/flonum
+  #:module "standard"
+  #:name   "send/flonum"
+  ;; Pass arguments as a list or vector.
+  (-> (extern string/symbol value) (f64)))
+
 (define-foreign js-throw
   #:module "standard"
   #:name   "throw"
