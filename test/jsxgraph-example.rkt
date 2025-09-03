@@ -23,6 +23,14 @@
 ;; - Sometimes, auxiliary or hidden construction points are shown in gray or lighter colors. 
 
 ;;;
+;;; Build Notes
+;;;
+
+;; racket -l errortrace -t ../webracket.rkt -- --ffi ../jsxgraph.ffi --ffi ../standard.ffi --ffi ../dom.ffi -b jsxgraph-example.rkt
+
+
+
+;;;
 ;;; Construct the DOM
 ;;; 
 
@@ -54,25 +62,11 @@
       [else       (loop (js-ref val (car props))
                         (cdr props))])))
 
-; invoke the `method-name` method of the object `obj` with arguments `args`.
-; js-send* returns an external object
-(define (js-send* obj method-name . args)
-  (js-send obj method-name (apply vector args)))
+(define (error msg . values)
+  (js-log msg)
+  (for-each (λ (x) (js-log x)) values)  ; todo - fix js-log - $prim:js-log is missing?!
+  (/ 0 0))
 
-; js-send/flonum* returns a flonum
-(define (js-send/flonum* obj method-name . args)
-  (js-send/flonum obj method-name (apply vector args)))
-
-;;;
-;;; Constructors
-;;;
-
-(define (board-create board element-type parents [attributes #f])
-  (define attrs (or attributes '#[])) ; optional
-  (js-send board "create" (vector element-type parents attrs)))
-
-(define (create-point board parents [attributes #f])
-  (board-create board "point" parents attributes))
 
 ;;;
 ;;; Pairings, Keys and Attributes
@@ -99,14 +93,6 @@
     [(vector key value) (vector (key->string key) value)]
     [_                  #f]))
 
-(define (vector-map f xs)
-  (list->vector
-   (map f (vector->list xs))))
-
-(define (error msg . values)
-  ; (js-log msg)
-  ; (for-each js-log values)
-  (/ 0 0))
 
 
 (define (pairings->vector xs)
@@ -129,39 +115,91 @@
                                       (loop (cdr (cdr kvs))))])))))
 
 ;;;
+;;; Invokers
+;;;
+
+; invoke the `method-name` method of the object `obj` with arguments `args`.
+; js-send* returns an external object
+(define (js-send* obj method-name . args)
+  (js-send obj method-name (apply vector args)))
+
+; js-send/flonum* returns a flonum
+(define (js-send/flonum* obj method-name . args)
+  (js-send/flonum obj method-name (apply vector args)))
+
+
+;;;
+;;; Constructors
+;;;
+
+(define JSXGraph #f) ; initialized in `init-board`
+
+;; Board Constructor
+(define (create-board container-id [maybe-attributes #f])
+  (define attrs (or maybe-attributes
+                    ; default attributes
+                    (attributes 'boundingbox     #[-5 5 5 -5]
+                                'axis            #t
+                                'keepaspectratio #t)))
+  (js-send JSXGraph "initBoard" (vector container-id attrs)))
+
+
+;; Element Constructors
+;;   - creates elements on `board`
+
+(define (board-create board element-type parents [attributes #f])
+  (define attrs (or attributes '#[])) ; optional
+  (js-send board "create" (vector element-type parents attrs)))
+
+(define (create-point board parents [attributes #f])
+  (board-create board "point" parents attributes))
+
+(define (create-line board parents [attributes #f])
+  ; parents can be:
+  ;   - two points     (JXG.Point, array, function)
+  ;   - three numbers: (number, function)
+  ;       a,b,c   =>   az + bx + cy = 0
+  ;   - a function:    (a function returning an array of 3 numbers in hom. coordinates) 
+  (board-create board "line" parents attributes))
+
+(define (create-segment board parents [attributes #f])
+  (board-create board "segment" parents attributes))
+
+(define (create-circle board parents [attributes #f])
+  ; parents:
+  ;   center: a point
+  ;   radius: number, point, line, circle
+  (board-create board "circle" parents attributes))
+
+
+
+;;;
 ;;; The Construction
 ;;;
 
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
-  (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
+  (set! JSXGraph (dot (js-var "JXG") "JSXGraph"))
+
   
-  (define board
-    (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
-                                                              #["axis"        #t]]))))
+  (define board (create-board "box"))
 
   (define A (create-point board
                           (vector -2 1) 
                           (attributes 'name "A" 'color "blue")))
   
-  (define B
-    (board-create board "point"  ; element type
-              (vector 3 4)                      ; array of parents
-              (js-object '#[#["name"  "B"]
-                            #["color" "blue"]]))) ; attributes
-  (define C
-    (js-send* board "create"
-              "point"
-              (vector 1 -2)
-              (js-object '#[#["name"  "C"]
-                            #["color" "blue"]]))) ; attributes
+  (define B (create-point board
+                          (vector 3 4) 
+                          (attributes 'name "B" 'color "blue")))
   
-  (js-send* board "create" "line"    (vector A B) (js-object '#[]))
-  (js-send* board "create" "segment" (vector A B) (js-object '#[]))
+  (define C (create-point board
+                          (vector 1 -2) 
+                          (attributes 'name "C" 'color "blue")))
 
-  (define BC
-    (js-send* board "create" "line" (vector B C) (js-object '#[#["visible" #f]
-                                                               #["dash"    2]])))
+  (create-line    board (vector A B))
+  (create-segment board (vector A B))
+
+  (define BC (create-line board (vector B C) (attributes 'visible #f 'dash 2)))
 
   (js-send* board "create"
             "segment"
@@ -184,7 +222,9 @@
               "intersection"
               (vector l BC)
               (js-object '#[#["name"  "P"]
-                                 #["color" "red"]])))
+                            #["color" "red"]])))
+
+  (create-circle board (vector P A))
 
   (define (update-BC-line . _)
     (define bx (js-send/flonum* B "X"))
