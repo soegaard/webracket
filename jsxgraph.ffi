@@ -1,0 +1,211 @@
+;;;
+;;; JSXGraph
+;;;
+
+;;; Point
+
+;; Properties
+;; Distance at which point is captured by attractors
+(define-foreign jsx-point-attractor-distance
+  #:module "jsx-point"
+  #:name   "attractor-distance"
+  (-> (extern) (f64)))
+
+;; Set distance at which point is captured by attractors
+(define-foreign jsx-set-point-attractor-distance!
+  #:module "jsx-point"
+  #:name   "set-attractor-distance!"
+  (-> (extern f64) ()))
+
+;; List of attractor points
+(define-foreign jsx-point-attractors
+  #:module "jsx-point"
+  #:name   "attractors"
+  (-> (extern) (extern)))
+
+;; Set list of attractor points
+(define-foreign jsx-set-point-attractors!
+  #:module "jsx-point"
+  #:name   "set-attractors!"
+  (-> (extern extern) ()))
+
+;; Unit of attractor distance
+(define-foreign jsx-point-attractor-unit
+  #:module "jsx-point"
+  #:name   "attractor-unit"
+  (-> (extern) (string)))
+
+;; Set unit of attractor distance
+(define-foreign jsx-set-point-attractor-unit!
+  #:module "jsx-point"
+  #:name   "set-attractor-unit!"
+  (-> (extern string) ()))
+
+;; Whether point is attracted to grid
+(define-foreign jsx-point-attract-to-grid
+  #:module "jsx-point"
+  #:name   "attract-to-grid"
+  (-> (extern) (i32)))
+
+;; Enable or disable grid attraction
+(define-foreign jsx-set-point-attract-to-grid!
+  #:module "jsx-point"
+  #:name   "set-attract-to-grid!"
+  (-> (extern i32) ()))
+
+;; Shape used to draw the point
+(define-foreign jsx-point-face
+  #:module "jsx-point"
+  #:name   "face"
+  (-> (extern) (string)))
+
+;; Set shape used to draw the point
+(define-foreign jsx-set-point-face!
+  #:module "jsx-point"
+  #:name   "set-face!"
+  (-> (extern string) ()))
+
+;; Points ignored when snapping
+(define-foreign jsx-point-ignored-snap-to-points
+  #:module "jsx-point"
+  #:name   "ignored-snap-to-points"
+  (-> (extern) (extern)))
+
+;; Set points ignored when snapping
+(define-foreign jsx-set-point-ignored-snap-to-points!
+  #:module "jsx-point"
+  #:name   "set-ignored-snap-to-points!"
+  (-> (extern extern) ()))
+
+;; Number of digits in infobox
+(define-foreign jsx-point-infobox-digits
+  #:module "jsx-point"
+  #:name   "infobox-digits"
+  (-> (extern) (i32)))
+
+;; Set number of digits in infobox
+(define-foreign jsx-set-point-infobox-digits!
+  #:module "jsx-point"
+  #:name   "set-infobox-digits!"
+  (-> (extern i32) ()))
+
+;; Whether to show infobox
+(define-foreign jsx-point-show-infobox
+  #:module "jsx-point"
+  #:name   "show-infobox"
+  (-> (extern) (i32)))
+
+;; Enable or disable infobox
+(define-foreign jsx-set-point-show-infobox!
+  #:module "jsx-point"
+  #:name   "set-show-infobox!"
+  (-> (extern i32) ()))
+
+;; Radius of point marker
+(define-foreign jsx-point-size
+  #:module "jsx-point"
+  #:name   "size"
+  (-> (extern) (f64)))
+
+;; Set radius of point marker
+(define-foreign jsx-set-point-size!
+  #:module "jsx-point"
+  #:name   "set-size!"
+  (-> (extern f64) ()))
+
+;; Unit for point size
+(define-foreign jsx-point-size-unit
+  #:module "jsx-point"
+  #:name   "size-unit"
+  (-> (extern) (string)))
+
+;; Set unit for point size
+(define-foreign jsx-set-point-size-unit!
+  #:module "jsx-point"
+  #:name   "set-size-unit!"
+  (-> (extern string) ()))
+
+;; Grid step in x-direction
+(define-foreign jsx-point-snap-size-x
+  #:module "jsx-point"
+  #:name   "snap-size-x"
+  (-> (extern) (f64)))
+
+;; Set grid step in x-direction
+(define-foreign jsx-set-point-snap-size-x!
+  #:module "jsx-point"
+  #:name   "set-snap-size-x!"
+  (-> (extern f64) ()))
+
+;; Grid step in y-direction
+(define-foreign jsx-point-snap-size-y
+  #:module "jsx-point"
+  #:name   "snap-size-y"
+  (-> (extern) (f64)))
+
+;; Set grid step in y-direction
+(define-foreign jsx-set-point-snap-size-y!
+  #:module "jsx-point"
+  #:name   "set-snap-size-y!"
+  (-> (extern f64) ()))
+
+;; Whether snapping to grid is enabled
+(define-foreign jsx-point-snap-to-grid
+  #:module "jsx-point"
+  #:name   "snap-to-grid"
+  (-> (extern) (i32)))
+
+;; Enable or disable snap to grid
+(define-foreign jsx-set-point-snap-to-grid!
+  #:module "jsx-point"
+  #:name   "set-snap-to-grid!"
+  (-> (extern i32) ()))
+
+;; Whether snapping to points is enabled
+(define-foreign jsx-point-snap-to-points
+  #:module "jsx-point"
+  #:name   "snap-to-points"
+  (-> (extern) (i32)))
+
+;; Enable or disable snap to points
+(define-foreign jsx-set-point-snap-to-points!
+  #:module "jsx-point"
+  #:name   "set-snap-to-points!"
+  (-> (extern i32) ()))
+
+;; Maximum snapping distance
+(define-foreign jsx-point-snatch-distance
+  #:module "jsx-point"
+  #:name   "snatch-distance"
+  (-> (extern) (f64)))
+
+;; Set maximum snapping distance
+(define-foreign jsx-set-point-snatch-distance!
+  #:module "jsx-point"
+  #:name   "set-snatch-distance!"
+  (-> (extern f64) ()))
+
+;; Numeric index of point style
+(define-foreign jsx-point-style
+  #:module "jsx-point"
+  #:name   "style"
+  (-> (extern) (i32)))
+
+;; Set numeric index of point style
+(define-foreign jsx-set-point-style!
+  #:module "jsx-point"
+  #:name   "set-style!"
+  (-> (extern i32) ()))
+
+;; Whether point size scales with zoom
+(define-foreign jsx-point-zoom
+  #:module "jsx-point"
+  #:name   "zoom"
+  (-> (extern) (i32)))
+
+;; Enable or disable zoom scaling
+(define-foreign jsx-set-point-zoom!
+  #:module "jsx-point"
+  #:name   "set-zoom!"
+  (-> (extern i32) ()))
+
