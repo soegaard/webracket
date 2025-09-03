@@ -162,6 +162,10 @@ function fasl_to_js_value(arr, i = 0) {
   }
 }
 
+function to_fasl(v) {
+  return js_value_to_fasl(v)
+}
+
 function js_value_to_fasl(v) {
   const out = [];
   const enc = new TextEncoder();
@@ -248,6 +252,8 @@ function js_value_to_fasl(v) {
 
   // --- main dispatcher (mirrors fasl_to_js_value mapping) ---
   function writeAny(x) {
+    console.log( ["foo", x])
+
     // Fast paths by JS type
     if (typeof x === "number") {
       if (Number.isInteger(x) && x >= -(1 << 29) && x <= ((1 << 29) - 1)) {
@@ -255,6 +261,12 @@ function js_value_to_fasl(v) {
       } else {
         writeFlonum(x);
       }
+      return;
+    }
+    // Number object
+    if ( (typeof x === "object") && (x instanceof Number) ) {
+      console.log("HERE!!!")
+      writeFlonum(x.valueOf());
       return;
     }
     if (typeof x === "boolean") {
@@ -515,7 +527,7 @@ var imports = {
       'index':                     ((obj, prop) => obj[from_fasl(prop)]),
       'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
       'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
-      'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || []))),
+      'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
       'throw':                     (exn => { throw from_fasl(exn); }),
       'null':                      (() => null),
       'this':                      (function () { return this; }),
@@ -1613,10 +1625,6 @@ const wasmModule
                           const bytes  = new Uint8Array(memory.buffer, 0, result);
                           console.log(new TextDecoder().decode(bytes));
                         });
-
-
-
-
 
 })
 
