@@ -11544,24 +11544,11 @@
                             (br $loop)))
                (return (local.get $xs)))
 
-        (func $vector-map (type $Prim>=1)
+        (func $vector-map (type $Prim>=2)
               (param $proc (ref eq))
-              (param $vecs (ref eq))
+              (param $v0   (ref eq))
+              (param $rest (ref eq))
               (result (ref eq))
-
-              (local $pair (ref $Pair))
-              (local $v0   (ref eq))
-              (local $rest (ref eq))
-
-              ;; Ensure a non-empty list of vectors
-              (if (ref.eq (local.get $vecs) (global.get $null))
-                  (then (call $raise-arity-mismatch) (unreachable)))
-              (if (i32.eqz (ref.test (ref $Pair) (local.get $vecs)))
-                  (then (call $raise-pair-expected (local.get $vecs))
-                        (unreachable)))
-              (local.set $pair (ref.cast (ref $Pair) (local.get $vecs)))
-              (local.set $v0   (struct.get $Pair $a (local.get $pair)))
-              (local.set $rest (struct.get $Pair $d (local.get $pair)))
 
               ;; Copy first vector and delegate to vector-map!
               (call $vector-map! (local.get $proc)
