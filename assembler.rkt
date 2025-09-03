@@ -1654,7 +1654,15 @@ var imports = {
         'style':                       (pt => pt.style),
         'set-style!':                  ((pt, s) => { pt.style = s; }),
         'zoom':                        (pt => pt.zoom ? 1 : 0),
-        'set-zoom!':                   ((pt, flag) => { pt.zoom = !!flag; })
+        'set-zoom!':                   ((pt, flag) => { pt.zoom = !!flag; }),
+        'has-point':                   ((pt, x, y) => pt.hasPoint(x, y) ? 1 : 0),
+        'is-on':                       ((pt, el, tol) => pt.isOn(el, tol) ? 1 : 0),
+        'make-intersection!':          ((pt, el1, el2, i, j) => { pt.makeIntersection(el1, el2, i, j); }),
+        'normalize-face':              ((pt, s) => pt.normalizeFace(from_fasl(s))),
+        'call-set-style!':             ((pt, i) => { pt.setStyle(i); }),
+        'update!':                     ((pt, flag) => { pt.update(!!flag); }),
+        'update-renderer!':            (pt => { pt.updateRenderer(); }),
+        'update-transform!':           ((pt, flag) => pt.updateTransform(!!flag))
     } : {
         'attractor-distance'()          { throw new Error('DOM not available in this environment'); },
         'set-attractor-distance!'()     { throw new Error('DOM not available in this environment'); },
@@ -1689,7 +1697,15 @@ var imports = {
         'style'()                       { throw new Error('DOM not available in this environment'); },
         'set-style!'()                  { throw new Error('DOM not available in this environment'); },
         'zoom'()                        { throw new Error('DOM not available in this environment'); },
-        'set-zoom!'()                   { throw new Error('DOM not available in this environment'); }
+        'set-zoom!'()                   { throw new Error('DOM not available in this environment'); },
+        'has-point'()                   { throw new Error('DOM not available in this environment'); },
+        'is-on'()                       { throw new Error('DOM not available in this environment'); },
+        'make-intersection!'()          { throw new Error('DOM not available in this environment'); },
+        'normalize-face'()              { throw new Error('DOM not available in this environment'); },
+        'call-set-style!'()             { throw new Error('DOM not available in this environment'); },
+        'update!'()                     { throw new Error('DOM not available in this environment'); },
+        'update-renderer!'()            { throw new Error('DOM not available in this environment'); },
+        'update-transform!'()           { throw new Error('DOM not available in this environment'); }
     }
 };
 
