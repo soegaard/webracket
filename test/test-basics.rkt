@@ -1354,6 +1354,15 @@
                    (let-values ([(a b) (vector-split-at '#(1 2 3 4 5) 2)])
                      (and (equal? a '#(1 2))
                           (equal? b '#(3 4 5))))))
+
+        (list "vector-map"
+              (and (equal? (vector-map + '#(1 2) '#(3 4)) '#(4 6))
+                   (equal? (vector-map add1 '#(1 2 3)) '#(2 3 4))))
+
+        (list "vector-map!"
+              (let ([v (vector 1 2 3 4)])
+                (and (equal? (vector-map! add1 v) '#(2 3 4 5))
+                     (equal? v '#(2 3 4 5)))))
         ))
 
  (list "4.15 Hash Tables"
