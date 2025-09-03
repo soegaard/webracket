@@ -19,15 +19,20 @@
 ;; When constructing new points follow the convention:
 
 ;; - Free/independent points (those you can drag freely) are often shown in blue.
-;; - Dependent/constructed points (intersection points, midpoints, etc.) are often shown in red.
-;; - Sometimes, auxiliary or hidden construction points are shown in gray or lighter colors. 
+;; - Dependent/constructed points (intersection points, midpoints, etc.)
+;;   are often shown in red.
+;; - Sometimes, auxiliary or hidden construction points are shown in
+;;   gray or lighter colors. 
 
 ;;;
 ;;; Build Notes
 ;;;
 
-;; racket -l errortrace -t ../webracket.rkt -- --ffi ../jsxgraph.ffi --ffi ../standard.ffi --ffi ../dom.ffi -b jsxgraph-example.rkt
-
+;; racket -l errortrace -t ../webracket.rkt --
+;;  --ffi ../jsxgraph.ffi
+;;  --ffi ../standard.ffi
+;;  --ffi ../dom.ffi
+;;  -b jsxgraph-example.rkt
 
 
 ;;;
@@ -46,8 +51,17 @@
 ;; Use the JSXGraph stylesheet
 (define link (js-create-element "link"))
 (js-set-attribute! link "rel" "stylesheet")
-(js-set-attribute! link "href" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
+(js-set-attribute! link "href"
+                   "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
 (js-append-child! head link)
+
+;;;
+;;; Syntax
+;;;
+
+#;(define-syntax-rule (defv (x ...) expr)
+    (define-values (x ...) expr))
+ 
 
 ;;;
 ;;; General Helpers
@@ -64,12 +78,13 @@
 
 (define (error msg . values)
   (js-log msg)
-  (for-each (λ (x) (js-log x)) values)  ; todo - fix js-log - $prim:js-log is missing?!
+  ; todo - fix js-log - $prim:js-log is missing?!
+  (for-each (λ (x) (js-log x)) values)
   (/ 0 0))
 
 
 ;;;
-;;; Pairings, Keys and Attributes
+;;; Pairings, Keys, Attributes and Parents
 ;;;
 
 (define (key? x)
@@ -78,7 +93,7 @@
 (define (key->string x)
   (or (and (string? x) x)
       (and (symbol? x) (symbol->string x))
-      #f))  ; todo : signal error
+      (error 'key->string "expected a key (string or symbol), got: " x)))
 
 
 (define (pairing? x)
@@ -104,7 +119,9 @@
 (define (attributes . key/values)
   (define n (length key/values))
   (unless (even? n)
-    (error 'attributes "expected an equal number of keys and values, got:" key/values))
+    (error 'attributes
+           "expected an equal number of keys and values, got:"
+           key/values))
 
   (js-object
    (list->vector
@@ -113,6 +130,12 @@
         ['()                    '()]
         [(list* key value more) (cons (vector (key->string key) value)
                                       (loop (cdr (cdr kvs))))])))))
+
+(define (parents . xs)
+  (list->vector xs))
+
+(define (set-attribute! elem key value)
+  (js-send elem "setAttribute" (vector (vector (key->string key) value))))
 
 ;;;
 ;;; Invokers
@@ -154,7 +177,8 @@
   ;   - two points     (JXG.Point, array, function)
   ;   - three numbers: (number, function)
   ;       a,b,c   =>   az + bx + cy = 0
-  ;   - a function:    (a function returning an array of 3 numbers in hom. coordinates) 
+  ;   - a function:    (a function returning an array of 3 numbers
+  ;                     in homogenous coordinates)
   (board-create board "line" parents attributes))
 
 (define (create-segment board parents [attributes #f])
@@ -172,8 +196,11 @@
 (define (create-intersection board parents [attributes #f])
   (board-create board "intersection" parents attributes))
 
-(define (set-attribute! elem key value)
-  (js-send elem "setAttribute" (vector (key->string key) value)))
+;; Point
+
+(define (point? x)
+  (and (external? x)
+       ...???...))
 
 (define (point-x p)
   (js-send/flonum* p "X"))
@@ -181,9 +208,48 @@
 (define (point-y p)
   (js-send/flonum* p "Y"))
 
+(define (coordinates p)
+  (values (point-x p) (point-y p)))
+
+;; Event handlers
+
 (define (on element event handler)
   (js-send element "on" (vector event handler)))
 
+;;;
+;;; Vector Operations
+;;;
+
+(define (as-vector obj)
+  (define msg "expected a vector-like value, got: ")
+  (match obj
+    [(vector x y) obj]
+    [(list   x y) (vector x y)]
+    #;[(? point?)   (vector (point-x obj) (point-y obj))]
+    [_ (error 'as-vector msg obj)]))
+
+(define (vector-plus v w)
+  (define msg "expected a vector-like value, got: ")
+  (match* ((as-vector v) (as-vector w))
+    [((vector vx vy) (vector wx wy))
+     (vector (+ wx vx) (+ wy vy))]))
+
+(define (vector-minus v w)
+  (define msg "expected a vector-like value, got: ")
+  (match* ((as-vector v) (as-vector w))
+    [((vector vx vy) (vector wx wy))
+     (vector (- wx vx) (- wy vy))]))
+
+(define (displacement P Q)
+  (define OP (as-vector P))
+  (define OQ (as-vector Q))
+  (vector-minus OQ OP))
+
+
+(define (dot-product v w)
+  (match* ((as-vector v) (as-vector w))
+    [((vector vx vy) (vector wx wy))
+     (+ (* vx wx) (* vy wy))]))
 
 
 ;;;
@@ -191,67 +257,62 @@
 ;;;
 
 (define (init-board _evt)
-  ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
+  ; The JXG.JSXGraph singleton stores all properties required to load, save,
+  ; create and free a board.
   (set! JSXGraph (dot (js-var "JXG") "JSXGraph"))
 
   
   (define board (create-board "box"))
 
-  (define A (create-point board
-                          (vector -2 1) 
-                          (attributes 'name "A" 'color "blue")))
+  (define A  (create-point board
+                           (parents -2 1) 
+                           (attributes 'name "A" 'color "blue")))
   
-  (define B (create-point board
-                          (vector 3 4) 
-                          (attributes 'name "B" 'color "blue")))
+  (define B  (create-point board
+                           (parents 4 -2) 
+                           (attributes 'name "B" 'color "blue")))
   
-  (define C (create-point board
-                          (vector 1 -2) 
-                          (attributes 'name "C" 'color "blue")))
-
-  (create-line    board (vector A B))
-  (create-segment board (vector A B))
+  (define C  (create-point board
+                           (parents 1 -2) 
+                           (attributes 'name "C" 'color "blue")))
 
   (define BC (create-line board (vector B C) (attributes 'visible #f 'dash 2)))
 
+  ; Triangle ABC
+  (create-segment board (vector A B))
   (create-segment board (vector B C))
-
   (create-segment board (vector C A))
 
-  (define l
-    (create-perpendicular board (vector BC A)
-                           (attributes 'name "l")))
+  (define l (create-perpendicular board
+                                  (parents BC A)
+                                  (attributes 'name "l")))
+  
+  (define P (create-intersection board
+                                 (parents l BC)
+                                 (attributes 'name  "P" 'color "red")))
 
-  (define P
-    (create-intersection board (vector l BC)
-                         (attributes 'name  "P"
-                                     'color "red")))
-
-  (create-circle board (vector P A))
+  (create-circle board (parents P A))
 
   (define (update-BC-line . _)
-    (define bx (point-x B))
-    (define by (point-y B))
-    (define cx (point-x C))
-    (define cy (point-y C))
-    (define px (point-x P))
-    (define py (point-y P))
+    (define-values (bx by) (coordinates B))
+    (define-values (cx cy) (coordinates C))
+    (define-values (px py) (coordinates P))
 
     (define dot1 (+ (* (- px bx) (- cx bx)) (* (- py by) (- cy by))))
     (define dot2 (+ (* (- px cx) (- bx cx)) (* (- py cy) (- by cy))))
 
     (define outside? (not (and (>= dot1 0) (>= dot2 0))))
-    
+
     (if outside?
         (set-attribute! BC 'visible #t)
         (set-attribute! BC 'visible #f))
-    )
 
-  
-
-  ;; 
-  
+    (void))
+ 
+  ;; Updates  
   (update-BC-line)
+
+  ;; Install event handlers
   (define on-drag-handler (procedure->external update-BC-line))
   (define on-down-handler (procedure->external
                            (λ _ (set-attribute! BC 'visible #t))))
@@ -276,6 +337,7 @@
 ;; When loaded, the board is created.
 
 (define script (js-create-element "script"))
-(js-set-attribute!      script "src"  "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
+(js-set-attribute! script "src"
+                  "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
 (js-add-event-listener! script "load" (procedure->external init-board))
 (js-append-child! head  script)
