@@ -6,206 +6,297 @@
 
 ;; Properties
 ;; Distance at which point is captured by attractors
+; (jsx-point-attractor-distance pt:Extern) -> Flonum
 (define-foreign jsx-point-attractor-distance
   #:module "jsx-point"
   #:name   "attractor-distance"
   (-> (extern) (f64)))
 
 ;; Set distance at which point is captured by attractors
+; (jsx-set-point-attractor-distance! pt:Extern distance:Flonum) -> Void
 (define-foreign jsx-set-point-attractor-distance!
   #:module "jsx-point"
   #:name   "set-attractor-distance!"
   (-> (extern f64) ()))
 
 ;; List of attractor points
+; (jsx-point-attractors pt:Extern) -> Extern
 (define-foreign jsx-point-attractors
   #:module "jsx-point"
   #:name   "attractors"
   (-> (extern) (extern)))
 
 ;; Set list of attractor points
+; (jsx-set-point-attractors! pt:Extern attractors:Extern) -> Void
 (define-foreign jsx-set-point-attractors!
   #:module "jsx-point"
   #:name   "set-attractors!"
   (-> (extern extern) ()))
 
 ;; Unit of attractor distance
+; (jsx-point-attractor-unit pt:Extern) -> String
 (define-foreign jsx-point-attractor-unit
   #:module "jsx-point"
   #:name   "attractor-unit"
   (-> (extern) (string)))
 
 ;; Set unit of attractor distance
+; (jsx-set-point-attractor-unit! pt:Extern unit:String) -> Void
 (define-foreign jsx-set-point-attractor-unit!
   #:module "jsx-point"
   #:name   "set-attractor-unit!"
   (-> (extern string) ()))
 
 ;; Whether point is attracted to grid
+; (jsx-point-attract-to-grid pt:Extern) -> Boolean
 (define-foreign jsx-point-attract-to-grid
   #:module "jsx-point"
   #:name   "attract-to-grid"
   (-> (extern) (i32)))
 
 ;; Enable or disable grid attraction
+; (jsx-set-point-attract-to-grid! pt:Extern enable:Boolean) -> Void
 (define-foreign jsx-set-point-attract-to-grid!
   #:module "jsx-point"
   #:name   "set-attract-to-grid!"
   (-> (extern i32) ()))
 
 ;; Shape used to draw the point
+; (jsx-point-face pt:Extern) -> String
 (define-foreign jsx-point-face
   #:module "jsx-point"
   #:name   "face"
   (-> (extern) (string)))
 
 ;; Set shape used to draw the point
+; (jsx-set-point-face! pt:Extern face:String) -> Void
 (define-foreign jsx-set-point-face!
   #:module "jsx-point"
   #:name   "set-face!"
   (-> (extern string) ()))
 
 ;; Points ignored when snapping
+; (jsx-point-ignored-snap-to-points pt:Extern) -> Extern
 (define-foreign jsx-point-ignored-snap-to-points
   #:module "jsx-point"
   #:name   "ignored-snap-to-points"
   (-> (extern) (extern)))
 
 ;; Set points ignored when snapping
+; (jsx-set-point-ignored-snap-to-points! pt:Extern points:Extern) -> Void
 (define-foreign jsx-set-point-ignored-snap-to-points!
   #:module "jsx-point"
   #:name   "set-ignored-snap-to-points!"
   (-> (extern extern) ()))
 
 ;; Number of digits in infobox
+; (jsx-point-infobox-digits pt:Extern) -> Integer
 (define-foreign jsx-point-infobox-digits
   #:module "jsx-point"
   #:name   "infobox-digits"
   (-> (extern) (i32)))
 
 ;; Set number of digits in infobox
+; (jsx-set-point-infobox-digits! pt:Extern digits:Integer) -> Void
 (define-foreign jsx-set-point-infobox-digits!
   #:module "jsx-point"
   #:name   "set-infobox-digits!"
   (-> (extern i32) ()))
 
 ;; Whether to show infobox
+; (jsx-point-show-infobox pt:Extern) -> Boolean
 (define-foreign jsx-point-show-infobox
   #:module "jsx-point"
   #:name   "show-infobox"
   (-> (extern) (i32)))
 
 ;; Enable or disable infobox
+; (jsx-set-point-show-infobox! pt:Extern enable:Boolean) -> Void
 (define-foreign jsx-set-point-show-infobox!
   #:module "jsx-point"
   #:name   "set-show-infobox!"
   (-> (extern i32) ()))
 
 ;; Radius of point marker
+; (jsx-point-size pt:Extern) -> Flonum
 (define-foreign jsx-point-size
   #:module "jsx-point"
   #:name   "size"
   (-> (extern) (f64)))
 
 ;; Set radius of point marker
+; (jsx-set-point-size! pt:Extern size:Flonum) -> Void
 (define-foreign jsx-set-point-size!
   #:module "jsx-point"
   #:name   "set-size!"
   (-> (extern f64) ()))
 
 ;; Unit for point size
+; (jsx-point-size-unit pt:Extern) -> String
 (define-foreign jsx-point-size-unit
   #:module "jsx-point"
   #:name   "size-unit"
   (-> (extern) (string)))
 
 ;; Set unit for point size
+; (jsx-set-point-size-unit! pt:Extern unit:String) -> Void
 (define-foreign jsx-set-point-size-unit!
   #:module "jsx-point"
   #:name   "set-size-unit!"
   (-> (extern string) ()))
 
 ;; Grid step in x-direction
+; (jsx-point-snap-size-x pt:Extern) -> Flonum
 (define-foreign jsx-point-snap-size-x
   #:module "jsx-point"
   #:name   "snap-size-x"
   (-> (extern) (f64)))
 
 ;; Set grid step in x-direction
+; (jsx-set-point-snap-size-x! pt:Extern step:Flonum) -> Void
 (define-foreign jsx-set-point-snap-size-x!
   #:module "jsx-point"
   #:name   "set-snap-size-x!"
   (-> (extern f64) ()))
 
 ;; Grid step in y-direction
+; (jsx-point-snap-size-y pt:Extern) -> Flonum
 (define-foreign jsx-point-snap-size-y
   #:module "jsx-point"
   #:name   "snap-size-y"
   (-> (extern) (f64)))
 
 ;; Set grid step in y-direction
+; (jsx-set-point-snap-size-y! pt:Extern step:Flonum) -> Void
 (define-foreign jsx-set-point-snap-size-y!
   #:module "jsx-point"
   #:name   "set-snap-size-y!"
   (-> (extern f64) ()))
 
 ;; Whether snapping to grid is enabled
+; (jsx-point-snap-to-grid pt:Extern) -> Boolean
 (define-foreign jsx-point-snap-to-grid
   #:module "jsx-point"
   #:name   "snap-to-grid"
   (-> (extern) (i32)))
 
 ;; Enable or disable snap to grid
+; (jsx-set-point-snap-to-grid! pt:Extern enable:Boolean) -> Void
 (define-foreign jsx-set-point-snap-to-grid!
   #:module "jsx-point"
   #:name   "set-snap-to-grid!"
   (-> (extern i32) ()))
 
 ;; Whether snapping to points is enabled
+; (jsx-point-snap-to-points pt:Extern) -> Boolean
 (define-foreign jsx-point-snap-to-points
   #:module "jsx-point"
   #:name   "snap-to-points"
   (-> (extern) (i32)))
 
 ;; Enable or disable snap to points
+; (jsx-set-point-snap-to-points! pt:Extern enable:Boolean) -> Void
 (define-foreign jsx-set-point-snap-to-points!
   #:module "jsx-point"
   #:name   "set-snap-to-points!"
   (-> (extern i32) ()))
 
 ;; Maximum snapping distance
+; (jsx-point-snatch-distance pt:Extern) -> Flonum
 (define-foreign jsx-point-snatch-distance
   #:module "jsx-point"
   #:name   "snatch-distance"
   (-> (extern) (f64)))
 
 ;; Set maximum snapping distance
+; (jsx-set-point-snatch-distance! pt:Extern distance:Flonum) -> Void
 (define-foreign jsx-set-point-snatch-distance!
   #:module "jsx-point"
   #:name   "set-snatch-distance!"
   (-> (extern f64) ()))
 
 ;; Numeric index of point style
+; (jsx-point-style pt:Extern) -> Integer
 (define-foreign jsx-point-style
   #:module "jsx-point"
   #:name   "style"
   (-> (extern) (i32)))
 
 ;; Set numeric index of point style
+; (jsx-set-point-style! pt:Extern style:Integer) -> Void
 (define-foreign jsx-set-point-style!
   #:module "jsx-point"
   #:name   "set-style!"
   (-> (extern i32) ()))
 
 ;; Whether point size scales with zoom
+; (jsx-point-zoom pt:Extern) -> Boolean
 (define-foreign jsx-point-zoom
   #:module "jsx-point"
   #:name   "zoom"
   (-> (extern) (i32)))
 
 ;; Enable or disable zoom scaling
+; (jsx-set-point-zoom! pt:Extern enable:Boolean) -> Void
 (define-foreign jsx-set-point-zoom!
   #:module "jsx-point"
   #:name   "set-zoom!"
   (-> (extern i32) ()))
+
+;; Methods
+;; Check whether coordinates are near the point
+; (jsx-point-has-point pt:Extern x:Flonum y:Flonum) -> Boolean
+(define-foreign jsx-point-has-point
+  #:module "jsx-point"
+  #:name   "has-point"
+  (-> (extern f64 f64) (i32)))
+
+;; Test if the point lies on a given element
+; (jsx-point-is-on pt:Extern element:Extern tol:Flonum) -> Boolean
+(define-foreign jsx-point-is-on
+  #:module "jsx-point"
+  #:name   "is-on"
+  (-> (extern extern f64) (i32)))
+
+;; Convert point to intersection of two elements
+; (jsx-point-make-intersection! pt:Extern el1:Extern el2:Extern i:Integer j:Integer) -> Void
+(define-foreign jsx-point-make-intersection!
+  #:module "jsx-point"
+  #:name   "make-intersection!"
+  (-> (extern extern extern i32 i32) ()))
+
+;; Normalize a face string
+; (jsx-point-normalize-face pt:Extern face:String) -> String
+(define-foreign jsx-point-normalize-face
+  #:module "jsx-point"
+  #:name   "normalize-face"
+  (-> (extern string) (string)))
+
+;; Set style by numeric index
+; (jsx-point-set-style! pt:Extern style:Integer) -> Void
+(define-foreign jsx-point-set-style!
+  #:module "jsx-point"
+  #:name   "call-set-style!"
+  (-> (extern i32) ()))
+
+;; Update the point's position
+; (jsx-point-update! pt:Extern finalize:Boolean) -> Void
+(define-foreign jsx-point-update!
+  #:module "jsx-point"
+  #:name   "update!"
+  (-> (extern i32) ()))
+
+;; Request renderer to redraw the point
+; (jsx-point-update-renderer! pt:Extern) -> Void
+(define-foreign jsx-point-update-renderer!
+  #:module "jsx-point"
+  #:name   "update-renderer!"
+  (-> (extern) ()))
+
+;; Apply transformations to base element
+; (jsx-point-update-transform! pt:Extern finalize:Boolean) -> Extern
+(define-foreign jsx-point-update-transform!
+  #:module "jsx-point"
+  #:name   "update-transform!"
+  (-> (extern i32) (extern)))
 
