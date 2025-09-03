@@ -761,13 +761,17 @@
                (param (ref extern))
                (result i32))
 
-         (func $js-lookup-external
-               (import "primitives" "lookup_external")
-               (param i32)
-               (result (ref extern)))
+        (func $js-lookup-external
+              (import "primitives" "lookup_external")
+              (param i32)
+              (result (ref extern)))
 
-         ;; FFI related imports
-         ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
+        (func $js-external-number->f64
+              (import "primitives" "external_number_to_f64")
+              (param (ref extern)) (result f64))
+
+        ;; FFI related imports
+        ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
          (func $raise-expected-string     (unreachable))
          (func $raise-unexpected-argument (unreachable))
@@ -6337,6 +6341,24 @@
                             (then (global.get $true))
                             (else (global.get $false))))
                   (else (global.get $false))))
+
+        (func $external-number->flonum (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+
+              (local $e (ref $External))
+              (local $f f64)
+
+              (if (i32.eqz (ref.test (ref $External) (local.get $v)))
+                  (then (call $raise-argument-error (local.get $v))
+                        (unreachable)))
+
+              (local.set $e (ref.cast (ref $External) (local.get $v)))
+              (local.set $f (call $js-external-number->f64
+                                    (struct.get $External $v (local.get $e))))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (local.get $f)))
 
         ;;;
         ;;; 4.3 Byte Strings

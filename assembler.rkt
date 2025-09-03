@@ -481,6 +481,10 @@ var imports = {
       }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),
+      'external_number_to_f64': (obj =>
+        (typeof obj === 'number'
+         ? obj
+         : (obj instanceof Number ? obj.valueOf() : NaN))),
       'char_upcase': ((cp) => {
         const s = String.fromCodePoint(cp).toUpperCase();
         const arr = Array.from(s);
