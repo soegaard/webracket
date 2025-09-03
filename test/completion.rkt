@@ -1148,15 +1148,23 @@
             acosh
             add1
             alt-reverse
+            andmap
             append
             apply
             asin
             asinh
             atan
             atanh
+            bitwise-and
+            bitwise-bit-set?
+            bitwise-first-bit-set
+            bitwise-ior
+            bitwise-not
+            bitwise-xor
             boolean?
             box
             boxed
+            build-list
             build-string
             byte?
             bytes
@@ -1194,10 +1202,14 @@
             char>?
             char?
             cons
+            cons?
             cos
             cosh
             current-inspector
             degrees->radians
+            eighth
+            eleventh
+            empty?
             eq-hash-code
             eq?
             equal?
@@ -1215,7 +1227,10 @@
             exp
             expt
             fasl->s-exp
+            fifteenth
+            fifth
             filter
+            first
             fixnum?
             fl*
             fl+
@@ -1249,6 +1264,8 @@
             fltan
             fltruncate
             for-each
+            fourteenth
+            fourth
             fx*
             fx*/wraparound
             fx+
@@ -1279,6 +1296,7 @@
             fxrshift/logical
             fxxor
             fxzero?
+            gcd
             get-output-bytes
             hash-clear!
             hash-has-key?
@@ -1288,7 +1306,10 @@
             hash?
             immutable?
             inexact->exact
+            inexact?
+            infinite?
             integer->char
+            integer-length
             integer-sqrt
             integer-sqrt/remainder
             integer?
@@ -1297,6 +1318,9 @@
             keyword->string
             keyword<?
             keyword?
+            last
+            last-pair
+            lcm
             length
             list
             list*
@@ -1319,23 +1343,35 @@
             make-vector
             make-void
             map
+            max
             memq
+            min
+            modulo
             most-negative-fixnum
             most-positive-fixnum
             namespace-set-variable-value!
             namespace-undefine-variable!
             namespace-variable-value-simple
             namespace?
+            nan?
+            natural?
+            negative-integer?
             negative?
+            ninth
             non-empty-string?
+            nonnegative-integer?
+            nonpositive-integer?
             not
             null?
             number->string
             number?
             odd?
             open-output-bytes
+            order-of-magnitude
+            ormap
             pair?
             port-next-location
+            positive-integer?
             positive?
             primitive-closure?
             primitive-result-arity
@@ -1346,21 +1382,32 @@
             procedure-arity-mask
             procedure-rename
             procedure?
+            quotient
+            quotient/remainder
             radians->degrees
             raise-unbound-variable-reference
+            random
+            remainder
+            remove
             reverse
             round
             s-exp->fasl
+            second
             set-box!
             set-boxed!
+            seventh
+            sgn
             sin
             sinh
+            sixth
+            sqr
             sqrt
             string
             string->bytes/utf-8
             string->immutable-string
             string->keyword
             string->list
+            string->number
             string->symbol
             string->uninterned-symbol
             string-append
@@ -1404,7 +1451,11 @@
             symbol?
             tan
             tanh
+            tenth
+            third
+            thirteenth
             truncate
+            twelfth
             unbox
             unboxed
             unsafe-car
