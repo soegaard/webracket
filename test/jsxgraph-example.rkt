@@ -85,6 +85,10 @@
               (js-object '#[#["name"  "A"]
                             #["color" "blue"]]))) ; attributes
 
+  ;; Adjust appearance using JSXGraph FFI helpers
+  (jsx-set-point-size! A 4.)
+  (jsx-set-point-face! A "x")
+
   (js-log "B")
   (define B
     (js-send* board "create"
@@ -93,12 +97,18 @@
               (js-object '#[#["name"  "B"]
                                  #["color" "blue"]]))) ; attributes
 
+  (jsx-set-point-size! B 4.)
+  (jsx-set-point-face! B "x")
+
   (define C
     (js-send* board "create"
               "point"
               (vector 1 -2)
               (js-object '#[#["name"  "C"]
                                  #["color" "blue"]]))) ; attributes
+
+  (jsx-set-point-size! C 4.)
+  (jsx-set-point-face! C "x")
 
   (js-send* board "create"
             "line"
@@ -139,6 +149,11 @@
               (vector l BC)
               (js-object '#[#["name"  "P"]
                                  #["color" "red"]])))
+
+  ;; Show an infobox for the intersection point and update its renderer
+  (jsx-set-point-show-infobox! P 1)
+  (jsx-set-point-size! P 4.)
+  (jsx-point-update-renderer! P)
   
   (define (update-BC-line)
     (define bx (js-send/flonum* B "X"))
