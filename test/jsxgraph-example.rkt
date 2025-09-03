@@ -118,11 +118,6 @@
 ;;; Invokers
 ;;;
 
-; invoke the `method-name` method of the object `obj` with arguments `args`.
-; js-send* returns an external object
-(define (js-send* obj method-name . args)
-  (js-send obj method-name (apply vector args)))
-
 ; js-send/flonum* returns a flonum
 (define (js-send/flonum* obj method-name . args)
   (js-send/flonum obj method-name (apply vector args)))
@@ -171,6 +166,24 @@
   ;   radius: number, point, line, circle
   (board-create board "circle" parents attributes))
 
+(define (create-perpendicular board parents [attributes #f])
+  (board-create board "perpendicular" parents attributes))
+
+(define (create-intersection board parents [attributes #f])
+  (board-create board "intersection" parents attributes))
+
+(define (set-attribute! elem key value)
+  (js-send elem "setAttribute" (vector (key->string key) value)))
+
+(define (point-x p)
+  (js-send/flonum* p "X"))
+
+(define (point-y p)
+  (js-send/flonum* p "Y"))
+
+(define (on element event handler)
+  (js-send element "on" (vector event handler)))
+
 
 
 ;;;
@@ -201,48 +214,37 @@
 
   (define BC (create-line board (vector B C) (attributes 'visible #f 'dash 2)))
 
-  (js-send* board "create"
-            "segment"
-            (vector B C)
-            (js-object '#[]))
+  (create-segment board (vector B C))
 
-  (js-send* board "create"
-            "segment"
-            (vector C A)
-            (js-object '#[]))
+  (create-segment board (vector C A))
 
   (define l
-    (js-send* board "create"
-              "perpendicular"
-              (vector BC A)
-              (js-object '#[#["name" "l"]])))
+    (create-perpendicular board (vector BC A)
+                           (attributes 'name "l")))
 
   (define P
-    (js-send* board "create"
-              "intersection"
-              (vector l BC)
-              (js-object '#[#["name"  "P"]
-                            #["color" "red"]])))
+    (create-intersection board (vector l BC)
+                         (attributes 'name  "P"
+                                     'color "red")))
 
   (create-circle board (vector P A))
 
   (define (update-BC-line . _)
-    (define bx (js-send/flonum* B "X"))
-    (define by (js-send/flonum* B "Y"))
-    (define cx (js-send/flonum* C "X"))
-    (define cy (js-send/flonum* C "Y"))
-    (define px (js-send/flonum* P "X"))
-    (define py (js-send/flonum* P "Y"))
+    (define bx (point-x B))
+    (define by (point-y B))
+    (define cx (point-x C))
+    (define cy (point-y C))
+    (define px (point-x P))
+    (define py (point-y P))
 
     (define dot1 (+ (* (- px bx) (- cx bx)) (* (- py by) (- cy by))))
     (define dot2 (+ (* (- px cx) (- bx cx)) (* (- py cy) (- by cy))))
 
     (define outside? (not (and (>= dot1 0) (>= dot2 0))))
     
-    (js-send* BC "setAttribute"
-              (if outside?
-                  '#["visible" #t]
-                  '#["visible" #f]))
+    (if outside?
+        (set-attribute! BC 'visible #t)
+        (set-attribute! BC 'visible #f))
     )
 
   
@@ -250,20 +252,20 @@
   ;; 
   
   (update-BC-line)
-  (define on-drag-handler (procedure->external update-BC-line))  
+  (define on-drag-handler (procedure->external update-BC-line))
   (define on-down-handler (procedure->external
-                           (λ _ (js-send* BC "setAttribute" '#["visible" #t]))))
+                           (λ _ (set-attribute! BC 'visible #t))))
   (define on-up-handler   (procedure->external update-BC-line))
 
-  (js-send* board "on" "down" on-down-handler)
-  (js-send* board "on" "up"   on-up-handler)
+  (on board "down" on-down-handler)
+  (on board "up"   on-up-handler)
   
-  ;; (js-send* A "on" "down" on-down-handler)
-  ;; (js-send* B "on" "down" on-down-handler)
-  ;; (js-send* C "on" "down" on-down-handler)
-  ;; (js-send* A "on" "up"   on-up-handler)
-  ;; (js-send* B "on" "up"   on-up-handler)
-  ;; (js-send* C "on" "up"   on-up-handler)
+  ;; (on A "down" on-down-handler)
+  ;; (on B "down" on-down-handler)
+  ;; (on C "down" on-down-handler)
+  ;; (on A "up"   on-up-handler)
+  ;; (on B "up"   on-up-handler)
+  ;; (on C "up"   on-up-handler)
   (void))
 
 ;;;
