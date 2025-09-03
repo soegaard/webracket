@@ -64,6 +64,71 @@
   (js-send/flonum obj method-name (apply vector args)))
 
 ;;;
+;;; Constructors
+;;;
+
+(define (board-create board element-type parents [attributes #f])
+  (define attrs (or attributes '#[])) ; optional
+  (js-send board "create" (vector element-type parents attrs)))
+
+(define (create-point board parents [attributes #f])
+  (board-create board "point" parents attributes))
+
+;;;
+;;; Pairings, Keys and Attributes
+;;;
+
+(define (key? x)
+  (or (symbol? x) (string? x)))
+
+(define (key->string x)
+  (or (and (string? x) x)
+      (and (symbol? x) (symbol->string x))
+      #f))  ; todo : signal error
+
+
+(define (pairing? x)
+  (match x
+    [(list   key value) #t]
+    [(vector key value) #t]
+    [_                  #f]))
+
+(define (pairing->vector x)
+  (match x
+    [(list   key value) (vector (key->string key) value)]
+    [(vector key value) (vector (key->string key) value)]
+    [_                  #f]))
+
+(define (vector-map f xs)
+  (list->vector
+   (map f (vector->list xs))))
+
+(define (error msg . values)
+  ; (js-log msg)
+  ; (for-each js-log values)
+  (/ 0 0))
+
+
+(define (pairings->vector xs)
+  (cond
+    [(vector? xs) (vector-map pairing->vector xs)]
+    [(list? xs)   (list->vector (map pairing->vector xs))]
+    [else         #f]))
+
+(define (attributes . key/values)
+  (define n (length key/values))
+  (unless (even? n)
+    (error 'attributes "expected an equal number of keys and values, got:" key/values))
+
+  (js-object
+   (list->vector
+    (let loop ([kvs key/values])
+      (match kvs
+        ['()                    '()]
+        [(list* key value more) (cons (vector (key->string key) value)
+                                      (loop (cdr (cdr kvs))))])))))
+
+;;;
 ;;; The Construction
 ;;;
 
@@ -71,61 +136,32 @@
   ; The JXG.JSXGraph singleton stores all properties required to load, save, create and free a board.
   (define JSXGraph (dot (js-var "JXG") "JSXGraph"))
   
-  (js-log "board")
-  (js-log JSXGraph)
   (define board
     (js-send JSXGraph "initBoard" (vector "box" (js-object '#[#["boundingbox" #[-5 5 5 -5]]
                                                               #["axis"        #t]]))))
 
-  (js-log "A")
-  (define A
-    (js-send* board "create"
-              "point"                           ; element type
-              (vector -2 1)                     ; array of parents
-              (js-object '#[#["name"  "A"]
-                            #["color" "blue"]]))) ; attributes
-
-  ;; Adjust appearance using JSXGraph FFI helpers
-  (jsx-set-point-size! A 4.)
-  (jsx-set-point-face! A "x")
-
-  (js-log "B")
+  (define A (create-point board
+                          (vector -2 1) 
+                          (attributes 'name "A" 'color "blue")))
+  
   (define B
-    (js-send* board "create"
-              "point"                           ; element type
+    (board-create board "point"  ; element type
               (vector 3 4)                      ; array of parents
               (js-object '#[#["name"  "B"]
                             #["color" "blue"]]))) ; attributes
-
-  (jsx-set-point-size! B 4.)
-  (jsx-set-point-face! B "x")
-
   (define C
     (js-send* board "create"
               "point"
               (vector 1 -2)
               (js-object '#[#["name"  "C"]
-                                 #["color" "blue"]]))) ; attributes
-
-  (jsx-set-point-size! C 4.)
-  (jsx-set-point-face! C "x")
-
-  (js-send* board "create"
-            "line"
-            (vector A B)
-            (js-object '#[]))
-
-  (js-send* board "create"
-            "segment"
-            (vector A B)
-            (js-object '#[]))
+                            #["color" "blue"]]))) ; attributes
+  
+  (js-send* board "create" "line"    (vector A B) (js-object '#[]))
+  (js-send* board "create" "segment" (vector A B) (js-object '#[]))
 
   (define BC
-    (js-send* board "create"
-              "line"
-              (vector B C)
-              (js-object '#[#["visible" #f]
-                            #["dash"    2]])))
+    (js-send* board "create" "line" (vector B C) (js-object '#[#["visible" #f]
+                                                               #["dash"    2]])))
 
   (js-send* board "create"
             "segment"
@@ -150,12 +186,7 @@
               (js-object '#[#["name"  "P"]
                                  #["color" "red"]])))
 
-  ;; Show an infobox for the intersection point and update its renderer
-  (jsx-set-point-show-infobox! P 1)
-  (jsx-set-point-size! P 4.)
-  (jsx-point-update-renderer! P)
-  
-  (define (update-BC-line)
+  (define (update-BC-line . _)
     (define bx (js-send/flonum* B "X"))
     (define by (js-send/flonum* B "Y"))
     (define cx (js-send/flonum* C "X"))
@@ -165,17 +196,34 @@
 
     (define dot1 (+ (* (- px bx) (- cx bx)) (* (- py by) (- cy by))))
     (define dot2 (+ (* (- px cx) (- bx cx)) (* (- py cy) (- by cy))))
+
     (define outside? (not (and (>= dot1 0) (>= dot2 0))))
     
     (js-send* BC "setAttribute"
-              (js-object (if outside?
-                                 '#[#["visible" #t]]
-                                 '#[#["visible" #f]]))))
+              (if outside?
+                  '#["visible" #t]
+                  '#["visible" #f]))
+    )
+
+  
 
   ;; 
   
   (update-BC-line)
-  (js-send* board "on" "update" (procedure->external update-BC-line))
+  (define on-drag-handler (procedure->external update-BC-line))  
+  (define on-down-handler (procedure->external
+                           (λ _ (js-send* BC "setAttribute" '#["visible" #t]))))
+  (define on-up-handler   (procedure->external update-BC-line))
+
+  (js-send* board "on" "down" on-down-handler)
+  (js-send* board "on" "up"   on-up-handler)
+  
+  ;; (js-send* A "on" "down" on-down-handler)
+  ;; (js-send* B "on" "down" on-down-handler)
+  ;; (js-send* C "on" "down" on-down-handler)
+  ;; (js-send* A "on" "up"   on-up-handler)
+  ;; (js-send* B "on" "up"   on-up-handler)
+  ;; (js-send* C "on" "up"   on-up-handler)
   (void))
 
 ;;;
