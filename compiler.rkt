@@ -3110,6 +3110,8 @@
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
          [(ormap)                      (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
+         [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
+         [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
 
