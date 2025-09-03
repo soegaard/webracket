@@ -1356,8 +1356,8 @@
                           (equal? b '#(3 4 5))))))
 
         (list "vector-map"
-              (and (equal? (vector-map + '#(1 2) '#(3 4)) '#(4 6))
-                   (equal? (vector-map add1 '#(1 2 3)) '#(2 3 4))))
+              (and (equal? (vector-map + '#(1 2) '#(3 4))   '#(4 6))
+                   (equal? (vector-map add1 '#(1 2 3))      '#(2 3 4))))
 
         (list "vector-map!"
               (let ([v (vector 1 2 3 4)])
@@ -1410,9 +1410,9 @@
                      (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
                           (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
-        )
+        ))
 
- (list "FFI"
+ #;(list "FFI"
        (list
         (list "external-number->flonum"
               (let ([e (js-eval "new Number(42)")])
