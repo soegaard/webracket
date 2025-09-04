@@ -343,25 +343,25 @@
 (define-foreign js-number-finite?
   #:module "number"
   #:name   "is-finite"
-  (-> (f64) (i32)))
+  (-> (f64) (boolean)))
 
 ;; Test whether a value is an integer.
 (define-foreign js-number-integer?
   #:module "number"
   #:name   "is-integer"
-  (-> (f64) (i32)))
+  (-> (f64) (boolean)))
 
 ;; Test whether a value is NaN.
 (define-foreign js-number-nan?
   #:module "number"
   #:name   "is-nan"
-  (-> (f64) (i32)))
+  (-> (f64) (boolean)))
 
 ;; Test whether a value is a safe integer.
 (define-foreign js-number-safe-integer?
   #:module "number"
   #:name   "is-safe-integer"
-  (-> (f64) (i32)))
+  (-> (f64) (boolean)))
 
 ;; Parse a string into an f64.
 (define-foreign js-number-parse-float
