@@ -41,12 +41,21 @@
 
 (define head (js-document-head))
 
+;; Header element above the board
+(define header (js-create-element "h1"))
+(js-append-child! header (js-create-text-node "Cevas's Theorem"))
+(js-append-child! (js-document-body) header)
+
 ;; Container element for the board
 (define container (js-create-element "div"))
 (js-set-attribute! container "id"    "box")
 (js-set-attribute! container "class" "jxgbox")
 (js-set-attribute! container "style" "width: 500px; height: 400px;")
 (js-append-child! (js-document-body) container)
+
+;; Text element below the board
+(define result-text (js-create-element "div"))
+(js-append-child! (js-document-body) result-text)
 
 ;; Use the JSXGraph stylesheet
 (define link (js-create-element "link"))
@@ -292,20 +301,17 @@
     (if (>= dp 0) v (- v)))
 
   (define (to-fixed2 x)
-    "x"
-    #;(define scaled (round (* x 100)))
-    #;(define value (/ scaled 100.0))
-    #;(js-log value)
-    #;(number->string value))
+    (define scaled (round (* x 100)))
+    (define value (/ scaled 100.0))
+    (number->string value))
 
-  #;(create-text board (parents -4.5 -4 
-                              (procedure->external
-                               (λ ()
-                                 (string-append
-                                  "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = "
-                                  (to-fixed2 (* (TV as c b)
-                                                (TV bs a c)
-                                                (TV cs b a))))))))
+  (js-set! result-text
+           "textContent"
+           (string-append
+            "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = "
+            (to-fixed2 (* (TV as c b)
+                          (TV bs a c)
+                          (TV cs b a)))))
 
   (void))
 
