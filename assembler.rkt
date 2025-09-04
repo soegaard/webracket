@@ -671,6 +671,60 @@ var imports = {
         'tanh':   ((x)       => Math.tanh(x)),
         'trunc':  ((x)       => Math.trunc(x))
     },
+    'number': {
+        // Machine epsilon constant.
+        'epsilon':           (() => Number.EPSILON),
+        // Largest safe integer.
+        'max-safe-integer':  (() => Number.MAX_SAFE_INTEGER),
+        // Greatest finite number.
+        'max-value':         (() => Number.MAX_VALUE),
+        // Smallest safe integer.
+        'min-safe-integer':  (() => Number.MIN_SAFE_INTEGER),
+        // Smallest positive non-zero number.
+        'min-value':         (() => Number.MIN_VALUE),
+        // IEEE NaN value.
+        'nan':               (() => Number.NaN),
+        // Negative infinity constant.
+        'negative-infinity': (() => Number.NEGATIVE_INFINITY),
+        // Positive infinity constant.
+        'positive-infinity': (() => Number.POSITIVE_INFINITY),
+        // Test whether a value is finite.
+        'is-finite':         (x => Number.isFinite(x) ? 1 : 0),
+        // Test whether a value is an integer.
+        'is-integer':        (x => Number.isInteger(x) ? 1 : 0),
+        // Test whether a value is NaN.
+        'is-nan':            (x => Number.isNaN(x) ? 1 : 0),
+        // Test whether a value is a safe integer.
+        'is-safe-integer':   (x => Number.isSafeInteger(x) ? 1 : 0),
+        // Parse string into floating-point number.
+        'parse-float':       (s => Number.parseFloat(from_fasl(s))),
+        // Parse string into integer.
+        'parse-int':         (s => Number.parseInt(from_fasl(s))),
+        // Convert number to exponential notation.
+        'to-exponential':    ((x, fd) => {
+                                 const d = from_fasl(fd);
+                                 return d === undefined ? x.toExponential() : x.toExponential(d);
+                               }),
+        // Format number with fixed-point notation.
+        'to-fixed':          ((x, digits) => {
+                                 const d = from_fasl(digits);
+                                 return d === undefined ? x.toFixed() : x.toFixed(d);
+                               }),
+        // Format number using locale-specific rules.
+        'to-locale-string':  ((x, locales, options) => x.toLocaleString(from_fasl(locales), from_fasl(options))),
+        // Format number with specified precision.
+        'to-precision':      ((x, precision) => {
+                                 const p = from_fasl(precision);
+                                 return p === undefined ? x.toPrecision() : x.toPrecision(p);
+                               }),
+        // Convert number to string with optional radix.
+        'to-string':         ((x, radix) => {
+                                 const r = from_fasl(radix);
+                                 return r === undefined ? x.toString() : x.toString(r);
+                               }),
+        // Extract primitive numeric value.
+        'value-of':          (x => x.valueOf())
+    },
     'array': {
         'length':            (arr => arr.length),
         'set-length!':       ((arr, len) => { arr.length = len; }),

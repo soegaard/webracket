@@ -286,6 +286,137 @@
   (-> () (extern)))
 
 ;;;
+;;; Number
+;;;
+
+;; See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+;; Smallest increment between 1 and the next representable f64.
+(define-foreign js-number-epsilon
+  #:module "number"
+  #:name   "epsilon"
+  (-> () (f64)))
+
+;; Largest f64 value where integers are represented exactly.
+(define-foreign js-number-max-safe-integer
+  #:module "number"
+  #:name   "max-safe-integer"
+  (-> () (f64)))
+
+;; Greatest finite f64.
+(define-foreign js-number-max-value
+  #:module "number"
+  #:name   "max-value"
+  (-> () (f64)))
+
+;; Smallest f64 value where integers are represented exactly.
+(define-foreign js-number-min-safe-integer
+  #:module "number"
+  #:name   "min-safe-integer"
+  (-> () (f64)))
+
+;; Smallest positive non-zero f64.
+(define-foreign js-number-min-value
+  #:module "number"
+  #:name   "min-value"
+  (-> () (f64)))
+
+;; IEEE NaN value.
+(define-foreign js-number-nan
+  #:module "number"
+  #:name   "nan"
+  (-> () (f64)))
+
+;; Negative infinity constant.
+(define-foreign js-number-negative-infinity
+  #:module "number"
+  #:name   "negative-infinity"
+  (-> () (f64)))
+
+;; Positive infinity constant.
+(define-foreign js-number-positive-infinity
+  #:module "number"
+  #:name   "positive-infinity"
+  (-> () (f64)))
+
+;; Test whether a value is finite.
+(define-foreign js-number-finite?
+  #:module "number"
+  #:name   "is-finite"
+  (-> (f64) (i32)))
+
+;; Test whether a value is an integer.
+(define-foreign js-number-integer?
+  #:module "number"
+  #:name   "is-integer"
+  (-> (f64) (i32)))
+
+;; Test whether a value is NaN.
+(define-foreign js-number-nan?
+  #:module "number"
+  #:name   "is-nan"
+  (-> (f64) (i32)))
+
+;; Test whether a value is a safe integer.
+(define-foreign js-number-safe-integer?
+  #:module "number"
+  #:name   "is-safe-integer"
+  (-> (f64) (i32)))
+
+;; Parse a string into an f64.
+(define-foreign js-number-parse-float
+  #:module "number"
+  #:name   "parse-float"
+  (-> (string) (f64)))
+
+;; Parse a string into a base-10 integer.
+(define-foreign js-number-parse-int
+  #:module "number"
+  #:name   "parse-int"
+  (-> (string) (f64)))
+
+;; Convert value to exponential notation.
+(define-foreign js-number-to-exponential
+  #:module "number"
+  #:name   "to-exponential"
+  ;; Pass `(void)` for missing fraction-digits.
+  (-> (f64 value) (string)))
+
+;; Format value with fixed-point notation.
+(define-foreign js-number-to-fixed
+  #:module "number"
+  #:name   "to-fixed"
+  ;; Pass `(void)` for missing digits.
+  (-> (f64 value) (string)))
+
+;; Format value using locale-specific rules.
+(define-foreign js-number-to-locale-string
+  #:module "number"
+  #:name   "to-locale-string"
+  ;; Pass `(void)` for missing locales and options.
+  (-> (f64 value value) (string)))
+
+;; Format value with specified precision.
+(define-foreign js-number-to-precision
+  #:module "number"
+  #:name   "to-precision"
+  ;; Pass `(void)` for missing precision.
+  (-> (f64 value) (string)))
+
+;; Convert value to string, optionally using a radix.
+(define-foreign js-number-to-string
+  #:module "number"
+  #:name   "to-string"
+  ;; Pass `(void)` for missing radix.
+  (-> (f64 value) (string)))
+
+;; Extract the primitive numeric value.
+(define-foreign js-number-value-of
+  #:module "number"
+  #:name   "value-of"
+  (-> (f64) (f64)))
+
+;;;
 ;;; Text processing
 ;;;
 
