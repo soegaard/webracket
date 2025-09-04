@@ -703,13 +703,13 @@ var imports = {
         // Positive infinity constant.
         'positive-infinity': (() => Number.POSITIVE_INFINITY),
         // Test whether a value is finite.
-        'is-finite':         (x => Number.isFinite(x) ? 1 : 0),
+        'is-finite':         (x => boolean_to_i32(Number.isFinite(x))),
         // Test whether a value is an integer.
-        'is-integer':        (x => Number.isInteger(x) ? 1 : 0),
+        'is-integer':        (x => boolean_to_i32(Number.isInteger(x))),
         // Test whether a value is NaN.
-        'is-nan':            (x => Number.isNaN(x) ? 1 : 0),
+        'is-nan':            (x => boolean_to_i32(Number.isNaN(x))),
         // Test whether a value is a safe integer.
-        'is-safe-integer':   (x => Number.isSafeInteger(x) ? 1 : 0),
+        'is-safe-integer':   (x => boolean_to_i32(Number.isSafeInteger(x))),
         // Parse string into floating-point number.
         'parse-float':       (s => Number.parseFloat(from_fasl(s))),
         // Parse string into integer.
