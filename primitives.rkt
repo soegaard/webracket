@@ -444,6 +444,7 @@ for-each
  fasl->s-exp
  procedure->external
  external-number->flonum
+ external-string->string
  js-log
  external?
 
@@ -460,6 +461,10 @@ for-each
 (define (external-number->flonum x)
   (cond [(number? x) (exact->inexact x)]
         [else (raise-argument-error 'external-number->flonum "number?" x)]))
+
+(define (external-string->string x)
+  (cond [(string? x) x]
+        [else (raise-argument-error 'external-string->string "string?" x)]))
 
 
 ;; Changed in version 8.15.0.7: Added string-find.
