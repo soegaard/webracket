@@ -547,6 +547,7 @@ var imports = {
       'encode-uri':                ((s) => to_string( encodeURI(from_fasl(s)))),
       'encode-uri-component':      ((s) => to_string( encodeURIComponent(from_fasl(s)))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
+      'ref/value':                 ((obj, key) => to_fasl(obj[from_fasl(key)])),
       'ref':                       ((obj, key) => obj[from_fasl(key)]),
       'set!':                      ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
       'index':                     ((obj, prop) => obj[from_fasl(prop)]),

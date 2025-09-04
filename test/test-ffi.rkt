@@ -54,12 +54,11 @@
               (let ([s "a b+c"])
                 (equal? (js-decode-uri-component (js-encode-uri-component s)) s)))        
         (list "js-ref/js-set!/js-assign"
-              (let ([and list] [equal? list])
               (let ([obj (js-object (list))])
                 (js-set! obj "a" 1)
-                (and (equal? (js-ref obj "a") 1)    ; js-ref returns an external?
+                (and (equal? (js-ref obj "a") 1)
                      (equal? (js-assign "b" 2) (void))
-                     (equal? (js-ref (js-global-this) "b") 2)))))))
+                     (equal? (js-ref (js-global-this) "b") 2))))))
 
  #;(list "Basic operations"
        (list
