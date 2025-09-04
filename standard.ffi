@@ -104,7 +104,7 @@
 
 (define-foreign js-ref
   #:module "standard"
-  #:name   "ref"
+  #:name   "ref/value"
   (-> (extern string/symbol) (value)))
 
 (define-foreign js-set!
