@@ -24,6 +24,12 @@
 
 (list
  (list "standard.ffi"
+       ;;;
+       ;;; Number
+       ;;;
+       
+       ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
+       
        (list "Number functions"
              (list
               (list "js-number-epsilon"
@@ -67,7 +73,8 @@
                     (and (equal? (js-number-parse-int "42") 42.0)
                          (equal? (js-number-parse-int "-17") -17.0)))
               (list "js-number-to-exponential"
-                    (equal? (js-number-to-exponential 12345.0 (void)) "1.2345e+4"))
+                    (equal? (js-number-to-exponential 12345.0 (void)) "1.2345e+4")
+                    #;(equal? (js-number-to-exponential 12345.0 (void)) "1.2345e+4"))
               (list "js-number-to-fixed"
                     (equal? (js-number-to-fixed 123.456 (void)) "123"))
               (list "js-number-to-locale-string"
@@ -78,4 +85,4 @@
                     (and (equal? (js-number-to-string 123.456 (void)) "123.456")
                          (equal? (js-number-to-string 255.0 16) "ff")))
               (list "js-number-value-of"
-                    (equal? (js-number-value-of 123.456) 123.456)))))
+                    (equal? (js-number-value-of 123.456) 123.456))))))
