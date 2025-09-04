@@ -196,6 +196,9 @@
 (define (create-intersection board parents [attributes #f])
   (board-create board "intersection" parents attributes))
 
+(define (create-text board parents [attributes #f])
+  (board-create board "text" parents attributes))
+
 ;; Point
 
 (define (point? x)
@@ -262,21 +265,21 @@
 
   (define board
     (create-board "box"
-                  (attributes 'boundingbox #[-5 5 5 -5]
-                              'axis #f
+                  (attributes 'boundingbox    #[-5 5 5 -5]
+                              'axis           #f
                               'showNavigation #f)))
 
-  (define a  (create-point board (parents -4 0) (attributes 'name "a")))
-  (define b  (create-point board (parents 4 -3) (attributes 'name "b")))
-  (define c  (create-point board (parents 1 4) (attributes 'name "c")))
+  (define a  (create-point board (parents -4  0) (attributes 'name "a")))
+  (define b  (create-point board (parents  4 -3) (attributes 'name "b")))
+  (define c  (create-point board (parents  1  4) (attributes 'name "c")))
 
   (define s1 (create-segment board (vector a b) (attributes 'color "black")))
   (define s2 (create-segment board (vector a c) (attributes 'color "black")))
   (define s3 (create-segment board (vector c b) (attributes 'color "black")))
 
-  (define as (board-create board "glider" (vector 3 0 s3) (attributes 'name "a'")))
+  (define as (board-create board "glider" (vector 3  0 s3) (attributes 'name "a'")))
   (define bs (board-create board "glider" (vector 4 -3 s2) (attributes 'name "b'")))
-  (define cs (board-create board "glider" (vector 1 4 s1) (attributes 'name "c'")))
+  (define cs (board-create board "glider" (vector 1  4 s1) (attributes 'name "c'")))
 
   (define s4 (create-segment board (vector a as) (attributes 'color "black")))
   (define s5 (create-segment board (vector b bs) (attributes 'color "black")))
@@ -289,21 +292,20 @@
     (if (>= dp 0) v (- v)))
 
   (define (to-fixed2 x)
-    (define scaled (round (* x 100)))
-    (define value (/ scaled 100.0))
-    (number->string value))
+    "x"
+    #;(define scaled (round (* x 100)))
+    #;(define value (/ scaled 100.0))
+    #;(js-log value)
+    #;(number->string value))
 
-  (board-create
-   board
-   "text"
-   (parents -4.5 -4
-            (procedure->external
-             (λ ()
-               (string-append
-                "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = "
-                (to-fixed2 (* (TV as c b)
-                              (TV bs a c)
-                              (TV cs b a))))))))
+  #;(create-text board (parents -4.5 -4 
+                              (procedure->external
+                               (λ ()
+                                 (string-append
+                                  "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = "
+                                  (to-fixed2 (* (TV as c b)
+                                                (TV bs a c)
+                                                (TV cs b a))))))))
 
   (void))
 
