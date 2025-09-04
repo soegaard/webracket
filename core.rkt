@@ -2,6 +2,10 @@
 (require "fully.rkt"
          "primitives.rkt")
 
+(require (for-syntax (only-in racket/base define-syntax-rule)))
+(provide (for-syntax define-syntax-rule))
+
+
 (provide (all-from-out "fully.rkt"
                        "primitives.rkt")
          ; core
@@ -9,6 +13,7 @@
                      [#%plain-app          #%app]
                      [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ]))
+
 
 
 (require (for-syntax (only-in racket/base
