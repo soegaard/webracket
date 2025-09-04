@@ -59,6 +59,7 @@
 ;;   i32           — fixnum → i32 ;   signed
 ;;   u32           — fixnum → u32 ; unsigned
 ;;   f64           — flonum → f64 (checked)
+;;   boolean       - #f/#t  → i32  (0/1)
 
 ;; Using `void` instead of (<result-type> ...) is equivalent to ().
 
