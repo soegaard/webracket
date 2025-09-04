@@ -718,8 +718,7 @@ var imports = {
         'to-exponential':    ((x, fd) => {
                                  const d = from_fasl(fd);
                                  const r = d === undefined ? x.toExponential() : x.toExponential(d);
-                                 console.log(r);
-                                 return to_fasl(r);
+                                 return to_fasl(r);  // todo - not correct
                                }),
         // Format number with fixed-point notation.
         'to-fixed':          ((x, digits) => {
