@@ -468,6 +468,20 @@ export function make_callback(id) {
     };
 }
 
+// For data types that can fit into an i32/u32/f64 it is more effecient
+// pass them as an i32/u32/f64 than it is to use fasl.
+
+// For booleans we can convert back and forth using these helpers.
+
+function i32_to_boolean(x) {
+  return x !== 0;
+}
+
+function boolean_to_i32(x) {
+  return x ? 1 : 0;
+}
+
+
 var imports = {
     'env': {
         'memory': memory
