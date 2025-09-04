@@ -17,10 +17,6 @@
 ;;   ...as-before... | racket ../tools/pretty.rkt | less
 ;;
 
-;; TODO
-
-;; - js-typeof
-
 
 (list
  (list "Value properties"
@@ -72,29 +68,34 @@
         (list "js-object"
               (let ([obj (js-object (vector (vector "a" 1)))])
                 (equal? (js-ref obj "a") 1))
-              (let ([obj (js-object (list (list "a" 1)))])
+              ; todo (?) - we don't support lists here
+              #;(let ([obj (js-object (list (list "a" 1)))])
                 (equal? (js-ref obj "a") 1)))
-        #;(list "js-new"
-              (equal? (js-typeof (js-new (js-date) (list))) "object"))
-        #;(list "js-send"
-              (let ([arr (js-array 1 2 3)])
-                (list (js-send arr "join" (list "-")) "1-2-3")))
-        #;(list "js-send/flonum"
-              (equal? (js-send/flonum (js-math) "abs" (list -1.0)) 1.0))
-        #;(list "js-operator"
-              (equal? (js-operator "+" (list 1 2)) 3))
-        #;(list "js-typeof"
-                (list (js-typeof (js-array (vector 1 2 3))) "number"))
-        ;; (list "js-instanceof"
-        ;;       (let ([arr (js-array (list))])
-        ;;         (equal? (js-instanceof arr (js-ref (js-global-this) "Array")) 1)))
-        ;; (list "js-null"
-        ;;       (equal? (js-typeof (js-null)) "object"))
-        ;; (list "js-this"
-        ;;       (equal? (js-this) (js-global-this)))
-        ))
+        (list "js-new"
+              ; The current time:
+              #;(external-string->string (js-new (js-Date) (vector))) 
+              (string? (external-string->string (js-new (js-Date) (vector)))))
+        (list "js-send"
+              (let ([arr (js-array/extern (vector 1 2 3))])
+                (equal? (external-string->string
+                         (js-send arr "join" (vector "-")))   "1-2-3")))
+        (list "js-send/flonum"
+              (equal? (js-send/flonum (js-Math) "abs" (vector -1.0)) 1.0))
+        (list "js-operator"
+              (equal? (external-number->flonum
+                       (js-operator "+" (vector 1 2)))   3.))
+        (list "js-typeof"
+              (list (js-typeof (js-array/extern (vector 1 2 3))) "object"))
+        (list "js-instanceof"
+              (let ([arr (js-array/extern #())])
+                (equal? (js-instanceof arr (js-ref (js-global-this) "Array")) #t)))
+         (list "js-null"
+               (equal? (js-typeof (js-null)) "object"))
+         #;(list "js-this"  ; this only makes sense in a function body
+                 (equal? (js-this) (js-global-this)))
+         ))
 
- #;(list "Fundamental objects"
+ (list "Fundamental objects"
        (list
         (list "js-Object"
               (equal? (js-typeof (js-Object)) "function"))
@@ -105,7 +106,7 @@
         (list "js-Symbol"
               (equal? (js-typeof (js-Symbol)) "function"))))
 
- #;(list "Error objects"
+ (list "Error objects"
        (list
         (list "js-Error"
               (equal? (js-typeof (js-Error)) "function"))
@@ -117,8 +118,8 @@
               (equal? (js-typeof (js-RangeError)) "function"))
         (list "js-ReferenceError"
               (equal? (js-typeof (js-ReferenceError)) "function"))
-        (list "js-SuppressedError"
-              (equal? (js-typeof (js-SuppressedError)) "function"))
+        (list "js-SuppressedError" 
+              (equal? (js-typeof (js-SuppressedError)) "function"))  ; todo
         (list "js-SyntaxError"
               (equal? (js-typeof (js-SyntaxError)) "function"))
         (list "js-TypeError"
@@ -126,9 +127,9 @@
         (list "js-URIError"
               (equal? (js-typeof (js-URIError)) "function"))
         (list "js-InternalError"
-              (equal? (js-typeof (js-InternalError)) "function"))))
+              (equal? (js-typeof (js-InternalError)) "function")))) ; todo
 
- #;(list "Numbers and dates"
+ (list "Numbers and dates"
        (list
         (list "js-Number"
               (equal? (js-typeof (js-Number)) "function"))
@@ -139,19 +140,19 @@
         (list "js-Date"
               (equal? (js-typeof (js-Date)) "function"))
         (list "js-Temporal"
-              (equal? (js-typeof (js-Temporal)) "object"))))
+              (equal? (js-typeof (js-Temporal)) "object")))) ; todo
 
- #;(list "Text processing"
+ (list "Text processing"
        (list
         (list "js-String"
               (equal? (js-typeof (js-String)) "function"))
         (list "js-RegExp"
               (equal? (js-typeof (js-RegExp)) "function"))))
  
- #;(list "Indexed collections"
+ (list "Indexed collections"
        (list
-        (list "js-TypedArray"
-              (equal? (js-typeof (js-TypedArray)) "function"))
+        #;(list "js-TypedArray" ; is not available everywhere
+              (member (js-typeof (js-TypedArray)) '("undefined" "function")))  ; todo - implement member
         (list "js-Int8Array"
               (equal? (js-typeof (js-Int8Array)) "function"))
         (list "js-Uint8Array"
@@ -170,14 +171,14 @@
               (equal? (js-typeof (js-BigInt64Array)) "function"))
         (list "js-BigUint64Array"
               (equal? (js-typeof (js-BigUint64Array)) "function"))
-        (list "js-Float16Array"
-              (equal? (js-typeof (js-Float16Array)) "function"))
+        #;(list "js-Float16Array" ; is not available everywhere, baseline 2025 (upgrade!)
+                (member (js-typeof (js-Float16Array)) '("undefined" "function"))) ; todo - implement member
         (list "js-Float32Array"
               (equal? (js-typeof (js-Float32Array)) "function"))
         (list "js-Float64Array"
               (equal? (js-typeof (js-Float64Array)) "function"))))
 
- #;(list "Keyed collections"
+ (list "Keyed collections"
        (list
         (list "js-Map"
               (equal? (js-typeof (js-Map)) "function"))
@@ -188,7 +189,7 @@
         (list "js-WeakSet"
               (equal? (js-typeof (js-WeakSet)) "function"))))
 
- #;(list "Structured data"
+ (list "Structured data"
        (list
         (list "js-ArrayBuffer"
               (equal? (js-typeof (js-ArrayBuffer)) "function"))
@@ -201,19 +202,19 @@
         (list "js-JSON"
               (equal? (js-typeof (js-JSON)) "object"))))
  
- #;(list "Managing memory"
+ (list "Managing memory"
        (list
         (list "js-WeakRef"
               (equal? (js-typeof (js-WeakRef)) "function"))
         (list "js-FinalizationRegistry"
               (equal? (js-typeof (js-FinalizationRegistry)) "function"))))
 
- #;(list "Control abstraction objects"
+ (list "Control abstraction objects"
        (list
         (list "js-Iterator"
               (equal? (js-typeof (js-Iterator)) "function"))
-        (list "js-AsyncIterator"
-              (equal? (js-typeof (js-AsyncIterator)) "function"))
+        (list "js-AsyncIterator"  
+              (list (js-typeof (js-AsyncIterator)) "function"))  ; undefined ?
         (list "js-Promise"
               (equal? (js-typeof (js-Promise)) "function"))
         (list "js-GeneratorFunction"
@@ -231,14 +232,14 @@
         (list "js-AsyncDisposableStack"
               (equal? (js-typeof (js-AsyncDisposableStack)) "function"))))
  
- #;(list "Reflection"
+ (list "Reflection"
        (list
         (list "js-Reflect"
               (equal? (js-typeof (js-Reflect)) "object"))
         (list "js-Proxy"
               (equal? (js-typeof (js-Proxy)) "function"))))
 
- #;(list "Internationalization"
+ (list "Internationalization"
        (list
         (list "js-Intl"
               (equal? (js-typeof (js-Intl)) "object"))
@@ -268,7 +269,7 @@
  ;;;
  
  ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
- #;(list "Number functions"
+ (list "Number functions"
        (list
         (list "js-number-epsilon"
               (equal? (js-number-epsilon) 2.220446049250313e-16))
