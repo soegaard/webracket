@@ -15657,11 +15657,30 @@
                                                           (local.get $k)))
                                      (i32.const 1))))
 
-         ;; Note the `unsafe-vector*-...` variants do not work on impersonators.
-         ;; (the `unsafe-vector-...` variants do)
-         (func $unsafe-vector*-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (local $vec (ref $Vector))
-               (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+        (func $unsafe-vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (local $vec (ref $Vector))
+              (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+              (ref.i31 (i32.shl
+                        (array.len
+                         (struct.get $Vector $arr (local.get $vec)))
+                        (i32.const 1))))
+
+        (func $unsafe-vector-ref (type $Prim2)
+              (param $v (ref eq))
+              (param $k (ref eq))
+              (result (ref eq))
+              (array.get $Array
+                         (struct.get $Vector $arr
+                                     (ref.cast (ref $Vector) (local.get $v)))
+                         (i32.shr_s (i31.get_s (ref.cast (ref i31)
+                                                         (local.get $k)))
+                                    (i32.const 1))))
+
+        ;; Note the `unsafe-vector*-...` variants do not work on impersonators.
+        ;; (the `unsafe-vector-...` variants do)
+        (func $unsafe-vector*-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (local $vec (ref $Vector))
+              (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
                (ref.i31 (i32.shl
                          (array.len
                           (struct.get $Vector $arr (local.get $vec)))

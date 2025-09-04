@@ -1327,6 +1327,12 @@
               (and (equal? (vector-length '#(1 2 3)) 3)
                    (equal? (vector-length '#()) 0)))
 
+        (list "unsafe-vector-length"
+              (equal? (unsafe-vector-length '#(1 2 3)) 3))
+
+        (list "unsafe-vector-ref"
+              (equal? (unsafe-vector-ref '#(10 20 30) 1) 20))
+
         (list "vector-fill!"
               (let ([v (vector 1 2 3)])
                 (vector-fill! v 9)

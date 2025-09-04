@@ -426,7 +426,7 @@ for-each
  unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
  unsafe-flmin unsafe-flmax unsafe-flexpt
  unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
- unsafe-struct-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
+ unsafe-struct-ref unsafe-vector-length unsafe-vector-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
  
 
  ;; 14.1 Namespaces
