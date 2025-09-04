@@ -200,7 +200,7 @@
 
 (define (point? x)
   (and (external? x)
-       ...???...))
+       (js-instanceof x (dot (js-var "JXG") "Point"))))
 
 (define (point-x p)
   (js-send/flonum* p "X"))
@@ -225,7 +225,7 @@
   (match obj
     [(vector x y) obj]
     [(list   x y) (vector x y)]
-    #;[(? point?)   (vector (point-x obj) (point-y obj))]
+    [(? point?)   (vector (point-x obj) (point-y obj))]
     [_ (error 'as-vector msg obj)]))
 
 (define (vector-plus v w)
