@@ -720,24 +720,24 @@ var imports = {
         'to-exponential':    ((x, fd) => {
                                  const d = from_fasl(fd);
                                  const r = d === undefined ? x.toExponential() : x.toExponential(d);
-                                 return to_fasl(r);  // todo - not correct
+                                 return to_fasl(r); 
                                }),
         // Format number with fixed-point notation.
         'to-fixed':          ((x, digits) => {
                                  const d = from_fasl(digits);
-                                 return d === undefined ? x.toFixed() : x.toFixed(d);
+                                 return to_fasl( d === undefined ? x.toFixed() : x.toFixed(d) );
                                }),
         // Format number using locale-specific rules.
-        'to-locale-string':  ((x, locales, options) => x.toLocaleString(from_fasl(locales), from_fasl(options))),
+        'to-locale-string':  ((x, locales, options) => to_fasl( x.toLocaleString(from_fasl(locales), from_fasl(options))) ),
         // Format number with specified precision.
         'to-precision':      ((x, precision) => {
                                  const p = from_fasl(precision);
-                                 return p === undefined ? x.toPrecision() : x.toPrecision(p);
+                                 return to_fasl( p === undefined ? x.toPrecision() : x.toPrecision(p) );
                                }),
         // Convert number to string with optional radix.
         'to-string':         ((x, radix) => {
                                  const r = from_fasl(radix);
-                                 return r === undefined ? x.toString() : x.toString(r);
+                                 return to_fasl( r === undefined ? x.toString() : x.toString(r) );
                                }),
         // Extract primitive numeric value.
         'value-of':          (x => x.valueOf())
