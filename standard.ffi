@@ -99,7 +99,7 @@
 
 (define-foreign js-ref/extern
   #:module "standard"
-  #:name   "ref"
+  #:name   "ref/extern"
   (-> (extern string/symbol) (extern)))
 
 (define-foreign js-ref
@@ -117,9 +117,9 @@
 (define-foreign js-index
   #:module "standard"
   #:name   "index"
-  (-> (extern value) (extern)))
+  (-> (extern value) (value)))
 
-(define-foreign js-assign
+(define-foreign js-assign!
   #:module "standard"
   #:name   "assign"
   (-> (string/symbol value) ()))
@@ -163,9 +163,9 @@
   ;; Fields should be a list of `[key value]` pairs.
   (-> (value) (extern)))
 
-(define-foreign js-array
+(define-foreign js-Array
   #:module "standard"
-  #:name   "array"
+  #:name   "Array"
   ;; Arguments should be a list or vector.
   (-> (value) (extern)))
 
@@ -442,10 +442,10 @@
 ;;;
 
 ; todo - extend js-array above to accept zero arguments
-#;(define-foreign js-array
+(define-foreign js-array
   #:module "standard"
   #:name   "array"
-  (-> () (extern)))
+  (-> (value) (extern)))
 
 (define-foreign js-typed-array
   #:module "standard"

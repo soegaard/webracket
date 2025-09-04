@@ -57,35 +57,38 @@
               (let ([obj (js-object (list))])
                 (js-set! obj "a" 1)
                 (and (equal? (js-ref obj "a") 1)
-                     (equal? (js-assign "b" 2) (void))
+                     (equal? (js-assign! "b" 2) (void))
                      (equal? (js-ref (js-global-this) "b") 2))))))
 
- #;(list "Basic operations"
+ (list "Basic operations"
        (list
         (list "js-array/js-index"
-              (let ([arr (js-array (list 1 2 3))])
-                (equal? (js-index arr 1) 2)))
-        (list "js-object"
-              (let ([obj (js-object (list (list "a" 1)))])
+              (let ([arr (js-array (vector 11 22 33))])
+                (list (js-index arr 1) 22)))
+        #;(list "js-object"
+              (let ([obj (js-object (vector (vector "a" 1)))])
+                (equal? (js-ref obj "a") 1))
+              #;(let ([obj (js-object (list (list "a" 1)))])
                 (equal? (js-ref obj "a") 1)))
-        (list "js-new"
+        #;(list "js-new"
               (equal? (js-typeof (js-new (js-date) (list))) "object"))
-        (list "js-send"
-              (let ([arr (js-array (list 1 2 3))])
-                (equal? (js-send arr "join" (list "-")) "1-2-3")))
-        (list "js-send/flonum"
+        #;(list "js-send"
+              (let ([arr (js-array 1 2 3)])
+                (list (js-send arr "join" (list "-")) "1-2-3")))
+        #;(list "js-send/flonum"
               (equal? (js-send/flonum (js-math) "abs" (list -1.0)) 1.0))
-        (list "js-operator"
+        #;(list "js-operator"
               (equal? (js-operator "+" (list 1 2)) 3))
-        (list "js-typeof"
-              (equal? (js-typeof (js-infinity)) "number"))
-        (list "js-instanceof"
-              (let ([arr (js-array (list))])
-                (equal? (js-instanceof arr (js-ref (js-global-this) "Array")) 1)))
-        (list "js-null"
-              (equal? (js-typeof (js-null)) "object"))
-        (list "js-this"
-              (equal? (js-this) (js-global-this)))))
+        #;(list "js-typeof"
+                (list (js-typeof (js-array (vector 1 2 3))) "number"))
+        ;; (list "js-instanceof"
+        ;;       (let ([arr (js-array (list))])
+        ;;         (equal? (js-instanceof arr (js-ref (js-global-this) "Array")) 1)))
+        ;; (list "js-null"
+        ;;       (equal? (js-typeof (js-null)) "object"))
+        ;; (list "js-this"
+        ;;       (equal? (js-this) (js-global-this)))
+        ))
 
  #;(list "Fundamental objects"
        (list

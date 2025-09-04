@@ -454,6 +454,8 @@ function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
 
+
+
 // The procedure to call has been given an `id` by `callback-register` in the wasm runtime.
 // To call it, fasl encode an array of arguments and use `callback`.
 export function make_callback(id) {
@@ -548,9 +550,12 @@ var imports = {
       'encode-uri-component':      ((s) => to_string( encodeURIComponent(from_fasl(s)))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref/value':                 ((obj, key) => to_fasl(obj[from_fasl(key)])),
-      'ref':                       ((obj, key) => obj[from_fasl(key)]),
-      'set!':                      ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
-      'index':                     ((obj, prop) => obj[from_fasl(prop)]),
+      'ref/extern':                ((obj, key) => obj[from_fasl(key)]),
+      'set!':                      ((obj, key, val) => ( obj[from_fasl(key)] = from_fasl(val) )),
+      'index':                     ((obj, prop) => { console.log( from_fasl(obj) );
+                                                     console.log( from_fasl(prop) ); 
+                                                     console.log( obj[ from_fasl(prop) ] );
+                                                     return to_fasl( obj[ from_fasl(prop) ] ) }),
       'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
       'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
       'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
@@ -569,8 +574,10 @@ var imports = {
                                      }
                                      return o;
                                    }),
-      'array':                     (args => [...(from_fasl(args) || [])]),
-      'typeof':                    (obj => to_string(typeof obj)),
+      'array':                     (args => { const as = from_fasl(args);
+                                              return to_fasl([...( as ? as : [])])
+                                    }),
+      'typeof':                    ((obj) => to_string(typeof obj)),
       'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
       'operator':                  ((op, operands) => {
                                      const o = from_fasl(op);
@@ -604,7 +611,7 @@ var imports = {
       'temporal':                  (() => (typeof Temporal === 'undefined' ? undefined : Temporal)),
       'string':                    (() => String),
       'reg-exp':                   (() => RegExp),
-      'array':                     (() => Array),
+      'Array':                     (() => Array),
       'typed-array':               (() => (typeof TypedArray === 'undefined' ? undefined : TypedArray)),
       'int8-array':                (() => Int8Array),
       'uint8-array':               (() => Uint8Array),
