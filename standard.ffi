@@ -343,7 +343,7 @@
 (define-foreign js-number-finite?
   #:module "number"
   #:name   "is-finite"
-  (-> (f64) (i32)))
+  (-> (f64) (boolean)))
 
 ;; Test whether a value is an integer.
 (define-foreign js-number-integer?
