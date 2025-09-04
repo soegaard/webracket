@@ -453,7 +453,7 @@
                   (if (result (ref eq))
                       (local.get $results)
                       (then (global.get $true))
-                      (then (global.get $false))))]                  
+                      (else (global.get $false))))]                  
                [(list 'string) ; a string is returned as an index into linear memory
                 `(return
                   (call $linear-memory->string (local.get $results)))]
