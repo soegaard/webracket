@@ -62,13 +62,17 @@
 
  (list "Basic operations"
        (list
-        (list "js-array/js-index"
-              (let ([arr (js-array (vector 11 22 33))])
-                (list (js-index arr 1) 22)))
-        #;(list "js-object"
+        (list "js-array"
+              (list (equal? (js-array (vector 11 22 33)) #(11 22 33))))
+        (list "js-array/extern"
+              (list (equal? (external? (js-array/extern (vector 11 22 33))) #t)))
+        (list "js-index" ; requires an external array
+              (let ([arr (js-array/extern (vector 11 22 33))])
+                (equal? (js-index arr 1) 22)))        
+        (list "js-object"
               (let ([obj (js-object (vector (vector "a" 1)))])
                 (equal? (js-ref obj "a") 1))
-              #;(let ([obj (js-object (list (list "a" 1)))])
+              (let ([obj (js-object (list (list "a" 1)))])
                 (equal? (js-ref obj "a") 1)))
         #;(list "js-new"
               (equal? (js-typeof (js-new (js-date) (list))) "object"))

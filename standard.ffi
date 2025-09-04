@@ -445,7 +445,13 @@
 (define-foreign js-array
   #:module "standard"
   #:name   "array"
+  (-> (value) (value)))
+
+(define-foreign js-array/extern
+  #:module "standard"
+  #:name   "array/extern"
   (-> (value) (extern)))
+
 
 (define-foreign js-typed-array
   #:module "standard"
