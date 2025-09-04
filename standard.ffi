@@ -63,29 +63,31 @@
 (define-foreign js-decode-uri
   #:module "standard"
   #:name   "decode-uri"
-  (-> (string) (extern)))
+  (-> (string) (string)))
 
 (define-foreign js-decode-uri-component
   #:module "standard"
   #:name   "decode-uri-component"
-  (-> (string) (extern)))
+  (-> (string) (string)))
 
 (define-foreign js-encode-uri
   #:module "standard"
   #:name   "encode-uri"
-  (-> (string) (extern)))
+  (-> (string) (string)))
 
 (define-foreign js-encode-uri-component
   #:module "standard"
   #:name   "encode-uri-component"
-  (-> (string) (extern)))
+  (-> (string) (string)))
 
-(define-foreign js-escape
+; deprecated
+#;(define-foreign js-escape
   #:module "standard"
   #:name   "escape"
   (-> (string) (extern)))
 
-(define-foreign js-unescape
+; deprecated
+#;(define-foreign js-unescape
   #:module "standard"
   #:name   "unescape"
   (-> (string) (extern)))
@@ -95,10 +97,15 @@
   #:name   "var"
   (-> (string) (extern)))
 
-(define-foreign js-ref
+(define-foreign js-ref/extern
   #:module "standard"
   #:name   "ref"
   (-> (extern string/symbol) (extern)))
+
+(define-foreign js-ref
+  #:module "standard"
+  #:name   "ref"
+  (-> (extern string/symbol) (value)))
 
 (define-foreign js-set!
   #:module "standard"
@@ -115,7 +122,7 @@
 (define-foreign js-assign
   #:module "standard"
   #:name   "assign"
-  (-> (string/symbol value) (extern)))
+  (-> (string/symbol value) ()))
 
 (define-foreign js-new
   #:module "standard"

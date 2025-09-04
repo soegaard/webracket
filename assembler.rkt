@@ -162,11 +162,6 @@ function fasl_to_js_value(arr, i = 0) {
   }
 }
 
-function to_fasl(v) {
-  const fasl = js_value_to_fasl(v);
-  new Uint8Array(memory.buffer).set(fasl, 0);
-  return 0
-}
 
 function js_value_to_fasl(v) {
   const out = [];
@@ -483,6 +478,15 @@ function boolean_to_i32(x) {
   return x ? 1 : 0;
 }
 
+function to_fasl(v) {
+  const fasl = js_value_to_fasl(v);
+  new Uint8Array(memory.buffer).set(fasl, 0);
+  return 0
+}
+
+function to_string(v) {
+  return to_fasl(v);
+}
 
 var imports = {
     'env': {
@@ -538,12 +542,10 @@ var imports = {
       'is-nan':                    ((x) => isNaN(x) ? 1 : 0),
       'parse-float':               ((s) => parseFloat(from_fasl(s))),
       'parse-int':                 ((s) => parseInt(from_fasl(s))),
-      'decode-uri':                ((s) => decodeURI(from_fasl(s))),
-      'decode-uri-component':      ((s) => decodeURIComponent(from_fasl(s))),
-      'encode-uri':                ((s) => encodeURI(from_fasl(s))),
-      'encode-uri-component':      ((s) => encodeURIComponent(from_fasl(s))),
-      'escape':                    ((s) => escape(from_fasl(s))),
-      'unescape':                  ((s) => unescape(from_fasl(s))),
+      'decode-uri':                ((s) => to_string( decodeURI(from_fasl(s)))),
+      'decode-uri-component':      ((s) => to_string( decodeURIComponent(from_fasl(s)))),
+      'encode-uri':                ((s) => to_string( encodeURI(from_fasl(s)))),
+      'encode-uri-component':      ((s) => to_string( encodeURIComponent(from_fasl(s)))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref':                       ((obj, key) => obj[from_fasl(key)]),
       'set!':                      ((obj, key, val) => { obj[from_fasl(key)] = from_fasl(val); }),
@@ -567,7 +569,7 @@ var imports = {
                                      return o;
                                    }),
       'array':                     (args => [...(from_fasl(args) || [])]),
-      'typeof':                    (obj => typeof obj),
+      'typeof':                    (obj => to_string(typeof obj)),
       'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
       'operator':                  ((op, operands) => {
                                      const o = from_fasl(op);
