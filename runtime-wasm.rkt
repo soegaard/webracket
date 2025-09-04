@@ -6029,7 +6029,7 @@
                (local.set $abs (f64.abs (local.get $x)))
                (local.set $neg (f64.lt (local.get $x) (f64.const 0)))
                ;; --- Integer part ---
-               (local.set $int (i32.trunc_f64_s (local.get $abs)))
+               (local.set $int (i32.trunc_sat_f64_s (local.get $abs)))  ; todo ? okay to use _sat_ ?
                ;; Scientific notation fallback if too large
                (if (i32.ge_u (local.get $int) (i32.const 1000000))
                    (then (return (call $f64->string/scientific (local.get $x)))))
@@ -6039,7 +6039,7 @@
                            (f64.sub (local.get $abs)
                                     (f64.convert_i32_s (local.get $int)))
                            (f64.const 1000000.0)))
-               (local.set $frac (i32.trunc_f64_s (local.get $frac-scaled)))
+               (local.set $frac (i32.trunc_sat_f64_s (local.get $frac-scaled))) ; todo ?
                ;; --- Convert parts to strings ---
                (local.set $s-int  (call $i32->string       (local.get $int)))
                (local.set $s-frac (call $i32->string/pad6  (local.get $frac)))

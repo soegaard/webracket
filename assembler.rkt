@@ -717,7 +717,9 @@ var imports = {
         // Convert number to exponential notation.
         'to-exponential':    ((x, fd) => {
                                  const d = from_fasl(fd);
-                                 return d === undefined ? x.toExponential() : x.toExponential(d);
+                                 const r = d === undefined ? x.toExponential() : x.toExponential(d);
+                                 console.log(r);
+                                 return to_fasl(r);
                                }),
         // Format number with fixed-point notation.
         'to-fixed':          ((x, digits) => {
