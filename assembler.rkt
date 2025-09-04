@@ -163,7 +163,9 @@ function fasl_to_js_value(arr, i = 0) {
 }
 
 function to_fasl(v) {
-  return js_value_to_fasl(v)
+  const fasl = js_value_to_fasl(v);
+  new Uint8Array(memory.buffer).set(fasl, 0);
+  return 0
 }
 
 function js_value_to_fasl(v) {
