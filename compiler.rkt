@@ -632,6 +632,7 @@
   ; shrink-vector
 
   external-number->flonum
+  external-string->string
   external?
   )
 

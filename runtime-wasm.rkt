@@ -770,6 +770,10 @@
               (import "primitives" "external_number_to_f64")
               (param (ref extern)) (result f64))
 
+        (func $js-external-string->string
+              (import "primitives" "external_string_to_string")
+              (param (ref extern)) (result i32))
+
         ;; FFI related imports
         ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
@@ -6363,6 +6367,28 @@
               (local.set $f (call $js-external-number->f64
                                   (ref.as_non_null (local.get $raw))))
               (struct.new $Flonum (i32.const 0) (local.get $f)))
+
+        (func $external-string->string (type $Prim1)
+              (param $v (ref eq))
+              (result   (ref eq))
+
+              (local $e   (ref $External))
+              (local $raw externref)
+              (local $ptr i32)
+              ;; Check that $v is an $External
+              (if (i32.eqz (ref.test (ref $External) (local.get $v)))
+                  (then (call $raise-argument-error (local.get $v)) (unreachable)))
+              ;; Cast to $External
+              (local.set $e (ref.cast (ref $External) (local.get $v)))
+              ;; Extract underlying JS value
+              (local.set $raw (struct.get $External $v (local.get $e)))
+              ;; If null, return #f
+              (if (ref.is_null (local.get $raw))
+                  (then (return (global.get $false))))
+              ;; Non-null now: pass as (ref extern) directly
+              (local.set $ptr (call $js-external-string->string
+                                     (ref.as_non_null (local.get $raw))))
+              (call $linear-memory->string (local.get $ptr)))
 
 
 

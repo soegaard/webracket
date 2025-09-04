@@ -63,6 +63,7 @@
     js-log
     procedure->external
     external-number->flonum
+    external-string->string
     ))
 
 

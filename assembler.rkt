@@ -525,6 +525,11 @@ var imports = {
         (typeof obj === 'number'
          ? obj
          : (obj instanceof Number ? obj.valueOf() : NaN))),
+      'external_string_to_string': (obj =>
+        (typeof obj === 'string'
+         ? to_string(obj)
+         : (obj instanceof String ? to_string(obj.valueOf())
+                                   : to_string(String(obj))))),
       'char_upcase': ((cp) => {
         const s = String.fromCodePoint(cp).toUpperCase();
         const arr = Array.from(s);
