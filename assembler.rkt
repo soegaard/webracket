@@ -454,6 +454,21 @@ function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
 
+function from_fasl2(index) {
+    const arr = new Uint8Array(memory.buffer)
+    const [v1, i1] = fasl_to_js_value(arr, index)
+    const [v2] = fasl_to_js_value(arr, i1)
+    return [v1, v2]
+}
+
+function from_fasl3(index) {
+    const arr = new Uint8Array(memory.buffer)
+    const [v1, i1] = fasl_to_js_value(arr, index)
+    const [v2, i2] = fasl_to_js_value(arr, i1)
+    const [v3] = fasl_to_js_value(arr, i2)
+    return [v1, v2, v3]
+}
+
 
 
 // The procedure to call has been given an `id` by `callback-register` in the wasm runtime.
