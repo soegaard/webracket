@@ -88,7 +88,8 @@
   (eq? (syntax-e x) (syntax-e y)))
 
 (define (validate-base-argument-type who form type)
-  (syntax-case* type (string string/symbol value extern i32 u32 f64) literal=?
+  (syntax-case* type (boolean string string/symbol value extern i32 u32 f64) literal=?
+    [boolean       #t]
     [string        #t]
     [string/symbol #t]
     [value         #t]
@@ -101,14 +102,15 @@
                          form type)]))
 
 (define (validate-base-result-type who form type)
-  (syntax-case* type (string value extern i32 u32 f64) literal=?
-    [string #t]
-    [value  #t]
-    [extern #t]
-    [i32    #t]
-    [u32    #t]
-    [f64    #t]
-    [void   #t]  ; synonym for ()
+  (syntax-case* type (boolean string value extern i32 u32 f64) literal=?
+    [boolean #t]
+    [string  #t]
+    [value   #t]
+    [extern  #t]
+    [i32     #t]
+    [u32     #t]
+    [f64     #t]
+    [void    #t]  ; synonym for ()
     [_
      (raise-syntax-error who "expected an result type, got: "
                          form type)]))
@@ -213,6 +215,7 @@
 
 (define (argument-type->wasm-import-parameter type)
   (case type
+    [(boolean)       'i32]         ; 0 or 1 
     [(string)        'i32]         ; index into linear memory
     [(string/symbol) 'i32]         ; index into linear memory
     [(value)         'i32]         ; index into linear memory
@@ -231,12 +234,13 @@
 
 (define (result-type->wasm-import-result type)
   (define t (case type
-              [(string) 'i32]         ; index into linear memory
-              [(value)  'i32]         ; index into linear memory
-              [(extern) 'externref]
-              [(i32)    'i32]
-              [(u32)    'i32]
-              [(f64)    'f64]
+              [(boolean) 'i32]
+              [(string)  'i32]         ; index into linear memory
+              [(value)   'i32]         ; index into linear memory
+              [(extern)  'externref]
+              [(i32)     'i32]
+              [(u32)     'i32]
+              [(f64)     'f64]
               [else
                (error 'result-type->wasm-import-result
                       "expected type, got: ~a"
@@ -246,8 +250,9 @@
 
 ;; Primitive wrapper for the imported function
 
-(define (argument-type->wasm-primtive-expected type)
+(define (argument-type->wasm-primitive-expected type)
   (case type
+    [(boolean)       '(ref eq)]         ; any non-false value counts as true
     [(string)        '(ref $String)]    ; index into linear memory
     [(string/symbol) '(ref eq)]         ; index into linear memory
     [(value)         '(ref eq)]         ; index into linear memory
@@ -256,7 +261,7 @@
     [(u32)           '(ref i31)]
     [(f64)           '(ref $Flonum)]
     [else
-     (error argument-type->wasm-primtive-expected
+     (error argument-type->wasm-primitive-expected
             "expected type, got: ~a"
             type)]))
 
@@ -288,7 +293,7 @@
             ;;   - each argument will be type checked and converted
             ;;     they are stored in (local-index i)
             ,@(for/list ([t argument-types])
-                (define expected (argument-type->wasm-primtive-expected t))
+                (define expected (argument-type->wasm-primitive-expected t))
                 `(local ,expected))
             ;;   - the types needed for the /imported function
             ;;     they are stored in import-index
@@ -315,10 +320,13 @@
             ;; 0. Type check - fail early
             ,@(for/list ([t argument-types] [i (in-naturals)])
                 (define test
-                  (match t
+                  (match t                    
                     ['string/symbol `(i32.or (ref.test (ref $String) (local.get ,(param-index i)))
                                              (ref.test (ref $Symbol) (local.get ,(param-index i))))]
-                    [_              (define expected (argument-type->wasm-primtive-expected t))
+                    ; Any non-false value counts as true. So we can accept any value as argument.
+                    ['boolean       `(i32.const 1)] ; any value is accepted
+
+                    [_              (define expected (argument-type->wasm-primitive-expected t))
                                     `(ref.test ,expected (local.get ,(param-index i)))]))
                 `(if (i32.eqz ,test)
                      ; TODO  Call a more specific error function that includes the type.
@@ -338,7 +346,9 @@
                   ['f64
                    `(local.set ,(local-index i)
                                (ref.cast (ref $Flonum)
-                                                     (local.get ,(param-index i))))]
+                                         (local.get ,(param-index i))))]
+                  ['boolean
+                   `(local.set ,(local-index i) (local.get ,(param-index i)))]
                   ['string
                    `(local.set ,(local-index i)
                                (ref.cast (ref $String)
@@ -380,6 +390,13 @@
                   ['f64
                    `(local.set ,(import-index i)
                                (struct.get $Flonum $v (local.get ,(local-index i))))]
+                  ['boolean                    
+                   `(local.set ,(import-index i)
+                               (if (result i32)
+                                   (ref.eq (local.get ,(local-index i)) (global.get $false))
+                                   (then (i32.const 0))
+                                   (else (i32.const 1))))]
+
                   [(or 'string 'string/symbol)
                    ;; 1) FASL-encode directly to a bytes object (port = #f)
                    ;; 2) Copy bytes to linear memory at $fasl-index
@@ -431,6 +448,12 @@
                [(list 'f64) ; to flonum
                 `(return
                   (struct.new $Flonum (i32.const 0) (local.get $results)))]
+               [(list 'boolean) ; either 0 or 1 as an i32
+                `(return
+                  (if (result (ref eq))
+                      (local.get $results)
+                      (then (global.get $true))
+                      (then (global.get $false))))]                  
                [(list 'string) ; a string is returned as an index into linear memory
                 `(return
                   (call $linear-memory->string (local.get $results)))]
