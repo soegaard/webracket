@@ -189,107 +189,107 @@
 ;;; Fundamental objects
 ;;;
 
-(define-foreign js-object-constructor
+(define-foreign js-Object
   #:module "standard"
-  #:name   "object-constructor"
+  #:name   "Object"
   (-> () (extern)))
 
-(define-foreign js-function
+(define-foreign js-Function
   #:module "standard"
-  #:name   "function"
+  #:name   "Function"
   (-> () (extern)))
 
-(define-foreign js-boolean
+(define-foreign js-Boolean
   #:module "standard"
-  #:name   "boolean"
+  #:name   "Boolean"
   (-> () (extern)))
 
-(define-foreign js-symbol
+(define-foreign js-Symbol
   #:module "standard"
-  #:name   "symbol"
+  #:name   "Symbol"
   (-> () (extern)))
 
 ;;;
 ;;; Error objects
 ;;;
 
-(define-foreign js-error
+(define-foreign js-Error
   #:module "standard"
-  #:name   "error"
+  #:name   "Error"
   (-> () (extern)))
 
-(define-foreign js-aggregate-error
+(define-foreign js-AggregateError
   #:module "standard"
-  #:name   "aggregate-error"
+  #:name   "AggregateError"
   (-> () (extern)))
 
-(define-foreign js-eval-error
+(define-foreign js-EvalError
   #:module "standard"
-  #:name   "eval-error"
+  #:name   "EvalError"
   (-> () (extern)))
 
-(define-foreign js-range-error
+(define-foreign js-RangeError
   #:module "standard"
-  #:name   "range-error"
+  #:name   "RangeError"
   (-> () (extern)))
 
-(define-foreign js-reference-error
+(define-foreign js-ReferenceError
   #:module "standard"
-  #:name   "reference-error"
+  #:name   "ReferenceError"
   (-> () (extern)))
 
-(define-foreign js-suppressed-error
+(define-foreign js-SuppressedError
   #:module "standard"
-  #:name   "suppressed-error"
+  #:name   "SuppressedError"
   (-> () (extern)))
 
-(define-foreign js-syntax-error
+(define-foreign js-SyntaxError
   #:module "standard"
-  #:name   "syntax-error"
+  #:name   "SyntaxError"
   (-> () (extern)))
 
-(define-foreign js-type-error
+(define-foreign js-TypeError
   #:module "standard"
-  #:name   "type-error"
+  #:name   "TypeError"
   (-> () (extern)))
 
-(define-foreign js-uri-error
+(define-foreign js-URIError
   #:module "standard"
-  #:name   "uri-error"
+  #:name   "URIError"
   (-> () (extern)))
 
-(define-foreign js-internal-error
+(define-foreign js-InternalError
   #:module "standard"
-  #:name   "internal-error"
+  #:name   "InternalError"
   (-> () (extern)))
 
 ;;;
 ;;; Numbers and dates
 ;;;
 
-(define-foreign js-number
+(define-foreign js-Number
   #:module "standard"
-  #:name   "number"
+  #:name   "Number"
   (-> () (extern)))
 
-(define-foreign js-bigint
+(define-foreign js-BigInt
   #:module "standard"
-  #:name   "bigint"
+  #:name   "BigInt"
   (-> () (extern)))
 
-(define-foreign js-math
+(define-foreign js-Math
   #:module "standard"
-  #:name   "math"
+  #:name   "Math"
   (-> () (extern)))
 
-(define-foreign js-date
+(define-foreign js-Date
   #:module "standard"
-  #:name   "date"
+  #:name   "Date"
   (-> () (extern)))
 
-(define-foreign js-temporal
+(define-foreign js-Temporal
   #:module "standard"
-  #:name   "temporal"
+  #:name   "Temporal"
   (-> () (extern)))
 
 ;;;
@@ -427,14 +427,14 @@
 ;;; Text processing
 ;;;
 
-(define-foreign js-string
+(define-foreign js-String
   #:module "standard"
-  #:name   "string"
+  #:name   "String"
   (-> () (extern)))
 
-(define-foreign js-reg-exp
+(define-foreign js-RegExp
   #:module "standard"
-  #:name   "reg-exp"
+  #:name   "RegExp"
   (-> () (extern)))
 
 ;;;
@@ -453,262 +453,262 @@
   (-> (value) (extern)))
 
 
-(define-foreign js-typed-array
+(define-foreign js-TypedArray
   #:module "standard"
-  #:name   "typed-array"
+  #:name   "TypedArray"
   (-> () (extern)))
 
-(define-foreign js-int8-array
+(define-foreign js-Int8Array
   #:module "standard"
-  #:name   "int8-array"
+  #:name   "Int8Array"
   (-> () (extern)))
 
-(define-foreign js-uint8-array
+(define-foreign js-Uint8Array
   #:module "standard"
-  #:name   "uint8-array"
+  #:name   "Uint8Array"
   (-> () (extern)))
 
-(define-foreign js-uint8-clamped-array
+(define-foreign js-Uint8ClampedArray
   #:module "standard"
-  #:name   "uint8-clamped-array"
+  #:name   "Uint8ClampedArray"
   (-> () (extern)))
 
-(define-foreign js-int16-array
+(define-foreign js-Int16Array
   #:module "standard"
-  #:name   "int16-array"
+  #:name   "Int16Array"
   (-> () (extern)))
 
-(define-foreign js-uint16-array
+(define-foreign js-Uint16Array
   #:module "standard"
-  #:name   "uint16-array"
+  #:name   "Uint16Array"
   (-> () (extern)))
 
-(define-foreign js-int32-array
+(define-foreign js-Int32Array
   #:module "standard"
-  #:name   "int32-array"
+  #:name   "Int32Array"
   (-> () (extern)))
 
-(define-foreign js-uint32-array
+(define-foreign js-Uint32Array
   #:module "standard"
-  #:name   "uint32-array"
+  #:name   "Uint32Array"
   (-> () (extern)))
 
-(define-foreign js-bigint64-array
+(define-foreign js-BigInt64Array
   #:module "standard"
-  #:name   "bigint64-array"
+  #:name   "BigInt64Array"
   (-> () (extern)))
 
-(define-foreign js-biguint64-array
+(define-foreign js-BigUint64Array
   #:module "standard"
-  #:name   "biguint64-array"
+  #:name   "BigUint64Array"
   (-> () (extern)))
 
-(define-foreign js-float16-array
+(define-foreign js-Float16Array
   #:module "standard"
-  #:name   "float16-array"
+  #:name   "Float16Array"
   (-> () (extern)))
 
-(define-foreign js-float32-array
+(define-foreign js-Float32Array
   #:module "standard"
-  #:name   "float32-array"
+  #:name   "Float32Array"
   (-> () (extern)))
 
-(define-foreign js-float64-array
+(define-foreign js-Float64Array
   #:module "standard"
-  #:name   "float64-array"
+  #:name   "Float64Array"
   (-> () (extern)))
 
 ;;;
 ;;; Keyed collections
 ;;;
 
-(define-foreign js-map
+(define-foreign js-Map
   #:module "standard"
-  #:name   "map"
+  #:name   "Map"
   (-> () (extern)))
 
-(define-foreign js-set
+(define-foreign js-Set
   #:module "standard"
-  #:name   "set"
+  #:name   "Set"
   (-> () (extern)))
 
-(define-foreign js-weak-map
+(define-foreign js-WeakMap
   #:module "standard"
-  #:name   "weak-map"
+  #:name   "WeakMap"
   (-> () (extern)))
 
-(define-foreign js-weak-set
+(define-foreign js-WeakSet
   #:module "standard"
-  #:name   "weak-set"
+  #:name   "WeakSet"
   (-> () (extern)))
 
 ;;;
 ;;; Structured data
 ;;;
 
-(define-foreign js-array-buffer
+(define-foreign js-ArrayBuffer
   #:module "standard"
-  #:name   "array-buffer"
+  #:name   "ArrayBuffer"
   (-> () (extern)))
 
-(define-foreign js-shared-array-buffer
+(define-foreign js-SharedArrayBuffer
   #:module "standard"
-  #:name   "shared-array-buffer"
+  #:name   "SharedArrayBuffer"
   (-> () (extern)))
 
-(define-foreign js-data-view
+(define-foreign js-DataView
   #:module "standard"
-  #:name   "data-view"
+  #:name   "DataView"
   (-> () (extern)))
 
-(define-foreign js-atomics
+(define-foreign js-Atomics
   #:module "standard"
-  #:name   "atomics"
+  #:name   "Atomics"
   (-> () (extern)))
 
-(define-foreign js-json
+(define-foreign js-JSON
   #:module "standard"
-  #:name   "json"
+  #:name   "JSON"
   (-> () (extern)))
 
 ;;;
 ;;; Managing memory
 ;;;
 
-(define-foreign js-weak-ref
+(define-foreign js-WeakRef
   #:module "standard"
-  #:name   "weak-ref"
+  #:name   "WeakRef"
   (-> () (extern)))
 
-(define-foreign js-finalization-registry
+(define-foreign js-FinalizationRegistry
   #:module "standard"
-  #:name   "finalization-registry"
+  #:name   "FinalizationRegistry"
   (-> () (extern)))
 
 ;;;
 ;;; Control abstraction objects
 ;;;
 
-(define-foreign js-iterator
+(define-foreign js-Iterator
   #:module "standard"
-  #:name   "iterator"
+  #:name   "Iterator"
   (-> () (extern)))
 
-(define-foreign js-async-iterator
+(define-foreign js-AsyncIterator
   #:module "standard"
-  #:name   "async-iterator"
+  #:name   "AsyncIterator"
   (-> () (extern)))
 
-(define-foreign js-promise
+(define-foreign js-Promise
   #:module "standard"
-  #:name   "promise"
+  #:name   "Promise"
   (-> () (extern)))
 
-(define-foreign js-generator-function
+(define-foreign js-GeneratorFunction
   #:module "standard"
-  #:name   "generator-function"
+  #:name   "GeneratorFunction"
   (-> () (extern)))
 
-(define-foreign js-async-generator-function
+(define-foreign js-AsyncGeneratorFunction
   #:module "standard"
-  #:name   "async-generator-function"
+  #:name   "AsyncGeneratorFunction"
   (-> () (extern)))
 
-(define-foreign js-generator
+(define-foreign js-Generator
   #:module "standard"
-  #:name   "generator"
+  #:name   "Generator"
   (-> () (extern)))
 
-(define-foreign js-async-generator
+(define-foreign js-AsyncGenerator
   #:module "standard"
-  #:name   "async-generator"
+  #:name   "AsyncGenerator"
   (-> () (extern)))
 
-(define-foreign js-async-function
+(define-foreign js-AsyncFunction
   #:module "standard"
-  #:name   "async-function"
+  #:name   "AsyncFunction"
   (-> () (extern)))
 
-(define-foreign js-disposable-stack
+(define-foreign js-DisposableStack
   #:module "standard"
-  #:name   "disposable-stack"
+  #:name   "DisposableStack"
   (-> () (extern)))
 
-(define-foreign js-async-disposable-stack
+(define-foreign js-AsyncDisposableStack
   #:module "standard"
-  #:name   "async-disposable-stack"
+  #:name   "AsyncDisposableStack"
   (-> () (extern)))
 
 ;;;
 ;;; Reflection
 ;;;
 
-(define-foreign js-reflect
+(define-foreign js-Reflect
   #:module "standard"
-  #:name   "reflect"
+  #:name   "Reflect"
   (-> () (extern)))
 
-(define-foreign js-proxy
+(define-foreign js-Proxy
   #:module "standard"
-  #:name   "proxy"
+  #:name   "Proxy"
   (-> () (extern)))
 
 ;;;
 ;;; Internationalization
 ;;;
 
-(define-foreign js-intl
+(define-foreign js-Intl
   #:module "standard"
-  #:name   "intl"
+  #:name   "Intl"
   (-> () (extern)))
 
-(define-foreign js-intl-collator
+(define-foreign js-IntlCollator
   #:module "standard"
-  #:name   "intl-collator"
+  #:name   "Intl.Collator"
   (-> () (extern)))
 
-(define-foreign js-intl-date-time-format
+(define-foreign js-IntlDateTimeFormat
   #:module "standard"
-  #:name   "intl-date-time-format"
+  #:name   "Intl.DateTimeFormat"
   (-> () (extern)))
 
-(define-foreign js-intl-display-names
+(define-foreign js-IntlDisplayNames
   #:module "standard"
-  #:name   "intl-display-names"
+  #:name   "Intl.DisplayNames"
   (-> () (extern)))
 
-(define-foreign js-intl-duration-format
+(define-foreign js-IntlDurationFormat
   #:module "standard"
-  #:name   "intl-duration-format"
+  #:name   "Intl.DurationFormat"
   (-> () (extern)))
 
-(define-foreign js-intl-list-format
+(define-foreign js-IntlListFormat
   #:module "standard"
-  #:name   "intl-list-format"
+  #:name   "Intl.ListFormat"
   (-> () (extern)))
 
-(define-foreign js-intl-locale
+(define-foreign js-IntlLocale
   #:module "standard"
-  #:name   "intl-locale"
+  #:name   "Intl.Locale"
   (-> () (extern)))
 
-(define-foreign js-intl-number-format
+(define-foreign js-IntlNumberFormat
   #:module "standard"
-  #:name   "intl-number-format"
+  #:name   "Intl.NumberFormat"
   (-> () (extern)))
 
-(define-foreign js-intl-plural-rules
+(define-foreign js-IntlPluralRules
   #:module "standard"
-  #:name   "intl-plural-rules"
+  #:name   "Intl.PluralRules"
   (-> () (extern)))
 
-(define-foreign js-intl-relative-time-format
+(define-foreign js-IntlRelativeTimeFormat
   #:module "standard"
-  #:name   "intl-relative-time-format"
+  #:name   "Intl.RelativeTimeFormat"
   (-> () (extern)))
 
-(define-foreign js-intl-segmenter
+(define-foreign js-IntlSegmenter
   #:module "standard"
-  #:name   "intl-segmenter"
+  #:name   "Intl.Segmenter"
   (-> () (extern)))
 

@@ -96,172 +96,172 @@
 
  #;(list "Fundamental objects"
        (list
-        (list "js-object-constructor"
-              (equal? (js-typeof (js-object-constructor)) "function"))
-        (list "js-function"
-              (equal? (js-typeof (js-function)) "function"))
-        (list "js-boolean"
-              (equal? (js-typeof (js-boolean)) "function"))
-        (list "js-symbol"
-              (equal? (js-typeof (js-symbol)) "function"))))
+        (list "js-Object"
+              (equal? (js-typeof (js-Object)) "function"))
+        (list "js-Function"
+              (equal? (js-typeof (js-Function)) "function"))
+        (list "js-Boolean"
+              (equal? (js-typeof (js-Boolean)) "function"))
+        (list "js-Symbol"
+              (equal? (js-typeof (js-Symbol)) "function"))))
 
  #;(list "Error objects"
        (list
-        (list "js-error"
-              (equal? (js-typeof (js-error)) "function"))
-        (list "js-aggregate-error"
-              (equal? (js-typeof (js-aggregate-error)) "function"))
-        (list "js-eval-error"
-              (equal? (js-typeof (js-eval-error)) "function"))
-        (list "js-range-error"
-              (equal? (js-typeof (js-range-error)) "function"))
-        (list "js-reference-error"
-              (equal? (js-typeof (js-reference-error)) "function"))
-        (list "js-suppressed-error"
-              (equal? (js-typeof (js-suppressed-error)) "function"))
-        (list "js-syntax-error"
-              (equal? (js-typeof (js-syntax-error)) "function"))
-        (list "js-type-error"
-              (equal? (js-typeof (js-type-error)) "function"))
-        (list "js-uri-error"
-              (equal? (js-typeof (js-uri-error)) "function"))
-        (list "js-internal-error"
-              (equal? (js-typeof (js-internal-error)) "function"))))
+        (list "js-Error"
+              (equal? (js-typeof (js-Error)) "function"))
+        (list "js-AggregateError"
+              (equal? (js-typeof (js-AggregateError)) "function"))
+        (list "js-EvalError"
+              (equal? (js-typeof (js-EvalError)) "function"))
+        (list "js-RangeError"
+              (equal? (js-typeof (js-RangeError)) "function"))
+        (list "js-ReferenceError"
+              (equal? (js-typeof (js-ReferenceError)) "function"))
+        (list "js-SuppressedError"
+              (equal? (js-typeof (js-SuppressedError)) "function"))
+        (list "js-SyntaxError"
+              (equal? (js-typeof (js-SyntaxError)) "function"))
+        (list "js-TypeError"
+              (equal? (js-typeof (js-TypeError)) "function"))
+        (list "js-URIError"
+              (equal? (js-typeof (js-URIError)) "function"))
+        (list "js-InternalError"
+              (equal? (js-typeof (js-InternalError)) "function"))))
 
  #;(list "Numbers and dates"
        (list
-        (list "js-number"
-              (equal? (js-typeof (js-number)) "function"))
-        (list "js-bigint"
-              (equal? (js-typeof (js-bigint)) "function"))
-        (list "js-math"
-              (equal? (js-typeof (js-math)) "object"))
-        (list "js-date"
-              (equal? (js-typeof (js-date)) "function"))
-        (list "js-temporal"
-              (equal? (js-typeof (js-temporal)) "object"))))
+        (list "js-Number"
+              (equal? (js-typeof (js-Number)) "function"))
+        (list "js-BigInt"
+              (equal? (js-typeof (js-BigInt)) "function"))
+        (list "js-Math"
+              (equal? (js-typeof (js-Math)) "object"))
+        (list "js-Date"
+              (equal? (js-typeof (js-Date)) "function"))
+        (list "js-Temporal"
+              (equal? (js-typeof (js-Temporal)) "object"))))
 
  #;(list "Text processing"
        (list
-        (list "js-string"
-              (equal? (js-typeof (js-string)) "function"))
-        (list "js-reg-exp"
-              (equal? (js-typeof (js-reg-exp)) "function"))))
+        (list "js-String"
+              (equal? (js-typeof (js-String)) "function"))
+        (list "js-RegExp"
+              (equal? (js-typeof (js-RegExp)) "function"))))
  
  #;(list "Indexed collections"
        (list
-        (list "js-typed-array"
-              (equal? (js-typeof (js-typed-array)) "function"))
-        (list "js-int8-array"
-              (equal? (js-typeof (js-int8-array)) "function"))
-        (list "js-uint8-array"
-              (equal? (js-typeof (js-uint8-array)) "function"))
-        (list "js-uint8-clamped-array"
-              (equal? (js-typeof (js-uint8-clamped-array)) "function"))
-        (list "js-int16-array"
-              (equal? (js-typeof (js-int16-array)) "function"))
-        (list "js-uint16-array"
-              (equal? (js-typeof (js-uint16-array)) "function"))
-        (list "js-int32-array"
-              (equal? (js-typeof (js-int32-array)) "function"))
-        (list "js-uint32-array"
-              (equal? (js-typeof (js-uint32-array)) "function"))
-        (list "js-bigint64-array"
-              (equal? (js-typeof (js-bigint64-array)) "function"))
-        (list "js-biguint64-array"
-              (equal? (js-typeof (js-biguint64-array)) "function"))
-        (list "js-float16-array"
-              (equal? (js-typeof (js-float16-array)) "function"))
-        (list "js-float32-array"
-              (equal? (js-typeof (js-float32-array)) "function"))
-        (list "js-float64-array"
-              (equal? (js-typeof (js-float64-array)) "function"))))
+        (list "js-TypedArray"
+              (equal? (js-typeof (js-TypedArray)) "function"))
+        (list "js-Int8Array"
+              (equal? (js-typeof (js-Int8Array)) "function"))
+        (list "js-Uint8Array"
+              (equal? (js-typeof (js-Uint8Array)) "function"))
+        (list "js-Uint8ClampedArray"
+              (equal? (js-typeof (js-Uint8ClampedArray)) "function"))
+        (list "js-Int16Array"
+              (equal? (js-typeof (js-Int16Array)) "function"))
+        (list "js-Uint16Array"
+              (equal? (js-typeof (js-Uint16Array)) "function"))
+        (list "js-Int32Array"
+              (equal? (js-typeof (js-Int32Array)) "function"))
+        (list "js-Uint32Array"
+              (equal? (js-typeof (js-Uint32Array)) "function"))
+        (list "js-BigInt64Array"
+              (equal? (js-typeof (js-BigInt64Array)) "function"))
+        (list "js-BigUint64Array"
+              (equal? (js-typeof (js-BigUint64Array)) "function"))
+        (list "js-Float16Array"
+              (equal? (js-typeof (js-Float16Array)) "function"))
+        (list "js-Float32Array"
+              (equal? (js-typeof (js-Float32Array)) "function"))
+        (list "js-Float64Array"
+              (equal? (js-typeof (js-Float64Array)) "function"))))
 
  #;(list "Keyed collections"
        (list
-        (list "js-map"
-              (equal? (js-typeof (js-map)) "function"))
-        (list "js-set"
-              (equal? (js-typeof (js-set)) "function"))
-        (list "js-weak-map"
-              (equal? (js-typeof (js-weak-map)) "function"))
-        (list "js-weak-set"
-              (equal? (js-typeof (js-weak-set)) "function"))))
+        (list "js-Map"
+              (equal? (js-typeof (js-Map)) "function"))
+        (list "js-Set"
+              (equal? (js-typeof (js-Set)) "function"))
+        (list "js-WeakMap"
+              (equal? (js-typeof (js-WeakMap)) "function"))
+        (list "js-WeakSet"
+              (equal? (js-typeof (js-WeakSet)) "function"))))
 
  #;(list "Structured data"
        (list
-        (list "js-array-buffer"
-              (equal? (js-typeof (js-array-buffer)) "function"))
-        (list "js-shared-array-buffer"
-              (equal? (js-typeof (js-shared-array-buffer)) "function"))
-        (list "js-data-view"
-              (equal? (js-typeof (js-data-view)) "function"))
-        (list "js-atomics"
-              (equal? (js-typeof (js-atomics)) "object"))
-        (list "js-json"
-              (equal? (js-typeof (js-json)) "object"))))
+        (list "js-ArrayBuffer"
+              (equal? (js-typeof (js-ArrayBuffer)) "function"))
+        (list "js-SharedArrayBuffer"
+              (equal? (js-typeof (js-SharedArrayBuffer)) "function"))
+        (list "js-DataView"
+              (equal? (js-typeof (js-DataView)) "function"))
+        (list "js-Atomics"
+              (equal? (js-typeof (js-Atomics)) "object"))
+        (list "js-JSON"
+              (equal? (js-typeof (js-JSON)) "object"))))
  
  #;(list "Managing memory"
        (list
-        (list "js-weak-ref"
-              (equal? (js-typeof (js-weak-ref)) "function"))
-        (list "js-finalization-registry"
-              (equal? (js-typeof (js-finalization-registry)) "function"))))
+        (list "js-WeakRef"
+              (equal? (js-typeof (js-WeakRef)) "function"))
+        (list "js-FinalizationRegistry"
+              (equal? (js-typeof (js-FinalizationRegistry)) "function"))))
 
  #;(list "Control abstraction objects"
        (list
-        (list "js-iterator"
-              (equal? (js-typeof (js-iterator)) "function"))
-        (list "js-async-iterator"
-              (equal? (js-typeof (js-async-iterator)) "function"))
-        (list "js-promise"
-              (equal? (js-typeof (js-promise)) "function"))
-        (list "js-generator-function"
-              (equal? (js-typeof (js-generator-function)) "function"))
-        (list "js-async-generator-function"
-              (equal? (js-typeof (js-async-generator-function)) "function"))
-        (list "js-generator"
-              (equal? (js-typeof (js-generator)) "function"))
-        (list "js-async-generator"
-              (equal? (js-typeof (js-async-generator)) "function"))
-        (list "js-async-function"
-              (equal? (js-typeof (js-async-function)) "function"))
-        (list "js-disposable-stack"
-              (equal? (js-typeof (js-disposable-stack)) "function"))
-        (list "js-async-disposable-stack"
-              (equal? (js-typeof (js-async-disposable-stack)) "function"))))
+        (list "js-Iterator"
+              (equal? (js-typeof (js-Iterator)) "function"))
+        (list "js-AsyncIterator"
+              (equal? (js-typeof (js-AsyncIterator)) "function"))
+        (list "js-Promise"
+              (equal? (js-typeof (js-Promise)) "function"))
+        (list "js-GeneratorFunction"
+              (equal? (js-typeof (js-GeneratorFunction)) "function"))
+        (list "js-AsyncGeneratorFunction"
+              (equal? (js-typeof (js-AsyncGeneratorFunction)) "function"))
+        (list "js-Generator"
+              (equal? (js-typeof (js-Generator)) "function"))
+        (list "js-AsyncGenerator"
+              (equal? (js-typeof (js-AsyncGenerator)) "function"))
+        (list "js-AsyncFunction"
+              (equal? (js-typeof (js-AsyncFunction)) "function"))
+        (list "js-DisposableStack"
+              (equal? (js-typeof (js-DisposableStack)) "function"))
+        (list "js-AsyncDisposableStack"
+              (equal? (js-typeof (js-AsyncDisposableStack)) "function"))))
  
  #;(list "Reflection"
        (list
-        (list "js-reflect"
-              (equal? (js-typeof (js-reflect)) "object"))
-        (list "js-proxy"
-              (equal? (js-typeof (js-proxy)) "function"))))
+        (list "js-Reflect"
+              (equal? (js-typeof (js-Reflect)) "object"))
+        (list "js-Proxy"
+              (equal? (js-typeof (js-Proxy)) "function"))))
 
  #;(list "Internationalization"
        (list
-        (list "js-intl"
-              (equal? (js-typeof (js-intl)) "object"))
-        (list "js-intl-collator"
-              (equal? (js-typeof (js-intl-collator)) "function"))
-        (list "js-intl-date-time-format"
-              (equal? (js-typeof (js-intl-date-time-format)) "function"))
-        (list "js-intl-display-names"
-              (equal? (js-typeof (js-intl-display-names)) "function"))
-        (list "js-intl-duration-format"
-              (equal? (js-typeof (js-intl-duration-format)) "function"))
-        (list "js-intl-list-format"
-              (equal? (js-typeof (js-intl-list-format)) "function"))
-        (list "js-intl-locale"
-              (equal? (js-typeof (js-intl-locale)) "function"))
-        (list "js-intl-number-format"
-              (equal? (js-typeof (js-intl-number-format)) "function"))
-        (list "js-intl-plural-rules"
-              (equal? (js-typeof (js-intl-plural-rules)) "function"))
-        (list "js-intl-relative-time-format"
-              (equal? (js-typeof (js-intl-relative-time-format)) "function"))
-        (list "js-intl-segmenter"
-              (equal? (js-typeof (js-intl-segmenter)) "function"))))
+        (list "js-Intl"
+              (equal? (js-typeof (js-Intl)) "object"))
+        (list "js-IntlCollator"
+              (equal? (js-typeof (js-IntlCollator)) "function"))
+        (list "js-IntlDateTimeFormat"
+              (equal? (js-typeof (js-IntlDateTimeFormat)) "function"))
+        (list "js-IntlDisplayNames"
+              (equal? (js-typeof (js-IntlDisplayNames)) "function"))
+        (list "js-IntlDurationFormat"
+              (equal? (js-typeof (js-IntlDurationFormat)) "function"))
+        (list "js-IntlListFormat"
+              (equal? (js-typeof (js-IntlListFormat)) "function"))
+        (list "js-IntlLocale"
+              (equal? (js-typeof (js-IntlLocale)) "function"))
+        (list "js-IntlNumberFormat"
+              (equal? (js-typeof (js-IntlNumberFormat)) "function"))
+        (list "js-IntlPluralRules"
+              (equal? (js-typeof (js-IntlPluralRules)) "function"))
+        (list "js-IntlRelativeTimeFormat"
+              (equal? (js-typeof (js-IntlRelativeTimeFormat)) "function"))
+        (list "js-IntlSegmenter"
+              (equal? (js-typeof (js-IntlSegmenter)) "function"))))
 
  ;;;
  ;;; Number
