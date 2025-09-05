@@ -53,6 +53,12 @@
 (js-set-attribute! container "style" "width: 500px; height: 400px;")
 (js-append-child! (js-document-body) container)
 
+;; Formula element below the board
+(define formula-div (js-create-element "div"))
+(js-append-child! formula-div
+                  (js-create-text-node "$$a^2+b^2=c^2$$"))
+(js-append-child! (js-document-body) formula-div)
+
 ;; Text element below the board
 (define result-text (js-create-element "div"))
 (js-append-child! (js-document-body) result-text)
@@ -348,8 +354,19 @@
   (on as "drag" handler)
   (on bs "drag" handler)
   (on cs "drag" handler)
-  
+
   (void))
+
+;;;
+;;; Load MathJax.
+;;;
+
+(define mathjax-script (js-create-element "script"))
+(js-set-attribute! mathjax-script "id" "MathJax-script")
+(js-set-attribute! mathjax-script "async" "true")
+(js-set-attribute! mathjax-script "src"
+                   "https://cdn.jsdelivr.net/npm/mathjax@4/es5/tex-chtml.js")
+(js-append-child! head mathjax-script)
 
 ;;;
 ;;; Load JSXGraph.
