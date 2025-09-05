@@ -91,6 +91,13 @@
   (for-each (λ (x) (js-log x)) values)
   (/ 0 0))
 
+(define (time where thunk)
+  (let ([now1 (js-performance-now)]) ; in ms
+    (let ([s (thunk)])
+      (let ([now2 (js-performance-now)])
+        (js-log (vector where (- now2 now1)))
+        s))))
+
 
 ;;;
 ;;; Pairings, Keys, Attributes and Parents
@@ -143,8 +150,6 @@
 (define (parents . xs)
   (list->vector xs))
 
-(define (set-attribute! elem key value)
-  (js-send elem "setAttribute" (vector (vector (key->string key) value))))
 
 ;;;
 ;;; Invokers
@@ -210,15 +215,9 @@
 
 ;; Point
 
-(define (point? x)
-  (and (external? x)
-       (js-instanceof x (dot (js-var "JXG") "Point"))))
-
-(define (point-x p)
-  (js-send/flonum* p "X"))
-
-(define (point-y p)
-  (js-send/flonum* p "Y"))
+(define (point? x)  (jsx-point? x))
+(define (point-x p) (jsx-point-x p))
+(define (point-y p) (jsx-point-x p))
 
 (define (coordinates p)
   (values (point-x p) (point-y p)))
@@ -232,13 +231,21 @@
 ;;; Vector Operations
 ;;;
 
-(define (as-vector obj)
+#;(define (as-vector obj)
   (define msg "expected a vector-like value, got: ")
   (match obj
     [(vector x y) obj]
     [(list   x y) (vector x y)]
     [(? point?)   (vector (point-x obj) (point-y obj))]
     [_ (error 'as-vector msg obj)]))
+
+(define (as-vector obj)
+  (define msg "expected a vector-like value, got: ")
+  (cond
+    [(vector? obj) obj]
+    [(list?   obj) (vector (car obj) (car (cdr obj)))]
+    [(point?  obj) (vector (point-x obj) (point-y obj))]
+    [else          (error 'as-vector msg obj)]))
 
 (define (vector-plus v w)
   (define msg "expected a vector-like value, got: ")
@@ -263,9 +270,26 @@
     [((vector vx vy) (vector wx wy))
      (+ (* vx wx) (* vy wy))]))
 
+(define (dist v w)
+  (match* ((as-vector v) (as-vector w))
+    [((vector vx vy) (vector wx wy))
+     (let ([dx (- wx vx)] [dy (- wy vy)])
+       (sqrt (+ (* dx dx) (* dy dy))))]))
 
+(define (TV/vec p q t) ; all vectors (x y)
+  (define sgn (let ([dp (dot-product (vector-minus p q) (vector-minus p t))])
+                (if (>= dp 0) 1.0 -1.0)))
+  (* sgn (/ (dist p t)
+            (dist p q))))
+
+
+
+
+;;;
 ;;; The Construction
 ;;;
+
+
 
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save,
@@ -294,25 +318,35 @@
   (define s5 (create-segment board (vector b bs) (attributes 'color "black")))
   (define s6 (create-segment board (vector c cs) (attributes 'color "black")))
 
-  (define (TV p q t)
-    (define v (/ (js-send/flonum* p "Dist" t)
-                 (js-send/flonum* p "Dist" q)))
-    (define dp (dot-product (displacement p q) (displacement p t)))
-    (if (>= dp 0) v (- v)))
+  (define (TV p q t)      
+    (TV/vec (as-vector p)
+            (as-vector q)
+            (as-vector t)))
 
+  
   (define (to-fixed2 x)
     (define scaled (round (* x 100)))
-    (define value (/ scaled 100.0))
+    (define value  (/ scaled 100.0))
     (number->string value))
 
-  (js-set! result-text
-           "textContent"
-           (string-append
-            "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = "
-            (to-fixed2 (* (TV as c b)
-                          (TV bs a c)
-                          (TV cs b a)))))
+  
+  (define formula "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = ")
 
+  (define (update-result)
+    (define prod     (* (TV as c b) (TV bs a c) (TV cs b a)))
+    (define new-text (string-append formula (to-fixed2 prod)))
+    (js-set! result-text "textContent" new-text))
+  
+  ;; Event Handlers
+  (define (on-drag . _)
+    (update-result))
+
+  (update-result)
+  (define handler (procedure->external on-drag))
+  (on as "drag" handler)
+  (on bs "drag" handler)
+  (on cs "drag" handler)
+  
   (void))
 
 ;;; Load JSXGraph.
