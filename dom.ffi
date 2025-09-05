@@ -510,6 +510,11 @@
   #:name   "body"
   (-> () (extern)))
 
+(define-foreign js-document-element
+  #:module "document"
+  #:name   "document-element"
+  (-> () (extern)))
+
 (define-foreign js-create-element
   #:module "document"
   #:name   "create-element"
