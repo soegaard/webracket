@@ -4,6 +4,14 @@
 
 ;;; Point
 
+;; Predicates
+;; Test whether value is a point
+; (jsx-point? v:Extern) -> Boolean
+(define-foreign jsx-point?
+  #:module "jsx-point"
+  #:name   "is-point"
+  (-> (extern) (i32)))
+
 ;; Properties
 ;; Distance at which point is captured by attractors
 ; (jsx-point-attractor-distance pt:Extern) -> Flonum
