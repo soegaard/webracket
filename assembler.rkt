@@ -611,8 +611,7 @@ var imports = {
                                      }
                                        }),
       // The following returns the prototype object
-      // Use the same name here as in JavaScript
-      // TODO - not all names have been fixed
+      // Some are guarded by a test. These might not be available everywhere.
       'Object':                    (() => Object),
       'Function':                  (() => Function),
       'Boolean':                   (() => Boolean),
@@ -643,9 +642,9 @@ var imports = {
       'Uint16Array':               (() => Uint16Array),
       'Int32Array':                (() => Int32Array),
       'Uint32Array':               (() => Uint32Array),
-      'BigInt64Array':             (() => (typeof BigInt64Array === 'undefined' ? undefined : BigInt64Array)),
+      'BigInt64Array':             (() => (typeof BigInt64Array  === 'undefined' ? undefined : BigInt64Array)),
       'BigUint64Array':            (() => (typeof BigUint64Array === 'undefined' ? undefined : BigUint64Array)),
-      'Float16Array':              (() => (typeof Float16Array === 'undefined' ? undefined : Float16Array)),
+      'Float16Array':              (() => (typeof Float16Array   === 'undefined' ? undefined : Float16Array)),  // Baseline 2025
       'Float32Array':              (() => Float32Array),
       'Float64Array':              (() => Float64Array),
       'Map':                       (() => Map),
