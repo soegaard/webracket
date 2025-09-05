@@ -12,6 +12,7 @@
 ;;;
 ;;; Window
 ;;;
+
 ; The various functions in this section are documented here:
 ;   https://developer.mozilla.org/en-US/docs/Web/API/Window
 
@@ -469,23 +470,25 @@
   #:name   "report-error"
   (-> (value) ()))
 
+;;;
 ;;; Performance
 ;;;
-; The various functions in this section are documented here:
-;   https://developer.mozilla.org/en-US/docs/Web/API/Performance
+
+;; The various functions in this section are documented here:
+;;   https://developer.mozilla.org/en-US/docs/Web/API/Performance
 
 (define-foreign js-performance-now
   #:module "performance"
   #:name   "now"
   (-> () (f64)))
 
+;;;
 ;;; Document
 ;;;
 
-; The various functions in this section are documented here:   
-;                                                              
-;     https://developer.mozilla.org/en-US/docs/Web/API/Document
-;
+;; The various functions in this section are documented here:   
+;;                                                              
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Document
 
 (define-foreign js-document
   #:module "document"
@@ -750,24 +753,27 @@
   #:name   "writeln"
   (-> (string) ()))
  
-
+;;;
 ;;; EventTarget
 ;;;
-; The various functions in this section are documented here:
-;
-;     https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
-;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
+
 (define-foreign js-add-event-listener!
   #:module "event-target"
   #:name   "add-event-listener!"
   (-> (extern string extern) ()))
 
+;;;
 ;;; Event
 ;;;
-; The various functions in this section are documented here:
-;
-;     https://developer.mozilla.org/en-US/docs/Web/API/Event
-;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Event
+
 (define-foreign js-event-new
   #:module "event"
   #:name   "new"
@@ -851,10 +857,10 @@
 ;;; Element
 ;;;
 
-; The various functions in this section are documented here:   
-;                                                              
-;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
-;                                                              
+;; The various functions in this section are documented here:   
+;;                                                              
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
+                                                              
 
 (define-foreign js-append-child!
   #:module "element"
@@ -1119,7 +1125,7 @@
 ;;; Canvas
 ;;;
 
-; https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement
 
 (define-foreign js-canvas-capture-stream
   #:module "canvas"
@@ -1166,9 +1172,11 @@
   #:name   "set-width!"
   (-> (extern u32) ()))
 
-
+;;;
 ;;; CanvasRenderingContext2D
-;;; https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
 
 (define-foreign js-canvas2d-canvas
   #:module "canvas-rendering-context-2d"
@@ -1711,9 +1719,11 @@
   (-> (extern f64 f64) ()))
 
 
-
+;;;
 ;;; HTMLMediaElement
-;;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
 
 ;; Properties
 (define-foreign js-media-audio-tracks
@@ -2009,8 +2019,11 @@
   #:name   "set-sink-id!"
   (-> (extern string) (extern)))
 
+;;;
 ;;; HTMLImageElement
-;;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image
 
 (define-foreign js-image-new
   #:module "image"
