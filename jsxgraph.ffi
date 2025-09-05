@@ -229,6 +229,20 @@
   #:name   "set-style!"
   (-> (extern i32) ()))
 
+;; X coordinate of the point
+; (jsx-point-x pt:Extern) -> Flonum
+(define-foreign jsx-point-x
+  #:module "jsx-point"
+  #:name   "x"
+  (-> (extern) (f64)))
+
+;; Y coordinate of the point
+; (jsx-point-y pt:Extern) -> Flonum
+(define-foreign jsx-point-y
+  #:module "jsx-point"
+  #:name   "y"
+  (-> (extern) (f64)))
+
 ;; Whether point size scales with zoom
 ; (jsx-point-zoom pt:Extern) -> Boolean
 (define-foreign jsx-point-zoom
