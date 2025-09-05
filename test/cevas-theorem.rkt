@@ -71,6 +71,13 @@
                    "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
 (js-append-child! head link)
 
+;; Use the pico.css stylesheet
+(define pico-link (js-create-element "link"))
+(js-set-attribute! pico-link "rel" "stylesheet")
+(js-set-attribute! pico-link "href"
+                   "https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css")
+(js-append-child! head pico-link)
+
 ;;;
 ;;; Syntax
 ;;;
