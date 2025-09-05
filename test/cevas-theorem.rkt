@@ -98,6 +98,10 @@
         (js-log (vector where (- now2 now1)))
         s))))
 
+(define (to-fixed2 x)
+  (define scaled (round (* x 100)))
+  (define value  (/ scaled 100.0))
+  (number->string value))
 
 ;;;
 ;;; Pairings, Keys, Attributes and Parents
@@ -276,19 +280,19 @@
      (let ([dx (- wx vx)] [dy (- wy vy)])
        (sqrt (+ (* dx dx) (* dy dy))))]))
 
-(define (TV/vec p q t) ; all vectors (x y)
-  (define sgn (let ([dp (dot-product (vector-minus p q) (vector-minus p t))])
-                (if (>= dp 0) 1.0 -1.0)))
-  (* sgn (/ (dist p t)
-            (dist p q))))
-
-
-
 
 ;;;
 ;;; The Construction
 ;;;
 
+
+(define (TV/vec p q t) ; all vectors (x y)
+  (define sign (sgn (dot-product (vector-minus p q) (vector-minus p t))))
+  (* sign (/ (dist p t)
+             (dist p q))))
+
+(define (TV p q t)      
+  (TV/vec (as-vector p) (as-vector q) (as-vector t)))
 
 
 (define (init-board _evt)
@@ -318,29 +322,27 @@
   (define s5 (create-segment board (vector b bs) (attributes 'color "black")))
   (define s6 (create-segment board (vector c cs) (attributes 'color "black")))
 
-  (define (TV p q t)      
-    (TV/vec (as-vector p)
-            (as-vector q)
-            (as-vector t)))
-
-  
-  (define (to-fixed2 x)
-    (define scaled (round (* x 100)))
-    (define value  (/ scaled 100.0))
-    (number->string value))
-
   
   (define formula "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = ")
 
   (define (update-result)
     (define prod     (* (TV as c b) (TV bs a c) (TV cs b a)))
     (define new-text (string-append formula (to-fixed2 prod)))
-    (js-set! result-text "textContent" new-text))
+    (js-set! result-text "textContent" new-text)
+    (set! debounce-timer #f))
+
+  (define external-update-result (procedure->external update-result))
   
   ;; Event Handlers
+  (define debounce-timer #f) ; id of last postponed computation
   (define (on-drag . _)
-    (update-result))
-
+    (when debounce-timer ; cancel previous
+      (js-window-clear-timeout debounce-timer))
+    ;; schedule one shortly (here: 50 ms after last drag tick)
+    (set! debounce-timer (js-window-set-timeout/delay
+                          external-update-result
+                          16.)))
+      
   (update-result)
   (define handler (procedure->external on-drag))
   (on as "drag" handler)
@@ -349,6 +351,7 @@
   
   (void))
 
+;;;
 ;;; Load JSXGraph.
 ;;;
 

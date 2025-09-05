@@ -447,6 +447,11 @@
 (define-foreign js-window-set-timeout
   #:module "window"
   #:name   "set-timeout"
+    (-> (extern) (u32)))
+
+(define-foreign js-window-set-timeout/delay
+  #:module "window"
+  #:name   "set-timeout/delay"
   (-> (extern f64) (u32)))
 
 (define-foreign js-window-stop

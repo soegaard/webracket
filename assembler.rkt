@@ -1229,7 +1229,8 @@ var imports = {
             }
         }),
         'set-interval':        ((handler, delay) => window.setInterval(handler, delay)),
-        'set-timeout':         ((handler, delay) => window.setTimeout(handler, delay)),
+        'set-timeout':         ((handler)        => window.setTimeout(handler)),
+        'set-timeout/delay':   ((handler, delay) => window.setTimeout(handler, delay)),
         'stop':                (() => window.stop()),
         'structured-clone':    ((value, options) => {
             const o = from_fasl(options);
