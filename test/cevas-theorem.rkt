@@ -56,6 +56,7 @@
 ;; Formula element below the board
 (define formula-div (js-create-element "div"))
 (js-append-child! formula-div
+                  #;(js-create-text-node "\\[a^2+b^2=c^2\\]")
                   (js-create-text-node "$$a^2+b^2=c^2$$"))
 (js-append-child! (js-document-body) formula-div)
 
@@ -300,6 +301,21 @@
 (define (TV p q t)      
   (TV/vec (as-vector p) (as-vector q) (as-vector t)))
 
+;;;
+;;; MathJax 4.0
+;;;
+
+(define (mj-typeset element)
+  (js-send (js-var "MathJax") "typeset" (vector element)))
+
+(define (mj-typeset-clear element)
+  (js-send (js-var "MathJax") "typesetClear" (vector (vector element))))
+
+(define (mj-typeset-promise element)
+  (js-send (js-var "MathJax") "typesetPromise" (vector (vector element))))
+
+
+
 
 (define (init-board _evt)
   ; The JXG.JSXGraph singleton stores all properties required to load, save,
@@ -329,12 +345,21 @@
   (define s6 (create-segment board (vector c cs) (attributes 'color "black")))
 
   
-  (define formula "TV(a',c,b) * TV(b',a,c) * TV(c',b,a) = ")
+  (define (formula product-str)
+    (string-append
+     "$$\\mathrm{TV}(a',c,b) \\cdot \\mathrm{TV}(b',a,c) \\cdot \\mathrm{TV}(c',b,a) = "
+     product-str
+     "$$"))
+    
 
   (define (update-result)
     (define prod     (* (TV as c b) (TV bs a c) (TV cs b a)))
-    (define new-text (string-append formula (to-fixed2 prod)))
+    (define new-text (formula (to-fixed2 prod)))
+
+    (mj-typeset-clear result-text)
     (js-set! result-text "textContent" new-text)
+    (mj-typeset-promise result-text)
+    
     (set! debounce-timer #f))
 
   (define external-update-result (procedure->external update-result))
@@ -344,10 +369,8 @@
   (define (on-drag . _)
     (when debounce-timer ; cancel previous
       (js-window-clear-timeout debounce-timer))
-    ;; schedule one shortly (here: 50 ms after last drag tick)
-    (set! debounce-timer (js-window-set-timeout/delay
-                          external-update-result
-                          16.)))
+    ;; schedule one shortly (here: 16 ms after last drag tick)
+    (set! debounce-timer (js-window-set-timeout/delay external-update-result 16.)))
       
   (update-result)
   (define handler (procedure->external on-drag))
@@ -365,15 +388,27 @@
 (js-set-attribute! mathjax-script "id" "MathJax-script")
 (js-set-attribute! mathjax-script "async" "true")
 (js-set-attribute! mathjax-script "src"
-                   "https://cdn.jsdelivr.net/npm/mathjax@4/es5/tex-chtml.js")
+                   "https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js")
 (js-append-child! head mathjax-script)
+
+;; When the script is loaded, ask MathJax to typeset our div
+#;(js-set! mathjax-script "onload"
+  (procedure->external
+   (lambda (_evt)
+     (js-log "mathjax onload")
+     ;; v3/v4 both support this:
+     (js-send (js-var "MathJax") "typeset"
+              (js-array/extern formula-div))
+     ;; or, if you prefer the promise API:
+     ;; (void (js-call (js-global "MathJax") "typesetPromise"
+     ;;                (js-array formula-div)))
+     )))
 
 ;;;
 ;;; Load JSXGraph.
 ;;;
 
 (define script (js-create-element "script"))
-(js-set-attribute! script "src"
-                   "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
+(js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
 (js-add-event-listener! script "load" (procedure->external init-board))
 (js-append-child! head  script)
