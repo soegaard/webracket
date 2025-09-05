@@ -1243,6 +1243,10 @@ var imports = {
         'queue-microtask':     (cb => window.queueMicrotask(cb)),
         'report-error':        (err => window.reportError(err))
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    // Performance
+    'performance': hasDOM ? {
+        'now':                 (() => performance.now())
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Document
     'document': hasDOM ? {
         'document':                 (()                               => document),

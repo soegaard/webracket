@@ -469,6 +469,16 @@
   #:name   "report-error"
   (-> (value) ()))
 
+;;; Performance
+;;;
+; The various functions in this section are documented here:
+;   https://developer.mozilla.org/en-US/docs/Web/API/Performance
+
+(define-foreign js-performance-now
+  #:module "performance"
+  #:name   "now"
+  (-> () (f64)))
+
 ;;; Document
 ;;;
 
