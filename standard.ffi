@@ -127,13 +127,13 @@
 (define-foreign js-new
   #:module "standard"
   #:name   "new"
-  ;; Pass arguments as a list or vector.
+  ;; Pass arguments as vector.
   (-> (extern value) (extern)))
 
 (define-foreign js-send
   #:module "standard"
   #:name   "send"
-  ;; Pass arguments as a list or vector.
+  ;; Pass arguments as vector.
   (-> (extern string/symbol value) (extern)))
 
 (define-foreign js-send/flonum
@@ -177,7 +177,7 @@
 (define-foreign js-instanceof
   #:module "standard"
   #:name   "instanceof"
-  (-> (extern extern) (i32)))
+  (-> (extern extern) (boolean)))
 
 (define-foreign js-operator
   #:module "standard"
