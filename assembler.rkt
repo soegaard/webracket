@@ -1728,6 +1728,7 @@ var imports = {
     },
     // JSXGraph Point
     'jsx-point': hasDOM ? {
+        'is-point':                    (v => boolean_to_i32(JXG.isPoint(v))),
         'attractor-distance':          (pt => pt.attractorDistance),
         'set-attractor-distance!':     ((pt, d) => { pt.attractorDistance = d; }),
         'attractors':                  (pt => pt.attractors),
@@ -1773,6 +1774,7 @@ var imports = {
         'update-renderer!':            (pt => { pt.updateRenderer(); }),
         'update-transform!':           ((pt, flag) => pt.updateTransform(!!flag))
     } : {
+        'is-point'()                    { throw new Error('DOM not available in this environment'); },
         'attractor-distance'()          { throw new Error('DOM not available in this environment'); },
         'set-attractor-distance!'()     { throw new Error('DOM not available in this environment'); },
         'attractors'()                  { throw new Error('DOM not available in this environment'); },
