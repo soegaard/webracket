@@ -1628,7 +1628,7 @@ var imports = {
     // Element
     'element': hasDOM ? {
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
-        'set-attribute!':          ((elem, name, value)      => elem.setAttribute(from_fasl(name), from_fasl(value))),
+        'set-attribute!':          ((elem, name, value)      => (console.log(elem), elem.setAttribute(from_fasl(name), from_fasl(value)))),
         'after!':                  ((elem, node)            => elem.after(node)),
         'animate':                 ((elem, keyframes, opts) => elem.animate(keyframes, opts)),
         'append!':                 ((elem, node)            => elem.append(node)),
