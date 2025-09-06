@@ -1149,6 +1149,11 @@
                    (equal? (reverse '(a (b c) d (e (f)))) '((e (f)) d (b c) a))
                    (equal? (procedure-arity reverse)      1)))
 
+        (list "flatten"
+              (and (equal? (flatten '((a) b (c (d) . e) ())) '(a b c d e))
+                   (equal? (flatten 'a)                     '(a))
+                   (equal? (procedure-arity flatten)        1)))
+
         (list "list-ref"
               (and (equal? (list-ref '(a b c d) 2)    'c)
                    (equal? (list-ref '(a b c . d) 2)  'c)

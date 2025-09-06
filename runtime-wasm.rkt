@@ -10040,6 +10040,37 @@
                              (else (call $raise-pair-expected (local.get $xs))
                                    (unreachable))))))
 
+         (func $flatten (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (local $stack (ref eq))
+               (local $node  (ref $Pair))
+               (local $cur   (ref eq))
+               (local $p     (ref $Pair))
+               (local $acc   (ref eq))
+
+               ;; Initialize stack with initial value and empty accumulator
+               (local.set $stack (call $cons (local.get $v) (global.get $null)))
+               (local.set $acc   (global.get $null))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $stack) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $stack)))
+                            (local.set $cur  (struct.get $Pair $a (local.get $node)))
+                            (local.set $stack (struct.get $Pair $d (local.get $node)))
+                            (if (ref.eq (local.get $cur) (global.get $null))
+                                (then (nop))
+                                (else
+                                 (if (ref.test (ref $Pair) (local.get $cur))
+                                     (then
+                                      (local.set $p (ref.cast (ref $Pair) (local.get $cur)))
+                                      ;; Push cdr then car to visit car first
+                                      (local.set $stack (call $cons (struct.get $Pair $d (local.get $p)) (local.get $stack)))
+                                      (local.set $stack (call $cons (struct.get $Pair $a (local.get $p)) (local.get $stack))))
+                                     (else
+                                      (local.set $acc (call $cons (local.get $cur) (local.get $acc))))))
+                            (br $loop)))
+               (call $reverse (local.get $acc)))
+
          (func $reverse (type $Prim1) (param $xs (ref eq)) (result (ref eq))
                (local $acc (ref eq))
                (local.set $acc (global.get $null))
