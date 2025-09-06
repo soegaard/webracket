@@ -15527,11 +15527,13 @@
               ; Why are we copying linear memory?
               ; Why are the memory size multiplied here?
 
-              ; memory.size returns number of pages of size 64 KiB, so we multiply with 65536.
+              ; memory.size returns number of pages. The page size is 64 KiB = 65536.
               (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536))) 
               (local.set $len       (i32.sub (local.get $mem-bytes) (local.get $start)))
               (local.set $arr       (array.new_default $I8Array (local.get $len)))
               (local.set $i         (i32.const 0))
+              ; Note: Currently (sep 2025) there are no bulk copy operations from
+              ;       memory to array. So the loop can't be replaced with bulk copy.
               (block $done
                      (loop $copy
                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
