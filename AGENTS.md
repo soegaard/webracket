@@ -15,6 +15,30 @@ Racket primitives** faithfully.
 
 ---
 
+## Implementing new WebRacket primitives
+
+The following steps are needed to implement a WebRacket primitive.
+
+- Implement the primitive in `runtime-wasm.rkt`. 
+- Add it to the list of primitives in `compiler.rkt`.
+- If needed add a clause to the inlining in `compiler.rkt`
+  (needed when the function doesn't take a fixed number of arguments)
+- Export the primitive in `primitives.rkt`.
+- If the WebRacket primitive isn't a primitive in Racket,
+  then add a "dummy" implementation at the botton of `primitives.rkt`.
+  (this way a program written in `#lang webracket` works the same
+   as if the program were compiled with webracket.
+- Add test cases to `test/test-basics.rkt`. 
+  Make sure to put the test cases in the correct section.
+  (consult `docs/` to se the correct section)
+- When asked to implement a WebRacket primitives, which is also
+  in Racket, consult the documentation in `docs/` to get a 
+  documentation for the function.
+- If the WebRacket function has restrictions or behave differently
+  from the Racket one, make a comment about it in `runtime-wasm.rkt`
+
+---
+
 ## 🔧 Core Responsibilities
 
 | Agent Name         | Responsibility Description |
