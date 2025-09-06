@@ -10929,6 +10929,59 @@
                      (br $loop))
                (unreachable))
 
+         (func $partition (type $Prim2)
+               (param $proc (ref eq))  ;; predicate
+               (param $xs   (ref eq))  ;; list
+               (result      (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+               (local $cur  (ref eq))
+               (local $pair (ref $Pair))
+               (local $elem (ref eq))
+               (local $call (ref $Args))
+               (local $r    (ref eq))
+               (local $acc-t (ref eq))
+               (local $acc-f (ref eq))
+
+               ;; 1) Check that $proc is a procedure and fetch its invoker
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               ;; 2) Prepare argument array for predicate
+               (local.set $call (array.new $Args (global.get $null) (i32.const 1)))
+
+               ;; 3) Iterate through list, building two reversed accumulators
+               (local.set $cur  (local.get $xs))
+               (local.set $acc-t (global.get $null))
+               (local.set $acc-f (global.get $null))
+               (loop $loop
+                     (if (ref.eq (local.get $cur) (global.get $null))
+                         (then (return (array.new_fixed $Values 2
+                                                         (call $reverse (local.get $acc-t))
+                                                         (call $reverse (local.get $acc-f))))))
+
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                         (then (call $raise-pair-expected (local.get $cur))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                     (array.set $Args (local.get $call) (i32.const 0) (local.get $elem))
+                     (local.set $r
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $call)
+                                          (local.get $finv)))
+                     (if (ref.eq (local.get $r) (global.get $false))
+                         (then (local.set $acc-f (call $cons (local.get $elem) (local.get $acc-f))))
+                         (else (local.set $acc-t (call $cons (local.get $elem) (local.get $acc-t)))))
+                     (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
+
          (func $remove (type $Prim3)
                (param $v    (ref eq))   ;; value to remove
                (param $lst  (ref eq))   ;; list
