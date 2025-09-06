@@ -15812,18 +15812,6 @@
               (return (ref.cast (ref $String) (local.get $v))))
 
         ;;;
-        ;;; MEMORY FASL
-        ;;;
-
-        ; Decodes fasl from the linear memory.
-        (func $fasl-memory->s-exp
-              (param $start i32)
-              (result (ref eq))
-              ...)
-        
-        
-
-        ;;;
         ;;; 14. REFLECTION AND SECURITY
         ;;;
 
