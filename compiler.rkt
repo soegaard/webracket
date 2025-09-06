@@ -412,6 +412,7 @@
   list? length list-ref list-tail
   first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth last last-pair
   append ; variadic list primitive
+  flatten
   reverse memq
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
