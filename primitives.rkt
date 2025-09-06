@@ -335,15 +335,16 @@ bytes->string/utf-8
  append
  reverse
 
-map
+ map
  andmap
-ormap
-for-each
+ ormap
+ for-each
  count
  ; foldl
  ; foldr
 
  filter
+ partition
  remove
  ; remq
  ; remv

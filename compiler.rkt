@@ -416,7 +416,7 @@
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list*
-  filter remove
+  filter partition remove
   make-list
    build-list
    argmax argmin
