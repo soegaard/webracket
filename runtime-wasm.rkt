@@ -15522,10 +15522,16 @@
               (local $end       i32)
               (local $res       (ref $I8Array))
 
-              (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536)))
-              (local.set $len (i32.sub (local.get $mem-bytes) (local.get $start)))
-              (local.set $arr (array.new_default $I8Array (local.get $len)))
-              (local.set $i (i32.const 0))
+              ; The Performance tab in Chrome shows that we are spending way too much time here.
+              ; It is called from linear-memory->value.
+              ; Why are we copying linear memory?
+              ; Why are the memory size multiplied here?
+
+              ; memory.size returns number of pages of size 64 KiB, so we multiply with 65536.
+              (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536))) 
+              (local.set $len       (i32.sub (local.get $mem-bytes) (local.get $start)))
+              (local.set $arr       (array.new_default $I8Array (local.get $len)))
+              (local.set $i         (i32.const 0))
               (block $done
                      (loop $copy
                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
@@ -15542,6 +15548,8 @@
               (return (local.get $res) (i32.add (local.get $start) (local.get $end))))
 
         (func $linear-memory->value (export "linear-memory->value")
+              ; Copy the entire linear memory in an i8array.
+              ; Note: This is an expensive operation. Avoid if possible.
               (param $start i32)
               (result (ref eq))
 
