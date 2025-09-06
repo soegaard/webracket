@@ -337,10 +337,11 @@ bytes->string/utf-8
 
  map
  andmap
-ormap
-for-each
-; foldl
-; foldr
+ ormap
+ for-each
+ count
+ ; foldl
+ ; foldr
 
  filter
  partition

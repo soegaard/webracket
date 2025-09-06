@@ -414,7 +414,7 @@
   append ; variadic list primitive
   reverse memq
   alt-reverse ; used in expansion of for/list
-  map andmap ormap for-each
+  map andmap ormap count for-each
   list*
   filter partition remove
   make-list
@@ -3113,6 +3113,7 @@
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
          [(ormap)                      (inline-prim/variadic sym ae1 2 1)]
+         [(count)                      (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
