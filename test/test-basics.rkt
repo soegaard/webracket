@@ -1268,8 +1268,17 @@
 
                    (equal? (memq (list->string (string->list "apple"))
                                  '("apple"))
-                           #f)                   
-                   (equal? (procedure-arity memq) 2)))))
+                           #f)
+                   (equal? (procedure-arity memq) 2)))
+
+        (list "argmax"
+              (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
+                   (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))
+
+        (list "argmin"
+              (and (equal? (argmin car '((3 pears) (1 banana) (2 apples))) '(1 banana))
+                   (equal? (argmin car '((1 banana) (1 orange))) '(1 banana))))
+        ))
 
  (list "4.12 Vectors"
        (list
