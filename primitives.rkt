@@ -333,6 +333,7 @@ bytes->string/utf-8
  last
  last-pair
  append
+ flatten
  reverse
 
  map
