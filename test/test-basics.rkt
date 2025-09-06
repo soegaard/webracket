@@ -1233,9 +1233,13 @@
                    (equal? (remove "b" (list "a" "A" "b" "B") (λ (x y) (string=? x y))) '("a" "A" "B"))
                    #;(equal? (remove "b" (list "a" "A" "b" "B") string=?) '("a" "A" "B")) ; todo - repair
                    (equal? (remove "b" (list "a" "A" "b" "B") equal?) '("a" "A" "B"))
-                   (let ([lst (list 1 2 3 2 4)])
-                     (and (eq? (remove 5 lst) lst)
-                          (equal? (remove 5 lst) lst)))))
+                  (let ([lst (list 1 2 3 2 4)])
+                    (and (eq? (remove 5 lst) lst)
+                         (equal? (remove 5 lst) lst)))))
+
+        (list "count"
+              (and (equal? (count positive? '(1 -1 2 3 -2 5)) 4)
+                   (equal? (count < '(1 2 3) '(2 2 4)) 2)))
 
         (list "andmap"
               (and (equal? (andmap eq? '(a b c) '(a b c)) #t)

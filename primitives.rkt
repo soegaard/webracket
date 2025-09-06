@@ -339,6 +339,7 @@ map
  andmap
 ormap
 for-each
+ count
  ; foldl
  ; foldr
 
