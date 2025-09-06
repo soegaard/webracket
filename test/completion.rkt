@@ -1226,6 +1226,9 @@
             exact?
             exp
             expt
+            external-number->flonum
+            external-string->string
+            external?
             fasl->s-exp
             fifteenth
             fifth
@@ -1487,6 +1490,8 @@
             unsafe-struct-set!
             unsafe-vector*-length
             unsafe-vector*-set!
+            unsafe-vector-length
+            unsafe-vector-ref
             values
             variable-reference-constant?
             variable-reference-from-unsafe?
@@ -1500,6 +1505,8 @@
             vector-fill!
             vector-immutable
             vector-length
+            vector-map
+            vector-map!
             vector-ref
             vector-set!
             vector-split-at
@@ -1509,6 +1516,7 @@
             void?
             write-byte
             zero?)
+
 
           ))
 
