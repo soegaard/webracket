@@ -357,6 +357,7 @@ for-each
  ; memw
  ; memv
  memq
+ argmax argmin
  ; memf
  ; findf
  ; assoc

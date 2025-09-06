@@ -418,9 +418,10 @@
   list*
   filter remove
   make-list
-  build-list
+   build-list
+   argmax argmin
 
-  void?
+   void?
   make-void  ; zero arguments
   void
 
@@ -3116,9 +3117,10 @@
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
-         [(remove)                     (inline-prim/optional sym ae1 2 3)]
+          [(remove)                     (inline-prim/optional sym ae1 2 3)]
+          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
-         [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
+          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
         [(random)                      (inline-prim/optional sym ae1 0 2)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
