@@ -1248,8 +1248,8 @@
                          (equal? (remove 5 lst) lst)))))
 
         (list "count"
-              (and (equal? (count positive? '(1 -1 2 3 -2 5)) 4)
-                   (equal? (count < '(1 2 3) '(2 2 4)) 2)))
+              (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
+                   (equal? (count (λ (x y) (< x y))       '(1 2 3) '(2 2 4)) 2)))
 
         (list "andmap"
               (and (equal? (andmap eq? '(a b c) '(a b c)) #t)
