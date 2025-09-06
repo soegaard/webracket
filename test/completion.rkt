@@ -1151,6 +1151,8 @@
             andmap
             append
             apply
+            argmax
+            argmin
             asin
             asinh
             atan
@@ -1205,6 +1207,7 @@
             cons?
             cos
             cosh
+            count
             current-inspector
             degrees->radians
             eighth
@@ -1250,6 +1253,7 @@
             flacos
             flasin
             flatan
+            flatten
             flceiling
             flcos
             flexp
@@ -1373,6 +1377,7 @@
             order-of-magnitude
             ormap
             pair?
+            partition
             port-next-location
             positive-integer?
             positive?
@@ -1516,6 +1521,7 @@
             void?
             write-byte
             zero?)
+
 
 
           ))
