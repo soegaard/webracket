@@ -15156,7 +15156,7 @@
                                        (then (drop (call $write-byte (global.get $fasl-eof) (local.get $out))))
                                        (else (unreachable))))))))))))
          
-        (func $fasl:write-u32
+         (func $fasl:write-u32
               (param $v i32)
               (param $out (ref eq))
 
@@ -15233,7 +15233,7 @@
                (call $fasl:write-u32 (local.get $hi) (local.get $out))
                (call $fasl:write-u32 (local.get $lo) (local.get $out)))
          
-         ;;; Fasl decoding
+         ;;; Fasl decoding (from byte string)
                   
          (func $fasl->s-exp (type $Prim1)
               ;; entry point: decode byte string
@@ -15525,7 +15525,6 @@
               ; The Performance tab in Chrome shows that we are spending way too much time here.
               ; It is called from linear-memory->value.
               ; Why are we copying linear memory?
-              ; Why are the memory size multiplied here?
 
               ; memory.size returns number of pages. The page size is 64 KiB = 65536.
               (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536))) 
@@ -15577,6 +15576,17 @@
                         (unreachable)))
               (return (ref.cast (ref $String) (local.get $v))))
 
+        ;;;
+        ;;; MEMORY FASL
+        ;;;
+
+        ; Decodes fasl from the linear memory.
+        (func $fasl-memory->s-exp
+              (param $start i32)
+              (result (ref eq))
+              ...)
+        
+        
 
         ;;;
         ;;; 14. REFLECTION AND SECURITY
