@@ -494,6 +494,7 @@
   bitwise-first-bit-set  ; note : added in 8.16
   integer-length
   random
+  system-big-endian?
 
   fixnum? fxzero?
   fx+ fx- fx*
