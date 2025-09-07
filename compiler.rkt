@@ -494,6 +494,7 @@
 
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
+  arithmetic-shift
   integer-length
   random
   system-big-endian?

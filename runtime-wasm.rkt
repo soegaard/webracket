@@ -4860,6 +4860,52 @@
                                          (i32.const 1))))))
 
 
+        ;; NOTE: Only supports fixnum arguments; bignum shifts are not implemented.
+        (func $arithmetic-shift (type $Prim2)
+              (param $n (ref eq))
+              (param $m (ref eq))
+              (result   (ref eq))
+
+              (local $n/fx i32)   ; raw bits of n
+              (local $m/fx i32)   ; raw bits of m
+              (local $n/i  i32)   ; unboxed signed n
+              (local $m/i  i32)   ; unboxed signed m
+
+              ;; --- Validate inputs ---
+              (if (ref.eq (call $exact-integer? (local.get $n)) (global.get $false))
+                  (then
+                   (if (ref.test (ref $Flonum) (local.get $n))
+                       (then (nop))
+                       (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+              (if (ref.eq (call $exact-integer? (local.get $m)) (global.get $false))
+                  (then
+                   (if (ref.test (ref $Flonum) (local.get $m))
+                       (then (nop))
+                       (else (call $raise-expected-number (local.get $m)) (unreachable)))))
+
+              ;; --- Convert inputs ---
+              (if (ref.test (ref $Flonum) (local.get $n))
+                  (then (local.set $n (call $fl->exact-integer (local.get $n)))))
+              (if (ref.test (ref $Flonum) (local.get $m))
+                  (then (local.set $m (call $fl->exact-integer (local.get $m)))))
+
+              ;; --- Extract values ---
+              (local.set $n/fx (i31.get_u (ref.cast (ref i31) (local.get $n))))
+              (local.set $m/fx (i31.get_u (ref.cast (ref i31) (local.get $m))))
+              (local.set $n/i  (i32.shr_s (local.get $n/fx) (i32.const 1)))
+              (local.set $m/i  (i32.shr_s (local.get $m/fx) (i32.const 1)))
+
+              ;; --- Compute ---
+              (if (result (ref eq)) (i32.lt_s (local.get $m/i) (i32.const 0))
+                  (then (ref.i31 (i32.shl (i32.shr_s (local.get $n/i)
+                                             (i32.sub (i32.const 0)
+                                                      (local.get $m/i)))
+                                           (i32.const 1))))
+                  (else (ref.i31 (i32.shl (i32.shl (local.get $n/i)
+                                                  (local.get $m/i))
+                                           (i32.const 1)))))
+
+
         (func $integer-length (type $Prim1)
               (param $n (ref eq))
               (result (ref eq))

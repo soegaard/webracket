@@ -515,6 +515,11 @@
               (list "bitwise-first-bit-set"  ; added in Racket 8.16
                     (and (equal? (bitwise-first-bit-set 128) 7)
                          (equal? (bitwise-first-bit-set -8) 3)))
+              (list "arithmetic-shift"
+                    (and (equal? (arithmetic-shift 1 10) 1024)
+                         (equal? (arithmetic-shift 255 -3) 31)
+                         (equal? (arithmetic-shift 1.0 2) 4)
+                         (equal? (arithmetic-shift 1 2.0) 4)))
               (list "integer-length"
                     (and (equal? (integer-length 8) 4)
                          (equal? (integer-length -8) 3)
