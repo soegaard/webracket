@@ -2760,9 +2760,9 @@
          ;; [x] infinite?
          ;; [x] inexact-real?
          ;; [x] fixnum?
-        ;; [x] flonum?
-        ;; [x] double-flonum?
-        ;; [x] single-flonum?
+         ;; [x] flonum?
+         ;; [x] double-flonum?
+         ;; [x] single-flonum?
          ;; [x] single-flonum-available?
          ;; [x] zero?
          ;; [x] positive?
@@ -11819,10 +11819,10 @@
 
 
         (func $drop-common-prefix (type $Prim3)
-              (param $l (ref eq))
-              (param $r (ref eq))
-              (param $same? (ref eq))
-              (result (ref eq))
+              (param $l     (ref eq)) ; list
+              (param $r     (ref eq)) ; list
+              (param $same? (ref eq)) ; optional, defaults to equal?
+              (result       (ref eq))
 
               (local $lcur   (ref eq))
               (local $rcur   (ref eq))
@@ -11885,7 +11885,7 @@
                                                                 (ref.cast (ref $Procedure) (local.get $same?)))))
                                 (if (ref.eq (local.get $res) (global.get $false))
                                     (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur))))
-                                    (else (br $same)))))
+                                    (else (br $same))))))
 
                     (local.set $lcur (struct.get $Pair $d (local.get $lpair)))
                     (local.set $rcur (struct.get $Pair $d (local.get $rpair)))
