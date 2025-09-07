@@ -13,34 +13,34 @@
                    (equal? (procedure-arity (lambda x x)) -1)))
         (list "case-lambda"
               (list (equal? (procedure? (case-lambda)) #t)
-                   (equal? (procedure? (case-lambda [(x) x])) #t)
-                   (equal? (procedure? (case-lambda [(x) x] [(x y) (+ x y)])) #t)
-                   (equal? ((case-lambda [(x) x] [(x y) (list x y)]) 11) 11)
-                   (equal? ((case-lambda [(x) x] [(x y) (+ x y)]) 11 22) 33)
-                   (equal? ((case-lambda [(x . y) x]) 11 22) 11)
-                   (equal? ((case-lambda [(x . y) y]) 11 22) '(22))
-                   (equal? (procedure-arity (case-lambda))                      '())
-                   (equal? (procedure-arity (case-lambda [(x) x]))              1)
-                   (equal? (procedure-arity (case-lambda [(x y) x]))            2)
-                   (equal? (procedure-arity (case-lambda [(x . y) x]))         -2)
-                   (equal? (procedure-arity (case-lambda [(x) x] [(x y) x]))   '(1 2))
-                   (equal? (procedure-arity (case-lambda [(x y) x] [(x) x] ))  '(2 1))
-                   (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))
-                   (equal? (procedure-arity (case-lambda [(x) 0]
-                                                         [(x y z) 1]
-                                                         [(x y z w u . rest) 2])) '(1 3 -6))
-                   ; todo - fails - result is (0 -1) instead of the expected -1
-                   (list (procedure-arity (case-lambda [() 10] [x 1])) -1)))
+                    (equal? (procedure? (case-lambda [(x) x])) #t)
+                    (equal? (procedure? (case-lambda [(x) x] [(x y) (+ x y)])) #t)
+                    (equal? ((case-lambda [(x) x] [(x y) (list x y)]) 11) 11)
+                    (equal? ((case-lambda [(x) x] [(x y) (+ x y)]) 11 22) 33)
+                    (equal? ((case-lambda [(x . y) x]) 11 22) 11)
+                    (equal? ((case-lambda [(x . y) y]) 11 22) '(22))
+                    (equal? (procedure-arity (case-lambda))                      '())
+                    (equal? (procedure-arity (case-lambda [(x) x]))              1)
+                    (equal? (procedure-arity (case-lambda [(x y) x]))            2)
+                    (equal? (procedure-arity (case-lambda [(x . y) x]))         -2)
+                    (equal? (procedure-arity (case-lambda [(x) x] [(x y) x]))   '(1 2))
+                    (equal? (procedure-arity (case-lambda [(x y) x] [(x) x] ))  '(2 1))
+                    (equal? (procedure-arity (case-lambda [(x) x] [(x . y) x])) '(1 -2))
+                    (equal? (procedure-arity (case-lambda [(x) 0]
+                                                          [(x y z) 1]
+                                                          [(x y z w u . rest) 2])) '(1 3 -6))
+                    ; todo - fails - result is (0 -1) instead of the expected -1
+                    (list (procedure-arity (case-lambda [() 10] [x 1])) -1)))
         (list "procedure?"
               (and
-                  (equal? (procedure? car) #t)
-                  (equal? (procedure? 'car) #f)
-                  (equal? (procedure? (lambda (x) (* x x))) #t)
-                  (equal? (procedure? '(lambda (x) (* x x))) #f)
-                  #;(equal? (procedure? call-with-current-continuation) #t)
-                  #;(equal? (procedure? call-with-escape-continuation) #t)
-                  (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
-                  (equal? (procedure-arity procedure?) 1)))))
+               (equal? (procedure? car) #t)
+               (equal? (procedure? 'car) #f)
+               (equal? (procedure? (lambda (x) (* x x))) #t)
+               (equal? (procedure? '(lambda (x) (* x x))) #f)
+               #;(equal? (procedure? call-with-current-continuation) #t)
+               #;(equal? (procedure? call-with-escape-continuation) #t)
+               (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
+               (equal? (procedure-arity procedure?) 1)))))
 
  (list "4.1 Equality"
        (list "eqv?"
@@ -223,9 +223,14 @@
                     (and (equal? (string->number "42")     42)
                           (equal? (string->number "111" 7)  57)
                           (equal? (string->number "-42")    -42)
-                          (equal? (string->number "-111" 7) -57)                         
-                          (equal? (string->number "-2.3")   -2.3)                         
+                          (equal? (string->number "-111" 7) -57)
+                          (equal? (string->number "-2.3")   -2.3)
                           (equal? (string->number "hello") #f)))
+              (list "inexact-real?"
+                    (and (equal? (inexact-real? 1.0)    #t)
+                         (equal? (inexact-real? 1)      #f)
+                         (equal? (inexact-real? +nan.0) #f)
+                         (equal? (procedure-arity inexact-real?) 1)))
               (list "inexact?"
                     (and (equal? (inexact? 1.0) #t)
                          (equal? (inexact? 1)   #f)
@@ -317,26 +322,26 @@
                          (equal? (/ 0 3)    0)))
               (list "quotient"
                     (list (equal? (quotient 10 3) 3)
-                         (equal? (quotient -10.0 3) -3.0)
-                         (equal? (quotient 10.0 -3) -3.0)
-                         (equal? (quotient -10 -3) 3)))
-             (list "remainder"
-                   (and (equal? (remainder 10 3) 1)
-                        (equal? (remainder -10.0 3) -1.0)
-                        (equal? (remainder 10.0 -3) 1.0)
+                          (equal? (quotient -10.0 3) -3.0)
+                          (equal? (quotient 10.0 -3) -3.0)
+                          (equal? (quotient -10 -3) 3)))
+              (list "remainder"
+                    (and (equal? (remainder 10 3) 1)
+                         (equal? (remainder -10.0 3) -1.0)
+                         (equal? (remainder 10.0 -3) 1.0)
                          (equal? (remainder -10 -3) -1)))
-             (list "modulo"
-                   (and (equal? (modulo 10 3) 1)
-                        (equal? (modulo -10.0 3) 2.0)
-                        (equal? (modulo 10.0 -3) -2.0)
-                        (equal? (modulo -10 -3) -1)))
-             (list "quotient/remainder"
-                   (and (let-values ([(q r) (quotient/remainder 10 3)])
-                          (and (equal? q 3) (equal? r 1)))
-                        (let-values ([(q r) (quotient/remainder -10.0 3)])
-                          (and (equal? q -3.0) (equal? r -1.0)))
-                        (let-values ([(q r) (quotient/remainder 10.0 -3)])
-                          (and (equal? q -3.0) (equal? r 1.0)))))))
+              (list "modulo"
+                    (and (equal? (modulo 10 3) 1)
+                         (equal? (modulo -10.0 3) 2.0)
+                         (equal? (modulo 10.0 -3) -2.0)
+                         (equal? (modulo -10 -3) -1)))
+              (list "quotient/remainder"
+                    (and (let-values ([(q r) (quotient/remainder 10 3)])
+                           (and (equal? q 3) (equal? r 1)))
+                         (let-values ([(q r) (quotient/remainder -10.0 3)])
+                           (and (equal? q -3.0) (equal? r -1.0)))
+                         (let-values ([(q r) (quotient/remainder 10.0 -3)])
+                           (and (equal? q -3.0) (equal? r 1.0)))))))
 
        (list "4.3.2.2 Number Comparison"
              (list
@@ -344,31 +349,31 @@
        
        (list "4.3.2 Generic Numerics"
              (list
-             (list "abs"
-                   (and (equal? (abs 1) 1)
-                        (equal? (abs -1) 1)
-                        (equal? (abs 1.0) 1.0)))
-             (list "sgn"
-                   (and (equal? (sgn 10) 1)
-                        (equal? (sgn -10) -1)
-                        (equal? (sgn 10.0) 1.0)
-                        (equal? (sgn -10.0) -1.0)
-                        (eqv? (sgn 0.0) 0.0)
-                        (eqv? (sgn -0.0) -0.0)
-                        (nan? (sgn +nan.0))))
-            (list "max"
-                  (and (equal? (max 1 3 2) 3)
-                       (equal? (max 1 3 2.0) 3.0)
-                       (eqv? (max -0.0 0.0) 0.0)
-                       (nan? (max 1.0 +nan.0))))
-            (list "min"
-                  (and (equal? (min 1 3 2) 1)
-                       (equal? (min 1 3 2.0) 1.0)
-                       (eqv? (min -0.0 0.0) -0.0)
-                       (nan? (min 1.0 +nan.0))))
-            (list "round"
-                  (and (equal? (round 1.2) 1.)
-                       (equal? (round 2.5) 2.)))
+              (list "abs"
+                    (and (equal? (abs 1) 1)
+                         (equal? (abs -1) 1)
+                         (equal? (abs 1.0) 1.0)))
+              (list "sgn"
+                    (and (equal? (sgn 10) 1)
+                         (equal? (sgn -10) -1)
+                         (equal? (sgn 10.0) 1.0)
+                         (equal? (sgn -10.0) -1.0)
+                         (eqv? (sgn 0.0) 0.0)
+                         (eqv? (sgn -0.0) -0.0)
+                         (nan? (sgn +nan.0))))
+              (list "max"
+                    (and (equal? (max 1 3 2) 3)
+                         (equal? (max 1 3 2.0) 3.0)
+                         (eqv? (max -0.0 0.0) 0.0)
+                         (nan? (max 1.0 +nan.0))))
+              (list "min"
+                    (and (equal? (min 1 3 2) 1)
+                         (equal? (min 1 3 2.0) 1.0)
+                         (eqv? (min -0.0 0.0) -0.0)
+                         (nan? (min 1.0 +nan.0))))
+              (list "round"
+                    (and (equal? (round 1.2) 1.)
+                         (equal? (round 2.5) 2.)))
               (list "floor"
                     (and (equal? (floor 1.2) 1.)
                          (equal? (floor -1.2) -2.)))
@@ -423,32 +428,32 @@
               ))
 
        (list "4.3.2.3 Powers and Roots"
-            (list
-             (list "sqr"
-                   (and (equal? (sqr 5) 25)
-                        (equal? (sqr 2.0) 4.0)))
-             (list "sqrt"
-                   (and (equal? (sqrt 9) 3)
-                        (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-12)))
-             (list "integer-sqrt"
-                   (and (equal? (integer-sqrt 9) 3)
-                        (equal? (integer-sqrt 9.0) 3.0)))
-             (list "integer-sqrt/remainder"
-                   (and (let-values ([(s r) (integer-sqrt/remainder 9)])
-                          (and (= s 3) (= r 0)))
-                        (let-values ([(s r) (integer-sqrt/remainder 15.0)])
-                          (and (= s 3.0) (= r 6.0)))))
-             (list "expt"
-                   (and (equal? (expt 2 5) 32)
-                        (equal? (expt 9.0 0.5) 3.0)))
-             (list "exp"
-                   (and (equal? (exp 0) 1)
-                        (< (abs (- (exp 1.0) 2.718281828459045)) 1e-12)))
-             (list "log"
-                   (and (equal? (log 1) 0)
-                        (equal? (log 8 2) 3.)
-                        (< (abs (- (log (exp 1.0)) 1.0)) 1e-12)
-                        (< (abs (- (log 10.0) 2.302585092994046)) 1e-12)))))
+             (list
+              (list "sqr"
+                    (and (equal? (sqr 5) 25)
+                         (equal? (sqr 2.0) 4.0)))
+              (list "sqrt"
+                    (and (equal? (sqrt 9) 3)
+                         (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-12)))
+              (list "integer-sqrt"
+                    (and (equal? (integer-sqrt 9) 3)
+                         (equal? (integer-sqrt 9.0) 3.0)))
+              (list "integer-sqrt/remainder"
+                    (and (let-values ([(s r) (integer-sqrt/remainder 9)])
+                           (and (= s 3) (= r 0)))
+                         (let-values ([(s r) (integer-sqrt/remainder 15.0)])
+                           (and (= s 3.0) (= r 6.0)))))
+              (list "expt"
+                    (and (equal? (expt 2 5) 32)
+                         (equal? (expt 9.0 0.5) 3.0)))
+              (list "exp"
+                    (and (equal? (exp 0) 1)
+                         (< (abs (- (exp 1.0) 2.718281828459045)) 1e-12)))
+              (list "log"
+                    (and (equal? (log 1) 0)
+                         (equal? (log 8 2) 3.)
+                         (< (abs (- (log (exp 1.0)) 1.0)) 1e-12)
+                         (< (abs (- (log 10.0) 2.302585092994046)) 1e-12)))))
 
        (list "4.3.2.4 Trigonometric Functions"
              (list
@@ -515,42 +520,61 @@
                          (equal? (integer-length -8) 3)
                          (equal? (integer-length 0) 0)))))
 
-        (list "4.3.2.7 Random Numbers"
-              ;; Basic sanity checks for the `random` primitive.  These
-              ;; tests intentionally avoid relying on a particular
-              ;; sequence and instead just validate the ranges and
-              ;; result types.
-              (list
-               (list "random"
-                     (let ([v (random)])
-                       (and (inexact? v) (> v 0.0) (< v 1.0))))
-               (list "random k"
-                     (let ([v (random 5)])
-                       (and (exact-integer? v) (<= 0 v) (< v 5))))
-               (list "random k edge" (= (random 1) 0))
-               (list "random min max"
-               (let ([v (random -5 5)])
+       (list "4.3.2.7 Random Numbers"
+             ;; Basic sanity checks for the `random` primitive.  These
+             ;; tests intentionally avoid relying on a particular
+             ;; sequence and instead just validate the ranges and
+             ;; result types.
+             (list
+              (list "random"
+                    (let ([v (random)])
+                      (and (inexact? v) (> v 0.0) (< v 1.0))))
+              (list "random k"
+                    (let ([v (random 5)])
+                      (and (exact-integer? v) (<= 0 v) (< v 5))))
+              (list "random k edge" (= (random 1) 0))
+              (list "random min max"
+                    (let ([v (random -5 5)])
                       (and (exact-integer? v) (<= -5 v) (< v 5))))))
 
-       (list "4.3.2.9 Number–String Conversions"
+       (list "4.3.2.8 Other Randomness Utilities")
+
+       (list "4.3.2.9 Byte String Conversions"
              (list
+              (list "real->floating-point-bytes"
+                    (and (bytes=? (real->floating-point-bytes 1.0 8 #t)
+                                  #"\x3f\xf0\x00\x00\x00\x00\x00\x00")
+                         (bytes=? (real->floating-point-bytes 1.0 8 #f)
+                                  #"\x00\x00\x00\x00\x00\x00\xf0\x3f")))
+              (list "real->floating-point-bytes default"
+                    (bytes=? (real->floating-point-bytes 1.0 8)
+                             #"\x00\x00\x00\x00\x00\x00\xf0\x3f"))
+              (list "real->floating-point-bytes start"
+                    (let* ([dest (make-bytes 10)]
+                           [res  (real->floating-point-bytes 1.0 8 #f dest 2)])
+                      (and (eq? res dest)
+                           (bytes=? dest
+                                    #"\x00\x00\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
               (list "floating-point-bytes->real"
                     (and (= (floating-point-bytes->real (bytes 0 0 128 63)) 1.0)
                          (= (floating-point-bytes->real (bytes 63 240 0 0 0 0 0 0) #t 0 8) 1.0)))))
+              (list "system-big-endian?"
+                    (and (equal? (system-big-endian?) #f)
+                         (equal? (procedure-arity system-big-endian?) 0)))))
 
        (list "4.3.2.10 Extra Constants and Functions"
-      (list
-       (list "degrees->radians"
-             (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
-       (list "radians->degrees"
-             (let ([pi 3.141592653589793])
-               (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
-                    (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))
-       (list "order-of-magnitude"
-             (and (= (order-of-magnitude 999) 2)
-                  (= (order-of-magnitude 1000) 3)
-                  (= (order-of-magnitude 0.01) -2)
-                  (= (order-of-magnitude 0.009) -3)))))
+             (list
+              (list "degrees->radians"
+                    (< (abs (- (degrees->radians 180) 3.141592653589793)) 1e-12))
+              (list "radians->degrees"
+                    (let ([pi 3.141592653589793])
+                      (and (< (abs (- (radians->degrees pi) 180.0)) 1e-12)
+                           (< (abs (- (radians->degrees (* 0.25 pi)) 45.0)) 1e-12))))
+              (list "order-of-magnitude"
+                    (and (= (order-of-magnitude 999) 2)
+                         (= (order-of-magnitude 1000) 3)
+                         (= (order-of-magnitude 0.01) -2)
+                         (= (order-of-magnitude 0.009) -3)))))
 
        (list "4.3.3 Flonums"
              (list
@@ -743,10 +767,10 @@
                    (equal? (procedure-arity string?) 1)))
 
         (list "make-string"
-                (and #;(equal? (string-length (make-string 3)) 3)
-                     (equal? (make-string 0) "")
-                     #;(equal? (procedure-arity make-string) '(1 2)) ; todo - improve arities
-                     ))
+              (and #;(equal? (string-length (make-string 3)) 3)
+                   (equal? (make-string 0) "")
+                   #;(equal? (procedure-arity make-string) '(1 2)) ; todo - improve arities
+                   ))
 
         (list "string-set!"
               (let ([f (make-string 3 #\*)])
@@ -835,9 +859,9 @@
                    (equal? (string>=? "A" "AB") #f)))
 
         #;(list "string-ci=?"
-              (and (equal? (string-ci=? "A" "a") #t)
-                   (equal? (string-ci=? "A" "B") #f)
-                   (equal? (string-ci=? "A" "AB") #f)))
+                (and (equal? (string-ci=? "A" "a") #t)
+                     (equal? (string-ci=? "A" "B") #f)
+                     (equal? (string-ci=? "A" "AB") #f)))
 
         (list "string->list"
               (and (equal? (string->list "P l") '(#\P #\space #\l))
@@ -1149,7 +1173,7 @@
 
                    #;(equal? (procedure-arity keyword<?) 2)))))
 
-(list "4.10 Pairs and Lists"
+ (list "4.10 Pairs and Lists"
        (list
         (list
          "cons?"
@@ -1292,9 +1316,9 @@
                    (equal? (remove "b" (list "a" "A" "b" "B") (λ (x y) (string=? x y))) '("a" "A" "B"))
                    #;(equal? (remove "b" (list "a" "A" "b" "B") string=?) '("a" "A" "B")) ; todo - repair
                    (equal? (remove "b" (list "a" "A" "b" "B") equal?) '("a" "A" "B"))
-                  (let ([lst (list 1 2 3 2 4)])
-                    (and (eq? (remove 5 lst) lst)
-                         (equal? (remove 5 lst) lst)))))
+                   (let ([lst (list 1 2 3 2 4)])
+                     (and (eq? (remove 5 lst) lst)
+                          (equal? (remove 5 lst) lst)))))
 
         (list "count"
               (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
@@ -1389,7 +1413,7 @@
                 (and (equal? v '#(5 a))
                      (equal? (immutable? v) #t))))
 
-       (list "vector-copy"
+        (list "vector-copy"
               (and (equal? (vector-copy '#(1 2 3 4))     '#(1 2 3 4))
                    (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
                    (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))
@@ -1486,16 +1510,16 @@
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])
                      (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
-                          (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
+                               (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
         ))
 
  #;(list "FFI"
-       (list
-        (list "external-number->flonum"
-              (let ([e (js-eval "new Number(42)")])
-                (equal? (external-number->flonum e) 42.0))))
-       )
+         (list
+          (list "external-number->flonum"
+                (let ([e (js-eval "new Number(42)")])
+                  (equal? (external-number->flonum e) 42.0))))
+         )
 
  )
 
