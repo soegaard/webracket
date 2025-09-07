@@ -488,6 +488,7 @@
   degrees->radians radians->degrees
   order-of-magnitude
   abs sgn max min sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
+  real->floating-point-bytes
 
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
@@ -3115,6 +3116,7 @@
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(log)                        (inline-prim/optional sym ae1 1 2)]
+        [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
          ; Todo: map and for-each needs to check that the first argument is a procedure
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
