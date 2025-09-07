@@ -4878,8 +4878,8 @@
                   (then (call $raise-expected-number (local.get $m))))
 
               ;; --- Extract values ---
-              (local.set $n/fx (i31.get_u (ref.cast (ref i31) (local.get $n))))
-              (local.set $m/fx (i31.get_u (ref.cast (ref i31) (local.get $m))))
+              (local.set $n/fx (i31.get_s (ref.cast (ref i31) (local.get $n))))
+              (local.set $m/fx (i31.get_s (ref.cast (ref i31) (local.get $m))))
               (local.set $n/i  (i32.shr_s (local.get $n/fx) (i32.const 1)))
               (local.set $m/i  (i32.shr_s (local.get $m/fx) (i32.const 1)))
 
