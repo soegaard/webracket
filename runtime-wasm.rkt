@@ -2588,15 +2588,23 @@
         (func $mutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
               (if (result (ref eq))
                   (ref.test (ref $Box) (local.get $v))
-                  (then (global.get $true))
+                  (then (if (result (ref eq))
+                             (i32.eq (struct.get $Box $immutable
+                                                 (ref.cast (ref $Box) (local.get $v)))
+                                      (i32.const 0))
+                             (then (global.get $true))
+                             (else (global.get $false))))
                   (else (global.get $false))))
 
-        ;; WebRacket currently only supports mutable boxes.
-        ;; Racket has immutable boxes (#&1), but those are not yet implemented.
         (func $immutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
               (if (result (ref eq))
                   (ref.test (ref $Box) (local.get $v))
-                  (then (global.get $false))
+                  (then (if (result (ref eq))
+                             (i32.eq (struct.get $Box $immutable
+                                                 (ref.cast (ref $Box) (local.get $v)))
+                                      (i32.const 1))
+                             (then (global.get $true))
+                             (else (global.get $false))))
                   (else (global.get $false))))
 
         (func $mutable-hash? (type $Prim1) (param $v (ref eq)) (result (ref eq))
@@ -2691,6 +2699,7 @@
                (local $bs   (ref $Bytes))
                (local $vec  (ref $Vector))
                (local $hash (ref $Hash))
+               (local $box  (ref $Box))
 
                (if (ref.test (ref $String) (local.get $v))
                    (then
@@ -2717,7 +2726,11 @@
                         (then (return (global.get $true)))
                         (else (return (global.get $false))))))
                (if (ref.test (ref $Box) (local.get $v))
-                   (then (return (global.get $false))))
+                   (then
+                    (local.set $box (ref.cast (ref $Box) (local.get $v)))
+                    (if (i32.eq (struct.get $Box $immutable (local.get $box)) (i32.const 1))
+                        (then (return (global.get $true)))
+                        (else (return (global.get $false))))))
                (global.get $false))
          
          ;;;
@@ -12200,25 +12213,32 @@
          ;; https://docs.racket-lang.org/reference/boxes.html
 
          ;; This section implements the Racket data type `box`.
-         (func $box (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
-               (struct.new $Box (i32.const 0) (local.get $v)))
+         (func $box (type $Prim1) (param $v (ref eq))  (result (ref eq))
+               (struct.new $Box
+                           (i32.const 0)       ;; $hash
+                           (i32.const 0)       ;; mutable
+                           (local.get $v)))
          (func $unbox (type $Prim1) (param $b (ref eq))  (result (ref eq))
                (struct.get $Box $v
                            (block $ok (result (ref $Box))
                              (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
                              (return (global.get $error)))))
+         (func $raise-immutable-box (param $x (ref eq)) (unreachable))
          (func $set-box! (type $Prim2) ; todo: should this invalidate the hash code?
                (param $b (ref eq)) (param $v (ref eq))
                (result (ref eq))
                ; 1. Cast $b into a (ref $Box)
-               (local $B (ref $Box))                
+               (local $B (ref $Box))
                (local.set $B
                           (block $ok (result (ref $Box))
                                  (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
                                  (return (global.get $error))))
-               ; 2. Set the contents
+               ; 2. Check mutability
+               (if (i32.ne (struct.get $Box $immutable (local.get $B)) (i32.const 0))
+                   (then (call $raise-immutable-box (local.get $B)) (unreachable)))
+               ; 3. Set the contents
                (struct.set $Box $v (local.get $B) (local.get $v))
-               ; 3. Return `void`
+               ; 4. Return `void`
                (global.get $void))
 
          
