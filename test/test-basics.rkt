@@ -1389,6 +1389,11 @@
         (list "argmin"
               (and (equal? (argmin car '((3 pears) (1 banana) (2 apples))) '(1 banana))
                    (equal? (argmin car '((1 banana) (1 orange))) '(1 banana))))
+        (list "drop-common-prefix"
+              (let-values ([(l r)
+                            (drop-common-prefix '(a b c d) '(a b x y z))])
+                (and (equal? l '(c d))
+                     (equal? r '(x y z)))))
         ))
 
  (list "4.12 Vectors"
