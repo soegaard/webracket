@@ -2774,7 +2774,7 @@
         ;; [x] inexact->exact
         ;; [x] exact->inexact
         ;; [ ] real->single-flonum
-        ;; [ ] real->double-flonum
+        ;; [x] real->double-flonum
 
          (func $number? (type $Prim1)
                (param $v (ref eq))
@@ -2957,6 +2957,31 @@
 
               ;; Not a number
               (call $raise-expected-number (local.get $z))
+              (unreachable))
+
+
+        (func $real->double-flonum (type $Prim1)
+              (param $x (ref eq))
+              (result   (ref eq))
+
+              (local $bits i32)
+
+              ;; If x is already a flonum, return it
+              (if (ref.test (ref $Flonum) (local.get $x))
+                  (then (return (local.get $x))))
+
+              ;; If x is a fixnum, ensure LSB = 0 and convert
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then (return (struct.new $Flonum (i32.const 0)
+                                                 (f64.convert_i32_s
+                                                  (i32.shr_u (local.get $bits)
+                                                             (i32.const 1)))))))))
+
+              ;; Not a number
+              (call $raise-expected-number (local.get $x))
               (unreachable))
 
 
