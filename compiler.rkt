@@ -517,6 +517,8 @@
   ; fixnum-for-every-system?
 
   flonum?
+  single-flonum?
+  single-flonum-available?
   fl+ fl- fl* fl/
   fl= fl< fl> fl<= fl>=
   flabs flround flfloor flceiling fltruncate flsingle

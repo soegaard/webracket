@@ -2762,8 +2762,8 @@
         ;; [ ] fixnum?
         ;; [ ] flonum?
         ;; [ ] double-flonum?
-        ;; [ ] single-flonum?
-        ;; [ ] single-flonum-available?
+        ;; [x] single-flonum?
+        ;; [x] single-flonum-available?
         ;; [x] zero?
         ;; [x] positive?
         ;; [x] negative?
@@ -2815,6 +2815,18 @@
                    (ref.test (ref $Flonum) (local.get $z))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         (func $single-flonum? (type $Prim1)
+               ;; single-flonums are not supported
+               (param $v (ref eq))
+               (result (ref eq))
+               (drop (local.get $v))
+               (global.get $false))
+
+         (func $single-flonum-available? (type $Prim0)
+               ;; single-flonums are not supported
+               (result (ref eq))
+               (global.get $false))
 
          (func $inexact-real? (type $Prim1)
                ;; Returns #t for inexact real numbers (flonums that are not NaN)
