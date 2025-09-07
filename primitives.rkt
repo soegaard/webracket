@@ -46,6 +46,7 @@
  ;; 4.2 Booleans
  not
  boolean?
+ xor
  immutable?
 
  ;; 4.3 Numbers
