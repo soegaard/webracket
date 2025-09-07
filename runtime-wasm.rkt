@@ -298,8 +298,9 @@
                              (field $d    (mut (ref eq))))))
           (type $Box  (sub $Heap
                            (struct
-                             (field $hash (mut i32))
-                             (field $v    (mut (ref eq))))))
+                             (field $hash      (mut i32))
+                             (field $immutable i32)
+                             (field $v         (mut (ref eq))))))
 
           (type $Procedure
                 (sub $Heap
