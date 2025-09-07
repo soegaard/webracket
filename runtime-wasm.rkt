@@ -6677,25 +6677,36 @@
         ;; mutable byte string starting at index 0). The big-endian? argument
         ;; defaults to #f when not provided.
         (func $real->floating-point-bytes (type $Prim5)
-              (param $x (ref eq))
-              (param $size-raw (ref eq))
-              (param $big-raw (ref eq))
-              (param $dest-raw (ref eq))
-              (param $start-raw (ref eq))
-              (result (ref eq))
+              (param $x         (ref eq))  ; real?
+              (param $size-raw  (ref eq))  ; (or/c 4 8)
+              (param $big-raw   (ref eq))  ; any/c, defaults to (system-big-endian?) = #f
+              (param $dest-raw  (ref eq))  ; 	(and/c bytes? (not/c immutable?)) = (make-bytes size-n)
+              (param $start-raw (ref eq))  ; exact-nonnegative-integer? = 0
+              (result           (ref eq))
 
-              (local $size i32)
-              (local $big i32)
-              (local $dest (ref $Bytes))
-              (local $arr (ref $I8Array))
-              (local $fl (ref $Flonum))
-              (local $val f64)
+              (local $size   i32)
+              (local $big    i32)
+              (local $dest   (ref $Bytes))
+              (local $arr    (ref $I8Array))
+              (local $fl     (ref $Flonum))
+              (local $val    f64)
               (local $bits64 i64)
               (local $bits32 i32)
+
+              ;; typecheck that that $x is real?
+              ;; typecheck that $size-raw is either 4 or 8
+              ;; typecheck that dest-raw is a bytestring (unless it's missing)
+              ;; typecheck that start-raw is an exact-nonnegative-integer?
+              
 
               ;; decode size (expects fixnum 4 or 8)
               (local.set $size (i31.get_u (ref.cast (ref i31) (local.get $size-raw))))
               (local.set $size (i32.shr_u (local.get $size) (i32.const 1)))
+
+              ;; dummy-init $dest so it's definitely assigned before any use
+              (local.set $dest
+                         (ref.cast (ref $Bytes)
+                                   (call $make-bytes (ref.i31 (i32.const 0)) (global.get $missing))))
 
               ;; allocate or cast destination byte string
               (if (ref.eq (local.get $dest-raw) (global.get $missing))
@@ -6708,6 +6719,7 @@
                   (else
                    (local.set $dest (ref.cast (ref $Bytes) (local.get $dest-raw)))))
 
+
               ;; decode big-endian? flag, defaulting to false
               (local.set $big (i32.const 0))
               (if (ref.eq (local.get $big-raw) (global.get $missing))
@@ -6715,12 +6727,17 @@
                   (else
                    (if (ref.eq (local.get $big-raw) (global.get $false))
                        (then)
-                       (else (local.set $big (i32.const 1)))))
+                       (else (local.set $big (i32.const 1))))))
+
+              ;; initialize $fl so it's definitely assigned before use
+              (local.set $fl (ref.cast (ref $Flonum) (global.get $flzero)))
 
               ;; convert x to flonum
               (if (ref.test (ref $Flonum) (local.get $x))
-                  (then (local.set $fl (ref.cast (ref $Flonum) (local.get $x))))
-                  (else (local.set $fl (call $fx->fl/precise (local.get $x)))))
+                  (then
+                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x))))
+                  (else
+                   (local.set $fl (call $fx->fl/precise (local.get $x)))))
               (local.set $val (struct.get $Flonum $v (local.get $fl)))
 
               (local.set $arr (struct.get $Bytes $bs (local.get $dest)))
@@ -6762,8 +6779,7 @@
                         (call $i8array-set! (local.get $arr) (i32.const 1) (i32.and (i32.shr_u (local.get $bits32) (i32.const 16)) (i32.const 255)))
                         (call $i8array-set! (local.get $arr) (i32.const 2) (i32.and (i32.shr_u (local.get $bits32) (i32.const 8)) (i32.const 255)))
                         (call $i8array-set! (local.get $arr) (i32.const 3) (i32.and (local.get $bits32) (i32.const 255)))))
-                   (local.get $dest)))
-             )
+                   (local.get $dest))))
 
 
          (func $bytes-length (type $Prim1) (param $a (ref eq)) (result (ref eq))
