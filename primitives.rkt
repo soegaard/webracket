@@ -339,6 +339,7 @@ bytes->string/utf-8
  length
  list-ref
  list-tail
+ list-update
  first
  second
  third
