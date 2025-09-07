@@ -6690,6 +6690,8 @@
               (local $arr    (ref $I8Array))
               (local $fl     (ref $Flonum))
               (local $val    f64)
+              (local $bits64 i64)
+              (local $bits32 i32)
               (local $start  i32)
 
               ;; --- Decode and validate size ---
@@ -6780,6 +6782,7 @@
               (local $bits32 i32)
 
               (local.set $arr (struct.get $Bytes $bs (local.get $dest)))
+              ;; write bytes for 8 or 4 byte result
               (if (i32.eq (local.get $size) (i32.const 8))
                   (then
                    (local.set $bits64 (i64.reinterpret_f64 (local.get $val)))
