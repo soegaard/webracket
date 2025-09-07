@@ -463,6 +463,7 @@
 
   number->string
   string->number
+  floating-point-bytes->real
 
   + - * / quotient remainder modulo quotient/remainder
   = < > <= >=
@@ -3108,9 +3109,10 @@
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
          [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
-         [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
-         [(string->number)             (inline-prim/optional sym ae1 1 5)]
-         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
+        [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
+        [(string->number)             (inline-prim/optional sym ae1 1 5)]
+        [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]
+        [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(log)                        (inline-prim/optional sym ae1 1 2)]

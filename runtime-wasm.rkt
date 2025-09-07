@@ -6114,6 +6114,107 @@
                   (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
                   (else (nop)))
               (struct.new $Flonum (i32.const 0) (local.get $res)))
+         (func $floating-point-bytes->real (type $Prim4)
+               (param $bstr  (ref eq))
+               (param $big?  (ref eq))
+               (param $start (ref eq))
+               (param $end   (ref eq))
+               (result       (ref eq))
+
+               (local $bs      (ref null $Bytes))
+               (local $arr     (ref $I8Array))
+               (local $from    i32)
+               (local $to      i32)
+               (local $len     i32)
+               (local $nbytes  i32)
+               (local $big-i32 i32)
+               (local $i       i32)
+               (local $idx     i32)
+               (local $byte    i32)
+               (local $val     i64)
+
+               ;; --- Validate byte string ---
+               (if (ref.test (ref $Bytes) (local.get $bstr))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
+                   (else (call $raise-check-bytes (local.get $bstr)) (unreachable)))
+
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+
+               ;; --- Decode start ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+
+               ;; --- Decode end ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+
+               ;; --- Bounds check ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to)) (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to)) (unreachable)))
+
+               (local.set $nbytes (i32.sub (local.get $to) (local.get $from)))
+               (if (i32.and (i32.ne (local.get $nbytes) (i32.const 4))
+                            (i32.ne (local.get $nbytes) (i32.const 8)))
+                   (then (call $raise-argument-error (local.get $bstr)) (unreachable)))
+
+               ;; --- Decode big-endian? ---
+               (if (ref.eq (local.get $big?) (global.get $missing))
+                   (then (local.set $big-i32 (i32.const 0)))
+                   (else (if (ref.eq (local.get $big?) (global.get $false))
+                             (then (local.set $big-i32 (i32.const 0)))
+                             (else (if (ref.eq (local.get $big?) (global.get $true))
+                                       (then (local.set $big-i32 (i32.const 1)))
+                                       (else (call $raise-argument-error (local.get $big?)) (unreachable))))))
+
+               ;; --- Accumulate bytes into i64 ---
+               (local.set $val (i64.const 0))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $nbytes)))
+                            (if (i32.eqz (local.get $big-i32))
+                                (then (local.set $idx (i32.add (local.get $from) (local.get $i))))
+                                (else (local.set $idx
+                                                   (i32.add (local.get $from)
+                                                            (i32.sub
+                                                             (i32.add (local.get $nbytes) (i32.const -1))
+                                                             (local.get $i))))))
+                            (local.set $byte (call $i8array-ref (local.get $arr) (local.get $idx)))
+                            (local.set $val
+                                       (i64.or
+                                        (local.get $val)
+                                        (i64.shl (i64.extend_i32_u (local.get $byte))
+                                                 (i64.extend_i32_u (i32.shl (local.get $i) (i32.const 3))))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; --- Produce result ---
+               (if (i32.eq (local.get $nbytes) (i32.const 4))
+                   (then (return (struct.new $Flonum
+                                              (i32.const 0)
+                                              (f64.promote_f32
+                                               (f32.reinterpret_i32
+                                                (i32.wrap_i64 (local.get $val)))))))
+                   (else (return (struct.new $Flonum
+                                              (i32.const 0)
+                                              (f64.reinterpret_i64 (local.get $val))))))
+               (unreachable))
+
 
 
 
