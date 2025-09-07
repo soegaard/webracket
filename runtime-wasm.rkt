@@ -10945,7 +10945,7 @@
               (param $xs   (ref eq))
               (param $i    (ref eq))
               (param $proc (ref eq))
-              (result (ref eq))
+              (result      (ref eq))
 
               (local $idx  i32)
               (local $f    (ref $Procedure))
@@ -10967,7 +10967,8 @@
               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
               (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
 
-              (if (ref.test (ref $Pair) (local.get $xs))
+              (if (result (ref eq))
+                  (ref.test (ref $Pair) (local.get $xs))
                   (then
                    (call $list-update/checked
                          (ref.cast (ref $Pair) (local.get $xs))
