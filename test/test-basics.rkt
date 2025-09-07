@@ -536,11 +536,20 @@
 
        (list "4.3.2.9 Byte String Conversions"
              (list
-              (list "real->floating-point-bytes"
-                    (and (bytes=? (real->floating-point-bytes 1.0 8 #t)
-                                    #"\x3f\xf0\x00\x00\x00\x00\x00\x00")
-                         (bytes=? (real->floating-point-bytes 1.0 8 #f)
-                                    #"\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
+             (list "real->floating-point-bytes"
+                   (and (bytes=? (real->floating-point-bytes 1.0 8 #t)
+                                   #"\x3f\xf0\x00\x00\x00\x00\x00\x00")
+                        (bytes=? (real->floating-point-bytes 1.0 8 #f)
+                                   #"\x00\x00\x00\x00\x00\x00\xf0\x3f")))
+             (list "real->floating-point-bytes default"
+                   (bytes=? (real->floating-point-bytes 1.0 8)
+                            #"\x00\x00\x00\x00\x00\x00\xf0\x3f"))
+             (list "real->floating-point-bytes start"
+                   (let* ([dest (make-bytes 10)]
+                          [res  (real->floating-point-bytes 1.0 8 #f dest 2)])
+                     (and (eq? res dest)
+                          (bytes=? dest
+                                   #"\x00\x00\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
               (list "system-big-endian?"
                     (and (equal? (system-big-endian?) #f)
                          (equal? (procedure-arity system-big-endian?) 0))))
