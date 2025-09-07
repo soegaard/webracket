@@ -1258,6 +1258,10 @@
                    (equal? (list-tail 1 0)             1)
                    (equal? (procedure-arity list-tail) 2)))
 
+        (list "list-set"
+              (and (equal? (list-set '(a b c d) 2 'x) '(a b x d))
+                   (equal? (procedure-arity list-set) 3)))
+
         (list "first"
               (and (equal? (first '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 1)
                    (equal? (procedure-arity first) 1)))
