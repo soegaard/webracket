@@ -159,6 +159,7 @@
  degrees->radians
  radians->degrees
  order-of-magnitude
+ system-big-endian?
 
  ;; 4.3.3 Flonums (racket/flonum)
  ;; 4.3.3.1 Flonum Arithmetic
