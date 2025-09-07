@@ -408,7 +408,7 @@
   pair? cons? null? empty?
   cons car cdr
   list              ; not first order yet
-  list? length list-ref list-tail list-set
+  list? length list-ref list-tail list-set list-update
   first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth last last-pair
   append ; variadic list primitive
   flatten

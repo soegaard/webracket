@@ -10878,6 +10878,107 @@
                             (br $loop)))
                (local.get $acc))
 
+        ;; list-update/checked: takes a Pair, an index, and an updater procedure.
+        ;; Returns a list like the input except that the element at index
+        ;; is replaced by the result of applying the updater.
+        (func $list-update/checked
+              (param $xs   (ref $Pair))
+              (param $i    i32)
+              (param $f    (ref $Procedure))
+              (param $finv (ref $ProcedureInvoker))
+              (param $args (ref $Args))
+              (result (ref eq))
+
+              (local $orig    (ref $Pair))
+              (local $node    (ref $Pair))
+              (local $acc     (ref eq))
+              (local $k       i32)
+              (local $next    (ref eq))
+              (local $elem    (ref eq))
+              (local $updated (ref eq))
+              (local $len     i32)
+
+              (local.set $orig (local.get $xs))
+              (local.set $node (local.get $xs))
+              (local.set $acc  (global.get $null))
+              (local.set $k    (local.get $i))
+
+              (loop $loop
+                    (if (i32.eqz (local.get $k))
+                        (then
+                         (local.set $elem (struct.get $Pair $a (local.get $node)))
+                         (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                         (local.set $updated
+                                    (call_ref $ProcedureInvoker
+                                              (local.get $f)
+                                              (local.get $args)
+                                              (local.get $finv)))
+                         (return
+                          (call $append/2
+                                (call $reverse (local.get $acc))
+                                (call $cons
+                                      (local.get $updated)
+                                      (struct.get $Pair $d (local.get $node)))))))
+
+                    (local.set $acc
+                               (call $cons
+                                     (struct.get $Pair $a (local.get $node))
+                                     (local.get $acc)))
+                    (local.set $next (struct.get $Pair $d (local.get $node)))
+                    (if (ref.test (ref $Pair) (local.get $next))
+                        (then (local.set $node (ref.cast (ref $Pair) (local.get $next)))
+                              (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+                              (br $loop))
+                        (else
+                         (local.set $len
+                                    (i32.add
+                                     (i32.sub (local.get $i) (local.get $k))
+                                     (i32.const 1)))
+                         (call $raise-bad-list-ref-index
+                               (local.get $orig)
+                               (local.get $i)
+                               (local.get $len))
+                         (unreachable))))
+              (unreachable))
+
+        (func $list-update (type $Prim3)
+              (param $xs   (ref eq))
+              (param $i    (ref eq))
+              (param $proc (ref eq))
+              (result (ref eq))
+
+              (local $idx  i32)
+              (local $f    (ref $Procedure))
+              (local $finv (ref $ProcedureInvoker))
+              (local $args (ref $Args))
+
+              (if (ref.test (ref i31) (local.get $i))
+                  (then
+                   (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                   (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
+                       (then (call $raise-check-fixnum (local.get $i))))
+                   (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $i))))
+
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              (if (ref.test (ref $Pair) (local.get $xs))
+                  (then
+                   (call $list-update/checked
+                         (ref.cast (ref $Pair) (local.get $xs))
+                         (local.get $idx)
+                         (local.get $f)
+                         (local.get $finv)
+                         (local.get $args)))
+                  (else
+                   (call $raise-pair-expected (local.get $xs))
+                   (unreachable))))
+
          ,@(let ()
              (define (gen-argminmax name cmp)
                (define $name (string->symbol (~a "$" name)))
