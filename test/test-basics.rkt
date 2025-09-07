@@ -555,6 +555,9 @@
                       (and (eq? res dest)
                            (bytes=? dest
                                     #"\x00\x00\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
+              (list "floating-point-bytes->real"
+                    (and (= (floating-point-bytes->real (bytes 0 0 128 63)) 1.0)
+                         (= (floating-point-bytes->real (bytes 63 240 0 0 0 0 0 0) #t 0 8) 1.0)))))
               (list "system-big-endian?"
                     (and (equal? (system-big-endian?) #f)
                          (equal? (procedure-arity system-big-endian?) 0)))))

@@ -155,6 +155,7 @@
  ;; 4.3.2.9 Number–String Conversions
  number->string
  string->number
+ floating-point-bytes->real
  real->floating-point-bytes
  ;; 4.3.2.10 Extra Constants and Functions (racket/math)
 
