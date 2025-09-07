@@ -396,7 +396,7 @@ bytes->string/utf-8
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal
- box unbox set-box!
+ box? box box-immutable unbox set-box! 
 
  ;; 4.15 Hash Tables
  hash? make-empty-hasheq make-hasheq hash-ref hash-set! hash-remove! hash-clear!

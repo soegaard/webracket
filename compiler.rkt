@@ -394,13 +394,12 @@
   
   values                     
   
-  ; box-immutable ; todo 
 
   boxed      ; used by assignment elimination
   unboxed    ; used by assignment elimination
   set-boxed! ; used by assignment elimination
 
-  box unbox set-box! ; normal primitives
+  box? box box-immutable unbox set-box! 
   
   vector-immutable  ; used in datum construction
   bytes             ; used in datum construction
@@ -1045,7 +1044,7 @@
           [(? pair? p)     `(app ,h ,(var:cons) ,(loop (car p)) ,(loop (cdr p)))]
           [(? vector? v)   (let ([vs (map loop (vector->list v))])
                              `(app ,h ,(var:vector-immutable) ,vs ...))]
-          [(? box? b)       `(app ,h ,(var:box) ,(loop (unbox b)))]
+          [(? box? b)       `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]
           [(? keyword? kw) (let ([s (loop (keyword->string kw))])
                              `(app ,h ,(var:string->keyword) ,s))]
           [else            (error 'datum->construction-expr "got: ~a" v)]))))

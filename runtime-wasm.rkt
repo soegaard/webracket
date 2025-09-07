@@ -12212,18 +12212,32 @@
 
          ;; https://docs.racket-lang.org/reference/boxes.html
 
-         ;; This section implements the Racket data type `box`.
+         (func $box? (type $Prim1)
+               (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Box) (local.get $v))
+                    (then (global.get $true))
+                    (else (global.get $false))))
+
          (func $box (type $Prim1) (param $v (ref eq))  (result (ref eq))
                (struct.new $Box
                            (i32.const 0)       ;; $hash
-                           (i32.const 0)       ;; mutable
+                           (i32.const 0)       ;; $immutable (mutable = not immmutable)
                            (local.get $v)))
+
+         (func $box-immutable (type $Prim1) (param $v (ref eq))  (result (ref eq))
+               (struct.new $Box
+                           (i32.const 0)       ;; $hash
+                           (i32.const 1)       ;; $immutable
+                           (local.get $v)))
+
          (func $unbox (type $Prim1) (param $b (ref eq))  (result (ref eq))
                (struct.get $Box $v
                            (block $ok (result (ref $Box))
                              (br_on_cast $ok (ref eq) (ref $Box) (local.get $b))
                              (return (global.get $error)))))
+         
          (func $raise-immutable-box (param $x (ref eq)) (unreachable))
+         
          (func $set-box! (type $Prim2) ; todo: should this invalidate the hash code?
                (param $b (ref eq)) (param $v (ref eq))
                (result (ref eq))
