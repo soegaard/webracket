@@ -1396,6 +1396,12 @@
                             (drop-common-prefix '(a b c d) '(a b x y z))])
                 (and (equal? l '(c d))
                      (equal? r '(x y z)))))
+        (list "split-common-prefix"
+              (let-values ([(p l r)
+                            (split-common-prefix '(a b c d) '(a b x y z))])
+                (and (equal? p '(a b))
+                     (equal? l '(c d))
+                     (equal? r '(x y z)))))
         ))
 
  (list "4.12 Vectors"
