@@ -155,11 +155,13 @@
  ;; 4.3.2.9 Number–String Conversions
  number->string
  string->number
+ real->floating-point-bytes
  ;; 4.3.2.10 Extra Constants and Functions (racket/math)
 
  degrees->radians
  radians->degrees
  order-of-magnitude
+ system-big-endian?
 
  ;; 4.3.3 Flonums (racket/flonum)
  ;; 4.3.3.1 Flonum Arithmetic
