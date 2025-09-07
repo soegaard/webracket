@@ -373,6 +373,7 @@ partition
 remove
 take-common-prefix
 drop-common-prefix
+split-common-prefix
  ; remq
  ; remv
  ; remw
