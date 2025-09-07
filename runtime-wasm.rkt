@@ -4862,9 +4862,9 @@
 
         ;; NOTE: Only supports fixnum arguments; bignum shifts are not implemented.
         (func $arithmetic-shift (type $Prim2)
-              (param $n (ref eq))
-              (param $m (ref eq))
-              (result   (ref eq))
+              (param $n (ref eq)) ; exact-integer
+              (param $m (ref eq)) ; exact-integer
+              (result   (ref eq)) ; exact-integer
 
               (local $n/fx i32)   ; raw bits of n
               (local $m/fx i32)   ; raw bits of m
@@ -4873,21 +4873,9 @@
 
               ;; --- Validate inputs ---
               (if (ref.eq (call $exact-integer? (local.get $n)) (global.get $false))
-                  (then
-                   (if (ref.test (ref $Flonum) (local.get $n))
-                       (then (nop))
-                       (else (call $raise-expected-number (local.get $n)) (unreachable)))))
+                  (then (call $raise-expected-number (local.get $n)) (unreachable)))
               (if (ref.eq (call $exact-integer? (local.get $m)) (global.get $false))
-                  (then
-                   (if (ref.test (ref $Flonum) (local.get $m))
-                       (then (nop))
-                       (else (call $raise-expected-number (local.get $m)) (unreachable)))))
-
-              ;; --- Convert inputs ---
-              (if (ref.test (ref $Flonum) (local.get $n))
-                  (then (local.set $n (call $fl->exact-integer (local.get $n)))))
-              (if (ref.test (ref $Flonum) (local.get $m))
-                  (then (local.set $m (call $fl->exact-integer (local.get $m)))))
+                  (then (call $raise-expected-number (local.get $m))))
 
               ;; --- Extract values ---
               (local.set $n/fx (i31.get_u (ref.cast (ref i31) (local.get $n))))
@@ -4896,14 +4884,15 @@
               (local.set $m/i  (i32.shr_s (local.get $m/fx) (i32.const 1)))
 
               ;; --- Compute ---
-              (if (result (ref eq)) (i32.lt_s (local.get $m/i) (i32.const 0))
+              (if (result (ref eq))
+                  (i32.lt_s (local.get $m/i) (i32.const 0))
                   (then (ref.i31 (i32.shl (i32.shr_s (local.get $n/i)
                                              (i32.sub (i32.const 0)
                                                       (local.get $m/i)))
                                            (i32.const 1))))
                   (else (ref.i31 (i32.shl (i32.shl (local.get $n/i)
                                                   (local.get $m/i))
-                                           (i32.const 1)))))
+                                           (i32.const 1))))))
 
 
         (func $integer-length (type $Prim1)
