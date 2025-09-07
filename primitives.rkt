@@ -371,7 +371,8 @@ bytes->string/utf-8
 filter
 partition
 remove
- drop-common-prefix
+take-common-prefix
+drop-common-prefix
  ; remq
  ; remv
  ; remw
