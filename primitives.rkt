@@ -84,8 +84,9 @@
  inexact->exact
  exact->inexact
  real->double-flonum
- fixnum?
+  fixnum?
  flonum?
+ double-flonum?
  single-flonum?
  single-flonum-available?
  zero?

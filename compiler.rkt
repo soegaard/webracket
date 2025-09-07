@@ -519,6 +519,7 @@
   ; fixnum-for-every-system?
 
   flonum?
+  double-flonum?
   single-flonum?
   single-flonum-available?
   fl+ fl- fl* fl/
