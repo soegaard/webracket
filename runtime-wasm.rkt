@@ -2760,9 +2760,9 @@
          ;; [x] infinite?
          ;; [x] inexact-real?
          ;; [x] fixnum?
-         ;; [x] flonum?
-         ;; [ ] double-flonum?
-         ;; [x] single-flonum?
+        ;; [x] flonum?
+        ;; [x] double-flonum?
+        ;; [x] single-flonum?
          ;; [x] single-flonum-available?
          ;; [x] zero?
          ;; [x] positive?
@@ -5511,6 +5511,11 @@
                    (ref.test (ref $Flonum) (local.get $a))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+        ;; double-flonum? : (ref eq) -> (ref eq)
+        ;;   All flonums are double precision, so reuse flonum?
+        (func $double-flonum? (type $Prim1) (param $a (ref eq)) (result (ref eq))
+              (call $flonum? (local.get $a)))
 
          (func $fx->fl/precise (param $v (ref eq)) (result (ref $Flonum))
                (local $v/i32 i32)

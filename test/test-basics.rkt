@@ -595,6 +595,10 @@
                       (and (equal? (flonum? 1.0) #t)
                            (equal? (flonum? 1) #f)
                            (equal? (procedure-arity flonum?) 1)))
+                (list "double-flonum?"
+                      (and (equal? (double-flonum? 1.0) #t)
+                           (equal? (double-flonum? 1) #f)
+                           (equal? (procedure-arity double-flonum?) 1)))
                 (list "single-flonum?"
                       (and (equal? (single-flonum? 1.0) #f)
                            (equal? (single-flonum? 1) #f)
