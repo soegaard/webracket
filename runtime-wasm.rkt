@@ -6649,7 +6649,7 @@
                            (i32.const 0)
                            (local.get $arr)))
 
-(func $bytes->immutable-bytes (type $Prim1) (param $b (ref eq)) (result (ref eq))
+         (func $bytes->immutable-bytes (type $Prim1) (param $b (ref eq)) (result (ref eq))
               (local $bs (ref $Bytes))
               (local.set $bs (ref.cast (ref $Bytes) (global.get $bytes:empty)))
               ;; 1. Check that b is a byte string
