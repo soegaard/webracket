@@ -148,7 +148,7 @@
         (define $bytes:name      (string->symbol (~a "$" "bytes:"      name)))
         (define n                (bytes-length bytes))
         `(global.set ,$bytes:name
-                     (call $i8array->bytes
+                     (call $i8array->immutable-bytes
                            (array.new_data $I8Array ,$bytes-data:name
                                            (i32.const 0) (i32.const ,n))))))
     

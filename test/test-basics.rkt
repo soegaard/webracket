@@ -196,11 +196,9 @@
                    (equal? (mutable-hash? (make-empty-hasheq)) #t)
                    (equal? (immutable-hash? (make-empty-hasheq)) #f)
                    (equal? (mutable-box? #&1) #f)
-                   (equal? (immutable-box? #&1) #t))
-              (list ; fails:
-               (equal? (immutable-bytes? #"ab") #t)
-               (equal? (mutable-bytes? #"ab") #f) ; make quoted bytes immutable               
-               ))))
+                   (equal? (immutable-box? #&1) #t)
+                   (equal? (immutable-bytes? #"ab") #t)
+                   (equal? (mutable-bytes?   #"ab") #f)))))
  
  (list "4.3 Numbers"
        (list "4.3.1 Number Types"
