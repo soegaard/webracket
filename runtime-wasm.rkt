@@ -2820,7 +2820,6 @@
                ;; single-flonums are not supported
                (param $v (ref eq))
                (result (ref eq))
-               (drop (local.get $v))
                (global.get $false))
 
          (func $single-flonum-available? (type $Prim0)
