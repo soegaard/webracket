@@ -2745,7 +2745,7 @@
 
          ;; [x] number?
          ;; [ ] complex?
-         ;; [ ] real?
+        ;; [x] real?
          ;; [ ] rational?
          ;; [x] integer?
          ;; [x] exact-integer?
@@ -2790,6 +2790,23 @@
                              (ref.test (ref $Flonum) (local.get $v))
                              (then (global.get $true))
                              (else (global.get $false))))))
+
+        (func $real? (type $Prim1)
+              ;; WebRacket currently has no complex numbers, so real? is
+              ;; equivalent to number?
+              (param $v (ref eq))
+              (result (ref eq))
+              (if (result (ref eq))
+                  (ref.test i31ref (local.get $v))
+                  (then (if (result (ref eq))
+                            (i32.eqz (i32.and (i31.get_s (ref.cast i31ref (local.get $v)))
+                                              (i32.const ,fixnum-mask)))
+                            (then (global.get $true))
+                            (else (global.get $false))))
+                  (else (if (result (ref eq))
+                            (ref.test (ref $Flonum) (local.get $v))
+                            (then (global.get $true))
+                            (else (global.get $false))))))
 
          (func $exact? (type $Prim1)
                ;; A number is exact if it's a fixnum: a ref i31 with LSB = 0

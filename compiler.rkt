@@ -471,6 +471,7 @@
   add1 sub1 gcd lcm
 
   number?
+  real?
   integer?
   exact? exact-integer?
   exact-nonnegative-integer?

@@ -226,6 +226,12 @@
                           (equal? (string->number "-111" 7) -57)
                           (equal? (string->number "-2.3")   -2.3)
                           (equal? (string->number "hello") #f)))
+              (list "real?"
+                    (and (equal? (real? 1)      #t)
+                         (equal? (real? 1.0)    #t)
+                         (equal? (real? +nan.0) #t)
+                         (equal? (real? 'a)     #f)
+                         (equal? (procedure-arity real?) 1)))
               (list "inexact-real?"
                     (and (equal? (inexact-real? 1.0)    #t)
                          (equal? (inexact-real? 1)      #f)
