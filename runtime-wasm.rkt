@@ -6672,15 +6672,15 @@
 
         ;; real->floating-point-bytes
         ;; Convert a real number to its IEEE floating-point byte representation.
-        ;; This implementation currently supports only fixnums and flonums and
-        ;; ignores the dest and start arguments (always allocating a fresh
-        ;; mutable byte string starting at index 0). The big-endian? argument
-        ;; defaults to #f when not provided.
+        ;; Only fixnums and flonums are supported for now. The start argument
+        ;; defaults to 0 when omitted, and a provided destination must be a
+        ;; mutable byte string of sufficient length. The big-endian? argument
+        ;; defaults to #f.
         (func $real->floating-point-bytes (type $Prim5)
               (param $x         (ref eq))  ; real?
               (param $size-raw  (ref eq))  ; (or/c 4 8)
               (param $big-raw   (ref eq))  ; any/c, defaults to (system-big-endian?) = #f
-              (param $dest-raw  (ref eq))  ; 	(and/c bytes? (not/c immutable?)) = (make-bytes size-n)
+              (param $dest-raw  (ref eq))  ; (and/c bytes? (not/c immutable?))
               (param $start-raw (ref eq))  ; exact-nonnegative-integer? = 0
               (result           (ref eq))
 
@@ -6692,93 +6692,113 @@
               (local $val    f64)
               (local $bits64 i64)
               (local $bits32 i32)
+              (local $start  i32)
 
-              ;; typecheck that that $x is real?
-              ;; typecheck that $size-raw is either 4 or 8
-              ;; typecheck that dest-raw is a bytestring (unless it's missing)
-              ;; typecheck that start-raw is an exact-nonnegative-integer?
-              
-
-              ;; decode size (expects fixnum 4 or 8)
+              ;; --- Decode and validate size ---
+              (if (i32.eqz (ref.test (ref i31) (local.get $size-raw)))
+                  (then (call $raise-check-fixnum (local.get $size-raw)) (unreachable)))
               (local.set $size (i31.get_u (ref.cast (ref i31) (local.get $size-raw))))
+              (if (i32.and (local.get $size) (i32.const 1))
+                  (then (call $raise-check-fixnum (local.get $size-raw)) (unreachable)))
               (local.set $size (i32.shr_u (local.get $size) (i32.const 1)))
+              (if (i32.and (i32.ne (local.get $size) (i32.const 4))
+                           (i32.ne (local.get $size) (i32.const 8)))
+                  (then (call $raise-argument-error (local.get $size-raw)) (unreachable)))
 
-              ;; dummy-init $dest so it's definitely assigned before any use
-              (local.set $dest
-                         (ref.cast (ref $Bytes)
-                                   (call $make-bytes (ref.i31 (i32.const 0)) (global.get $missing))))
+              ;; --- Decode and validate start (exact-nonnegative-integer?, defaults to 0) ---
+              (local.set $start (i32.const 0))
+              (if (ref.eq (local.get $start-raw) (global.get $missing))
+                  (then)
+                  (else
+                   (if (i32.eqz (ref.test (ref i31) (local.get $start-raw)))
+                       (then (call $raise-check-fixnum (local.get $start-raw)) (unreachable)))
+                   (local.set $start (i31.get_s (ref.cast (ref i31) (local.get $start-raw))))
+                   (if (i32.and (local.get $start) (i32.const 1))
+                       (then (call $raise-check-fixnum (local.get $start-raw)) (unreachable)))
+                   (local.set $start (i32.shr_s (local.get $start) (i32.const 1)))
+                   (if (i32.lt_s (local.get $start) (i32.const 0))
+                       (then (call $raise-argument-error (local.get $start-raw)) (unreachable)))))
 
-              ;; allocate or cast destination byte string
+              ;; --- Allocate or validate destination ---
               (if (ref.eq (local.get $dest-raw) (global.get $missing))
                   (then
+                   (if (i32.eqz (ref.eq (local.get $start-raw) (global.get $missing)))
+                       (then (call $raise-argument-error (local.get $start-raw)) (unreachable)))
                    (local.set $dest
                               (ref.cast (ref $Bytes)
                                         (call $make-bytes
                                               (ref.i31 (i32.shl (local.get $size) (i32.const 1)))
-                                              (global.get $missing)))))
+                                              (global.get $missing))))
+                   (local.set $arr (struct.get $Bytes $bs (local.get $dest))))
                   (else
-                   (local.set $dest (ref.cast (ref $Bytes) (local.get $dest-raw)))))
+                   (if (i32.eqz (ref.test (ref $Bytes) (local.get $dest-raw)))
+                       (then (call $raise-check-bytes (local.get $dest-raw)) (unreachable)))
+                   (local.set $dest (ref.cast (ref $Bytes) (local.get $dest-raw)))
+                   (if (i32.eq (struct.get $Bytes $immutable (local.get $dest)) (i32.const 1))
+                       (then (call $raise-expected-mutable-bytes (local.get $dest-raw)) (unreachable)))
+                   (local.set $arr (struct.get $Bytes $bs (local.get $dest)))
+                   (if (i32.lt_u (call $i8array-length (local.get $arr))
+                                 (i32.add (local.get $start) (local.get $size)))
+                       (then (call $raise-argument-error (local.get $dest-raw)) (unreachable))))
 
-
-              ;; decode big-endian? flag, defaulting to false
+              ;; --- Decode big-endian? flag, defaulting to (system-big-endian?) ---
               (local.set $big (i32.const 0))
               (if (ref.eq (local.get $big-raw) (global.get $missing))
-                  (then)
+                  (then
+                   (if (ref.eq (call $system-big-endian?) (global.get $false))
+                       (then)
+                       (else (local.set $big (i32.const 1)))))
                   (else
                    (if (ref.eq (local.get $big-raw) (global.get $false))
                        (then)
                        (else (local.set $big (i32.const 1))))))
 
-              ;; initialize $fl so it's definitely assigned before use
+              ;; --- Convert x to flonum ---
               (local.set $fl (ref.cast (ref $Flonum) (global.get $flzero)))
-
-              ;; convert x to flonum
               (if (ref.test (ref $Flonum) (local.get $x))
-                  (then
-                   (local.set $fl (ref.cast (ref $Flonum) (local.get $x))))
+                  (then (local.set $fl (ref.cast (ref $Flonum) (local.get $x))))
                   (else
-                   (local.set $fl (call $fx->fl/precise (local.get $x)))))
+                   (if (ref.test (ref i31) (local.get $x))
+                       (then (local.set $fl (call $fx->fl/precise (local.get $x))))
+                       (else (call $raise-expected-number (local.get $x)) (unreachable)))))
               (local.set $val (struct.get $Flonum $v (local.get $fl)))
-
-              (local.set $arr (struct.get $Bytes $bs (local.get $dest)))
-
               ;; write bytes for 8 or 4 byte result
               (if (i32.eq (local.get $size) (i32.const 8))
                   (then
                    (local.set $bits64 (i64.reinterpret_f64 (local.get $val)))
                    (if (i32.eqz (local.get $big))
                        (then
-                        (call $i8array-set! (local.get $arr) (i32.const 0) (i32.wrap_i64 (local.get $bits64)))
-                        (call $i8array-set! (local.get $arr) (i32.const 1) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 8))))
-                        (call $i8array-set! (local.get $arr) (i32.const 2) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 16))))
-                        (call $i8array-set! (local.get $arr) (i32.const 3) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 24))))
-                        (call $i8array-set! (local.get $arr) (i32.const 4) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 32))))
-                        (call $i8array-set! (local.get $arr) (i32.const 5) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 40))))
-                        (call $i8array-set! (local.get $arr) (i32.const 6) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 48))))
-                        (call $i8array-set! (local.get $arr) (i32.const 7) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 56)))))
+                        (call $i8array-set! (local.get $arr) (local.get $start) (i32.wrap_i64 (local.get $bits64)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 1)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 8))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 2)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 16))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 3)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 24))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 4)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 32))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 5)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 40))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 6)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 48))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 7)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 56)))))
                        (else
-                        (call $i8array-set! (local.get $arr) (i32.const 0) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 56))))
-                        (call $i8array-set! (local.get $arr) (i32.const 1) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 48))))
-                        (call $i8array-set! (local.get $arr) (i32.const 2) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 40))))
-                        (call $i8array-set! (local.get $arr) (i32.const 3) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 32))))
-                        (call $i8array-set! (local.get $arr) (i32.const 4) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 24))))
-                        (call $i8array-set! (local.get $arr) (i32.const 5) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 16))))
-                        (call $i8array-set! (local.get $arr) (i32.const 6) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 8))))
-                        (call $i8array-set! (local.get $arr) (i32.const 7) (i32.wrap_i64 (local.get $bits64)))))
+                        (call $i8array-set! (local.get $arr) (local.get $start) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 56))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 1)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 48))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 2)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 40))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 3)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 32))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 4)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 24))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 5)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 16))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 6)) (i32.wrap_i64 (i64.shr_u (local.get $bits64) (i64.const 8))))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 7)) (i32.wrap_i64 (local.get $bits64)))))
                    (local.get $dest))
                   (else
                    (local.set $bits32 (i32.reinterpret_f32 (f32.demote_f64 (local.get $val))))
                    (if (i32.eqz (local.get $big))
                        (then
-                        (call $i8array-set! (local.get $arr) (i32.const 0) (i32.and (local.get $bits32) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 1) (i32.and (i32.shr_u (local.get $bits32) (i32.const 8)) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 2) (i32.and (i32.shr_u (local.get $bits32) (i32.const 16)) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 3) (i32.and (i32.shr_u (local.get $bits32) (i32.const 24)) (i32.const 255))))
+                        (call $i8array-set! (local.get $arr) (local.get $start) (i32.and (local.get $bits32) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 1)) (i32.and (i32.shr_u (local.get $bits32) (i32.const 8)) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 2)) (i32.and (i32.shr_u (local.get $bits32) (i32.const 16)) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 3)) (i32.and (i32.shr_u (local.get $bits32) (i32.const 24)) (i32.const 255))))
                        (else
-                        (call $i8array-set! (local.get $arr) (i32.const 0) (i32.and (i32.shr_u (local.get $bits32) (i32.const 24)) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 1) (i32.and (i32.shr_u (local.get $bits32) (i32.const 16)) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 2) (i32.and (i32.shr_u (local.get $bits32) (i32.const 8)) (i32.const 255)))
-                        (call $i8array-set! (local.get $arr) (i32.const 3) (i32.and (local.get $bits32) (i32.const 255)))))
+                        (call $i8array-set! (local.get $arr) (local.get $start) (i32.and (i32.shr_u (local.get $bits32) (i32.const 24)) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 1)) (i32.and (i32.shr_u (local.get $bits32) (i32.const 16)) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 2)) (i32.and (i32.shr_u (local.get $bits32) (i32.const 8)) (i32.const 255)))
+                        (call $i8array-set! (local.get $arr) (i32.add (local.get $start) (i32.const 3)) (i32.and (local.get $bits32) (i32.const 255)))))
                    (local.get $dest))))
 
 
