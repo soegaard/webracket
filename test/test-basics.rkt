@@ -581,12 +581,19 @@
                          (= (order-of-magnitude 0.009) -3)))))
 
        (list "4.3.3 Flonums"
-             (list
-              (list "flonum?"
-                    (and (equal? (flonum? 1.0) #t)
-                         (equal? (flonum? 1) #f)
-                         (equal? (procedure-arity flonum?) 1)))
-              (list "fl+"
+               (list
+                (list "flonum?"
+                      (and (equal? (flonum? 1.0) #t)
+                           (equal? (flonum? 1) #f)
+                           (equal? (procedure-arity flonum?) 1)))
+                (list "single-flonum?"
+                      (and (equal? (single-flonum? 1.0) #f)
+                           (equal? (single-flonum? 1) #f)
+                           (equal? (procedure-arity single-flonum?) 1)))
+                (list "single-flonum-available?"
+                      (and (equal? (single-flonum-available?) #f)
+                           (equal? (procedure-arity single-flonum-available?) 0)))
+                (list "fl+"
                     (and (fl= (fl+ 1.0 2.0) 3.0)
                          (fl= (fl+ 1.0 2.0 3.0) 6.0)))
               (list "fl-"

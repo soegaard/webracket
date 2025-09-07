@@ -84,6 +84,8 @@
  exact->inexact
  fixnum?
  flonum?
+ single-flonum?
+ single-flonum-available?
  zero?
  positive?
  negative?
