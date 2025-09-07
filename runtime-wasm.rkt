@@ -10540,8 +10540,11 @@
         ;; list-set/checked: xs is a Pair and i >= 0 within bounds.
         ;; Returns a new list with the element at index i replaced by v.
         (func $list-set/checked
-              (param $xs (ref $Pair)) (param $i i32) (param $v (ref eq))
-              (result (ref eq))
+              (param $xs (ref $Pair))
+              (param $i  i32)
+              (param $v  (ref eq))
+              (result    (ref eq))
+              
               (local $p      (ref $Pair))
               (local $k      i32)
               (local $next   (ref eq))
@@ -10551,8 +10554,8 @@
               (local $res    (ref eq))
               (local $prefix (ref eq))
 
-              (local.set $p (local.get $xs))
-              (local.set $k (local.get $i))
+              (local.set $p   (local.get $xs))
+              (local.set $k   (local.get $i))
               (local.set $rev (global.get $null))
 
               (loop $loop
@@ -10576,7 +10579,7 @@
                                           (struct.get $Pair $d
                                                       (ref.cast (ref $Pair)
                                                                 (local.get $prefix))))
-                               (br $rebuild)))
+                               (br $rebuild))))
                     (local.set $rev
                                (struct.new $Pair (i32.const 0)
                                            (struct.get $Pair $a (local.get $p))
@@ -10598,26 +10601,27 @@
               (unreachable))
 
         (func $list-set (type $Prim3)
-              (param $xs (ref eq)) (param $i (ref eq)) (param $v (ref eq))
-              (result (ref eq))
+              (param $xs (ref eq))
+              (param $i  (ref eq))
+              (param $v  (ref eq))
+              (result    (ref eq))
+              
               (local $idx  i32)
               (local $pair (ref $Pair))
 
               ;; Decode & check fixnum index
               (if (ref.test (ref i31) (local.get $i))
-                  (then
-                   (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
-                   (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
-                       (then (call $raise-check-fixnum (local.get $i))))
-                   (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                  (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                        (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $i))))
+                        (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
                   (else (call $raise-check-fixnum (local.get $i))))
 
               ;; Ensure non-empty proper list
               (if (ref.eq (local.get $xs) (global.get $null))
-                  (then
-                   (call $raise-bad-list-set-index
-                         (local.get $xs) (local.get $idx) (i32.const 0))
-                   (unreachable)))
+                  (then (call $raise-bad-list-set-index
+                              (local.get $xs) (local.get $idx) (i32.const 0))
+                        (unreachable)))
               (if (ref.eq (call $list? (local.get $xs)) (global.get $false))
                   (then (call $raise-argument-error (local.get $xs)) (unreachable)))
 
