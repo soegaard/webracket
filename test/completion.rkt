@@ -1158,6 +1158,7 @@
             atan
             atanh
             bitwise-and
+            bitwise-bit-field
             bitwise-bit-set?
             bitwise-first-bit-set
             bitwise-ior

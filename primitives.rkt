@@ -145,6 +145,7 @@
  bitwise-and
  bitwise-xor
  bitwise-not
+ bitwise-bit-field
  bitwise-bit-set?
  bitwise-first-bit-set  ; added in version 8.16
  integer-length

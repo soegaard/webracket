@@ -503,6 +503,10 @@
               (list "bitwise-not"
                     (and (equal? (bitwise-not 5) -6)
                          (equal? (bitwise-not -1) 0)))
+              (list "bitwise-bit-field"
+                    (and (equal? (bitwise-bit-field 13 1 4) 6)
+                         (equal? (bitwise-bit-field -2 1 3) 3)
+                         (equal? (bitwise-bit-field 13.0 1 4) 6)))
               (list "bitwise-bit-set?"
                     (and (bitwise-bit-set? 5 0)
                          (bitwise-bit-set? 5 2)

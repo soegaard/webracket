@@ -489,7 +489,7 @@
   order-of-magnitude
   abs sgn max min sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
 
-  bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
+  bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-field bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
   integer-length
   random
