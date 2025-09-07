@@ -2758,7 +2758,7 @@
         ;; [x] natural?
         ;; [x] nan?
         ;; [x] infinite?
-        ;; [ ] inexact-real?
+        ;; [x] inexact-real?
         ;; [ ] fixnum?
         ;; [ ] flonum?
         ;; [ ] double-flonum?
@@ -2814,6 +2814,26 @@
                (if (result (ref eq))
                    (ref.test (ref $Flonum) (local.get $z))
                    (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $inexact-real? (type $Prim1)
+               ;; Returns #t for inexact real numbers (flonums that are not NaN)
+               (param $z (ref eq))
+               (result   (ref eq))
+
+               (local $fl (ref $Flonum))
+               (local $f64 f64)
+
+               ;; Check: is z a flonum?
+               (if (result (ref eq))
+                   (ref.test (ref $Flonum) (local.get $z))
+                   (then
+                    (local.set $fl (ref.cast (ref $Flonum) (local.get $z)))
+                    (local.set $f64 (struct.get $Flonum $v (local.get $fl)))
+                    (if (result (ref eq))
+                        (f64.eq (local.get $f64) (local.get $f64)) ; check not NaN
+                        (then (global.get $true))
+                        (else (global.get $false))))
                    (else (global.get $false))))
 
          (func $exact-integer? (type $Prim1)

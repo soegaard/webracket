@@ -223,9 +223,14 @@
                     (and (equal? (string->number "42")     42)
                           (equal? (string->number "111" 7)  57)
                           (equal? (string->number "-42")    -42)
-                          (equal? (string->number "-111" 7) -57)                         
-                          (equal? (string->number "-2.3")   -2.3)                         
+                          (equal? (string->number "-111" 7) -57)
+                          (equal? (string->number "-2.3")   -2.3)
                           (equal? (string->number "hello") #f)))
+              (list "inexact-real?"
+                    (and (equal? (inexact-real? 1.0)    #t)
+                         (equal? (inexact-real? 1)      #f)
+                         (equal? (inexact-real? +nan.0) #f)
+                         (equal? (procedure-arity inexact-real?) 1)))
               (list "inexact?"
                     (and (equal? (inexact? 1.0) #t)
                          (equal? (inexact? 1)   #f)

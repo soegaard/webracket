@@ -478,6 +478,7 @@
   positive-integer? negative-integer?
   nonpositive-integer? nonnegative-integer?
   natural?
+  inexact-real?
   inexact?
   inexact->exact
   exact->inexact
