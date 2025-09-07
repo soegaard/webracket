@@ -10054,20 +10054,19 @@
                (block $done
                       (loop $loop
                             (br_if $done (ref.eq (local.get $stack) (global.get $null)))
-                            (local.set $node (ref.cast (ref $Pair) (local.get $stack)))
-                            (local.set $cur  (struct.get $Pair $a (local.get $node)))
-                            (local.set $stack (struct.get $Pair $d (local.get $node)))
+                            (local.set $node  (ref.cast (ref $Pair) (local.get $stack)))
+                            (local.set $cur   (struct.get $Pair $a  (local.get $node)))
+                            (local.set $stack (struct.get $Pair $d  (local.get $node)))
                             (if (ref.eq (local.get $cur) (global.get $null))
                                 (then (nop))
                                 (else
                                  (if (ref.test (ref $Pair) (local.get $cur))
-                                     (then
-                                      (local.set $p (ref.cast (ref $Pair) (local.get $cur)))
-                                      ;; Push cdr then car to visit car first
-                                      (local.set $stack (call $cons (struct.get $Pair $d (local.get $p)) (local.get $stack)))
-                                      (local.set $stack (call $cons (struct.get $Pair $a (local.get $p)) (local.get $stack))))
+                                     (then (local.set $p     (ref.cast (ref $Pair) (local.get $cur)))
+                                           ;; Push cdr then car to visit car first
+                                           (local.set $stack (call $cons (struct.get $Pair $d (local.get $p)) (local.get $stack)))
+                                           (local.set $stack (call $cons (struct.get $Pair $a (local.get $p)) (local.get $stack))))
                                      (else
-                                      (local.set $acc (call $cons (local.get $cur) (local.get $acc))))))
+                                      (local.set $acc (call $cons (local.get $cur) (local.get $acc)))))))
                             (br $loop)))
                (call $reverse (local.get $acc)))
 
