@@ -19,6 +19,7 @@
          racket/string
          racket/symbol
          racket/vector
+         racket/mutability
          racket/unsafe/ops
          (prefix-in imm: "immediates.rkt"))
 
@@ -50,6 +51,16 @@
  false?
  xor
  immutable?
+ mutable-string?
+ immutable-string?
+ mutable-bytes?
+ immutable-bytes?
+ mutable-vector?
+ immutable-vector?
+ mutable-box?
+ immutable-box?
+ mutable-hash?
+ immutable-hash?
 
  ;; 4.3 Numbers
 
