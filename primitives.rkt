@@ -64,8 +64,9 @@
 
  ;; 4.3 Numbers
 
- ;; 4.3.1 Number Types
+;; 4.3.1 Number Types
  number?
+ real?
  integer?
  exact?
  exact-integer?
