@@ -483,6 +483,7 @@
   inexact?
   inexact->exact
   exact->inexact
+  real->double-flonum
   exact-round exact-floor exact-ceiling exact-truncate
   round floor ceiling truncate
   sin  cos  tan  asin  acos  atan

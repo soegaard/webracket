@@ -241,6 +241,9 @@
               (list "exact->inexact"
                     (and (equal? (exact->inexact 1)   1.0)
                          (equal? (exact->inexact 1.0) 1.0)))
+              (list "real->double-flonum"
+                    (and (equal? (real->double-flonum 1)   1.0)
+                         (equal? (real->double-flonum 1.0) 1.0)))
               (list "nan?"
                     (and (equal? (nan? +nan.0) #t)
                          (equal? (nan? 0.0)   #f)))

@@ -82,6 +82,7 @@
  inexact?
  inexact->exact
  exact->inexact
+ real->double-flonum
  fixnum?
  flonum?
  single-flonum?
