@@ -6139,11 +6139,12 @@
                   (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
                   (else (nop)))
               (struct.new $Flonum (i32.const 0) (local.get $res)))
+        
          (func $floating-point-bytes->real (type $Prim4)
-               (param $bstr  (ref eq))
-               (param $big?  (ref eq))
-               (param $start (ref eq))
-               (param $end   (ref eq))
+               (param $bstr  (ref eq)) ; bytes?
+               (param $big?  (ref eq)) ; any, default to (system-big-endian?) which is #f
+               (param $start (ref eq)) ; exact-non-negative-integer, defaults to 0
+               (param $end   (ref eq)) ; exact-nonnegative-integer?, defaults to (bytes-length bstr)
                (result       (ref eq))
 
                (local $bs      (ref null $Bytes))
@@ -6204,7 +6205,7 @@
                              (then (local.set $big-i32 (i32.const 0)))
                              (else (if (ref.eq (local.get $big?) (global.get $true))
                                        (then (local.set $big-i32 (i32.const 1)))
-                                       (else (call $raise-argument-error (local.get $big?)) (unreachable))))))
+                                       (else (call $raise-argument-error (local.get $big?)) (unreachable)))))))
 
                ;; --- Accumulate bytes into i64 ---
                (local.set $val (i64.const 0))
