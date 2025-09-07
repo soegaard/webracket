@@ -4966,6 +4966,11 @@
                              (return (ref.i31 (i32.shl (local.get $r) (i32.const 1))))))))
               (unreachable))
 
+         (func $system-big-endian? (type $Prim0) (result (ref eq))
+               ;; WebAssembly's linear memory is defined as little-endian,
+               ;; so WebRacket always reports a little-endian system.
+               (global.get $false))
+
          ;;;
          ;;;  4.3.4 Fixnums
          ;;;

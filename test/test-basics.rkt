@@ -532,6 +532,12 @@
                      (let ([v (random -5 5)])
                        (and (exact-integer? v) (<= -5 v) (< v 5))))))
 
+       (list "4.3.2.8 Byte String Conversions"
+             (list
+              (list "system-big-endian?"
+                    (and (equal? (system-big-endian?) #f)
+                         (equal? (procedure-arity system-big-endian?) 0)))))
+
        (list "4.3.2.10 Extra Constants and Functions"
       (list
        (list "degrees->radians"
