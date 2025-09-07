@@ -169,16 +169,16 @@
                    (equal? (xor #f #f) #f)
                    (equal? (procedure-arity xor) 2)))
         (list "immutable?"
-              (and  (equal? (immutable? "a") #t)
+              (list  (equal? (immutable? "a") #t)
                     (equal? (immutable? (string-copy "a")) #f)
-                    (equal? (immutable? '#(1 2)) #t)
+                    (equal? (immutable? '#(1 2)) #t)            ; todo: make quoted byte string immutable
                     (equal? (immutable? (make-vector 2 0)) #f)
                     (equal? (immutable? (bytes 1 2)) #f)
                     (equal? (immutable? (make-bytes 2 0)) #f)
                     (equal? (immutable? (make-hasheq)) #f)
                     (equal? (immutable? (box 5)) #f))))
         (list "Mutability Predicates"
-              (and (equal? (immutable-string? "hi") #t)
+              (list (equal? (immutable-string? "hi") #t)
                    (equal? (mutable-string? (string-copy "hi")) #t)
                    (equal? (mutable-string? "hi") #f)
                    (equal? (immutable-string? (string-copy "hi")) #f)
@@ -191,12 +191,11 @@
                    (equal? (mutable-vector? #(1 2)) #f)
                    (equal? (immutable-vector? (vector 1 2)) #f)
                    (equal? (mutable-box? (box 1)) #t)
-                   (equal? (immutable-box? (box 1)) #f)
+                   (equal? (immutable-box? (box 1)) #f)             ; todo: add immutability flag to boxes
                    (equal? (mutable-box? 1) #f)
                    (equal? (immutable-box? 1) #f)
                    (equal? (mutable-hash? (make-empty-hasheq)) #t)
-                   (equal? (immutable-hash? (make-empty-hasheq)) #f)))
-        )
+                   (equal? (immutable-hash? (make-empty-hasheq)) #f))))
  
  (list "4.3 Numbers"
        (list "4.3.1 Number Types"
