@@ -416,7 +416,7 @@
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list*
-  filter partition remove
+  filter partition remove drop-common-prefix
   make-list
    build-list
    argmax argmin
@@ -3135,6 +3135,7 @@
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
           [(remove)                     (inline-prim/optional sym ae1 2 3)]
+          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
           [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
           [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]

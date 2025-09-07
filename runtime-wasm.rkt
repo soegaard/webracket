@@ -11813,6 +11813,81 @@
                (unreachable))
 
 
+        (func $drop-common-prefix (type $Prim3)
+              (param $l (ref eq))
+              (param $r (ref eq))
+              (param $same? (ref eq))
+              (result (ref eq))
+
+              (local $lcur   (ref eq))
+              (local $rcur   (ref eq))
+              (local $lpair  (ref $Pair))
+              (local $rpair  (ref $Pair))
+              (local $lelem  (ref eq))
+              (local $relem  (ref eq))
+              (local $args   (ref $Args))
+              (local $res    (ref eq))
+              (local $use-proc i32)
+
+              ;; Handle optional comparator
+              (if (ref.eq (local.get $same?) (global.get $missing))
+                  (then (local.set $use-proc (i32.const 0)))
+                  (else
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                             (unreachable))
+                       (else))
+                   (local.set $use-proc (i32.const 1))))
+
+              ;; Iterate through lists, dropping common prefix
+              (local.set $lcur (local.get $l))
+              (local.set $rcur (local.get $r))
+              (loop $loop
+                    (if (ref.eq (local.get $lcur) (global.get $null))
+                        (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur)))))
+                    (if (ref.eq (local.get $rcur) (global.get $null))
+                        (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur)))))
+
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $lcur)))
+                        (then (call $raise-pair-expected (local.get $lcur))
+                              (unreachable)))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $rcur)))
+                        (then (call $raise-pair-expected (local.get $rcur))
+                              (unreachable)))
+
+                    (local.set $lpair (ref.cast (ref $Pair) (local.get $lcur)))
+                    (local.set $rpair (ref.cast (ref $Pair) (local.get $rcur)))
+                    (local.set $lelem (struct.get $Pair $a (local.get $lpair)))
+                    (local.set $relem (struct.get $Pair $a (local.get $rpair)))
+
+                    (block $same
+                           (if (i32.eqz (local.get $use-proc))
+                               (then
+                                (if (ref.eq (call $equal? (local.get $lelem) (local.get $relem))
+                                            (global.get $false))
+                                    (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur))))
+                                    (else (br $same))))
+                               (else
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (ref.cast (ref $Procedure) (local.get $same?))
+                                                     (block (result (ref $Args))
+                                                            (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+                                                            (array.set $Args (local.get $args) (i32.const 0) (local.get $lelem))
+                                                            (array.set $Args (local.get $args) (i32.const 1) (local.get $relem))
+                                                            (local.get $args))
+                                                     (struct.get $Procedure $invoke
+                                                                (ref.cast (ref $Procedure) (local.get $same?)))))
+                                (if (ref.eq (local.get $res) (global.get $false))
+                                    (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur))))
+                                    (else (br $same)))))
+
+                    (local.set $lcur (struct.get $Pair $d (local.get $lpair)))
+                    (local.set $rcur (struct.get $Pair $d (local.get $rpair)))
+                    (br $loop))
+              (unreachable))
+
+
 
 
          ;;;

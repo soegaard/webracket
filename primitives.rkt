@@ -367,9 +367,10 @@ bytes->string/utf-8
  ; foldl
  ; foldr
 
- filter
- partition
- remove
+filter
+partition
+remove
+ drop-common-prefix
  ; remq
  ; remv
  ; remw
