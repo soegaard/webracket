@@ -428,6 +428,11 @@
 
   ;; BOOLEANS
   boolean? boolean=? false? not xor immutable?
+  mutable-string? immutable-string?
+  mutable-bytes? immutable-bytes?
+  mutable-vector? immutable-vector?
+  mutable-box? immutable-box?
+  mutable-hash? immutable-hash?
 
   ;; CHARACTERS
   char?

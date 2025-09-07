@@ -176,7 +176,27 @@
                     (equal? (immutable? (bytes 1 2)) #f)
                     (equal? (immutable? (make-bytes 2 0)) #f)
                     (equal? (immutable? (make-hasheq)) #f)
-                    (equal? (immutable? (box 5)) #f)))))
+                    (equal? (immutable? (box 5)) #f))))
+        (list "Mutability Predicates"
+              (and (equal? (immutable-string? "hi") #t)
+                   (equal? (mutable-string? (string-copy "hi")) #t)
+                   (equal? (mutable-string? "hi") #f)
+                   (equal? (immutable-string? (string-copy "hi")) #f)
+                   (equal? (immutable-bytes? #"ab") #t)
+                   (equal? (mutable-bytes? (bytes 1 2)) #t)
+                   (equal? (mutable-bytes? #"ab") #f)
+                   (equal? (immutable-bytes? (bytes 1 2)) #f)
+                   (equal? (immutable-vector? #(1 2)) #t)
+                   (equal? (mutable-vector? (vector 1 2)) #t)
+                   (equal? (mutable-vector? #(1 2)) #f)
+                   (equal? (immutable-vector? (vector 1 2)) #f)
+                   (equal? (mutable-box? (box 1)) #t)
+                   (equal? (immutable-box? (box 1)) #f)
+                   (equal? (mutable-box? 1) #f)
+                   (equal? (immutable-box? 1) #f)
+                   (equal? (mutable-hash? (make-empty-hasheq)) #t)
+                   (equal? (immutable-hash? (make-empty-hasheq)) #f)))
+        )
  
  (list "4.3 Numbers"
        (list "4.3.1 Number Types"
