@@ -176,7 +176,8 @@
                     (equal? (immutable? (bytes 1 2)) #f)
                     (equal? (immutable? (make-bytes 2 0)) #f)
                     (equal? (immutable? (make-hasheq)) #f)
-                    (equal? (immutable? (box 5)) #f))))
+                    (equal? (immutable? (box 5)) #f)
+                    (equal? (immutable? #&1) #t))))
         (list "Mutability Predicates"
               (and (equal? (immutable-string? "hi") #t)
                    (equal? (mutable-string? (string-copy "hi")) #t)
@@ -192,6 +193,8 @@
                    (equal? (immutable-vector? (vector 1 2)) #f)
                    (equal? (mutable-box? (box 1)) #t)
                    (equal? (immutable-box? (box 1)) #f)
+                   (equal? (mutable-box? #&1) #f)
+                   (equal? (immutable-box? #&1) #t)
                    (equal? (mutable-box? 1) #f)
                    (equal? (immutable-box? 1) #f)
                    (equal? (mutable-hash? (make-empty-hasheq)) #t)
