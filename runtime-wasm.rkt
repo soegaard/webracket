@@ -2498,9 +2498,9 @@
          ;;; Boolean Aliases
          ;; [ ] true
          ;; [ ] false
-         ;; [ ] symbol=?
-         ;; [ ] boolean=?
-         ;; [ ] false?
+        ;; [ ] symbol=?
+        ;; [x] boolean=?
+        ;; [x] false?
          ;; [ ] nand
          ;; [ ] nor
          ;; [ ] implies
@@ -2556,10 +2556,16 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.eq (local.get $v) (global.get $false))
-                   (then (global.get $true))
+        (func $false? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq))
+                  (ref.eq (local.get $v) (global.get $false))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq))
+                  (ref.eq (local.get $v) (global.get $false))
+                  (then (global.get $true))
                    (else (global.get $false))))
 
         (func $xor (type $Prim2) (param $b1 (ref eq)) (param $b2 (ref eq)) (result (ref eq))

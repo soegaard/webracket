@@ -47,6 +47,7 @@
  not
  boolean?
  boolean=?
+ false?
  xor
  immutable?
 
