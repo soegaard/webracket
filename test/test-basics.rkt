@@ -540,10 +540,10 @@
                     (and (bytes=? (real->floating-point-bytes 1.0 8 #t)
                                     #"\x3f\xf0\x00\x00\x00\x00\x00\x00")
                          (bytes=? (real->floating-point-bytes 1.0 8 #f)
-                                    #"\x00\x00\x00\x00\x00\x00\xf0\x3f")))))
+                                    #"\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
               (list "system-big-endian?"
                     (and (equal? (system-big-endian?) #f)
-                         (equal? (procedure-arity system-big-endian?) 0)))))
+                         (equal? (procedure-arity system-big-endian?) 0))))
 
        (list "4.3.2.10 Extra Constants and Functions"
              (list
