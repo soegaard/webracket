@@ -157,6 +157,11 @@
                    (equal? (boolean=? #t #f) #f)
                    (equal? (boolean=? #f #f) #t)
                    (equal? (procedure-arity boolean=?) 2)))
+        (list "false?"
+              (and (equal? (false? #f) #t)
+                   (equal? (false? #t) #f)
+                   (equal? (false? 0)  #f)
+                   (equal? (procedure-arity false?) 1)))
         (list "xor"
               (and (equal? (xor 11 #f) 11)
                    (equal? (xor #f 22) 22)
