@@ -529,8 +529,16 @@
                        (and (exact-integer? v) (<= 0 v) (< v 5))))
                (list "random k edge" (= (random 1) 0))
                (list "random min max"
-                     (let ([v (random -5 5)])
-                       (and (exact-integer? v) (<= -5 v) (< v 5))))))
+               (let ([v (random -5 5)])
+                      (and (exact-integer? v) (<= -5 v) (< v 5))))))
+
+       (list "4.3.2.8 Byte Conversions"
+             (list
+              (list "real->floating-point-bytes"
+                    (and (bytes=? (real->floating-point-bytes 1.0 8 #t)
+                                    #"\x3f\xf0\x00\x00\x00\x00\x00\x00")
+                         (bytes=? (real->floating-point-bytes 1.0 8 #f)
+                                    #"\x00\x00\x00\x00\x00\x00\xf0\x3f")))))
 
        (list "4.3.2.10 Extra Constants and Functions"
       (list
