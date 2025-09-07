@@ -152,6 +152,12 @@
                    (equal? (boolean? 0)   #f)
                    (equal? (boolean? '()) #f)
                    (equal? (procedure-arity boolean?) 1)))
+        (list "xor"
+              (and (equal? (xor 11 #f) 11)
+                   (equal? (xor #f 22) 22)
+                   (equal? (xor 11 22) #f)
+                   (equal? (xor #f #f) #f)
+                   (equal? (procedure-arity xor) 2)))
         (list "immutable?"
               (and  (equal? (immutable? "a") #t)
                     (equal? (immutable? (string-copy "a")) #f)
