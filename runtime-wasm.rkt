@@ -10274,11 +10274,14 @@
                              (global.get $false)      ;; a = null
                              (global.get $false)))    ;; d = null
          
-         ;; Pair related exceptions         
-         (func $raise-pair-expected (param $x (ref eq)) (unreachable))
-         (func $raise-bad-list-ref-index
-               (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
-               (unreachable))
+        ;; Pair related exceptions
+        (func $raise-pair-expected (param $x (ref eq)) (unreachable))
+        (func $raise-bad-list-ref-index
+              (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
+              (unreachable))
+        (func $raise-bad-list-set-index
+              (param $xs (ref eq)) (param $i i32) (param $len i32)
+              (unreachable))
           (func $pair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                 (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
                     (then (global.get $true))
@@ -10533,6 +10536,97 @@
                     (unreachable)))
 
                (call $list-tail/checked (local.get $pair) (local.get $idx)))
+
+        ;; list-set/checked: xs is a Pair and i >= 0 within bounds.
+        ;; Returns a new list with the element at index i replaced by v.
+        (func $list-set/checked
+              (param $xs (ref $Pair))
+              (param $i  i32)
+              (param $v  (ref eq))
+              (result    (ref eq))
+              
+              (local $p      (ref $Pair))
+              (local $k      i32)
+              (local $next   (ref eq))
+              (local $rev    (ref eq))
+              (local $len    i32)
+              (local $tail   (ref eq))
+              (local $res    (ref eq))
+              (local $prefix (ref eq))
+
+              (local.set $p   (local.get $xs))
+              (local.set $k   (local.get $i))
+              (local.set $rev (global.get $null))
+
+              (loop $loop
+                    (if (i32.eqz (local.get $k))
+                        (then
+                         (local.set $tail (struct.get $Pair $d (local.get $p)))
+                         (local.set $res
+                                    (struct.new $Pair (i32.const 0)
+                                                (local.get $v) (local.get $tail)))
+                         (local.set $prefix (local.get $rev))
+                         (loop $rebuild
+                               (if (ref.eq (local.get $prefix) (global.get $null))
+                                   (then (return (local.get $res))))
+                               (local.set $res
+                                          (struct.new $Pair (i32.const 0)
+                                                      (struct.get $Pair $a
+                                                                  (ref.cast (ref $Pair)
+                                                                            (local.get $prefix)))
+                                                      (local.get $res)))
+                               (local.set $prefix
+                                          (struct.get $Pair $d
+                                                      (ref.cast (ref $Pair)
+                                                                (local.get $prefix))))
+                               (br $rebuild))))
+                    (local.set $rev
+                               (struct.new $Pair (i32.const 0)
+                                           (struct.get $Pair $a (local.get $p))
+                                           (local.get $rev)))
+                    (local.set $next (struct.get $Pair $d (local.get $p)))
+                    (if (ref.test (ref $Pair) (local.get $next))
+                        (then
+                         (local.set $p (ref.cast (ref $Pair) (local.get $next)))
+                         (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+                         (br $loop))
+                        (else
+                         (local.set $len
+                                    (i32.add (i32.sub (local.get $i) (local.get $k))
+                                             (i32.const 1)))
+                         (call $raise-bad-list-set-index
+                               (local.get $xs) (local.get $i) (local.get $len))
+                         (unreachable))))
+
+              (unreachable))
+
+        (func $list-set (type $Prim3)
+              (param $xs (ref eq))
+              (param $i  (ref eq))
+              (param $v  (ref eq))
+              (result    (ref eq))
+              
+              (local $idx  i32)
+              (local $pair (ref $Pair))
+
+              ;; Decode & check fixnum index
+              (if (ref.test (ref i31) (local.get $i))
+                  (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                        (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $i))))
+                        (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $i))))
+
+              ;; Ensure non-empty proper list
+              (if (ref.eq (local.get $xs) (global.get $null))
+                  (then (call $raise-bad-list-set-index
+                              (local.get $xs) (local.get $idx) (i32.const 0))
+                        (unreachable)))
+              (if (ref.eq (call $list? (local.get $xs)) (global.get $false))
+                  (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+
+              (local.set $pair (ref.cast (ref $Pair) (local.get $xs)))
+              (call $list-set/checked (local.get $pair) (local.get $idx) (local.get $v)))
 
 
          (func $append (type $Prim>=0)
@@ -12066,6 +12160,87 @@
                                     (then (return (array.new_fixed $Values 2 (local.get $lcur) (local.get $rcur))))
                                     (else (br $same))))))
 
+                    (local.set $lcur (struct.get $Pair $d (local.get $lpair)))
+                    (local.set $rcur (struct.get $Pair $d (local.get $rpair)))
+                    (br $loop))
+              (unreachable))
+
+        (func $split-common-prefix (type $Prim3)
+              (param $l     (ref eq)) ; list
+              (param $r     (ref eq)) ; list
+              (param $same? (ref eq)) ; optional, defaults to equal?
+              (result       (ref eq))
+
+              (local $lcur   (ref eq))
+              (local $rcur   (ref eq))
+              (local $lpair  (ref $Pair))
+              (local $rpair  (ref $Pair))
+              (local $lelem  (ref eq))
+              (local $relem  (ref eq))
+              (local $acc    (ref eq))
+              (local $args   (ref $Args))
+              (local $res    (ref eq))
+              (local $use-proc i32)
+
+              ;; Handle optional comparator
+              (if (ref.eq (local.get $same?) (global.get $missing))
+                  (then (local.set $use-proc (i32.const 0)))
+                  (else
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                             (unreachable))
+                       (else))
+                   (local.set $use-proc (i32.const 1))))
+
+              ;; Iterate through lists, building accumulator and returning tails
+              (local.set $lcur (local.get $l))
+              (local.set $rcur (local.get $r))
+              (local.set $acc (global.get $null))
+              (loop $loop
+                    (if (ref.eq (local.get $lcur) (global.get $null))
+                        (then (return (array.new_fixed $Values 3 (call $reverse (local.get $acc))
+                                                          (local.get $lcur) (local.get $rcur)))))
+                    (if (ref.eq (local.get $rcur) (global.get $null))
+                        (then (return (array.new_fixed $Values 3 (call $reverse (local.get $acc))
+                                                          (local.get $lcur) (local.get $rcur)))))
+
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $lcur)))
+                        (then (call $raise-pair-expected (local.get $lcur))
+                              (unreachable)))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $rcur)))
+                        (then (call $raise-pair-expected (local.get $rcur))
+                              (unreachable)))
+
+                    (local.set $lpair (ref.cast (ref $Pair) (local.get $lcur)))
+                    (local.set $rpair (ref.cast (ref $Pair) (local.get $rcur)))
+                    (local.set $lelem (struct.get $Pair $a (local.get $lpair)))
+                    (local.set $relem (struct.get $Pair $a (local.get $rpair)))
+
+                    (block $same
+                           (if (i32.eqz (local.get $use-proc))
+                               (then
+                                (if (ref.eq (call $equal? (local.get $lelem) (local.get $relem))
+                                            (global.get $false))
+                                    (then (return (array.new_fixed $Values 3 (call $reverse (local.get $acc))
+                                                               (local.get $lcur) (local.get $rcur))))
+                                    (else (br $same))))
+                               (else
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (ref.cast (ref $Procedure) (local.get $same?))
+                                                     (block (result (ref $Args))
+                                                            (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+                                                            (array.set $Args (local.get $args) (i32.const 0) (local.get $lelem))
+                                                            (array.set $Args (local.get $args) (i32.const 1) (local.get $relem))
+                                                            (local.get $args))
+                                                     (struct.get $Procedure $invoke
+                                                                (ref.cast (ref $Procedure) (local.get $same?)))))
+                                (if (ref.eq (local.get $res) (global.get $false))
+                                    (then (return (array.new_fixed $Values 3 (call $reverse (local.get $acc))
+                                                               (local.get $lcur) (local.get $rcur))))
+                                    (else (br $same))))))
+
+                    (local.set $acc (call $cons (local.get $lelem) (local.get $acc)))
                     (local.set $lcur (struct.get $Pair $d (local.get $lpair)))
                     (local.set $rcur (struct.get $Pair $d (local.get $rpair)))
                     (br $loop))

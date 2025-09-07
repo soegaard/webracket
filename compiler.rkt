@@ -408,7 +408,7 @@
   pair? cons? null? empty?
   cons car cdr
   list              ; not first order yet
-  list? length list-ref list-tail list-update
+  list? length list-ref list-tail list-set list-update
   first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth last last-pair
   append ; variadic list primitive
   flatten
@@ -416,7 +416,7 @@
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list*
-  filter partition remove take-common-prefix drop-common-prefix
+  filter partition remove take-common-prefix drop-common-prefix split-common-prefix
   make-list
    build-list
    argmax argmin
@@ -3138,6 +3138,7 @@
           [(remove)                     (inline-prim/optional sym ae1 2 3)]
           [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
           [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
+          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
           [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
           [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]

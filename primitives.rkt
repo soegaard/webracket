@@ -340,6 +340,7 @@ bytes->string/utf-8
  list-ref
  list-tail
  list-update
+ list-set
  first
  second
  third
@@ -374,6 +375,7 @@ partition
 remove
 take-common-prefix
 drop-common-prefix
+split-common-prefix
  ; remq
  ; remv
  ; remw

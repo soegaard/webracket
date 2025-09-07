@@ -1262,7 +1262,9 @@
               (and (equal? (list-update '(zero one two) 1 symbol->string)
                            '(zero "one" two))
                    (equal? (procedure-arity list-update) 3)))
-
+        (list "list-set"
+              (and (equal? (list-set '(a b c d) 2 'x) '(a b x d))
+                   (equal? (procedure-arity list-set) 3)))
         (list "first"
               (and (equal? (first '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 1)
                    (equal? (procedure-arity first) 1)))
@@ -1400,6 +1402,12 @@
               (let-values ([(l r)
                             (drop-common-prefix '(a b c d) '(a b x y z))])
                 (and (equal? l '(c d))
+                     (equal? r '(x y z)))))
+        (list "split-common-prefix"
+              (let-values ([(p l r)
+                            (split-common-prefix '(a b c d) '(a b x y z))])
+                (and (equal? p '(a b))
+                     (equal? l '(c d))
                      (equal? r '(x y z)))))
         ))
 
