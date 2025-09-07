@@ -2504,7 +2504,7 @@
          ;; [ ] nand
          ;; [ ] nor
          ;; [ ] implies
-         ;; [ ] xor
+        ;; [x] xor
 
          ;;; Mutability Predicates
          ;; [ ] mutable-string?
@@ -2561,6 +2561,18 @@
                    (ref.eq (local.get $v) (global.get $false))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+        (func $xor (type $Prim2) (param $b1 (ref eq)) (param $b2 (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $b1) (global.get $false))
+                   (then (if (result (ref eq))
+                             (ref.eq (local.get $b2) (global.get $false))
+                             (then (global.get $false))
+                             (else (local.get $b2))))
+                   (else (if (result (ref eq))
+                             (ref.eq (local.get $b2) (global.get $false))
+                             (then (local.get $b1))
+                             (else (global.get $false))))))
 
          (func $immutable? (type $Prim1)
                (param $v (ref eq))

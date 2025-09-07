@@ -47,6 +47,7 @@
  not
  boolean?
  boolean=?
+ xor
  immutable?
 
  ;; 4.3 Numbers
