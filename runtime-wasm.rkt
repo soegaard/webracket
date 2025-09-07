@@ -2745,36 +2745,36 @@
 
          ;; [x] number?
          ;; [ ] complex?
-        ;; [x] real?
+         ;; [x] real?
          ;; [ ] rational?
          ;; [x] integer?
          ;; [x] exact-integer?
-        ;; [x] exact-nonnegative-integer?
-        ;; [x] exact-positive-integer?
-        ;; [x] positive-integer?
-        ;; [x] negative-integer?
-        ;; [x] nonpositive-integer?
-        ;; [x] nonnegative-integer?
-        ;; [x] natural?
-        ;; [x] nan?
-        ;; [x] infinite?
-        ;; [x] inexact-real?
-        ;; [ ] fixnum?
-        ;; [ ] flonum?
-        ;; [ ] double-flonum?
-        ;; [x] single-flonum?
-        ;; [x] single-flonum-available?
-        ;; [x] zero?
-        ;; [x] positive?
-        ;; [x] negative?
-        ;; [x] even?
-        ;; [x] odd?
-        ;; [x] exact?
-        ;; [x] inexact?
-        ;; [x] inexact->exact
-        ;; [x] exact->inexact
-        ;; [ ] real->single-flonum
-        ;; [x] real->double-flonum
+         ;; [x] exact-nonnegative-integer?
+         ;; [x] exact-positive-integer?
+         ;; [x] positive-integer?
+         ;; [x] negative-integer?
+         ;; [x] nonpositive-integer?
+         ;; [x] nonnegative-integer?
+         ;; [x] natural?
+         ;; [x] nan?
+         ;; [x] infinite?
+         ;; [x] inexact-real?
+         ;; [x] fixnum?
+         ;; [x] flonum?
+         ;; [ ] double-flonum?
+         ;; [x] single-flonum?
+         ;; [x] single-flonum-available?
+         ;; [x] zero?
+         ;; [x] positive?
+         ;; [x] negative?
+         ;; [x] even?
+         ;; [x] odd?
+         ;; [x] exact?
+         ;; [x] inexact?
+         ;; [x] inexact->exact
+         ;; [x] exact->inexact
+         ;; [ ] real->single-flonum
+         ;; [x] real->double-flonum
 
          (func $number? (type $Prim1)
                (param $v (ref eq))
