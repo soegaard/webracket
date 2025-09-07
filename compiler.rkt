@@ -427,7 +427,7 @@
   void
 
   ;; BOOLEANS
-  boolean? not immutable?
+  boolean? boolean=? not immutable?
 
   ;; CHARACTERS
   char?

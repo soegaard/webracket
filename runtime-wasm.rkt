@@ -2540,6 +2540,22 @@
                              (else (global.get $false))))
                    (else (global.get $false))))
 
+         (func $boolean=? (type $Prim2)
+               (param $x (ref eq)) (param $y (ref eq))
+               (result (ref eq))
+
+               ;; Type checks
+               (if (ref.eq (call $boolean? (local.get $x)) (global.get $false))
+                   (then (call $raise-argument-error (local.get $x)) (unreachable)))
+               (if (ref.eq (call $boolean? (local.get $y)) (global.get $false))
+                   (then (call $raise-argument-error (local.get $y)) (unreachable)))
+
+               ;; Compare booleans
+               (if (result (ref eq))
+                   (ref.eq (local.get $x) (local.get $y))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
          (func $not (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq))
                    (ref.eq (local.get $v) (global.get $false))

@@ -152,6 +152,11 @@
                    (equal? (boolean? 0)   #f)
                    (equal? (boolean? '()) #f)
                    (equal? (procedure-arity boolean?) 1)))
+        (list "boolean=?"
+              (and (equal? (boolean=? #t #t) #t)
+                   (equal? (boolean=? #t #f) #f)
+                   (equal? (boolean=? #f #f) #t)
+                   (equal? (procedure-arity boolean=?) 2)))
         (list "immutable?"
               (and  (equal? (immutable? "a") #t)
                     (equal? (immutable? (string-copy "a")) #f)

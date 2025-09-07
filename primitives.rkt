@@ -46,6 +46,7 @@
  ;; 4.2 Booleans
  not
  boolean?
+ boolean=?
  immutable?
 
  ;; 4.3 Numbers
