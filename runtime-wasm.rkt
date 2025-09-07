@@ -6762,6 +6762,26 @@
                        (then (local.set $fl (call $fx->fl/precise (local.get $x))))
                        (else (call $raise-expected-number (local.get $x)) (unreachable)))))
               (local.set $val (struct.get $Flonum $v (local.get $fl)))
+              (return_call $real->floating-point-bytes/checked
+                           (local.get $val)
+                           (local.get $size)
+                           (local.get $big)
+                           (local.get $dest)
+                           (local.get $start)))
+
+        (func $real->floating-point-bytes/checked
+              (param $val f64)
+              (param $size i32)
+              (param $big i32)
+              (param $dest (ref $Bytes))
+              (param $start i32)
+              (result (ref $Bytes))
+
+              (local $arr    (ref $I8Array))
+              (local $bits64 i64)
+              (local $bits32 i32)
+
+              (local.set $arr (struct.get $Bytes $bs (local.get $dest)))
               ;; write bytes for 8 or 4 byte result
               (if (i32.eq (local.get $size) (i32.const 8))
                   (then
