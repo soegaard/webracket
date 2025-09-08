@@ -417,7 +417,7 @@
   map andmap ormap count for-each
   list*
   cartesian-product
-  filter partition remove take-common-prefix drop-common-prefix split-common-prefix
+  filter filter-not partition remove take-common-prefix drop-common-prefix split-common-prefix
   make-list
    build-list
    argmax argmin
