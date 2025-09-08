@@ -585,7 +585,25 @@ var imports = {
         if (/\p{Cs}/u.test(s)) return 27;
         if (/\p{Co}/u.test(s)) return 28;
         return 29; // Cn
-      })
+      }),
+      'char_alphabetic': ((cp) =>
+        Number(/\p{Alphabetic}/u.test(String.fromCodePoint(cp)))),
+      'char_lower_case': ((cp) =>
+        Number(/\p{Lowercase}/u.test(String.fromCodePoint(cp)))),
+      'char_upper_case': ((cp) =>
+        Number(/\p{Uppercase}/u.test(String.fromCodePoint(cp)))),
+      'char_title_case': ((cp) =>
+        Number(/\p{gc=Lt}/u.test(String.fromCodePoint(cp)))),
+      'char_numeric': ((cp) =>
+        Number(/\p{Number}/u.test(String.fromCodePoint(cp)))),
+      'char_symbolic': ((cp) =>
+        Number(/\p{gc=Sm}|\p{gc=Sc}|\p{gc=Sk}|\p{gc=So}/u.test(String.fromCodePoint(cp)))),
+      'char_punctuation': ((cp) =>
+        Number(/\p{gc=Pc}|\p{gc=Pd}|\p{gc=Ps}|\p{gc=Pe}|\p{gc=Pi}|\p{gc=Pf}|\p{gc=Po}/u.test(String.fromCodePoint(cp)))),
+      'char_graphic': ((cp) =>
+        Number(/\p{gc=Ll}|\p{gc=Lm}|\p{gc=Lo}|\p{gc=Lt}|\p{gc=Lu}|\p{gc=Nd}|\p{gc=Nl}|\p{gc=No}|\p{gc=Mn}|\p{gc=Mc}|\p{gc=Me}|\p{Alphabetic}|\p{Number}|\p{gc=Sm}|\p{gc=Sc}|\p{gc=Sk}|\p{gc=So}|\p{gc=Pc}|\p{gc=Pd}|\p{gc=Ps}|\p{gc=Pe}|\p{gc=Pi}|\p{gc=Pf}|\p{gc=Po}/u.test(String.fromCodePoint(cp)))),
+      'char_extended_pictographic': ((cp) =>
+        Number(/\p{Extended_Pictographic}/u.test(String.fromCodePoint(cp))))
     },
     'standard': {
       'global-this':               (() => globalThis),

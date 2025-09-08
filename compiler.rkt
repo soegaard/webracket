@@ -455,8 +455,19 @@
   char-ci>?           ; variadic
   char-ci>=?          ; variadic
   ; char predicates
+  char-alphabetic?
+  char-lower-case?
+  char-upper-case?
+  char-title-case?
+  char-numeric?
+  char-symbolic?
+  char-punctuation?
+  char-graphic?
   char-whitespace?
   char-general-category
+  char-blank?
+  char-iso-control?
+  char-extended-pictographic?
 
   eq?
   eqv?
