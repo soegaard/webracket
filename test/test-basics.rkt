@@ -1494,6 +1494,14 @@
         (list "argmin"
               (and (equal? (argmin car '((3 pears) (1 banana) (2 apples))) '(1 banana))
                    (equal? (argmin car '((1 banana) (1 orange))) '(1 banana))))
+        (list "cartesian-product"
+              (and (equal? (cartesian-product) '(()))
+                   (equal? (cartesian-product '(1 2) '(a b))
+                           '((1 a) (1 b) (2 a) (2 b)))
+                   (equal? (cartesian-product '(1 2 3))
+                           '((1) (2) (3)))
+                   (equal? (cartesian-product '(1 2) '()) '())
+                   (equal? (procedure-arity cartesian-product) -1)))
         (list "take-common-prefix"
               (equal? (take-common-prefix '(a b c d) '(a b x y z)) '(a b)))
         (list "drop-common-prefix"
