@@ -295,7 +295,7 @@ bytes=?
 bytes->string/utf-8
 
  ;; 4.6 Characters
- char? char->integer integer->char
+ char? char->integer integer->char char-utf-8-length
  char=? char<? char<=? char>? char>=?
  char-downcase char-foldcase char-titlecase char-upcase
  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?
