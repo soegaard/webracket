@@ -4908,9 +4908,65 @@
               ;; --- Compute ---
               (if (result (ref eq))
                   (i32.eqz (local.get $n/i))
-                  (then (ref.i31 (i32.const -2)))
-                  (else (ref.i31 (i32.shl (i32.ctz (local.get $n/i))
+                 (then (ref.i31 (i32.const -2)))
+                 (else (ref.i31 (i32.shl (i32.ctz (local.get $n/i))
                                          (i32.const 1))))))
+
+
+        ;; NOTE: Only supports fixnum arguments; start/end must be
+        ;; non-negative fixnums and `end` must be >= `start`.
+        (func $bitwise-bit-field (type $Prim3)
+              (param $n     (ref eq))
+              (param $start (ref eq))
+              (param $end   (ref eq))
+              (result       (ref eq))
+
+              (local $n/fx     i32)
+              (local $start/fx i32)
+              (local $end/fx   i32)
+              (local $n/i      i32)
+              (local $start/i  i32)
+              (local $end/i    i32)
+              (local $width    i32)
+              (local $mask     i32)
+              (local $shifted  i32)
+
+              ;; --- Validate inputs ---
+              (if (i32.eqz (call $fx?/i32 (local.get $n)))
+                  (then (call $raise-expected-number (local.get $n)) (unreachable)))
+              (if (i32.eqz (call $fx?/i32 (local.get $start)))
+                  (then (call $raise-expected-number (local.get $start)) (unreachable)))
+              (if (i32.eqz (call $fx?/i32 (local.get $end)))
+                  (then (call $raise-expected-number (local.get $end)) (unreachable)))
+
+              ;; --- Extract values ---
+              (local.set $n/fx     (i31.get_s (ref.cast (ref i31) (local.get $n))))
+              (local.set $start/fx (i31.get_s (ref.cast (ref i31) (local.get $start))))
+              (local.set $end/fx   (i31.get_s (ref.cast (ref i31) (local.get $end))))
+              (local.set $n/i      (i32.shr_s (local.get $n/fx) (i32.const 1)))
+              (local.set $start/i  (i32.shr_s (local.get $start/fx) (i32.const 1)))
+              (local.set $end/i    (i32.shr_s (local.get $end/fx) (i32.const 1)))
+
+              ;; --- Range checks ---
+              (if (i32.lt_s (local.get $start/i) (i32.const 0))
+                  (then (call $raise-argument-error (local.get $start)) (unreachable)))
+              (if (i32.lt_s (local.get $end/i) (i32.const 0))
+                  (then (call $raise-argument-error (local.get $end)) (unreachable)))
+              (if (i32.lt_s (local.get $end/i) (local.get $start/i))
+                  (then (call $raise-argument-error (local.get $end)) (unreachable)))
+
+              ;; --- Compute width and mask ---
+              (local.set $width (i32.sub (local.get $end/i) (local.get $start/i)))
+              (local.set $mask
+                        (if (result i32) (i32.ge_u (local.get $width) (i32.const 30))
+                            (then (i32.const -1))
+                            (else (i32.sub (i32.shl (i32.const 1) (local.get $width))
+                                           (i32.const 1)))))
+
+              ;; --- Shift and mask ---
+              (local.set $shifted (i32.shr_s (local.get $n/i) (local.get $start/i)))
+              (ref.i31 (i32.shl (i32.and (local.get $shifted) (local.get $mask))
+                                 (i32.const 1))))
 
 
         ;; NOTE: Only supports fixnum arguments; bignum shifts are not implemented.

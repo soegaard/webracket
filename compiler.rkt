@@ -496,6 +496,7 @@
 
   bitwise-ior bitwise-and bitwise-xor bitwise-not bitwise-bit-set?
   bitwise-first-bit-set  ; note : added in 8.16
+  bitwise-bit-field
   arithmetic-shift
   integer-length
   random
