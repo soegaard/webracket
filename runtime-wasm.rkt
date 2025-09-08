@@ -9817,54 +9817,6 @@
 
         ;; 4.6.3 Classifications
 
-        (func $char-grapheme-break-property (type $Prim1) (param $c (ref eq)) (result (ref eq))
-              (local $i31   (ref i31))
-              (local $c/tag i32)
-              (local $cp    i32)
-              (local $prop  i32)
-              ;; Type check
-              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-              (local.set $c/tag (i31.get_u (local.get $i31)))
-              ;; Decode codepoint
-              (if (i32.ne (i32.and (local.get $c/tag)
-                                   (i32.const ,char-mask))
-                          (i32.const ,char-tag))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-              ;; Delegate to host
-              (local.set $prop
-                         (call $char-grapheme-break-property/ucs (local.get $cp)))
-              (block $ret (result (ref eq))
-                (if (i32.eq (local.get $prop) (i32.const 1))
-                    (then (br $ret (global.get $symbol:CR))))
-                (if (i32.eq (local.get $prop) (i32.const 2))
-                    (then (br $ret (global.get $symbol:LF))))
-                (if (i32.eq (local.get $prop) (i32.const 3))
-                    (then (br $ret (global.get $symbol:Control))))
-                (if (i32.eq (local.get $prop) (i32.const 4))
-                    (then (br $ret (global.get $symbol:Extend))))
-                (if (i32.eq (local.get $prop) (i32.const 5))
-                    (then (br $ret (global.get $symbol:ZWJ))))
-                (if (i32.eq (local.get $prop) (i32.const 6))
-                    (then (br $ret (global.get $symbol:Regional_Indicator))))
-                (if (i32.eq (local.get $prop) (i32.const 7))
-                    (then (br $ret (global.get $symbol:Prepend))))
-                (if (i32.eq (local.get $prop) (i32.const 8))
-                    (then (br $ret (global.get $symbol:SpacingMark))))
-                (if (i32.eq (local.get $prop) (i32.const 9))
-                    (then (br $ret (global.get $symbol:L))))
-                (if (i32.eq (local.get $prop) (i32.const 10))
-                    (then (br $ret (global.get $symbol:V))))
-                (if (i32.eq (local.get $prop) (i32.const 11))
-                    (then (br $ret (global.get $symbol:T))))
-                (if (i32.eq (local.get $prop) (i32.const 12))
-                    (then (br $ret (global.get $symbol:LV))))
-                (if (i32.eq (local.get $prop) (i32.const 13))
-                    (then (br $ret (global.get $symbol:LVT))))
-                (br $ret (global.get $symbol:Other))))
-
         ,@(for/list ([name+imp
                       (in-list '(( $char-alphabetic?    $char-alphabetic?/ucs)
                                  ( $char-lower-case?    $char-lower-case?/ucs)
@@ -9895,76 +9847,6 @@
                        (call ,imp (local.get $cp))
                        (then (global.get $true))
                        (else (global.get $false)))))
-
-        (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
-              (local $i31   (ref i31))
-              (local $c/tag i32)
-              (local $cp    i32)
-              ;; Type check
-              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-              (local.set $c/tag (i31.get_u (local.get $i31)))
-              ;; Decode codepoint
-              (if (i32.ne (i32.and (local.get $c/tag)
-                                   (i32.const ,char-mask))
-                          (i32.const ,char-tag))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-              ;; Delegate
-              (call $char-whitespace?/ucs (local.get $cp)))
-
-        (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
-                  (then (return (global.get $true))))
-              ;; U+0009..000D: tab, newline, vtab, formfeed, return
-              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
-                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
-                            (then (return (global.get $true))))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
-                  (then (return (global.get $true))))
-              ;; U+2000–U+200A
-              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
-                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
-                            (then (return (global.get $true))))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
-                  (then (return (global.get $true))))
-              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
-                  (then (return (global.get $true))))
-              (global.get $false))
-
-        (func $char-general-category (type $Prim1)
-              (param $c (ref eq))
-              (result   (ref eq))
-
-              (local $i31   (ref i31))
-              (local $c/tag i32)
-              (local $cp    i32)
-              (local $idx   i32)
-
-              ;; Type check
-              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
-              (local.set $c/tag (i31.get_u (local.get $i31)))
-              (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
-                          (i32.const ,char-tag))
-                  (then (call $raise-check-char (local.get $c))))
-              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-              ;; Delegate to host
-              (local.set $idx (call $char-general-category/ucs (local.get $cp)))
-              ;; Lookup symbol
-              (array.get $Array (global.get $char-general-category-symbols) (local.get $idx)))
 
         (func $char-blank? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
@@ -10046,6 +9928,127 @@
                   (call $char-extended-pictographic?/ucs (local.get $cp))
                   (then (global.get $true))
                   (else (global.get $false))))
+
+        (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate
+              (call $char-whitespace?/ucs (local.get $cp)))
+
+        (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+                  (then (return (global.get $true))))
+              ;; U+0009..000D: tab, newline, vtab, formfeed, return
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\return)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\tab)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u0085))) ; NEXT LINE (NEL)
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0))) ; NO-BREAK SPACE (NBSP)
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680))) ; OGHAM SPACE MARK
+                  (then (return (global.get $true))))
+              ;; U+2000–U+200A
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2028))) ; LINE SEPARATOR
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u2029))) ; PARAGRAPH SEPARATOR
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F))) ; NARROW NO-BREAK SPACE
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F))) ; MEDIUM MATHEMATICAL SPACE
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
+                  (then (return (global.get $true))))
+              (global.get $false))
+
+        (func $char-general-category (type $Prim1)
+              (param $c (ref eq))
+              (result   (ref eq))
+
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              (local $idx   i32)
+
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate to host
+              (local.set $idx (call $char-general-category/ucs (local.get $cp)))
+              ;; Lookup symbol
+              (array.get $Array (global.get $char-general-category-symbols) (local.get $idx)))
+
+        (func $char-grapheme-break-property (type $Prim1)
+              (param $c     (ref eq))
+              (result       (ref eq))
+              
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              (local $prop  i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c)) (unreachable)))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c)) (unreachable)))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate to host
+              (local.set $prop
+                         (call $char-grapheme-break-property/ucs (local.get $cp)))
+              (block $ret (result (ref eq))
+                (if (i32.eq (local.get $prop) (i32.const 1))
+                    (then (br $ret (global.get $symbol:CR))))
+                (if (i32.eq (local.get $prop) (i32.const 2))
+                    (then (br $ret (global.get $symbol:LF))))
+                (if (i32.eq (local.get $prop) (i32.const 3))
+                    (then (br $ret (global.get $symbol:Control))))
+                (if (i32.eq (local.get $prop) (i32.const 4))
+                    (then (br $ret (global.get $symbol:Extend))))
+                (if (i32.eq (local.get $prop) (i32.const 5))
+                    (then (br $ret (global.get $symbol:ZWJ))))
+                (if (i32.eq (local.get $prop) (i32.const 6))
+                    (then (br $ret (global.get $symbol:Regional_Indicator))))
+                (if (i32.eq (local.get $prop) (i32.const 7))
+                    (then (br $ret (global.get $symbol:Prepend))))
+                (if (i32.eq (local.get $prop) (i32.const 8))
+                    (then (br $ret (global.get $symbol:SpacingMark))))
+                (if (i32.eq (local.get $prop) (i32.const 9))
+                    (then (br $ret (global.get $symbol:L))))
+                (if (i32.eq (local.get $prop) (i32.const 10))
+                    (then (br $ret (global.get $symbol:V))))
+                (if (i32.eq (local.get $prop) (i32.const 11))
+                    (then (br $ret (global.get $symbol:T))))
+                (if (i32.eq (local.get $prop) (i32.const 12))
+                    (then (br $ret (global.get $symbol:LV))))
+                (if (i32.eq (local.get $prop) (i32.const 13))
+                    (then (br $ret (global.get $symbol:LVT))))
+                (br $ret (global.get $symbol:Other))))
 
         ;; 4.6.4 Character Conversions
 
