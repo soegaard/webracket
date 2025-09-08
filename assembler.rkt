@@ -584,7 +584,7 @@ var imports = {
           return (sIndex % 28 === 0) ? 12 : 13; // LV or LVT
         }
         return 0; // Other
-      })
+      }),
       'char_general_category': ((cp) => {
         const s = String.fromCodePoint(cp);
         if (/\p{Lu}/u.test(s)) return 0;
