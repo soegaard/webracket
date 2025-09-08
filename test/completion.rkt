@@ -1148,11 +1148,13 @@
             acosh
             add1
             alt-reverse
+            always-throw
             andmap
             append
             apply
             argmax
             argmin
+            arithmetic-shift
             asin
             asinh
             atan
@@ -1163,8 +1165,11 @@
             bitwise-ior
             bitwise-not
             bitwise-xor
+            boolean=?
             boolean?
             box
+            box-immutable
+            box?
             boxed
             build-list
             build-string
@@ -1187,15 +1192,28 @@
             cdr
             ceiling
             char->integer
+            char-alphabetic?
+            char-blank?
             char-ci<=?
             char-ci<?
             char-ci=?
             char-ci>=?
             char-ci>?
             char-downcase
+            char-extended-pictographic?
             char-foldcase
+            char-general-category
+            char-grapheme-break-property
+            char-graphic?
+            char-iso-control?
+            char-lower-case?
+            char-numeric?
+            char-punctuation?
+            char-symbolic?
+            char-title-case?
             char-titlecase
             char-upcase
+            char-upper-case?
             char-whitespace?
             char<=?
             char<?
@@ -1210,6 +1228,8 @@
             count
             current-inspector
             degrees->radians
+            double-flonum?
+            drop-common-prefix
             eighth
             eleventh
             empty?
@@ -1232,6 +1252,7 @@
             external-number->flonum
             external-string->string
             external?
+            false?
             fasl->s-exp
             fifteenth
             fifth
@@ -1262,6 +1283,7 @@
             fllog
             flmax
             flmin
+            floating-point-bytes->real
             flonum?
             floor
             flround
@@ -1311,8 +1333,14 @@
             hash-remove!
             hash-set!
             hash?
+            immutable-box?
+            immutable-bytes?
+            immutable-hash?
+            immutable-string?
+            immutable-vector?
             immutable?
             inexact->exact
+            inexact-real?
             inexact?
             infinite?
             integer->char
@@ -1335,7 +1363,9 @@
             list->string
             list->vector
             list-ref
+            list-set
             list-tail
+            list-update
             list?
             log
             make-bytes
@@ -1356,6 +1386,11 @@
             modulo
             most-negative-fixnum
             most-positive-fixnum
+            mutable-box?
+            mutable-bytes?
+            mutable-hash?
+            mutable-string?
+            mutable-vector?
             namespace-set-variable-value!
             namespace-undefine-variable!
             namespace-variable-value-simple
@@ -1395,6 +1430,9 @@
             radians->degrees
             raise-unbound-variable-reference
             random
+            real->double-flonum
+            real->floating-point-bytes
+            real?
             remainder
             remove
             reverse
@@ -1406,8 +1444,11 @@
             seventh
             sgn
             sin
+            single-flonum-available?
+            single-flonum?
             sinh
             sixth
+            split-common-prefix
             sqr
             sqrt
             string
@@ -1457,6 +1498,8 @@
             symbol<?
             symbol=?
             symbol?
+            system-big-endian?
+            take-common-prefix
             tan
             tanh
             tenth
@@ -1520,9 +1563,8 @@
             void
             void?
             write-byte
+            xor
             zero?)
-
-
 
           ))
 
