@@ -650,6 +650,8 @@
 
         (func $char-general-category/ucs
               (import "primitives" "char_general_category")
+              (param i32) (result i32))
+
         (func $char-alphabetic?/ucs
               (import "primitives" "char_alphabetic")
               (param i32) (result i32))
@@ -858,7 +860,9 @@
          ;; Symbol constants used in the runtime
          ,@(declare-runtime-symbol-constants)
 
-        (global $char-general-category-symbols (mut (ref $Array)) (ref.null $Array))
+         ;; The function $char-general-category returns symbols from this array,
+         ;; based on an index computed on the host.
+         (global $char-general-category-symbols (mut (ref null $Array)) (ref.null $Array))
 
          ;; Commonly used realms
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
@@ -9871,11 +9875,15 @@
                   (then (return (global.get $true))))
               (global.get $false))
 
-        (func $char-general-category (type $Prim1) (param $c (ref eq)) (result (ref eq))
+        (func $char-general-category (type $Prim1)
+              (param $c (ref eq))
+              (result   (ref eq))
+              
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
               (local $idx   i32)
+              
               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
                           (i32.const ,char-tag))
                   (then (call $raise-check-char (local.get $c))))
