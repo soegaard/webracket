@@ -1048,6 +1048,14 @@
                    (equal? (char-whitespace? #\tab) #t)
                    (equal? (char-whitespace? #\A) #f)
                    (equal? (procedure-arity char-whitespace?) 1)))
+        (list "char-grapheme-break-property"
+              (and (equal? (char-grapheme-break-property #\a) 'Other)
+                   (equal? (char-grapheme-break-property #\return) 'CR)
+                   (equal? (char-grapheme-break-property #\newline) 'LF)
+                   (equal? (char-grapheme-break-property #\u0300) 'Extend)
+                   (equal? (char-grapheme-break-property #\u200D) 'ZWJ)
+                   (equal? (char-grapheme-break-property #\u1F1E6) 'Regional_Indicator)
+                   (equal? (procedure-arity char-grapheme-break-property) 1)))
         (list "char-upcase"
               (and (equal? (char-upcase #\a) #\A)
                    (equal? (char-upcase #\u03BB) #\u039B)

@@ -548,10 +548,40 @@ var imports = {
       }),
       'char_foldcase': ((cp) => {
         // Note: JavaScript doesn't have builtin unicode aware fold case (year 2025).
-        //       For now, we will just use lowercase.                  
+        //       For now, we will just use lowercase.
         const s = String.fromCodePoint(cp).toLowerCase();
         const arr = Array.from(s);
         return (arr.length === 1) ? arr[0].codePointAt(0) : cp;
+      }),
+      'char_grapheme_break_property': (cp => {
+        if (cp === 0x000D) return 1; // CR
+        if (cp === 0x000A) return 2; // LF
+        if ((cp >= 0x0000 && cp <= 0x001F && cp !== 0x000A && cp !== 0x000D) ||
+            (cp >= 0x007F && cp <= 0x009F)) return 3; // Control
+        if ((cp >= 0x0300 && cp <= 0x036F) ||
+            (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+            (cp >= 0x1DC0 && cp <= 0x1DFF) ||
+            (cp >= 0x20D0 && cp <= 0x20FF) ||
+            (cp >= 0xFE20 && cp <= 0xFE2F) ||
+            cp === 0x200C) return 4; // Extend
+        if (cp === 0x200D) return 5; // ZWJ
+        if (cp >= 0x1F1E6 && cp <= 0x1F1FF) return 6; // Regional Indicator
+        if ((cp >= 0x0600 && cp <= 0x0605) || cp === 0x06DD || cp === 0x070F || cp === 0x08E2)
+          return 7; // Prepend (subset)
+        if (cp === 0x0903 || cp === 0x093B ||
+            (cp >= 0x093E && cp <= 0x0940) ||
+            (cp >= 0x0949 && cp <= 0x094C) ||
+            (cp >= 0x094E && cp <= 0x094F) ||
+            (cp >= 0x0982 && cp <= 0x0983))
+          return 8; // SpacingMark (subset)
+        if ((cp >= 0x1100 && cp <= 0x115F) || (cp >= 0xA960 && cp <= 0xA97C)) return 9; // L
+        if ((cp >= 0x1160 && cp <= 0x11A7) || (cp >= 0xD7B0 && cp <= 0xD7C6)) return 10; // V
+        if ((cp >= 0x11A8 && cp <= 0x11FF) || (cp >= 0xD7CB && cp <= 0xD7FB)) return 11; // T
+        if (cp >= 0xAC00 && cp <= 0xD7A3) {
+          const sIndex = cp - 0xAC00;
+          return (sIndex % 28 === 0) ? 12 : 13; // LV or LVT
+        }
+        return 0; // Other
       })
     },
     'standard': {
