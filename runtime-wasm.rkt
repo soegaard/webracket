@@ -192,7 +192,10 @@
     ;; String and symbol constants used in the runtime
     (add-runtime-symbol-constant 'racket)
     (add-runtime-symbol-constant 'racket/primitive)
-    
+
+    (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
+      (add-runtime-symbol-constant sym))
+
     (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                "#&")
     (add-runtime-string-constant 'bytes-prefix              "#\"")
@@ -645,6 +648,8 @@
                (import "primitives" "char_foldcase")
                (param i32) (result i32))
 
+        (func $char-general-category/ucs
+              (import "primitives" "char_general_category")
         (func $char-alphabetic?/ucs
               (import "primitives" "char_alphabetic")
               (param i32) (result i32))
@@ -852,7 +857,9 @@
          ,@(declare-runtime-bytes-constants)
          ;; Symbol constants used in the runtime
          ,@(declare-runtime-symbol-constants)
-         
+
+        (global $char-general-category-symbols (mut (ref $Array)) (ref.null $Array))
+
          ;; Commonly used realms
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
@@ -9863,6 +9870,20 @@
               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
                   (then (return (global.get $true))))
               (global.get $false))
+
+        (func $char-general-category (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              (local $idx   i32)
+              (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate to host
+              (local.set $idx (call $char-general-category/ucs (local.get $cp)))
+              ;; Lookup symbol
+              (array.get $Array (global.get $char-general-category-symbols) (local.get $idx)))
 
         (func $char-blank? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
@@ -18931,6 +18952,39 @@
                      ,@(initialize-runtime-bytes-constants)
                      ;; Initialize symbol constants used in the runtime
                      ,@(initialize-runtime-symbol-constants)
+
+                     (global.set $char-general-category-symbols
+                                 (array.new_fixed $Array 30
+                                                  (global.get $symbol:lu)
+                                                  (global.get $symbol:ll)
+                                                  (global.get $symbol:lt)
+                                                  (global.get $symbol:lm)
+                                                  (global.get $symbol:lo)
+                                                  (global.get $symbol:mn)
+                                                  (global.get $symbol:mc)
+                                                  (global.get $symbol:me)
+                                                  (global.get $symbol:nd)
+                                                  (global.get $symbol:nl)
+                                                  (global.get $symbol:no)
+                                                  (global.get $symbol:ps)
+                                                  (global.get $symbol:pe)
+                                                  (global.get $symbol:pi)
+                                                  (global.get $symbol:pf)
+                                                  (global.get $symbol:pd)
+                                                  (global.get $symbol:pc)
+                                                  (global.get $symbol:po)
+                                                  (global.get $symbol:sc)
+                                                  (global.get $symbol:sm)
+                                                  (global.get $symbol:sk)
+                                                  (global.get $symbol:so)
+                                                  (global.get $symbol:zs)
+                                                  (global.get $symbol:zp)
+                                                  (global.get $symbol:zl)
+                                                  (global.get $symbol:cc)
+                                                  (global.get $symbol:cf)
+                                                  (global.get $symbol:cs)
+                                                  (global.get $symbol:co)
+                                                  (global.get $symbol:cn)))
                      
                      ;; ;; Initialize realm symbols
                      ;; (global.set $the-racket-realm
