@@ -207,6 +207,9 @@
     (add-runtime-symbol-constant 'LV)
     (add-runtime-symbol-constant 'LVT)
     
+    (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
+      (add-runtime-symbol-constant sym))
+
     (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                "#&")
     (add-runtime-string-constant 'bytes-prefix              "#\"")
@@ -665,6 +668,46 @@
               (import "primitives" "char_grapheme_break_property")
               (param i32) (result i32))
 
+        (func $char-general-category/ucs
+              (import "primitives" "char_general_category")
+              (param i32) (result i32))
+
+        (func $char-alphabetic?/ucs
+              (import "primitives" "char_alphabetic")
+              (param i32) (result i32))
+
+        (func $char-lower-case?/ucs
+              (import "primitives" "char_lower_case")
+              (param i32) (result i32))
+
+        (func $char-upper-case?/ucs
+              (import "primitives" "char_upper_case")
+              (param i32) (result i32))
+
+        (func $char-title-case?/ucs
+              (import "primitives" "char_title_case")
+              (param i32) (result i32))
+
+        (func $char-numeric?/ucs
+              (import "primitives" "char_numeric")
+              (param i32) (result i32))
+
+        (func $char-symbolic?/ucs
+              (import "primitives" "char_symbolic")
+              (param i32) (result i32))
+
+        (func $char-punctuation?/ucs
+              (import "primitives" "char_punctuation")
+              (param i32) (result i32))
+
+        (func $char-graphic?/ucs
+              (import "primitives" "char_graphic")
+              (param i32) (result i32))
+
+        (func $char-extended-pictographic?/ucs
+              (import "primitives" "char_extended_pictographic")
+              (param i32) (result i32))
+
         ;; Math functions
         (func $js-math-abs
               (import "math" "abs")
@@ -836,7 +879,11 @@
          ,@(declare-runtime-bytes-constants)
          ;; Symbol constants used in the runtime
          ,@(declare-runtime-symbol-constants)
-         
+
+         ;; The function $char-general-category returns symbols from this array,
+         ;; based on an index computed on the host.
+         (global $char-general-category-symbols (mut (ref null $Array)) (ref.null $Array))
+
          ;; Commonly used realms
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
@@ -2301,6 +2348,17 @@
                            (i32.const 0)      ;; hash = 0
                            (i32.const 1)      ;; immutable = true
                            (local.get $arr))) ;; the backing I8Array
+
+         ;;;
+         ;;; Exceptions
+         ;;;
+
+         (tag $exn (param (ref eq)))  ; an exception that that carries an value
+         
+         (func $always-throw (type $Prim0)
+               (throw $exn ,(Imm 42)))
+
+         
 
          
          ;;;
@@ -9807,6 +9865,37 @@
                     (then (br $ret (global.get $symbol:LVT))))
                 (br $ret (global.get $symbol:Other))))
 
+        ,@(for/list ([name+imp
+                      (in-list '(( $char-alphabetic?    $char-alphabetic?/ucs)
+                                 ( $char-lower-case?    $char-lower-case?/ucs)
+                                 ( $char-upper-case?    $char-upper-case?/ucs)
+                                 ( $char-title-case?    $char-title-case?/ucs)
+                                 ( $char-numeric?       $char-numeric?/ucs)
+                                 ( $char-symbolic?      $char-symbolic?/ucs)
+                                 ( $char-punctuation?   $char-punctuation?/ucs)
+                                 ( $char-graphic?       $char-graphic?/ucs)     ))])
+            (define name (car  name+imp))
+            (define imp  (cadr name+imp))
+            `(func ,name (type $Prim1) (param $c (ref eq)) (result (ref eq))
+                   (local $i31   (ref i31))
+                   (local $c/tag i32)
+                   (local $cp    i32)
+                   ;; Type check
+                   (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                       (then (call $raise-check-char (local.get $c))))
+                   (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+                   (local.set $c/tag (i31.get_u (local.get $i31)))
+                   ;; Decode codepoint
+                   (if (i32.ne (i32.and (local.get $c/tag)
+                                        (i32.const ,char-mask))
+                               (i32.const ,char-tag))
+                       (then (call $raise-check-char (local.get $c))))
+                   (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+                   (if (result (ref eq))
+                       (call ,imp (local.get $cp))
+                       (then (global.get $true))
+                       (else (global.get $false)))))
+
         (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
@@ -9824,7 +9913,7 @@
               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
               ;; Delegate
               (call $char-whitespace?/ucs (local.get $cp)))
-        
+
         (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
                   (then (return (global.get $true))))
@@ -9853,6 +9942,110 @@
               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
                   (then (return (global.get $true))))
               (global.get $false))
+
+        (func $char-general-category (type $Prim1)
+              (param $c (ref eq))
+              (result   (ref eq))
+
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              (local $idx   i32)
+
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate to host
+              (local.set $idx (call $char-general-category/ucs (local.get $cp)))
+              ;; Lookup symbol
+              (array.get $Array (global.get $char-general-category-symbols) (local.get $idx)))
+
+        (func $char-blank? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate
+              (call $char-blank?/ucs (local.get $cp)))
+
+        (func $char-blank?/ucs (param $cp i32) (result (ref eq))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\tab)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680)))
+                  (then (return (global.get $true))))
+              ;; U+2000–U+200A
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000)))
+                  (then (return (global.get $true))))
+              (global.get $false))
+
+        (func $char-iso-control? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u001F)))
+                  (then (return (global.get $true))))
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u009F)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\rubout)))
+                            (then (return (global.get $true))))))
+              (global.get $false))
+
+        (func $char-extended-pictographic? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              (if (result (ref eq))
+                  (call $char-extended-pictographic?/ucs (local.get $cp))
+                  (then (global.get $true))
+                  (else (global.get $false))))
 
         ;; 4.6.4 Character Conversions
 
@@ -18809,6 +19002,10 @@
                ;;    into the linear memory, where the host can read it.
 
                (global $result-bytes (mut (ref eq)) (ref.i31 (i32.const 0)))
+
+               (func $get-bytes (export "get_bytes")
+                     (result (ref $Bytes))
+                     (ref.cast (ref $Bytes) (global.get $result-bytes)))
                
                (func $entry (export "entry") (result i32)
                      ; Declare local variables (bound by let-values and letrec-values)
@@ -18836,6 +19033,39 @@
                      ,@(initialize-runtime-bytes-constants)
                      ;; Initialize symbol constants used in the runtime
                      ,@(initialize-runtime-symbol-constants)
+
+                     (global.set $char-general-category-symbols
+                                 (array.new_fixed $Array 30
+                                                  (global.get $symbol:lu)
+                                                  (global.get $symbol:ll)
+                                                  (global.get $symbol:lt)
+                                                  (global.get $symbol:lm)
+                                                  (global.get $symbol:lo)
+                                                  (global.get $symbol:mn)
+                                                  (global.get $symbol:mc)
+                                                  (global.get $symbol:me)
+                                                  (global.get $symbol:nd)
+                                                  (global.get $symbol:nl)
+                                                  (global.get $symbol:no)
+                                                  (global.get $symbol:ps)
+                                                  (global.get $symbol:pe)
+                                                  (global.get $symbol:pi)
+                                                  (global.get $symbol:pf)
+                                                  (global.get $symbol:pd)
+                                                  (global.get $symbol:pc)
+                                                  (global.get $symbol:po)
+                                                  (global.get $symbol:sc)
+                                                  (global.get $symbol:sm)
+                                                  (global.get $symbol:sk)
+                                                  (global.get $symbol:so)
+                                                  (global.get $symbol:zs)
+                                                  (global.get $symbol:zp)
+                                                  (global.get $symbol:zl)
+                                                  (global.get $symbol:cc)
+                                                  (global.get $symbol:cf)
+                                                  (global.get $symbol:cs)
+                                                  (global.get $symbol:co)
+                                                  (global.get $symbol:cn)))
                      
                      ;; ;; Initialize realm symbols
                      ;; (global.set $the-racket-realm
@@ -18880,9 +19110,17 @@
                          (define (Init* xs) (map Init xs))
                          (Init* entry-locals))
 
-                     
-                     ; Body
+
                      ,entry-body
+
+                     ;; Experiment: how to use exceptions in webassembly
+                     ;; (block $join #;(result (ref eq))
+                     ;;        (block $on_exn
+                     ;;               (try_table (catch $exn $on_exn)                                                               
+                     ;;                          (br $join))                 ;; send success value to the join
+                     ;;               (unreachable))                         ;; we must not fall through here
+                     ;;        ;; --- handler path (branched to end of $on_exn) ---
+                     ;;        (global.set ,result))                         ;; consumes exception (ref eq)
                      
                      ; Return the result
                      (global.set $result-bytes
@@ -18894,9 +19132,5 @@
 
                      (call $copy-bytes-to-memory ; copy and return length as i32
                            (global.get $result-bytes) (i32.const 0)))
-
-               (func $get-bytes (export "get_bytes")
-                     (result (ref $Bytes))
-                     (ref.cast (ref $Bytes) (global.get $result-bytes)))
-
+               
                ))))

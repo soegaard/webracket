@@ -585,6 +585,57 @@ var imports = {
         }
         return 0; // Other
       })
+      'char_general_category': ((cp) => {
+        const s = String.fromCodePoint(cp);
+        if (/\p{Lu}/u.test(s)) return 0;
+        if (/\p{Ll}/u.test(s)) return 1;
+        if (/\p{Lt}/u.test(s)) return 2;
+        if (/\p{Lm}/u.test(s)) return 3;
+        if (/\p{Lo}/u.test(s)) return 4;
+        if (/\p{Mn}/u.test(s)) return 5;
+        if (/\p{Mc}/u.test(s)) return 6;
+        if (/\p{Me}/u.test(s)) return 7;
+        if (/\p{Nd}/u.test(s)) return 8;
+        if (/\p{Nl}/u.test(s)) return 9;
+        if (/\p{No}/u.test(s)) return 10;
+        if (/\p{Ps}/u.test(s)) return 11;
+        if (/\p{Pe}/u.test(s)) return 12;
+        if (/\p{Pi}/u.test(s)) return 13;
+        if (/\p{Pf}/u.test(s)) return 14;
+        if (/\p{Pd}/u.test(s)) return 15;
+        if (/\p{Pc}/u.test(s)) return 16;
+        if (/\p{Po}/u.test(s)) return 17;
+        if (/\p{Sc}/u.test(s)) return 18;
+        if (/\p{Sm}/u.test(s)) return 19;
+        if (/\p{Sk}/u.test(s)) return 20;
+        if (/\p{So}/u.test(s)) return 21;
+        if (/\p{Zs}/u.test(s)) return 22;
+        if (/\p{Zp}/u.test(s)) return 23;
+        if (/\p{Zl}/u.test(s)) return 24;
+        if (/\p{Cc}/u.test(s)) return 25;
+        if (/\p{Cf}/u.test(s)) return 26;
+        if (/\p{Cs}/u.test(s)) return 27;
+        if (/\p{Co}/u.test(s)) return 28;
+        return 29; // Cn
+      }),
+      'char_alphabetic': ((cp) =>
+        Number(/\p{Alphabetic}/u.test(String.fromCodePoint(cp)))),
+      'char_lower_case': ((cp) =>
+        Number(/\p{Lowercase}/u.test(String.fromCodePoint(cp)))),
+      'char_upper_case': ((cp) =>
+        Number(/\p{Uppercase}/u.test(String.fromCodePoint(cp)))),
+      'char_title_case': ((cp) =>
+        Number(/\p{gc=Lt}/u.test(String.fromCodePoint(cp)))),
+      'char_numeric': ((cp) =>
+        Number(/\p{Number}/u.test(String.fromCodePoint(cp)))),
+      'char_symbolic': ((cp) =>
+        Number(/\p{gc=Sm}|\p{gc=Sc}|\p{gc=Sk}|\p{gc=So}/u.test(String.fromCodePoint(cp)))),
+      'char_punctuation': ((cp) =>
+        Number(/\p{gc=Pc}|\p{gc=Pd}|\p{gc=Ps}|\p{gc=Pe}|\p{gc=Pi}|\p{gc=Pf}|\p{gc=Po}/u.test(String.fromCodePoint(cp)))),
+      'char_graphic': ((cp) =>
+        Number(/\p{gc=Ll}|\p{gc=Lm}|\p{gc=Lo}|\p{gc=Lt}|\p{gc=Lu}|\p{gc=Nd}|\p{gc=Nl}|\p{gc=No}|\p{gc=Mn}|\p{gc=Mc}|\p{gc=Me}|\p{Alphabetic}|\p{Number}|\p{gc=Sm}|\p{gc=Sc}|\p{gc=Sk}|\p{gc=So}|\p{gc=Pc}|\p{gc=Pd}|\p{gc=Ps}|\p{gc=Pe}|\p{gc=Pi}|\p{gc=Pf}|\p{gc=Po}/u.test(String.fromCodePoint(cp)))),
+      'char_extended_pictographic': ((cp) =>
+        Number(/\p{Extended_Pictographic}/u.test(String.fromCodePoint(cp))))
     },
     'standard': {
       'global-this':               (() => globalThis),
@@ -1986,7 +2037,7 @@ const wasmModule
       (with-output-to-string
         (λ ()
           (set! success?
-                (system (format "/usr/local/bin/node --expose-gc ~a"
+                (system (format "/usr/local/bin/node --experimental-wasm-exnref --expose-gc ~a"
                                 runtime.js))))))
     ; 3. If there were any errors, display the error messages
     (displayln output)))
