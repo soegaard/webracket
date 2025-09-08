@@ -8985,7 +8985,7 @@
          (func $raise-string-utf-8-length:bad-argument (unreachable))
          (func $raise-string-utf-8-length:range-error (unreachable))
 
-         (func $string-utf-8-length (export "string-utf-8-length") (type $Prim3)
+         (func $string-utf-8-length (type $Prim3)
                (param $str       (ref eq))
                (param $start-raw (ref eq))   ;; fixnum or $missing
                (param $end-raw   (ref eq))   ;; fixnum or $missing
@@ -9012,13 +9012,13 @@
                    (then (local.set $start (i32.const 0)))
                    (else (if (ref.test (ref i31) (local.get $start-raw))
                              (then (local.set $start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
-                             (else (call $raise-string-utf-8-length:bad-argument))))
+                             (else (call $raise-string-utf-8-length:bad-argument)))))
                ;; --- Decode end ---
                (if (ref.eq (local.get $end-raw) (global.get $missing))
                    (then (local.set $end (local.get $len)))
                    (else (if (ref.test (ref i31) (local.get $end-raw))
                              (then (local.set $end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
-                             (else (call $raise-string-utf-8-length:bad-argument))))
+                             (else (call $raise-string-utf-8-length:bad-argument)))))
                ;; --- Range check ---
                (if (i32.or (i32.gt_u (local.get $start) (local.get $end))
                            (i32.gt_u (local.get $end) (local.get $len)))
