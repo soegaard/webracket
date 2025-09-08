@@ -437,6 +437,7 @@
   char?
   char->integer
   integer->char
+  char-utf-8-length
   ; comparisons
   char=?           ; variadic
   char<?           ; variadic

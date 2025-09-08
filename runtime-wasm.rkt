@@ -9767,7 +9767,26 @@
                ;; Pack as character: (k << (char-shift - 1)) | char-tag
                (ref.i31 (i32.or (i32.shl (local.get $k/i32) 
                                          (i32.const ,char-shift))
-                                (i32.const ,char-tag))))
+                               (i32.const ,char-tag))))
+
+         (func $char-utf-8-length (type $Prim1) (param $c (ref eq)) (result (ref eq))
+               (local $cp  i32)
+               (local $len i32)
+               ;; Returns bytes needed to encode $c in UTF-8.
+               ;; Characters are limited to U+10FFFF so result is in [1,4].
+               (local.set $cp (call $char->integer/i32 (local.get $c)))
+               (local.set $len
+                     (if (result i32)
+                         (i32.le_u (local.get $cp) (i32.const #x7F))
+                         (i32.const 1)
+                         (if (result i32)
+                             (i32.le_u (local.get $cp) (i32.const #x7FF))
+                             (i32.const 2)
+                             (if (result i32)
+                                 (i32.le_u (local.get $cp) (i32.const #xFFFF))
+                                 (i32.const 3)
+                                 (i32.const 4)))))
+               (ref.i31 (i32.shl (local.get $len) (i32.const 1))))
 
          ;; 4.6.2 Character Comparisons
 
