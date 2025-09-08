@@ -12316,7 +12316,7 @@
                      (br $loop))
                (unreachable))
 
-         (func $filter-map (type $Prim>=1)
+         (func $filter-map (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
                (param $xss  (ref eq))   ;; list of lists
                (result      (ref eq))
