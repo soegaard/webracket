@@ -275,6 +275,7 @@
  
  string->list
  string->bytes/utf-8
+ string-utf-8-length
  string->immutable-string
  
  ;; 4.5 Byte Strings
