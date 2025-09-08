@@ -456,6 +456,7 @@
   char-ci>=?          ; variadic
   ; char predicates
   char-whitespace?
+  char-grapheme-break-property
   
   eq?
   eqv?
