@@ -74,8 +74,6 @@
 ;     - The shape could be precomputed.
 ; [ ] For primitives not in original Racket, provide arity information.
 
-; [ ] Extend +, fx+ and friends to be variadic.
-
 ; [ ] Modules!
 
 ; [ ] Keyword arguments
@@ -162,7 +160,7 @@
 
 ; [ ] Parameters.
 
-; [ ] Synchronize primitives between compiler and the `webracket` language.
+; [x] Synchronize primitives between compiler and the `webracket` language.
 
 
 ; [ ] Hash tables
@@ -172,7 +170,7 @@
 
 ; [ ] Numbers
 ;      - bignums, rationals, exact, inexact 
-; [ ] Floating points.
+; [x] Floating points.
 ;      - log, exp, expt, sin, cos, ...
 ; [ ] Implement a proper flonum printing algorithm.
 
@@ -377,6 +375,8 @@
 (define-primitives
   ; call/cc ; todo remove - we use it for our test function
 
+  always-throw  ; test function: throws an exception
+  
   raise-unbound-variable-reference
   
   ; structures

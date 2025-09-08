@@ -1954,7 +1954,7 @@ const wasmModule
       (with-output-to-string
         (λ ()
           (set! success?
-                (system (format "/usr/local/bin/node --expose-gc ~a"
+                (system (format "/usr/local/bin/node --experimental-wasm-exnref --expose-gc ~a"
                                 runtime.js))))))
     ; 3. If there were any errors, display the error messages
     (displayln output)))

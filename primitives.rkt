@@ -26,7 +26,10 @@
 ;; The primitives are 
 
 (provide
+ ;; Test functions
+ always-throw ; todo - remove
 
+ 
  ;; 4.1 Equality
  eq?
  eqv?
@@ -654,3 +657,9 @@ split-common-prefix
 (define (js-log x)
   (displayln x))
 
+
+(define (always-throw)
+  (raise 42))
+
+
+  

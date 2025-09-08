@@ -2282,6 +2282,17 @@
                            (i32.const 1)      ;; immutable = true
                            (local.get $arr))) ;; the backing I8Array
 
+         ;;;
+         ;;; Exceptions
+         ;;;
+
+         (tag $exn (param (ref eq)))  ; an exception that that carries an value
+         
+         (func $always-throw (type $Prim0)
+               (throw $exn ,(Imm 42)))
+
+         
+
          
          ;;;
          ;;; DATATYPES
@@ -18741,6 +18752,10 @@
                ;;    into the linear memory, where the host can read it.
 
                (global $result-bytes (mut (ref eq)) (ref.i31 (i32.const 0)))
+
+               (func $get-bytes (export "get_bytes")
+                     (result (ref $Bytes))
+                     (ref.cast (ref $Bytes) (global.get $result-bytes)))
                
                (func $entry (export "entry") (result i32)
                      ; Declare local variables (bound by let-values and letrec-values)
@@ -18812,9 +18827,17 @@
                          (define (Init* xs) (map Init xs))
                          (Init* entry-locals))
 
-                     
-                     ; Body
+
                      ,entry-body
+
+                     ;; Experiment: how to use exceptions in webassembly
+                     ;; (block $join #;(result (ref eq))
+                     ;;        (block $on_exn
+                     ;;               (try_table (catch $exn $on_exn)                                                               
+                     ;;                          (br $join))                 ;; send success value to the join
+                     ;;               (unreachable))                         ;; we must not fall through here
+                     ;;        ;; --- handler path (branched to end of $on_exn) ---
+                     ;;        (global.set ,result))                         ;; consumes exception (ref eq)
                      
                      ; Return the result
                      (global.set $result-bytes
@@ -18826,9 +18849,5 @@
 
                      (call $copy-bytes-to-memory ; copy and return length as i32
                            (global.get $result-bytes) (i32.const 0)))
-
-               (func $get-bytes (export "get_bytes")
-                     (result (ref $Bytes))
-                     (ref.cast (ref $Bytes) (global.get $result-bytes)))
-
+               
                ))))
