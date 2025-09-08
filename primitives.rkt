@@ -156,6 +156,7 @@
   bitwise-not
   bitwise-bit-set?
   bitwise-first-bit-set  ; added in version 8.16
+  bitwise-bit-field
   arithmetic-shift
   integer-length
   random
