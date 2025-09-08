@@ -454,6 +454,7 @@
   char-ci<=?          ; variadic
   char-ci>?           ; variadic
   char-ci>=?          ; variadic
+
   ; char predicates
   char-alphabetic?
   char-lower-case?
@@ -464,6 +465,7 @@
   char-punctuation?
   char-graphic?
   char-whitespace?
+  char-grapheme-break-property
   char-general-category
   char-blank?
   char-iso-control?

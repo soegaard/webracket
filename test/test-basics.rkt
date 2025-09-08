@@ -1089,6 +1089,22 @@
                    (equal? (char-whitespace? #\A) #f)
                    (equal? (procedure-arity char-whitespace?) 1)))
 
+        (list "char-grapheme-break-property"
+              (and (equal? (char-grapheme-break-property #\a) 'Other)
+                   (equal? (char-grapheme-break-property #\return) 'CR)
+                   (equal? (char-grapheme-break-property #\newline) 'LF)
+                   (equal? (char-grapheme-break-property #\u0300) 'Extend)
+                   (equal? (char-grapheme-break-property #\u200D) 'ZWJ)
+                   (equal? (char-grapheme-break-property #\u1F1E6) 'Regional_Indicator)
+                   (equal? (char-grapheme-break-property #\u0600) 'Prepend)
+                   (equal? (char-grapheme-break-property #\u0903) 'SpacingMark)
+                   (equal? (char-grapheme-break-property #\u1100) 'L)
+                   (equal? (char-grapheme-break-property #\u1161) 'V)
+                   (equal? (char-grapheme-break-property #\u11A8) 'T)
+                   (equal? (char-grapheme-break-property #\uAC00) 'LV)
+                   (equal? (char-grapheme-break-property #\uAC01) 'LVT)
+                   (equal? (procedure-arity char-grapheme-break-property) 1)))
+
         (list "char-general-category"
               (and (equal? (char-general-category #\A) 'lu)
                    (equal? (char-general-category #\a) 'll)
