@@ -456,7 +456,8 @@
   char-ci>=?          ; variadic
   ; char predicates
   char-whitespace?
-  
+  char-general-category
+
   eq?
   eqv?
   equal?

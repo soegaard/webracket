@@ -1048,6 +1048,12 @@
                    (equal? (char-whitespace? #\tab) #t)
                    (equal? (char-whitespace? #\A) #f)
                    (equal? (procedure-arity char-whitespace?) 1)))
+        (list "char-general-category"
+              (and (equal? (char-general-category #\A) 'lu)
+                   (equal? (char-general-category #\a) 'll)
+                   (equal? (char-general-category #\1) 'nd)
+                   (equal? (char-general-category #\space) 'zs)
+                   (equal? (procedure-arity char-general-category) 1)))
         (list "char-upcase"
               (and (equal? (char-upcase #\a) #\A)
                    (equal? (char-upcase #\u03BB) #\u039B)
