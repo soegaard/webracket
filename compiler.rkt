@@ -416,6 +416,7 @@
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list*
+  cartesian-product
   filter partition remove take-common-prefix drop-common-prefix split-common-prefix
   make-list
    build-list
@@ -3243,6 +3244,9 @@
              [(list v)      v]
              [(list v1 v2)  `(call $append/2 ,v1 ,v2)]
              [(list* vs)    `(call $append ,(build-rest-args aes))]))]
+
+        [(cartesian-product)
+         (inline-prim/variadic sym ae1 0)]
 
         [(string-append)
          (let loop ([aes (AExpr* ae1)])

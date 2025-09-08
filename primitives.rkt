@@ -375,6 +375,7 @@ bytes->string/utf-8
  ormap
  for-each
  count
+ cartesian-product
  ; foldl
  ; foldr
 
