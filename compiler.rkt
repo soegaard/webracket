@@ -464,6 +464,7 @@
   char-punctuation?
   char-graphic?
   char-whitespace?
+  char-general-category
   char-blank?
   char-iso-control?
   char-extended-pictographic?
