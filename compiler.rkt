@@ -563,7 +563,7 @@
   string-copy!
   string-copy string-fill! string-append string-append-immutable
   string->list list->string
-  string->bytes/utf-8 string->immutable-string
+  string->bytes/utf-8 string-utf-8-length string->immutable-string
   non-empty-string?
 
   string-take        ; not in Racket
@@ -3126,9 +3126,10 @@
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]
          [(make-bytes)                 (inline-prim/optional sym ae1 1 2)]
-         
+
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
+         [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
 
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]

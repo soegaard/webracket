@@ -8979,8 +8979,61 @@
                           (local.set $char (array.get $I32Array (local.get $cp) (local.get $i)))
                           (local.set $idx  (call $write-utf8 (local.get $bs) (local.get $idx) (local.get $char)))
                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                          (br $encode-loop))))               
+                          (br $encode-loop))))
                (local.get $bs))
+
+         (func $raise-string-utf-8-length:bad-argument (unreachable))
+         (func $raise-string-utf-8-length:range-error (unreachable))
+
+         (func $string-utf-8-length (export "string-utf-8-length") (type $Prim3)
+               (param $str       (ref eq))
+               (param $start-raw (ref eq))   ;; fixnum or $missing
+               (param $end-raw   (ref eq))   ;; fixnum or $missing
+               (result (ref eq))
+
+               (local $s     (ref null $String))
+               (local $cp    (ref $I32Array))
+               (local $len   i32)
+               (local $start i32)
+               (local $end   i32)
+               (local $i     i32)
+               (local $char  i32)
+               (local $total i32)
+
+               ;; --- Type check for string ---
+               (if (ref.test (ref $String) (local.get $str))
+                   (then (local.set $s (ref.cast (ref $String) (local.get $str))))
+                   (else (call $raise-string-utf-8-length:bad-argument)))
+               ;; --- Extract codepoints and length ---
+               (local.set $cp  (struct.get $String $codepoints (local.get $s)))
+               (local.set $len (array.len (local.get $cp)))
+               ;; --- Decode start ---
+               (if (ref.eq (local.get $start-raw) (global.get $missing))
+                   (then (local.set $start (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start-raw))
+                             (then (local.set $start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
+                             (else (call $raise-string-utf-8-length:bad-argument))))
+               ;; --- Decode end ---
+               (if (ref.eq (local.get $end-raw) (global.get $missing))
+                   (then (local.set $end (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end-raw))
+                             (then (local.set $end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
+                             (else (call $raise-string-utf-8-length:bad-argument))))
+               ;; --- Range check ---
+               (if (i32.or (i32.gt_u (local.get $start) (local.get $end))
+                           (i32.gt_u (local.get $end) (local.get $len)))
+                   (then (call $raise-string-utf-8-length:range-error)))
+               ;; --- Compute UTF-8 length ---
+               (local.set $i     (local.get $start))
+               (local.set $total (i32.const 0))
+               (loop $len-loop
+                     (if (i32.lt_u (local.get $i) (local.get $end))
+                         (then
+                          (local.set $char (array.get $I32Array (local.get $cp) (local.get $i)))
+                          (local.set $total (i32.add (local.get $total) (call $utf8-size (local.get $char))))
+                          (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                          (br $len-loop))))
+               (ref.i31 (i32.shl (local.get $total) (i32.const 1))))
 
          (func $raise-string-copy!:bad-destination       (unreachable))
          (func $raise-string-copy!:bad-destination-start (unreachable))

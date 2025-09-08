@@ -988,6 +988,13 @@
               (equal? (memq (list->bytes (bytes->list #"apple"))
                             '(#"apple")) #f))
 
+        (list "string-utf-8-length"
+              (let* ([s1 "çðö£"]
+                     [s2 "aéllo"])
+                (and (equal? (string-utf-8-length s1) 8)
+                     (equal? (string-utf-8-length "hello") 5)
+                     (equal? (string-utf-8-length s2 1 4) 4))))
+
         (list "bytes=?"
               '(todo "Make bytes=? variadic")
               (and #;(equal? (bytes=? #"a" #"a" #"a") #t)
