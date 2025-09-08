@@ -9778,14 +9778,14 @@
                (local.set $len
                      (if (result i32)
                          (i32.le_u (local.get $cp) (i32.const #x7F))
-                         (i32.const 1)
-                         (if (result i32)
-                             (i32.le_u (local.get $cp) (i32.const #x7FF))
-                             (i32.const 2)
-                             (if (result i32)
-                                 (i32.le_u (local.get $cp) (i32.const #xFFFF))
-                                 (i32.const 3)
-                                 (i32.const 4)))))
+                         (then (i32.const 1))
+                         (else (if (result i32)
+                                   (i32.le_u (local.get $cp) (i32.const #x7FF))
+                                   (then (i32.const 2))
+                                   (else (if (result i32)
+                                             (i32.le_u (local.get $cp) (i32.const #xFFFF))
+                                             (then (i32.const 3))
+                                             (else (i32.const 4))))))))
                (ref.i31 (i32.shl (local.get $len) (i32.const 1))))
 
          ;; 4.6.2 Character Comparisons
