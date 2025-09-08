@@ -296,7 +296,9 @@ bytes->string/utf-8
  char=? char<? char<=? char>? char>=?
  char-downcase char-foldcase char-titlecase char-upcase
  char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?
- char-whitespace?
+ char-alphabetic? char-lower-case? char-upper-case? char-title-case?
+ char-numeric? char-symbolic? char-punctuation? char-graphic?
+ char-whitespace? char-blank? char-iso-control? char-extended-pictographic?
 
  ;; 4.7 Symbols
  symbol?
