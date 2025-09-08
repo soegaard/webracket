@@ -380,6 +380,7 @@ bytes->string/utf-8
  ; foldr
 
 filter
+filter-map
 filter-not
 partition
 remove
