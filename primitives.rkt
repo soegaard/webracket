@@ -380,6 +380,7 @@ bytes->string/utf-8
  ; foldr
 
 filter
+filter-not
 partition
 remove
 take-common-prefix

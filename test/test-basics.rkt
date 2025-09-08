@@ -1427,6 +1427,10 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "filter-not"
+              (and (equal? (filter-not (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(-2 -5))
+                   (equal? (filter-not (λ (x) (positive? x)) '()) '())))
+
         (list "partition"
               (and (let-values ([(pos neg)
                                  (partition (λ (x) (positive? x)) '(1 -2 3 4 -5))])
