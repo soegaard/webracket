@@ -1026,6 +1026,13 @@
                    (equal? (integer->char 32) #\space)
                    (equal? (procedure-arity integer->char) 1)))
 
+        (list "char-utf-8-length"
+              (and (equal? (char-utf-8-length #\A) 1)
+                   (equal? (char-utf-8-length (integer->char #x07FF)) 2)
+                   (equal? (char-utf-8-length (integer->char #x0800)) 3)
+                   (equal? (char-utf-8-length (integer->char #x10000)) 4)
+                   (equal? (procedure-arity char-utf-8-length) 1)))
+
         (list "char=?"
               (and (equal? (char=? #\A #\A) #t)
                    (equal? (char=? #\A #\B) #f)
