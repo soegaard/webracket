@@ -1043,11 +1043,67 @@
               (and (equal? (char>=? #\B #\A) #t)
                    (equal? (char>=? #\A #\b) #f)))
 
+        (list "char-alphabetic?"
+              (and (equal? (char-alphabetic? #\A) #t)
+                   (equal? (char-alphabetic? #\1) #f)
+                   (equal? (procedure-arity char-alphabetic?) 1)))
+
+        (list "char-lower-case?"
+              (and (equal? (char-lower-case? #\a) #t)
+                   (equal? (char-lower-case? #\A) #f)
+                   (equal? (procedure-arity char-lower-case?) 1)))
+
+        (list "char-upper-case?"
+              (and (equal? (char-upper-case? #\A) #t)
+                   (equal? (char-upper-case? #\a) #f)
+                   (equal? (procedure-arity char-upper-case?) 1)))
+
+        (list "char-title-case?"
+              (and (equal? (char-title-case? (integer->char #x01C5)) #t)
+                   (equal? (char-title-case? #\A) #f)
+                   (equal? (procedure-arity char-title-case?) 1)))
+
+        (list "char-numeric?"
+              (and (equal? (char-numeric? #\1) #t)
+                   (equal? (char-numeric? #\A) #f)
+                   (equal? (procedure-arity char-numeric?) 1)))
+
+        (list "char-symbolic?"
+              (and (equal? (char-symbolic? #\+) #t)
+                   (equal? (char-symbolic? #\A) #f)
+                   (equal? (procedure-arity char-symbolic?) 1)))
+
+        (list "char-punctuation?"
+              (and (equal? (char-punctuation? #\,) #t)
+                   (equal? (char-punctuation? #\A) #f)
+                   (equal? (procedure-arity char-punctuation?) 1)))
+
+        (list "char-graphic?"
+              (and (equal? (char-graphic? #\A) #t)
+                   (equal? (char-graphic? #\space) #f)
+                   (equal? (procedure-arity char-graphic?) 1)))
+
         (list "char-whitespace?"
               (and (equal? (char-whitespace? #\space) #t)
                    (equal? (char-whitespace? #\tab) #t)
                    (equal? (char-whitespace? #\A) #f)
                    (equal? (procedure-arity char-whitespace?) 1)))
+
+        (list "char-blank?"
+              (and (equal? (char-blank? #\space) #t)
+                   (equal? (char-blank? #\newline) #f)
+                   (equal? (procedure-arity char-blank?) 1)))
+
+        (list "char-iso-control?"
+              (and (equal? (char-iso-control? #\nul) #t)
+                   (equal? (char-iso-control? #\space) #f)
+                   (equal? (procedure-arity char-iso-control?) 1)))
+
+        (list "char-extended-pictographic?"
+              (and (equal? (char-extended-pictographic? (integer->char #x1F600)) #t)
+                   (equal? (char-extended-pictographic? #\A) #f)
+                   (equal? (procedure-arity char-extended-pictographic?) 1)))
+
         (list "char-upcase"
               (and (equal? (char-upcase #\a) #\A)
                    (equal? (char-upcase #\u03BB) #\u039B)
