@@ -9786,7 +9786,7 @@
 
         ;; 4.6.3 Classifications
 
-        ,@(for/list ([(name imp)
+        ,@(for/list ([name+imp
                       (in-list '(( $char-alphabetic?    $char-alphabetic?/ucs)
                                  ( $char-lower-case?    $char-lower-case?/ucs)
                                  ( $char-upper-case?    $char-upper-case?/ucs)
@@ -9794,7 +9794,9 @@
                                  ( $char-numeric?       $char-numeric?/ucs)
                                  ( $char-symbolic?      $char-symbolic?/ucs)
                                  ( $char-punctuation?   $char-punctuation?/ucs)
-                                 ( $char-graphic?       $char-graphic?/ucs)))]
+                                 ( $char-graphic?       $char-graphic?/ucs)     ))])
+            (define name (car  name+imp))
+            (define imp  (cadr name+imp))
             `(func ,name (type $Prim1) (param $c (ref eq)) (result (ref eq))
                    (local $i31   (ref i31))
                    (local $c/tag i32)
@@ -9810,9 +9812,10 @@
                                (i32.const ,char-tag))
                        (then (call $raise-check-char (local.get $c))))
                    (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-                   (if (i32.eqz (call ,imp (local.get $cp)))
-                       (then (global.get $false))
-                       (else (global.get $true)))))
+                   (if (result (ref eq))
+                       (call ,imp (local.get $cp))
+                       (then (global.get $true))
+                       (else (global.get $false)))))
 
         (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
@@ -9937,9 +9940,10 @@
                           (i32.const ,char-tag))
                   (then (call $raise-check-char (local.get $c))))
               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
-              (if (i32.eqz (call $char-extended-pictographic?/ucs (local.get $cp)))
-                  (then (global.get $false))
-                  (else (global.get $true))))
+              (if (result (ref eq))
+                  (call $char-extended-pictographic?/ucs (local.get $cp))
+                  (then (global.get $true))
+                  (else (global.get $false))))
 
         ;; 4.6.4 Character Conversions
 
