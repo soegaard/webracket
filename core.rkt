@@ -49,6 +49,11 @@
 ;; Note: When bootstrapping we need implementations
 ;;       for these.
 
+;; 3.2 Importing and Exporting: require and provide
+(require (only-in racket/base #%require #%provide))
+(provide #%require #%provide)
+
+
 ;; 3.3 Literals: quote and #%datum
 (require (only-in racket/base #%datum))
 (provide #%datum)
@@ -71,8 +76,8 @@
 ;; (provide #%app)
 
 ;; 3.8 Procedure Expressions: lambda, case-lambda
-;; (require (only-in racket/base case-lambda))
-;; (provide case-lambda)
+(require (only-in racket/base case-lambda))
+(provide case-lambda)
 
 ;; 3.9 Local binding: let, let*, letrec, ...
 (require (only-in racket/base let let* letrec
