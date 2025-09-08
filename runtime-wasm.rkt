@@ -645,6 +645,42 @@
                (import "primitives" "char_foldcase")
                (param i32) (result i32))
 
+        (func $char-alphabetic?/ucs
+              (import "primitives" "char_alphabetic")
+              (param i32) (result i32))
+
+        (func $char-lower-case?/ucs
+              (import "primitives" "char_lower_case")
+              (param i32) (result i32))
+
+        (func $char-upper-case?/ucs
+              (import "primitives" "char_upper_case")
+              (param i32) (result i32))
+
+        (func $char-title-case?/ucs
+              (import "primitives" "char_title_case")
+              (param i32) (result i32))
+
+        (func $char-numeric?/ucs
+              (import "primitives" "char_numeric")
+              (param i32) (result i32))
+
+        (func $char-symbolic?/ucs
+              (import "primitives" "char_symbolic")
+              (param i32) (result i32))
+
+        (func $char-punctuation?/ucs
+              (import "primitives" "char_punctuation")
+              (param i32) (result i32))
+
+        (func $char-graphic?/ucs
+              (import "primitives" "char_graphic")
+              (param i32) (result i32))
+
+        (func $char-extended-pictographic?/ucs
+              (import "primitives" "char_extended_pictographic")
+              (param i32) (result i32))
+
         ;; Math functions
         (func $js-math-abs
               (import "math" "abs")
@@ -9750,6 +9786,34 @@
 
         ;; 4.6.3 Classifications
 
+        ,@(for/list ([(name imp)
+                      (in-list '(( $char-alphabetic?    $char-alphabetic?/ucs)
+                                 ( $char-lower-case?    $char-lower-case?/ucs)
+                                 ( $char-upper-case?    $char-upper-case?/ucs)
+                                 ( $char-title-case?    $char-title-case?/ucs)
+                                 ( $char-numeric?       $char-numeric?/ucs)
+                                 ( $char-symbolic?      $char-symbolic?/ucs)
+                                 ( $char-punctuation?   $char-punctuation?/ucs)
+                                 ( $char-graphic?       $char-graphic?/ucs)))]
+            `(func ,name (type $Prim1) (param $c (ref eq)) (result (ref eq))
+                   (local $i31   (ref i31))
+                   (local $c/tag i32)
+                   (local $cp    i32)
+                   ;; Type check
+                   (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                       (then (call $raise-check-char (local.get $c))))
+                   (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+                   (local.set $c/tag (i31.get_u (local.get $i31)))
+                   ;; Decode codepoint
+                   (if (i32.ne (i32.and (local.get $c/tag)
+                                        (i32.const ,char-mask))
+                               (i32.const ,char-tag))
+                       (then (call $raise-check-char (local.get $c))))
+                   (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+                   (if (i32.eqz (call ,imp (local.get $cp)))
+                       (then (global.get $false))
+                       (else (global.get $true)))))
+
         (func $char-whitespace? (type $Prim1) (param $c (ref eq)) (result (ref eq))
               (local $i31   (ref i31))
               (local $c/tag i32)
@@ -9767,7 +9831,7 @@
               (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
               ;; Delegate
               (call $char-whitespace?/ucs (local.get $cp)))
-        
+
         (func $char-whitespace?/ucs (param $cp i32) (result (ref eq))
               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
                   (then (return (global.get $true))))
@@ -9796,6 +9860,86 @@
               (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000))) ; IDEOGRAPHIC SPACE
                   (then (return (global.get $true))))
               (global.get $false))
+
+        (func $char-blank? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              ;; Delegate
+              (call $char-blank?/ucs (local.get $cp)))
+
+        (func $char-blank?/ucs (param $cp i32) (result (ref eq))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\tab)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\space)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u00A0)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u1680)))
+                  (then (return (global.get $true))))
+              ;; U+2000–U+200A
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u200A)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\u2000)))
+                            (then (return (global.get $true))))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u202F)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u205F)))
+                  (then (return (global.get $true))))
+              (if (i32.eq (local.get $cp) (i32.const ,(char->integer #\u3000)))
+                  (then (return (global.get $true))))
+              (global.get $false))
+
+        (func $char-iso-control? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u001F)))
+                  (then (return (global.get $true))))
+              (if (i32.le_u (local.get $cp) (i32.const ,(char->integer #\u009F)))
+                  (then (if (i32.ge_u (local.get $cp) (i32.const ,(char->integer #\rubout)))
+                            (then (return (global.get $true))))))
+              (global.get $false))
+
+        (func $char-extended-pictographic? (type $Prim1) (param $c (ref eq)) (result (ref eq))
+              (local $i31   (ref i31))
+              (local $c/tag i32)
+              (local $cp    i32)
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
+              ;; Decode codepoint
+              (if (i32.ne (i32.and (local.get $c/tag)
+                                   (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+              (if (i32.eqz (call $char-extended-pictographic?/ucs (local.get $cp)))
+                  (then (global.get $false))
+                  (else (global.get $true))))
 
         ;; 4.6.4 Character Conversions
 
