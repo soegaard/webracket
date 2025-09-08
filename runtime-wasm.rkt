@@ -11169,6 +11169,68 @@
                (unreachable))
 
 
+         (func $cartesian-product (type $Prim>=0)
+               (param $xss (ref eq))
+               (result (ref eq))
+
+               (local $pair   (ref $Pair))
+               (local $xs     (ref eq))
+               (local $rest   (ref eq))
+               (local $prod   (ref eq))
+               (local $list   (ref eq))
+               (local $elem   (ref eq))
+               (local $rs     (ref eq))
+               (local $rpair  (ref $Pair))
+               (local $r      (ref eq))
+               (local $tmp    (ref eq))
+               (local $acc    (ref eq))
+
+               ;; Base case: no lists -> '(())
+               (if (ref.eq (local.get $xss) (global.get $null))
+                   (then (return (struct.new $Pair (i32.const 0)
+                                             (global.get $null)
+                                             (global.get $null)))))
+
+               ;; Ensure xss is a proper list
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $xss)))
+                   (then (call $raise-pair-expected (local.get $xss))
+                         (unreachable)))
+               (local.set $pair (ref.cast (ref $Pair) (local.get $xss)))
+               (local.set $xs   (struct.get $Pair $a (local.get $pair)))
+               (local.set $rest (struct.get $Pair $d (local.get $pair)))
+
+               ;; Recursively compute product of remaining lists
+               (local.set $prod (call $cartesian-product (local.get $rest)))
+
+               ;; Iterate over first list and combine with rest
+               (local.set $list (local.get $xs))
+               (local.set $acc  (global.get $null))
+               (block $outer_done
+                      (loop $outer
+                            (if (ref.eq (local.get $list) (global.get $null))
+                                (then (br $outer_done)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $list)))
+                                (then (call $raise-pair-expected (local.get $list))
+                                      (unreachable)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $list)))
+                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                            (local.set $rs   (local.get $prod))
+                            (block $inner_done
+                                   (loop $inner
+                                         (if (ref.eq (local.get $rs) (global.get $null))
+                                             (then (br $inner_done)))
+                                         (local.set $rpair (ref.cast (ref $Pair) (local.get $rs)))
+                                         (local.set $r     (struct.get $Pair $a (local.get $rpair)))
+                                         (local.set $tmp   (call $cons (local.get $elem) (local.get $r)))
+                                         (local.set $acc   (call $cons (local.get $tmp) (local.get $acc)))
+                                         (local.set $rs    (struct.get $Pair $d (local.get $rpair)))
+                                         (br $inner)))
+                            (local.set $list (struct.get $Pair $d (local.get $pair)))
+                            (br $outer)))
+
+               (call $reverse (local.get $acc)))
+
+
          (func $make-list (type $Prim2)
                (param $n-raw (ref eq))    ;; fixnum
                (param $v     (ref eq))    ;; value to repeat
