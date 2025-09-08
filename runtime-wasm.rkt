@@ -12316,10 +12316,11 @@
                      (br $loop))
                (unreachable))
 
-         (func $filter-map (type $Prim>=2)
-               (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
-               (result      (ref eq))
+        (func $filter-map (type $Prim>=2)
+              (param $proc (ref eq))   ;; procedure
+              (param $xs0  (ref eq))   ;; first list
+              (param $rest (ref eq))   ;; rest lists
+              (result      (ref eq))
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
@@ -12345,9 +12346,15 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
-               (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
+               ;; 2) Ensure $xs0 is a list head; walk $rest to count #lists and validate each head
+               (if (i32.eqz
+                    (i32.or
+                     (ref.eq (local.get $xs0) (global.get $null))
+                     (ref.test (ref $Pair) (local.get $xs0))))
+                   (then (call $raise-pair-expected (local.get $xs0))
+                         (unreachable)))
+               (local.set $nlists (i32.const 1))
+               (local.set $outer  (local.get $rest))
                (block $count_done
                       (loop $count
                             (if (ref.eq (local.get $outer) (global.get $null))
@@ -12365,16 +12372,13 @@
                             (local.set $outer (struct.get $Pair $d (local.get $pair)))
                             (br $count)))
 
-               ;; Racket's filter-map requires at least one list argument
-               (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
-
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
-               (local.set $outer (local.get $xss))
-               (local.set $i (i32.const 0))
+               (array.set $Args (local.get $lists) (i32.const 0) (local.get $xs0))
+               (local.set $outer (local.get $rest))
+               (local.set $i (i32.const 1))
                (block $seed_done
                       (loop $seed
                             (if (i32.ge_u (local.get $i) (local.get $nlists))

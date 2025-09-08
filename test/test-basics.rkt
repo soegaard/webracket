@@ -1431,7 +1431,7 @@
               (and (equal? (filter-map (λ (x) (and (negative? x) (abs x)))
                                        '(1 2 -3 -4 8))
                               '(3 4))
-                   #;(equal? (filter-map (λ (x y) (and (< x y) (+ x y)))
+                   (equal? (filter-map (λ (x y) (and (< x y) (+ x y)))
                                        '(1 2 3)
                                        '(2 1 4))
                            '(3 7))))
