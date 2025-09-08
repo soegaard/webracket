@@ -9878,12 +9878,17 @@
         (func $char-general-category (type $Prim1)
               (param $c (ref eq))
               (result   (ref eq))
-              
+
               (local $i31   (ref i31))
               (local $c/tag i32)
               (local $cp    i32)
               (local $idx   i32)
-              
+
+              ;; Type check
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c))))
+              (local.set $i31   (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $i31)))
               (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
                           (i32.const ,char-tag))
                   (then (call $raise-check-char (local.get $c))))
