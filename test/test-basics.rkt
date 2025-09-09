@@ -1490,7 +1490,7 @@
                    (equal? (procedure-arity remw) 2)))
 
         (list "remove*"
-              (and (equal? (remove* '(1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
+              (list (equal? (remove* '(1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
                    (let ([lst (list 1 2 3)])
                      (and (eq? (remove* '(4 5) lst) lst)
                           (equal? (remove* '(4 5) lst) lst)))
@@ -1499,11 +1499,11 @@
                            '("a" "A" "B"))))
 
         (list "remq*"
-              (and (equal? (remq* '(1 2) (list 1 2 3 2 4)) '(3 4))
+              (list (equal? (remq* '(1 2) (list 1 2 3 2 4)) '(3 4))
                    (equal? (procedure-arity remq*) 2)))
 
         (list "remv*"
-              (and (equal? (remv* '(1 2) (list 1 2 3 2 4)) '(3 4))
+              (list (equal? (remv* '(1 2) (list 1 2 3 2 4)) '(3 4))
                    (equal? (procedure-arity remv*) 2)))
 
         (list "remw*"
