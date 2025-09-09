@@ -3189,7 +3189,6 @@
          [(inclusive-range-proc)
           (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
 
-         [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
