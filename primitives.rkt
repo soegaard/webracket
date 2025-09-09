@@ -383,6 +383,7 @@ filter
 filter-not
 partition
 remove
+list-prefix?
 take-common-prefix
 drop-common-prefix
 split-common-prefix

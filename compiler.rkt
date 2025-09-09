@@ -417,7 +417,7 @@
   map andmap ormap count for-each
   list*
   cartesian-product
-  filter filter-not partition remove take-common-prefix drop-common-prefix split-common-prefix
+  filter filter-not partition remove list-prefix? take-common-prefix drop-common-prefix split-common-prefix
   make-list
    build-list
    argmax argmin
@@ -3154,6 +3154,7 @@
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
           [(remove)                     (inline-prim/optional sym ae1 2 3)]
+          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
           [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
           [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
           [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
