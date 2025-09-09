@@ -424,6 +424,7 @@
   split-common-prefix
   make-list
   build-list
+  inclusive-range
   argmax argmin
 
   void?
@@ -3164,6 +3165,7 @@
          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
          [(filter-map)                 (inline-prim/variadic sym ae1 2)]
+         [(inclusive-range)            (inline-prim/optional sym ae1 2 3)]
 
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]

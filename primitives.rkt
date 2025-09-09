@@ -340,9 +340,10 @@ bytes->string/utf-8
  cdr
  list?
  list
- list*
- make-list     ; racket/list
- build-list
+ list* 
+  make-list     ; racket/list
+  build-list
+  inclusive-range
 
  length
  list-ref
