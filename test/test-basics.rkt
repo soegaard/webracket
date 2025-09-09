@@ -1552,6 +1552,26 @@
                    (equal? (inclusive-range 10 15 1.5)
                            '(10.0 11.5 13.0 14.5))))
 
+        (list "check-list"
+              (and (eq? (check-list '(1 2 3)) (void))
+                   (equal? (procedure-arity check-list) 1)))
+
+        (list "check-mlist"
+              (and (eq? (check-mlist '()) (void))
+                   (equal? (procedure-arity check-mlist) 1)))
+
+        (list "check-range"
+              (and (eq? (check-range 0 10 1) (void))
+                   (equal? (procedure-arity check-range) 3)))
+
+        (list "check-range-generic"
+              (and (eq? (check-range-generic 'test 0 10 1) (void))
+                   (equal? (procedure-arity check-range-generic) 4)))
+
+        (list "check-naturals"
+              (and (eq? (check-naturals 5) (void))
+                   (equal? (procedure-arity check-naturals) 1)))
+
         (list "memq"
               (and (equal? (memq 'a '(a b c))   '(a b c))
                    (equal? (memq 'b '(a b c))   '(b c))
