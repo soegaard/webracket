@@ -11572,6 +11572,154 @@
                             (br $loop)))
                (local.get $acc))
 
+         (func $range-proc (type $Prim3)
+               (param $start (ref eq))
+               (param $end   (ref eq))
+               (param $step  (ref eq)) ;; $missing for default 1
+               (result       (ref eq))
+               (call $range (local.get $start) (local.get $end) (local.get $step)))
+
+        (func $range (type $Prim3)
+              (param $start-raw (ref eq))
+              (param $end-raw   (ref eq))
+              (param $step-raw  (ref eq)) ;; $missing for defaults 0/1
+              (result           (ref eq))
+
+              (local $use-fl       i32)
+              (local $start-i32    i32)
+              (local $end-i32      i32)
+              (local $step-i32     i32)
+              (local $start-f64    f64)
+              (local $end-f64      f64)
+              (local $step-f64     f64)
+              (local $start-is-fl  i32)
+              (local $end-is-fl    i32)
+              (local $step-is-fl   i32)
+
+              ;; start (optional, defaults to 0)
+              (if (ref.eq (local.get $start-raw) (global.get $missing))
+                  (then (local.set $start-i32 (i32.const 0)))
+                  (else (if (call $fl?/i32 (local.get $start-raw))
+                            (then (local.set $use-fl (i32.const 1))
+                                  (local.set $start-is-fl (i32.const 1))
+                                  (local.set $start-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $start-raw)))))
+                            (else (if (call $fx?/i32 (local.get $start-raw))
+                                      (then (local.set $start-i32
+                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
+                                      (else (call $raise-argument-error (local.get $start-raw))
+                                            (unreachable)))))))
+
+              ;; end
+              (if (call $fl?/i32 (local.get $end-raw))
+                  (then (local.set $use-fl (i32.const 1))
+                        (local.set $end-is-fl (i32.const 1))
+                        (local.set $end-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $end-raw)))))
+                  (else (if (call $fx?/i32 (local.get $end-raw))
+                            (then (local.set $end-i32
+                                            (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
+                            (else (call $raise-argument-error (local.get $end-raw))
+                                  (unreachable)))))
+
+              ;; step (optional, defaults to 1)
+              (if (ref.eq (local.get $step-raw) (global.get $missing))
+                  (then (if (i32.eqz (local.get $use-fl))
+                            (then (local.set $step-i32 (i32.const 1)))
+                            (else (local.set $step-is-fl (i32.const 1))
+                                  (local.set $step-f64 (f64.const 1.0)))))
+                  (else (if (call $fl?/i32 (local.get $step-raw))
+                            (then (local.set $use-fl (i32.const 1))
+                                  (local.set $step-is-fl (i32.const 1))
+                                  (local.set $step-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $step-raw)))))
+                            (else (if (call $fx?/i32 (local.get $step-raw))
+                                      (then (local.set $step-i32
+                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $step-raw))) (i32.const 1))))
+                                      (else (call $raise-argument-error (local.get $step-raw))
+                                            (unreachable)))))))
+
+              ;; step must be non-zero when provided
+              (if (i32.eqz (ref.eq (local.get $step-raw) (global.get $missing)))
+                  (then (if (i32.eqz (local.get $use-fl))
+                            (then (if (i32.eq (local.get $step-i32) (i32.const 0))
+                                      (then (call $raise-argument-error (local.get $step-raw))
+                                            (unreachable))))
+                            (else (if (f64.eq (local.get $step-f64) (f64.const 0))
+                                      (then (call $raise-argument-error (local.get $step-raw))
+                                            (unreachable)))))))
+
+              ;; decide variant
+              (if (i32.eqz (local.get $use-fl))
+                  (then (return (call $range/fixnum
+                                       (local.get $start-i32)
+                                       (local.get $end-i32)
+                                       (local.get $step-i32)))))
+
+              ;; convert fixnums to flonums if needed
+              (if (i32.eqz (local.get $start-is-fl))
+                  (then (local.set $start-f64 (f64.convert_i32_s (local.get $start-i32)))))
+              (if (i32.eqz (local.get $end-is-fl))
+                  (then (local.set $end-f64 (f64.convert_i32_s (local.get $end-i32)))))
+              (if (i32.eqz (local.get $step-is-fl))
+                  (then (local.set $step-f64 (f64.convert_i32_s (local.get $step-i32)))))
+
+              (call $range/flonum
+                    (local.get $start-f64)
+                    (local.get $end-f64)
+                    (local.get $step-f64)))
+
+        (func $range/fixnum
+              (param $start i32)
+              (param $end   i32)
+              (param $step  i32)
+              (result (ref eq))
+
+              (local $cur i32)
+              (local $lst (ref eq))
+
+              (local.set $cur (local.get $start))
+              (local.set $lst (global.get $null))
+              (block $done
+                     (loop $loop
+                           (if (i32.gt_s (local.get $step) (i32.const 0))
+                               (then (br_if $done (i32.ge_s (local.get $cur) (local.get $end))))
+                               (else (br_if $done (i32.le_s (local.get $cur) (local.get $end)))))
+                           (local.set $lst
+                                      (struct.new $Pair
+                                                  (i32.const 0)
+                                                  (ref.i31 (i32.shl (local.get $cur) (i32.const 1)))
+                                                  (local.get $lst)))
+                           (local.set $cur (i32.add (local.get $cur) (local.get $step)))
+                           (br $loop)))
+              (call $reverse (local.get $lst)))
+
+        (func $range/flonum
+              (param $start f64)
+              (param $end   f64)
+              (param $step  f64)
+              (result (ref eq))
+
+              (local $n   i32)
+              (local $cur f64)
+              (local $lst (ref eq))
+
+              (local.set $n   (i32.const 0))
+              (local.set $lst (global.get $null))
+              (block $done
+                     (loop $loop
+                           (local.set $cur
+                                      (f64.add (local.get $start)
+                                               (f64.mul (f64.convert_i32_s (local.get $n)) (local.get $step))))
+                           (if (f64.gt (local.get $step) (f64.const 0))
+                               (then (br_if $done (f64.ge (local.get $cur) (local.get $end))))
+                               (else (br_if $done (f64.le (local.get $cur) (local.get $end)))))
+                           (local.set $lst
+                                      (struct.new $Pair
+                                                  (i32.const 0)
+                                                  (struct.new $Flonum (i32.const 0) (local.get $cur))
+                                                  (local.get $lst)))
+                           (local.set $n (i32.add (local.get $n) (i32.const 1)))
+                           (br $loop)))
+              (call $reverse (local.get $lst)))
+
         (func $inclusive-range-proc (type $Prim3)
               (param $start (ref eq))
               (param $end   (ref eq))
