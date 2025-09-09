@@ -11344,14 +11344,14 @@
         (func $inclusive-range-proc (type $Prim3)
               (param $start (ref eq))
               (param $end   (ref eq))
-              (param $step  (ref eq)) ;; $missing for default 1
+              (param $step  (ref eq)) ;; $missing for default 1/-1
               (result       (ref eq))
               (call $inclusive-range (local.get $start) (local.get $end) (local.get $step)))
 
         (func $inclusive-range (type $Prim3)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))
-              (param $step-raw  (ref eq)) ;; $missing for default 1
+              (param $step-raw  (ref eq)) ;; $missing for default 1/-1
               (result (ref eq))
 
               (local $use-fl       i32)
@@ -11372,7 +11372,7 @@
                         (local.set $start-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $start-raw)))))
                   (else (if (call $fx?/i32 (local.get $start-raw))
                             (then (local.set $start-i32
-                                            (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
+                                            (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
                             (else (call $raise-argument-error (local.get $start-raw))
                                   (unreachable)))))
 
@@ -11383,25 +11383,44 @@
                         (local.set $end-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $end-raw)))))
                   (else (if (call $fx?/i32 (local.get $end-raw))
                             (then (local.set $end-i32
-                                            (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
+                                            (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
                             (else (call $raise-argument-error (local.get $end-raw))
                                   (unreachable)))))
 
               ;; step
               (if (ref.eq (local.get $step-raw) (global.get $missing))
                   (then (if (i32.eqz (local.get $use-fl))
-                            (then (local.set $step-i32 (i32.const 1)))
-                            (else (local.set $step-is-fl (i32.const 1))
-                                  (local.set $step-f64 (f64.const 1.0)))))
+                            (then (if (i32.le_s (local.get $start-i32) (local.get $end-i32))
+                                      (local.set $step-i32 (i32.const 1))
+                                      (local.set $step-i32 (i32.const -1))))
+                            (else (if (i32.eqz (local.get $start-is-fl))
+                                      (then (local.set $start-f64 (f64.convert_i32_s (local.get $start-i32)))))
+                                  (if (i32.eqz (local.get $end-is-fl))
+                                      (then (local.set $end-f64 (f64.convert_i32_s (local.get $end-i32)))))
+                                  (local.set $step-is-fl (i32.const 1))
+                                  (if (f64.le (local.get $start-f64) (local.get $end-f64))
+                                      (local.set $step-f64 (f64.const 1.0))
+                                      (local.set $step-f64 (f64.const -1.0))))))
                   (else (if (call $fl?/i32 (local.get $step-raw))
                             (then (local.set $use-fl (i32.const 1))
                                   (local.set $step-is-fl (i32.const 1))
                                   (local.set $step-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $step-raw)))))
                             (else (if (call $fx?/i32 (local.get $step-raw))
                                       (then (local.set $step-i32
-                                                      (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $step-raw))) (i32.const 1))))
+                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $step-raw))) (i32.const 1))))
                                       (else (call $raise-argument-error (local.get $step-raw))
                                             (unreachable)))))))
+
+              ;; step must be non-zero when provided
+              (if (ref.eq (local.get $step-raw) (global.get $missing))
+                  (nop)
+                  (if (i32.eqz (local.get $use-fl))
+                      (then (if (i32.eq (local.get $step-i32) (i32.const 0))
+                                (then (call $raise-argument-error (local.get $step-raw))
+                                      (unreachable))))
+                      (else (if (f64.eq (local.get $step-f64) (f64.const 0))
+                                (then (call $raise-argument-error (local.get $step-raw))
+                                      (unreachable))))))
 
               ;; decide variant
               (if (i32.eqz (local.get $use-fl))
