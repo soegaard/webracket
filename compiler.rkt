@@ -418,7 +418,7 @@
   list* 
   cartesian-product
   permutations
-  filter filter-map filter-not shuffle partition remove remq remv remw
+  filter filter-map filter-not shuffle partition remove remq remv remw remove* remq* remv* remw*
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix
@@ -3174,6 +3174,7 @@
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
+         [(remove*)                    (inline-prim/optional sym ae1 2 3)]
          [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
          [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]

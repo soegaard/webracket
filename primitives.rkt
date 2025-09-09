@@ -388,22 +388,22 @@ filter-map
 filter-not
 shuffle
 partition
-remove
-index-of
-index-where
-indexes-of
-indexes-where
-list-prefix?
-take-common-prefix
-drop-common-prefix
-split-common-prefix
+ remove
+ index-of
+ index-where
+ indexes-of
+ indexes-where
+ list-prefix?
+ take-common-prefix
+ drop-common-prefix
+ split-common-prefix
  remq
  remv
  remw
- ; remove*
- ; remq*
- ; remv*
- ; remw*
+ remove*
+ remq*
+ remv*
+ remw*
  ; sort
 
  ; member
