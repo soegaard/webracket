@@ -13411,19 +13411,21 @@
               (local $v         (ref eq))
               (local $args      (ref $Args))
               (local $r         (ref eq))
-              (local $use-proc  i32)
               (local $found     i32)
               (local $modified  i32)
 
+              ;; ensure non-nullable $r is initialized for all paths
+              (local.set $r (global.get $false))
+              
               ;; Handle optional comparator
+              ;; Defaults to equal? when not supplied
               (if (ref.eq (local.get $proc) (global.get $missing))
-                  (then (local.set $use-proc (i32.const 0)))
+                  (then (local.set $proc (global.get $prim:equal?)))
                   (else
                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                        (then (call $raise-argument-error:procedure-expected (local.get $proc))
                              (unreachable))
-                       (else))
-                   (local.set $use-proc (i32.const 1))))
+                       (else))))
 
               ;; If v-lst is empty, return lst directly
               (if (ref.eq (local.get $v-lst) (global.get $null))
@@ -13440,8 +13442,7 @@
 
                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
                                (then (call $raise-pair-expected (local.get $cur))
-                                     (unreachable))
-                               (else))
+                                     (unreachable)))
 
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
@@ -13456,39 +13457,31 @@
                                             (then (br $search-done)))
                                         (if (i32.eqz (ref.test (ref $Pair) (local.get $vlcur)))
                                             (then (call $raise-pair-expected (local.get $vlcur))
-                                                  (unreachable))
-                                            (else))
+                                                  (unreachable)))
                                         (local.set $vlpair (ref.cast (ref $Pair) (local.get $vlcur)))
-                                        (local.set $v (struct.get $Pair $a (local.get $vlpair)))
-                                        (local.set $vlcur (struct.get $Pair $d (local.get $vlpair)))
+                                        (local.set $v      (struct.get $Pair $a (local.get $vlpair)))
+                                        (local.set $vlcur  (struct.get $Pair $d (local.get $vlpair)))
                                         (block $cont
-                                               (if (i32.eqz (local.get $use-proc))
-                                                   (then
-                                                    (if (ref.eq (call $equal? (local.get $v) (local.get $elem))
-                                                                (global.get $false))
-                                                        (then (br $cont))
-                                                        (else (local.set $found (i32.const 1)) (br $search-done))))
-                                                   (else
-                                                    (local.set $r
-                                                               (call_ref $ProcedureInvoker
-                                                                         (ref.cast (ref $Procedure) (local.get $proc))
-                                                                         (block (result (ref $Args))
-                                                                                (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
-                                                                                (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
-                                                                                (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
-                                                                                (local.get $args))
-                                                                         (struct.get $Procedure $invoke
-                                                                                     (ref.cast (ref $Procedure) (local.get $proc)))))
-                                                    (if (ref.eq (local.get $r) (global.get $false))
-                                                        (then (br $cont))
-                                                        (else (local.set $found (i32.const 1)) (br $search-done)))))))
+                                               (local.set $r
+                                                          (call_ref $ProcedureInvoker
+                                                                    (ref.cast (ref $Procedure) (local.get $proc))
+                                                                    (block (result (ref $Args))
+                                                                           (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+                                                                           (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+                                                                           (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                                                                           (local.get $args))
+                                                                    (struct.get $Procedure $invoke
+                                                                                (ref.cast (ref $Procedure) (local.get $proc))))
+                                                          (if (ref.eq (local.get $r) (global.get $false))
+                                                              (then (br $cont))
+                                                              (else (local.set $found (i32.const 1)) (br $search-done)))))
 
                                   (if (i32.eqz (local.get $found))
                                       (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
                                       (else (local.set $modified (i32.const 1))))
 
                                   (local.set $cur (local.get $tail))
-                                  (br $loop))
+                                  (br $loop)))
 
                            ;; done loop
                            ))
