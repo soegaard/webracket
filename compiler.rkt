@@ -417,12 +417,16 @@
   map andmap ormap count for-each
   list*
   cartesian-product
-  filter filter-not partition remove list-prefix? take-common-prefix drop-common-prefix split-common-prefix
+  filter filter-map filter-not partition remove 
+  list-prefix? 
+  take-common-prefix 
+  drop-common-prefix 
+  split-common-prefix
   make-list
-   build-list
-   argmax argmin
+  build-list
+  argmax argmin
 
-   void?
+  void?
   make-void  ; zero arguments
   void
 
@@ -3136,14 +3140,14 @@
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
          [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
-        [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
-        [(string->number)             (inline-prim/optional sym ae1 1 5)]
-        [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]
-        [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
+         [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
+         [(string->number)             (inline-prim/optional sym ae1 1 5)]
+         [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]
+         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(log)                        (inline-prim/optional sym ae1 1 2)]
-        [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
+         [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
          ; Todo: map and for-each needs to check that the first argument is a procedure
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
@@ -3153,15 +3157,22 @@
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
-          [(remove)                     (inline-prim/optional sym ae1 2 3)]
-          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
-          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
-          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
+         [(remove)                     (inline-prim/optional sym ae1 2 3)]
+         [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
+         [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
+         [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
+         [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
+         [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
+         [(filter-map)                 (inline-prim/variadic sym ae1 2)]
 
-          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
-        [(random)                      (inline-prim/optional sym ae1 0 2)]
+         [(remove)                     (inline-prim/optional sym ae1 2 3)]
+         [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
+         [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
+         [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
+         [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
+
+         [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
+         [(random)                      (inline-prim/optional sym ae1 0 2)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
          [(min max)                      (inline-prim/variadic sym ae1 2)]

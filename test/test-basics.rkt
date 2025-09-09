@@ -1427,6 +1427,15 @@
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
 
+        (list "filter-map"
+              (and (equal? (filter-map (λ (x) (and (negative? x) (abs x)))
+                                       '(1 2 -3 -4 8))
+                              '(3 4))
+                   (equal? (filter-map (λ (x y) (and (< x y) (+ x y)))
+                                       '(1 2 3)
+                                       '(2 1 4))
+                           '(3 7))))
+
         (list "filter-not"
               (and (equal? (filter-not (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(-2 -5))
                    (equal? (filter-not (λ (x) (positive? x)) '()) '())))

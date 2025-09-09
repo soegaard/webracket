@@ -36,6 +36,9 @@ The following steps are needed to implement a WebRacket primitive.
   documentation for the function.
 - If the WebRacket function has restrictions or behave differently
   from the Racket one, make a comment about it in `runtime-wasm.rkt`
+- If a parameter of a function is optional, mention it in an inline comment.
+  Also, mention the default value.
+- Use inline comments for the type of each parameter.
 
 ---
 
@@ -138,7 +141,13 @@ etc.
 - Prefer named struct fields over numeric indices.
 - Drop results from calls when unused with (drop (call ...)).
 - Stack discipline: all branches/blocks must leave same number of values.
-
+- In order to avoid the error "failed: uninitialized non-defaultable local"
+  use the "Validate first → fail if not valid → proceed" pattern.
+  That is, do not put initializations inside if-expressions.
+- Remember the result type for if-expressions that put a value of the stack.
+- Remember `then` and `else` in if-expressions.
+- In the folded text format for WebAssembly, an if-expression does not need an `else`-clause.
+  Drop the `else` in this situation `(else (nop))`.
 
 --- 
 
