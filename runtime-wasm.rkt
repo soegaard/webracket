@@ -11348,6 +11348,9 @@
               (result       (ref eq))
               (call $inclusive-range (local.get $start) (local.get $end) (local.get $step)))
 
+        ;; Unlike Racket's @racket[inclusive-range], the step defaults to
+        ;; either 1 or -1 based on the ordering of @racket[start] and
+        ;; @racket[end] when omitted.
         (func $inclusive-range (type $Prim3)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))

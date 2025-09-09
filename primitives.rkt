@@ -673,5 +673,11 @@ split-common-prefix
   (raise 42))
 
 
-(define (inclusive-range-proc start end [step 1])
-  (inclusive-range start end step))
+(define (inclusive-range-proc start end [step #f])
+  ;; Step defaults to 1 or -1 depending on order of start and end.
+  ;; Uses flonum defaults when either boundary is inexact.
+  (define default-step
+    (if (<= start end)
+        (if (or (inexact? start) (inexact? end)) 1.0 1)
+        (if (or (inexact? start) (inexact? end)) -1.0 -1)))
+  (inclusive-range start end (if step step default-step)))
