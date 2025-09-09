@@ -13475,16 +13475,13 @@
                                                           (if (ref.eq (local.get $r) (global.get $false))
                                                               (then (br $cont))
                                                               (else (local.set $found (i32.const 1)) (br $search-done)))))
-
-                                  (if (i32.eqz (local.get $found))
-                                      (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
-                                      (else (local.set $modified (i32.const 1))))
-
-                                  (local.set $cur (local.get $tail))
-                                  (br $loop)))
-
+                                        (if (i32.eqz (local.get $found))
+                                            (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
+                                            (else (local.set $modified (i32.const 1))))
+                                        (local.set $cur (local.get $tail))
+                                        (br $loop))
                            ;; done loop
-                           ))
+                           )))
 
               (if (i32.eqz (local.get $modified))
                   (then (return (local.get $lst))))
