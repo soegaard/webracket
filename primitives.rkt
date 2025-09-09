@@ -351,10 +351,11 @@ bytes->string/utf-8
  list-update
  list-set
  first
+ rest
  second
- third
- fourth
- fifth
+  third
+  fourth
+  fifth
  sixth
  seventh
  eighth
@@ -385,6 +386,7 @@ filter-map
 filter-not
 partition
 remove
+list-prefix?
 take-common-prefix
 drop-common-prefix
 split-common-prefix
