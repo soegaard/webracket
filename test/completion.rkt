@@ -1160,6 +1160,7 @@
             atan
             atanh
             bitwise-and
+            bitwise-bit-field
             bitwise-bit-set?
             bitwise-first-bit-set
             bitwise-ior
@@ -1189,6 +1190,7 @@
             bytes?
             call-with-values
             car
+            cartesian-product
             cdr
             ceiling
             char->integer
@@ -1214,6 +1216,7 @@
             char-titlecase
             char-upcase
             char-upper-case?
+            char-utf-8-length
             char-whitespace?
             char<=?
             char<?
@@ -1235,6 +1238,7 @@
             empty?
             eq-hash-code
             eq?
+            equal-always?
             equal?
             eqv?
             even?
@@ -1257,6 +1261,8 @@
             fifteenth
             fifth
             filter
+            filter-map
+            filter-not
             first
             fixnum?
             fl*
@@ -1339,6 +1345,12 @@
             immutable-string?
             immutable-vector?
             immutable?
+            inclusive-range
+            inclusive-range-proc
+            index-of
+            index-where
+            indexes-of
+            indexes-where
             inexact->exact
             inexact-real?
             inexact?
@@ -1362,6 +1374,7 @@
             list->bytes
             list->string
             list->vector
+            list-prefix?
             list-ref
             list-set
             list-tail
@@ -1413,6 +1426,7 @@
             ormap
             pair?
             partition
+            permutations
             port-next-location
             positive-integer?
             positive?
@@ -1430,11 +1444,21 @@
             radians->degrees
             raise-unbound-variable-reference
             random
+            range
+            range-proc
             real->double-flonum
             real->floating-point-bytes
             real?
             remainder
             remove
+            remove*
+            remq
+            remq*
+            remv
+            remv*
+            remw
+            remw*
+            rest
             reverse
             round
             s-exp->fasl
@@ -1443,6 +1467,7 @@
             set-boxed!
             seventh
             sgn
+            shuffle
             sin
             single-flonum-available?
             single-flonum?
@@ -1477,6 +1502,7 @@
             string-take-right
             string-trim-left
             string-trim-right
+            string-utf-8-length
             string<=?
             string<?
             string=?
@@ -1566,6 +1592,7 @@
             xor
             zero?)
 
+
           ))
 
 (define sections
@@ -1579,7 +1606,7 @@
 ;;; showing the percentage. The unfilled portion is covered with a grey
 ;;; overlay so the gradient corresponds to the entire gauge, not just the
 ;;; filled width.
-(define (make-gauge pct title)
+(define (make-gauge pct implemented-cnt primitives-cnt title)
   ; (js-log 'make-gauge)  
   (define pct-num       (inexact->exact (round (* 100 pct))))
   (define pct-str       (number->string pct-num))
@@ -1600,7 +1627,14 @@
                (span (@ (style ,overlay-style))))
          " "
          (span (@ (style "font-size: 2em;width:3em;text-align:right;"))
-               ,(string-append pct-str "%")))
+               ,(string-append pct-str "%"))
+         " "
+         (span (@ (style "font-size: 1em;width:6em;text-align:right;"))
+               "("
+               ,(number->string implemented-cnt)
+               " of "
+               ,(number->string primitives-cnt)
+               ")"))
   )
 
 (define (primitive-url sym)
@@ -1646,7 +1680,7 @@
      (js-log tri-id)
      
      `(section              
-       (div (h2 ,(make-gauge pct title))
+       (div (h2 ,(make-gauge pct (length implemented) (length primitives) title))
             (span (@ (id      ,tri-id)
                      (onclick ,toggle-script)
                      (style   "cursor:pointer;"))
@@ -1663,8 +1697,10 @@
     (section->sxml s i)))
 
 (define page
-  `(div (h1 "Progress: Datatype Functions and Constants")
-        ""
+  `(div (h1 "Progress: Primitives in WebRacket")
+        (span "Implemented: "
+              ,(number->string (length implemented-primitives)))
+        (h2 "Datatype Functions and Constants")
         ,@sections))
 
 (js-append-child! (js-document-body) (sxml->dom page))
