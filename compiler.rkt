@@ -418,7 +418,7 @@
   list* 
   cartesian-product
   permutations
-  filter filter-map filter-not shuffle partition remove
+  filter filter-map filter-not shuffle partition remove remq remv remw
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix
@@ -484,6 +484,7 @@
   eq?
   eqv?
   equal?
+  equal-always?
 
   number->string
   string->number

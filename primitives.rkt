@@ -37,7 +37,7 @@
  eq-hash-code
  eqv-hash-code
  equal-hash-code
- ; equal-always?
+ equal-always?
  ; equal?/recur
  ; equal-always?/recur
  ;; equal-hash-code/recur
@@ -397,9 +397,9 @@ list-prefix?
 take-common-prefix
 drop-common-prefix
 split-common-prefix
-; remq
- ; remv
- ; remw
+ remq
+ remv
+ remw
  ; remove*
  ; remq*
  ; remv*
