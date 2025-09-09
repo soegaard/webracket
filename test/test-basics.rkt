@@ -1769,5 +1769,14 @@
                   (equal? (external-number->flonum e) 42.0))))
          )
 
- )
+ (list "Checkers"
+       (list
+        (list "check-list" (equal? (begin (check-list '(1 2 3)) 'ok) 'ok))
+        (list "check-mlist" (equal? (begin (check-mlist '()) 'ok) 'ok))
+        (list "check-range" (equal? (begin (check-range 0 5 1) 'ok) 'ok))
+        (list "check-range-generic"
+              (equal? (begin (check-range-generic 'who 0 1 1) 'ok) 'ok))
+        (list "check-naturals" (equal? (begin (check-naturals 5) 'ok) 'ok))))
+
+)
 

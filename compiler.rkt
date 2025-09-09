@@ -378,6 +378,7 @@
   always-throw  ; test function: throws an exception
   
   raise-unbound-variable-reference
+  raise-argument-error
   
   ; structures
   make-struct-type
@@ -428,6 +429,7 @@
   build-list
   range range-proc
   inclusive-range inclusive-range-proc
+  check-list check-mlist check-range check-range-generic check-naturals
   argmax argmin
 
   void?

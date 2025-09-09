@@ -6,7 +6,8 @@
          racket/flonum
          racket/math
          racket/list
-         math/flonum          
+         racket/mpair
+         math/flonum
          (only-in math/base
                   asinh acosh atanh
                   
@@ -460,7 +461,10 @@ partition
  raise-argument-error
  ; raise-unbound-variable-reference
 
- 
+
+ ;; 12. Sequences and Streams
+ check-list check-mlist check-range check-range-generic check-naturals
+
  ;; 13.5 Writing
  display
  displayln
@@ -694,7 +698,31 @@ partition
         [(eq? step #f) (range start-or-end end)]
         [else (range start-or-end end step)]))
 
-(define (range start-or-end [end #f] [step #f]) 
+(define (range start-or-end [end #f] [step #f])
   (cond [(eq? end #f) (range start-or-end)]
         [(eq? step #f) (range start-or-end end)]
         [else (range start-or-end end step)]))
+
+(define (check-list l)
+  (unless (list? l)
+    (raise-argument-error 'in-list "list?" l)))
+
+(define (check-mlist l)
+  (unless (or (mpair? l) (null? l))
+    (raise-argument-error 'in-mlist "(or/c mpair? null?)" l)))
+
+(define (check-range a b step)
+  (check-range-generic 'in-range a b step))
+
+(define (check-range-generic who a b step)
+  (unless (real? a) (raise-argument-error who "real?" a))
+  (unless (real? b) (raise-argument-error who "real?" b))
+  (unless (real? step) (raise-argument-error who "real?" step)))
+
+(define (check-naturals n)
+  (unless (and (integer? n)
+               (exact? n)
+               (n . >= . 0))
+    (raise-argument-error 'in-naturals
+                          "exact-nonnegative-integer?"
+                          n)))
