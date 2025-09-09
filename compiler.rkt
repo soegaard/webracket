@@ -415,16 +415,18 @@
   reverse memq
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
-  list*
+  list* 
   cartesian-product
   permutations
-  filter filter-map filter-not partition remove
-  list-prefix? 
-  take-common-prefix 
-  drop-common-prefix 
+  filter filter-map filter-not shuffle partition remove
+  index-of index-where indexes-of indexes-where
+  list-prefix?
+  take-common-prefix
+  drop-common-prefix
   split-common-prefix
   make-list
   build-list
+  range range-proc
   inclusive-range inclusive-range-proc
   argmax argmin
 
@@ -3049,16 +3051,27 @@
      ;; That is, arguments beyound `min` are optional.
      ;; Passes `default` for missing arguments.
      ;; Note: The same default values is used for all arguments.
-     (define (inline-prim/optional/default sym ae1 min max default)
-       (define filler `(global.get $missing))
-       (define aes (AExpr* ae1))
-       (define n   (length aes))
-       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
-       (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
-       (define optionals (make-list (- max n) default))
-       `(call ,($ sym) ,@aes ,@optionals))
+    (define (inline-prim/optional/default sym ae1 min max default)
+      (define filler `(global.get $missing))
+      (define aes (AExpr* ae1))
+      (define n   (length aes))
+      (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+      (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
+      (define optionals (make-list (- max n) default))
+      `(call ,($ sym) ,@aes ,@optionals))
 
-     (define (build-rest-args aes)
+    (define (inline-range sym ae1)
+      (define aes (AExpr* ae1))
+      (match aes
+        [(list end)
+         `(call ,($ sym) (global.get $missing) ,end (global.get $missing))]
+        [(list start end)
+         `(call ,($ sym) ,start ,end (global.get $missing))]
+        [(list start end step)
+         `(call ,($ sym) ,start ,end ,step)]
+        [_ (error 'primapp "wrong number of arguments: ~a" sym)]))
+
+    (define (build-rest-args aes)
        (let loop ([aes aes])
          (if (null? aes)
              `(global.get $null)
@@ -3160,12 +3173,16 @@
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
+         [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
+         [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
          [(filter-map)                 (inline-prim/variadic sym ae1 2)]
+         [(range)                      (inline-range sym ae1)]
+         [(range-proc)                (inline-range sym ae1)]
          [(inclusive-range)
           (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
          [(inclusive-range-proc)
