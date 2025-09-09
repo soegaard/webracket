@@ -415,9 +415,10 @@
   reverse memq
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
-  list*
+  list* 
   cartesian-product
   filter filter-map filter-not partition remove
+  index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix
   drop-common-prefix
@@ -3171,6 +3172,8 @@
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
+         [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
+         [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]

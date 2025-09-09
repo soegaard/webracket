@@ -11174,13 +11174,244 @@
                      ;; 3) advance to cdr
                      (local.set $xs
                                 (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs))))
-                     (br $search))
+               (br $search))
                (unreachable))
 
 
-         (func $cartesian-product (type $Prim>=0)
-               (param $xss (ref eq))
-               (result (ref eq))
+        (func $index-of (type $Prim3)
+              (param $xs     (ref eq)) ; list
+              (param $v      (ref eq)) ; value to find
+              (param $same?  (ref eq)) ; optional comparator, default equal?
+              (result        (ref eq))
+
+              (local $cur     (ref eq))
+              (local $pair    (ref $Pair))
+              (local $elem    (ref eq))
+              (local $f       (ref $Procedure))
+              (local $finv    (ref $ProcedureInvoker))
+              (local $args    (ref $Args))
+              (local $res     (ref eq))
+              (local $use-proc i32)
+              (local $i       i32)
+
+              ;; Handle optional comparator
+              (if (ref.eq (local.get $same?) (global.get $missing))
+                  (then (local.set $use-proc (i32.const 0)))
+                  (else
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                             (unreachable)))
+                   (local.set $use-proc (i32.const 1))
+                   (local.set $f    (ref.cast (ref $Procedure) (local.get $same?)))
+                   (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                   (local.set $args (array.new $Args (global.get $null) (i32.const 2)))))
+
+              (local.set $cur (local.get $xs))
+              (local.set $i   (i32.const 0))
+              (loop $loop
+                    (if (ref.eq (local.get $cur) (global.get $null))
+                        (then (return (global.get $false))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-pair-expected (local.get $cur))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (block $same
+                           (if (i32.eqz (local.get $use-proc))
+                               (then
+                                (if (ref.eq (call $equal? (local.get $elem) (local.get $v))
+                                            (global.get $false))
+                                    (then (br $same))
+                                    (else (return (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))
+                               (else
+                                (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+                                (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (local.get $f)
+                                                     (local.get $args)
+                                                     (local.get $finv)))
+                                (if (ref.eq (local.get $res) (global.get $false))
+                                    (then (br $same))
+                                    (else (return (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                    (br $loop))
+              (unreachable))
+
+
+        (func $index-where (type $Prim2)
+              (param $xs   (ref eq)) ; list
+              (param $proc (ref eq)) ; predicate
+              (result      (ref eq))
+
+              (local $cur   (ref eq))
+              (local $pair  (ref $Pair))
+              (local $elem  (ref eq))
+              (local $f     (ref $Procedure))
+              (local $finv  (ref $ProcedureInvoker))
+              (local $args  (ref $Args))
+              (local $res   (ref eq))
+              (local $i     i32)
+
+              ;; Ensure proc is a procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              (local.set $cur (local.get $xs))
+              (local.set $i   (i32.const 0))
+              (loop $loop
+                    (if (ref.eq (local.get $cur) (global.get $null))
+                        (then (return (global.get $false))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-pair-expected (local.get $cur))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                    (local.set $res
+                               (call_ref $ProcedureInvoker
+                                         (local.get $f)
+                                         (local.get $args)
+                                         (local.get $finv)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (nop))
+                        (else (return (ref.i31 (i32.shl (local.get $i) (i32.const 1))))))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                    (br $loop))
+              (unreachable))
+
+
+        (func $indexes-of (type $Prim3)
+              (param $xs     (ref eq)) ; list
+              (param $v      (ref eq)) ; value to find
+              (param $same?  (ref eq)) ; optional comparator, default equal?
+              (result        (ref eq))
+
+              (local $cur     (ref eq))
+              (local $pair    (ref $Pair))
+              (local $elem    (ref eq))
+              (local $f       (ref $Procedure))
+              (local $finv    (ref $ProcedureInvoker))
+              (local $args    (ref $Args))
+              (local $res     (ref eq))
+              (local $use-proc i32)
+              (local $i       i32)
+              (local $acc     (ref eq))
+
+              ;; Handle optional comparator
+              (if (ref.eq (local.get $same?) (global.get $missing))
+                  (then (local.set $use-proc (i32.const 0)))
+                  (else
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                             (unreachable)))
+                   (local.set $use-proc (i32.const 1))
+                   (local.set $f    (ref.cast (ref $Procedure) (local.get $same?)))
+                   (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                   (local.set $args (array.new $Args (global.get $null) (i32.const 2)))))
+
+              (local.set $cur (local.get $xs))
+              (local.set $i   (i32.const 0))
+              (local.set $acc (global.get $null))
+              (loop $loop
+                    (if (ref.eq (local.get $cur) (global.get $null))
+                        (then (return (call $reverse (local.get $acc)))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-pair-expected (local.get $cur))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (block $same
+                           (if (i32.eqz (local.get $use-proc))
+                               (then
+                                (if (ref.eq (call $equal? (local.get $elem) (local.get $v))
+                                            (global.get $false))
+                                    (then (br $same))
+                                    (else (local.set $acc
+                                                    (call $cons
+                                                          (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                                          (local.get $acc))))))
+                               (else
+                                (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+                                (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (local.get $f)
+                                                     (local.get $args)
+                                                     (local.get $finv)))
+                                (if (ref.eq (local.get $res) (global.get $false))
+                                    (then (br $same))
+                                    (else (local.set $acc
+                                                    (call $cons
+                                                          (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                                          (local.get $acc)))))))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                    (br $loop))
+              (unreachable))
+
+
+        (func $indexes-where (type $Prim2)
+              (param $xs   (ref eq)) ; list
+              (param $proc (ref eq)) ; predicate
+              (result      (ref eq))
+
+              (local $cur   (ref eq))
+              (local $pair  (ref $Pair))
+              (local $elem  (ref eq))
+              (local $f     (ref $Procedure))
+              (local $finv  (ref $ProcedureInvoker))
+              (local $args  (ref $Args))
+              (local $res   (ref eq))
+              (local $i     i32)
+              (local $acc   (ref eq))
+
+              ;; Ensure proc is a procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              (local.set $cur (local.get $xs))
+              (local.set $i   (i32.const 0))
+              (local.set $acc (global.get $null))
+              (loop $loop
+                    (if (ref.eq (local.get $cur) (global.get $null))
+                        (then (return (call $reverse (local.get $acc)))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-pair-expected (local.get $cur))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                    (local.set $res
+                               (call_ref $ProcedureInvoker
+                                         (local.get $f)
+                                         (local.get $args)
+                                         (local.get $finv)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (nop))
+                        (else (local.set $acc
+                                         (call $cons
+                                               (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                               (local.get $acc)))))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                    (br $loop))
+              (unreachable))
+
+
+        (func $cartesian-product (type $Prim>=0)
+              (param $xss (ref eq))
+              (result (ref eq))
 
                (local $pair   (ref $Pair))
                (local $xs     (ref eq))

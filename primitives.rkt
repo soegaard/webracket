@@ -387,11 +387,15 @@ filter-map
 filter-not
 partition
 remove
+index-of
+index-where
+indexes-of
+indexes-where
 list-prefix?
 take-common-prefix
 drop-common-prefix
 split-common-prefix
- ; remq
+; remq
  ; remv
  ; remw
  ; remove*
