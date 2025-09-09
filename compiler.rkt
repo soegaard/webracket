@@ -378,6 +378,14 @@
   always-throw  ; test function: throws an exception
   
   raise-unbound-variable-reference
+  raise-argument-error
+
+  ; checkers
+  check-list
+  check-mlist
+  check-range
+  check-range-generic
+  check-naturals
   
   ; structures
   make-struct-type

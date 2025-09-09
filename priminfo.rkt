@@ -65,6 +65,12 @@
     external-number->flonum
     external-string->string
     inclusive-range
+
+    ;; check-list
+    ;; check-mlist
+    ;; check-range
+    ;; check-range-generic
+    ;; check-naturals
     ))
 
 

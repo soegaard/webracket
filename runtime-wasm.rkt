@@ -206,57 +206,67 @@
     (add-runtime-symbol-constant 'T)
     (add-runtime-symbol-constant 'LV)
     (add-runtime-symbol-constant 'LVT)
+
+    (add-runtime-symbol-constant 'in-list)
+    (add-runtime-symbol-constant 'in-mlist)
+    (add-runtime-symbol-constant 'in-range)
+    (add-runtime-symbol-constant 'in-naturals)    
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
 
-    (add-runtime-string-constant 'hash-variable-reference   "#<variable-reference>")
-    (add-runtime-string-constant 'box-prefix                "#&")
-    (add-runtime-string-constant 'bytes-prefix              "#\"")
-    (add-runtime-string-constant 'backslash                 "\\")
-    (add-runtime-string-constant 'backslash-x               "\\x")
-    (add-runtime-string-constant 'double-quote              "\"")
-    (add-runtime-string-constant 'hash-t                    "#t")
-    (add-runtime-string-constant 'hash-f                    "#f")
-    (add-runtime-string-constant 'null                      "()")
-    (add-runtime-string-constant 'void                      "#<void>")
-    (add-runtime-string-constant 'undefined                 "#<undefined>")
-    (add-runtime-string-constant 'unspecified               "#<unspecified>")
-    (add-runtime-string-constant 'missing                   "#<missing>")
-    (add-runtime-string-constant 'closure                   "#<closure>")
-    (add-runtime-string-constant 'external                  "#<external>")
-    (add-runtime-string-constant 'external-null             "#<external-null>")
-    (add-runtime-string-constant 'namespace                 "#<namespace>")
-    (add-runtime-string-constant 'hash-less-namespace-colon "#<namespace:")
-    (add-runtime-string-constant 'empty                     "")
-    (add-runtime-string-constant 'open-paren                "(")
-    (add-runtime-string-constant 'close-paren               ")")
-    (add-runtime-string-constant 'space                     " ")
-    (add-runtime-string-constant 'dot-space                 ". ")
-    (add-runtime-string-constant 'space-dot-space           " . ")
-    (add-runtime-string-constant 'vector-prefix             "#(")
-    (add-runtime-string-constant 'values-prefix             "(values")
-    (add-runtime-string-constant 'g                         "g")
-    (add-runtime-string-constant 'struct-type-descriptor    "#<struct-type-descriptor>")
-    (add-runtime-string-constant 'struct-open               "#(struct ")
-    (add-runtime-string-constant 'hash-colon                "#:")
-    (add-runtime-string-constant 'hash-backslash            "#\\")
-    (add-runtime-string-constant 'hash-backslash-u          "#\\u")
-    (add-runtime-string-constant 'hash-backslash-U          "#\\U")
-    (add-runtime-string-constant 'word-newline              "newline")
-    (add-runtime-string-constant 'word-tab                  "tab")
-    (add-runtime-string-constant 'word-return               "return")
-    (add-runtime-string-constant 'word-backspace            "backspace")
-    (add-runtime-string-constant 'word-space                "space")
-    (add-runtime-string-constant 'word-rubout               "rubout")
-    (add-runtime-string-constant 'word-nul                  "nul")
-    (add-runtime-string-constant 'hash-less-procedure-colon "#<procedure:")
-    (add-runtime-string-constant 'hash-less-primitive-colon "#<primitive:")
-    (add-runtime-string-constant 'unknown                   "unknown")
-    (add-runtime-string-constant 'colon                     ":")
-    (add-runtime-string-constant '->                        ">")
-    (add-runtime-string-constant 'hash-less-boxed-colon     "#<boxed:")
+    (add-runtime-string-constant 'hash-variable-reference    "#<variable-reference>")
+    (add-runtime-string-constant 'box-prefix                 "#&")
+    (add-runtime-string-constant 'bytes-prefix               "#\"")
+    (add-runtime-string-constant 'backslash                  "\\")
+    (add-runtime-string-constant 'backslash-x                "\\x")
+    (add-runtime-string-constant 'double-quote               "\"")
+    (add-runtime-string-constant 'hash-t                     "#t")
+    (add-runtime-string-constant 'hash-f                     "#f")
+    (add-runtime-string-constant 'null                       "()")
+    (add-runtime-string-constant 'void                       "#<void>")
+    (add-runtime-string-constant 'undefined                  "#<undefined>")
+    (add-runtime-string-constant 'unspecified                "#<unspecified>")
+    (add-runtime-string-constant 'missing                    "#<missing>")
+    (add-runtime-string-constant 'closure                    "#<closure>")
+    (add-runtime-string-constant 'external                   "#<external>")
+    (add-runtime-string-constant 'external-null              "#<external-null>")
+    (add-runtime-string-constant 'namespace                  "#<namespace>")
+    (add-runtime-string-constant 'hash-less-namespace-colon  "#<namespace:")
+    (add-runtime-string-constant 'empty                      "")
+    (add-runtime-string-constant 'open-paren                 "(")
+    (add-runtime-string-constant 'close-paren                ")")
+    (add-runtime-string-constant 'space                      " ")
+    (add-runtime-string-constant 'dot-space                  ". ")
+    (add-runtime-string-constant 'space-dot-space            " . ")
+    (add-runtime-string-constant 'vector-prefix              "#(")
+    (add-runtime-string-constant 'values-prefix              "(values")
+    (add-runtime-string-constant 'g                          "g")
+    (add-runtime-string-constant 'struct-type-descriptor     "#<struct-type-descriptor>")
+    (add-runtime-string-constant 'struct-open                "#(struct ")
+    (add-runtime-string-constant 'hash-colon                 "#:")
+    (add-runtime-string-constant 'hash-backslash             "#\\")
+    (add-runtime-string-constant 'hash-backslash-u           "#\\u")
+    (add-runtime-string-constant 'hash-backslash-U           "#\\U")
+    (add-runtime-string-constant 'word-newline               "newline")
+    (add-runtime-string-constant 'word-tab                   "tab")
+    (add-runtime-string-constant 'word-return                "return")
+    (add-runtime-string-constant 'word-backspace             "backspace")
+    (add-runtime-string-constant 'word-space                 "space")
+    (add-runtime-string-constant 'word-rubout                "rubout")
+    (add-runtime-string-constant 'word-nul                   "nul")
+    (add-runtime-string-constant 'hash-less-procedure-colon  "#<procedure:")
+    (add-runtime-string-constant 'hash-less-primitive-colon  "#<primitive:")
+    (add-runtime-string-constant 'unknown                    "unknown")
+    (add-runtime-string-constant 'colon                      ":")
+    (add-runtime-string-constant '->                         ">")
+    (add-runtime-string-constant 'hash-less-boxed-colon      "#<boxed:")
 
+    (add-runtime-string-constant 'list?                      "list?")
+    (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
+    (add-runtime-string-constant 'real?                      "real?")
+    (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
+    
     (add-runtime-bytes-constant  'empty                     #"")
     
     `(module
@@ -841,14 +851,27 @@
         ;; FFI related imports
         ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
          
-         (func $raise-expected-string     (unreachable))
-         (func $raise-unexpected-argument (unreachable))
 
          ,@(current-ffi-funcs-wat)   ; generated from "driver.rkt" in "define-foreign.rkt"
          
-         
-         ;; Exceptions
+
+         ;;;
+         ;;; Exceptions
+         ;;;
+
+         (func $raise-expected-string                 (unreachable))
+         (func $raise-unexpected-argument             (unreachable))
          (func $raise-wrong-number-of-values-received (unreachable))
+
+         (func $raise-argument-error1
+               (param $who      (ref eq))      ;; symbol
+               (param $expected (ref eq))      ;; expected description
+               (param $got      (ref eq))      ;; received value
+               
+               (call $js-log (local.get $who))
+               (call $js-log (local.get $expected))
+               (call $js-log (local.get $got))
+               (unreachable))
          
          ;; Singletons
          (global $null       (ref eq) ,(Imm '()))
@@ -2358,8 +2381,104 @@
          (func $always-throw (type $Prim0)
                (throw $exn ,(Imm 42)))
 
-         
+         ;;;
+         ;;; Checkers
+         ;;;
 
+         (func $check-list (type $Prim1)
+               (param $l (ref eq)) ;; list
+               (result   (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $list? (local.get $l)) (global.get $true))
+                   (then (global.get $void))
+                   (else (call $raise-argument-error1
+                               (global.get $symbol:in-list)
+                               (global.get $string:list?)
+                               (local.get $l))
+                         (unreachable))))
+
+         ;; Racket's check-mlist accepts only mutable pairs; mpairs are
+         ;; currently unsupported, so this version accepts any pair.
+         (func $check-mlist (type $Prim1)
+               (param $l (ref eq))                 ;; mutable list
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $l) (global.get $null))
+                   (then (global.get $void))
+                   (else (if (result (ref eq))
+                             (ref.eq (call $pair? (local.get $l)) (global.get $true))
+                             (then (global.get $void))
+                             (else (call $raise-argument-error1
+                                         (global.get $symbol:in-mlist)
+                                         (global.get $string:mpair-or-null)
+                                         (local.get $l))
+                                   (unreachable))))))
+
+         (func $check-range (type $Prim3)
+               (param $a (ref eq))     ;; start
+               (param $b (ref eq))     ;; end
+               (param $step (ref eq))  ;; step
+               (result (ref eq))
+               (call $check-range-generic (global.get $symbol:in-range)
+                     (local.get $a)
+                     (local.get $b)
+                     (local.get $step)))
+
+         (func $check-range-generic
+               (param $who  (ref eq))  ;; symbol
+               (param $a    (ref eq))  ;; start
+               (param $b    (ref eq))  ;; end
+               (param $step (ref eq))  ;; step
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $real? (local.get $a)) (global.get $true))
+                   (then (if (result (ref eq))
+                             (ref.eq (call $real? (local.get $b)) (global.get $true))
+                             (then (if (result (ref eq))
+                                       (ref.eq (call $real? (local.get $step)) (global.get $true))
+                                       (then (global.get $void))
+                                       (else (call $raise-argument-error1
+                                                   (local.get $who) (global.get $string:real?) (local.get $step))
+                                             (unreachable))))
+                             (else (call $raise-argument-error1
+                                         (local.get $who) (global.get $string:real?) (local.get $b))
+                                   (unreachable))))
+                   (else (call $raise-argument-error1
+                               (local.get $who) (global.get $string:real?) (local.get $a))
+                         (unreachable))))
+
+         (func $check-naturals (type $Prim1)
+               (param $n (ref eq))   ;; n
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $integer? (local.get $n)) (global.get $true))
+                   (then (if (result (ref eq))
+                             (ref.eq (call $exact? (local.get $n)) (global.get $true))
+                             (then (if (result (ref eq))
+                                       (ref.test (ref i31) (local.get $n))
+                                       (then (if (result (ref eq))
+                                                 (i32.ge_s (i31.get_s (ref.cast (ref i31) (local.get $n))) (i32.const 0))
+                                                 (then (global.get $void))
+                                                 (else (call $raise-argument-error1
+                                                             (global.get $symbol:in-naturals)
+                                                             (global.get $string:exact-nonnegative-integer?)
+                                                             (local.get $n))
+                                                       (unreachable))))
+                                       (else (call $raise-argument-error1
+                                                   (global.get $symbol:in-naturals)
+                                                   (global.get $string:exact-nonnegative-integer?)
+                                                   (local.get $n))
+                                             (unreachable))))
+                             (else (call $raise-argument-error1
+                                         (global.get $symbol:in-naturals)
+                                         (global.get $string:exact-nonnegative-integer?)
+                                         (local.get $n))
+                                   (unreachable))))
+                   (else (call $raise-argument-error1
+                               (global.get $symbol:in-naturals)
+                               (global.get $string:exact-nonnegative-integer?)
+                               (local.get $n))
+                         (unreachable))))
          
          ;;;
          ;;; DATATYPES
@@ -16766,12 +16885,6 @@
                            (ref.func $struct-accessor)
                            (local.get $free)))
 
-
-         (func $raise-argument-error1 (param $x (ref eq)) (unreachable))
-         (func $raise-argument-error2 (param $x (ref eq)) (unreachable))
-         (func $raise-argument-error3 (param $x (ref eq)) (unreachable))
-         (func $raise-argument-error4 (param $x (ref eq)) (unreachable))
-         (func $raise-argument-error5 (param $x (ref eq)) (unreachable))         
          
          (func $struct-accessor
                (type $ClosureCode)
@@ -16803,21 +16916,21 @@
                ;; Get struct
                (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
                (if (i32.eqz (ref.test (ref $Struct) (local.get $target)))
-                   (then (call $raise-argument-error1 (local.get $target))))
+                   (then (call $raise-argument-error (local.get $target))))
                (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
 
                ;; Get index and decode
                (local.set $index-fx (array.get $Args (local.get $args) (i32.const 1)))
                (if (i32.or (i32.eqz (ref.test (ref i31) (local.get $index-fx)))
                            (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $index-fx))) (i32.const 1)) (i32.const 0)))
-                   (then (call $raise-argument-error2 (local.get $index-fx))))
+                   (then (call $raise-argument-error (local.get $index-fx))))
                (local.set $index (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $index-fx))) (i32.const 1)))
                
                ;; Type match - is $struct a subtype of $std
                (if (i32.eqz (call $struct-type-is-a?/i32
                                   (struct.get $Struct $type (local.get $struct))
                                   (local.get $std)))
-                   (then (call $raise-argument-error3 (local.get $target))))
+                   (then (call $raise-argument-error (local.get $target))))
 
                ;; Get and return field
                (local.set $fields (struct.get $Struct $fields (local.get $struct)))
@@ -17102,7 +17215,7 @@
                (if (i32.eqz (call $struct-type-is-a?/i32
                                   (struct.get $Struct $type (local.get $struct))
                                   (local.get $std)))
-                   (then (call $raise-argument-error3 (local.get $target))))
+                   (then (call $raise-argument-error (local.get $target))))
 
                ;; --- Set field ---
                (local.set $fields (struct.get $Struct $fields (local.get $struct)))
