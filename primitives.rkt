@@ -380,30 +380,31 @@ bytes->string/utf-8
  count
  cartesian-product
  permutations
+ remf
+ remf*
  ; foldl
  ; foldr
 
-filter
-filter-map
-filter-not
-shuffle
-partition
-remove
-index-of
-index-where
-indexes-of
-indexes-where
-list-prefix?
-take-common-prefix
-drop-common-prefix
-split-common-prefix
-; remq
- ; remv
- ; remw
- ; remove*
- ; remq*
- ; remv*
- ; remw*
+ filter
+ filter-map
+ filter-not
+ shuffle
+ partition
+ remove
+ remq
+ remv
+ remw
+ remq*
+ remv*
+ remw*
+ index-of
+ index-where
+ indexes-of
+ indexes-where
+ list-prefix?
+ take-common-prefix
+ drop-common-prefix
+ split-common-prefix
  ; sort
 
  ; member
