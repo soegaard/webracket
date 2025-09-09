@@ -1529,6 +1529,18 @@
                            '((1) (2) (3)))
                    (equal? (cartesian-product '(1 2) '()) '())
                    (equal? (procedure-arity cartesian-product) -1)))
+        (list "index-of"
+              (let ([s1 (string #\a)]
+                    [s2 (string #\a)])
+                (and (equal? (index-of '(1 2 3 4) 3) 2)
+                     (equal? (index-of '(1 2 3 4) 5) #f)
+                     (equal? (index-of (list s1) s2 eq?) #f))))
+        (list "index-where"
+              (equal? (index-where '(1 2 3 4) even?) 1))
+        (list "indexes-of"
+              (equal? (indexes-of '(1 2 1 2 1) 2) '(1 3)))
+        (list "indexes-where"
+              (equal? (indexes-where '(1 2 3 4) even?) '(1 3)))
         (list "list-prefix?"
               (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
                    (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))
