@@ -415,11 +415,10 @@
   reverse memq
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
-  list*
+  list* 
   cartesian-product
   permutations
-  remf remf*
-  filter filter-map filter-not shuffle partition remove remq remv remw remq* remv* remw*
+  filter filter-map filter-not shuffle partition remove
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix

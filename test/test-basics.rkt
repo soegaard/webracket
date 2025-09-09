@@ -1477,25 +1477,6 @@
                      (and (eq? (remove 5 lst) lst)
                           (equal? (remove 5 lst) lst)))))
 
-        (list "remq"
-              (and (equal? (remq 2 (list 1 2 3 4 5)) '(1 3 4 5))
-                   (let ([lst (list 1 3 4 5)]) (eq? (remq 6 lst) lst))))
-        (list "remv"
-              (and (equal? (remv 2 (list 1 2 3 4 5)) '(1 3 4 5))
-                   (let ([lst (list 1 3 4 5)]) (eq? (remv 6 lst) lst))))
-        (list "remw"
-              (and (equal? (remw 2 (list 1 2 3 4 5)) '(1 3 4 5))
-                   (let ([lst (list 1 3 4 5)]) (eq? (remw 6 lst) lst))))
-        (list "remq*"
-              (and (equal? (remq* (list 1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
-                   (let ([lst (list 1 2 3)]) (eq? (remq* '() lst) lst))))
-        (list "remv*"
-              (and (equal? (remv* (list 1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
-                   (let ([lst (list 1 2 3)]) (eq? (remv* '() lst) lst))))
-        (list "remw*"
-              (and (equal? (remw* (list 1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
-                   (let ([lst (list 1 2 3)]) (eq? (remw* '() lst) lst))))
-
         (list "count"
               (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
                    (equal? (count (λ (x y) (< x y))       '(1 2 3) '(2 2 4)) 2)))
@@ -1570,12 +1551,6 @@
              (and (equal? (permutations '(1 2 3))
                          '((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1)))
                   (equal? (permutations '(x x)) '((x x) (x x)))))
-       (list "remf"
-             (and (equal? (remf negative? '(1 -2 3 4 -5)) '(1 3 4 -5))
-                  (equal? (remf negative? '(1 2 3)) '(1 2 3))))
-       (list "remf*"
-             (and (equal? (remf* negative? '(1 -2 3 4 -5)) '(1 3 4))
-                  (equal? (remf* negative? '(1 2 3)) '(1 2 3))))
         (list "index-of"
               (let ([s1 (string #\a)]
                     [s2 (string #\a)])
