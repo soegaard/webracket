@@ -64,6 +64,7 @@
     procedure->external
     external-number->flonum
     external-string->string
+    inclusive-range
     ))
 
 
