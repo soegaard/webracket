@@ -1491,6 +1491,7 @@
 
         (list "remove*"
               (and (equal? (remove* '(1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
+                   (equal? (remove* '((2)) '((1) (2) (3))) '((1) (3)))
                    (let ([lst (list 1 2 3)])
                      (and (eq? (remove* '(4 5) lst) lst)
                           (equal? (remove* '(4 5) lst) lst)))
