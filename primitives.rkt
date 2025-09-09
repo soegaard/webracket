@@ -379,6 +379,7 @@ bytes->string/utf-8
  for-each
  count
  cartesian-product
+ permutations
  ; foldl
  ; foldr
 

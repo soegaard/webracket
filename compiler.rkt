@@ -417,6 +417,7 @@
   map andmap ormap count for-each
   list* 
   cartesian-product
+  permutations
   filter filter-map filter-not shuffle partition remove
   index-of index-where indexes-of indexes-where
   list-prefix?
