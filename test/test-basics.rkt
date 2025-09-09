@@ -1444,6 +1444,17 @@
               (and (equal? (filter-not (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(-2 -5))
                    (equal? (filter-not (λ (x) (positive? x)) '()) '())))
 
+        (list "shuffle"
+              (let ([l '(1 2 3 4 5 6)])
+                (let ([s (shuffle l)])
+                  (and (equal? (length s) (length l))
+                       (let loop ([xs s] [rem l])
+                         (if (null? xs)
+                             (null? rem)
+                             (let ([rest (remove (car xs) rem)])
+                               (and (not (eq? rest rem))
+                                    (loop (cdr xs) rest)))))))))
+
         (list "partition"
               (and (let-values ([(pos neg)
                                  (partition (λ (x) (positive? x)) '(1 -2 3 4 -5))])

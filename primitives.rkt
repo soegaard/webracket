@@ -384,6 +384,7 @@ bytes->string/utf-8
 filter
 filter-map
 filter-not
+shuffle
 partition
 remove
 list-prefix?

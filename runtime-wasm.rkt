@@ -12700,10 +12700,58 @@
                      (br $loop))
                (unreachable))
 
-         (func $partition (type $Prim2)
-               (param $proc (ref eq))  ;; predicate
-               (param $xs   (ref eq))  ;; list
-               (result      (ref eq))
+        (func $shuffle (type $Prim1)
+              (param $xs (ref eq))  ;; list
+              (result (ref eq))
+
+              (local $arr  (ref $Array))
+              (local $len  i32)
+              (local $i    i32)
+              (local $j    i32)
+              (local $tmp  (ref eq))
+              (local $elem (ref eq))
+              (local $res  (ref eq))
+
+              ;; 1) Convert list to array (validates list)
+              (local.set $arr (call $list->array (local.get $xs)))
+              (local.set $len (array.len (local.get $arr)))
+
+              ;; 2) Fisher-Yates shuffle
+              (local.set $i (i32.const 0))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                           (local.set $j
+                                      (i32.rem_u (call $random-u32)
+                                                 (i32.add (local.get $i) (i32.const 1))))
+                           (if (i32.ne (local.get $j) (local.get $i))
+                               (then
+                                (local.set $tmp (array.get $Array (local.get $arr) (local.get $i)))
+                                (local.set $elem (array.get $Array (local.get $arr) (local.get $j)))
+                                (array.set $Array (local.get $arr) (local.get $i) (local.get $elem))
+                                (array.set $Array (local.get $arr) (local.get $j) (local.get $tmp)))
+                               (else (nop)))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $loop)))
+
+              ;; 3) Convert array back to list
+              (local.set $res (global.get $null))
+              (local.set $i (i32.sub (local.get $len) (i32.const 1)))
+              (block $rev-done
+                     (loop $rev
+                           (br_if $rev-done (i32.lt_s (local.get $i) (i32.const 0)))
+                           (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+                           (local.set $res (struct.new $Pair (i32.const 0)
+                                                        (local.get $elem)
+                                                        (local.get $res)))
+                           (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                           (br $rev)))
+              (local.get $res))
+
+        (func $partition (type $Prim2)
+              (param $proc (ref eq))  ;; predicate
+              (param $xs   (ref eq))  ;; list
+              (result      (ref eq))
 
                (local $f    (ref $Procedure))
                (local $finv (ref $ProcedureInvoker))
