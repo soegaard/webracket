@@ -11177,67 +11177,76 @@
                (br $search))
                (unreachable))
 
+         
+         (func $index-of (type $Prim3)
+               (param $xs     (ref eq))  ;; list
+               (param $v      (ref eq))  ;; value to find
+               (param $same?  (ref eq))  ;; optional comparator, default equal?
+               (result        (ref eq))
 
-        (func $index-of (type $Prim3)
-              (param $xs     (ref eq)) ; list
-              (param $v      (ref eq)) ; value to find
-              (param $same?  (ref eq)) ; optional comparator, default equal?
-              (result        (ref eq))
+               (local $cur      (ref eq))
+               (local $pair     (ref $Pair))
+               (local $elem     (ref eq))
+               (local $args     (ref $Args))
+               (local $res      (ref eq))
+               (local $use-proc i32)
+               (local $i        i32)
 
-              (local $cur     (ref eq))
-              (local $pair    (ref $Pair))
-              (local $elem    (ref eq))
-              (local $f       (ref $Procedure))
-              (local $finv    (ref $ProcedureInvoker))
-              (local $args    (ref $Args))
-              (local $res     (ref eq))
-              (local $use-proc i32)
-              (local $i       i32)
+               ;; Handle optional comparator 
+               (if (ref.eq (local.get $same?) (global.get $missing))
+                   (then (local.set $use-proc (i32.const 0)))
+                   (else
+                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                        (then
+                         (call $raise-argument-error:procedure-expected (local.get $same?))
+                         (unreachable)))
+                    (local.set $use-proc (i32.const 1))))
 
-              ;; Handle optional comparator
-              (if (ref.eq (local.get $same?) (global.get $missing))
-                  (then (local.set $use-proc (i32.const 0)))
-                  (else
-                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
-                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
-                             (unreachable)))
-                   (local.set $use-proc (i32.const 1))
-                   (local.set $f    (ref.cast (ref $Procedure) (local.get $same?)))
-                   (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
-                   (local.set $args (array.new $Args (global.get $null) (i32.const 2)))))
+               ;; Unconditionally allocate args buffer once; overwrite each iteration.
+               (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
 
-              (local.set $cur (local.get $xs))
-              (local.set $i   (i32.const 0))
-              (loop $loop
-                    (if (ref.eq (local.get $cur) (global.get $null))
-                        (then (return (global.get $false))))
-                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
-                        (then (call $raise-pair-expected (local.get $cur))
-                              (unreachable)))
-                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
-                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                    (block $same
-                           (if (i32.eqz (local.get $use-proc))
-                               (then
-                                (if (ref.eq (call $equal? (local.get $elem) (local.get $v))
-                                            (global.get $false))
-                                    (then (br $same))
-                                    (else (return (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))
-                               (else
-                                (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
-                                (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
-                                (local.set $res
-                                           (call_ref $ProcedureInvoker
-                                                     (local.get $f)
-                                                     (local.get $args)
-                                                     (local.get $finv)))
-                                (if (ref.eq (local.get $res) (global.get $false))
-                                    (then (br $same))
-                                    (else (return (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))))
-                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
-                    (local.set $i   (i32.add (local.get $i) (i32.const 1)))
-                    (br $loop))
-              (unreachable))
+               (local.set $cur (local.get $xs))
+               (local.set $i   (i32.const 0))
+               (loop $loop
+                     (if (ref.eq (local.get $cur) (global.get $null))
+                         (then (return (global.get $false))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                         (then (call $raise-pair-expected (local.get $cur))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+
+                     (block $same
+                            (if (i32.eqz (local.get $use-proc))
+                                (then
+                                 (if (ref.eq (call $equal? (local.get $elem) (local.get $v))
+                                             (global.get $false))
+                                     (then (br $same))
+                                     (else
+                                      (return
+                                       (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))
+                                (else
+                                 ;; Prepare args once per iteration
+                                 (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+                                 (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                                 ;; Call provided comparator without storing non-defaultable locals
+                                 (local.set $res
+                                            (call_ref $ProcedureInvoker
+                                                      (ref.cast (ref $Procedure) (local.get $same?))
+                                                      (local.get $args)
+                                                      (struct.get $Procedure $invoke
+                                                                  (ref.cast (ref $Procedure) (local.get $same?)))))
+                                 (if (ref.eq (local.get $res) (global.get $false))
+                                     (then (br $same))
+                                     (else
+                                      (return
+                                       (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))))))
+
+                     (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                     (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                     (br $loop))
+               (unreachable))
+
 
 
         (func $index-where (type $Prim2)
@@ -11288,73 +11297,86 @@
 
 
         (func $indexes-of (type $Prim3)
-              (param $xs     (ref eq)) ; list
-              (param $v      (ref eq)) ; value to find
-              (param $same?  (ref eq)) ; optional comparator, default equal?
-              (result        (ref eq))
+              (param $xs      (ref eq))  ;; list
+              (param $v       (ref eq))  ;; value to find
+              (param $same?   (ref eq))  ;; optional comparator, default equal?
+              (result         (ref eq))
 
-              (local $cur     (ref eq))
-              (local $pair    (ref $Pair))
-              (local $elem    (ref eq))
-              (local $f       (ref $Procedure))
-              (local $finv    (ref $ProcedureInvoker))
-              (local $args    (ref $Args))
-              (local $res     (ref eq))
+              (local $cur      (ref eq))
+              (local $pair     (ref $Pair))
+              (local $elem     (ref eq))
+              (local $args     (ref $Args))
+              (local $res      (ref eq))
               (local $use-proc i32)
-              (local $i       i32)
-              (local $acc     (ref eq))
+              (local $i        i32)
+              (local $acc      (ref eq))
 
-              ;; Handle optional comparator
+              ;; Handle optional comparator 
               (if (ref.eq (local.get $same?) (global.get $missing))
                   (then (local.set $use-proc (i32.const 0)))
                   (else
                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
-                       (then (call $raise-argument-error:procedure-expected (local.get $same?))
-                             (unreachable)))
-                   (local.set $use-proc (i32.const 1))
-                   (local.set $f    (ref.cast (ref $Procedure) (local.get $same?)))
-                   (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
-                   (local.set $args (array.new $Args (global.get $null) (i32.const 2)))))
+                       (then
+                        (call $raise-argument-error:procedure-expected (local.get $same?))
+                        (unreachable))
+                       (else (nop)))
+                   (local.set $use-proc (i32.const 1))))
+
+              ;; Unconditionally allocate args buffer once; we overwrite each iteration.
+              (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
 
               (local.set $cur (local.get $xs))
               (local.set $i   (i32.const 0))
               (local.set $acc (global.get $null))
               (loop $loop
                     (if (ref.eq (local.get $cur) (global.get $null))
-                        (then (return (call $reverse (local.get $acc)))))
+                        (then (return (call $reverse (local.get $acc))))
+                        (else (nop)))
                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
-                        (then (call $raise-pair-expected (local.get $cur))
-                              (unreachable)))
+                        (then
+                         (call $raise-pair-expected (local.get $cur))
+                         (unreachable))
+                        (else (nop)))
                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+
                     (block $same
                            (if (i32.eqz (local.get $use-proc))
                                (then
                                 (if (ref.eq (call $equal? (local.get $elem) (local.get $v))
                                             (global.get $false))
                                     (then (br $same))
-                                    (else (local.set $acc
-                                                    (call $cons
-                                                          (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
-                                                          (local.get $acc))))))
+                                    (else
+                                     (local.set $acc
+                                                (call $cons
+                                                      (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                                      (local.get $acc))))))
                                (else
+                                ;; Prepare args for comparator: (v, elem)
                                 (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
                                 (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+
+                                ;; Call provided comparator without non-defaultable locals
                                 (local.set $res
                                            (call_ref $ProcedureInvoker
-                                                     (local.get $f)
+                                                     (ref.cast (ref $Procedure) (local.get $same?))
                                                      (local.get $args)
-                                                     (local.get $finv)))
+                                                     (struct.get $Procedure $invoke
+                                                                 (ref.cast (ref $Procedure) (local.get $same?)))))
+
                                 (if (ref.eq (local.get $res) (global.get $false))
                                     (then (br $same))
-                                    (else (local.set $acc
-                                                    (call $cons
-                                                          (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
-                                                          (local.get $acc)))))))
+                                    (else
+                                     (local.set $acc
+                                                (call $cons
+                                                      (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                                      (local.get $acc))))))))
+
                     (local.set $cur (struct.get $Pair $d (local.get $pair)))
                     (local.set $i   (i32.add (local.get $i) (i32.const 1)))
                     (br $loop))
               (unreachable))
+
 
 
         (func $indexes-where (type $Prim2)
