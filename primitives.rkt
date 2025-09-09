@@ -340,9 +340,10 @@ bytes->string/utf-8
  cdr
  list?
  list
- list* 
+ list*
  make-list     ; racket/list
  build-list
+ range range-proc
  inclusive-range inclusive-range-proc
 
  length
@@ -387,11 +388,15 @@ filter-not
 shuffle
 partition
 remove
+index-of
+index-where
+indexes-of
+indexes-where
 list-prefix?
 take-common-prefix
 drop-common-prefix
 split-common-prefix
- ; remq
+; remq
  ; remv
  ; remw
  ; remove*
@@ -682,3 +687,13 @@ split-common-prefix
         (if (or (inexact? start) (inexact? end)) 1.0 1)
         (if (or (inexact? start) (inexact? end)) -1.0 -1)))
   (inclusive-range start end (if step step default-step)))
+
+(define (range-proc start-or-end [end #f] [step #f])
+  (cond [(eq? end #f) (range start-or-end)]
+        [(eq? step #f) (range start-or-end end)]
+        [else (range start-or-end end step)]))
+
+(define (range start-or-end [end #f] [step #f]) 
+  (cond [(eq? end #f) (range start-or-end)]
+        [(eq? step #f) (range start-or-end end)]
+        [else (range start-or-end end step)]))
