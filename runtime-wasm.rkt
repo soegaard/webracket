@@ -11494,7 +11494,7 @@
 
          (func $permutations (type $Prim1)
                (param $lst (ref eq))
-               (result (ref eq))
+               (result     (ref eq))
 
                (local $len i32)                 ;; length of input list
                (local $vec (ref $Vector))       ;; vector representation
@@ -11553,7 +11553,7 @@
                        (else
                         ;; Reset counter and advance i
                         (call $i32array-set! (local.get $cnt) (local.get $i) (i32.const 0))
-                        (local.set $i (i32.add (local.get $i) (i32.const 1))))
+                        (local.set $i (i32.add (local.get $i) (i32.const 1)))))
                    (br $loop)))
 
                ;; Reverse accumulator to preserve generation order
