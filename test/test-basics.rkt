@@ -1518,7 +1518,7 @@
               (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
                    (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))
 
-        (list "argmin"
+       (list "argmin"
               (and (equal? (argmin car '((3 pears) (1 banana) (2 apples))) '(1 banana))
                    (equal? (argmin car '((1 banana) (1 orange))) '(1 banana))))
        (list "cartesian-product"
@@ -1529,9 +1529,13 @@
                            '((1) (2) (3)))
                    (equal? (cartesian-product '(1 2) '()) '())
                    (equal? (procedure-arity cartesian-product) -1)))
-        (list "list-prefix?"
-              (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
-                   (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))
+       (list "permutations"
+             (and (equal? (permutations '(1 2 3))
+                         '((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1)))
+                  (equal? (permutations '(x x)) '((x x) (x x)))))
+       (list "list-prefix?"
+             (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
+                  (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))
         (list "take-common-prefix"
               (equal? (take-common-prefix '(a b c d) '(a b x y z)) '(a b)))
         (list "drop-common-prefix"

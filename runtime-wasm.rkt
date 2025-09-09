@@ -11237,6 +11237,73 @@
                             (local.set $list (struct.get $Pair $d (local.get $pair)))
                             (br $outer)))
 
+              (call $reverse (local.get $acc)))
+
+         (func $permutations (type $Prim1)
+               (param $lst (ref eq))
+               (result (ref eq))
+
+               (local $len i32)                 ;; length of input list
+               (local $vec (ref $Vector))       ;; vector representation
+               (local $cnt (ref $I32Array))     ;; counters for Heap's algorithm
+               (local $i i32)                   ;; index
+               (local $ci i32)                  ;; counter value at i
+               (local $x (ref eq))              ;; temporary for swaps
+               (local $y (ref eq))
+               (local $perm (ref eq))           ;; list for current permutation
+               (local $acc (ref eq))            ;; accumulator of permutations
+
+               ;; Determine length and ensure lst is a proper list
+               (local.set $len (call $length/i32 (local.get $lst)))
+
+               ;; If length <= 1, return list containing lst
+               (if (i32.le_u (local.get $len) (i32.const 1))
+                   (then (return (call $cons (local.get $lst) (global.get $null)))))
+
+               ;; Convert list to vector and allocate counters
+               (local.set $vec (ref.cast (ref $Vector) (call $list->vector (local.get $lst))))
+               (local.set $cnt (call $i32array-make (local.get $len) (i32.const 0)))
+
+               ;; Initialize accumulator with original list
+               (local.set $acc (call $cons (local.get $lst) (global.get $null)))
+
+               ;; Main Heap's algorithm loop
+               (local.set $i (i32.const 0))
+               (block $done
+                 (loop $loop
+                   (if (i32.ge_u (local.get $i) (local.get $len))
+                       (then (br $done)))
+                   (local.set $ci (call $i32array-ref (local.get $cnt) (local.get $i)))
+                   (if (i32.lt_u (local.get $ci) (local.get $i))
+                       (then
+                        ;; Swap depending on parity of i
+                        (if (i32.eqz (i32.and (local.get $i) (i32.const 1)))
+                            (then
+                             (local.set $x (call $vector-ref/checked (local.get $vec) (i32.const 0)))
+                             (local.set $y (call $vector-ref/checked (local.get $vec) (local.get $i)))
+                             (call $vector-set!/checked (local.get $vec) (i32.const 0) (local.get $y))
+                             (call $vector-set!/checked (local.get $vec) (local.get $i) (local.get $x)))
+                            (else
+                             (local.set $x (call $vector-ref/checked (local.get $vec) (local.get $ci)))
+                             (local.set $y (call $vector-ref/checked (local.get $vec) (local.get $i)))
+                             (call $vector-set!/checked (local.get $vec) (local.get $ci) (local.get $y))
+                             (call $vector-set!/checked (local.get $vec) (local.get $i) (local.get $x))))
+
+                        ;; Record permutation
+                        (local.set $perm (call $vector->list (local.get $vec)))
+                        (local.set $acc (call $cons (local.get $perm) (local.get $acc)))
+
+                        ;; Increment counter and reset i
+                        (call $i32array-set! (local.get $cnt) (local.get $i)
+                                             (i32.add (local.get $ci) (i32.const 1)))
+                        (local.set $i (i32.const 0)))
+                       (else
+                        ;; Reset counter and advance i
+                        (call $i32array-set! (local.get $cnt) (local.get $i) (i32.const 0))
+                        (local.set $i (i32.add (local.get $i) (i32.const 1))))
+                   (br $loop)))
+
+               ;; Reverse accumulator to preserve generation order
                (call $reverse (local.get $acc)))
 
 

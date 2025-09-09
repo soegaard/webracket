@@ -417,7 +417,8 @@
   map andmap ormap count for-each
   list*
   cartesian-product
-  filter filter-map filter-not partition remove 
+  permutations
+  filter filter-map filter-not partition remove
   list-prefix? 
   take-common-prefix 
   drop-common-prefix 
