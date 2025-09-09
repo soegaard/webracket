@@ -1477,6 +1477,18 @@
                      (and (eq? (remove 5 lst) lst)
                           (equal? (remove 5 lst) lst)))))
 
+        (list "remq"
+              (and (equal? (remq 2 (list 1 2 3 2 4)) '(1 3 2 4))
+                   (equal? (procedure-arity remq) 2)))
+
+        (list "remv"
+              (and (equal? (remv 2 (list 1 2 3 2 4)) '(1 3 2 4))
+                   (equal? (procedure-arity remv) 2)))
+
+        (list "remw"
+              (and (equal? (remw 2 (list 1 2 3 2 4)) '(1 3 2 4))
+                   (equal? (procedure-arity remw) 2)))
+
         (list "count"
               (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
                    (equal? (count (λ (x y) (< x y))       '(1 2 3) '(2 2 4)) 2)))
