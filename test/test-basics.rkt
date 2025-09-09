@@ -1366,6 +1366,10 @@
         (list "first"
               (and (equal? (first '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 1)
                    (equal? (procedure-arity first) 1)))
+        (list "rest"
+              (and (equal? (rest '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))
+                           '(2 3 4 5 6 7 8 9 10 11 12 13 14 15))
+                   (equal? (procedure-arity rest) 1)))
         (list "second"
               (and (equal? (second '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)) 2)
                    (equal? (procedure-arity second) 1)))

@@ -10838,6 +10838,15 @@
                          (local.get $xs)
                         (ref.i31 (i32.shl (i32.const ,idx) (i32.const 1))))))
 
+        (func $rest (type $Prim1) (param $xs (ref eq)) (result (ref eq))
+              ;; Type check: non-empty proper list
+              (if (ref.eq (local.get $xs) (global.get $null))
+                  (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+              (if (ref.eq (call $list? (local.get $xs)) (global.get $false))
+                  (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+              ;; Return tail
+              (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $xs))))
+
         ;; last-pair/checked: takes a Pair and returns the last Pair in the chain
         (func $last-pair/checked
               (param $p (ref $Pair))
