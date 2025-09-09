@@ -687,3 +687,8 @@ split-common-prefix
   (cond [(eq? end #f) (range start-or-end)]
         [(eq? step #f) (range start-or-end end)]
         [else (range start-or-end end step)]))
+
+(define (range start-or-end [end #f] [step #f]) 
+  (cond [(eq? end #f) (range start-or-end)]
+        [(eq? step #f) (range start-or-end end)]
+        [else (range start-or-end end step)]))

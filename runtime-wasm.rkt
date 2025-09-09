@@ -11341,18 +11341,18 @@
                             (br $loop)))
                (local.get $acc))
 
-        (func $range-proc (type $Prim3)
-              (param $start (ref eq))
-              (param $end   (ref eq))
-              (param $step  (ref eq)) ;; $missing for default 1
-              (result       (ref eq))
-              (call $range (local.get $start) (local.get $end) (local.get $step)))
+         (func $range-proc (type $Prim3)
+               (param $start (ref eq))
+               (param $end   (ref eq))
+               (param $step  (ref eq)) ;; $missing for default 1
+               (result       (ref eq))
+               (call $range (local.get $start) (local.get $end) (local.get $step)))
 
         (func $range (type $Prim3)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))
               (param $step-raw  (ref eq)) ;; $missing for defaults 0/1
-              (result (ref eq))
+              (result           (ref eq))
 
               (local $use-fl       i32)
               (local $start-i32    i32)
@@ -11376,7 +11376,7 @@
                                       (then (local.set $start-i32
                                                       (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
                                       (else (call $raise-argument-error (local.get $start-raw))
-                                            (unreachable))))))
+                                            (unreachable)))))))
 
               ;; end
               (if (call $fl?/i32 (local.get $end-raw))
