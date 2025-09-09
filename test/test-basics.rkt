@@ -1500,11 +1500,11 @@
                            '("a" "A" "B"))))
 
         (list "remq*"
-              (list (equal? (remq* '(1 2) (list 1 2 3 2 4)) '(3 4))
+              (and (equal? (remq* '(1 2) (list 1 2 3 2 4)) '(3 4))
                    (equal? (procedure-arity remq*) 2)))
 
         (list "remv*"
-              (list (equal? (remv* '(1 2) (list 1 2 3 2 4)) '(3 4))
+              (and (equal? (remv* '(1 2) (list 1 2 3 2 4)) '(3 4))
                    (equal? (procedure-arity remv*) 2)))
 
         (list "remw*"

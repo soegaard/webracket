@@ -13400,105 +13400,120 @@
               (param $proc  (ref eq))   ;; optional comparator, defaults to equal?
               (result       (ref eq))
 
-              (local $cur       (ref eq))
-              (local $pair      (ref $Pair))
-              (local $elem      (ref eq))
-              (local $acc       (ref eq))
-              (local $res       (ref eq))
-              (local $tail      (ref eq))
-              (local $vlcur     (ref eq))
-              (local $vlpair    (ref $Pair))
-              (local $v         (ref eq))
-              (local $args      (ref $Args))
-              (local $r         (ref eq))
-              (local $found     i32)
-              (local $modified  i32)
-
-              ;; ensure non-nullable $r is initialized for all paths
-              (local.set $r (global.get $false))
-              
               ;; Handle optional comparator
-              ;; Defaults to equal? when not supplied
               (if (ref.eq (local.get $proc) (global.get $missing))
                   (then (local.set $proc (global.get $prim:equal?)))
                   (else
                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                        (then (call $raise-argument-error:procedure-expected (local.get $proc))
-                             (unreachable))
-                       (else))))
+                             (unreachable)))))
 
-              ;; If v-lst is empty, return lst directly
+              ;; If v-lst is empty, return original list
               (if (ref.eq (local.get $v-lst) (global.get $null))
                   (then (return (local.get $lst))))
 
-              (local.set $cur (local.get $lst))
-              (local.set $acc (global.get $null))
+              (return_call $remove*/checked
+                           (local.get $v-lst)
+                           (local.get $lst)
+                           (local.get $proc)))
+
+        ;; Iterate through the value list, removing each one in turn
+        (func $remove*/checked
+              (param $v-lst (ref eq))
+              (param $lst   (ref eq))
+              (param $proc  (ref eq))
+              (result       (ref eq))
+
+              (local $vlcur  (ref eq))
+              (local $vlpair (ref $Pair))
+              (local $v      (ref eq))
+              (local $res    (ref eq))
+
+              (local.set $vlcur (local.get $v-lst))
+              (local.set $res   (local.get $lst))
+              (loop $loop
+                    (if (ref.eq (local.get $vlcur) (global.get $null))
+                        (then (return (local.get $res))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $vlcur)))
+                        (then (call $raise-pair-expected (local.get $vlcur))
+                              (unreachable)))
+                    (local.set $vlpair (ref.cast (ref $Pair) (local.get $vlcur)))
+                    (local.set $v      (struct.get $Pair $a (local.get $vlpair)))
+                    (local.set $vlcur  (struct.get $Pair $d (local.get $vlpair)))
+                    (local.set $res (call $remove*/checked/1
+                                          (local.get $v)
+                                          (local.get $res)
+                                          (local.get $proc)))
+                    (br $loop))
+              (unreachable))
+
+        ;; Remove all occurrences of a single value from a list using the comparator
+        (func $remove*/checked/1
+              (param $v    (ref eq))
+              (param $lst  (ref eq))
+              (param $proc (ref eq))
+              (result      (ref eq))
+              
+              (local $cur      (ref eq))
+              (local $pair     (ref $Pair))
+              (local $elem     (ref eq))
+              (local $acc      (ref eq))
+              (local $res      (ref eq))
+              (local $tail     (ref eq))
+              (local $args     (ref $Args))
+              (local $r        (ref eq))
+              (local $f        (ref $Procedure))
+              (local $finv     (ref $ProcedureInvoker))
+              (local $modified i32)
+
+              ;; Prepare comparator call
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+              (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+
+              (local.set $cur      (local.get $lst))
+              (local.set $acc      (global.get $null))
               (local.set $modified (i32.const 0))
 
               (block $done
                      (loop $loop
                            (if (ref.eq (local.get $cur) (global.get $null))
                                (then (br $done)))
-
                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
                                (then (call $raise-pair-expected (local.get $cur))
                                      (unreachable)))
-
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
                            (local.set $tail (struct.get $Pair $d (local.get $pair)))
-
-                           ;; search v-lst for elem
-                           (local.set $vlcur (local.get $v-lst))
-                           (local.set $found (i32.const 0))
-                           (block $search-done
-                                  (loop $search
-                                        (if (ref.eq (local.get $vlcur) (global.get $null))
-                                            (then (br $search-done)))
-                                        (if (i32.eqz (ref.test (ref $Pair) (local.get $vlcur)))
-                                            (then (call $raise-pair-expected (local.get $vlcur))
-                                                  (unreachable)))
-                                        (local.set $vlpair (ref.cast (ref $Pair) (local.get $vlcur)))
-                                        (local.set $v      (struct.get $Pair $a (local.get $vlpair)))
-                                        (local.set $vlcur  (struct.get $Pair $d (local.get $vlpair)))
-                                        (block $cont
-                                               (local.set $r
-                                                          (call_ref $ProcedureInvoker
-                                                                    (ref.cast (ref $Procedure) (local.get $proc))
-                                                                    (block (result (ref $Args))
-                                                                           (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
-                                                                           (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
-                                                                           (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
-                                                                           (local.get $args))
-                                                                    (struct.get $Procedure $invoke
-                                                                                (ref.cast (ref $Procedure) (local.get $proc))))
-                                                          (if (ref.eq (local.get $r) (global.get $false))
-                                                              (then (br $cont))
-                                                              (else (local.set $found (i32.const 1)) (br $search-done)))))
-                                        (if (i32.eqz (local.get $found))
-                                            (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
-                                            (else (local.set $modified (i32.const 1))))
-                                        (local.set $cur (local.get $tail))
-                                        (br $loop))
-                           ;; done loop
-                           )))
+                           (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                           (local.set $r
+                                      (call_ref $ProcedureInvoker
+                                                (local.get $f)
+                                                (local.get $args)
+                                                (local.get $finv)))
+                           (if (ref.eq (local.get $r) (global.get $false))
+                               (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
+                               (else (local.set $modified (i32.const 1))))
+                           (local.set $cur (local.get $tail))
+                           (br $loop)))
 
               (if (i32.eqz (local.get $modified))
                   (then (return (local.get $lst))))
 
-              ;; rebuild reversed accumulator
+              ;; Rebuild reversed accumulator
               (local.set $cur (local.get $acc))
               (local.set $res (global.get $null))
               (loop $rev
                     (if (ref.eq (local.get $cur) (global.get $null))
-                        (then (return (local.get $res)))
-                        (else))
+                        (then (return (local.get $res))))
                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                     (local.set $res (call $cons (struct.get $Pair $a (local.get $pair))
                                           (local.get $res)))
                     (local.set $cur (struct.get $Pair $d (local.get $pair)))
                     (br $rev))
               (unreachable))
+
 
 
         ;; $remq*, $remv*, and $remw* implemented via remove*
