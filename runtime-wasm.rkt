@@ -11341,6 +11341,13 @@
                             (br $loop)))
                (local.get $acc))
 
+        (func $inclusive-range-proc (type $Prim3)
+              (param $start (ref eq))
+              (param $end   (ref eq))
+              (param $step  (ref eq)) ;; $missing for default 1
+              (result       (ref eq))
+              (call $inclusive-range (local.get $start) (local.get $end) (local.get $step)))
+
         (func $inclusive-range (type $Prim3)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))

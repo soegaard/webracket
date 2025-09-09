@@ -341,9 +341,9 @@ bytes->string/utf-8
  list?
  list
  list* 
-  make-list     ; racket/list
-  build-list
-  inclusive-range
+ make-list     ; racket/list
+ build-list
+ inclusive-range inclusive-range-proc
 
  length
  list-ref
@@ -673,4 +673,5 @@ split-common-prefix
   (raise 42))
 
 
-  
+(define (inclusive-range-proc start end [step 1])
+  (inclusive-range start end step))
