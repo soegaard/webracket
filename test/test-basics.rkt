@@ -1489,6 +1489,27 @@
               (and (equal? (remw 2 (list 1 2 3 2 4)) '(1 3 2 4))
                    (equal? (procedure-arity remw) 2)))
 
+        (list "remove*"
+              (and (equal? (remove* '(1 2) (list 1 2 3 2 4 5 2)) '(3 4 5))
+                   (let ([lst (list 1 2 3)])
+                     (and (eq? (remove* '(4 5) lst) lst)
+                          (equal? (remove* '(4 5) lst) lst)))
+                   (equal? (remove* '("b") (list "a" "A" "b" "B")
+                                    (λ (x y) (string=? x y)))
+                           '("a" "A" "B"))))
+
+        (list "remq*"
+              (and (equal? (remq* '(1 2) (list 1 2 3 2 4)) '(3 4))
+                   (equal? (procedure-arity remq*) 2)))
+
+        (list "remv*"
+              (and (equal? (remv* '(1 2) (list 1 2 3 2 4)) '(3 4))
+                   (equal? (procedure-arity remv*) 2)))
+
+        (list "remw*"
+              (and (equal? (remw* '(1 2) (list 1 2 3 2 4)) '(3 4))
+                   (equal? (procedure-arity remw*) 2)))
+
         (list "count"
               (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
                    (equal? (count (λ (x y) (< x y))       '(1 2 3) '(2 2 4)) 2)))
