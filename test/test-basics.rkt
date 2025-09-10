@@ -1756,11 +1756,16 @@
 
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
-                         [ys (list 1 2 4)])
+                        [ys (list 1 2 4)])
                      (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
                                (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
         ))
+
+ (list "Pattern Matching"
+       (list
+        (list "match:error"
+              (equal? (procedure-arity match:error) 3))))
 
  (list "Checkers"
        (list

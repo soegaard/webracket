@@ -379,6 +379,7 @@
   
   raise-unbound-variable-reference
   raise-argument-error
+  match:error
 
   ; checkers
   check-list

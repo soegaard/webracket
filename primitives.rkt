@@ -14,7 +14,8 @@
          racket/string
          racket/symbol
          racket/vector
-         racket/unsafe/ops         
+         racket/unsafe/ops
+         (only-in racket/match match:error)
          ; racket/namespace
 
          math/flonum
@@ -466,6 +467,7 @@ partition
 
  ;; 10.2 Exceptions
  raise-argument-error
+ match:error
  ; raise-unbound-variable-reference
  
  ;; 13.5 Writing
