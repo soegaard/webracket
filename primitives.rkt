@@ -22,11 +22,17 @@
                   asinh acosh atanh                  
                   float-complex?)
          
-         (prefix-in imm: "immediates.rkt"))
+         (prefix-in imm: "immediates.rkt")
+
+         racket/match
+         )
 
 ;; The primitives are 
 
 (provide
+ match
+
+ 
  ;; Test functions
  always-throw ; todo - remove
 
