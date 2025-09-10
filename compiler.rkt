@@ -424,7 +424,7 @@
   
   append ; variadic list primitive
   flatten
-  reverse memq
+  reverse member memq memv memw
   alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list* 

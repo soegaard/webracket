@@ -409,10 +409,7 @@ bytes->string/utf-8
  remove* remf* remq* remv* remw*
  ; sort
 
- ; member
- ; memw
- ; memv
- memq
+ member memw memv memq
  argmax argmin
  ; memf
  ; findf

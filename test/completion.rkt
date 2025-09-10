@@ -1394,7 +1394,10 @@
             make-void
             map
             max
+            member
             memq
+            memv
+            memw
             min
             modulo
             most-negative-fixnum

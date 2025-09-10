@@ -1577,6 +1577,42 @@
                            #f)
                    (equal? (procedure-arity memq) 2)))
 
+        (list "memv"
+              (and (equal? (memv 'a '(a b c)) '(a b c))
+                   (equal? (memv 'b '(a b c)) '(b c))
+                   (equal? (memv 'b '(a b . c)) '(b . c))
+                   (equal? (memv 'a '(b c d)) #f)
+                   (equal? (memv (list->string (string->list "apple"))
+                                 '("apple"))
+                           #f)
+                   (equal? (memv 1/2 '(1/2)) '(1/2))
+                   (equal? (procedure-arity memv) 2)))
+
+        (list "memw"
+              (and (equal? (memw 'a '(a b c)) '(a b c))
+                   (equal? (memw 'b '(a b c)) '(b c))
+                   (equal? (memw 'b '(a b . c)) '(b . c))
+                   (equal? (memw 'a '(b c d)) #f)
+                   (equal? (memw (list->string (string->list "apple"))
+                                 '("apple"))
+                           #f)
+                   (equal? (memw (string->immutable-string (list->string (string->list "apple")))
+                                 '("apple"))
+                           '("apple"))
+                   (equal? (memw 1/2 '(1/2)) '(1/2))
+                   (equal? (memw '(1 2) '(1 2 (1 2))) '((1 2)))
+                   (equal? (procedure-arity memw) 2)))
+
+        (list "member"
+              (and (equal? (member 'a '(a b c)) '(a b c))
+                   (equal? (member 'b '(a b c)) '(b c))
+                   (equal? (member 'b '(a b . c)) '(b . c))
+                   (equal? (member 'a '(b c d)) #f)
+                   (equal? (member 2 '(1 2 1 2) =) '(2 1 2))
+                   (equal? (member 2 '(3 4 5 6) =) #f)
+                   (equal? (member #"b" '(#"a" #"b" #"c") bytes=?) '(#"b" #"c"))
+                   (equal? (procedure-arity member) '(2 . 3))))
+
         (list "argmax"
               (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
                    (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))
