@@ -1476,7 +1476,18 @@
                    (let ([lst (list 1 2 3 2 4)])
                      (and (eq? (remove 5 lst) lst)
                           (equal? (remove 5 lst) lst)))))
-
+        (list "remf"
+              (and (equal? (remf negative? '(1 -2 3 4 -5)) '(1 3 4 -5))
+                   (let ([lst (list 1 2 3)])
+                     (and (eq? (remf negative? lst) lst)
+                          (equal? (remf negative? lst) lst)))
+                   (equal? (procedure-arity remf) 2)))
+        (list "remf*"
+              (and (equal? (remf* negative? '(1 -2 3 4 -5)) '(1 3 4))
+                   (let ([lst (list 1 2 3)])
+                     (and (eq? (remf* negative? lst) lst)
+                          (equal? (remf* negative? lst) lst)))
+                   (equal? (procedure-arity remf*) 2)))
         (list "remq"
               (and (equal? (remq 2 (list 1 2 3 2 4)) '(1 3 2 4))
                    (equal? (procedure-arity remq) 2)))

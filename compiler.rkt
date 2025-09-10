@@ -418,7 +418,10 @@
   cons car cdr
   list              ; not first order yet
   list? length list-ref list-tail list-set list-update
-  first rest second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth last last-pair
+  first rest last last-pair
+  second third fourth fifth sixth seventh eighth ninth tenth
+  eleventh twelfth thirteenth fourteenth fifteenth
+  
   append ; variadic list primitive
   flatten
   reverse memq
@@ -427,7 +430,9 @@
   list* 
   cartesian-product
   permutations
-  filter filter-map filter-not shuffle partition remove remq remv remw remove* remq* remv* remw*
+  filter filter-map filter-not shuffle partition
+  remove  remf  remq  remv  remw
+  remove* remf* remq* remv* remw*
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix

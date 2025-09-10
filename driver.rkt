@@ -30,7 +30,7 @@
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/pretty     pretty-write)
          (only-in racket/format     ~a)
-         (only-in "lang/reader.rkt" read-syntax)
+         #;(only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
          (only-in racket/list       append*)
          (only-in "parameters.rkt"  current-ffi-foreigns
@@ -128,7 +128,7 @@
 (define (read-top-level-from-from-file filename)
   (define (read-forms port)
     (let loop ([forms '()])
-      (define stx (read-syntax filename port))
+      (define stx (read-syntax filename port))      
       (if (eof-object? stx)
           (reverse forms)
           (loop (cons stx forms)))))

@@ -26,7 +26,7 @@
   (define mod-name (source-name->module-name source-name))
   (define mod      `(module ,mod-name webracket ,@forms))
   (define out      (strip-context (datum->syntax #f mod)))
-  #;(displayln out (current-error-port))
+  ; (displayln out (current-error-port))
   out)
 
 

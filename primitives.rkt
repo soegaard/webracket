@@ -391,12 +391,11 @@ bytes->string/utf-8
  ; foldl
  ; foldr
 
-filter
-filter-map
-filter-not
-shuffle
-partition
- remove
+ filter
+ filter-map
+ filter-not
+ shuffle
+ partition
  index-of
  index-where
  indexes-of
@@ -405,13 +404,9 @@ partition
  take-common-prefix
  drop-common-prefix
  split-common-prefix
- remq
- remv
- remw
- remove*
- remq*
- remv*
- remw*
+
+ remove  remf  remq  remv  remw
+ remove* remf* remq* remv* remw*
  ; sort
 
  ; member
