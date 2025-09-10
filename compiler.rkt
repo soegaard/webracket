@@ -931,7 +931,7 @@
   (ModuleLevelForm : * (M) -> ModuleLevelForm ()
     (with-output-language (LFE ModuleLevelForm)
       (syntax-parse M #:literal-sets (kernel-literals)
-        [(#%provide rps ...)          `(#%provide ,(RawProvideSpec* #'(rps ...)))]
+        [(#%provide rps ...)          `(#%provide ,(RawProvideSpec* #'(rps ...)) ...)]
         ; (modbegin-for-syntax ...) todo
         ; (#%declare ...)           todo
         [g  `,(GeneralTopLevelForm #'g)])))
@@ -951,7 +951,7 @@
   (RawRequireSpec : * (RRS) -> RawRequireSpec ()
     (with-output-language (LFE RawRequireSpec)
       ; (displayln (list 'in RRS))
-      (RawRootModulePath RRS))) ; TODO - temporary solution
+      `,(RawRootModulePath RRS))) ; TODO - temporary solution
 
   (RawRootModulePath : * (RRMP) -> RawRootModulePath ()
     (with-output-language (LFE RawRootModulePath)
