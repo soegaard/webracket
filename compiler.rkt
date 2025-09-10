@@ -424,15 +424,16 @@
   
   append ; variadic list primitive
   flatten
-  reverse memq
-  alt-reverse ; used in expansion of for/list
+  reverse alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each
   list* 
   cartesian-product
   permutations
   filter filter-map filter-not shuffle partition
+  member memq memv memw  
   remove  remf  remq  remv  remw
   remove* remf* remq* remv* remw*
+  
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix
@@ -3206,7 +3207,7 @@
        `(call ,($ sym) ,@aes))
 
      ;; Inlines a call to a primitive with
-     ;;   at least `min` arguments,
+     ;;   at least `min` arguments, and
      ;;   at most  `max` arguments.
      ;; That is, arguments beyound `min` are optional.
      ;; Passes `(global.get $missing)` to indicate a missing argument.
@@ -3348,6 +3349,7 @@
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
+         [(member)                     (inline-prim/optional sym ae1 2 3)]
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(remove*)                    (inline-prim/optional sym ae1 2 3)]
          [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]

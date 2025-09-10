@@ -405,16 +405,13 @@ bytes->string/utf-8
  drop-common-prefix
  split-common-prefix
 
+ member memq memv memw
+ ; memf
  remove  remf  remq  remv  remw
  remove* remf* remq* remv* remw*
  ; sort
 
- ; member
- ; memw
- ; memv
- memq
  argmax argmin
- ; memf
  ; findf
  ; assoc
  ; assw

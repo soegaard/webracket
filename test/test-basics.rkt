@@ -1563,20 +1563,52 @@
                    (equal? (inclusive-range 10 15 1.5)
                            '(10.0 11.5 13.0 14.5))))
 
+        (list "member"
+              (and (equal? (member 'a '(a b c))     '(a b c))
+                   (equal? (member 'b '(a b c))     '(b c))
+                   (equal? (member 'b '(a b . c))   '(b . c))
+                   (equal? (member 'a '(b c d))     #f)
+                   (equal? (member 2 '(1 2 1 2) (λ (x y) (= x y)))  '(2 1 2))
+                   (equal? (member 2 '(3 4 5 6) (λ (x y) (= x y)))  #f)
+                   (equal? (member #"b" '(#"a" #"b" #"c") (λ (x y) (bytes=? x y))) '(#"b" #"c"))
+                   ; (procedure-arity member) ; returns #f   TODO
+                   #;(equal? (procedure-arity member) '(2 3)))) ; fails, TODO
         (list "memq"
               (and (equal? (memq 'a '(a b c))   '(a b c))
                    (equal? (memq 'b '(a b c))   '(b c))
                    (equal? (memq 'b '(a b . c)) '(b . c))
                    (equal? (memq 'a '(b c d))   #f)
-
                    #;(equal? (memq  "apple" '( "apple"))         '("apple"))   ; todo - intern literals
                    #;(equal? (memq #"apple" '(#"apple"))         '(#"apple"))  ; todo - intern literals
-
                    (equal? (memq (list->string (string->list "apple"))
                                  '("apple"))
                            #f)
                    (equal? (procedure-arity memq) 2)))
+        (list "memv"
+              (and (equal? (memv 'a '(a b c)) '(a b c))
+                   (equal? (memv 'b '(a b c)) '(b c))
+                   (equal? (memv 'b '(a b . c)) '(b . c))
+                   (equal? (memv 'a '(b c d)) #f)
+                   (equal? (memv (list->string (string->list "apple"))
+                                 '("apple"))
+                           #f)
+                   (equal? (memv 1/2 '(1/2)) '(1/2))
+                   (equal? (procedure-arity memv) 2)))
 
+        (list "memw" ; TODO - implement equal-always to get this test to pass
+              (and (equal? (memw 'a '(a b c)) '(a b c))
+                   (equal? (memw 'b '(a b c)) '(b c))
+                   (equal? (memw 'b '(a b . c)) '(b . c))
+                   (equal? (memw 'a '(b c d)) #f)
+                   (equal? (memw (list->string (string->list "apple"))
+                                 '("apple"))
+                           #f)
+                   (equal? (memw (string->immutable-string (list->string (string->list "apple")))
+                                 '("apple"))
+                           '("apple"))
+                   (equal? (memw 1/2 '(1/2)) '(1/2))
+                   (equal? (memw '(1 2) '(1 2 (1 2))) '((1 2)))
+                   (equal? (procedure-arity memw) 2)))
         (list "argmax"
               (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
                    (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))
