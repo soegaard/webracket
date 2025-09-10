@@ -266,8 +266,10 @@
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
+    (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     
     (add-runtime-bytes-constant  'empty                     #"")
+
     
     `(module
          ;;;
@@ -862,7 +864,7 @@
          (func $raise-expected-string                 (unreachable))
          (func $raise-unexpected-argument             (unreachable))
          (func $raise-wrong-number-of-values-received (unreachable))
-
+         
          (func $raise-argument-error1
                (param $who      (ref eq))      ;; symbol
                (param $expected (ref eq))      ;; expected description
@@ -2380,6 +2382,22 @@
          
          (func $always-throw (type $Prim0)
                (throw $exn ,(Imm 42)))
+
+         ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
+         (func $raise (type $Prim2)
+               (param $v        (ref eq)) ; any/c
+               (param $barrier? (ref eq)) ; any/c, optional with default #t
+               (result (ref eq))
+
+               ; Handle optional barrier? with default $t
+               (if (ref.eq (local.get $barrier?) (global.get $missing))
+                   (then (local.set $barrier? (global.get $true))))
+
+               (call $js-log (global.get $string:uncaught-exception))
+               (call $js-log (local.get  $v))
+
+               (unreachable))
+         
 
          ;;;
          ;;; Checkers

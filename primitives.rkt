@@ -465,6 +465,7 @@ partition
  call-with-values
 
  ;; 10.2 Exceptions
+ raise
  raise-argument-error
  ; raise-unbound-variable-reference
  
