@@ -1343,6 +1343,12 @@
 ; The expression (fresh x ρ) returns a new identifier not already mapped in ρ.
 ; The new name is based in the identifier x.
 
+(define-language LFE2+ (extends LFE2)
+  (SpacelessSpec (sls)
+    (- x)
+    (+ [x0 x1])))  ; [x_before x_after] names before and after renaming
+
+
 ;; New identifiers are produced by new-var.
 
 (define counter 0)
@@ -1369,7 +1375,7 @@
 
 (define α-rename-mode (make-parameter 'full))  ; 'full or 'simple
 
-; 'simple is only used for the existig test cases
+; 'simple is only used for the existing test cases
 ; 'full   is used otherwise
 ; In the simple mode, the  first occurence of a variable x in a scope is not renamed.
 ; In the full mode, all variables are renamed.
@@ -1378,10 +1384,42 @@
 ; In the simple mode, the program (begin (let ([x 1]) x)  (let ([x 2]) x)) fails.
 ; Someday, when the test cases are rewritten, we can remove the simple mode.
 
-(define-pass α-rename : LFE2 (T) -> LFE2 ()
+; α-rename : LFE2 -> LFE2+
+(define (α-rename T)
+  (letv ((T ρ) (α-rename/pass1 T))
+    ; pass 2 patches the `provide` form to hold both variables
+    ; before and after renaming.
+    (α-rename/pass2 T ρ)))
+
+(define-pass α-rename/pass2 : LFE2 (T ρ) -> LFE2+ ()
+  (definitions
+    (define (ModuleLevelForm* xs) (map ModuleLevelForm xs))
+    (define (TopLevelForm*    xs) (map TopLevelForm    xs))
+    (define (RawProvideSpec*  xs) (map RawProvideSpec  xs)))
+  
+  (TopLevelForm : TopLevelForm (T) -> TopLevelForm ()
+    [(topbegin ,s ,t ...)           (let ([t (TopLevelForm* t)])
+                                      `(topbegin ,s ,t ...))]     
+    [(topmodule ,s ,mn ,mp ,mf ...) (let ([mf (ModuleLevelForm* mf)])
+                                      `(topmodule ,s ,mn ,mp ,mf ...))])
+  
+  (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm ()
+    [(#%provide ,rps ...) `(#%provide ,(RawProvideSpec* rps) ...)])
+  
+  (RawProvideSpec : RawProvideSpec (RPS) -> RawProvideSpec ()
+    [,ps `,(PhaselessSpec ps)])
+
+  (PhaselessSpec : PhaselessSpec (PS) -> PhaselessSpec ()
+    [,sls `,(SpacelessSpec sls)])
+
+  (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ()
+    [,x  `[,x ,(ρ x)]]))
+
+
+(define-pass α-rename/pass1 : LFE2 (T) -> LFE2 (ρ)
   (definitions
     (define (reserved-target-language-keyword? id)
-      ; Any reserved keywords in the target language needs renaming.
+      ; Any reserved keywords in the target language that needs renaming.
       ; In WebAssembly the "user" names are prefixed with $, so
       ; there is nothing to worry about.
       #f)
@@ -1390,6 +1428,7 @@
             [(primitive? (variable-id x))             x]
             [else                                    #f]))
     (define (extend ρ original renamed)
+      ; (displayln (list original renamed))
       (λ (x) (if (id=? x original) renamed (ρ x))))
     (define (extend-map-to-self* ρ xs)
       (if (null? xs)
@@ -1554,8 +1593,7 @@
     [(variable-reference ,s ,vrx)             (values E ρ)])
   
   (letv ((T ρ) (TopLevelForm T initial-ρ))
-    T))
-
+    (values T ρ)))
   ;; (VariableReferenceId (vrx)
   ;;    x                                            
   ;;    (anonymous s)                                => ()
@@ -1567,7 +1605,7 @@
                 (reset-counter!)
                 (parameterize ([α-rename-mode 'simple])
                   (unparse-all
-                   (unparse-LFE2 (α-rename
+                   (unparse-LFE2+ (α-rename
                                   (explicit-case-lambda
                                    (explicit-begin
                                     (parse (expand-syntax stx)))))))))])
@@ -1599,7 +1637,7 @@
 ;; The first pass returns an id-set of all variables that are (potentially) assigned to.
 ;; The second pass converts assignable variables into boxes and assignments into box mutations.
 
-(define-pass collect-assignable-variables : LFE2 (T) -> * ()
+(define-pass collect-assignable-variables : LFE2+ (T) -> * ()
   ;; Assumption: α-conversion has been done
   (definitions
     (define (TopLevelForm*    Ts  xs)  (map* TopLevelForm    Ts  xs))
@@ -1645,7 +1683,7 @@
     #;(protect ...)
     #;(expand (id . datum))
     #;(expand (id . datum) orig-form)
-    [,x  empty-set]) ; id
+    [[,x0 ,x1] empty-set]) ; [id_before id_after]
 
   #;(Space (space)
       x ; identifier
@@ -1673,7 +1711,7 @@
     [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
   (apply make-id-set (TopLevelForm T '())))
 
-(define-pass box-mutables : LFE2 (T ms) -> LFE2 ()
+(define-pass box-mutables : LFE2+ (T ms) -> LFE2+ ()
   ;; Assumption: α-conversion has been done
   ;;  ms = assignable variables collected by collect-assignable-variables
   
@@ -1696,16 +1734,16 @@
     (define (immutable? x) (not (mutable? x)))    
     (define (formal-variables F)
       ; list of variables occuring as formal arguments
-      (nanopass-case (LFE2 Formals) F
+      (nanopass-case (LFE2+ Formals) F
         [(formals (,x ...))            x]
         [(formals (,x0 ,x1 ... . ,xd)) (cons x0 (append x1 (list xd)))]
         [(formals ,x)                  (list x)]))
-    (define (Boxed e)   (with-output-language (LFE2 Expr) `(app ,h ,(var:boxed) ,e)))
-    (define (Unboxed e) (with-output-language (LFE2 Expr) `(app ,h ,(var:unboxed) ,e)))
-    (define (Undefined) (with-output-language (LFE2 Expr) `(quote ,h ,datum:undefined)))
+    (define (Boxed e)   (with-output-language (LFE2+ Expr) `(app ,h ,(var:boxed) ,e)))
+    (define (Unboxed e) (with-output-language (LFE2+ Expr) `(app ,h ,(var:unboxed) ,e)))
+    (define (Undefined) (with-output-language (LFE2+ Expr) `(quote ,h ,datum:undefined)))
     (define (LambdaBody s f fs e)
       ; fs are the variables to be bound in the body e
-      (with-output-language (LFE2 Expr)
+      (with-output-language (LFE2+ Expr)
         (define (Begin es)  (match es [(list e0 e1 ...) `(begin ,h ,e0 ,e1 ...)]))
         (match (set-disjoint? fs ms) 
           [#t `,e]
@@ -1720,7 +1758,7 @@
             [0 e]
             [1 (if (mutable? (first xs)) (Boxed e) e)]
             [_ (with-fresh* (ts xs)
-                 (with-output-language (LFE2 Expr)
+                 (with-output-language (LFE2+ Expr)
                    (let ([bt (for/list ([x xs] [t ts])
                                (if (mutable? x) (Boxed t) t))])
                      `(let-values ,h ([(,ts ...) ,e])
@@ -1751,7 +1789,7 @@
        `(letrec-values ,s ([(,x ...) ,e*] ...) ,e0))])
   (TopLevelForm T))
 
-(define (assignment-conversion T) ; LFE2 -> LFE2
+(define (assignment-conversion T) ; LFE2+ -> LFE2+
   ; more convenient to use assignment-conversion than
   ; calling collect-assignable-variables and box-mutables in order
   ; (since  assignment-conversion has type T -> T)
@@ -1763,7 +1801,7 @@
       (reset-counter!)
       (parameterize ([α-rename-mode 'simple])
         (unparse-all
-         (unparse-LFE2
+         (unparse-LFE2+
           (assignment-conversion
            (α-rename
             (explicit-case-lambda
@@ -1812,7 +1850,7 @@
 
 ;; The terminal pr is a variable bound to a primitive.
 
-(define-language LFE3 (extends LFE2)
+(define-language LFE3 (extends LFE2+)
   (terminals
    (+ ((primitive (pr)) . => . unparse-primitive)))
   (CaseAbstraction (cab)
@@ -1825,7 +1863,7 @@
        (closedapp s ab e1 ...)      => (closedapp ab e1 ...)
        (app       s e0 e1 ...)      => (app       e0 e1 ...))))
 
-(define-pass categorize-applications : LFE2 (T) -> LFE3 ()
+(define-pass categorize-applications : LFE2+ (T) -> LFE3 ()
   (definitions
     (define (Expr* Es) (map Expr Es))
     (define (Values s es)
@@ -1986,8 +2024,9 @@
   (define (id x) x)
   (define h #'an)
   
-  (define (TopLevelForm*    ts)  (map TopLevelForm    ts))
-  (define (ModuleLevelForm* mfs) (map ModuleLevelForm mfs))
+  (define (TopLevelForm*    ts)   (map TopLevelForm    ts))
+  (define (ModuleLevelForm* mfs)  (map ModuleLevelForm mfs))
+  (define (RawProvideSpec*  rpss) (map RawProvideSpec  rpss))
   
   (define (TopLevelForm T)
     (with-output-language (LANF TopLevelForm)
@@ -2000,7 +2039,8 @@
   (define (ModuleLevelForm M)
     (with-output-language (LANF ModuleLevelForm)
       (nanopass-case (LFE3 ModuleLevelForm) M
-        [,g (GeneralTopLevelForm g)])))
+        [(#%provide ,rps ...)  `(#%provide ,(RawProvideSpec* rps) ...)]
+        [,g                     (GeneralTopLevelForm g)])))
 
   (define (GeneralTopLevelForm G)
     (with-output-language (LANF GeneralTopLevelForm)
@@ -2022,6 +2062,22 @@
     (with-output-language (LANF RawRootModulePath)
       (nanopass-case (LFE3 RawRootModulePath) RRMP
         [(quote ,x)  `(quote ,x)])))
+
+  (define (RawProvideSpec RPS)
+    (with-output-language (LANF RawProvideSpec)
+      (nanopass-case (LFE3 RawProvideSpec) RPS
+        [,ps (PhaselessSpec ps)])))
+
+  (define (PhaselessSpec PS)
+    (with-output-language (LANF PhaselessSpec)
+      (nanopass-case (LFE3 PhaselessSpec) PS
+        [,sls (SpacelessSpec sls)])))
+                     
+  (define (SpacelessSpec SS)
+    (with-output-language (LANF SpacelessSpec)
+      (nanopass-case (LFE3 SpacelessSpec) SS
+        [[,x0 ,x1] `[,x0 ,x1]])))
+
   
   (define (Abstraction ab k)
     (with-output-language (LANF AExpr) 
