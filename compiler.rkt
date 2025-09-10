@@ -797,10 +797,10 @@
 (define-language LFE    ; FE = Fully Expanded
   (entry TopLevelForm)
   (terminals   
-   ((variable    (x xd)) . => . unparse-variable)
-   ((datum       (d))    . => . unparse-datum)
-   ((modname     (mn))   . => . unparse-module-name)
-   ((modpath     (mp))   . => . unparse-module-path)
+   ((variable    (x xd))    . => . unparse-variable)
+   ((datum       (d))       . => . unparse-datum)
+   ((modname     (mn))      . => . unparse-module-name)
+   ((modpath     (mp))      . => . unparse-module-path)
    (syntax       (s)))
   (Formals (f)
     (formals (x ...))            => (x ...)
@@ -813,21 +813,55 @@
     (#%expression s e)           => (#%expression e)
     g)
   (ModuleLevelForm (mf)
-    ; (#%provide rps ...)                           => (#%provide rps ...)
+    (#%provide rps ...)           => (#%provide rps ...)
     ; (modbegin-for-syntax ...) todo
     ; (#%declare ...)           todo
-    g)
+    g)  
   ; (SubModuleLevelForm ...) todo
   (GeneralTopLevelForm (g)
     e
-    (define-values   s (x ...) e)                 => (define-values   (x ...) e)
-    (define-syntaxes s (x ...) e)                 => (define-syntaxes (x ...) e)
-    (#%require s rrs ...)                         => (#%require s rrs ...))
+    (define-values   s (x ...) e)  => (define-values   (x ...) e)
+    (define-syntaxes s (x ...) e)  => (define-syntaxes (x ...) e)
+    (#%require s rrs ...)          => (#%require s rrs ...))
+
   (RawRequireSpec     (rrs) rrmp) ; todo
   ;(RawRequireSpec    (rrs) ps)   ; todo  <- the correct one
-  ;(PhaselessSpec     (ps)  rmp)  ; todo
+
+  (RawProvideSpec (rps) 
+    #;(for-meta   phase-level ps ...)
+    #;(for-syntax             ps ...)
+    #;(for-label              ps ...)
+    #;(protect                rps ...)
+    ps)
+
+  (PhaselessSpec     (ps)  
+    #;(for-space space sls ...)
+    #;(protect         ps ...)
+    sls) ; spaceless-spec
+
+  (SpacelessSpec (sls)
+    #;(rename local-id export-id)
+    #;(struct ...)
+    #;(all-from ...)
+    #;(all-from-except ...)
+    #;(all-defined)
+    #;(all-defined-except ...)
+    #;(prefix-all-defined prefix-id)
+    #;(prefix-all-defined-except ...)
+    #;(protect ...)
+    #;(expand (id . datum))
+    #;(expand (id . datum) orig-form)
+    x) ; id
+
+  #;(Space (space)
+      x ; identifier
+      #f)
+
+  
   ;(RawModulePath     (rmp) rrmp) ; todo
-  (RawRootModulePath (rrmp) (quote x))
+  (RawRootModulePath (rrmp) 
+    (quote x))
+
   (Expr (e)
     x                                             
     (λ s f e ...)                                 => (λ f e ...)                      ; #%plain-lambda
@@ -855,8 +889,8 @@
 ;;;
 
 ;; The standard tools in Racket represents programs as syntax objects.
-;; In particular the output of expand-syntax is a syntax object representing
-;; a program in fully expanded form. Here parse takes such a syntax object
+;; In particular the output of `expand-syntax` is a syntax object representing
+;; a program in fully expanded form. Here `parse` takes such a syntax object
 ;; and return a nanopass representation of the fully expanded program.
 
 (define-pass parse : * (stx) -> LFE ()
@@ -871,7 +905,9 @@
     (define (ModuleLevelForm* ms)      (map ModuleLevelForm   (stx->list ms)))
     (define (variable* xs)             (map variable          (stx->list xs)))
     (define (RawRequireSpec* rsss)     (map RawRequireSpec    (stx->list rsss)))
+    (define (RawProvideSpec* rpss)     (map RawProvideSpec    (stx->list rpss)))
     (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps))))
+  
   
   (Formals : * (F) -> Formals ()
     (with-output-language (LFE Formals)
@@ -895,7 +931,7 @@
   (ModuleLevelForm : * (M) -> ModuleLevelForm ()
     (with-output-language (LFE ModuleLevelForm)
       (syntax-parse M #:literal-sets (kernel-literals)
-        ; (#%provide rps ...)       todo
+        [(#%provide rps ...)          `(#%provide ,(RawProvideSpec* #'(rps ...)))]
         ; (modbegin-for-syntax ...) todo
         ; (#%declare ...)           todo
         [g  `,(GeneralTopLevelForm #'g)])))
@@ -922,8 +958,40 @@
       (syntax-parse RRMP #:literal-sets (kernel-literals)
         [(quote x)      `(quote ,(variable #'x))]
         [x              `,(variable #'x)])))
-  ; (PhaselessSpec     (ps)  rmp)
+
   ; (RawModulePath     (rmp) rrmp)
+
+  (RawProvideSpec : * (RPS) -> RawProvideSpec ()
+    (with-output-language (LFE RawProvideSpec)
+      (syntax-parse RPS #:literal-sets (kernel-literals)
+      #;(for-meta   phase-level ps ...)
+      #;(for-syntax             ps ...)
+      #;(for-label              ps ...)
+      #;(protect                rps ...)
+      [ps  `,(PhaselessSpec #'ps)])))
+
+  (PhaselessSpec : * (PS) -> PhaselessSpec ()
+    (with-output-language (LFE PhaselessSpec)
+      (syntax-parse PS #:literal-sets (kernel-literals)
+        #;[(for-space space sls ...) ...]
+        #;[(protect         ps ...)  ...]
+        [sls `,(SpacelessSpec #'sls)])))
+
+  (SpacelessSpec : * (SLS) -> SpacelessSpec ()
+    (with-output-language (LFE SpacelessSpec)
+      (syntax-parse SLS #:literal-sets (kernel-literals)
+         #;(rename local-id export-id)
+         #;(struct ...)
+         #;(all-from ...)
+         #;(all-from-except ...)
+         #;(all-defined)
+         #;(all-defined-except ...)
+         #;(prefix-all-defined prefix-id)
+         #;(prefix-all-defined-except ...)
+         #;(protect ...)
+         #;(expand (id . datum))
+         #;(expand (id . datum) orig-form)
+         [x   `,(variable #'x)])))
   
   (Expr : * (E) -> Expr ()
     (with-output-language (LFE Expr)
@@ -1544,6 +1612,7 @@
     [(topmodule ,s ,mn ,mp ,mf ...) (ModuleLevelForm* mf xs)]
     [,g                             (GeneralTopLevelForm g xs)])
   (ModuleLevelForm : ModuleLevelForm (M xs) -> * (xs)
+    [(#%provide ,rps ...)           empty-set]
     [,g                             (GeneralTopLevelForm g xs)])
   (GeneralTopLevelForm : GeneralTopLevelForm (G xs) -> * (xs)
     [,e                                 (Expr e xs)]
@@ -1551,6 +1620,39 @@
     [(define-values   ,s (,x ...) ,e)   (Expr e (append x xs))]
     [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
     [(#%require       ,s ,rrs ...)      empty-set])
+
+  (RawProvideSpec : RawProvideSpec (RPS rps) -> * (rps)
+    #;(for-meta   phase-level ps ...)
+    #;(for-syntax             ps ...)
+    #;(for-label              ps ...)
+    #;(protect                rps ...)
+    [,ps (PhaselessSpec ps)])
+
+  (PhaselessSpec : PhaselessSpec (PS ps) -> * (ps)
+    #;(for-space space sls ...)
+    #;(protect         ps ...)
+    [,sls (SpacelessSpec sls)]) ; spaceless-spec
+
+  (SpacelessSpec : SpacelessSpec (SLS sls) -> * (sls)
+    #;(rename local-id export-id)
+    #;(struct ...)
+    #;(all-from ...)
+    #;(all-from-except ...)
+    #;(all-defined)
+    #;(all-defined-except ...)
+    #;(prefix-all-defined prefix-id)
+    #;(prefix-all-defined-except ...)
+    #;(protect ...)
+    #;(expand (id . datum))
+    #;(expand (id . datum) orig-form)
+    [,x  empty-set]) ; id
+
+  #;(Space (space)
+      x ; identifier
+      #f)
+
+  
+
   (Abstraction : Abstraction (AB xs) -> * (xs)
     [(λ ,s ,f ,e)                               (Expr e xs)])
   (Expr : Expr (E xs) -> * (xs)
@@ -2521,6 +2623,7 @@
                                       (ModuleLevelForm* mf))]
     [,g                             (GeneralTopLevelForm g)])
   (ModuleLevelForm : ModuleLevelForm (M) -> * ()
+    [(#%provide ,rps ...)           (void)] ; todo : collect provided vars
     [(define-label ,l ,cab)         (lab! l) (ConvertedAbstraction cab)]
     [,g                             (GeneralTopLevelForm g)])
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> * ()
@@ -3873,6 +3976,8 @@
             [_ (error 'internal-here "got: ~a" ts)]))
   
   (ModuleLevelForm : ModuleLevelForm (mf dd) -> * ()
+    [(#%provide ,rps ...)  
+     (void)]                   ; todo : generate provide vars here
     [(define-label ,l ,cab)         
      `(define-label ,l ,(ConvertedAbstraction cab))
      #;`(var [binding ,(Label l) 
