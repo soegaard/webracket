@@ -1,12 +1,33 @@
 #lang racket/base
 (provide
- (rename-out [my-read read]
+ (rename-out [my-read        read]
              [my-read-syntax read-syntax]
-             [my-get-info get-info]))
+             [my-get-info    get-info]))
 
+
+(define (source-name->module-name sn)
+  ; Example:
+  ;   /Users/soegaard/Dropbox/GitHub/webracket/testing.rkt
+  (cond
+    [(path? sn)   (define-values (base name must-be-dir?) (split-path sn))  
+                  (define mod (path->string (path-replace-extension name #"")))
+                  (string->symbol mod)]
+    [(symbol? sn) sn]
+    [else         'anon]))
+
+
+; Since read-syntax is supposed to return a syntax object without
+; lexcial context, we use `strip-context`.
 (define (my-read-syntax [source-name (object-name (current-input-port))]
                         [in          (current-input-port)])
-  (read-syntax source-name in))
+  ;; 1. Read all forms after the #lang
+  (define (read-one input-port) (read-syntax source-name in))
+  (define forms    (for/list ([form (in-port read-one)]) form))
+  (define mod-name (source-name->module-name source-name))
+  (define mod      `(module ,mod-name webracket ,@forms))
+  (define out      (strip-context (datum->syntax #f mod)))
+  #;(displayln out (current-error-port))
+  out)
 
 
 ; The procedure `read` returns the same as `read-syntax`, except as a datum.
@@ -24,3 +45,8 @@
       [(color-lexer)
        (dynamic-require 'syntax-color/racket-lexer 'racket-lexer)]
       [else default])))
+
+
+(require syntax/strip-context
+         racket/string
+         racket/list)

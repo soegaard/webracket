@@ -1,19 +1,15 @@
 #lang racket/base
-(require "fully.rkt"
-         "primitives.rkt")
+(require               "fully.rkt" "primitives.rkt")
+(provide (all-from-out "fully.rkt" "primitives.rkt"))
 
 (require (for-syntax (only-in racket/base define-syntax-rule)))
 (provide (for-syntax define-syntax-rule))
 
-
-(provide (all-from-out "fully.rkt"
-                       "primitives.rkt")
-         ; core
-         (rename-out [#%plain-module-begin #%module-begin]
+; core
+(provide (rename-out [#%plain-module-begin #%module-begin]
                      [#%plain-app          #%app]
                      [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ]))
-
 
 
 (require (for-syntax (only-in racket/base

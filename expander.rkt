@@ -16,8 +16,13 @@
 ;  Unless disabled, `reverse` becomes `alt-reverse`.
 (define (topexpand top-level-form-stx)
   (parameterize ([current-namespace (make-webracket-namespace)]
-                 [eval-jit-enabled  #f])    
+                 [eval-jit-enabled  #f])
     ; (namespace-require 'racket/private/struct) 
-    (namespace-require 'racket/match)    
+    ; (namespace-require 'racket/match)
     ; (namespace-require 'racket/symbol)
-    (expand top-level-form-stx)))
+
+    ; Since `current-namespace` is set to `(make-webracket-namespace)`
+    ; the `webracket` module is available.
+    (expand top-level-form-stx)
+
+    ))
