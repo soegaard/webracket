@@ -408,10 +408,12 @@ partition
  remq
  remv
  remw
+ remf
  remove*
  remq*
  remv*
  remw*
+ remf*
  ; sort
 
  ; member

@@ -1585,7 +1585,19 @@
              (and (equal? (permutations '(1 2 3))
                          '((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1)))
                   (equal? (permutations '(x x)) '((x x) (x x)))))
-        (list "index-of"
+       (list "remf"
+             (and (equal? (remf negative? '(1 -2 3 4 -5)) '(1 3 4 -5))
+                  (let ([lst (list 1 2 3)])
+                    (and (eq? (remf negative? lst) lst)
+                         (equal? (remf negative? lst) lst)))
+                  (equal? (procedure-arity remf) 2)))
+       (list "remf*"
+             (and (equal? (remf* negative? '(1 -2 3 4 -5)) '(1 3 4))
+                  (let ([lst (list 1 2 3)])
+                    (and (eq? (remf* negative? lst) lst)
+                         (equal? (remf* negative? lst) lst)))
+                  (equal? (procedure-arity remf*) 2)))
+       (list "index-of"
               (let ([s1 (string #\a)]
                     [s2 (string #\a)])
                 (and (equal? (index-of '(1 2 3 4) 3) 2)

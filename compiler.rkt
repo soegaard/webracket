@@ -427,7 +427,7 @@
   list* 
   cartesian-product
   permutations
-  filter filter-map filter-not shuffle partition remove remq remv remw remove* remq* remv* remw*
+  filter filter-map filter-not shuffle partition remove remq remv remw remf remove* remq* remv* remw* remf*
   index-of index-where indexes-of indexes-where
   list-prefix?
   take-common-prefix
