@@ -14368,7 +14368,38 @@
               (unreachable))
 
 
+        ;; Note: Only implements the two-argument form of Racket's add-between.
+        ;;       Keyword arguments such as #:before-first are not supported.
+        (func $add-between (type $Prim2)
+              (param $xs  (ref eq)) ; list
+              (param $v   (ref eq)) ; separator value
+              (result     (ref eq))
+              (local $acc (ref eq))
+              (local $p   (ref $Pair))
 
+              (local.set $acc (global.get $null))
+
+              (block $done
+                     (loop $loop
+                           (if (ref.eq (local.get $xs) (global.get $null))
+                               (then (br $done)))
+                           (if (ref.test (ref $Pair) (local.get $xs))
+                               (then
+                                (local.set $p (ref.cast (ref $Pair) (local.get $xs)))
+                                (local.set $acc
+                                           (call $cons
+                                                 (struct.get $Pair $a (local.get $p))
+                                                 (local.get $acc)))
+                                (local.set $xs (struct.get $Pair $d (local.get $p)))
+                                (if (ref.eq (local.get $xs) (global.get $null))
+                                    (then (br $loop))
+                                    (else
+                                     (local.set $acc (call $cons (local.get $v) (local.get $acc)))
+                                     (br $loop))))
+                               (else (call $raise-pair-expected (local.get $xs))
+                                     (unreachable)))))
+
+              (call $reverse (local.get $acc)))
 
          ;;;
          ;;; 4.11 Mutable Pairs and lists

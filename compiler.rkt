@@ -426,6 +426,7 @@
   flatten
   reverse alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each append-map
+  add-between ; simplified
   list* 
   cartesian-product
   permutations

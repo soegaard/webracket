@@ -1668,6 +1668,10 @@
                 (and (equal? p '(a b))
                      (equal? l '(c d))
                      (equal? r '(x y z)))))
+        (list "add-between"
+              (and (equal? (add-between '(x y z) 'and) '(x and y and z))
+                   (equal? (add-between '(x) 'and)     '(x))
+                   (equal? (add-between '() 'and)      '())))
         ))
 
  (list "4.12 Vectors"

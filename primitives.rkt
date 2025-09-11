@@ -393,6 +393,7 @@ bytes->string/utf-8
  append-map
  for-each
  count
+ add-between
  cartesian-product
  permutations
  ; foldl
@@ -734,3 +735,6 @@ bytes->string/utf-8
                           "exact-nonnegative-integer?"
                           n)))
 
+(require (prefix-in racket: racket/list))
+(define (add-between xs v)   ; simplified version without keyword arguments.
+  (racket:add-between xs v))
