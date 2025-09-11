@@ -444,6 +444,7 @@
   range range-proc
   inclusive-range inclusive-range-proc
   argmax argmin
+  group-by
 
   void?
   make-void  ; zero arguments
@@ -3349,6 +3350,7 @@
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
+         [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(remove*)                    (inline-prim/optional sym ae1 2 3)]

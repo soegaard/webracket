@@ -1616,6 +1616,10 @@
        (list "argmin"
               (and (equal? (argmin car '((3 pears) (1 banana) (2 apples))) '(1 banana))
                    (equal? (argmin car '((1 banana) (1 orange))) '(1 banana))))
+       (list "group-by"
+             (equal? (group-by (λ (x) (modulo x 3))
+                               '(1 2 1 2 54 2 5 43 7 2 643 1 2 0))
+                     '((1 1 43 7 643 1) (2 2 2 5 2 2) (54 0))))
        (list "cartesian-product"
               (and (equal? (cartesian-product) '(()))
                    (equal? (cartesian-product '(1 2) '(a b))

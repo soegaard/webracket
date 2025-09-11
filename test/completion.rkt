@@ -1224,6 +1224,11 @@
             char>=?
             char>?
             char?
+            check-list
+            check-mlist
+            check-naturals
+            check-range
+            check-range-generic
             cons
             cons?
             cos
@@ -1394,7 +1399,10 @@
             make-void
             map
             max
+            member
             memq
+            memv
+            memw
             min
             modulo
             most-negative-fixnum
@@ -1442,6 +1450,8 @@
             quotient
             quotient/remainder
             radians->degrees
+            raise
+            raise-argument-error
             raise-unbound-variable-reference
             random
             range
@@ -1450,6 +1460,8 @@
             real->floating-point-bytes
             real?
             remainder
+            remf
+            remf*
             remove
             remove*
             remq

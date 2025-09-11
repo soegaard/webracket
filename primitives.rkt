@@ -418,6 +418,8 @@ bytes->string/utf-8
  ; sort
 
  argmax argmin
+ group-by
+ 
  ; findf
  ; assoc
  ; assw

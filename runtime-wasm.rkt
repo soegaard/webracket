@@ -11642,6 +11642,158 @@
               (unreachable))
 
 
+        ;; Groups list elements by a key function. The third parameter is
+        ;; optional and defaults to equal?.
+        (func $group-by (type $Prim3)
+              (param $proc  (ref eq))  ;; key function
+              (param $xs    (ref eq))  ;; list
+              (param $same? (ref eq))  ;; optional comparator, default equal?
+              (result       (ref eq))
+
+              (local $f       (ref $Procedure))
+              (local $finv    (ref $ProcedureInvoker))
+              (local $cmp     (ref $Procedure))
+              (local $cmpinv  (ref $ProcedureInvoker))
+              (local $use-cmp i32)
+              (local $args1   (ref $Args))
+              (local $args2   (ref $Args))
+              (local $cur     (ref eq))     ; local index 10
+
+              (local $pair    (ref $Pair))
+              (local $elem    (ref eq))
+              (local $key     (ref eq))
+              (local $groups  (ref eq))
+              (local $node    (ref eq)) 
+              (local $gpair   (ref eq)) 
+              (local $gkey    (ref eq))
+              (local $glist   (ref eq))
+              (local $res     (ref eq))
+              (local $same-proc (ref eq))  ;; temp
+
+              (local.set $same-proc (global.get $false))
+              
+              ;; Ensure key function is a procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+              ;; Handle optional comparator
+              ;; If $same? is not a procedure, it must be the missing sentinel — otherwise error.
+              (if (i32.eqz (i32.or (ref.test (ref $Procedure) (local.get $same?))
+                                   (ref.eq (local.get $same?) (global.get $missing))))
+                  (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                        (unreachable)))
+              (if (ref.eq (local.get $same?) (global.get $missing))
+                  (then (local.set $use-cmp (i32.const 0))               ;; no comparator; won't read $cmp/$cmpinv
+                        (local.set $same?   (global.get $prim:equal?)))  ;; (won't be used, keeps validator happy)
+                  (else (local.set $use-cmp (i32.const 0)))) 
+
+              ;; Unconditional initialization of $cmp / $cmpinv
+              (local.set $cmp    (ref.cast (ref $Procedure) (local.get $same-proc)))
+              (local.set $cmpinv (struct.get $Procedure $invoke (local.get $cmp)))
+
+              
+              ;; Here $same? definitely a procedure, so initialize both locals.
+              (local.set $cmp     (ref.cast (ref $Procedure) (local.get $same?)))
+              (local.set $cmpinv  (struct.get $Procedure $invoke (local.get $cmp)))
+              (local.set $use-cmp (i32.const 1))             
+
+              ;; Prepare argument arrays
+              (local.set $args1 (array.new $Args (global.get $null) (i32.const 1)))
+              (local.set $args2 (array.new $Args (global.get $null) (i32.const 2)))
+
+              ;; Iterate through list, accumulating groups
+              (local.set $cur    (local.get $xs))
+              (local.set $groups (global.get $null))
+              (loop $loop
+                    (if (ref.eq (local.get $cur) (global.get $null))
+                        (then
+                         ;; Build result: reverse groups and each sublist
+                         (local.set $res  (global.get $null))
+                         (local.set $node (local.get $groups))
+                         (loop $build
+                               (if (ref.eq (local.get $node) (global.get $null))
+                                   (then (return (local.get $res))))
+                               (local.set $pair  (ref.cast (ref $Pair)
+                                                           (local.get $node)))
+                               (local.set $gpair (ref.cast (ref $Pair)
+                                                           (struct.get $Pair $a (local.get $pair))))
+                               (local.set $glist (struct.get $Pair $d
+                                                             (ref.cast (ref $Pair) (local.get $gpair))))
+                               (local.set $res
+                                          (call $cons (call $reverse (local.get $glist)) (local.get $res)))
+                               (local.set $node (struct.get $Pair $d (local.get $pair)))
+                               (br $build))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-pair-expected (local.get $cur))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+
+                    ;; Compute key for current element
+                    (array.set $Args (local.get $args1) (i32.const 0) (local.get $elem))
+                    (local.set $key
+                               (call_ref $ProcedureInvoker
+                                         (local.get $f)
+                                         (local.get $args1)
+                                         (local.get $finv)))
+
+                    ;; Search existing groups for matching key
+                    (local.set $node  (local.get $groups))
+                    (local.set $gpair (global.get $null))
+                    (block $found
+                           (loop $search
+                                 (if (ref.eq (local.get $node) (global.get $null))
+                                     (then (br $found)))
+                                 (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                                 (local.set $gpair (ref.cast (ref $Pair)
+                                                             (struct.get $Pair $a (local.get $pair))))
+                                 (local.set $gkey (struct.get $Pair $a
+                                                              (ref.cast (ref $Pair) (local.get $gpair))))
+                                 (block $next
+                                        (if (i32.eqz (local.get $use-cmp))
+                                            (then
+                                             (if (ref.eq (call $equal? (local.get $key) (local.get $gkey))
+                                                         (global.get $false))
+                                                 (then (br $next))
+                                                 (else (br $found))))
+                                            (else
+                                             (array.set $Args (local.get $args2) (i32.const 0) (local.get $key))
+                                             (array.set $Args (local.get $args2) (i32.const 1) (local.get $gkey))
+                                             (local.set $res
+                                                        (call_ref $ProcedureInvoker
+                                                                  (local.get $cmp)
+                                                                  (local.get $args2)
+                                                                  (local.get $cmpinv)))
+                                             (if (ref.eq (local.get $res) (global.get $false))
+                                                 (then (br $next))
+                                                 (else (br $found))))))
+                                 (local.set $node (struct.get $Pair $d (local.get $pair)))
+                                 (local.set $gpair (global.get $null))
+                                 (br $search)))
+
+                    ;; Add element to existing group or create new one
+                    (if (ref.eq (local.get $gpair) (global.get $null))
+                        (then
+                         (local.set $glist  (call $cons (local.get $elem) (global.get $null)))
+                         (local.set $gpair  (call $cons (local.get $key) (local.get $glist)))
+                         (local.set $groups (call $cons (local.get $gpair) (local.get $groups))))
+                        (else
+                         (local.set $glist (struct.get $Pair $d
+                                                       (ref.cast (ref $Pair) (local.get $gpair))))
+                         (struct.set $Pair $d
+                                     (ref.cast (ref $Pair) (local.get $gpair))
+                                     (call $cons (local.get $elem) (local.get $glist)))))
+
+                    ;; Advance to next element
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (br $loop))
+              (unreachable))
+
+
+
         (func $cartesian-product (type $Prim>=0)
               (param $xss (ref eq))
               (result (ref eq))
