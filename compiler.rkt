@@ -592,6 +592,7 @@
   make-string build-string string-ref string-set! string-length substring
   string-copy!
   string-copy string-fill!
+  string-upcase string-downcase string-titlecase string-foldcase
   string-append string-append-immutable string-append* string-join
   string->list list->string
   string->bytes/utf-8 string-utf-8-length string->immutable-string

@@ -277,7 +277,11 @@
  string-join
  string-copy
  string-copy!
- string-fill! 
+ string-fill!
+ string-upcase
+ string-downcase
+ string-titlecase
+ string-foldcase
  string->immutable-string
  string=? string<? string<=? string>? string>=?
  string-ci=?  

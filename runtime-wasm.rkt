@@ -8882,6 +8882,102 @@
                            (i32.const 0)
                            (local.get $arr)))
          
+         ;; 4.4.3 String Conversions
+         ;; Note: string-foldcase currently delegates to downcase.
+         ,@(for/list ([name+imp
+                       (in-list '(( $string-upcase    $char-upcase/ucs)
+                                  ( $string-downcase  $char-downcase/ucs)                                  
+                                  ( $string-foldcase  $char-downcase/ucs)))])
+             (define name (car  name+imp))
+             (define imp  (cadr name+imp))
+             `(func ,name (type $Prim1) (param $s (ref eq)) (result (ref eq))
+                    (local $str (ref $String))
+                    (local $arr (ref $I32Array))
+                    (local $len i32)
+                    (local $res (ref $I32Array))
+                    (local $i   i32)
+                    (local $cp  i32)
+                    (local $cp2 i32)
+                    ;; Type check
+                    (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                        (then (call $raise-check-string (local.get $s))))
+                    ;; Extract codepoint array and length
+                    (local.set $str (ref.cast (ref $String) (local.get $s)))
+                    (local.set $arr (struct.get $String $codepoints (local.get $str)))
+                    (local.set $len (array.len (local.get $arr)))
+                    ;; Allocate result array
+                    (local.set $res (call $i32array-make (local.get $len) (i32.const 0)))
+                    ;; Loop over characters
+                    (local.set $i (i32.const 0))
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                 (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
+                                 (local.set $cp2 (call ,imp (local.get $cp)))
+                                 (call $i32array-set! (local.get $res) (local.get $i) (local.get $cp2))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop)))
+                    ;; Build new mutable string
+                    (struct.new $String
+                                (i32.const 0)
+                                (i32.const 0)
+                                (local.get $res))))
+
+
+         ;; string-titlecase : string? -> string?
+         ;;   Note: Approximates Unicode Case_Ignorable via general categories
+         ;;         Mn, Me, Cf, Lm, Sk. No optional parameters.
+         (func $string-titlecase (type $Prim1)
+               (param $s (ref eq))
+               (result   (ref eq))
+
+               (local $t      (ref $String))
+               (local $len    i32)
+               (local $i      i32)
+               (local $in-run i32)
+               (local $c      (ref eq))
+               (local $cat    (ref eq))
+
+               ;; --- Type check ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                   (then (call $raise-check-string (local.get $s))
+                         (unreachable)))
+               ;; --- Make mutable copy and get length ---
+               (local.set $t      (ref.cast (ref $String) (call $string-copy (local.get $s))))
+               (local.set $len    (call $string-length/checked/i32 (local.get $t)))
+               (local.set $i      (i32.const 0))
+               (local.set $in-run (i32.const 0))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+
+                            (local.set $c (call $string-ref/checked (local.get $t) (local.get $i)))
+
+                            (if (i32.or (ref.eq (call $char-upper-case? (local.get $c)) (global.get $true))
+                                        (ref.eq (call $char-lower-case? (local.get $c)) (global.get $true)))
+                                (then
+                                 (drop ; rememember, string-set! returns `void`
+                                  (call $string-set!
+                                        (local.get $t)
+                                        (ref.i31 (i32.shl (local.get $i) (i32.const 1)))
+                                        (if (result (ref eq)) (local.get $in-run)
+                                            (then (call $char-downcase (local.get $c)))
+                                            (else (call $char-upcase (local.get $c))))))
+                                 (local.set $in-run (i32.const 1)))
+                                (else
+                                 (local.set $cat (call $char-general-category (local.get $c)))
+                                 (if (i32.eqz (i32.or (ref.eq       (local.get $cat) (global.get $symbol:mn))
+                                                (i32.or (ref.eq     (local.get $cat) (global.get $symbol:me))
+                                                  (i32.or (ref.eq   (local.get $cat) (global.get $symbol:cf))
+                                                    (i32.or (ref.eq (local.get $cat) (global.get $symbol:lm))
+                                                            (ref.eq (local.get $cat) (global.get $symbol:sk)))))))
+                                     (then (local.set $in-run (i32.const 0))))))
+
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (local.get $t))
+
          (func $string->list (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))
                (local $arr   (ref $I32Array))

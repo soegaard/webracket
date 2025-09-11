@@ -899,11 +899,30 @@
               (and (equal? (string>=? "" "") #t)
                    (equal? (string>=? "B" "A") #t)
                    (equal? (string>=? "A" "AB") #f)))
-
+        
         #;(list "string-ci=?"
                 (and (equal? (string-ci=? "A" "a") #t)
                      (equal? (string-ci=? "A" "B") #f)
                      (equal? (string-ci=? "A" "AB") #f)))
+
+        (list "string-upcase"
+              (and (equal? (string-upcase "abc!") "ABC!")
+                   (equal? (procedure-arity string-upcase) 1)))
+
+        (list "string-downcase"
+              (and (equal? (string-downcase "ABC!") "abc!")
+                   (equal? (procedure-arity string-downcase) 1)))
+
+        (list "string-titlecase" 
+              (and (equal? (string-titlecase "hello world")   "Hello World")
+                   (equal? (string-titlecase "a\u0308bc")     "Äbc")
+                   (equal? (string-titlecase "y\u200Dz")      "Y‍z")
+                   (equal? (string-titlecase "ph\u02b0ysics") "Phʰysics")
+                   (equal? (procedure-arity string-titlecase) 1)))
+
+        (list "string-foldcase"
+              (and (equal? (string-foldcase "ABC!") "abc!")
+                   (equal? (procedure-arity string-foldcase) 1)))
 
         (list "string->list"
               (and (equal? (string->list "P l") '(#\P #\space #\l))
