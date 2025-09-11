@@ -9988,6 +9988,159 @@
                             (br $outer)))
                (global.get $false))
 
+
+        (func $string-replace (type $Prim4)
+              (param $s     (ref eq)) ;; string?
+              (param $from  (ref eq)) ;; string?
+              (param $to    (ref eq)) ;; string?
+              (param $all?  (ref eq)) ;; boolean?, optional with default #t
+              (result        (ref eq))
+
+              (local $str      (ref $String))
+              (local $f        (ref $String))
+              (local $t        (ref $String))
+              (local $arr-s    (ref $I32Array))
+              (local $arr-f    (ref $I32Array))
+              (local $arr-t    (ref $I32Array))
+              (local $n        i32)
+              (local $m        i32)
+              (local $r        i32)
+              (local $idxs     (ref $I32GrowableArray))
+              (local $limit    i32)
+              (local $i        i32)
+              (local $j        i32)
+              (local $k        i32)
+              (local $res-len  i32)
+              (local $res      (ref $I32Array))
+              (local $dst      i32)
+              (local $src      i32)
+              (local $idx      i32)
+
+              ;; Handle optional all? with default #t
+              (if (ref.eq (local.get $all?) (global.get $missing))
+                  (then (local.set $all? (global.get $true))))
+
+              ;; Type checks
+              (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                  (then (call $raise-check-string (local.get $s))))
+              (if (i32.eqz (ref.test (ref $String) (local.get $from)))
+                  (then (call $raise-check-string (local.get $from))))
+              (if (i32.eqz (ref.test (ref $String) (local.get $to)))
+                  (then (call $raise-check-string (local.get $to))))
+              (if (ref.eq (call $boolean? (local.get $all?)) (global.get $false))
+                  (then (call $raise-argument-error (local.get $all?))
+                        (unreachable)))
+
+              ;; Decode after checks
+              (local.set $str   (ref.cast (ref $String) (local.get $s)))
+              (local.set $f     (ref.cast (ref $String) (local.get $from)))
+              (local.set $t     (ref.cast (ref $String) (local.get $to)))
+              (local.set $arr-s (struct.get $String $codepoints (local.get $str)))
+              (local.set $arr-f (struct.get $String $codepoints (local.get $f)))
+              (local.set $arr-t (struct.get $String $codepoints (local.get $t)))
+              (local.set $n     (array.len (local.get $arr-s)))
+              (local.set $m     (array.len (local.get $arr-f)))
+              (local.set $r     (array.len (local.get $arr-t)))
+
+              ;; Collect match indices
+              (local.set $idxs (call $make-i32growable-array (i32.const 4)))
+              (if (i32.eqz (local.get $m))
+                  (then
+                   (if (ref.eq (local.get $all?) (global.get $false))
+                       (then (call $i32growable-array-add! (local.get $idxs) (i32.const 0)))
+                       (else
+                        (local.set $i (i32.const 0))
+                        (block $done
+                               (loop $loop
+                                     (br_if $done (i32.gt_u (local.get $i) (local.get $n)))
+                                     (call $i32growable-array-add! (local.get $idxs) (local.get $i))
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop))))))
+                  (else
+                   (local.set $limit (i32.sub (local.get $n) (local.get $m)))
+                   (local.set $i (i32.const 0))
+                   (if (ref.eq (local.get $all?) (global.get $false))
+                       (then
+                        (block $done
+                               (loop $loop
+                                     (br_if $done (i32.gt_u (local.get $i) (local.get $limit)))
+                                     (local.set $j (i32.const 0))
+                                     (block $mismatch
+                                            (loop $inner
+                                                  (br_if $mismatch (i32.ge_u (local.get $j) (local.get $m)))
+                                                  (br_if $mismatch
+                                                         (i32.ne
+                                                          (call $i32array-ref
+                                                                (local.get $arr-s)
+                                                                (i32.add (local.get $i) (local.get $j)))
+                                                          (call $i32array-ref (local.get $arr-f) (local.get $j))))
+                                                  (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                                                  (br $inner)))
+                                     (if (i32.eq (local.get $j) (local.get $m))
+                                         (then (call $i32growable-array-add! (local.get $idxs) (local.get $i))
+                                               (br $done)))
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop))))
+                       (else
+                        (block $end
+                               (loop $loop
+                                     (br_if $end (i32.gt_u (local.get $i) (local.get $limit)))
+                                     (local.set $j (i32.const 0))
+                                     (block $mismatch
+                                            (loop $inner
+                                                  (br_if $mismatch (i32.ge_u (local.get $j) (local.get $m)))
+                                                  (br_if $mismatch
+                                                         (i32.ne
+                                                          (call $i32array-ref
+                                                                (local.get $arr-s)
+                                                                (i32.add (local.get $i) (local.get $j)))
+                                                          (call $i32array-ref (local.get $arr-f) (local.get $j))))
+                                                  (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                                                  (br $inner)))
+                                     (if (i32.eq (local.get $j) (local.get $m))
+                                         (then (call $i32growable-array-add! (local.get $idxs) (local.get $i))
+                                               (local.set $i (i32.add (local.get $i) (local.get $m)))
+                                               (br $loop)))
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop)))))))
+
+              (local.set $k (call $i32growable-array-count (local.get $idxs)))
+              (if (i32.eqz (local.get $k))
+                  (then (return (local.get $str))))
+
+              (local.set $res-len
+                        (i32.add (local.get $n)
+                                 (i32.mul (local.get $k)
+                                          (i32.sub (local.get $r) (local.get $m)))))
+              (local.set $res (array.new_default $I32Array (local.get $res-len)))
+              (local.set $dst (i32.const 0))
+              (local.set $src (i32.const 0))
+              (local.set $i   (i32.const 0))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $k)))
+                           (local.set $idx (call $i32growable-array-ref (local.get $idxs) (local.get $i)))
+                           (call $i32array-copy!
+                                 (local.get $res) (local.get $dst)
+                                 (local.get $arr-s) (local.get $src) (local.get $idx))
+                           (local.set $dst (i32.add (local.get $dst)
+                                                    (i32.sub (local.get $idx) (local.get $src))))
+                           (call $i32array-copy!
+                                 (local.get $res) (local.get $dst)
+                                 (local.get $arr-t) (i32.const 0) (local.get $r))
+                           (local.set $dst (i32.add (local.get $dst) (local.get $r)))
+                           (local.set $src (i32.add (local.get $idx) (local.get $m)))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $loop)))
+              (call $i32array-copy!
+                    (local.get $res) (local.get $dst)
+                    (local.get $arr-s) (local.get $src) (local.get $n))
+              (struct.new $String
+                          (i32.const 0)
+                          (i32.const 0)
+                          (local.get $res)))
+         
+
          ;;;
          ;;; 4.6 Characters
          ;;;

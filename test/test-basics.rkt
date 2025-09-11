@@ -940,7 +940,12 @@
 
         (list "string-contains?"
               (and (equal? (string-contains? "Racket" "ack") #t)
-                   (equal? (string-contains? "Racket" "cat") #f)))        
+                   (equal? (string-contains? "Racket" "cat") #f)))
+
+        (list "string-replace"
+              (and (equal? (string-replace "banana" "an" "oo")    "booooa")
+                   (equal? (string-replace "banana" "an" "oo" #f) "booana")
+                   (equal? (string-replace "ab" "" "-")           "-a-b-")))
         ))
 
  (list "4.5 Byte Strings"
