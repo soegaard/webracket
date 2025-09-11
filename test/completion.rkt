@@ -1338,6 +1338,7 @@
             fxzero?
             gcd
             get-output-bytes
+            group-by
             hash-clear!
             hash-has-key?
             hash-ref
@@ -1603,7 +1604,6 @@
             write-byte
             xor
             zero?)
-
 
           ))
 
