@@ -931,7 +931,16 @@
         (list "list->string"
               (and (equal? (list->string '(#\1 #\\ #\")) "1\\\"")
                    (equal? (list->string '()) "")))
-        
+
+        (list "string-find"
+              (and (equal? (string-find "Racket" "ack") 1)
+                   (equal? (string-find "Racket" "Rac") 0)
+                   (equal? (string-find "Racket" "et")  4)
+                   (equal? (string-find "Racket" "cat") #f)))
+
+        (list "string-contains?"
+              (and (equal? (string-contains? "Racket" "ack") #t)
+                   (equal? (string-contains? "Racket" "cat") #f)))        
         ))
 
  (list "4.5 Byte Strings"
