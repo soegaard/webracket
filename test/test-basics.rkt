@@ -1425,12 +1425,18 @@
               (and (equal? (list* 1 2 3) (cons 1 (cons 2 3)))
                    (equal? (list* 1 2 (list 3 4)) '(1 2 3 4))))
 
+        (list "foldl"
+              (and (equal? (foldl cons '() '(1 2 3 4)) '(4 3 2 1))
+                   (equal? (foldl + 0 '(1 2 3 4)) 10)
+                   (equal? (foldl (λ (a b acc) (cons (cons a b) acc))
+                                  '()
+                                  '(a b c) '(x y z))
+                           '((c . z) (b . y) (a . x)))))
         (list "filter"
               #;(and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
                      (equal? (filter positive? '()) '()))
               (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                    (equal? (filter (λ (x) (positive? x)) '()) '())))
-
         (list "filter-map"
               (and (equal? (filter-map (λ (x) (and (negative? x) (abs x)))
                                        '(1 2 -3 -4 8))

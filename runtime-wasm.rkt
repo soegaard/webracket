@@ -13331,6 +13331,298 @@
                      (br $loop))
                (unreachable))
 
+         ;; foldl : general entry point that dispatches to helpers
+         (func $foldl (type $Prim>=2)
+               (param $proc (ref eq))   ;; procedure
+               (param $init (ref eq))   ;; initial accumulator
+               (param $xss  (ref eq))   ;; list of lists
+               (result      (ref eq))
+
+               (local $outer  (ref eq))
+               (local $pair   (ref $Pair))
+               (local $elem   (ref eq))
+               (local $nlists i32)
+               (local $xs     (ref eq))
+               (local $ys     (ref eq))
+
+               (local.set $xs (global.get $null))
+               (local.set $ys (global.get $null))
+
+               ;; Walk outer list xss to count #lists; capture first two lists
+               (local.set $nlists (i32.const 0))
+               (local.set $outer  (local.get $xss))
+               (block $count_done
+                      (loop $count
+                            (if (ref.eq (local.get $outer) (global.get $null))
+                                (then (br $count_done)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
+                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
+                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                            (if (i32.eqz
+                                 (i32.or
+                                  (ref.eq (local.get $elem) (global.get $null))
+                                  (ref.test (ref $Pair) (local.get $elem))))
+                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
+                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
+                            (if (i32.eq (local.get $nlists) (i32.const 1))
+                                (then (local.set $xs (local.get $elem)))
+                                (else
+                                 (if (i32.eq (local.get $nlists) (i32.const 2))
+                                     (then (local.set $ys (local.get $elem))))))
+                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
+                            (br $count)))
+
+               ;; Racket's foldl requires at least one list argument
+               (if (i32.eq (local.get $nlists) (i32.const 0))
+                   (then (call $raise-arity-mismatch) (unreachable)))
+
+               ;; Dispatch based on number of lists
+               (if (i32.eq (local.get $nlists) (i32.const 1))
+                   (then (return (call $foldl/1 (local.get $proc)
+                                       (local.get $init)
+                                       (local.get $xs)))))
+               (if (i32.eq (local.get $nlists) (i32.const 2))
+                   (then (return (call $foldl/2 (local.get $proc)
+                                       (local.get $init)
+                                       (local.get $xs)
+                                       (local.get $ys)))))
+
+               (call $foldl/n (local.get $proc) (local.get $init) (local.get $xss)))
+         
+         ;; foldl/1 : (X Acc -> Acc) Acc (Listof X) -> Acc
+         (func $foldl/1 (type $Prim3)
+               (param $proc (ref eq))   ;; procedure
+               (param $acc  (ref eq))   ;; initial accumulator
+               (param $xs   (ref eq))   ;; list
+               (result      (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+               (local $pair (ref $Pair))
+               (local $elem (ref eq))
+               (local $call (ref $Args))
+               (local $r    (ref eq))
+
+               ;; Ensure $proc is a procedure and fetch its invoker
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               ;; Prepare argument array for procedure
+               (local.set $call (array.new_fixed $Args 2 (global.get $null) (global.get $null)))
+
+               ;; Iterate through list
+               (loop $loop
+                     (if (ref.eq (local.get $xs) (global.get $null))
+                         (then (return (local.get $acc))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                         (then (call $raise-pair-expected (local.get $xs)) (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $xs)))
+                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                     (array.set $Args (local.get $call) (i32.const 0) (local.get $elem))
+                     (array.set $Args (local.get $call) (i32.const 1) (local.get $acc))
+                     (local.set $r
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $call)
+                                          (local.get $finv)))
+                     (local.set $acc (local.get $r))
+                     (local.set $xs (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
+
+         ;; foldl/2 : (X Y Acc -> Acc) Acc (Listof X) (Listof Y) -> Acc
+         (func $foldl/2 (type $Prim4)
+               (param $proc (ref eq))   ;; procedure
+               (param $acc  (ref eq))   ;; initial accumulator
+               (param $xs   (ref eq))   ;; first list
+               (param $ys   (ref eq))   ;; second list
+               (result      (ref eq))
+
+               (local $f     (ref $Procedure))
+               (local $finv  (ref $ProcedureInvoker))
+               (local $pairx (ref $Pair))
+               (local $pairy (ref $Pair))
+               (local $call  (ref $Args))
+               (local $r     (ref eq))
+
+               ;; Ensure $proc is a procedure and fetch its invoker
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               ;; Prepare argument array for procedure
+               (local.set $call (array.new_fixed $Args 3 (global.get $null) (global.get $null) (global.get $null)))
+
+               ;; Iterate through both lists in lockstep; stop at shortest
+               (loop $loop
+                     (if (i32.or (ref.eq (local.get $xs) (global.get $null))
+                                 (ref.eq (local.get $ys) (global.get $null)))
+                         (then (return (local.get $acc))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                         (then (call $raise-pair-expected (local.get $xs)) (unreachable)))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $ys)))
+                         (then (call $raise-pair-expected (local.get $ys)) (unreachable)))
+                     (local.set $pairx (ref.cast (ref $Pair) (local.get $xs)))
+                     (local.set $pairy (ref.cast (ref $Pair) (local.get $ys)))
+                     (array.set $Args (local.get $call) (i32.const 0)
+                                (struct.get $Pair $a (local.get $pairx)))
+                     (array.set $Args (local.get $call) (i32.const 1)
+                                (struct.get $Pair $a (local.get $pairy)))
+                     (array.set $Args (local.get $call) (i32.const 2) (local.get $acc))
+                     (local.set $r
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $call)
+                                          (local.get $finv)))
+                     (local.set $acc (local.get $r))
+                     (local.set $xs (struct.get $Pair $d (local.get $pairx)))
+                     (local.set $ys (struct.get $Pair $d (local.get $pairy)))
+                     (br $loop))
+               (unreachable))
+
+         ;; foldl/n : (X1 X2 ... Xn Acc -> Acc) Acc (Listof X1) ... (Listof Xn) -> Acc
+         (func $foldl/n (type $Prim>=2)
+               (param $proc (ref eq))   ;; procedure
+               (param $acc  (ref eq))   ;; initial accumulator
+               (param $xss  (ref eq))   ;; list of lists
+               (result      (ref eq))
+
+               (local $f      (ref $Procedure))
+               (local $finv   (ref $ProcedureInvoker))
+               (local $outer  (ref eq))
+               (local $pair   (ref $Pair))
+               (local $elem   (ref eq))
+               (local $nlists i32)
+
+               (local $lists  (ref $Args))
+               (local $call   (ref $Args))
+               (local $i      i32)
+               (local $cur    (ref eq))
+               (local $stop   i32)
+               (local $r      (ref eq))
+
+               ;; Check that $proc is a procedure and fetch its invoker
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               ;; Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               (local.set $nlists (i32.const 0))
+               (local.set $outer  (local.get $xss))
+               (block $count_done
+                      (loop $count
+                            (if (ref.eq (local.get $outer) (global.get $null))
+                                (then (br $count_done)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
+                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
+                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                            (if (i32.eqz
+                                 (i32.or
+                                  (ref.eq (local.get $elem) (global.get $null))
+                                  (ref.test (ref $Pair) (local.get $elem))))
+                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
+                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
+                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
+                            (br $count)))
+
+               ;; Racket's foldl requires at least one list argument
+               (if (i32.eq (local.get $nlists) (i32.const 0))
+                   (then (call $raise-arity-mismatch) (unreachable)))
+
+               ;; Allocate arrays for list cursors and call arguments (extra slot for accumulator)
+               (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
+               (local.set $call  (array.new $Args (global.get $null)
+                                            (i32.add (local.get $nlists) (i32.const 1))))
+
+               ;; Seed list cursors from xss
+               (local.set $outer (local.get $xss))
+               (local.set $i (i32.const 0))
+               (block $seed_done
+                      (loop $seed
+                            (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                (then (br $seed_done)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
+                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                            (array.set $Args (local.get $lists) (local.get $i) (local.get $elem))
+                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $seed)))
+
+               ;; Main loop: stop at the shortest list
+               (loop $loop
+                     ;; (a) Check state of all lists; determine if we stop
+                     (local.set $stop (i32.const 0))
+                     (local.set $i (i32.const 0))
+                     (block $check_done
+                            (loop $check
+                                  (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                      (then (br $check_done)))
+                                  (local.set $cur (array.get $Args (local.get $lists) (local.get $i)))
+                                  (if (ref.eq (local.get $cur) (global.get $null))
+                                      (then (local.set $stop (i32.const 1)))
+                                      (else
+                                       (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                                           (then (call $raise-pair-expected (local.get $cur)) (unreachable)))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $check)))
+
+                     ;; If any list is empty → return accumulator
+                     (if (i32.ne (local.get $stop) (i32.const 0))
+                         (then (return (local.get $acc))))
+
+                     ;; (b) Build call args for f: cars of each list + accumulator
+                     (local.set $i (i32.const 0))
+                     (block $cars_done
+                            (loop $cars
+                                  (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                      (then (br $cars_done)))
+                                  (local.set $pair
+                                             (ref.cast (ref $Pair)
+                                                       (array.get $Args (local.get $lists) (local.get $i))))
+                                  (array.set $Args
+                                             (local.get $call) (local.get $i)
+                                             (struct.get $Pair $a (local.get $pair)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $cars)))
+                     (array.set $Args (local.get $call) (local.get $nlists) (local.get $acc))
+
+                     ;; (c) Apply f and update accumulator
+                     (local.set $r
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $call)
+                                          (local.get $finv)))
+                     (local.set $acc (local.get $r))
+
+                     ;; (d) Advance each list (cdr)
+                     (local.set $i (i32.const 0))
+                     (block $cdrs_done
+                            (loop $cdrs
+                                  (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                      (then (br $cdrs_done)))
+                                  (local.set $pair
+                                             (ref.cast (ref $Pair)
+                                                       (array.get $Args (local.get $lists) (local.get $i))))
+                                  (array.set $Args
+                                             (local.get $lists) (local.get $i)
+                                             (struct.get $Pair $d (local.get $pair)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $cdrs)))
+
+                     (br $loop))
+               (unreachable))
+
+         
+               
          (func $filter (type $Prim>=1)
                (param $proc (ref eq))  ;; predicate
                (param $xs   (ref eq))  ;; list

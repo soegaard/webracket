@@ -423,6 +423,7 @@
   eleventh twelfth thirteenth fourteenth fifteenth
   
   append ; variadic list primitive
+  foldl
   flatten
   reverse alt-reverse ; used in expansion of for/list
   map andmap ormap count for-each append-map
@@ -3349,6 +3350,7 @@
          [(append-map)                 (inline-prim/variadic sym ae1 2 1)]
          [(count)                      (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
+         [(foldl)                      (inline-prim/variadic sym ae1 3)]
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
 
