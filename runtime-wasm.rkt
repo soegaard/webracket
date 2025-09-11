@@ -13621,6 +13621,271 @@
                (unreachable))
 
          
+         (func $foldr (type $Prim>=2)
+               (param $proc (ref eq))   ;; procedure
+               (param $init (ref eq))   ;; initial value
+               (param $xss  (ref eq))   ;; list of lists
+               (result      (ref eq))
+
+               (local $pair (ref $Pair))
+               (local $xs   (ref eq))
+               (local $ys   (ref eq))
+               (local $rest (ref eq))
+
+               (if (ref.eq (local.get $xss) (global.get $null))
+                   (then (call $raise-arity-mismatch) (unreachable)))
+
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $xss)))
+                   (then (call $raise-pair-expected (local.get $xss)) (unreachable)))
+               (local.set $pair (ref.cast (ref $Pair) (local.get $xss)))
+               (local.set $xs   (struct.get $Pair $a (local.get $pair)))
+               (local.set $rest (struct.get $Pair $d (local.get $pair)))
+
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then (return (call $foldr/1 (local.get $proc) (local.get $init) (local.get $xs)))))
+
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $rest)))
+                   (then (call $raise-pair-expected (local.get $rest)) (unreachable)))
+               (local.set $pair (ref.cast (ref $Pair) (local.get $rest)))
+               (local.set $ys   (struct.get $Pair $a (local.get $pair)))
+               (local.set $rest (struct.get $Pair $d (local.get $pair)))
+
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then (return (call $foldr/2 (local.get $proc) (local.get $init)
+                                       (local.get $xs) (local.get $ys)))))
+
+               (call $foldr/n (local.get $proc) (local.get $init) (local.get $xss)))
+
+         (func $foldr/1-loop
+               (param $f    (ref $Procedure))
+               (param $finv (ref $ProcedureInvoker))
+               (param $init (ref eq))
+               (param $xs   (ref eq))
+               (result      (ref eq))
+
+               (local $pair (ref $Pair))
+               (local $call (ref $Args))
+               (local $rest (ref eq))
+
+               (if (ref.eq (local.get $xs) (global.get $null))
+                   (then (return (local.get $init))))
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                   (then (call $raise-pair-expected (local.get $xs))
+                         (unreachable)))
+               (local.set $pair (ref.cast (ref $Pair) (local.get $xs)))
+               (local.set $rest
+                          (call $foldr/1-loop
+                                (local.get $f) (local.get $finv) (local.get $init)
+                                (struct.get $Pair $d (local.get $pair))))
+               (local.set $call
+                          (array.new_fixed $Args 2
+                                           (struct.get $Pair $a (local.get $pair))
+                                           (local.get $rest)))
+               (call_ref $ProcedureInvoker
+                         (local.get $f)
+                         (local.get $call)
+                         (local.get $finv)))
+
+
+         
+         (func $foldr/1
+               (param $proc (ref eq))   ;; procedure
+               (param $init (ref eq))   ;; initial value
+               (param $xs   (ref eq))   ;; list
+               (result      (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+               (call $foldr/1-loop (local.get $f) (local.get $finv)
+                     (local.get $init) (local.get $xs)))
+
+         (func $foldr/2-loop
+               (param $f    (ref $Procedure))
+               (param $finv (ref $ProcedureInvoker))
+               (param $init (ref eq))
+               (param $xs   (ref eq))
+               (param $ys   (ref eq))
+               (result      (ref eq))
+
+               (local $px   (ref $Pair))
+               (local $py   (ref $Pair))
+               (local $call (ref $Args))
+               (local $rest (ref eq))
+
+               (if (i32.or (ref.eq (local.get $xs) (global.get $null))
+                           (ref.eq (local.get $ys) (global.get $null)))
+                   (then (return (local.get $init))))
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                   (then (call $raise-pair-expected (local.get $xs)) (unreachable)))
+               (if (i32.eqz (ref.test (ref $Pair) (local.get $ys)))
+                   (then (call $raise-pair-expected (local.get $ys)) (unreachable)))
+               (local.set $px (ref.cast (ref $Pair) (local.get $xs)))
+               (local.set $py (ref.cast (ref $Pair) (local.get $ys)))
+               (local.set $rest
+                          (call $foldr/2-loop (local.get $f) (local.get $finv)
+                                (local.get $init)
+                                (struct.get $Pair $d (local.get $px))
+                                (struct.get $Pair $d (local.get $py))))
+               (local.set $call
+                          (array.new_fixed $Args 3
+                                           (struct.get $Pair $a (local.get $px))
+                                           (struct.get $Pair $a (local.get $py))
+                                           (local.get $rest)))
+               (call_ref $ProcedureInvoker
+                         (local.get $f)
+                         (local.get $call)
+                         (local.get $finv)))
+
+         (func $foldr/2
+               (param $proc (ref eq))   ;; procedure
+               (param $init (ref eq))   ;; initial value
+               (param $xs   (ref eq))   ;; list X
+               (param $ys   (ref eq))   ;; list Y
+               (result (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+               (call $foldr/2-loop (local.get $f) (local.get $finv)
+                     (local.get $init)
+                     (local.get $xs) (local.get $ys)))
+
+         (func $foldr/n-loop
+               (param $f     (ref $Procedure))
+               (param $finv  (ref $ProcedureInvoker))
+               (param $lists (ref $Args))
+               (param $nlists i32)
+               (param $init  (ref eq))
+               (result (ref eq))
+
+               (local $i     i32)
+               (local $cur   (ref eq))
+               (local $tails (ref $Args))
+               (local $call  (ref $Args))
+               (local $pair  (ref $Pair))
+               (local $rest  (ref eq))
+
+               ;; Check for empty lists
+               (local.set $i (i32.const 0))
+               (block $check_done
+                      (loop $check
+                            (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                (then (br $check_done)))
+                            (local.set $cur (array.get $Args (local.get $lists) (local.get $i)))
+                            (if (ref.eq (local.get $cur) (global.get $null))
+                                (then (return (local.get $init))))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                                (then (call $raise-pair-expected (local.get $cur))
+                                      (unreachable)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $check)))
+
+               ;; Build tails and call arrays
+               (local.set $tails (array.new $Args (global.get $null) (local.get $nlists)))
+               (local.set $call  (array.new $Args (global.get $null)
+                                            (i32.add (local.get $nlists) (i32.const 1))))
+               (local.set $i (i32.const 0))
+               (block $build_done
+                      (loop $build
+                            (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                (then (br $build_done)))
+                            (local.set $pair
+                                       (ref.cast (ref $Pair)
+                                                 (array.get $Args (local.get $lists) (local.get $i))))
+                            (array.set $Args (local.get $call) (local.get $i)
+                                       (struct.get $Pair $a (local.get $pair)))
+                            (array.set $Args (local.get $tails) (local.get $i)
+                                       (struct.get $Pair $d (local.get $pair)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $build)))
+
+               ;; Recursive call on tails
+               (local.set $rest
+                          (call $foldr/n-loop (local.get $f) (local.get $finv)
+                                (local.get $tails) (local.get $nlists)
+                                (local.get $init)))
+               (array.set $Args (local.get $call) (local.get $nlists) (local.get $rest))
+               (call_ref $ProcedureInvoker
+                         (local.get $f)
+                         (local.get $call)
+                         (local.get $finv)))
+
+         (func $foldr/n
+               (param $proc (ref eq))   ;; procedure
+               (param $init (ref eq))   ;; initial value
+               (param $xss  (ref eq))   ;; list of lists
+               (result (ref eq))
+
+               (local $f      (ref $Procedure))
+               (local $finv   (ref $ProcedureInvoker))
+               (local $outer  (ref eq))
+               (local $pair   (ref $Pair))
+               (local $elem   (ref eq))
+               (local $nlists i32)
+               (local $lists  (ref $Args))
+               (local $i      i32)
+
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+               (if (ref.eq (local.get $xss) (global.get $null))
+                   (then (call $raise-arity-mismatch) (unreachable)))
+
+               ;; Count lists
+               (local.set $nlists (i32.const 0))
+               (local.set $outer  (local.get $xss))
+               (block $count_done
+                      (loop $count
+                            (if (ref.eq (local.get $outer) (global.get $null))
+                                (then (br $count_done)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
+                                (then (call $raise-pair-expected (local.get $outer))
+                                      (unreachable)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
+                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                            (if (i32.eqz (i32.or (ref.eq (local.get $elem) (global.get $null))
+                                                 (ref.test (ref $Pair) (local.get $elem))))
+                                (then (call $raise-pair-expected (local.get $elem))
+                                      (unreachable)))
+                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
+                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
+                            (br $count)))
+
+               (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
+               (local.set $outer (local.get $xss))
+               (local.set $i (i32.const 0))
+               (block $seed_done
+                      (loop $seed
+                            (if (i32.ge_u (local.get $i) (local.get $nlists))
+                                (then (br $seed_done)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
+                            (array.set $Args (local.get $lists) (local.get $i)
+                                       (struct.get $Pair $a (local.get $pair)))
+                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $seed)))
+
+               (call $foldr/n-loop (local.get $f) (local.get $finv)
+                     (local.get $lists) (local.get $nlists)
+                     (local.get $init)))
+
+        
+
+         
                
          (func $filter (type $Prim>=1)
                (param $proc (ref eq))  ;; predicate
