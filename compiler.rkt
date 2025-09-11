@@ -608,6 +608,7 @@
   string-prefix?     ; from racket/string
   string-contains?   ; from racket/string
   string-find        ; from racket/string  (added in 8.15)
+  string-replace     ; from racket/string 
 
   symbol? symbol=? symbol<? 
   string->symbol symbol->string
@@ -3380,6 +3381,8 @@
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
+         [(string-replace)             (inline-prim/optional/default sym ae1 3 4 (Imm #t))]
+
          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
@@ -3390,6 +3393,8 @@
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0
+
+         
          
         [(fx= fx< fx> fx<= fx>=)
           ; variadic, at least one argument
@@ -3487,6 +3492,8 @@
 
         [(string-join)
          (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
+
+        
          
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])

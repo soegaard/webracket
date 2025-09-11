@@ -288,6 +288,7 @@
  string-prefix?
  string-suffix?
  string-contains?
+ string-replace
  string-find
  string-take string-take-right
  string-drop string-drop-right
@@ -760,6 +761,12 @@ bytes->string/utf-8
 (define (string-join strs [maybe-sep " "])
   (define xs (add-between strs maybe-sep))
   (string-append* xs))
+
+(require (prefix-in racket: racket/string))
+
+; A simplified no-keywords version 
+(define (string-replace str from to [all? #t])
+  (racket:string-replace str from to all?))
 
 
 
