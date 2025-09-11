@@ -13035,6 +13035,15 @@
                      (br $loop))
                (unreachable))
 
+         ; TODO : The implementation of $append-map can be made more efficient.
+         (func $append-map (type $Prim>=1)
+               (param $proc (ref eq))   ;; procedure
+               (param $xss  (ref eq))   ;; list of lists
+               (result      (ref eq))
+               ;; Proc results must be lists; map and append handle validation.
+               (call $append
+                     (call $map (local.get $proc) (local.get $xss))))
+
          (func $count (type $Prim>=1)
                (param $proc (ref eq))   ;; procedure
                (param $xss  (ref eq))   ;; list of lists

@@ -425,7 +425,7 @@
   append ; variadic list primitive
   flatten
   reverse alt-reverse ; used in expansion of for/list
-  map andmap ormap count for-each
+  map andmap ormap count for-each append-map
   list* 
   cartesian-product
   permutations
@@ -3345,6 +3345,7 @@
          [(map)                        (inline-prim/variadic sym ae1 2 1)]
          [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
          [(ormap)                      (inline-prim/variadic sym ae1 2 1)]
+         [(append-map)                 (inline-prim/variadic sym ae1 2 1)]
          [(count)                      (inline-prim/variadic sym ae1 2 1)]
          [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]

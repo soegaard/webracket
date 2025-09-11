@@ -390,6 +390,7 @@ bytes->string/utf-8
  map
  andmap
  ormap
+ append-map
  for-each
  count
  cartesian-product

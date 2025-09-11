@@ -1439,6 +1439,11 @@
                                        '(1 2 3)
                                        '(2 1 4))
                            '(3 7))))
+        (list "append-map"
+              (and (equal? (append-map (λ (x) (vector->list x)) '(#(1) #(2 3) #(4)))
+                           '(1 2 3 4))
+                   (equal? (append-map (λ (x) (list x x)) '(1 2 3))
+                           '(1 1 2 2 3 3))))
 
         (list "filter-not"
               (and (equal? (filter-not (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(-2 -5))
