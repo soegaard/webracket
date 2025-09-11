@@ -13620,41 +13620,41 @@
                      (br $loop))
                (unreachable))
 
+
+         (func $foldr (type $Prim>=3)
+              (param $proc (ref eq))   ;; procedure
+              (param $init (ref eq))   ;; initial value
+              (param $xs   (ref eq))   ;; first list
+              (param $rest (ref eq))   ;; remaining lists
+              (result      (ref eq))
+
+              (local $pair  (ref $Pair))
+              (local $ys    (ref eq))
+              (local $rest2 (ref eq))
+              (local $xss   (ref eq))
+
+              ;; Combine first list with remaining lists for n-ary case
+              (local.set $xss (call $list* (local.get $xs) (local.get $rest)))
+
+              ;; Single list case
+              (if (ref.eq (local.get $rest) (global.get $null))
+                  (then (return (call $foldr/1 (local.get $proc) (local.get $init)
+                                      (local.get $xs)))))
+
+              ;; Two-list case
+              (if (i32.eqz (ref.test (ref $Pair) (local.get $rest)))
+                  (then (call $raise-pair-expected (local.get $rest)) (unreachable)))
+              (local.set $pair  (ref.cast (ref $Pair) (local.get $rest)))
+              (local.set $ys    (struct.get $Pair $a (local.get $pair)))
+              (local.set $rest2 (struct.get $Pair $d (local.get $pair)))
+
+              (if (ref.eq (local.get $rest2) (global.get $null))
+                  (then (return (call $foldr/2 (local.get $proc) (local.get $init)
+                                      (local.get $xs) (local.get $ys)))))
+
+              ;; N-ary case
+              (call $foldr/n (local.get $proc) (local.get $init) (local.get $xss)))
          
-         (func $foldr (type $Prim>=2)
-               (param $proc (ref eq))   ;; procedure
-               (param $init (ref eq))   ;; initial value
-               (param $xss  (ref eq))   ;; list of lists
-               (result      (ref eq))
-
-               (local $pair (ref $Pair))
-               (local $xs   (ref eq))
-               (local $ys   (ref eq))
-               (local $rest (ref eq))
-
-               (if (ref.eq (local.get $xss) (global.get $null))
-                   (then (call $raise-arity-mismatch) (unreachable)))
-
-               (if (i32.eqz (ref.test (ref $Pair) (local.get $xss)))
-                   (then (call $raise-pair-expected (local.get $xss)) (unreachable)))
-               (local.set $pair (ref.cast (ref $Pair) (local.get $xss)))
-               (local.set $xs   (struct.get $Pair $a (local.get $pair)))
-               (local.set $rest (struct.get $Pair $d (local.get $pair)))
-
-               (if (ref.eq (local.get $rest) (global.get $null))
-                   (then (return (call $foldr/1 (local.get $proc) (local.get $init) (local.get $xs)))))
-
-               (if (i32.eqz (ref.test (ref $Pair) (local.get $rest)))
-                   (then (call $raise-pair-expected (local.get $rest)) (unreachable)))
-               (local.set $pair (ref.cast (ref $Pair) (local.get $rest)))
-               (local.set $ys   (struct.get $Pair $a (local.get $pair)))
-               (local.set $rest (struct.get $Pair $d (local.get $pair)))
-
-               (if (ref.eq (local.get $rest) (global.get $null))
-                   (then (return (call $foldr/2 (local.get $proc) (local.get $init)
-                                       (local.get $xs) (local.get $ys)))))
-
-               (call $foldr/n (local.get $proc) (local.get $init) (local.get $xss)))
 
          (func $foldr/1-loop
                (param $f    (ref $Procedure))

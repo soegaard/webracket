@@ -391,7 +391,7 @@ bytes->string/utf-8
  andmap
  ormap
  append-map
- foldl
+ foldl foldr
  for-each
  count
  add-between

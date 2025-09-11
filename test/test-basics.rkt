@@ -1432,6 +1432,13 @@
                                   '()
                                   '(a b c) '(x y z))
                            '((c . z) (b . y) (a . x)))))
+        (list "foldr"
+              (and (equal? (foldr cons '() '(1 2 3 4)) '(1 2 3 4))
+                   (equal? (foldr + 0 '(1 2 3 4)) 10)
+                   (equal? (foldr (λ (a b acc) (cons (cons a b) acc))
+                                  '()
+                                  '(a b c) '(x y z))
+                           '((a . x) (b . y) (c . z)))))
         (list "filter"
               #;(and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
                      (equal? (filter positive? '()) '()))
