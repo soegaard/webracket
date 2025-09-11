@@ -1623,6 +1623,13 @@
   (for/list ([entry (in-list datatypes-primitives)])
     (list (symbol->title (car entry)) (cdr entry))))
 
+(define total-primitives-cnt
+  (for/sum ([entry (in-list datatypes-primitives)])
+    (length (cdr entry))))
+
+(define missing-primitives
+  (- total-primitives-cnt (length implemented-primitives)))
+
 ; (js-log sections)
 
 
@@ -1724,6 +1731,8 @@
   `(div (h1 "Progress: Primitives in WebRacket")
         (span "Implemented: "
               ,(number->string (length implemented-primitives)))
+        (div "Missing: "
+             ,(number->string missing-primitives))
         (h2 "Datatype Functions and Constants")
         ,@sections))
 
