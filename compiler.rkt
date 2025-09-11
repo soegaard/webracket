@@ -592,7 +592,7 @@
   make-string build-string string-ref string-set! string-length substring
   string-copy!
   string-copy string-fill!
-  string-append string-append-immutable string-append*
+  string-append string-append-immutable string-append* string-join
   string->list list->string
   string->bytes/utf-8 string-utf-8-length string->immutable-string
   non-empty-string?
@@ -3482,7 +3482,10 @@
           (inline-prim/variadic sym ae1 0)]
 
         [(string-append*)
-          (inline-prim/variadic sym ae1 1)]
+         (inline-prim/variadic sym ae1 1)]
+
+        [(string-join)
+         (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
          
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])

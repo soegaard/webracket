@@ -8744,7 +8744,6 @@
 
                ; initialize locals with no defaults
                (local.set $last (global.get $false))
-
                ;; no extra args: first arg supplies list of strings
                (if (ref.eq (local.get $rest) (global.get $null))
                    (then (return (call $string-append (local.get $str)))))
@@ -8786,6 +8785,102 @@
                                       (local.get $str)
                                       (local.get $args)))
                (call $string-append (local.get $args)))
+
+         ;; Note: Simplified version: accepts list of strings and optional separator only.
+         (func $string-join (type $Prim2)
+               (param $strs (ref eq)) ;; listof string?
+               (param $sep  (ref eq)) ;; optional string?, default = " "
+               (result      (ref eq))
+
+               (local $xs      (ref eq))
+               (local $node    (ref $Pair))
+               (local $v       (ref eq))
+               (local $str     (ref $String))
+               (local $sep-str (ref $String))
+               (local $sep-len i32)
+               (local $n       i32)
+               (local $total   i32)
+               (local $len     i32)
+               (local $arr     (ref $I32Array))
+               (local $pos     i32)
+
+               ;; --- Handle optional separator ---
+               (local.set $sep-str
+                          (if (result (ref $String))
+                              (ref.eq (local.get $sep) (global.get $missing))
+                              (then (ref.cast (ref $String) (global.get $string:space)))
+                              (else (if (result (ref $String))
+                                        (ref.test (ref $String) (local.get $sep))
+                                        (then (ref.cast (ref $String) (local.get $sep)))
+                                        (else (call $raise-check-string (local.get $sep))
+                                              (unreachable))))))
+               ;; --- Determine separator length ---
+               (local.set $sep-len
+                          (call $i32array-length
+                                (struct.get $String $codepoints (local.get $sep-str))))
+               ;; --- Determine number of strings ---
+               (local.set $n (call $length/i32 (local.get $strs)))
+               (if (i32.eqz (local.get $n))
+                   (then (return (global.get $string:empty))))
+               ;; --- Compute total length ---
+               (local.set $xs (local.get $strs))
+               (local.set $total
+                          (i32.mul (i32.sub (local.get $n) (i32.const 1))
+                                   (local.get $sep-len)))
+               (block $done1
+                      (loop $loop1
+                            (br_if $done1 (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v (struct.get $Pair $a (local.get $node)))
+                            (if (ref.test (ref $String) (local.get $v))
+                                (then
+                                 (local.set $str (ref.cast (ref $String) (local.get $v)))
+                                 (local.set $len
+                                            (call $i32array-length
+                                                  (struct.get $String $codepoints (local.get $str))))
+                                 (local.set $total (i32.add (local.get $total) (local.get $len))))
+                                (else (call $raise-check-string (local.get $v)) (unreachable)))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (br $loop1)))
+               ;; --- All empty -> empty string ---
+               (if (i32.eqz (local.get $total))
+                   (then (return (global.get $string:empty))))
+               ;; --- Allocate result array ---
+               (local.set $arr (call $i32array-make (local.get $total) (i32.const 0)))
+               ;; --- Copy strings and separators ---
+               (local.set $xs (local.get $strs))
+               (local.set $pos (i32.const 0))
+               (block $done2
+                      (loop $loop2
+                            (br_if $done2 (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $str
+                                       (ref.cast (ref $String)
+                                                 (struct.get $Pair $a (local.get $node))))
+                            (local.set $len
+                                       (call $i32array-length
+                                             (struct.get $String $codepoints (local.get $str))))
+                            (call $i32array-copy!
+                                  (local.get $arr) (local.get $pos)
+                                  (struct.get $String $codepoints (local.get $str))
+                                  (i32.const 0) (local.get $len))
+                            (local.set $pos (i32.add (local.get $pos) (local.get $len)))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (nop))
+                                (else
+                                 (call $i32array-copy!
+                                       (local.get $arr) (local.get $pos)
+                                       (struct.get $String $codepoints (local.get $sep-str))
+                                       (i32.const 0) (local.get $sep-len))
+                                 (local.set $pos
+                                            (i32.add (local.get $pos) (local.get $sep-len)))))
+                            (br $loop2)))
+               ;; --- Build result string ---
+               (struct.new $String
+                           (i32.const 0)
+                           (i32.const 0)
+                           (local.get $arr)))
          
          (func $string->list (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))

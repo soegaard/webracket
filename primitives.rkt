@@ -274,6 +274,7 @@
  string-append
  string-append-immutable
  string-append*
+ string-join
  string-copy
  string-copy!
  string-fill! 
@@ -749,3 +750,9 @@ bytes->string/utf-8
 (require (prefix-in racket: racket/list))
 (define (add-between xs v)   ; simplified version without keyword arguments.
   (racket:add-between xs v))
+
+
+; A simplified no-keywords version of string-join.
+(define (string-join strs [maybe-sep " "])
+  (define xs (add-between strs maybe-sep))
+  (string-append* xs))

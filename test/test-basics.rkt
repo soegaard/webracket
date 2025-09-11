@@ -841,6 +841,14 @@
                    (equal? (string-append* "A" (list "B" "C"))      "ABC")
                    (equal? (string-append* "A" "B" (list "C" "D"))  "ABCD")))
 
+        (list "string-join"
+              (and (equal? (string-join '("one" "two" "three" "four"))
+                           "one two three four")
+                   (equal? (string-join '("one" "two" "three" "four") ", ")
+                           "one, two, three, four")
+                   (equal? (string-join '("one" "two" "three" "four") " potato ")
+                           "one potato two potato three potato four")))
+
         (list "string-copy"
               (let* ([s (string-copy "hello")]
                      [s2 (string-copy s)])
