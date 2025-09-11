@@ -449,6 +449,7 @@
   inclusive-range inclusive-range-proc
   argmax argmin
   group-by
+  sort
 
   void?
   make-void  ; zero arguments

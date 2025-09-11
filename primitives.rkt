@@ -429,6 +429,7 @@ bytes->string/utf-8
 
  argmax argmin
  group-by
+ sort
  
  ; findf
  ; assoc
@@ -768,5 +769,8 @@ bytes->string/utf-8
 (define (string-replace str from to [all? #t])
   (racket:string-replace str from to all?))
 
+; A simplified no-keywords version 
+(define (sort xs less-than?)
+  (racket:sort xs less-than?))
 
 

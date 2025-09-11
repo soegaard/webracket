@@ -46,7 +46,7 @@
     string-drop-right   ; srfi 13
     string-take         ; srfi 13
     string-take-right   ; srfi 13
-    string-replace      ; srfi 13
+    ; string-replace    ; 
     make-void
     
     set-boxed!          ; assignment boxes

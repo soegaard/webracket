@@ -1586,7 +1586,9 @@
         (list "remw*"
               (and (equal? (remw* '(1 2) (list 1 2 3 2 4)) '(3 4))
                    (equal? (procedure-arity remw*) 2)))
-
+        (list "sort"
+              (and (equal? (sort '(3 1 2)       (λ (x y) (<        x y))) '(1 2 3))
+                   (equal? (sort '("c" "a" "b") (λ (x y) (string<? x y))) '("a" "b" "c"))))
         (list "count"
               (and (equal? (count (λ (x)   (positive? x)) '(1 -1 2 3 -2 5))  4)
                    (equal? (count (λ (x y) (< x y))       '(1 2 3) '(2 2 4)) 2)))

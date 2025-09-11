@@ -8883,11 +8883,11 @@
                            (local.get $arr)))
          
          ;; 4.4.3 String Conversions
-         ;; Note: string-foldcase currently delegates to downcase.
+         ;; Note: string-foldcase currently delegates to upcase.
          ,@(for/list ([name+imp
-                       (in-list '(( $string-upcase    $char-upcase/ucs)
-                                  ( $string-downcase  $char-downcase/ucs)                                  
-                                  ( $string-foldcase  $char-downcase/ucs)))])
+                       (in-list '(($string-upcase    $char-upcase/ucs)
+                                  ($string-downcase  $char-downcase/ucs)                                  
+                                  ($string-foldcase  $char-upcase/ucs)))])
              (define name (car  name+imp))
              (define imp  (cadr name+imp))
              `(func ,name (type $Prim1) (param $s (ref eq)) (result (ref eq))
@@ -15217,6 +15217,159 @@
                                      (unreachable)))))
 
               (call $reverse (local.get $acc)))
+
+        ; Note: Simplified version of sort with two arguments only.
+        ;       Internally it uses a merge sort.
+        (func $sort (type $Prim2)
+              (param $xs   (ref eq))
+              (param $proc (ref eq))
+              (result      (ref eq))
+
+              (local $f    (ref $Procedure))
+              (local $finv (ref $ProcedureInvoker))
+              (local $call (ref $Args))
+
+              ;; 1) Check that $proc is a procedure and fetch its invoker
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $call (array.new $Args (global.get $null) (i32.const 2)))
+              
+              (return_call $sort:merge-sort
+                           (local.get $xs)
+                           (local.get $f)
+                           (local.get $finv)
+                           (local.get $call)))
+
+        (func $sort:merge
+              (param $a    (ref eq))
+              (param $b    (ref eq))
+              (param $f    (ref $Procedure))
+              (param $finv (ref $ProcedureInvoker))
+              (param $call (ref $Args))
+              (result      (ref eq))
+
+              (local $apair (ref $Pair))
+              (local $bpair (ref $Pair))
+              (local $x     (ref eq))
+              (local $y     (ref eq))
+              (local $r     (ref eq))
+
+              (if (ref.eq (local.get $a) (global.get $null))
+                  (then (return (local.get $b))))
+              (if (ref.eq (local.get $b) (global.get $null))
+                  (then (return (local.get $a))))
+
+              (if (i32.eqz (ref.test (ref $Pair) (local.get $a)))
+                  (then (call $raise-pair-expected (local.get $a))
+                        (unreachable)))
+              (if (i32.eqz (ref.test (ref $Pair) (local.get $b)))
+                  (then (call $raise-pair-expected (local.get $b))
+                        (unreachable)))
+
+              (local.set $apair (ref.cast (ref $Pair) (local.get $a)))
+              (local.set $bpair (ref.cast (ref $Pair) (local.get $b)))
+              (local.set $x     (struct.get $Pair $a (local.get $apair)))
+              (local.set $y     (struct.get $Pair $a (local.get $bpair)))
+
+              (array.set $Args  (local.get $call) (i32.const 0) (local.get $y))
+              (array.set $Args  (local.get $call) (i32.const 1) (local.get $x))
+              (local.set $r     (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $call)
+                                          (local.get $finv)))
+              (if (result (ref eq))
+                  (ref.eq (local.get $r) (global.get $false))
+                  (then (call $cons (local.get $x)
+                              (call $sort:merge
+                                    (struct.get $Pair $d (local.get $apair))
+                                    (local.get $b)
+                                    (local.get $f)
+                                    (local.get $finv)
+                                    (local.get $call))))
+                  (else (call $cons (local.get $y)
+                              (call $sort:merge
+                                    (local.get $a)
+                                    (struct.get $Pair $d (local.get $bpair))
+                                    (local.get $f)
+                                    (local.get $finv)
+                                    (local.get $call))))))
+
+        (func $sort:split (param $lst (ref eq))
+              (result (ref $Values))
+
+              (local $slow (ref eq))
+              (local $fast (ref eq))
+              (local $acc  (ref eq))
+              (local $pair (ref $Pair))
+              (local $fastcdr (ref eq))
+              (local $slowpair (ref $Pair))
+
+              (local.set $slow (local.get $lst))
+              (local.set $fast (local.get $lst))
+              (local.set $acc  (global.get $null))
+
+              (block $done
+                     (loop $loop
+                           (if (ref.eq (local.get $fast) (global.get $null))
+                               (then (br $done)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $fast)))
+                               (then (call $raise-pair-expected (local.get $fast))
+                                     (unreachable)))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $fast)))
+                           (local.set $fastcdr (struct.get $Pair $d (local.get $pair)))
+                           (if (ref.eq (local.get $fastcdr) (global.get $null))
+                               (then (br $done)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $slow)))
+                               (then (call $raise-pair-expected (local.get $slow))
+                                     (unreachable)))
+                           (local.set $slowpair (ref.cast (ref $Pair) (local.get $slow)))
+                           (local.set $acc (call $cons (struct.get $Pair $a (local.get $slowpair))
+                                                 (local.get $acc)))
+                           (local.set $slow (struct.get $Pair $d (local.get $slowpair)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $fastcdr)))
+                               (then (call $raise-pair-expected (local.get $fastcdr))
+                                     (unreachable)))
+                           (local.set $fast (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $fastcdr))))
+                           (br $loop)))
+              (array.new_fixed $Values 2 (call $reverse (local.get $acc)) (local.get $slow)))
+
+        (func $sort:merge-sort
+              (param $lst  (ref eq))
+              (param $f    (ref $Procedure))
+              (param $finv (ref $ProcedureInvoker))
+              (param $call (ref $Args))
+              
+              (result      (ref eq))
+
+              (local $pair (ref $Pair))
+              (local $rest (ref eq))
+              (local $vals (ref $Values))
+              (local $a    (ref eq))
+              (local $b    (ref eq))
+              (local $sa   (ref eq))
+              (local $sb   (ref eq))
+
+              (if (ref.eq (local.get $lst) (global.get $null))
+                  (then (return (local.get $lst))))
+              (if (i32.eqz (ref.test (ref $Pair) (local.get $lst)))
+                  (then (call $raise-pair-expected (local.get $lst))
+                        (unreachable)))
+              (local.set $pair (ref.cast (ref $Pair) (local.get $lst)))
+              (local.set $rest (struct.get $Pair $d (local.get $pair)))
+              (if (ref.eq (local.get $rest) (global.get $null))
+                  (then (return (local.get $lst))))              
+
+              (local.set $vals  (call $sort:split (local.get $lst)))
+              (local.set $a     (array.get $Values (local.get $vals) (i32.const 0)))
+              (local.set $b     (array.get $Values (local.get $vals) (i32.const 1)))
+              (local.set $sa    (call $sort:merge-sort (local.get $a) (local.get $f) (local.get $finv) (local.get $call)))
+              (local.set $sb    (call $sort:merge-sort (local.get $b) (local.get $f) (local.get $finv) (local.get $call)))
+              (return_call $sort:merge
+                           (local.get $sa) (local.get $sb) (local.get $f) (local.get $finv) (local.get $call)))
+        
 
          ;;;
          ;;; 4.11 Mutable Pairs and lists
