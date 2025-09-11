@@ -591,7 +591,8 @@
   string? string=? string<? string<=? string>? string>=?
   make-string build-string string-ref string-set! string-length substring
   string-copy!
-  string-copy string-fill! string-append string-append-immutable
+  string-copy string-fill!
+  string-append string-append-immutable string-append*
   string->list list->string
   string->bytes/utf-8 string-utf-8-length string->immutable-string
   non-empty-string?
@@ -3476,9 +3477,13 @@
               [(list v)      `(call $string-copy ,v)]
               [(list v1 v2)  `(call $string-append/2 ,v1 ,v2)]
               [(list* vs)    `(call $string-append ,(build-rest-args aes))]) )]
-         [(string-append-immutable) ; variadic, at least zero arguments
+
+        [(string-append-immutable) ; variadic, at least zero arguments
           (inline-prim/variadic sym ae1 0)]
 
+        [(string-append*)
+          (inline-prim/variadic sym ae1 1)]
+         
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])
             (match aes

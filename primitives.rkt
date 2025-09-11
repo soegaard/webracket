@@ -273,6 +273,7 @@
  string-length
  string-append
  string-append-immutable
+ string-append*
  string-copy
  string-copy!
  string-fill! 

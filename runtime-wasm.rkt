@@ -8731,6 +8731,61 @@
                            (i32.const 1)      ;; $immutable
                            (local.get $arr))) ;; $codepoints
 
+         (func $string-append* (type $Prim>=1)
+               (param $str  (ref eq))  ;; string? or list of strings
+               (param $rest (ref eq))  ;; additional strings, last element list
+               (result      (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $acc  (ref eq))
+               (local $last (ref eq))
+               (local $args (ref eq))
+
+               ; initialize locals with no defaults
+               (local.set $last (global.get $false))
+
+               ;; no extra args: first arg supplies list of strings
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then (return (call $string-append (local.get $str)))))
+
+               ;; separate last list from preceding string arguments
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $loop
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then
+                                 (local.set $last (struct.get $Pair $a (local.get $node)))
+                                 (br $done))
+                                (else
+                                 (local.set $acc
+                                            (struct.new $Pair
+                                                        (i32.const 0)
+                                                        (struct.get $Pair $a (local.get $node))
+                                                        (local.get $acc)))
+                                 (br $loop)))))
+
+               ;; rebuild argument list in proper order
+               (local.set $args (local.get $last))
+               (block $done2
+                      (loop $loop2
+                            (br_if $done2 (ref.eq (local.get $acc) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $acc)))
+                            (local.set $args
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (struct.get $Pair $a (local.get $node))
+                                                   (local.get $args)))
+                            (local.set $acc (struct.get $Pair $d (local.get $node)))
+                            (br $loop2)))
+               (local.set $args
+                          (struct.new $Pair (i32.const 0)
+                                      (local.get $str)
+                                      (local.get $args)))
+               (call $string-append (local.get $args)))
          
          (func $string->list (type $Prim1) (param $s (ref eq)) (result (ref eq))
                (local $str   (ref null $String))

@@ -835,6 +835,12 @@
                    (equal? (string-append-immutable) "")
                    (equal? (immutable? (string-append-immutable "foo")) #t)))
 
+        (list "string-append*"
+              (and (equal? (string-append* (list))                  "")
+                   (equal? (string-append* (list "A"))              "A")
+                   (equal? (string-append* "A" (list "B" "C"))      "ABC")
+                   (equal? (string-append* "A" "B" (list "C" "D"))  "ABCD")))
+
         (list "string-copy"
               (let* ([s (string-copy "hello")]
                      [s2 (string-copy s)])
