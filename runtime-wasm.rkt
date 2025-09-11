@@ -325,6 +325,11 @@
                              (field $hash (mut i32))
                              (field $a    (mut (ref eq)))
                              (field $d    (mut (ref eq))))))
+          (type $MPair (sub $Heap
+                            (struct
+                              (field $hash (mut i32))
+                              (field $a    (mut (ref eq)))
+                              (field $d    (mut (ref eq))))))
           (type $Box  (sub $Heap
                            (struct
                              (field $hash      (mut i32))
