@@ -1404,6 +1404,9 @@
             make-void
             map
             max
+            mcar
+            mcdr
+            mcons
             member
             memq
             memv
@@ -1412,6 +1415,7 @@
             modulo
             most-negative-fixnum
             most-positive-fixnum
+            mpair?
             mutable-box?
             mutable-bytes?
             mutable-hash?
@@ -1482,6 +1486,8 @@
             second
             set-box!
             set-boxed!
+            set-mcar!
+            set-mcdr!
             seventh
             sgn
             shuffle
@@ -1608,6 +1614,7 @@
             write-byte
             xor
             zero?)
+
 
 
           ))
