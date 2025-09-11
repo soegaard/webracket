@@ -13332,25 +13332,27 @@
                (unreachable))
 
          ;; foldl : general entry point that dispatches to helpers
-         (func $foldl (type $Prim>=2)
+         (func $foldl (type $Prim>=3)
                (param $proc (ref eq))   ;; procedure
                (param $init (ref eq))   ;; initial accumulator
-               (param $xss  (ref eq))   ;; list of lists
+               (param $xs   (ref eq))   ;; first list
+               (param $rest (ref eq))   ;; remaining lists
                (result      (ref eq))
-
-               (local $outer  (ref eq))
-               (local $pair   (ref $Pair))
-               (local $elem   (ref eq))
+               
+               (local $xss   (ref eq))
+               (local $outer (ref eq))
+               (local $pair  (ref $Pair))
+               (local $elem  (ref eq))
                (local $nlists i32)
-               (local $xs     (ref eq))
-               (local $ys     (ref eq))
+               (local $ys    (ref eq))
 
-               (local.set $xs (global.get $null))
-               (local.set $ys (global.get $null))
+               ;; combine first list with the rest
+               (local.set $xss (call $list* (local.get $xs) (local.get $rest)))
+               (local.set $ys  (global.get $null))
 
-               ;; Walk outer list xss to count #lists; capture first two lists
+               ;; Walk outer list xss to count #lists; capture second list
                (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
+               (local.set $outer (local.get $xss))
                (block $count_done
                       (loop $count
                             (if (ref.eq (local.get $outer) (global.get $null))
@@ -13365,11 +13367,8 @@
                                   (ref.test (ref $Pair) (local.get $elem))))
                                 (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
                             (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (if (i32.eq (local.get $nlists) (i32.const 1))
-                                (then (local.set $xs (local.get $elem)))
-                                (else
-                                 (if (i32.eq (local.get $nlists) (i32.const 2))
-                                     (then (local.set $ys (local.get $elem))))))
+                            (if (i32.eq (local.get $nlists) (i32.const 2))
+                                (then (local.set $ys (local.get $elem))))
                             (local.set $outer (struct.get $Pair $d (local.get $pair)))
                             (br $count)))
 
