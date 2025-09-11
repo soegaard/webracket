@@ -25,6 +25,7 @@
   (namespace-require 'racket/flonum)
   (namespace-require 'racket/fixnum)
   (namespace-require 'racket/fasl)
+  (namespace-require 'racket/mpair)  
   (namespace-require 'racket/symbol)
   (namespace-require 'racket/string)
   (namespace-require 'racket/keyword)            ; keyword->immutable-string

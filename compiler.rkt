@@ -409,6 +409,8 @@
   set-boxed! ; used by assignment elimination
 
   box? box box-immutable unbox set-box! 
+
+  mpair? mcons mcar mcdr set-mcar! set-mcdr!
   
   vector-immutable  ; used in datum construction
   bytes             ; used in datum construction

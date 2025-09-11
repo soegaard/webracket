@@ -14968,8 +14968,65 @@
 
          ;; https://docs.racket-lang.org/reference/mpairs.html
 
-         ;; TODO - Implement mutable pairs and lists.
-         
+        ;; Mutable pairs are similar to pairs but allow their fields
+        ;; to be updated. These operations parallel their immutable
+        ;; counterparts above but use the `$MPair` type.
+
+        ;; mpair? : any/c -> boolean?
+        (func $raise-mpair-expected (param $x (ref eq)) (unreachable))
+
+        (func $mpair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $v))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        ;; mcons : any/c any/c -> mpair?
+        (func $mcons (type $Prim2)
+              (param $a (ref eq))  ;; car value
+              (param $d (ref eq))  ;; cdr value
+              (result (ref eq))
+              (struct.new $MPair (i32.const 0) (local.get $a) (local.get $d)))
+
+        ;; mcar : mpair? -> any/c
+        (func $mcar (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $v))
+                  (then (struct.get $MPair $a (ref.cast (ref $MPair) (local.get $v))))
+                  (else (call $raise-mpair-expected (local.get $v))
+                        (unreachable))))
+
+        ;; mcdr : mpair? -> any/c
+        (func $mcdr (type $Prim1) (param $v (ref eq)) (result (ref eq))
+              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $v))
+                  (then (struct.get $MPair $d (ref.cast (ref $MPair) (local.get $v))))
+                  (else (call $raise-mpair-expected (local.get $v))
+                        (unreachable))))
+
+        ;; set-mcar! : mpair? any/c -> void?
+        (func $set-mcar! (type $Prim2)
+              (param $p (ref eq))   ;; mpair to mutate
+              (param $v (ref eq))   ;; new car value
+              (result (ref eq))
+              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $p))
+                  (then (struct.set $MPair $a
+                                    (ref.cast (ref $MPair) (local.get $p))
+                                    (local.get $v))
+                        (global.get $void))
+                  (else (call $raise-mpair-expected (local.get $p))
+                        (unreachable))))
+
+        ;; set-mcdr! : mpair? any/c -> void?
+        (func $set-mcdr! (type $Prim2)
+              (param $p (ref eq))   ;; mpair to mutate
+              (param $v (ref eq))   ;; new cdr value
+              (result (ref eq))
+              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $p))
+                  (then (struct.set $MPair $d
+                                    (ref.cast (ref $MPair) (local.get $p))
+                                    (local.get $v))
+                        (global.get $void))
+                  (else (call $raise-mpair-expected (local.get $p))
+                        (unreachable))))
+        
          ;;;
          ;;; 4.12 Vectors
          ;;;

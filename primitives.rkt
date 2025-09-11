@@ -435,6 +435,15 @@ bytes->string/utf-8
  ; cdar
  ; cddr
 
+ ;; 4.11 Mutable Pairs and Lists
+
+ mpair?
+ mcons
+ mcar
+ mcdr
+ set-mcar!
+ set-mcdr!
+ 
  ;; 4.12 Vectors
  vector vector-immutable vector? make-vector vector-ref vector-set!
  vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop

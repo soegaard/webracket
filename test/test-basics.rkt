@@ -1687,6 +1687,34 @@
                    (equal? (add-between '() 'and)      '())))
         ))
 
+ (list "4.11 Mutable Pairs and Lists"
+       (list
+        (list "mpair?"
+              (and (equal? (mpair? (mcons 1 2)) #t)
+                   (equal? (mpair? 1) #f)
+                   (equal? (procedure-arity mpair?) 1)))
+        (list "mcons"
+              (let ([p (mcons 'a 'b)])
+                (and (mpair? p)
+                     (equal? (procedure-arity mcons) 2))))
+        (list "mcar"
+              (and (equal? (mcar (mcons 1 2)) 1)
+                   (equal? (procedure-arity mcar) 1)))
+        (list "mcdr"
+              (and (equal? (mcdr (mcons 1 2)) 2)
+                   (equal? (procedure-arity mcdr) 1)))
+        (list "set-mcar!"
+              (let ([p (mcons 1 2)])
+                (set-mcar! p 3)
+                (and (equal? (mcar p) 3)
+                     (equal? (procedure-arity set-mcar!) 2))))
+        (list "set-mcdr!"
+              (let ([p (mcons 1 2)])
+                (set-mcdr! p 3)
+                (and (equal? (mcdr p) 3)
+                     (equal? (procedure-arity set-mcdr!) 2))))
+        ))
+
  (list "4.12 Vectors"
        (list
         (list "vector?"
