@@ -118,11 +118,11 @@
 
 ;; 3.18 Iterations and comprehensions
 (require (only-in racket/base
-                  for for/list for/vector
+                  for for/list for/vector for/sum
                   in-list in-vector
                   in-range in-naturals
                   ))
-(provide for for/list for/vector
+(provide for for/list for/vector for/sum
          in-list in-vector
          in-range in-naturals)
 
