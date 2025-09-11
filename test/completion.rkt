@@ -1146,11 +1146,13 @@
             abs
             acos
             acosh
+            add-between
             add1
             alt-reverse
             always-throw
             andmap
             append
+            append-map
             apply
             argmax
             argmin
@@ -1303,6 +1305,8 @@
             flsqrt
             fltan
             fltruncate
+            foldl
+            foldr
             for-each
             fourteenth
             fourth
@@ -1604,6 +1608,7 @@
             write-byte
             xor
             zero?)
+
 
           ))
 
