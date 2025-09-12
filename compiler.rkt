@@ -3499,9 +3499,8 @@
         [(vector-append)
          (let loop ([aes (AExpr* ae1)])
            (match aes
-             #;[(list)        '(call $vector-append (global.get $null))] ; handled by runtime
-             #;[(list v)      `(call $vector-copy ,v (global.get $missing) (global.get $missing))]
-             #;[(list v1 v2)  `(call $vector-append/2 ,v1 ,v2)]
+             [(list v)      `(call $vector-copy ,v (global.get $missing) (global.get $missing))]
+             [(list v1 v2)  `(call $vector-append/2 ,v1 ,v2)]
              [(list* vs)    `(call $vector-append ,(build-rest-args aes))]) )]
          
          [(bytes-append)
