@@ -460,6 +460,7 @@ bytes->string/utf-8
  vector->list vector->values vector->immutable-vector
  list->vector
  vector-map vector-map! vector-append
+ vector-extend ; racket 8.12
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal
@@ -777,3 +778,15 @@ bytes->string/utf-8
   (racket:sort xs less-than?))
 
 
+; Added in version Racket 8.12.
+(define (vector-extend vec new-size [val 0])
+  (define old-size (vector-length vec))
+  (unless (and (exact-nonnegative-integer? new-size)
+               (>= new-size old-size))
+    (raise-argument-error 'vector-extend
+                          "(and/c exact-nonnegative-integer? (>=/c (vector-length vec)))"
+                          new-size))
+  (define new-vec (make-vector new-size val))
+  (for ([i (in-range old-size)])
+    (vector-set! new-vec i (vector-ref vec i)))
+  new-vec)

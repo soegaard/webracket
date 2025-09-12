@@ -15934,6 +15934,59 @@
                            (local.get $arr) (local.get $ss)
                            (local.get $n))
                (local.get $vals))
+
+         (func $raise-vector-extend:bad-length
+               (param (ref $Vector)) (param i32) (param i32)
+               (unreachable))
+
+         ; TODO:
+         ;   Error message in original vector-extend
+         ;     vector-extend: new length is shorter than existing length
+         ;       new length: 3
+         ;       existing length: 7
+         
+         (func $vector-extend (type $Prim3)
+               (param $v        (ref eq))  ;; vector
+               (param $new-size (ref eq))  ;; fixnum
+               (param $val      (ref eq))  ;; optional, defaults to 0
+               (result          (ref eq))
+
+               (local $vec  (ref $Vector))
+               (local $ns   i32)
+               (local $len  i32)
+               (local $fill (ref eq))
+
+               (local.set $vec  (global.get $dummy-vector))
+               (local.set $fill (global.get $zero))
+
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+
+               (if (ref.test (ref i31) (local.get $new-size))
+                   (then (local.set $ns (i31.get_s (ref.cast (ref i31) (local.get $new-size))))
+                         (if (i32.and (local.get $ns) (i32.const 1))
+                             (then (call $raise-check-fixnum (local.get $new-size))))
+                         (local.set $ns (i32.shr_s (local.get $ns) (i32.const 1))))
+                   (else (call $raise-check-fixnum (local.get $new-size))))
+
+               (local.set $fill (if (result (ref eq))
+                                    (ref.eq (local.get $val) (global.get $missing))
+                                    (then (global.get $zero))
+                                    (else (local.get $val))))
+
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.lt_s (local.get $ns) (local.get $len))
+                   (then (call $raise-vector-extend:bad-length
+                               (local.get $vec) (local.get $ns) (local.get $len))
+                         (unreachable)))
+
+               (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
+                           (call $array-extend
+                                 (struct.get $Vector $arr (local.get $vec))
+                                 (local.get $ns)
+                                 (local.get $fill))))
          
          (func $vector-empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
