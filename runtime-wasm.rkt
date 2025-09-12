@@ -17067,11 +17067,35 @@
                                                 (local.get $lo) (local.get $hi))))
 
               (local.get $vec))
+
+
+        (func $vector-sort (type $Prim4)
+              (param $v     (ref eq))   ;; vector
+              (param $proc  (ref eq))   ;; less-than procedure
+              (param $start (ref eq))   ;; fixnum or $missing, default: 0
+              (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)
+              (result       (ref eq))
+
+              (local $copy (ref eq))
+
+              ;; Validate procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+
+              ;; Copy the vector or subvector
+              (local.set $copy (call $vector-copy (local.get $v)
+                                                  (local.get $start)
+                                                  (local.get $end)))
+
+              ;; Sort the copy and return it
+              (call $vector-sort!
+                    (local.get $copy) (local.get $proc) (global.get $missing) (global.get $missing)))
             
             
-            ;;;
-            ;;; Boxed (for assignable variables)
-            ;;;
+        ;;;
+        ;;; Boxed (for assignable variables)
+        ;;;
 
          ;; We used `boxed`, `set-boxed!` and `unboxed` for assignable variables.
          ;; These "boxes" are not the same as the Racket datatype `box`.

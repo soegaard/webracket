@@ -465,7 +465,7 @@ bytes->string/utf-8
  vector-argmax vector-argmin
  vector-filter vector-filter-not
  vector-member vector-memq vector-memv
- vector-sort!
+ vector-sort! vector-sort
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal
@@ -801,4 +801,8 @@ bytes->string/utf-8
 ; A simplified no-keywords version 
 (define (vector-sort! vec less-than? [start 0] [end (vector-length #f)])
   (racket:vector-sort! vec less-than? start end))
-  
+
+; A simplified no-keywords version 
+(define (vector-sort vec less-than? [start 0] [end (vector-length #f)])
+  (racket:vector-sort vec less-than? start end))
+

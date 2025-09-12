@@ -1940,6 +1940,13 @@
                      (let ([v (vector 4 3 2 1 0)])
                        (vector-sort! v < 1 4)
                        (equal? v '#(4 1 2 3 0))))))
+
+        (list "vector-sort"
+              (let ([< (λ (x y) (< x y))])
+                (and (equal? (vector-sort '#(3 1 2 5 4) <)
+                             '#(1 2 3 4 5))
+                     (equal? (vector-sort '#(4 3 2 1 0) < 1 4)
+                             '#(1 2 3)))))
         ))
 
  (list "4.15 Hash Tables"
