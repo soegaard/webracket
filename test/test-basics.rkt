@@ -1846,6 +1846,12 @@
                      (equal? (vector-append)                         #())
                      (not (eq? v w)))))
 
+        (list "vector-count"
+              (let ([= (λ (x y) (= x y))])
+                (and (equal? (vector-count even? '#(1 2 3 4 5))           2)
+                     (equal? (vector-count = '#(1 2 3 4 5) '#(5 4 3 2 1)) 1)
+                     (equal? (vector-count = '#(1 2 3 4 5) '#(5 2 3 2 5)) 3))))
+
         (list "vector-length"
               (and (equal? (vector-length '#(1 2 3)) 3)
                    (equal? (vector-length '#()) 0)))

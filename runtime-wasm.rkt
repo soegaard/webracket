@@ -16399,6 +16399,131 @@
               (local.get $vec0))
 
 
+        (func $vector-count (type $Prim>=2)
+              (param $proc (ref eq))   ;; procedure
+              (param $v0   (ref eq))   ;; first vector
+              (param $rest (ref eq))   ;; list of vectors
+              (result      (ref eq))
+
+              (local $f       (ref $Procedure))
+              (local $finv    (ref $ProcedureInvoker))
+              (local $vec0    (ref $Vector))
+              (local $cur     (ref eq))
+              (local $pair    (ref $Pair))
+              (local $vec     (ref $Vector))
+              (local $vectors (ref $Args))
+              (local $call    (ref $Args))
+              (local $nvecs   i32)
+              (local $len     i32)
+              (local $i       i32)
+              (local $j       i32)
+              (local $elem    (ref eq))
+              (local $r       (ref eq))
+              (local $tmp     (ref eq))
+              (local $cnt     i32)
+
+              ;; 1) Validate procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+              ;; 2) Validate first vector
+              (local.set $vec0 (global.get $dummy-vector))
+              (if (ref.test (ref $Vector) (local.get $v0))
+                  (then (local.set $vec0 (ref.cast (ref $Vector) (local.get $v0))))
+                  (else (call $raise-check-vector (local.get $v0))
+                        (unreachable)))
+              (local.set $len (array.len (struct.get $Vector $arr (local.get $vec0))))
+
+              ;; 3) Walk rest vectors
+              (local.set $nvecs (i32.const 1))
+              (local.set $cur   (local.get $rest))
+              (block $count-done
+                     (loop $count
+                           (if (ref.eq (local.get $cur) (global.get $null))
+                               (then (br $count-done))
+                               (else (nop)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                               (then (call $raise-pair-expected (local.get $cur))
+                                     (unreachable)))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+
+                           ;; Load car as (ref eq), test, then cast before putting into $vec
+                           (local.set $tmp (struct.get $Pair $a (local.get $pair)))
+                           (if (i32.eqz (ref.test (ref $Vector) (local.get $tmp)))
+                               (then (call $raise-check-vector (local.get $tmp))
+                                     (unreachable)))
+                           (local.set $vec (ref.cast (ref $Vector) (local.get $tmp)))
+
+                           (if (i32.ne
+                                (array.len (struct.get $Vector $arr (local.get $vec)))
+                                (local.get $len))
+                               (then (call $raise-argument-error (local.get $vec))
+                                     (unreachable)))
+                           (local.set $nvecs (i32.add (local.get $nvecs) (i32.const 1)))
+                           (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                           (br $count)))
+
+              ;; 4) Allocate arrays and seed
+              (local.set $vectors (array.new $Args (global.get $null) (local.get $nvecs)))
+              (local.set $call    (array.new $Args (global.get $null) (local.get $nvecs)))
+              (array.set $Args (local.get $vectors) (i32.const 0) (local.get $vec0))
+              (local.set $cur (local.get $rest))
+              (local.set $i   (i32.const 1))
+              (block $seed-done
+                     (loop $seed
+                           (if (i32.ge_u (local.get $i) (local.get $nvecs))
+                               (then (br $seed-done))
+                               (else (nop)))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                           (array.set $Args (local.get $vectors) (local.get $i)
+                                      (ref.cast (ref $Vector)
+                                                (struct.get $Pair $a (local.get $pair))))
+                           (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $seed)))
+
+              ;; 5) Iterate and count
+              (local.set $cnt (i32.const 0))
+              (local.set $j   (i32.const 0))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $j) (local.get $len)))
+
+                           (local.set $i (i32.const 0))
+                           (block $args-done
+                                  (loop $args
+                                        (if (i32.ge_u (local.get $i) (local.get $nvecs))
+                                            (then (br $args-done))
+                                            (else (nop)))
+                                        (local.set $vec
+                                                   (ref.cast (ref $Vector)
+                                                             (array.get $Args (local.get $vectors) (local.get $i))))
+                                        (local.set $elem
+                                                   (array.get $Array
+                                                              (struct.get $Vector $arr (local.get $vec))
+                                                              (local.get $j)))
+                                        (array.set $Args (local.get $call) (local.get $i) (local.get $elem))
+                                        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                        (br $args)))
+
+                           (local.set $r
+                                      (call_ref $ProcedureInvoker
+                                                (local.get $f)
+                                                (local.get $call)
+                                                (local.get $finv)))
+
+                           (if (i32.eqz (ref.eq (local.get $r) (global.get $false)))
+                               (then (local.set $cnt (i32.add (local.get $cnt) (i32.const 1))))
+                               (else))
+
+                           (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                           (br $loop)))
+
+              (ref.i31 (i32.shl (local.get $cnt) (i32.const 1))))
+        
         ;;;
         ;;; Boxed (for assignable variables)
         ;;;

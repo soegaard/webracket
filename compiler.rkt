@@ -584,7 +584,7 @@
   vector-drop-right vector-split-at
   vector->list list->vector vector->values vector->immutable-vector
   vector-copy vector-map vector-map!
-  vector-append vector-extend
+  vector-append vector-extend vector-count
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3338,10 +3338,12 @@
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
+
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
          [(vector->values)             (inline-prim/optional sym ae1 1 3)]
          [(vector-extend)              (inline-prim/optional sym ae1 2 3)]
-
+         [(vector-count)               (inline-prim/variadic sym ae1 2 2)]
+         
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
          [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
