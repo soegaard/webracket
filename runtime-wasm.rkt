@@ -15556,6 +15556,77 @@
                           (local.get $arr)))
 
 
+        (func $build-vector (type $Prim2)
+              (param $n-raw (ref eq))  ;; exact-nonnegative integer
+              (param $proc  (ref eq))  ;; (exact-nonnegative-integer? . -> . any/c)
+              (result       (ref eq))
+
+              (local $n    i32)
+              (local $f    (ref $Procedure))
+              (local $finv (ref $ProcedureInvoker))
+
+              ;; --- Check and unwrap n ---
+              (if (i32.eqz (ref.test (ref i31) (local.get $n-raw)))
+                  (then (call $raise-expected-fixnum (local.get $n-raw))))
+              (local.set $n
+                         (i32.shr_s
+                          (i31.get_s (ref.cast (ref i31) (local.get $n-raw)))
+                          (i32.const 1)))
+              (if (i32.lt_s (local.get $n) (i32.const 0))
+                  (then (call $raise-argument-error (local.get $n-raw))))
+
+              ;; --- Check procedure ---
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+
+              ;; Delegate
+              (call $build-vector/checked (local.get $n)
+                    (local.get $f)
+                    (local.get $finv)))
+
+        (func $build-vector/checked
+              (param $n    i32)
+              (param $f    (ref $Procedure))
+              (param $finv (ref $ProcedureInvoker))
+              (result      (ref $Vector))
+
+              (local $args (ref $Args))
+              (local $arr  (ref $Array))
+              (local $i    i32)
+              (local $res  (ref eq))
+
+              ;; Prepare array and argument holder
+              (local.set $arr  (call $make-array (local.get $n) (global.get $false)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              ;; Iterate from 0 to n-1
+              (local.set $i (i32.const 0))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                           ;; Set argument to current index as fixnum
+                           (array.set $Args (local.get $args) (i32.const 0)
+                                      (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+                           ;; Call procedure and store result
+                           (local.set $res
+                                      (call_ref $ProcedureInvoker
+                                                (local.get $f)
+                                                (local.get $args)
+                                                (local.get $finv)))
+                           (array.set $Array (local.get $arr) (local.get $i) (local.get $res))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $loop)))
+
+              ;; Construct vector
+              (struct.new $Vector
+                          (i32.const 0)    ;; hash
+                          (i32.const 0)    ;; mutable
+                          (local.get $arr)))
+        
+        
         (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (if (result (ref eq))

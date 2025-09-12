@@ -1773,6 +1773,9 @@
               (and (equal? (make-vector 5) '#(0 0 0 0 0))
                    (equal? (make-vector 5 0) '#(0 0 0 0 0))))
 
+        (list "build-vector"
+              (equal? (build-vector 5 (λ (x) (add1 x))) '#(1 2 3 4 5)))
+
         (list "vector"
               (and (equal? (vector 1 2 3) '#(1 2 3))
                    (equal? (vector) '#())))

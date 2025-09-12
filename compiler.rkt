@@ -579,7 +579,7 @@
   byte?
 
   vector 
-  vector? make-vector vector-ref vector-set! vector-length
+  vector? make-vector vector-ref vector-set! vector-length  
   vector-fill! vector-copy! vector-empty?
   vector->list list->vector vector->values vector->immutable-vector
   vector-copy vector-map vector-map! vector-argmax vector-argmin
@@ -590,6 +590,7 @@
   vector-drop vector-drop-right
   vector-take vector-take-right
   vector-split-at vector-split-at-right
+  build-vector
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes

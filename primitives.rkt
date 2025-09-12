@@ -468,7 +468,8 @@ bytes->string/utf-8
  vector-filter vector-filter-not
  vector-member vector-memq vector-memv
  vector-sort! vector-sort
-
+ build-vector
+ 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal
  box? box box-immutable unbox set-box! 
