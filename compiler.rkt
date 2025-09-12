@@ -586,6 +586,7 @@
   vector-copy vector-map vector-map! vector-argmax vector-argmin
   vector-append vector-extend vector-count
   vector-filter vector-filter-not
+  vector-memq vector-memv
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes

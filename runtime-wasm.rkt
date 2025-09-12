@@ -16666,10 +16666,46 @@
                   (param $vec  (ref eq))  ;; vector
                   (result (ref eq))
                   (call $vector-filter/template (local.get $proc) (local.get $vec) (i32.const 1)))
+
+            ,@(for/list ([name '($vector-memq $vector-memv)]
+                         [cmp  '((ref.eq (local.get $needle)             (local.get $elem))
+                                 (ref.eq (call $eqv? (local.get $needle) (local.get $elem))
+                                         (global.get $true)))])
+                `(func ,name (type $Prim2)
+                       (param $needle (ref eq)) ;; value to find
+                       (param $v      (ref eq)) ;; vector to search
+                       (result (ref eq))        ;; fixnum index or #f
+
+                       (local $vec  (ref $Vector))
+                       (local $arr  (ref $Array))
+                       (local $len  i32)
+                       (local $i    i32)
+                       (local $elem (ref eq))
+
+                       ;; Ensure $v is a vector
+                       (local.set $vec (global.get $dummy-vector))
+                       (if (ref.test (ref $Vector) (local.get $v))
+                           (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                           (else (call $raise-check-vector (local.get $v))
+                                 (unreachable)))
+
+                       (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                       (local.set $len (array.len (local.get $arr)))
+                       (local.set $i   (i32.const 0))
+                       (loop $loop
+                             (if (i32.ge_u (local.get $i) (local.get $len))
+                                 (then (return (global.get $false))))
+                             (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+                             (if ,cmp
+                                 (then (return (ref.i31 (i32.shl (local.get $i)
+                                                                 (i32.const 1))))))
+                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                             (br $loop))
+                       (unreachable)))
         
-        ;;;
-        ;;; Boxed (for assignable variables)
-        ;;;
+            ;;;
+            ;;; Boxed (for assignable variables)
+            ;;;
 
          ;; We used `boxed`, `set-boxed!` and `unboxed` for assignable variables.
          ;; These "boxes" are not the same as the Racket datatype `box`.

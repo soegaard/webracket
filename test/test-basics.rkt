@@ -1916,6 +1916,16 @@
         
         (list "vector-filter-not"
               (equal? (vector-filter-not even? '#(1 2 3 4 5 6)) '#(1 3 5)))
+
+        (list "vector-memq"
+              (and (equal? (vector-memq 'b '#(a b c))    1)
+                   (equal? (vector-memq 9 '#(1 2 3 4))   #f)
+                   (equal? (procedure-arity vector-memq) 2)))
+
+        (list "vector-memv"
+              (and (equal? (vector-memv 'b '#(a b c))    1)
+                   (equal? (vector-memv 9 '#(1 2 3 4))   #f)
+                   (equal? (procedure-arity vector-memv) 2)))
         ))
 
  (list "4.15 Hash Tables"
