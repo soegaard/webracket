@@ -1834,6 +1834,12 @@
                    (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
                    (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))
 
+        (list "vector-set/copy"
+              (let* ([v (vector 1 2 3)]
+                     [w (vector-set/copy v 1 9)])
+                (and (equal? w '#(1 9 3))
+                     (equal? v '#(1 2 3)))))
+
         (list "vector-extend"
               (and (equal? (vector-extend '#(1 2 3) 5)    '#(1 2 3 0 0))
                    (equal? (vector-extend '#(1 2 3) 5 #f) '#(1 2 3 #f #f))

@@ -15625,6 +15625,47 @@
                           (i32.const 0)    ;; hash
                           (i32.const 0)    ;; mutable
                           (local.get $arr)))
+
+        (func $vector-set/copy (type $Prim3)
+              ;; Returns a fresh mutable vector with VAL at index POS.
+              (param $v   (ref eq)) ;; vector
+              (param $pos (ref eq)) ;; fixnum
+              (param $val (ref eq)) ;; any
+              (result     (ref eq))
+
+              (local $vec (ref $Vector))
+              (local $idx i32)
+              (local $len i32)
+
+              ;; --- Validate vector ---
+              (local.set $vec (global.get $dummy-vector))
+              (if (ref.test (ref $Vector) (local.get $v))
+                  (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                  (else (call $raise-check-vector (local.get $v))))
+
+              ;; --- Validate index ---
+              (if (ref.test (ref i31) (local.get $pos))
+                  (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $pos))))
+                        (if (i32.and (local.get $idx) (i32.const 1))
+                            (then (call $raise-check-fixnum (local.get $pos))))
+                        (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $pos))))
+
+              ;; --- Bounds check ---
+              (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+              (if (i32.lt_u (local.get $idx) (local.get $len))
+                  (then (return
+                         (struct.new $Vector
+                                    (i32.const 0)
+                                    (i32.const 0)
+                                    (call $array-set/copy
+                                          (struct.get $Vector $arr (local.get $vec))
+                                          (local.get $idx)
+                                          (local.get $val)))))
+                  (else (call $raise-bad-vector-ref-index
+                              (local.get $vec) (local.get $idx) (local.get $len))
+                        (unreachable)))
+              (unreachable))
         
         
         (func $vector-length (type $Prim1) (param $v (ref eq)) (result (ref eq))

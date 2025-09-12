@@ -469,6 +469,7 @@ bytes->string/utf-8
  vector-member vector-memq vector-memv
  vector-sort! vector-sort
  build-vector
+ vector-set/copy
  
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

@@ -591,6 +591,7 @@
   vector-take vector-take-right
   vector-split-at vector-split-at-right
   build-vector
+  vector-set/copy 
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
