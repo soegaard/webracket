@@ -463,6 +463,7 @@ bytes->string/utf-8
  vector-extend ; racket 8.12
  vector-count
  vector-argmax vector-argmin
+ vector-filter vector-filter-not
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

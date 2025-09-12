@@ -1910,6 +1910,12 @@
               (let ([car (λ (x) (car x))])
                 (equal? (vector-argmax car (vector '(3 pears) '(1 banana) '(2 apples)))
                         '(3 pears))))
+
+        (list "vector-filter"
+              (equal? (vector-filter even? '#(1 2 3 4 5 6)) '#(2 4 6)))
+        
+        (list "vector-filter-not"
+              (equal? (vector-filter-not even? '#(1 2 3 4 5 6)) '#(1 3 5)))
         ))
 
  (list "4.15 Hash Tables"
