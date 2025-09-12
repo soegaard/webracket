@@ -1890,6 +1890,14 @@
                      (and (equal? a '#(1 2))
                           (equal? b '#(3 4 5))))))
 
+        (list "vector-split-at-right"
+              (and (let-values ([(v1 v2) (vector-split-at-right '#(a b c d) 2)])
+                     (and (equal? v1 '#(c d))
+                          (equal? v2 '#(a b))))
+                   (let-values ([(a b) (vector-split-at-right '#(1 2 3 4 5) 2)])
+                     (and (equal? a '#(4 5))
+                          (equal? b '#(1 2 3))))))
+
         (list "vector-map"
               (and (equal? (vector-map + '#(1 2) '#(3 4))   '#(4 6))
                    (equal? (vector-map add1 '#(1 2 3))      '#(2 3 4))))

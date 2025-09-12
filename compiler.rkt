@@ -581,7 +581,7 @@
   vector 
   vector? make-vector vector-ref vector-set! vector-length
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
-  vector-drop-right vector-split-at
+  vector-drop-right vector-split-at vector-split-at-right
   vector->list list->vector vector->values vector->immutable-vector
   vector-copy vector-map vector-map! vector-argmax vector-argmin
   vector-append vector-extend vector-count
