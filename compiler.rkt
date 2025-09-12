@@ -587,6 +587,7 @@
   vector-append vector-extend vector-count
   vector-filter vector-filter-not
   vector-member vector-memq vector-memv
+  vector-sort!
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3345,6 +3346,7 @@
          [(vector->values)             (inline-prim/optional sym ae1 1 3)]
          [(vector-extend)              (inline-prim/optional sym ae1 2 3)]
          [(vector-count)               (inline-prim/variadic sym ae1 2 2)]
+         [(vector-sort!)               (inline-prim/optional sym ae1 2 4)]
          
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]

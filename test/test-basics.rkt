@@ -1931,6 +1931,15 @@
                 (and (equal? (vector-member 2   '#(1 2 3 4))     1)
                      (equal? (vector-member 9   '#(1 2 3 4))     #f)
                      (equal? (vector-member 1.0 '#(3 2 1.0 4) =) 2))))
+
+        (list "vector-sort!"
+              (let ([< (λ (x y) (< x y))])
+                (and (let ([v (vector 3 1 2 5 4)])
+                       (vector-sort! v <)
+                       (equal? v '#(1 2 3 4 5)))
+                     (let ([v (vector 4 3 2 1 0)])
+                       (vector-sort! v < 1 4)
+                       (equal? v '#(4 1 2 3 0))))))
         ))
 
  (list "4.15 Hash Tables"

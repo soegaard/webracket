@@ -16781,6 +16781,293 @@
                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
                         (br $loop))
                   (unreachable))
+
+            
+            ;;; Vector Sorting
+
+            ;; Quicksort with median-of-three pivot and insertion sort cutoff.
+            ;; #:key and #:cache-keys? arguments are not supported.
+            
+            (func $vector-sort!:swap!
+                  (param $vec (ref $Vector)) ;; vector
+                  (param $i   i32)           ;; index
+                  (param $j   i32)           ;; index
+
+                  (local $arr (ref $Array))
+                  (local $tmp (ref eq))
+                  (local.set $arr   (struct.get $Vector $arr (local.get $vec)))
+                  (local.set $tmp   (array.get $Array (local.get $arr) (local.get $i)))
+                  (array.set $Array (local.get $arr) (local.get $i)
+                             (array.get $Array (local.get $arr) (local.get $j)))
+                  (array.set $Array (local.get $arr) (local.get $j) (local.get $tmp)))
+
+            (func $vector-sort!:lt-idx?
+                  (param $vec  (ref $Vector))            ;; vector
+                  (param $f    (ref $Procedure))         ;; less-than
+                  (param $finv (ref $ProcedureInvoker))  ;; invoker
+                  (param $call (ref $Args))              ;; args array
+                  (param $i    i32)                      ;; index
+                  (param $j    i32)                      ;; index
+                  (result      i32)
+
+                  (local $arr (ref $Array))
+                  (local $x   (ref eq))
+                  (local $y   (ref eq))
+                  (local $r   (ref eq))
+
+                  (local.set $arr  (struct.get $Vector $arr (local.get $vec)))
+                  (local.set $x    (array.get $Array (local.get $arr) (local.get $i)))
+                  (local.set $y    (array.get $Array (local.get $arr) (local.get $j)))
+                  (array.set $Args (local.get $call) (i32.const 0) (local.get $x))
+                  (array.set $Args (local.get $call) (i32.const 1) (local.get $y))
+                  (local.set $r    (call_ref $ProcedureInvoker
+                                             (local.get $f)
+                                             (local.get $call)
+                                             (local.get $finv)))
+                  (i32.eqz (ref.eq (local.get $r) (global.get $false))))
+
+        (func $vector-sort!:median-of-three->end!
+              (param $vec  (ref $Vector))            ;; vector
+              (param $f    (ref $Procedure))         ;; less-than
+              (param $finv (ref $ProcedureInvoker))  ;; invoker
+              (param $call (ref $Args))              ;; args array
+              (param $lo   i32)                      ;; start index
+              (param $hi   i32)                      ;; end index (exclusive)
+
+              (local $i i32)
+              (local $k i32)
+              (local $m i32)
+
+              (local.set $i (local.get $lo))
+              (local.set $k (i32.sub (local.get $hi) (i32.const 1)))
+              (local.set $m (i32.add (local.get $lo)
+                                     (i32.shr_u (i32.sub (local.get $hi) (local.get $lo))
+                                                (i32.const 1))))
+              (if (i32.ne (call $vector-sort!:lt-idx? (local.get $vec) (local.get $f)
+                                                   (local.get $finv) (local.get $call)
+                                                   (local.get $k) (local.get $i))
+                          (i32.const 0))
+                  (then (call $vector-sort!:swap! (local.get $vec) (local.get $k) (local.get $i))))
+              (if (i32.ne (call $vector-sort!:lt-idx? (local.get $vec) (local.get $f)
+                                                   (local.get $finv) (local.get $call)
+                                                   (local.get $m) (local.get $i))
+                          (i32.const 0))
+                  (then (call $vector-sort!:swap! (local.get $vec) (local.get $m) (local.get $i))))
+              (if (i32.ne (call $vector-sort!:lt-idx? (local.get $vec) (local.get $f)
+                                                   (local.get $finv) (local.get $call)
+                                                   (local.get $k) (local.get $m))
+                          (i32.const 0))
+                  (then (call $vector-sort!:swap! (local.get $vec) (local.get $k) (local.get $m))))
+              (call $vector-sort!:swap! (local.get $vec) (local.get $m) (local.get $k)))
+
+        (func $vector-sort!:partition!
+              (param $vec  (ref $Vector))            ;; vector
+              (param $f    (ref $Procedure))         ;; less-than
+              (param $finv (ref $ProcedureInvoker))  ;; invoker
+              (param $call (ref $Args))              ;; args array
+              (param $lo   i32)                      ;; start index
+              (param $hi   i32)                      ;; end index (exclusive)
+              (result      i32)
+              
+              (local $arr   (ref $Array))
+              (local $pivot (ref eq))
+              (local $i     i32)
+              (local $j     i32)
+              (local $elem  (ref eq))
+              (local $r     (ref eq))
+
+              (local.set $arr   (struct.get $Vector $arr (local.get $vec)))
+              (local.set $pivot (array.get $Array (local.get $arr)
+                                           (i32.sub (local.get $hi) (i32.const 1))))
+              (local.set $i     (local.get $lo))
+              (local.set $j     (local.get $lo))
+              (block $done
+                     (loop $loop
+                           (br_if $done (i32.ge_u (local.get $j)
+                                                  (i32.sub (local.get $hi) (i32.const 1))))
+                           (local.set $elem (array.get $Array (local.get $arr) (local.get $j)))
+                           (array.set $Args (local.get $call) (i32.const 0) (local.get $elem))
+                           (array.set $Args (local.get $call) (i32.const 1) (local.get $pivot))
+                           (local.set $r (call_ref $ProcedureInvoker
+                                                   (local.get $f)
+                                                   (local.get $call)
+                                                   (local.get $finv)))
+                           (if (i32.eqz (ref.eq (local.get $r) (global.get $false)))
+                               (then (call $vector-sort!:swap! (local.get $vec) (local.get $i) (local.get $j))
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))))
+                           (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                           (br $loop)))
+              (call $vector-sort!:swap! (local.get $vec) (local.get $i)
+                                        (i32.sub (local.get $hi) (i32.const 1)))
+              (local.get $i))
+
+        (func $vector-sort!:insertion-sort!
+              (param $vec  (ref $Vector))            ;; vector
+              (param $f    (ref $Procedure))         ;; less-than
+              (param $finv (ref $ProcedureInvoker))  ;; invoker
+              (param $call (ref $Args))              ;; args array
+              (param $lo   i32)                      ;; start index
+              (param $hi   i32)                      ;; end index (exclusive)
+
+              (local $arr  (ref $Array))
+              (local $i    i32)
+              (local $j    i32)
+              (local $key  (ref eq))
+              (local $elem (ref eq))
+              (local $r    (ref eq))
+              
+              (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+              (local.set $i   (i32.add (local.get $lo) (i32.const 1)))
+              (block $outer-done
+                     (loop $outer
+                           (br_if $outer-done (i32.ge_u (local.get $i) (local.get $hi)))
+                           (local.set $key (array.get $Array (local.get $arr) (local.get $i)))
+                           (local.set $j (i32.sub (local.get $i) (i32.const 1)))
+                           (block $inner-done
+                                  (loop $inner
+                                        (br_if $inner-done
+                                               (i32.lt_s (local.get $j) (local.get $lo)))
+                                        (local.set $elem (array.get $Array (local.get $arr) (local.get $j)))
+                                        (array.set $Args (local.get $call) (i32.const 0) (local.get $key))
+                                        (array.set $Args (local.get $call) (i32.const 1) (local.get $elem))
+                                        (local.set $r (call_ref $ProcedureInvoker
+                                                                (local.get $f)
+                                                                (local.get $call)
+                                                                (local.get $finv)))
+                                        (br_if $inner-done
+                                               (ref.eq (local.get $r) (global.get $false)))
+                                        (array.set $Array (local.get $arr)
+                                                   (i32.add (local.get $j) (i32.const 1))
+                                                   (local.get $elem))
+                                        (local.set $j (i32.sub (local.get $j) (i32.const 1)))
+                                        (br $inner)))
+                           (array.set $Array (local.get $arr)
+                                      (i32.add (local.get $j) (i32.const 1))
+                                      (local.get $key))
+                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                           (br $outer))))
+
+        (func $vector-sort!:qs!
+              (param $vec  (ref $Vector))            ;; vector
+              (param $f    (ref $Procedure))         ;; less-than
+              (param $finv (ref $ProcedureInvoker))  ;; invoker
+              (param $call (ref $Args))              ;; args array
+              (param $lo   i32)                      ;; start index
+              (param $hi   i32)                      ;; end index (exclusive)
+
+              (local $p     i32)
+              (local $left  i32)
+              (local $right i32)
+              
+              (block $done
+                     (loop $loop
+                           ; If the range to sort is shorted than 16, then use insertion sort.
+                           ; Otherwise, ...
+                           (if (i32.le_u (i32.sub (local.get $hi) (local.get $lo)) (i32.const 16))
+                               (then (call $vector-sort!:insertion-sort!
+                                           (local.get $vec) (local.get $f) (local.get $finv)
+                                           (local.get $call) (local.get $lo) (local.get $hi))
+                                     (br $done)))
+                           (call $vector-sort!:median-of-three->end!
+                                 (local.get $vec) (local.get $f) (local.get $finv)
+                                 (local.get $call) (local.get $lo) (local.get $hi))
+                           (local.set $p (call $vector-sort!:partition!
+                                                (local.get $vec) (local.get $f)
+                                                (local.get $finv) (local.get $call)
+                                                (local.get $lo) (local.get $hi)))
+                           (local.set $left (i32.sub (local.get $p) (local.get $lo)))
+                           (local.set $right (i32.sub (local.get $hi)
+                                                      (i32.add (local.get $p) (i32.const 1))))
+                           (if (i32.lt_u (local.get $left) (local.get $right))
+                               (then (call $vector-sort!:qs!
+                                           (local.get $vec) (local.get $f) (local.get $finv)
+                                           (local.get $call) (local.get $lo) (local.get $p))
+                                     (local.set $lo (i32.add (local.get $p) (i32.const 1)))
+                                     (br $loop))
+                               (else (call $vector-sort!:qs!
+                                           (local.get $vec) (local.get $f) (local.get $finv)
+                                           (local.get $call)
+                                           (i32.add (local.get $p) (i32.const 1))
+                                           (local.get $hi))
+                                     (local.set $hi (local.get $p))
+                                     (br $loop))))))
+
+        (func $vector-sort! (type $Prim4)
+              (param $v     (ref eq))   ;; vector
+              (param $proc  (ref eq))   ;; less-than procedure
+              (param $start (ref eq))   ;; fixnum or $missing, default: 0
+              (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)
+              (result       (ref eq))
+
+              (local $vec  (ref $Vector))
+              (local $f    (ref $Procedure))
+              (local $finv (ref $ProcedureInvoker))
+              (local $call (ref $Args))
+              (local $lo   i32)
+              (local $hi   i32)
+              (local $len  i32)
+
+              ;; Validate vector
+              (local.set $vec (global.get $dummy-vector))
+              (if (ref.test (ref $Vector) (local.get $v))
+                  (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                  (else (call $raise-check-vector (local.get $v))
+                        (unreachable)))
+              (if (i32.ne (struct.get $Vector $immutable (local.get $vec)) (i32.const 0))
+                  (then (call $raise-immutable-vector (local.get $v))
+                        (unreachable)))
+
+              ;; Validate procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $call (array.new $Args (global.get $null) (i32.const 2)))
+
+              ;; Validate start
+              (if (i32.eqz (ref.eq (local.get $start) (global.get $missing)))
+                  (then (if (i32.eqz (ref.test (ref i31) (local.get $start)))
+                            (then (call $raise-check-fixnum (local.get $start)) (unreachable)))
+                        (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $start)))
+                                     (i32.const 1))
+                            (then (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+
+              ;; Validate end
+              (if (i32.eqz (ref.eq (local.get $end) (global.get $missing)))
+                  (then (if (i32.eqz (ref.test (ref i31) (local.get $end)))
+                            (then (call $raise-check-fixnum (local.get $end)) (unreachable)))
+                        (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $end)))
+                                     (i32.const 1))
+                            (then (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+
+              ;; Decode start/end and check range
+              (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+              (if (ref.eq (local.get $start) (global.get $missing))
+                  (then (local.set $lo (i32.const 0)))
+                  (else (local.set $lo (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start)))
+                                                  (i32.const 1)))))
+              (if (ref.eq (local.get $end) (global.get $missing))
+                  (then (local.set $hi (local.get $len)))
+                  (else (local.set $hi (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end)))
+                                                  (i32.const 1)))))
+              (if (i32.or
+                   (i32.or (i32.gt_u (local.get $lo) (local.get $len))
+                           (i32.gt_u (local.get $hi) (local.get $len)))
+                   (i32.gt_u (local.get $lo) (local.get $hi)))
+                  (then (call $raise-bad-vector-copy-range
+                              (local.get $vec) (local.get $lo)
+                              (local.get $vec) (local.get $lo) (local.get $hi))
+                        (unreachable)))
+
+              ;; Sort when range has more than one element
+              (if (i32.lt_u (i32.add (local.get $lo) (i32.const 1)) (local.get $hi))
+                  (then (call $vector-sort!:qs! (local.get $vec) (local.get $f)
+                                                (local.get $finv) (local.get $call)
+                                                (local.get $lo) (local.get $hi))))
+
+              (local.get $vec))
+            
             
             ;;;
             ;;; Boxed (for assignable variables)
