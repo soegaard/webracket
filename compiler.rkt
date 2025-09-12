@@ -586,7 +586,7 @@
   vector-copy vector-map vector-map! vector-argmax vector-argmin
   vector-append vector-extend vector-count
   vector-filter vector-filter-not
-  vector-memq vector-memv
+  vector-member vector-memq vector-memv
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3512,7 +3512,16 @@
              [(list v)      `(call $vector-copy ,v (global.get $missing) (global.get $missing))]
              [(list v1 v2)  `(call $vector-append/2 ,v1 ,v2)]
              [(list* vs)    `(call $vector-append ,(build-rest-args aes))]) )]
-         
+
+        [(vector-member)
+         (let* ([aes (AExpr* ae1)]
+                [n   (length aes)])
+           (cond
+             [(= n 2) `(call $vector-member/2 ,(list-ref aes 0) ,(list-ref aes 1))]
+             [(= n 3) `(call $vector-member ,(list-ref aes 0) ,(list-ref aes 1) ,(list-ref aes 2))]
+             [(< n 2) (error 'primapp "too few arguments: ~a" 'vector-member)]
+             [else    (error 'primapp "too many arguments: ~a" 'vector-member)]))]
+        
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])
             (match aes

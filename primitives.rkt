@@ -464,7 +464,7 @@ bytes->string/utf-8
  vector-count
  vector-argmax vector-argmin
  vector-filter vector-filter-not
- vector-memq vector-memv
+ vector-member vector-memq vector-memv
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

@@ -16702,7 +16702,86 @@
                              (local.set $i (i32.add (local.get $i) (i32.const 1)))
                              (br $loop))
                        (unreachable)))
-        
+
+            (func $vector-member/2
+                  (param $v   (ref eq))  ;; value to find
+                  (param $vec (ref eq))  ;; vector to search
+                  (result     (ref eq))
+
+                  (local $vecv (ref $Vector))
+                  (local $len  i32)
+                  (local $i    i32)
+                  (local $elem (ref eq))
+
+                  (local.set $vecv (global.get $dummy-vector))
+                  (if (ref.test (ref $Vector) (local.get $vec))
+                      (then (local.set $vecv (ref.cast (ref $Vector) (local.get $vec))))
+                      (else (call $raise-check-vector (local.get $vec))))
+                  (local.set $len (array.len (struct.get $Vector $arr (local.get $vecv))))
+                  (local.set $i   (i32.const 0))
+                  (loop $loop
+                        (if (i32.ge_u (local.get $i) (local.get $len))
+                            (then (return (global.get $false))))
+                        (local.set $elem
+                                   (array.get $Array
+                                              (struct.get $Vector $arr (local.get $vecv))
+                                              (local.get $i)))
+                        (if (ref.eq (call $equal? (local.get $v) (local.get $elem))
+                                    (global.get $true))
+                            (then (return (ref.i31 (i32.shl (local.get $i) (i32.const 1))))))
+                        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                        (br $loop))
+                  (unreachable))
+
+            (func $vector-member (type $Prim3)
+                  (param $v     (ref eq)) ;; value to find
+                  (param $vec   (ref eq)) ;; vector to search
+                  (param $same? (ref eq)) ;; optional comparator, default equal?
+                  (result       (ref eq))
+
+                  (local $vecv (ref $Vector))
+                  (local $len  i32)
+                  (local $i    i32)
+                  (local $elem (ref eq))
+                  (local $args (ref $Args))
+                  (local $res  (ref eq))
+
+                  (if (ref.eq (local.get $same?) (global.get $missing))
+                      (then (return (call $vector-member/2 (local.get $v) (local.get $vec)))))
+
+                  (local.set $vecv (global.get $dummy-vector))
+                  (if (ref.test (ref $Vector) (local.get $vec))
+                      (then (local.set $vecv (ref.cast (ref $Vector) (local.get $vec))))
+                      (else (call $raise-check-vector (local.get $vec))))
+
+                  (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                      (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                            (unreachable)))
+
+                  (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+                  (local.set $len  (array.len (struct.get $Vector $arr (local.get $vecv))))
+                  (local.set $i    (i32.const 0))
+                  
+                  (loop $loop
+                        (if (i32.ge_u (local.get $i) (local.get $len))
+                            (then (return (global.get $false))))
+                        (local.set $elem (array.get $Array
+                                                    (struct.get $Vector $arr (local.get $vecv))
+                                                    (local.get $i)))
+                        (array.set $Args (local.get $args) (i32.const 0) (local.get $v))
+                        (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
+                        (local.set $res
+                                   (call_ref $ProcedureInvoker
+                                             (ref.cast (ref $Procedure) (local.get $same?))
+                                             (local.get $args)
+                                             (struct.get $Procedure $invoke
+                                                         (ref.cast (ref $Procedure) (local.get $same?)))))
+                        (if (ref.eq (local.get $res) (global.get $true))
+                            (then (return (ref.i31 (i32.shl (local.get $i) (i32.const 1))))))
+                        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                        (br $loop))
+                  (unreachable))
+            
             ;;;
             ;;; Boxed (for assignable variables)
             ;;;

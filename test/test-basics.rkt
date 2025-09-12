@@ -1926,6 +1926,11 @@
               (and (equal? (vector-memv 'b '#(a b c))    1)
                    (equal? (vector-memv 9 '#(1 2 3 4))   #f)
                    (equal? (procedure-arity vector-memv) 2)))
+        (list "vector-member"
+              (let ([= (λ (x y) (= x y))])
+                (and (equal? (vector-member 2   '#(1 2 3 4))     1)
+                     (equal? (vector-member 9   '#(1 2 3 4))     #f)
+                     (equal? (vector-member 1.0 '#(3 2 1.0 4) =) 2))))
         ))
 
  (list "4.15 Hash Tables"
