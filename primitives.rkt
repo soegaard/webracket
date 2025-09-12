@@ -455,7 +455,10 @@ bytes->string/utf-8
  ;; 4.12 Vectors
  vector vector-immutable vector? make-vector vector-ref vector-set!
  vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop
- vector-drop-right vector-split-at vector->list vector-copy list->vector vector->values
+ vector-drop-right vector-split-at
+ vector-copy
+ vector->list vector->values vector->immutable-vector
+ list->vector
  vector-map vector-map! vector-append
 
  ;; 4.14 Boxes

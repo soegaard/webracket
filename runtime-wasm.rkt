@@ -15847,6 +15847,32 @@
                                  (struct.get $Vector $arr (local.get $vec))
                                  (local.get $ss) (local.get $se))))
 
+         (func $vector->immutable-vector (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $vec (ref $Vector))
+
+               ;; --- Validate vector ---
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+
+               ;; --- If already immutable, return as-is ---
+               (if (result (ref eq))
+                   (i32.eq (struct.get $Vector $immutable (local.get $vec)) (i32.const 1))
+                   (then (local.get $vec))
+                   (else
+                    ;; Otherwise, allocate immutable copy
+                    (struct.new $Vector
+                                (struct.get $Vector $hash (local.get $vec))
+                                (i32.const 1)
+                                (call $array-copy
+                                      (struct.get $Vector $arr (local.get $vec))
+                                      (i32.const 0)
+                                      (array.len (struct.get $Vector $arr (local.get $vec))))))))
+         
          (func $vector->values (type $Prim3)
                (param $v     (ref eq))
                (param $start (ref eq))   ;; fixnum or $missing, default: 0
