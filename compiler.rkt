@@ -583,6 +583,7 @@
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
   vector-drop-right vector-split-at
   vector->list list->vector vector-copy vector-map vector-map!
+  vector-append
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3495,6 +3496,13 @@
          (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
 
         
+        [(vector-append)
+         (let loop ([aes (AExpr* ae1)])
+           (match aes
+             #;[(list)        '(call $vector-append (global.get $null))] ; handled by runtime
+             #;[(list v)      `(call $vector-copy ,v (global.get $missing) (global.get $missing))]
+             #;[(list v1 v2)  `(call $vector-append/2 ,v1 ,v2)]
+             [(list* vs)    `(call $vector-append ,(build-rest-args aes))]) )]
          
          [(bytes-append)
           (let loop ([aes (AExpr* ae1)])

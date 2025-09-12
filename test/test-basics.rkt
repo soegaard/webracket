@@ -1815,6 +1815,15 @@
                    (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
                    (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))
 
+        (list "vector-append"
+              (let* ([v (vector 1 2)]
+                     [w (vector-append v)])
+                (and (equal? (vector-append  #(1 2) #(3 4))          #(1 2 3 4))
+                     (equal? (vector-append  #(1)   #()    #(2 3))   #(1 2 3))
+                     (equal? (vector-append  #(1)   #(2 3) #(4 5 6)) #(1 2 3 4 5 6))
+                     (equal? (vector-append  #(1 2))                 #(1 2))
+                     (equal? (vector-append)                         #())
+                     (not (eq? v w)))))
 
         (list "vector-length"
               (and (equal? (vector-length '#(1 2 3)) 3)

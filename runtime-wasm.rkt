@@ -15861,7 +15861,88 @@
                    (else (call $raise-check-vector (local.get $v))
                          (unreachable))))
 
-         (func $vector-append (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
+         (func $vector-append (type $Prim>=0)
+              (param $xs    (ref eq))        ;; list of vectors
+              (result       (ref eq))
+
+              (local $n     i32)
+              (local $node  (ref $Pair))
+              (local $vec   (ref $Vector))
+              (local $v     (ref eq))
+              (local $orig  (ref eq))
+              (local $total i32)
+              (local $len   i32)
+              (local $arr   (ref $Array))
+              (local $pos   i32)
+
+              ;; initialize non-defaultable refs
+              (local.set $vec (global.get $dummy-vector))
+
+              ;; Preserve original list
+              (local.set $orig (local.get $xs))
+              ;; Determine number of arguments
+              (local.set $n (call $length/i32 (local.get $xs)))
+              ;; Zero arguments -> empty vector
+              (if (i32.eqz (local.get $n))
+                  (then (return (struct.new $Vector
+                                           (i32.const 0)
+                                           (i32.const 0)
+                                           (call $make-array
+                                                 (i32.const 0)
+                                                 (global.get $false))))))
+              ;; Extract and check first argument
+              (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+              (local.set $v    (struct.get $Pair $a (local.get $node)))
+              (if (ref.test (ref $Vector) (local.get $v))
+                  (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                  (else (call $raise-check-vector (local.get $v))))
+              ;; Single argument -> copy to ensure fresh vector
+              (if (i32.eq (local.get $n) (i32.const 1))
+                  (then (return (call $vector-copy
+                                      (local.get $v)
+                                      (global.get $missing)
+                                      (global.get $missing)))))
+              ;; Compute total length
+              (local.set $total (array.len (struct.get $Vector $arr (local.get $vec))))
+              (local.set $xs    (struct.get $Pair $d (local.get $node)))
+              (block $done1
+                     (loop $loop1
+                           (br_if $done1 (ref.eq (local.get $xs) (global.get $null)))
+                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                           (local.set $v    (struct.get $Pair $a (local.get $node)))
+                           (if (ref.test (ref $Vector) (local.get $v))
+                               (then (local.set $vec   (ref.cast (ref $Vector) (local.get $v)))
+                                     (local.set $len   (array.len (struct.get $Vector $arr (local.get $vec))))
+                                     (local.set $total (i32.add (local.get $total) (local.get $len))))
+                               (else (call $raise-check-vector (local.get $v))))
+                           (local.set $xs (struct.get $Pair $d (local.get $node)))
+                           (br $loop1)))
+              ;; Allocate result array
+              (local.set $arr (call $make-array (local.get $total) (global.get $false)))
+              ;; Copy vectors into result array
+              (local.set $xs (local.get $orig))
+              (local.set $pos (i32.const 0))
+              (block $done2
+                     (loop $loop2
+                           (br_if $done2 (ref.eq (local.get $xs) (global.get $null)))
+                           (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                           (local.set $vec  (ref.cast (ref $Vector)
+                                                      (struct.get $Pair $a (local.get $node))))
+                           (local.set $len  (array.len (struct.get $Vector $arr (local.get $vec))))
+                           (call $array-copy!
+                                 (local.get $arr) (local.get $pos)
+                                 (struct.get $Vector $arr (local.get $vec))
+                                 (i32.const 0) (local.get $len))
+                           (local.set $pos (i32.add (local.get $pos) (local.get $len)))
+                           (local.set $xs (struct.get $Pair $d (local.get $node)))
+                           (br $loop2)))
+
+              (struct.new $Vector
+                          (i32.const 0)
+                          (i32.const 0)
+                          (local.get $arr)))
+
+         (func $vector-append/2 (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
                (local $va (ref $Vector))
                (local $vb (ref $Vector))
                (local.set $va (global.get $dummy-vector))
@@ -15878,6 +15959,7 @@
                            (call $array-append
                                  (struct.get $Vector $arr (local.get $va))
                                  (struct.get $Vector $arr (local.get $vb)))))
+        
 
          (func $vector-take (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
