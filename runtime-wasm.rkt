@@ -16597,7 +16597,7 @@
               (param $proc (ref eq))  ;; predicate, must accept one argument
               (param $vec  (ref eq))  ;; vector
               (param $not? i32)       ;; 1 => keep elements where predicate returns #f
-              (result (ref eq))
+              (result      (ref eq))
 
               (local $f     (ref $Procedure))
               (local $finv  (ref $ProcedureInvoker))
@@ -16605,11 +16605,10 @@
               (local $len   i32)
               (local $call  (ref $Args))
               (local $i     i32)
-              (local $count i32)
               (local $elem  (ref eq))
               (local $r     (ref eq))
+              (local $ga    (ref $GrowableArray))
               (local $arr   (ref $Array))
-              (local $j     i32)
 
               ;; 1) Validate procedure
               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
@@ -16624,14 +16623,14 @@
                   (else (call $raise-check-vector (local.get $vec))
                         (unreachable)))
               (local.set $len (array.len (struct.get $Vector $arr (local.get $v))))
-              ;; 3) Prepare argument array
+              ;; 3) Prepare argument array and growable result array
               (local.set $call (array.new $Args (global.get $null) (i32.const 1)))
-              ;; 4) First pass: count matching elements
+              (local.set $ga   (call $make-growable-array (local.get $len)))
+              ;; 4) Single pass over elements
               (local.set $i (i32.const 0))
-              (local.set $count (i32.const 0))
-              (block $count-done
-                     (loop $count-loop
-                           (br_if $count-done (i32.ge_u (local.get $i) (local.get $len)))
+              (block $loop-done
+                     (loop $loop
+                           (br_if $loop-done (i32.ge_u (local.get $i) (local.get $len)))
                            (local.set $elem
                                       (array.get $Array
                                                  (struct.get $Vector $arr (local.get $v))
@@ -16645,41 +16644,15 @@
                            (if (i32.eqz (local.get $not?))
                                (then (if (ref.eq (local.get $r) (global.get $false))
                                          (then (nop))
-                                         (else (local.set $count (i32.add (local.get $count) (i32.const 1))))))
+                                         (else (call $growable-array-add! (local.get $ga) (local.get $elem)))))
                                (else (if (ref.eq (local.get $r) (global.get $false))
-                                         (then (local.set $count (i32.add (local.get $count) (i32.const 1)))))))
+                                         (then (call $growable-array-add! (local.get $ga) (local.get $elem))))))
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                           (br $count-loop)))
-              ;; 5) Allocate result array
-              (local.set $arr (call $make-array (local.get $count) (global.get $false)))
-              ;; 6) Second pass: fill result array
-              (local.set $i (i32.const 0))
-              (local.set $j (i32.const 0))
-              (block $fill-done
-                     (loop $fill-loop
-                           (br_if $fill-done (i32.ge_u (local.get $i) (local.get $len)))
-                           (local.set $elem
-                                      (array.get $Array
-                                                 (struct.get $Vector $arr (local.get $v))
-                                                 (local.get $i)))
-                           (array.set $Args (local.get $call) (i32.const 0) (local.get $elem))
-                           (local.set $r
-                                      (call_ref $ProcedureInvoker
-                                                (local.get $f)
-                                                (local.get $call)
-                                                (local.get $finv)))
-                           (if (i32.eqz (local.get $not?))
-                               (then (if (ref.eq (local.get $r) (global.get $false))
-                                         (then (nop))
-                                         (else (array.set $Array (local.get $arr) (local.get $j) (local.get $elem))
-                                               (local.set $j (i32.add (local.get $j) (i32.const 1))))))
-                               (else (if (ref.eq (local.get $r) (global.get $false))
-                                         (then (array.set $Array (local.get $arr) (local.get $j) (local.get $elem))
-                                               (local.set $j (i32.add (local.get $j) (i32.const 1)))))))
-                           (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                           (br $fill-loop)))
-              ;; 7) Wrap array in vector struct
+                           (br $loop)))
+              ;; 5) Turn growable array into vector
+              (local.set $arr (call $growable-array->array (local.get $ga)))
               (struct.new $Vector (i32.const 0) (i32.const 0) (local.get $arr)))
+
             
 
             (func $vector-filter (type $Prim2)
