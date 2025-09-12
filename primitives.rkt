@@ -462,6 +462,7 @@ bytes->string/utf-8
  vector-map vector-map! vector-append
  vector-extend ; racket 8.12
  vector-count
+ vector-argmax vector-argmin
 
  ;; 4.14 Boxes
  ; boxed unboxed set-boxed!  ; internal

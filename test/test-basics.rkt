@@ -1898,6 +1898,18 @@
               (let ([v (vector 1 2 3 4)])
                 (and (equal? (vector-map! add1 v) '#(2 3 4 5))
                      (equal? v '#(2 3 4 5)))))
+
+        (list "vector-argmin"
+              (let ([car (λ (x) (car x))])
+                (and (equal? (vector-argmin car (vector '(3 pears) '(1 banana) '(2 apples)))
+                             '(1 banana))
+                     (equal? (vector-argmin car (vector '(1 banana) '(1 orange)))
+                             '(1 banana)))))
+
+        (list "vector-argmax"
+              (let ([car (λ (x) (car x))])
+                (equal? (vector-argmax car (vector '(3 pears) '(1 banana) '(2 apples)))
+                        '(3 pears))))
         ))
 
  (list "4.15 Hash Tables"

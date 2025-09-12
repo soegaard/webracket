@@ -583,7 +583,7 @@
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
   vector-drop-right vector-split-at
   vector->list list->vector vector->values vector->immutable-vector
-  vector-copy vector-map vector-map!
+  vector-copy vector-map vector-map! vector-argmax vector-argmin
   vector-append vector-extend vector-count
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
@@ -3365,6 +3365,7 @@
          [(foldl foldr)                (inline-prim/variadic sym ae1 3)]
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
+         [(vector-argmax vector-argmin) (inline-prim/fixed sym ae1 2)]
 
          [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
