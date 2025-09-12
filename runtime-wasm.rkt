@@ -15847,6 +15847,68 @@
                                  (struct.get $Vector $arr (local.get $vec))
                                  (local.get $ss) (local.get $se))))
 
+         (func $vector->values (type $Prim3)
+               (param $v     (ref eq))
+               (param $start (ref eq))   ;; fixnum or $missing, default: 0
+               (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)
+               (result       (ref eq))
+
+               (local $vec  (ref $Vector))
+               (local $arr  (ref $Array))
+               (local $ss   i32)
+               (local $se   i32)
+               (local $len  i32)
+               (local $n    i32)
+               (local $vals (ref $Values))
+
+               ;; --- Validate vector ---
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+               (local.set $len (array.len (local.get $arr)))
+
+               ;; --- Decode $start ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $ss (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $ss (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.and (local.get $ss) (i32.const 1))
+                                       (then (call $raise-check-fixnum (local.get $start))))
+                                   (local.set $ss (i32.shr_u (local.get $ss) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $start))))))
+
+               ;; --- Decode $end ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $se (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $se (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.and (local.get $se) (i32.const 1))
+                                       (then (call $raise-check-fixnum (local.get $end))))
+                                   (local.set $se (i32.shr_u (local.get $se) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $end))))))
+
+               ;; --- Bounds check: start <= end <= len ---
+               (if (i32.or (i32.gt_u (local.get $ss) (local.get $se))
+                           (i32.gt_u (local.get $se) (local.get $len)))
+                   (then (call $raise-bad-vector-copy-range
+                               (local.get $vec) (i32.const 0)
+                               (local.get $vec) (local.get $ss) (local.get $se))
+                         (unreachable)))
+
+               (local.set $n (i32.sub (local.get $se) (local.get $ss)))
+               (if (i32.eq (local.get $n) (i32.const 1))
+                   (then (return (array.get $Array (local.get $arr) (local.get $ss))))
+                   (else (nop)))
+
+               (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
+               (array.copy $Values $Array
+                           (local.get $vals) (i32.const 0)
+                           (local.get $arr) (local.get $ss)
+                           (local.get $n))
+               (local.get $vals))
+         
          (func $vector-empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $len i32)

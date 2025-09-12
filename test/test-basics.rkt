@@ -1804,6 +1804,13 @@
               (and (equal? (list->vector '(foo bar baz))
                            '#(foo bar baz))
                    (equal? (list->vector '()) '#())))
+
+        (list "vector->values"
+              (and (let-values ([() (vector->values '#())]) #t)
+                   (let-values ([(a b c) (vector->values '#(a b c))])
+                     (and (eq? a 'a) (eq? b 'b) (eq? c 'c)))
+                   (let-values ([(b c) (vector->values '#(a b c d) 1 3)])
+                     (and (eq? b 'b) (eq? c 'c)))))
         
         (list "vector-immutable"
               (let ([v (vector-immutable 5 'a)])

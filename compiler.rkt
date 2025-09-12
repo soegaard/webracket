@@ -582,8 +582,9 @@
   vector? make-vector vector-ref vector-set! vector-length
   vector-fill! vector-copy! vector-empty? vector-take vector-drop
   vector-drop-right vector-split-at
-  vector->list list->vector vector-copy vector-map vector-map!
-  vector-append
+  vector->list list->vector vector->values
+  vector-copy vector-map vector-map!
+  vector-append 
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
@@ -3338,6 +3339,7 @@
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
+         [(vector->values)             (inline-prim/optional sym ae1 1 3)]
 
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
