@@ -454,8 +454,10 @@ bytes->string/utf-8
  
  ;; 4.12 Vectors
  vector vector-immutable vector? make-vector vector-ref vector-set!
- vector-length vector-fill! vector-copy! vector-empty? vector-take vector-drop
- vector-drop-right vector-split-at vector-split-at-right
+ vector-length vector-fill! vector-copy! vector-empty?
+ vector-take vector-take-right
+ vector-drop vector-drop-right
+ vector-split-at vector-split-at-right 
  vector-copy
  vector->list vector->values vector->immutable-vector
  list->vector

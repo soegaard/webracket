@@ -16145,7 +16145,7 @@
                (struct.new $Vector (i32.const 0)
                            (i32.const 0)
                            (call $array-drop (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
-
+         
          (func $vector-drop-right (type $Prim2) (param $v (ref eq)) (param $i (ref eq)) (result (ref eq))
                (local $vec (ref $Vector))
                (local $ix i32)
@@ -16167,6 +16167,33 @@
                (struct.new $Vector (i32.const 0)
                            (i32.const 0)
                            (call $array-drop-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
+
+         (func $vector-take-right (type $Prim2)
+               (param $v (ref eq))
+               (param $i (ref eq))
+               (result   (ref eq))               
+               (local $vec (ref $Vector))
+               (local $ix i32)
+               (local $len i32)              
+               (local.set $vec (global.get $dummy-vector))
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (local.set $vec (ref.cast (ref $Vector) (local.get $v))))
+                   (else (call $raise-check-vector (local.get $v))))
+               (if (ref.test (ref i31) (local.get $i))
+                   (then (local.set $ix (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                         (if (i32.eqz (i32.and (local.get $ix) (i32.const 1)))
+                             (then (local.set $ix (i32.shr_u (local.get $ix) (i32.const 1))))
+                             (else (call $raise-check-fixnum (local.get $i)))))
+                   (else (call $raise-check-fixnum (local.get $i))))
+               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec))))
+               (if (i32.gt_u (local.get $ix) (local.get $len))
+                   (then (call $raise-bad-vector-take-index (local.get $vec) (local.get $ix) (local.get $len))
+                         (unreachable)))
+               (struct.new $Vector (i32.const 0)
+                           (i32.const 0)
+                           (call $array-take-right (struct.get $Vector $arr (local.get $vec)) (local.get $ix))))
+
+         
 
          (func $vector-split-at (type $Prim2)
                (param $v (ref eq))

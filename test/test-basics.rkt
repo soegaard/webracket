@@ -1874,6 +1874,9 @@
         (list "vector-take"
               (equal? (vector-take '#(a b c d) 2) '#(a b)))
 
+        (list "vector-take-right"
+              (equal? (vector-take-right '#(a b c d) 2) '#(c d)))
+
         (list "vector-drop"
               (equal? (vector-drop '#(a b c d) 2) '#(c d)))
 
