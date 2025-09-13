@@ -575,6 +575,7 @@
   fllog flexp flsqrt 
   flsin flcos fltan flasin flacos flatan
   flmin flmax flexpt ->fl fl->exact-integer
+  flrandom
 
   byte?
 
@@ -684,6 +685,7 @@
   unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
   unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
   unsafe-flmin unsafe-flmax unsafe-flexpt
+  unsafe-flrandom
 
   unsafe-fx=
   unsafe-fx<
@@ -3408,7 +3410,8 @@
          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
-         [(random)                      (inline-prim/optional sym ae1 0 2)]
+         [(random)                     (inline-prim/optional sym ae1 0 2)]
+         [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
          [(min max)                      (inline-prim/variadic sym ae1 2)]

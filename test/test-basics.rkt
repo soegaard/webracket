@@ -221,11 +221,11 @@
                           (equal? (number->string 0.0001) "0.0001")))
               (list "string->number"
                     (and (equal? (string->number "42")     42)
-                          (equal? (string->number "111" 7)  57)
-                          (equal? (string->number "-42")    -42)
-                          (equal? (string->number "-111" 7) -57)
-                          (equal? (string->number "-2.3")   -2.3)
-                          (equal? (string->number "hello") #f)))
+                         (equal? (string->number "111" 7)  57)
+                         (equal? (string->number "-42")    -42)
+                         (equal? (string->number "-111" 7) -57)
+                         (equal? (string->number "-2.3")   -2.3)
+                         (equal? (string->number "hello") #f)))
               (list "real?"
                     (and (equal? (real? 1)      #t)
                          (equal? (real? 1.0)    #t)
@@ -594,23 +594,23 @@
                          (= (order-of-magnitude 0.009) -3)))))
 
        (list "4.3.3 Flonums"
-               (list
-                (list "flonum?"
-                      (and (equal? (flonum? 1.0) #t)
-                           (equal? (flonum? 1) #f)
-                           (equal? (procedure-arity flonum?) 1)))
-                (list "double-flonum?"
-                      (and (equal? (double-flonum? 1.0) #t)
-                           (equal? (double-flonum? 1) #f)
-                           (equal? (procedure-arity double-flonum?) 1)))
-                (list "single-flonum?"
-                      (and (equal? (single-flonum? 1.0) #f)
-                           (equal? (single-flonum? 1) #f)
-                           (equal? (procedure-arity single-flonum?) 1)))
-                (list "single-flonum-available?"
-                      (and (equal? (single-flonum-available?) #f)
-                           (equal? (procedure-arity single-flonum-available?) 0)))
-                (list "fl+"
+             (list
+              (list "flonum?"
+                    (and (equal? (flonum? 1.0) #t)
+                         (equal? (flonum? 1) #f)
+                         (equal? (procedure-arity flonum?) 1)))
+              (list "double-flonum?"
+                    (and (equal? (double-flonum? 1.0) #t)
+                         (equal? (double-flonum? 1) #f)
+                         (equal? (procedure-arity double-flonum?) 1)))
+              (list "single-flonum?"
+                    (and (equal? (single-flonum? 1.0) #f)
+                         (equal? (single-flonum? 1) #f)
+                         (equal? (procedure-arity single-flonum?) 1)))
+              (list "single-flonum-available?"
+                    (and (equal? (single-flonum-available?) #f)
+                         (equal? (procedure-arity single-flonum-available?) 0)))
+              (list "fl+"
                     (and (fl= (fl+ 1.0 2.0) 3.0)
                          (fl= (fl+ 1.0 2.0 3.0) 6.0)))
               (list "fl-"
@@ -684,7 +684,10 @@
                          (fl= (flmax 3.0)         3.0)))
               (list "flexpt"
                     (fl= (flexpt 2.0 3.0) 8.0))
-              ))
+              (list "flrandom"
+                    (let ([v (flrandom)])
+                      (and (flonum? v) (> v 0.0) (< v 1.0)))))
+       )
        
        (list "4.3.4 Fixnums"
              (list

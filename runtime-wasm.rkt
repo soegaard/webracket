@@ -6163,7 +6163,40 @@
                   '($fl=    $fl<    $fl>    $fl<=     $fl>=)
                   '(f64.eq  f64.lt  f64.gt  f64.le    f64.ge)))
 
-         
+
+        (func $flrandom (type $Prim1) ; one optional argument
+              ;; (flrandom [rand-gen pseudo-random-generator?]) -> flonum in (0,1)
+              ;; rand-gen : pseudo-random-generator? (optional, default: uses shared generator)
+              ;; The rand-gen argument is currently ignored.
+              (param $rg (ref eq))
+              (result    (ref eq))
+
+              (local $r i32)
+              
+              (local.set $r (call $random-u32))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (f64.div
+                           (f64.add (f64.convert_i32_u (local.get $r))
+                                    (f64.const 1))
+                           (f64.const 4294967298.0))))
+
+        (func $unsafe-flrandom (type $Prim1)
+              ;; Unsafe variant, same behaviour as flrandom.
+              ;; rand-gen : pseudo-random-generator? (optional, default ignored)
+              (param $rg (ref eq))
+              (result    (ref eq))
+
+              (local $r i32)
+
+              (local.set $r (call $random-u32))
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (f64.div
+                           (f64.add (f64.convert_i32_u (local.get $r))
+                                    (f64.const 1))
+                           (f64.const 4294967298.0))))
+        
          ;;;
          ;;; Number / String conversions
          ;;;

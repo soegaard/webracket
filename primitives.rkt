@@ -15,13 +15,14 @@
          racket/string
          racket/symbol
          racket/vector
-         racket/unsafe/ops         
+         racket/unsafe/ops
          ; racket/namespace
 
          math/flonum
          (only-in math/base
-                  asinh acosh atanh                  
+                  asinh acosh atanh
                   float-complex?)
+         
          
          (prefix-in imm: "immediates.rkt")
 
@@ -174,7 +175,7 @@
   bitwise-bit-field
   arithmetic-shift
   integer-length
-  random
+  random 
  ;; 4.3.2.7 Random Numbers
  ;; 4.3.2.8 Other Randomness Utilities (racket/random)
  ;; 4.3.2.9 Number–String Conversions
@@ -220,6 +221,8 @@
  flmax
  ->fl
  fl->exact-integer
+ flrandom
+ 
  ;; 4.3.3.2 Flonum Vectors
 
  ;; 4.3.4 Fixnums (racket/fixnum)
@@ -525,6 +528,7 @@
  unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
  unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
  unsafe-flmin unsafe-flmax unsafe-flexpt
+ unsafe-flrandom 
  unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector-length unsafe-vector-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
  
@@ -815,3 +819,14 @@
 (define (vector-sort vec less-than? [start 0] [end (vector-length #f)])
   (racket:vector-sort vec less-than? start end))
 
+
+(require (prefix-in racket: math/flonum))
+; This simplified version of flrandom ignores the random generator argument.
+(define flrandom
+  ;; Mirrors the WebAssembly primitive's semantics by always using the
+  ;; shared generator.
+  (case-lambda
+    [()  (racket:flrandom)]
+    [(_) (racket:flrandom)]))
+
+(define unsafe-flrandom flrandom)
