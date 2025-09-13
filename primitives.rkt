@@ -309,13 +309,14 @@
  bytes-copy!
  bytes-copy
  bytes-fill!
-bytes-append
-bytes->immutable-bytes
+ bytes-append
+ bytes->immutable-bytes
  byte?
-bytes->list
-list->bytes
-bytes=?
-bytes->string/utf-8
+ bytes->list
+ list->bytes
+ bytes=?
+ bytes<?
+ bytes->string/utf-8
 
  ;; 4.6 Characters
  char? char->integer integer->char char-utf-8-length

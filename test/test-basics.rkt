@@ -1053,6 +1053,12 @@
                    #;(equal? (bytes=? #"c" #"a" #"a") #f)
                    #;(equal? (bytes=? #"c" #"b" #"a") #f)
                    (equal? (bytes=? #"b" #"a") #f)))
+
+        (list "bytes<?"
+              (and (equal? (bytes<? #""   #"")      #f)
+                   (equal? (bytes<? #"A"  #"B")     #t)
+                   (equal? (bytes<? #"AB" #"A")     #f)
+                   (equal? (bytes<? #"a" #"b" #"c") #t)))
         ))
 
  (list "4.6 Characters"

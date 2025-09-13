@@ -595,8 +595,9 @@
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
   bytes-copy bytes-fill! bytes-append bytes->immutable-bytes
-  bytes->list list->bytes bytes=?
+  bytes->list list->bytes 
   bytes->string/utf-8
+  bytes=? bytes<?
 
   string? string=? string<? string<=? string>? string>=?
   make-string build-string string-ref string-set! string-length substring
@@ -3449,7 +3450,20 @@
                                   (i32.const 0)
                                   ,(first aes)
                                   ,(loop (rest aes))))))
-            `(call ,$cmp ,c0 ,xs)])]
+             `(call ,$cmp ,c0 ,xs)])]
+
+        [(bytes<?)
+         ; variadic, at least one argument
+         (define n (length ae1))
+         (when (< n 1) (error 'primapp "too few arguments: ~a" sym))
+         (define aes    (AExpr* ae1))
+         (define $cmp   ($ sym))
+         (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
+         (case n
+           [(1)  `(global.get $true)]
+           [(2)  `(call ,$cmp/2 ,@aes)]
+           [else `(call ,$cmp ,(first aes) ,(build-rest-args (rest aes)))])]
+        
 
         [(bitwise-and bitwise-ior bitwise-xor)
          (define aes (AExpr* ae1))

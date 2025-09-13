@@ -7421,7 +7421,10 @@
                ;; All bytes match
                (global.get $true))
 
+
          
+
+        
          (func $byte? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $i i32)
                (if (result (ref eq)) (ref.test (ref i31) (local.get $v))
