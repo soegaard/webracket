@@ -2602,7 +2602,7 @@
                ;; --- Bytes ---
                (if (i32.and (ref.test (ref $Bytes) (local.get $v1))
                             (ref.test (ref $Bytes) (local.get $v2)))
-                   (then (return_call $bytes=?
+                   (then (return_call $bytes=?/2/checked
                                       (ref.cast (ref $Bytes) (local.get $v1))
                                       (ref.cast (ref $Bytes) (local.get $v2)))))
                ;; --- Struct --- (fieldwise comparison)
@@ -7354,7 +7354,7 @@
 
          (func $raise-expected-bytes (unreachable))
 
-         (func $bytes=? (type $Prim2)
+         (func $bytes=?/2 (type $Prim2)
                (param $v1 (ref eq))
                (param $v2 (ref eq))
                (result    (ref eq))
@@ -7368,7 +7368,7 @@
                      (ref.cast (ref $Bytes) (local.get $v1))
                      (ref.cast (ref $Bytes) (local.get $v2))))
 
-         (func $bytes=?/checked
+         (func $bytes=?/2/checked
                (param $b1 (ref $Bytes))
                (param $b2 (ref $Bytes))
                (result    (ref eq))
