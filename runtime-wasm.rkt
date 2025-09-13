@@ -7403,14 +7403,8 @@
                      '((if (ref.eq (local.get $b1) (local.get $b2))
                            (then (return (global.get $true)))))
                      '()))
-               (define v1-get
-                 (if signed?
-                     '(i32.extend8_s (array.get_u $I8Array (local.get $a1) (local.get $i)))
-                     '(array.get_u $I8Array (local.get $a1) (local.get $i))))
-               (define v2-get
-                 (if signed?
-                     '(i32.extend8_s (array.get_u $I8Array (local.get $a2) (local.get $i)))
-                     '(array.get_u $I8Array (local.get $a2) (local.get $i))))
+               (define v1-get '(array.get_u $I8Array (local.get $a1) (local.get $i)))
+               (define v2-get '(array.get_u $I8Array (local.get $a2) (local.get $i)))
                (define diff
                  (if (eq? kind 'eq)
                      '(if (i32.ne (local.get $v1) (local.get $v2))
