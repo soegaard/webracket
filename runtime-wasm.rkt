@@ -7408,6 +7408,22 @@
                ;; All bytes match
                (global.get $true))
 
+         (func $bytes<?/2 
+               (param $v1 (ref eq)) ;; bytes?
+               (param $v2 (ref eq)) ;; bytes?
+               (result    (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v1)))
+                   (then (call $raise-expected-bytes (local.get $v1))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $v2)))
+                   (then (call $raise-expected-bytes (local.get $v2))
+                         (unreachable)))
+
+               (return_call $bytes<?/2/checked
+                            (ref.cast (ref $Bytes) (local.get $v1))
+                            (ref.cast (ref $Bytes) (local.get $v2))))
+
          (func $bytes<?/2/checked
                (param $b1 (ref $Bytes)) ;; bytes
                (param $b2 (ref $Bytes)) ;; bytes
