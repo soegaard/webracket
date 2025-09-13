@@ -319,6 +319,7 @@
  list->bytes
  bytes=?
  bytes<?
+ bytes>?
  bytes->string/utf-8
 
  ;; 4.6 Characters
