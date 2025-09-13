@@ -3452,6 +3452,18 @@
                                   ,(loop (rest aes))))))
              `(call ,$cmp ,c0 ,xs)])]
 
+        [(bytes=?)
+         ; variadic, at least one argument
+         (define n (length ae1))
+         (when (< n 1) (error 'primapp "too few arguments: ~a" sym))
+         (define aes    (AExpr* ae1))
+         (define $cmp   ($ sym))
+         (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
+         (case n
+           [(1)  `(global.get $true)]
+           [(2)  `(call ,$cmp/2 ,@aes)]
+           [else `(call ,$cmp ,(first aes) ,(build-rest-args (rest aes)))])]
+
         [(bytes<?)
          ; variadic, at least one argument
          (define n (length ae1))

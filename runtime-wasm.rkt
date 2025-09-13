@@ -7364,9 +7364,9 @@
                (if (i32.eqz (ref.test (ref $Bytes) (local.get $v2)))
                    (then (call $raise-expected-bytes (local.get $v2)) (unreachable)))
 
-               (call $bytes=?/checked
-                     (ref.cast (ref $Bytes) (local.get $v1))
-                     (ref.cast (ref $Bytes) (local.get $v2))))
+               (return_call $bytes=?/2/checked
+                            (ref.cast (ref $Bytes) (local.get $v1))
+                            (ref.cast (ref $Bytes) (local.get $v2))))
 
          (func $bytes=?/2/checked
                (param $b1 (ref $Bytes))
@@ -7407,6 +7407,79 @@
                             (br $loop)))
                ;; All bytes match
                (global.get $true))
+
+         (func $bytes=?/checked
+               (param $b0 (ref $Bytes)) ;; first bytes
+               (param $b1 (ref $Bytes)) ;; second bytes
+               (param $bs (ref eq))     ;; rest bytes list
+               (result    (ref eq))
+
+               (local $node      (ref $Pair))
+               (local $next/any  (ref eq))       ;; raw car from the list
+               (local $next      (ref $Bytes))   ;; refined to (ref $Bytes)
+               (local $curr      (ref $Bytes))
+
+               ;; Compare first two
+               (if (ref.eq (call $bytes=?/2/checked (local.get $b0) (local.get $b1))
+                           (global.get $false))
+                   (then (return (global.get $false))))
+               (local.set $curr (local.get $b1))
+
+               ;; Iterate remaining arguments
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $bs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $bs)))
+                            (local.set $next/any (struct.get $Pair $a (local.get $node)))
+                            (if (i32.eqz (ref.test (ref $Bytes) (local.get $next/any)))
+                                (then (call $raise-expected-bytes (local.get $next/any))
+                                      (unreachable)))
+                            (local.set $next
+                                       (ref.cast (ref $Bytes) (local.get $next/any)))
+
+                            (if (ref.eq (call $bytes=?/2/checked (local.get $curr) (local.get $next))
+                                        (global.get $false))
+                                (then (return (global.get $false))))
+
+                            (local.set $curr (local.get $next))
+                            (local.set $bs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+
+               (global.get $true))
+
+         (func $bytes=? (type $Prim>=1)
+               (param $b0 (ref eq)) ; bytes?
+               (param $bs (ref eq)) ; rest list
+               (result    (ref eq))
+
+               (local $b1   (ref $Bytes))
+               (local $b2   (ref $Bytes))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+
+               ;; Initialize non-defaultable locals
+               (local.set $b1 (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               (local.set $b2 (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+
+               ;; Validate first argument
+               (if (ref.test (ref $Bytes) (local.get $b0))
+                   (then (local.set $b1 (ref.cast (ref $Bytes) (local.get $b0))))
+                   (else (call $raise-expected-bytes (local.get $b0)) (unreachable)))
+               ;; No more arguments → true
+               (if (ref.eq (local.get $bs) (global.get $null))
+                   (then (return (global.get $true))))
+               ;; Extract second argument
+               (local.set $node (ref.cast (ref $Pair) (local.get $bs)))
+               (local.set $v    (struct.get $Pair $a (local.get $node)))
+               (if (ref.test (ref $Bytes) (local.get $v))
+                   (then (local.set $b2 (ref.cast (ref $Bytes) (local.get $v))))
+                   (else (call $raise-expected-bytes (local.get $v)) (unreachable)))
+               (local.set $bs   (struct.get $Pair $d (local.get $node)))
+               ;; Exactly two arguments?
+               (if (ref.eq (local.get $bs) (global.get $null))
+                   (then (return_call $bytes=?/2/checked (local.get $b1) (local.get $b2)))
+                   (else (return_call $bytes=?/checked (local.get $b1) (local.get $b2) (local.get $bs))))
+               (unreachable))
 
          (func $bytes<?/2 
                (param $v1 (ref eq)) ;; bytes?

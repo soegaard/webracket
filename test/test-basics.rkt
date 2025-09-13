@@ -1043,15 +1043,14 @@
                      (equal? (string-utf-8-length s2 1 4) 4))))
 
         (list "bytes=?"
-              '(todo "Make bytes=? variadic")
-              (and #;(equal? (bytes=? #"a" #"a" #"a") #t)
+              (and (equal? (bytes=? #"a" #"a" #"a") #t)
                    (equal? (bytes=? #"a" #"a") #t)
-                   #;(equal? (bytes=? #"a") #t)
-                   #;(equal? (bytes=? #"a" #"a" #"c") #f)
-                   #;(equal? (bytes=? #"a" #"b" #"c") #f)
+                   (equal? (bytes=? #"a") #t)
+                   (equal? (bytes=? #"a" #"a" #"c") #f)
+                   (equal? (bytes=? #"a" #"b" #"c") #f)
                    (equal? (bytes=? #"a" #"b") #f)
-                   #;(equal? (bytes=? #"c" #"a" #"a") #f)
-                   #;(equal? (bytes=? #"c" #"b" #"a") #f)
+                   (equal? (bytes=? #"c" #"a" #"a") #f)
+                   (equal? (bytes=? #"c" #"b" #"a") #f)
                    (equal? (bytes=? #"b" #"a") #f)))
 
         (list "bytes<?"
