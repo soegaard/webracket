@@ -6349,8 +6349,7 @@
                                          (else (br $done)))))))
 
                            (if (i32.ge_u (local.get $digit) (local.get $radix))
-                               (then (br $done))
-                               (else (nop)))
+                               (then (br $done)))
 
                            (local.set $acc
                                       (i32.add
@@ -6421,8 +6420,7 @@
                    (i32.gt_u (local.get $radix) (i32.const 16)))
                   (then
                    (call $raise-string->number:bad-radix)
-                   (unreachable))
-                  (else (nop)))
+                   (unreachable)))
 
               ;; Extract codepoints array and length
               (local.set $arr (struct.get $String $codepoints (local.get $s)))
@@ -6430,8 +6428,7 @@
 
               ;; Empty string -> #f
               (if (i32.eqz (local.get $len))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
 
               ;; Handle optional sign
               (local.set $i   (i32.const 0))
@@ -6442,8 +6439,7 @@
                         (local.set $i (i32.const 1)))
                   (else
                   (if (i32.eq (local.get $cp) (i32.const 43))
-                      (then (local.set $i (i32.const 1)))
-                      (else (nop)))))
+                      (then (local.set $i (i32.const 1))))))
 
               ;; Parse integer part
               (call $string->number:parse-integer
@@ -6452,29 +6448,24 @@
                     (local.get $radix))
               (local.set $n) (local.set $int)
               (if (ref.eq (local.get $int) (global.get $false))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
               (local.set $i (i32.add (local.get $i) (local.get $n)))
               ;; No fractional part
               (if (i32.eq (local.get $i) (local.get $len))
                   (then
                    (local.set $acc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $int))) (i32.const 1)))
                    (if (local.get $neg)
-                       (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc))))
-                       (else (nop)))
-                   (return (ref.i31 (i32.shl (local.get $acc) (i32.const 1)))))
-                  (else (nop)))
+                       (then (local.set $acc (i32.sub (i32.const 0) (local.get $acc)))))
+                   (return (ref.i31 (i32.shl (local.get $acc) (i32.const 1))))))
 
               ;; Expect decimal point
               (local.set $cp (call $i32array-ref (local.get $arr) (local.get $i)))
               (if (i32.ne (local.get $cp) (i32.const 46))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
 
               ;; Decimal only allowed in radix 10
               (if (i32.ne (local.get $radix) (i32.const 10))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
 
               ;; Parse fractional part
               (call $string->number:parse-integer
@@ -6483,16 +6474,13 @@
                     (local.get $radix))
               (local.set $m) (local.set $frac)
               (if (ref.eq (local.get $frac) (global.get $false))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
 
               ;; Require digits after '.' and consume all characters
               (if (i32.eqz (local.get $m))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
               (if (i32.ne (i32.add (local.get $i) (i32.add (local.get $m) (i32.const 1))) (local.get $len))
-                  (then (return (global.get $false)))
-                  (else (nop)))
+                  (then (return (global.get $false))))
 
               ;; Compute result
               (local.set $acc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $int))) (i32.const 1)))
@@ -6512,8 +6500,7 @@
                           (f64.div (f64.convert_i32_s (local.get $frac-i32))
                                    (f64.convert_i32_s (local.get $div)))))
               (if (local.get $neg)
-                  (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res))))
-                  (else (nop)))
+                  (then (local.set $res (f64.mul (f64.const -1.0) (local.get $res)))))
               (struct.new $Flonum (i32.const 0) (local.get $res)))
         
          (func $floating-point-bytes->real (type $Prim4)
@@ -7421,7 +7408,128 @@
                ;; All bytes match
                (global.get $true))
 
+         (func $bytes<?/2/checked
+               (param $b1 (ref $Bytes)) ;; bytes
+               (param $b2 (ref $Bytes)) ;; bytes
+               (result    (ref eq))
 
+               (local $a1   (ref $I8Array))
+               (local $a2   (ref $I8Array))
+               (local $len1 i32)
+               (local $len2 i32)
+               (local $min  i32)
+               (local $i    i32)
+               (local $v1   i32)
+               (local $v2   i32)
+
+               ;; Extract arrays and lengths
+               (local.set $a1   (struct.get $Bytes $bs (local.get $b1)))
+               (local.set $a2   (struct.get $Bytes $bs (local.get $b2)))
+               (local.set $len1 (array.len (local.get $a1)))
+               (local.set $len2 (array.len (local.get $a2)))
+
+               ;; Determine minimum length
+               (local.set $min (local.get $len1))
+               (if (i32.lt_u (local.get $len2) (local.get $min))
+                   (then (local.set $min (local.get $len2))))
+
+               ;; Compare bytes one-by-one
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $min)))
+                            (local.set $v1 (array.get_u $I8Array (local.get $a1) (local.get $i)))
+                            (local.set $v2 (array.get_u $I8Array (local.get $a2) (local.get $i)))
+
+                            ;; If bytes differ, decide based on < vs >
+                            (if (i32.ne (local.get $v1) (local.get $v2))
+                                (then (if (i32.lt_u (local.get $v1) (local.get $v2))
+                                          (then (return (global.get $true)))
+                                          (else (return (global.get $false))))))
+
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; All compared bytes equal – shorter array wins
+               (if (result (ref eq))
+                   (i32.lt_u (local.get $len1) (local.get $len2))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+
+         (func $bytes<?/checked
+               (param $b0 (ref $Bytes)) ;; first bytes
+               (param $b1 (ref $Bytes)) ;; second bytes
+               (param $bs (ref eq))     ;; rest bytes list
+               (result (ref eq))
+
+               (local $node      (ref $Pair))
+               (local $next/any  (ref eq))       ;; raw car from the list
+               (local $next      (ref $Bytes))   ;; refined to (ref $Bytes)
+               (local $curr      (ref $Bytes))
+
+               ;; Compare first two
+               (if (ref.eq (call $bytes<?/2/checked (local.get $b0) (local.get $b1))
+                           (global.get $false))
+                   (then (return (global.get $false))))
+               (local.set $curr (local.get $b1))
+
+               ;; Iterate remaining arguments
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $bs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $bs)))
+                            (local.set $next/any (struct.get $Pair $a (local.get $node)))
+                            (if (i32.eqz (ref.test (ref $Bytes) (local.get $next/any)))
+                                (then (call $raise-expected-bytes (local.get $next/any))
+                                      (unreachable)))
+                            (local.set $next
+                                       (ref.cast (ref $Bytes) (local.get $next/any)))
+
+                            (if (ref.eq (call $bytes<?/2/checked (local.get $curr) (local.get $next))
+                                        (global.get $false))
+                                (then (return (global.get $false))))
+
+                            (local.set $curr (local.get $next))
+                            (local.set $bs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+
+               (global.get $true))
+
+
+         (func $bytes<? (type $Prim>=1)
+               (param $b0 (ref eq)) ; bytes?
+               (param $bs (ref eq)) ; rest list
+               (result    (ref eq))
+
+               (local $b1   (ref $Bytes))
+               (local $b2   (ref $Bytes))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+
+               ;; Initialize non-defaultable locals
+               (local.set $b1 (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               (local.set $b2 (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               
+               ;; Validate first argument
+               (if (ref.test (ref $Bytes) (local.get $b0))
+                   (then (local.set $b1 (ref.cast (ref $Bytes) (local.get $b0))))
+                   (else (call $raise-expected-bytes (local.get $b0)) (unreachable)))
+               ;; No more arguments → true
+               (if (ref.eq (local.get $bs) (global.get $null))
+                   (then (return (global.get $true))))
+               ;; Extract second argument
+               (local.set $node (ref.cast (ref $Pair) (local.get $bs)))
+               (local.set $v    (struct.get $Pair $a (local.get $node)))
+               (if (ref.test (ref $Bytes) (local.get $v))
+                   (then (local.set $b2 (ref.cast (ref $Bytes) (local.get $v))))
+                   (else (call $raise-expected-bytes (local.get $v)) (unreachable)))
+               (local.set $bs   (struct.get $Pair $d (local.get $node)))
+               ;; Exactly two arguments?
+               (if (ref.eq (local.get $bs) (global.get $null))
+                   (then (return_call $bytes<?/2/checked (local.get $b1) (local.get $b2)))
+                   (else (return_call $bytes<?/checked (local.get $b1) (local.get $b2) (local.get $bs))))
+               (unreachable))
          
 
         
@@ -11633,8 +11741,7 @@
                                     (then
                                      (if (ref.eq (call $equal? (local.get $needle) (local.get $elem))
                                                  (global.get $true))
-                                         (then (return (local.get $xs)))
-                                         (else (nop))))
+                                         (then (return (local.get $xs)))))
                                     (else
                                      (array.set $Args (local.get $args) (i32.const 0) (local.get $needle))
                                      (array.set $Args (local.get $args) (i32.const 1) (local.get $elem))
@@ -11645,8 +11752,7 @@
                                                           (struct.get $Procedure $invoke
                                                                       (ref.cast (ref $Procedure) (local.get $same?)))))
                                      (if (ref.eq (local.get $res) (global.get $true))
-                                         (then (return (local.get $xs)))
-                                         (else (nop))))))
+                                         (then (return (local.get $xs)))))))
                           ;; 3) advance to cdr
                           (local.set $xs (struct.get $Pair $d (local.get $pair)))
                           (br $search))
@@ -11793,8 +11899,7 @@
                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
                        (then
                         (call $raise-argument-error:procedure-expected (local.get $same?))
-                        (unreachable))
-                       (else (nop)))
+                        (unreachable)))
                    (local.set $use-proc (i32.const 1))))
 
               ;; Unconditionally allocate args buffer once; we overwrite each iteration.
@@ -11805,13 +11910,11 @@
               (local.set $acc (global.get $null))
               (loop $loop
                     (if (ref.eq (local.get $cur) (global.get $null))
-                        (then (return (call $reverse (local.get $acc))))
-                        (else (nop)))
+                        (then (return (call $reverse (local.get $acc)))))
                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
                         (then
                          (call $raise-pair-expected (local.get $cur))
-                         (unreachable))
-                        (else (nop)))
+                         (unreachable)))
                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
 
@@ -14425,8 +14528,7 @@
                                           (local.get $call)
                                           (local.get $finv)))
                      (if (ref.eq (local.get $r) (global.get $false))
-                         (then (local.set $acc (call $cons (local.get $elem) (local.get $acc))))
-                         (else (nop)))
+                         (then (local.set $acc (call $cons (local.get $elem) (local.get $acc)))))
                      (local.set $cur (struct.get $Pair $d (local.get $pair)))
                      (br $loop))
                (unreachable))
@@ -14460,8 +14562,7 @@
                                 (local.set $tmp (array.get $Array (local.get $arr) (local.get $i)))
                                 (local.set $elem (array.get $Array (local.get $arr) (local.get $j)))
                                 (array.set $Array (local.get $arr) (local.get $i) (local.get $elem))
-                                (array.set $Array (local.get $arr) (local.get $j) (local.get $tmp)))
-                               (else (nop)))
+                                (array.set $Array (local.get $arr) (local.get $j) (local.get $tmp))))
                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
                            (br $loop)))
 
@@ -16040,8 +16141,7 @@
 
                (local.set $n (i32.sub (local.get $se) (local.get $ss)))
                (if (i32.eq (local.get $n) (i32.const 1))
-                   (then (return (array.get $Array (local.get $arr) (local.get $ss))))
-                   (else (nop)))
+                   (then (return (array.get $Array (local.get $arr) (local.get $ss)))))
 
                (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
                (array.copy $Values $Array
@@ -16477,8 +16577,7 @@
               ;; 1) Validate procedure
               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
-                        (unreachable))
-                  (else (nop)))
+                        (unreachable)))
               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
@@ -16489,8 +16588,7 @@
                   (else (call $raise-check-vector (local.get $v0))
                         (unreachable)))
               (if (i32.ne (struct.get $Vector $immutable (local.get $vec0)) (i32.const 0))
-                  (then (call $raise-immutable-vector (local.get $v0)))
-                  (else (nop)))
+                  (then (call $raise-immutable-vector (local.get $v0))))
               (local.set $len (array.len (struct.get $Vector $arr (local.get $vec0))))
 
               ;; 3) Walk rest vectors
@@ -16499,28 +16597,24 @@
               (block $count-done
                      (loop $count
                            (if (ref.eq (local.get $cur) (global.get $null))
-                               (then (br $count-done))
-                               (else (nop)))
+                               (then (br $count-done)))
                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
                                (then (call $raise-pair-expected (local.get $cur))
-                                     (unreachable))
-                               (else (nop)))
+                                     (unreachable)))
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
 
                            ;; Load car as (ref eq), test, then cast before putting into $vec
                            (local.set $tmp (struct.get $Pair $a (local.get $pair)))
                            (if (i32.eqz (ref.test (ref $Vector) (local.get $tmp)))
                                (then (call $raise-check-vector (local.get $tmp))
-                                     (unreachable))
-                               (else (nop)))
+                                     (unreachable)))
                            (local.set $vec (ref.cast (ref $Vector) (local.get $tmp)))
 
                            (if (i32.ne
                                 (array.len (struct.get $Vector $arr (local.get $vec)))
                                 (local.get $len))
                                (then (call $raise-argument-error (local.get $vec))
-                                     (unreachable))
-                               (else (nop)))
+                                     (unreachable)))
                            (local.set $nvecs (i32.add (local.get $nvecs) (i32.const 1)))
                            (local.set $cur (struct.get $Pair $d (local.get $pair)))
                            (br $count)))
@@ -16534,8 +16628,7 @@
               (block $seed-done
                      (loop $seed
                            (if (i32.ge_u (local.get $i) (local.get $nvecs))
-                               (then (br $seed-done))
-                               (else (nop)))
+                               (then (br $seed-done)))
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                            (array.set $Args (local.get $vectors) (local.get $i)
                                       (ref.cast (ref $Vector)
@@ -16554,8 +16647,7 @@
                            (block $args-done
                                   (loop $args
                                         (if (i32.ge_u (local.get $i) (local.get $nvecs))
-                                            (then (br $args-done))
-                                            (else (nop)))
+                                            (then (br $args-done)))
                                         (local.set $vec
                                                    (ref.cast (ref $Vector)
                                                              (array.get $Args (local.get $vectors) (local.get $i))))
@@ -16626,8 +16718,7 @@
               (block $count-done
                      (loop $count
                            (if (ref.eq (local.get $cur) (global.get $null))
-                               (then (br $count-done))
-                               (else (nop)))
+                               (then (br $count-done)))
                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
                                (then (call $raise-pair-expected (local.get $cur))
                                      (unreachable)))
@@ -16658,8 +16749,7 @@
               (block $seed-done
                      (loop $seed
                            (if (i32.ge_u (local.get $i) (local.get $nvecs))
-                               (then (br $seed-done))
-                               (else (nop)))
+                               (then (br $seed-done)))
                            (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
                            (array.set $Args (local.get $vectors) (local.get $i)
                                       (ref.cast (ref $Vector)
@@ -16679,8 +16769,7 @@
                            (block $args-done
                                   (loop $args
                                         (if (i32.ge_u (local.get $i) (local.get $nvecs))
-                                            (then (br $args-done))
-                                            (else (nop)))
+                                            (then (br $args-done)))
                                         (local.set $vec
                                                    (ref.cast (ref $Vector)
                                                              (array.get $Args (local.get $vectors) (local.get $i))))
