@@ -1,6 +1,7 @@
 #lang racket/base
 (require ; version-case
          racket/bool
+         racket/bytes
          racket/fasl
          racket/fixnum
          racket/flonum
@@ -310,6 +311,7 @@
  bytes-copy
  bytes-fill!
  bytes-append
+ bytes-append*
  bytes->immutable-bytes
  byte?
  bytes->list

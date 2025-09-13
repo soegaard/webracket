@@ -28,6 +28,7 @@
   (namespace-require 'racket/mpair)  
   (namespace-require 'racket/symbol)
   (namespace-require 'racket/string)
+  (namespace-require 'racket/bytes)
   (namespace-require 'racket/keyword)            ; keyword->immutable-string
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   (namespace-require 'math/base)

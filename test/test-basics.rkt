@@ -1013,6 +1013,12 @@
                    (equal? (bytes-append (bytes 97 0 98) (bytes 99 0 100))
                            (bytes 97 0 98 99 0 100))))
 
+        (list "bytes-append*"
+              (and (equal? (bytes-append* (list))                      #"")
+                   (equal? (bytes-append* (list #"A"))                 #"A")
+                   (equal? (bytes-append* #"A" (list #"B" #"C"))       #"ABC")
+                   (equal? (bytes-append* #"A" #"B" (list #"C" #"D"))  #"ABCD")))
+
         (list "bytes-copy"
               (let* ([s (bytes-copy #"hello")]
                      [s2 (bytes-copy s)])
