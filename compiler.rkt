@@ -594,9 +594,11 @@
   vector-set/copy 
   
   bytes?  make-bytes  bytes-ref  bytes-set!  bytes-length  subbytes bytes-copy!
-  bytes-copy bytes-fill! bytes-append bytes-append* bytes->immutable-bytes
-  bytes->list list->bytes 
+  bytes-copy bytes-fill!
+  bytes-append bytes-append* bytes-join
+  bytes->immutable-bytes
   bytes->string/utf-8
+  bytes->list list->bytes 
   bytes=? bytes<?
 
   string? string=? string<? string<=? string>? string>=?
@@ -3534,6 +3536,7 @@
 
         [(string-append*)  (inline-prim/variadic sym ae1 1)]
         [(bytes-append*)   (inline-prim/variadic sym ae1 1)]
+        [(bytes-join)      (inline-prim/fixed sym ae1 2)]
 
         [(string-join)
          (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]

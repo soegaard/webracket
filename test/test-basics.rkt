@@ -1019,6 +1019,10 @@
                    (equal? (bytes-append* #"A" (list #"B" #"C"))       #"ABC")
                    (equal? (bytes-append* #"A" #"B" (list #"C" #"D"))  #"ABCD")))
 
+        (list "bytes-join"
+              (equal? (bytes-join '(#"one" #"two" #"three" #"four") #" potato ")
+                      #"one potato two potato three potato four"))
+
         (list "bytes-copy"
               (let* ([s (bytes-copy #"hello")]
                      [s2 (bytes-copy s)])

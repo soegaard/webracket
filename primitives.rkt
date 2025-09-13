@@ -312,6 +312,7 @@
  bytes-fill!
  bytes-append
  bytes-append*
+ bytes-join
  bytes->immutable-bytes
  byte?
  bytes->list
