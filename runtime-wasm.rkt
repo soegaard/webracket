@@ -636,7 +636,7 @@
                        (field $entries  (mut (ref $Array)))  ;; flat array: key0, val0, key1, val1, ...
                        (field $count    (mut i32)))))        ;; number of key/value pairs currently stored
 
-          (type $HashEqualMutableAlways
+          (type $HashEqualAlwaysMutable
                 ; Mutable hash tables are implemented as an open-addressing hash table
                 ; with linear probing.
                 (sub $HashEqual
@@ -17782,69 +17782,95 @@
 
          ; Theory: https://thenumb.at/Hashtables/
 
-         (func $make-empty-hasheq (type $Prim0)
-               (result (ref eq))  ; an (ref $HashEqMutable)
-               
-               (local $entries (ref $Array))
-               ;; Step 1: Allocate an array with 2 × capacity (key/value pairs)
-               ;; Capacity = 16 entries → 32 elements
-               (local.set $entries
-                          (array.new $Array (global.get $missing) (i32.const 32)))
-               ;; Step 2: Construct and return the hashtable struct
-               (struct.new $HashEqMutable
-                           (i32.const 0)                 ;; hash = 0 (placeholder or unused)
-                           (global.get $true)            ;; mutable? = #t
-                           (local.get $entries)          ;; entries array
-                           (i32.const 0)))               ;; count = 0
+         ,@(for/list ([name   '($make-empty-hasheq
+                                $make-empty-hasheqv
+                                $make-empty-hash
+                                $make-empty-hashalw)]
+                      [type   '($HashEqMutable
+                                $HashEqvMutable
+                                $HashEqualMutable
+                                $HashEqualAlwaysMutable)])
+             `(func ,name (type $Prim0)
+                    (result (ref eq))  ; an (ref $HashEqMutable)
+                    
+                    (local $entries (ref $Array))
+                    ;; Step 1: Allocate an array with 2 × capacity (key/value pairs)
+                    ;; Capacity = 16 entries → 32 elements
+                    (local.set $entries
+                               (array.new $Array (global.get $missing) (i32.const 32)))
+                    ;; Step 2: Construct and return the hashtable struct
+                    (struct.new ,type
+                                (i32.const 0)                 ;; hash = 0 (placeholder or unused)
+                                (global.get $true)            ;; mutable? = #t
+                                (local.get $entries)          ;; entries array
+                                (i32.const 0)))               ;; count = 0
+             )
 
          (func $raise-argument-error:pair-expected  (unreachable))
          (func $raise-argument-error:pair-expected1 (unreachable))
          (func $raise-argument-error:pair-expected2 (unreachable))
-         
-         (func $make-hasheq (type $Prim1) ; (make-hasheq [assocs])   - optional without default 
-               (param $assocs (ref eq))   ;; Either $missing or an alist of key/value pairs
-               (result        (ref eq))   ;; an (ref $HashEqMutable)
 
-               (local $alist (ref eq))
-               (local $pair  (ref $Pair))
-               (local $key   (ref eq))
-               (local $val   (ref eq))
-               (local $first (ref eq)) ; of the alist
-               (local $rest  (ref eq)) ; of the alist
-               (local $ht    (ref $HashEqMutable))
 
-               ;; Case 1: No argument => make empty table
-               (if (ref.eq (local.get $assocs) (global.get $missing))
-                   (then (return (call $make-empty-hasheq))))
-               ;; Case 2: Provided association list
-               (local.set $ht    (ref.cast (ref $HashEqMutable)
-                                           (call $make-empty-hasheq)))
-               (local.set $alist (local.get $assocs))
+         ,@(for/list ([make-hash     '($make-hasheq
+                                       $make-hasheqv
+                                       $make-hash
+                                       $make-hashalw)]
+                      [make-empty    '($make-empty-hasheq
+                                       $make-empty-hasheqv
+                                       $make-empty-hash
+                                       $make-empty-hashalw)]                      
+                      [type          '($HashEqMutable
+                                       $HashEqvMutable
+                                       $HashEqualMutable
+                                       $HashEqualAlwaysMutable)]
+                      [set!/checked  '($hasheq-set!/mutable/checked
+                                       $hasheqv-set!/mutable/checked
+                                       $hash-set!/mutable/checked
+                                       $hashalw-set!/mutable/checked)])
+             `(func ,make-hash (type $Prim1) ; (make-hasheq [assocs])   - optional without default 
+                    (param $assocs (ref eq))   ;; Either $missing or an alist of key/value pairs
+                    (result        (ref eq))   ;; an (ref $HashEqMutable)
 
-               (block $done
-                      (loop $walk
-                            ;; Stop when list is null
-                            (br_if $done (ref.eq (local.get $alist) (global.get $null)))
-                            ;; Must be a pair
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $alist)))
-                                (then (call $raise-argument-error:pair-expected1 (local.get $alist)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $alist)))
-                            ;; Extract car and cdr of current pair
-                            (local.set $first (struct.get $Pair $a (local.get $pair))) ;; first = key/value pair
-                            (local.set $rest  (struct.get $Pair $d (local.get $pair))) ;; rest  = remaining pairings
-                            ;; Validate first is a pair (key . value)
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $first)))
-                                (then (call $raise-argument-error:pair-expected2 (local.get $first)) (unreachable)))
-                            ;; Extract key and value from nested pair
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $first)))
-                            (local.set $key  (struct.get $Pair $a (local.get $pair))) ;; key
-                            (local.set $val  (struct.get $Pair $d (local.get $pair))) ;; value
-                            ;; Insert into table
-                            (call $hasheq-set!/mutable/checked (local.get $ht) (local.get $key) (local.get $val))
-                            ;; Move to next element in alist
-                            (local.set $alist (local.get $rest))
-                            (br $walk)))
-               (local.get $ht))
+                    (local $alist (ref eq))
+                    (local $pair  (ref $Pair))
+                    (local $key   (ref eq))
+                    (local $val   (ref eq))
+                    (local $first (ref eq)) ; of the alist
+                    (local $rest  (ref eq)) ; of the alist
+                    (local $ht    (ref ,type))
+
+                    ;; Case 1: No argument => make empty table
+                    (if (ref.eq (local.get $assocs) (global.get $missing))
+                        (then (return (call ,make-empty))))
+                    ;; Case 2: Provided association list
+                    (local.set $ht    (ref.cast (ref ,type)
+                                                (call ,make-empty)))
+                    (local.set $alist (local.get $assocs))
+
+                    (block $done
+                           (loop $walk
+                                 ;; Stop when list is null
+                                 (br_if $done (ref.eq (local.get $alist) (global.get $null)))
+                                 ;; Must be a pair
+                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $alist)))
+                                     (then (call $raise-argument-error:pair-expected1 (local.get $alist)) (unreachable)))
+                                 (local.set $pair (ref.cast (ref $Pair) (local.get $alist)))
+                                 ;; Extract car and cdr of current pair
+                                 (local.set $first (struct.get $Pair $a (local.get $pair))) ;; first = key/value pair
+                                 (local.set $rest  (struct.get $Pair $d (local.get $pair))) ;; rest  = remaining pairings
+                                 ;; Validate first is a pair (key . value)
+                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $first)))
+                                     (then (call $raise-argument-error:pair-expected2 (local.get $first)) (unreachable)))
+                                 ;; Extract key and value from nested pair
+                                 (local.set $pair (ref.cast (ref $Pair) (local.get $first)))
+                                 (local.set $key  (struct.get $Pair $a (local.get $pair))) ;; key
+                                 (local.set $val  (struct.get $Pair $d (local.get $pair))) ;; value
+                                 ;; Insert into table
+                                 (call ,set!/checked (local.get $ht) (local.get $key) (local.get $val))
+                                 ;; Move to next element in alist
+                                 (local.set $alist (local.get $rest))
+                                 (br $walk)))
+                    (local.get $ht)))
          
 
          (func $raise-argument-error:hash-expected (unreachable))
@@ -17998,79 +18024,96 @@
                ;; Return void
                (global.get $void))
 
-         (func $raise-hasheq-insert:table-full (unreachable))
-         
-         (func $hasheq-set!/mutable/checked
-               (param $table (ref $HashEqMutable))
-               (param $key   (ref eq))
-               (param $val   (ref eq))
+         (func $raise-hash-insert:table-full (unreachable))
 
-               (local $entries        (ref $Array))
-               (local $capacity       i32)
-               (local $hash           i32)
-               (local $index          i32)
-               (local $step           i32)
-               (local $slot           i32)
-               (local $k              (ref eq))
-               (local $first-tombstone i32)
 
-               ;; Maybe resize
-               (local.set $table    (call $maybe-resize-hasheq (local.get $table)))
-               ;; Get entries and capacity
-               (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
-               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-               ;; Compute initial hash/index
-               (local.set $hash  (call $eq-hash/i32 (local.get $key)))
-               (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step  (i32.const 0))
-               ;; No tombstone seen yet
-               (local.set $first-tombstone (i32.const -1))
-               (block $done
-                      (block $full
-                             (loop $probe
-                                   (br_if $full (i32.ge_u (local.get $step) (local.get $capacity)))
-                                   ;; Compute probe slot = 2 * ((index + step) % capacity)
-                                   (local.set $slot (i32.shl
-                                               (i32.rem_u (i32.add (local.get $index) (local.get $step))
-                                                          (local.get $capacity))
-                                               (i32.const 1)))
-                                   ;; Load key at slot
-                                   (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
-                                   ;; First tombstone — record slot
-                                   (if (ref.eq (local.get $k) (global.get $tombstone))
-                                       (then (if (i32.eq (local.get $first-tombstone) (i32.const -1))
-                                                 (then (local.set $first-tombstone (local.get $slot))))))
-                                   ;; Empty — insert into tombstone if available, else here
-                                   (if (ref.eq (local.get $k) (global.get $missing))
-                                       (then
-                                        (local.set $slot
-                                                   (select
-                                                    (local.get $slot)
-                                                    (local.get $first-tombstone)
-                                                    (i32.eq (local.get $first-tombstone) (i32.const -1))))
+         ,@(for/list ([set!/checked     '($hasheq-set!/mutable/checked
+                                          $hasheqv-set!/mutable/checked
+                                          $hash-set!/mutable/checked
+                                          $hashalw-set!/mutable/checked)]                      
+                      [make-empty       '($make-empty-hasheq
+                                          $make-empty-hasheqv
+                                          $make-empty-hash
+                                          $make-empty-hashalw)]                                            
+                      [type             '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]                      
+                      [maybe-resize     '($maybe-resize-hasheq
+                                          $maybe-resize-hasheqv
+                                          $maybe-resize-hashequal
+                                          $maybe-resize-hashalw)])
+             `(func ,set!/checked
+                    (param $table (ref ,type))
+                    (param $key   (ref eq))
+                    (param $val   (ref eq))
 
-                                        (array.set $Array (local.get $entries) (local.get $slot) (local.get $key))
-                                        (array.set $Array
-                                                   (local.get $entries)
-                                                   (i32.add (local.get $slot) (i32.const 1))
-                                                   (local.get $val))
-                                        (struct.set $HashEqMutable $count
-                                                    (local.get $table)
-                                                    (i32.add (struct.get $HashEqMutable $count (local.get $table)) (i32.const 1)))
-                                        (br $done)))
-                                   ;; Key match — overwrite value
-                                   (if (ref.eq (local.get $k) (local.get $key))
-                                       (then
-                                        (array.set $Array
-                                                   (local.get $entries)
-                                                   (i32.add (local.get $slot) (i32.const 1))
-                                                   (local.get $val))
-                                        (br $done)))
-                                   ;; Next probe
-                                   (local.set $step (i32.add (local.get $step) (i32.const 1)))
-                                   (br $probe)))
-                      ;; Table full (no missing or tombstone slots available)
-                      (call $raise-hasheq-insert:table-full)))
+                    (local $entries        (ref $Array))
+                    (local $capacity       i32)
+                    (local $hash           i32)
+                    (local $index          i32)
+                    (local $step           i32)
+                    (local $slot           i32)
+                    (local $k              (ref eq))
+                    (local $first-tombstone i32)
+
+                    ;; Maybe resize
+                    (local.set $table    (call ,maybe-resize (local.get $table)))
+                    ;; Get entries and capacity
+                    (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                    ;; Compute initial hash/index
+                    (local.set $hash  (call $eq-hash/i32 (local.get $key))) ; XXX
+                    (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
+                    (local.set $step  (i32.const 0))
+                    ;; No tombstone seen yet
+                    (local.set $first-tombstone (i32.const -1))
+                    (block $done
+                           (block $full
+                                  (loop $probe
+                                        (br_if $full (i32.ge_u (local.get $step) (local.get $capacity)))
+                                        ;; Compute probe slot = 2 * ((index + step) % capacity)
+                                        (local.set $slot (i32.shl
+                                                          (i32.rem_u (i32.add (local.get $index) (local.get $step))
+                                                                     (local.get $capacity))
+                                                          (i32.const 1)))
+                                        ;; Load key at slot
+                                        (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+                                        ;; First tombstone — record slot
+                                        (if (ref.eq (local.get $k) (global.get $tombstone))
+                                            (then (if (i32.eq (local.get $first-tombstone) (i32.const -1))
+                                                      (then (local.set $first-tombstone (local.get $slot))))))
+                                        ;; Empty — insert into tombstone if available, else here
+                                        (if (ref.eq (local.get $k) (global.get $missing))
+                                            (then
+                                             (local.set $slot
+                                                        (select
+                                                         (local.get $slot)
+                                                         (local.get $first-tombstone)
+                                                         (i32.eq (local.get $first-tombstone) (i32.const -1))))
+
+                                             (array.set $Array (local.get $entries) (local.get $slot) (local.get $key))
+                                             (array.set $Array
+                                                        (local.get $entries)
+                                                        (i32.add (local.get $slot) (i32.const 1))
+                                                        (local.get $val))
+                                             (struct.set ,type $count
+                                                         (local.get $table)
+                                                         (i32.add (struct.get ,type $count (local.get $table)) (i32.const 1)))
+                                             (br $done)))
+                                        ;; Key match — overwrite value
+                                        (if (ref.eq (local.get $k) (local.get $key))
+                                            (then
+                                             (array.set $Array
+                                                        (local.get $entries)
+                                                        (i32.add (local.get $slot) (i32.const 1))
+                                                        (local.get $val))
+                                             (br $done)))
+                                        ;; Next probe
+                                        (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                        (br $probe)))
+                           ;; Table full (no missing or tombstone slots available)
+                           (call $raise-hash-insert:table-full))))
 
 
 
@@ -18154,73 +18197,97 @@
                             (local.set $step (i32.add (local.get $step) (i32.const 1)))
                             (br $probe))))
 
-         (func $hasheq-resize
-               (param $old (ref $HashEqMutable))
-               (result (ref $HashEqMutable))
+         ,@(for/list ([type             '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]
+                      [resize           '($hasheq-resize
+                                          $hasheqv-resize
+                                          $hashequal-resize
+                                          $hashalw-resize)]                      
+                      [set!/checked     '($hasheq-set!/mutable/checked
+                                          $hasheqv-set!/mutable/checked
+                                          $hash-set!/mutable/checked
+                                          $hashalw-set!/mutable/checked)])
+             `(func ,resize
+                    (param $old (ref ,type))
+                    (result (ref ,type))
 
-               (local $old-entries (ref $Array))
-               (local $old-cap     i32)
-               (local $new-cap     i32)
-               (local $new-array   (ref $Array))
-               (local $new-table   (ref $HashEqMutable))
-               (local $i           i32)
-               (local $len         i32)
-               (local $key         (ref eq))
-               (local $val         (ref eq))
+                    (local $old-entries (ref $Array))
+                    (local $old-cap     i32)
+                    (local $new-cap     i32)
+                    (local $new-array   (ref $Array))
+                    (local $new-table   (ref ,type))
+                    (local $i           i32)
+                    (local $len         i32)
+                    (local $key         (ref eq))
+                    (local $val         (ref eq))
 
-               ;; Get old table size and entries
-               (local.set $old-entries (struct.get $HashEqMutable $entries (local.get $old)))
-               (local.set $old-cap     (i32.div_u (array.len (local.get $old-entries)) (i32.const 2)))
-               (local.set $new-cap     (i32.mul (local.get $old-cap) (i32.const 2)))               
-               ;; Allocate new entries array (2 * new-capacity), all set to $missing
-               (local.set $new-array (array.new $Array (global.get $missing)
-                                                (i32.mul (local.get $new-cap) (i32.const 2))))
-               ;; Create new empty table (copy mutability from old table)
-               (local.set $new-table
-                          (struct.new $HashEqMutable
-                                      (i32.const 0)
-                                      (struct.get $HashEqMutable $mutable? (local.get $old))
-                                      (local.get $new-array)
-                                      (i32.const 0)))
-               ;; Reinsert valid key-value pairs
-               (local.set $i   (i32.const 0))
-               (local.set $len (array.len (local.get $old-entries)))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                            ;; Load key and value
-                            (local.set $key (array.get $Array (local.get $old-entries) (local.get $i)))
-                            (local.set $val (array.get $Array (local.get $old-entries)
-                                                       (i32.add (local.get $i) (i32.const 1))))
-                            ;; Reinsert only if key is not $missing or $tombstone
-                            (if (i32.eqz (ref.eq (local.get $key) (global.get $missing)))
-                                (then (if (i32.eqz (ref.eq (local.get $key) (global.get $tombstone)))
-                                          (then
-                                           (call $hasheq-set!/mutable/checked
-                                                 (local.get $new-table)
-                                                 (local.get $key)
-                                                 (local.get $val))))))
-                            ;; Next pair
-                            (local.set $i (i32.add (local.get $i) (i32.const 2)))
-                            (br $loop)))
-               (local.get $new-table))
+                    ;; Get old table size and entries
+                    (local.set $old-entries (struct.get ,type $entries (local.get $old)))
+                    (local.set $old-cap     (i32.div_u (array.len (local.get $old-entries)) (i32.const 2)))
+                    (local.set $new-cap     (i32.mul (local.get $old-cap) (i32.const 2)))               
+                    ;; Allocate new entries array (2 * new-capacity), all set to $missing
+                    (local.set $new-array (array.new $Array (global.get $missing)
+                                                     (i32.mul (local.get $new-cap) (i32.const 2))))
+                    ;; Create new empty table (copy mutability from old table)
+                    (local.set $new-table
+                               (struct.new ,type
+                                           (i32.const 0)
+                                           (struct.get ,type $mutable? (local.get $old))
+                                           (local.get $new-array)
+                                           (i32.const 0)))
+                    ;; Reinsert valid key-value pairs
+                    (local.set $i   (i32.const 0))
+                    (local.set $len (array.len (local.get $old-entries)))
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                 ;; Load key and value
+                                 (local.set $key (array.get $Array (local.get $old-entries) (local.get $i)))
+                                 (local.set $val (array.get $Array (local.get $old-entries)
+                                                            (i32.add (local.get $i) (i32.const 1))))
+                                 ;; Reinsert only if key is not $missing or $tombstone
+                                 (if (i32.eqz (ref.eq (local.get $key) (global.get $missing)))
+                                     (then (if (i32.eqz (ref.eq (local.get $key) (global.get $tombstone)))
+                                               (then
+                                                (call ,set!/checked
+                                                      (local.get $new-table)
+                                                      (local.get $key)
+                                                      (local.get $val))))))
+                                 ;; Next pair
+                                 (local.set $i (i32.add (local.get $i) (i32.const 2)))
+                                 (br $loop)))
+                    (local.get $new-table)))
 
-         (func $maybe-resize-hasheq
-               (param $table (ref $HashEqMutable))
-               (result (ref $HashEqMutable))
+         ,@(for/list ([type             '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]                      
+                      [resize           '($hasheq-resize
+                                          $hasheqv-resize
+                                          $hashequal-resize
+                                          $hashalw-resize)]
+                      [maybe-resize     '($maybe-resize-hasheq
+                                          $maybe-resize-hasheqv
+                                          $maybe-resize-hashequal
+                                          $maybe-resize-hashalw)])
+             `(func ,maybe-resize
+                    (param $table (ref ,type))
+                    (result (ref ,type))
 
-               (local $entries  (ref $Array))
-               (local $capacity i32)
-               (local $count    i32)
-               ;; Get fields
-               (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
-               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-               (local.set $count    (struct.get $HashEqMutable $count (local.get $table)))
-               ;; Resize if count ≥ capacity / 2
-               (if (i32.ge_u (local.get $count)
-                             (i32.shr_u (local.get $capacity) (i32.const 1)))
-                   (then (return (call $hasheq-resize (local.get $table)))))
-               (local.get $table))
+                    (local $entries  (ref $Array))
+                    (local $capacity i32)
+                    (local $count    i32)
+                    ;; Get fields
+                    (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                    (local.set $count    (struct.get ,type $count (local.get $table)))
+                    ;; Resize if count ≥ capacity / 2
+                    (if (i32.ge_u (local.get $count)
+                                  (i32.shr_u (local.get $capacity) (i32.const 1)))
+                        (then (return (call ,resize (local.get $table)))))
+                    (local.get $table)))
 
 
          (func $hash-has-key? (type $Prim2)

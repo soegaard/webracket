@@ -642,7 +642,11 @@
   s-exp->fasl
   fasl->s-exp
 
-  make-empty-hasheq ; not in Racket
+  make-empty-hasheq  ; not in Racket
+  make-empty-hasheqv ; not in Racket
+  make-empty-hash    ; not in Racket
+  make-empty-hashalw ; not in Racket
+  
   make-hasheq
   hash?
   hash-ref

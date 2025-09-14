@@ -640,8 +640,10 @@
 (define (unboxed b)      (boxed-x b))
 (define (set-boxed! b x) (set-boxed-x! b x))
 
-(define (make-empty-hasheq)
-  (make-hasheq))
+(define (make-empty-hash)    (make-hash))
+(define (make-empty-hasheq)  (make-hasheq))
+(define (make-empty-hasheqv) (make-hasheqv))
+(define (make-empty-hashalw) (make-hashalw))
 
 (define (make-void) (void))
 
