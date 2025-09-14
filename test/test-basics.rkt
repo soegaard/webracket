@@ -2138,7 +2138,19 @@
                   (let ([expected (list (cons 1 'a) (cons 2 'b) (cons 3 'c))])
                     (and (equal? (sort (hash->list h)    <<) expected)
                          (equal? (sort (hash->list h #t) <<) expected))))))
-        
+
+        (list "hash-for-each"
+              (let ([<< (λ (x y) (< (car x) (car y)))])
+                (let ([h   (make-hasheq)]
+                      [acc (box '())])
+                  (hash-set! h 1 'a)
+                  (hash-set! h 2 'b)
+                  (hash-set! h 3 'c)
+                  (let ([r (hash-for-each h (λ (k v)
+                                              (set-box! acc (cons (cons k v) (unbox acc)))))]
+                        [expected (list (cons 1 'a) (cons 2 'b) (cons 3 'c))])
+                    (and (eq? r (void))
+                         (equal? (sort (unbox acc) <<) expected))))))
 
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]

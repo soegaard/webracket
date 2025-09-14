@@ -19004,6 +19004,141 @@
                     (local.get $acc)))
 
         
+         ;; hash-for-each : apply proc to each key/value in a hash table.
+         ;; The try-order? argument is accepted but ignored.
+         (func $hash-for-each (type $Prim3)
+               (param $ht   (ref eq))   ;; hash table
+               (param $proc (ref eq))   ;; procedure
+               (param $try  (ref eq))   ;; optional try-order? (default #f)
+               (result      (ref eq))
+
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
+                         (unreachable)))
+
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-for-each (local.get $ht) (local.get $proc)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-for-each (local.get $ht) (local.get $proc)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-for-each (local.get $ht) (local.get $proc)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-for-each (local.get $ht) (local.get $proc)))))
+               (unreachable))
+
+        ,@(for/list ([hash-for-each '($hasheq-for-each
+                                      $hasheqv-for-each
+                                      $hashequal-for-each
+                                      $hashalw-for-each)]
+                     [hash-for-each/checked '($hasheq-for-each/checked
+                                              $hasheqv-for-each/checked
+                                              $hashequal-for-each/checked
+                                              $hashalw-for-each/checked)]
+                     [type '($HashEqMutable
+                             $HashEqvMutable
+                             $HashEqualMutable
+                             $HashEqualAlwaysMutable)]
+                     [raise-expected '($raise-argument-error:hasheq-expected
+                                       $raise-argument-error:hasheqv-expected
+                                       $raise-argument-error:hash-expected
+                                       $raise-argument-error:hashalw-expected)])
+            `(func ,hash-for-each
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (result      (ref eq))
+
+                   (local $table (ref ,type))
+                   (local $f     (ref $Procedure))
+
+                   ;; Check that ht is expected table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise-expected (local.get $ht))
+                             (unreachable)))
+
+                   ;; Ensure proc is a procedure
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                             (unreachable)))
+
+                   ;; Decode
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   (local.set $f     (ref.cast (ref $Procedure) (local.get $proc)))
+
+                   ;; Delegate to checked implementation
+                   (return_call ,hash-for-each/checked
+                                (local.get $table)
+                                (local.get $f))))
+
+        ,@(for/list ([hash-for-each/checked '($hasheq-for-each/checked
+                                              $hasheqv-for-each/checked
+                                              $hashequal-for-each/checked
+                                              $hashalw-for-each/checked)]
+                     [type '($HashEqMutable
+                             $HashEqvMutable
+                             $HashEqualMutable
+                             $HashEqualAlwaysMutable)])
+            `(func ,hash-for-each/checked
+                   (param $table (ref ,type))
+                   (param $f     (ref $Procedure))
+                   (result       (ref eq))
+
+                   (local $finv    (ref $ProcedureInvoker))
+                   (local $entries (ref $Array))
+                   (local $capacity i32)
+                   (local $i       i32)
+                   (local $key     (ref eq))
+                   (local $val     (ref eq))
+                   (local $call    (ref $Args))
+
+                   ;; Fetch procedure invoker and table fields
+                   (local.set $finv   (struct.get $Procedure $invoke (local.get $f)))
+                   (local.set $entries (struct.get ,type $entries (local.get $table)))
+                   (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                   (local.set $i       (i32.const 0))
+                   (local.set $call    (array.new_fixed $Args 2 (global.get $null) (global.get $null)))
+
+                   (block $done
+                          (loop $loop
+                                (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+
+                                ;; Load key
+                                (local.set $key (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.shl (local.get $i) (i32.const 1))))
+                                ;; Skip empty or tombstone slots
+                                (if (ref.eq (local.get $key) (global.get $missing))
+                                    (then
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop)))
+                                (if (ref.eq (local.get $key) (global.get $tombstone))
+                                    (then
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop)))
+
+                                ;; Load value
+                                (local.set $val (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                                    (i32.const 1))))
+
+                                ;; Prepare call arguments
+                                (array.set $Args (local.get $call) (i32.const 0) (local.get $key))
+                                (array.set $Args (local.get $call) (i32.const 1) (local.get $val))
+
+                                ;; Apply procedure and drop result
+                                (drop (call_ref $ProcedureInvoker
+                                                (local.get $f)
+                                                (local.get $call)
+                                                (local.get $finv)))
+
+                                (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                (br $loop)))
+
+                   (global.get $void)))
+
+
          ;;;
          ;;; HASH CODES
          ;;;
