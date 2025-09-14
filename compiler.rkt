@@ -665,7 +665,7 @@
   hash-has-key?
   hash-empty?
   hash-count
-
+  hash->list
   
   eq-hash-code
   eqv-hash-code
@@ -3430,6 +3430,8 @@
          [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
+         [(hash->list)                 (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
+         
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2

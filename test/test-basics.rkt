@@ -2129,6 +2129,17 @@
                        (hash-set! h 'b 2)
                        (equal? (hash-count h) 2)))))
 
+        (list "hash->list"
+              (let ([<< (λ (x y) (< (car x) (car y)))])
+                (let ([h (make-hasheq)])
+                  (hash-set! h 1 'a)
+                  (hash-set! h 2 'b)
+                  (hash-set! h 3 'c)
+                  (let ([expected (list (cons 1 'a) (cons 2 'b) (cons 3 'c))])
+                    (and (equal? (sort (hash->list h)    <<) expected)
+                         (equal? (sort (hash->list h #t) <<) expected))))))
+        
+
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])

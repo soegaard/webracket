@@ -433,7 +433,6 @@
  ; memf
  remove  remf  remq  remv  remw
  remove* remf* remq* remv* remw*
- ; sort
 
  argmax argmin
  group-by
@@ -494,6 +493,7 @@
  hash-has-key?
  hash-empty?
  hash-count
+ hash->list
 
  make-empty-hasheq
  make-empty-hasheqv
