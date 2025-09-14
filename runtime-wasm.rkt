@@ -18116,11 +18116,13 @@
                     ; return void
                     (global.get $void)))
          
+         
          ,@(for/list ([raise-expected '($raise-argument-error:mutable-hasheq-expected
                                         $raise-argument-error:mutable-hasheqv-expected
                                         $raise-argument-error:mutable-hash-expected
                                         $raise-argument-error:mutable-hashalw-expected)])
              `(func ,raise-expected (unreachable)))
+
 
          (func $raise-hash-insert:table-full (unreachable))
 
@@ -18217,84 +18219,205 @@
 
          (func $raise-argument-error:hasheq-mutable-expected (unreachable))
          
+         ;; (func $hash-remove! (type $Prim2)
+         ;;       (param $ht  (ref eq))
+         ;;       (param $key (ref eq))
+         ;;       (result     (ref eq))
+         ;;       (call $hash-remove!/mutable
+         ;;             (local.get $ht) (local.get $key)))
+         
+         ;; (func $hash-remove!/mutable
+         ;;       (param $ht  (ref eq))
+         ;;       (param $key (ref eq))
+         ;;       (result     (ref eq))
+
+         ;;       (local $table (ref $HashEqMutable))
+               
+         ;;       ;; --- Type checks ---
+         ;;       (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
+         ;;           (then
+         ;;            (call $raise-argument-error:hasheq-mutable-expected (local.get $ht))
+         ;;            (unreachable)))
+         ;;       ;; --- Decode ---
+         ;;       (local.set $table (ref.cast (ref $HashEqMutable) (local.get $ht)))
+         ;;       ;; --- Delegate ---
+         ;;       (call $hash-remove!/mutable/checked
+         ;;             (local.get $table)
+         ;;             (local.get $key))
+         ;;       (global.get $void))
+
+         ;; (func $hash-remove!/mutable/checked
+         ;;       ; Note: (global $tombstone) must be different from valid keys and $missing.
+         ;;       (param $ht  (ref $HashEqMutable))
+         ;;       (param $key (ref eq))
+
+         ;;       (local $entries  (ref $Array))
+         ;;       (local $capacity i32)
+         ;;       (local $hash     i32)
+         ;;       (local $index    i32)
+         ;;       (local $step     i32)
+         ;;       (local $k        (ref eq))
+         ;;       (local $slot     i32)
+
+         ;;       ;; Get entries and capacity
+         ;;       (local.set $entries  (struct.get $HashEqMutable $entries (local.get $ht)))
+         ;;       (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+         ;;       ;; Compute hash and initial index
+         ;;       (local.set $hash  (call $eq-hash/i32 (local.get $key)))
+         ;;       (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
+         ;;       (local.set $step  (i32.const 0))
+         ;;       ;; Probe loop
+         ;;       (block $done
+         ;;              (loop $probe
+         ;;                    ;; Stop if probing exceeds capacity
+         ;;                    (br_if $done (i32.ge_u (local.get $step) (local.get $capacity)))
+         ;;                    ;; Compute probe slot (2 * index)
+         ;;                    (local.set $slot (i32.shl
+         ;;                                      (i32.rem_u (i32.add (local.get $index) (local.get $step))
+         ;;                                                 (local.get $capacity))
+         ;;                                      (i32.const 1)))
+         ;;                    ;; Load key from slot
+         ;;                    (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+         ;;                    ;; Stop if slot is missing
+         ;;                    (br_if $done (ref.eq (local.get $k) (global.get $missing)))
+         ;;                    ;; If key matches, remove
+         ;;                    (if (ref.eq (local.get $k) (local.get $key))
+         ;;                        (then
+         ;;                         ;; Replace key and value with tombstone
+         ;;                         (array.set $Array (local.get $entries) (local.get $slot) (global.get $tombstone))
+         ;;                         (array.set $Array (local.get $entries)
+         ;;                                    (i32.add (local.get $slot) (i32.const 1))
+         ;;                                    (global.get $tombstone))
+         ;;                         ;; Decrement count
+         ;;                         (struct.set $HashEqMutable $count
+         ;;                                     (local.get $ht)
+         ;;                                     (i32.sub (struct.get $HashEqMutable $count (local.get $ht)) (i32.const 1)))
+         ;;                         (br $done)))
+         ;;                    ;; Step to next slot
+         ;;                    (local.set $step (i32.add (local.get $step) (i32.const 1)))
+         ;;                    (br $probe))))
+
+
          (func $hash-remove! (type $Prim2)
                (param $ht  (ref eq))
                (param $key (ref eq))
                (result     (ref eq))
-               (call $hash-remove!/mutable
-                     (local.get $ht) (local.get $key)))
+
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
+                         (unreachable)))
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-remove!
+                                       (local.get $ht) (local.get $key)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-remove!
+                                       (local.get $ht) (local.get $key)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-remove!
+                                       (local.get $ht) (local.get $key)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-remove!
+                                       (local.get $ht) (local.get $key)))))
+               (unreachable))
+
+         ,@(for/list ([hash-remove     '($hasheq-remove!
+                                        $hasheqv-remove!
+                                        $hashequal-remove!
+                                        $hashalw-remove!)]
+                      [remove!/checked '($hasheq-remove!/mutable/checked
+                                         $hasheqv-remove!/mutable/checked
+                                         $hash-remove!/mutable/checked
+                                         $hashalw-remove!/mutable/checked)]
+                      [type            '($HashEqMutable
+                                         $HashEqvMutable
+                                         $HashEqualMutable
+                                         $HashEqualAlwaysMutable)]
+                      [raise-expected  '($raise-argument-error:mutable-hasheq-expected
+                                         $raise-argument-error:mutable-hasheqv-expected
+                                         $raise-argument-error:mutable-hash-expected
+                                         $raise-argument-error:mutable-hashalw-expected)])
+            `(func ,hash-remove
+                   (param $ht  (ref eq))
+                   (param $key (ref eq))
+                   (result     (ref eq))
+
+                   (local $table (ref ,type))
+
+                   ;; Check that ht is expected table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise-expected (local.get $ht))
+                             (unreachable)))
+                   ;; Decode
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   ;; Delegate
+                   (call ,remove!/checked (local.get $table) (local.get $key))
+                   ;; Return void
+                   (global.get $void)))
+
+         ,@(for/list ([remove!/checked '($hasheq-remove!/mutable/checked
+                                         $hasheqv-remove!/mutable/checked
+                                         $hash-remove!/mutable/checked
+                                         $hashalw-remove!/mutable/checked)]
+                      [type            '($HashEqMutable
+                                         $HashEqvMutable
+                                         $HashEqualMutable
+                                         $HashEqualAlwaysMutable)])
+             `(func ,remove!/checked
+                    ;; Note: (global $tombstone) must be different from valid keys and $missing.
+                    (param $ht  (ref ,type))
+                    (param $key (ref eq))
+
+                    (local $entries  (ref $Array))
+                    (local $capacity i32)
+                    (local $hash     i32)
+                    (local $index    i32)
+                    (local $step     i32)
+                    (local $k        (ref eq))
+                    (local $slot     i32)
+
+                    ;; Get entries and capacity
+                    (local.set $entries  (struct.get ,type $entries (local.get $ht)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                    ;; Compute hash and initial index
+                    (local.set $hash  (call $eq-hash/i32 (local.get $key))) ; XXX
+                    (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
+                    (local.set $step  (i32.const 0))
+                    ;; Probe loop
+                    (block $done
+                           (loop $probe
+                                 ;; Stop if probing exceeds capacity
+                                 (br_if $done (i32.ge_u (local.get $step) (local.get $capacity)))
+                                 ;; Compute probe slot (2 * index)
+                                 (local.set $slot (i32.shl
+                                                   (i32.rem_u (i32.add (local.get $index) (local.get $step))
+                                                              (local.get $capacity))
+                                                   (i32.const 1)))
+                                 ;; Load key from slot
+                                 (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+                                 ;; Stop if slot is missing
+                                 (br_if $done (ref.eq (local.get $k) (global.get $missing)))
+                                 ;; If key matches, remove
+                                 (if (ref.eq (local.get $k) (local.get $key))
+                                     (then
+                                      ;; Replace key and value with tombstone
+                                      (array.set $Array (local.get $entries) (local.get $slot) (global.get $tombstone))
+                                      (array.set $Array (local.get $entries)
+                                                 (i32.add (local.get $slot) (i32.const 1))
+                                                 (global.get $tombstone))
+                                      ;; Decrement count
+                                      (struct.set ,type $count
+                                                  (local.get $ht)
+                                                  (i32.sub (struct.get ,type $count (local.get $ht))
+                                                           (i32.const 1)))
+                                      (br $done)))
+                                 ;; Step to next slot
+                                 (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                 (br $probe)))))
+
+
          
-         (func $hash-remove!/mutable
-               (param $ht  (ref eq))
-               (param $key (ref eq))
-               (result     (ref eq))
-
-               (local $table (ref $HashEqMutable))
-               
-               ;; --- Type checks ---
-               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
-                   (then
-                    (call $raise-argument-error:hasheq-mutable-expected (local.get $ht))
-                    (unreachable)))
-               ;; --- Decode ---
-               (local.set $table (ref.cast (ref $HashEqMutable) (local.get $ht)))
-               ;; --- Delegate ---
-               (call $hash-remove!/mutable/checked
-                     (local.get $table)
-                     (local.get $key))
-               (global.get $void))
-
-         (func $hash-remove!/mutable/checked
-               ; Note: (global $tombstone) must be different from valid keys and $missing.
-               (param $ht  (ref $HashEqMutable))
-               (param $key (ref eq))
-
-               (local $entries  (ref $Array))
-               (local $capacity i32)
-               (local $hash     i32)
-               (local $index    i32)
-               (local $step     i32)
-               (local $k        (ref eq))
-               (local $slot     i32)
-
-               ;; Get entries and capacity
-               (local.set $entries  (struct.get $HashEqMutable $entries (local.get $ht)))
-               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-               ;; Compute hash and initial index
-               (local.set $hash  (call $eq-hash/i32 (local.get $key)))
-               (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step  (i32.const 0))
-               ;; Probe loop
-               (block $done
-                      (loop $probe
-                            ;; Stop if probing exceeds capacity
-                            (br_if $done (i32.ge_u (local.get $step) (local.get $capacity)))
-                            ;; Compute probe slot (2 * index)
-                            (local.set $slot (i32.shl
-                                              (i32.rem_u (i32.add (local.get $index) (local.get $step))
-                                                         (local.get $capacity))
-                                              (i32.const 1)))
-                            ;; Load key from slot
-                            (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
-                            ;; Stop if slot is missing
-                            (br_if $done (ref.eq (local.get $k) (global.get $missing)))
-                            ;; If key matches, remove
-                            (if (ref.eq (local.get $k) (local.get $key))
-                                (then
-                                 ;; Replace key and value with tombstone
-                                 (array.set $Array (local.get $entries) (local.get $slot) (global.get $tombstone))
-                                 (array.set $Array (local.get $entries)
-                                            (i32.add (local.get $slot) (i32.const 1))
-                                            (global.get $tombstone))
-                                 ;; Decrement count
-                                 (struct.set $HashEqMutable $count
-                                             (local.get $ht)
-                                             (i32.sub (struct.get $HashEqMutable $count (local.get $ht)) (i32.const 1)))
-                                 (br $done)))
-                            ;; Step to next slot
-                            (local.set $step (i32.add (local.get $step) (i32.const 1)))
-                            (br $probe))))
-
          ,@(for/list ([type             '($HashEqMutable
                                           $HashEqvMutable
                                           $HashEqualMutable
@@ -23448,7 +23571,8 @@
                      
                      (local.set $tab (struct.get $Namespace $table (local.get $ns)))
                       ; returns void
-                     (call $hash-remove!/mutable (local.get $tab) (local.get $sym)))
+                     (call $hasheq-remove!/mutable/checked (local.get $tab) (local.get $sym))
+                     (global.get $void))
 
 
                (func $namespace-has-key?
