@@ -18566,32 +18566,85 @@
                ;; Not found: return #f
                (global.get $false))
 
+
          (func $hash-clear! (type $Prim1)
                (param $ht (ref eq))
                (result    (ref eq))
-               ;; Type check
-               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
-                   (then (call $raise-argument-error:hasheq-mutable-expected (local.get $ht))
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
                          (unreachable)))
-               ;; Cast and delegate
-               (call $eqhash-clear!/checked
-                     (ref.cast (ref $HashEqMutable) (local.get $ht)))
-               (global.get $void))
 
-         (func $eqhash-clear!/checked
-               (param $ht (ref $HashEqMutable))
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-clear!
+                                       (local.get $ht)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-clear!
+                                       (local.get $ht)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-clear!
+                                       (local.get $ht)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-clear!
+                                       (local.get $ht)))))
+               (unreachable))
 
-               (local $new-entries (ref $Array))
-               ;; Allocate fresh array of default size (16 entries = 32 slots)
-               (local.set $new-entries (array.new $Array (global.get $missing) (i32.const 32)))
-               ;; Replace entries array
-               (struct.set $HashEqMutable $entries (local.get $ht) (local.get $new-entries))
-               ;; Reset count to 0
-               (struct.set $HashEqMutable $count (local.get $ht) (i32.const 0)))
+         
+         ,@(for/list ([hash-clear     '($hasheq-clear!
+                                        $hasheqv-clear!
+                                        $hashequal-clear!
+                                        $hashalw-clear!)]
+                      [clear!/checked '($hasheq-clear!/mutable/checked
+                                        $hasheqv-clear!/mutable/checked
+                                        $hash-clear!/mutable/checked
+                                        $hashalw-clear!/mutable/checked)]
+                      [type           '($HashEqMutable
+                                        $HashEqvMutable
+                                        $HashEqualMutable
+                                        $HashEqualAlwaysMutable)]
+                      [raise-expected '($raise-argument-error:mutable-hasheq-expected
+                                        $raise-argument-error:mutable-hasheqv-expected
+                                        $raise-argument-error:mutable-hash-expected
+                                        $raise-argument-error:mutable-hashalw-expected)])
+             `(func ,hash-clear
+                    (param $ht (ref eq))   ;; table
+                    (result    (ref eq))   ;; return void
+                    
+                    (local $table (ref ,type))
+
+                    ;; Check that ht is expected table type
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                    ;; Delegate
+                    (call ,clear!/checked (local.get $table))
+                    ;; Return void
+                    (global.get $void)))
 
 
+         ,@(for/list ([clear!/checked '($hasheq-clear!/mutable/checked
+                                        $hasheqv-clear!/mutable/checked
+                                        $hash-clear!/mutable/checked
+                                        $hashalw-clear!/mutable/checked)]
+                      [type           '($HashEqMutable
+                                        $HashEqvMutable
+                                        $HashEqualMutable
+                                        $HashEqualAlwaysMutable)])
+             `(func ,clear!/checked
+                    (param $ht (ref ,type))
 
+                    (local $new-entries (ref $Array))
 
+                    ;; Allocate fresh array of default size (16 entries = 32 slots)
+                    (local.set $new-entries (array.new $Array (global.get $missing) (i32.const 32)))
+                    ;; Replace entries array
+                    (struct.set ,type $entries (local.get $ht) (local.get $new-entries))
+                    ;; Reset count to 0
+                    (struct.set ,type $count (local.get $ht) (i32.const 0))))
+         
 
 
          

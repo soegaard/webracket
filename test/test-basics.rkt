@@ -2063,10 +2063,22 @@
                           (equal? (hash-ref h 'b (lambda () 3)) 3)))))
 
         (list "hash-remove!"
-              (let ([h (make-hasheq)])
-                (hash-set! h 'a 1)
-                (hash-remove! h 'a)
-                (equal? (hash-has-key? h 'a) #f)))
+              (and (let ([h (make-hasheq)])
+                     (hash-set! h 'a 1)
+                     (hash-remove! h 'a)
+                     (equal? (hash-has-key? h 'a) #f))
+                   (let ([h (make-hasheqv)])
+                     (hash-set! h 'a 1)
+                     (hash-remove! h 'a)
+                     (equal? (hash-has-key? h 'a) #f))
+                   (let ([h (make-hash)])
+                     (hash-set! h 'a 1)
+                     (hash-remove! h 'a)
+                     (equal? (hash-has-key? h 'a) #f))
+                   (let ([h (make-hashalw)])
+                     (hash-set! h 'a 1)
+                     (hash-remove! h 'a)
+                     (equal? (hash-has-key? h 'a) #f))))
 
         (list "hash-clear!"
               (let ([h (make-hasheq)])
