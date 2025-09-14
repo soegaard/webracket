@@ -2174,10 +2174,26 @@
                        (equal? (hash-ref h2 'a) 2)
                        (equal? (hash-ref h2 'b) 3)))))
 
+        (list "hash-keys"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-set! h 'b 2)
+                (let ([expected '(a b)])
+                  (and (equal? (sort (hash-keys h)    (λ (x y) (symbol<? x y))) expected)
+                       (equal? (sort (hash-keys h #t) (λ (x y) (symbol<? x y))) expected)))))
+
+        (list "hash-values"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-set! h 'b 2)
+                (let ([expected '(1 2)])
+                  (and (equal? (sort (hash-values h)    (λ (x y) (< x y))) expected)
+                       (equal? (sort (hash-values h #t) (λ (x y) (< x y))) expected)))))
+        
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])
-                     (and (eq? (eq-hash-code xs) (eq-hash-code xs))
+                     (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
                           (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
         (list "eqv-hash-code"

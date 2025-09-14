@@ -669,6 +669,8 @@
   hash-for-each
   hash-map
   hash-map/copy
+  hash-keys
+  hash-values
   
   eq-hash-code
   eqv-hash-code
@@ -3434,6 +3436,7 @@
 
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
          [(hash->list)                 (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
+         [(hash-keys hash-values)      (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
          [(hash-for-each)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map/copy)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]

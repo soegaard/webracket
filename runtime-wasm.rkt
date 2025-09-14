@@ -19526,6 +19526,132 @@
                    (local.get $dst)))
 
 
+        ;; General hash-keys and hash-values
+
+        ;; The try-order? argument is accepted but ignored.
+        ,@(for/list ([prim             '($hash-keys       $hash-values)]
+                     [hasheq-prim      '($hasheq-keys     $hasheq-values)]
+                     [hasheqv-prim     '($hasheqv-keys    $hasheqv-values)]
+                     [hashequal-prim   '($hashequal-keys  $hashequal-values)]
+                     [hashalw-prim     '($hashalw-keys    $hashalw-values)])
+            `(func ,prim (type $Prim2)
+                   (param $ht  (ref eq))   ;; hash table
+                   (param $try (ref eq))   ;; optional try-order? (default #f)
+                   (result     (ref eq))   ;; list of keys/values
+
+                   ;; Check type: must be (ref $Hash)
+                   (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                       (then (call $raise-argument-error:hash-expected)
+                             (unreachable)))
+
+                   ;; Dispatch on table type
+                   (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                       (then (return (call ,hasheq-prim (local.get $ht) (local.get $try)))))
+                   (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                       (then (return (call ,hasheqv-prim (local.get $ht) (local.get $try)))))
+                   (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                       (then (return (call ,hashequal-prim (local.get $ht) (local.get $try)))))
+                   (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                       (then (return (call ,hashalw-prim (local.get $ht) (local.get $try)))))
+                   (unreachable)))
+
+        ,@(append*
+           (for/list ([spec '("keys" "values")] [offset '(0 1)])
+            (let* ([name spec]
+                   [off  offset]
+                   [mk   (λ (base)     (string->symbol (format "$~a-~a" base name)))]
+                   [mkp  (λ (base suf) (string->symbol (format "~a/~a" (symbol->string (mk base)) suf)))])
+              (append*
+               (for/list ([base  '("hasheq" "hasheqv" "hashequal" "hashalw")]
+                          [type  '($HashEqMutable
+                                   $HashEqvMutable
+                                   $HashEqualMutable
+                                   $HashEqualAlwaysMutable)]
+                          [raise '($raise-argument-error:hasheq-expected
+                                   $raise-argument-error:hasheqv-expected
+                                   $raise-argument-error:hash-expected
+                                   $raise-argument-error:hashalw-expected)])
+                (let* ([fun     (mk base)]
+                       [plain   (mkp base "plain")]
+                       [checked (mkp base "plain/checked")])
+                  `((func ,fun
+                           (param $ht  (ref eq))
+                           (param $try (ref eq))
+                           (result     (ref eq))
+
+                           (return_call ,plain
+                                        (local.get $ht)
+                                        (local.get $try)))
+
+                     (func ,plain
+                           (param $ht  (ref eq))
+                           (param $try (ref eq))
+                           (result     (ref eq))
+
+                           (local $table (ref ,type))
+
+                           ;; Check that ht is expected table type
+                           (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                               (then (call ,raise (local.get $ht))
+                                     (unreachable)))
+                           ;; Decode
+                           (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                           ;; Delegate to checked implementation
+                           (call ,checked
+                                 (local.get $table)))
+
+                     (func ,checked
+                           (param $table (ref ,type))
+                           (result       (ref eq))
+
+                           (local $entries  (ref $Array))
+                           (local $capacity i32)
+                           (local $i        i32)
+                           (local $key      (ref eq))
+                           (local $val      (ref eq))
+                           (local $acc      (ref eq))
+
+                           ;; Initialize locals
+                           (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                           (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                           (local.set $i        (i32.const 0))
+                           (local.set $acc      (global.get $null))
+
+                           (block $done
+                                  (loop $loop
+                                        (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+
+                                        ;; Load key
+                                        (local.set $key (array.get $Array
+                                                                   (local.get $entries)
+                                                                   (i32.shl (local.get $i) (i32.const 1))))
+                                        ;; Skip empty or tombstone slots
+                                        (if (ref.eq (local.get $key) (global.get $missing))
+                                            (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                  (br $loop)))
+                                        (if (ref.eq (local.get $key) (global.get $tombstone))
+                                            (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                  (br $loop)))
+
+                                        ,@(if (zero? off)
+                                              '()
+                                              '((local.set $val (array.get $Array
+                                                                           (local.get $entries)
+                                                                           (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                                                    (i32.const 1))))))
+                                        (local.set $acc (call $cons
+                                                              ,(if (zero? off)
+                                                                   '(local.get $key)
+                                                                   '(local.get $val))
+                                                              (local.get $acc)))
+
+                                        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                        (br $loop)))
+
+                           (local.get $acc)))))))))
+
+
+
          ;;;
          ;;; HASH CODES
          ;;;

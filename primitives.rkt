@@ -497,6 +497,8 @@
  hash-for-each
  hash-map
  hash-map/copy
+ hash-keys
+ hash-values
 
  make-empty-hasheq
  make-empty-hasheqv
