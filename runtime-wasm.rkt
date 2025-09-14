@@ -18511,60 +18511,152 @@
                     (local.get $table)))
 
 
+         ; General hash-has-key?
          (func $hash-has-key? (type $Prim2)
                (param $ht  (ref eq))
                (param $key (ref eq))
                (result     (ref eq))
 
-               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
-                   (then (call $raise-argument-error:hasheq-mutable-expected (local.get $ht))
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
                          (unreachable)))
-               (call $eqhash-has-key?/checked
-                     (ref.cast (ref $HashEqMutable) (local.get $ht))
-                     (local.get $key)))
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-has-key?
+                                       (local.get $ht)
+                                       (local.get $key)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-has-key?
+                                       (local.get $ht)
+                                       (local.get $key)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-has-key?
+                                       (local.get $ht)
+                                       (local.get $key)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-has-key?
+                                       (local.get $ht)
+                                       (local.get $key)))))
+               (unreachable))
 
-         (func $eqhash-has-key?/checked
-               (param $table (ref $HashEqMutable))
-               (param $key   (ref eq))
-               (result       (ref eq))
 
-               (local $entries  (ref $Array))
-               (local $capacity i32)
-               (local $index    i32)
-               (local $step     i32)
-               (local $hash     i32)
-               (local $k        (ref eq))
-               (local $slot     i32)
-               ;; Get entries and capacity
-               (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
-               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-               ;; Hash key and compute initial index
-               (local.set $hash  (call $eq-hash/i32 (local.get $key)))
-               (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step  (i32.const 0))
-               (block $not-found
-                      (loop $probe
-                            ;; Stop if we've probed the full table
-                            (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
-                            ;; slot = 2 * ((index + step) % capacity)
-                            (local.set $slot (i32.shl (i32.rem_u (i32.add (local.get $index) (local.get $step))
-                                                                 (local.get $capacity))
-                                                      (i32.const 1)))
-                            ;; Load key from slot
-                            (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
-                            ;; Empty slot: key is not in the table
-                            (br_if $not-found (ref.eq (local.get $k) (global.get $missing)))
-                            ;; Tombstone: skip
-                            (if (ref.eq (local.get $k) (global.get $tombstone))
-                                (then (local.set $step (i32.add (local.get $step) (i32.const 1))) (br $probe)))
-                            ;; Match: return #t
-                            (if (ref.eq (local.get $k) (local.get $key))
-                                (then (return (global.get $true))))
-                            ;; Otherwise try next slot
-                            (local.set $step (i32.add (local.get $step) (i32.const 1)))
-                            (br $probe)))
-               ;; Not found: return #f
-               (global.get $false))
+         ; Specialized hash-has-key?
+         ,@(for/list ([hash-has-key       '($hasheq-has-key?
+                                            $hasheqv-has-key?
+                                            $hashequal-has-key?
+                                            $hashalw-has-key?)]
+                      [hash-has-key/plain '($hasheq-has-key?/plain
+                                            $hasheqv-has-key?/plain
+                                            $hashequal-has-key?/plain
+                                            $hashalw-has-key?/plain)])
+             `(func ,hash-has-key
+                    (param $ht  (ref eq))   ;; hash table
+                    (param $key (ref eq))   ;; key
+                    (result     (ref eq))   ;; boolean result
+
+                    (return_call ,hash-has-key/plain
+                                 (local.get $ht)
+                                 (local.get $key))))
+
+         
+         ,@(for/list ([hash-has-key/plain '($hasheq-has-key?/plain
+                                            $hasheqv-has-key?/plain
+                                            $hashequal-has-key?/plain
+                                            $hashalw-has-key?/plain)]
+                      [hash-has-key/plain/checked '($hasheq-has-key?/plain/checked
+                                                    $hasheqv-has-key?/plain/checked
+                                                    $hashequal-has-key?/plain/checked
+                                                    $hashalw-has-key?/plain/checked)]
+                      [type                   '($HashEqMutable
+                                                $HashEqvMutable
+                                                $HashEqualMutable
+                                                $HashEqualAlwaysMutable)]
+                      [raise-expected         '($raise-argument-error:hasheq-expected
+                                                $raise-argument-error:hasheqv-expected
+                                                $raise-argument-error:hash-expected
+                                                $raise-argument-error:hashalw-expected)])
+             `(func ,hash-has-key/plain
+                    (param $ht  (ref eq))
+                    (param $key (ref eq))
+                    (result     (ref eq))
+
+                    (local $table (ref ,type))
+
+                    ;; Check that ht is expected table type
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
+
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+
+                    ;; Delegate to checked implementation
+                    (call ,hash-has-key/plain/checked
+                          (local.get $table)
+                          (local.get $key))))
+
+         ,@(for/list ([hash-has-key/plain/checked '($hasheq-has-key?/plain/checked
+                                                   $hasheqv-has-key?/plain/checked
+                                                   $hashequal-has-key?/plain/checked
+                                                   $hashalw-has-key?/plain/checked)]
+                      [type                   '($HashEqMutable
+                                                $HashEqvMutable
+                                                $HashEqualMutable
+                                                $HashEqualAlwaysMutable)])
+             `(func ,hash-has-key/plain/checked
+                    (param $table (ref ,type))
+                    (param $key   (ref eq))
+                    (result       (ref eq))
+
+                    (local $entries  (ref $Array))
+                    (local $capacity i32)
+                    (local $index    i32)
+                    (local $step     i32)
+                    (local $hash     i32)
+                    (local $k        (ref eq))
+                    (local $slot     i32)
+
+                    ;; Get entries and capacity
+                    (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+
+                    ;; Hash key and compute initial index
+                    (local.set $hash  (call $eq-hash/i32 (local.get $key)))
+                    (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
+                    (local.set $step  (i32.const 0))
+
+                    (block $not-found
+                           (loop $probe
+                                 ;; Stop if we've probed the full table
+                                 (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
+                                 ;; slot = 2 * ((index + step) % capacity)
+                                 (local.set $slot
+                                            (i32.shl
+                                             (i32.rem_u
+                                              (i32.add (local.get $index) (local.get $step))
+                                              (local.get $capacity))
+                                             (i32.const 1)))
+                                 ;; Load key from slot
+                                 (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+                                 ;; Empty slot: key is not in the table
+                                 (br_if $not-found (ref.eq (local.get $k) (global.get $missing)))
+                                 ;; Tombstone: skip
+                                 (if (ref.eq (local.get $k) (global.get $tombstone))
+                                     (then
+                                      (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                      (br $probe)))
+                                 ;; Match: return #t
+                                 (if (ref.eq (local.get $k) (local.get $key))
+                                     (then (return (global.get $true))))
+                                 ;; Otherwise try next slot
+                                 (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                 (br $probe)))
+
+                    ;; Not found: return #f
+                    (global.get $false)))
+         
+         
 
 
          (func $hash-clear! (type $Prim1)
