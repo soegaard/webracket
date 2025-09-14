@@ -639,7 +639,7 @@
           (type $HashEqualAlwaysMutable
                 ; Mutable hash tables are implemented as an open-addressing hash table
                 ; with linear probing.
-                (sub $HashEqual
+                (sub $HashEqualAlways
                      (struct
                        (field $hash     (mut i32))
                        (field $mutable? (ref eq))
@@ -17772,6 +17772,21 @@
                    (ref.test (ref $Hash) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         ,@(for/list ([pred '($hash-eq? $hash-eqv? $hash-equal? $hash-equal-always?)]
+                      [type '($HashEq   $HashEqv   $HashEqual   $HashEqualAlways)])
+             `(func ,pred (type $Prim1)
+                    (param $ht (ref eq)) ;; hash table
+                    (result    (ref eq))
+                    ;; Validate argument is a hash table
+                    (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                        (then (call $raise-argument-error:hash-expected)
+                              (unreachable)))
+                    (if (result (ref eq))
+                        (ref.test (ref ,type) (local.get $ht))
+                        (then (global.get $true))
+                        (else (global.get $false)))))
+
          
          ;;;
          ;;; MUTABLE HASHEQ

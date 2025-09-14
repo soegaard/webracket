@@ -653,6 +653,11 @@
   make-hashalw
 
   hash?
+  hash-eq?
+  hash-eqv?
+  hash-equal?
+  hash-equal-always?
+  
   hash-ref
   hash-set!
   hash-remove!

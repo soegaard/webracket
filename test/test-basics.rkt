@@ -2013,6 +2013,27 @@
                 (and (hash? h)
                      (mutable-hash? h))))        
 
+        (list "hash-eq?"
+              (and (equal? (hash-eq? (make-hasheq))  #t)
+                   (equal? (hash-eq? (make-hash))    #f)
+                   (equal? (hash-eq? (make-hasheqv)) #f)
+                   (equal? (hash-eq? (make-hashalw)) #f)))
+        (list "hash-eqv?"
+              (and (equal? (hash-eqv? (make-hasheq))  #f)
+                   (equal? (hash-eqv? (make-hash))    #f)
+                   (equal? (hash-eqv? (make-hasheqv)) #t)
+                   (equal? (hash-eqv? (make-hashalw)) #f)))
+        (list "hash-equal?"
+              (and (equal? (hash-equal? (make-hasheq))  #f)
+                   (equal? (hash-equal? (make-hash))    #t)
+                   (equal? (hash-equal? (make-hasheqv)) #f)
+                   (equal? (hash-equal? (make-hashalw)) #f)))
+        (list "hash-equal-always?"
+              (list (equal? (hash-equal-always? (make-hasheq))  #f)
+                    (equal? (hash-equal-always? (make-hash))    #f)
+                    (equal? (hash-equal-always? (make-hasheqv)) #f)
+                    (equal? (hash-equal-always? (make-hashalw)) #t)))
+
         (list "make-hash"
               (let ([h (make-hash)])
                 (and (hash? h) (mutable-hash? h))))

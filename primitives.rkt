@@ -484,7 +484,13 @@
  box? box box-immutable unbox set-box! 
 
  ;; 4.15 Hash Tables
- hash?   hash-ref hash-set! hash-remove! hash-clear!
+ hash?
+ hash-eq?
+ hash-eqv?
+ hash-equal?
+ hash-equal-always?
+
+ hash-ref hash-set! hash-remove! hash-clear!
  hash-has-key? eq-hash-code
 
  make-empty-hasheq
