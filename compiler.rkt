@@ -651,6 +651,8 @@
   hash-clear!
   hash-has-key?
   eq-hash-code
+  eqv-hash-code
+  
 
   keyword?
   keyword->string

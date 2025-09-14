@@ -18262,6 +18262,25 @@
          ;;; HASH CODES
          ;;;
 
+         (global $next-hash-state (mut i32) (i32.const 0x9e3779b9)) ;; initial seed, can be randomized or fixed
+         
+         (func $splitmix32 (result i32)
+               (local $z i32)
+               ;; z = state += 0x9E3779B9
+               (local.set $z (i32.add (global.get $next-hash-state) (i32.const 0x9E3779B9)))
+               (global.set $next-hash-state (local.get $z))
+               ;; z ^= (z >> 16)
+               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 16))))
+               ;; z *= 0x85EBCA6B
+               (local.set $z (i32.mul (local.get $z) (i32.const 0x85EBCA6B)))
+               ;; z ^= (z >> 13)
+               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 13))))
+               ;; z *= 0xC2B2AE35
+               (local.set $z (i32.mul (local.get $z) (i32.const 0xC2B2AE35)))
+               ;; z ^= (z >> 16)
+               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 16))))
+               (local.get $z))
+
          (func $eq-hash-code (type $Prim1)
                (param $v (ref eq))
                (result (ref eq))
@@ -18270,7 +18289,6 @@
                 (i32.shl (call $eq-hash/i32
                                (local.get $v))
                  (i32.const 1))))
-
          
          (func $eq-hash/i32
                (param $v (ref eq))
@@ -18317,37 +18335,77 @@
                    ;;         (i32.mul (local.get $x) (i32.const 0xcc9e2d51))
                    ;;         (i32.const 15))
                    ;;        (i32.const 0x1b873593)))
+                   (else
+                    ;; --- Heap object: return or assign hash without mixing for now ---
+                    (local.set $heap (ref.cast (ref $Heap) (local.get $v)))
+                    (local.set $h    (struct.get $Heap $hash (local.get $heap)))
+                    (if (result i32)
+                        (i32.eqz (local.get $h))
+                        (then (local.set $h (call $splitmix32))
+                              (struct.set $Heap $hash (local.get $heap) (local.get $h))
+                              (local.get $h))
+                        (else (local.get $h))))))
+
+
+         (func $eqv-hash-code (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+
+              (ref.i31
+               (i32.shl (call $eqv-hash/i32
+                              (local.get $v))
+                (i32.const 1))))
+         
+         (func $eqv-hash/i32
+               (param $v (ref eq))
+               (result   i32)
+
+               (local $v-i31 i32)
+               (local $heap  (ref $Heap))
+               (local $h     i32)
+               (local $f     (ref $Flonum))
+               (local $bits i64)
+               (local $low  i32)
+               (local $high i32)
+               (local $x    i32)
+
+               (if (result i32)
+                   (ref.test (ref i31) (local.get $v))
+                   (then
+                    ;; --- Mix i31 immediate using Murmur3-style scramble ---
+                    (local.set $v-i31 (i31.get_u (ref.cast (ref i31) (local.get $v))))
+                    (i32.mul
+                     (i32.rotl
+                      (i32.mul (local.get $v-i31) (i32.const 0xcc9e2d51))
+                      (i32.const 15))
+                     (i32.const 0x1b873593)))
+                   (else
+                    ;; --- Special case: flonum hashed by value ---
+                    (if (result i32)
+                        (ref.test (ref $Flonum) (local.get $v))
+                        (then
+                         (local.set $f    (ref.cast (ref $Flonum) (local.get $v)))
+                         (local.set $bits (i64.reinterpret_f64
+                                           (struct.get $Flonum $v (local.get $f))))
+                         (local.set $low  (i32.wrap_i64 (local.get $bits)))
+                         (local.set $high (i32.wrap_i64 (i64.shr_u (local.get $bits) (i64.const 32))))
+                         (local.set $x    (i32.xor (local.get $low) (local.get $high)))
+                         ;; Murmur3 mix again
+                         (i32.mul
+                          (i32.rotl
+                           (i32.mul (local.get $x) (i32.const 0xcc9e2d51))
+                           (i32.const 15))
+                          (i32.const 0x1b873593)))
                         (else
                          ;; --- Heap object: return or assign hash without mixing for now ---
                          (local.set $heap (ref.cast (ref $Heap) (local.get $v)))
                          (local.set $h (struct.get $Heap $hash (local.get $heap)))
                          (if (result i32)
                              (i32.eqz (local.get $h))
-                             (then (local.set $h (call $splitmix32))                         
+                             (then (local.set $h (call $splitmix32))
                                    (struct.set $Heap $hash (local.get $heap) (local.get $h))
                                    (local.get $h))
-                             (else (local.get $h))))))
-
-         (global $next-hash-state (mut i32) (i32.const 0x9e3779b9)) ;; initial seed, can be randomized or fixed
-         
-         (func $splitmix32 (result i32)
-               (local $z i32)
-               ;; z = state += 0x9E3779B9
-               (local.set $z (i32.add (global.get $next-hash-state) (i32.const 0x9E3779B9)))
-               (global.set $next-hash-state (local.get $z))
-               ;; z ^= (z >> 16)
-               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 16))))
-               ;; z *= 0x85EBCA6B
-               (local.set $z (i32.mul (local.get $z) (i32.const 0x85EBCA6B)))
-               ;; z ^= (z >> 13)
-               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 13))))
-               ;; z *= 0xC2B2AE35
-               (local.set $z (i32.mul (local.get $z) (i32.const 0xC2B2AE35)))
-               ;; z ^= (z >> 16)
-               (local.set $z (i32.xor (local.get $z) (i32.shr_u (local.get $z) (i32.const 16))))
-               (local.get $z))
-
-
+                             (else (local.get $h))))))))
 
 
          
