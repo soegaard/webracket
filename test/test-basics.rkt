@@ -1996,15 +1996,49 @@
 
  (list "4.15 Hash Tables"
        (list
+        (list "make-empty-hash"
+              (let ([h (make-empty-hash)])
+                (and (hash? h)
+                     (mutable-hash? h))))
         (list "make-empty-hasheq"
               (let ([h (make-empty-hasheq)])
                 (and (hash? h)
-                     (equal? (hash-has-key? h 'a) #f))))
+                     (equal? (hash-has-key? h 'a) #f))))        
+        (list "make-empty-hasheqv"
+              (let ([h (make-empty-hasheqv)])
+                (and (hash? h)
+                     (mutable-hash? h))))
+        (list "make-empty-hashalw"
+              (let ([h (make-empty-hashalw)])
+                (and (hash? h)
+                     (mutable-hash? h))))        
+
+        (list "make-hash"
+              (let ([h (make-hash)])
+                (and (hash? h) (mutable-hash? h))))
+        (list "make-hasheq"
+              (let ([h (make-hasheq)])
+                (and (hash? h) (mutable-hash? h))))
+        (list "make-hasheqv"
+              (let ([h (make-hasheqv)])
+                (and (hash? h) (mutable-hash? h))))
+        (list "make-hashalw"
+              (let ([h (make-hashalw)])
+                (and (hash? h) (mutable-hash? h))))
 
         (list "hash-set!"
-              (let ([h (make-hasheq)])
-                (hash-set! h 'a 1)
-                (equal? (hash-ref h 'a) 1)))
+              (and (let ([h (make-hasheq)])
+                     (hash-set! h 'a 1)
+                     (equal? (hash-ref h 'a) 1))
+                   (let ([h (make-hasheqv)])
+                     (hash-set! h 'a 1)
+                     (equal? (hash-ref h 'a) 1))
+                   (let ([h (make-hash)])
+                     (hash-set! h 'a 1)
+                     (equal? (hash-ref h 'a) 1))
+                   (let ([h (make-hashalw)])
+                     (hash-set! h 'a 1)
+                     (equal? (hash-ref h 'a) 1))))
 
         (list "hash-ref"
               (let ([h (make-hasheq)])

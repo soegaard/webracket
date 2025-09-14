@@ -648,6 +648,10 @@
   make-empty-hashalw ; not in Racket
   
   make-hasheq
+  make-hasheqv
+  make-hash
+  make-hashalw
+
   hash?
   hash-ref
   hash-set!
@@ -3366,7 +3370,8 @@
          
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
-         [(make-hasheq)                (inline-prim/optional sym ae1 0 1)]
+         [(make-hasheq make-hasheqv
+           make-hash make-hashalw)     (inline-prim/optional sym ae1 0 1)]
          [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
          [(string->number)             (inline-prim/optional sym ae1 1 5)]
          [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]

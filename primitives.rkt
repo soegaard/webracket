@@ -484,8 +484,19 @@
  box? box box-immutable unbox set-box! 
 
  ;; 4.15 Hash Tables
- hash? make-empty-hasheq make-hasheq hash-ref hash-set! hash-remove! hash-clear!
+ hash?   hash-ref hash-set! hash-remove! hash-clear!
  hash-has-key? eq-hash-code
+
+ make-empty-hasheq
+ make-empty-hasheqv
+ make-empty-hash
+ make-empty-hashalw
+ 
+ make-hasheq
+ make-hasheqv
+ make-hash
+ make-hashalw
+
  
  ;; 4.20 Procedures
  procedure? apply procedure-rename procedure->external

@@ -17873,7 +17873,7 @@
                     (local.get $ht)))
          
 
-         (func $raise-argument-error:hash-expected (unreachable))
+         #;(func $raise-argument-error:hash-expected (unreachable))
 
          (func $raise-hash-ref-key-not-found (param $key (ref eq)) (unreachable))
 
@@ -17891,113 +17891,158 @@
                (if (ref.test (ref $HashEqMutable) (local.get $ht))
                    (then (return (call $hasheq-ref
                                        (local.get $ht) (local.get $key) (local.get $failure)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-ref
+                                       (local.get $ht) (local.get $key) (local.get $failure)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-ref
+                                       (local.get $ht) (local.get $key) (local.get $failure)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-ref
+                                       (local.get $ht) (local.get $key) (local.get $failure)))))
                (unreachable))
          
-         (func $hasheq-ref
-               (param $ht      (ref eq))     ;; hasheq
-               (param $key     (ref eq))     ;; lookup key
-               (param $failure (ref eq))     ;; value to return if not found
-               (result         (ref eq))
+         ,@(for/list ([hash-ref       '($hasheq-ref
+                                        $hasheqv-ref
+                                        $hashequal-ref
+                                        $hashalw-ref)]
+                      [hash-ref/plain '($hasheq-ref/plain
+                                        $hasheqv-ref/plain
+                                        $hashequal-ref/plain
+                                        $hashalw-ref/plain)])
+             `(func ,hash-ref
+                    (param $ht      (ref eq))     ;; hasheq
+                    (param $key     (ref eq))     ;; lookup key
+                    (param $failure (ref eq))     ;; value to return if not found
+                    (result         (ref eq))
 
-               (return_call $hasheq-ref/plain
-                            (local.get $ht) (local.get $key) (local.get $failure)))
+                    (return_call ,hash-ref/plain
+                                 (local.get $ht) (local.get $key) (local.get $failure))))
 
-         (func $raise-argument-error:hasheq-expected (unreachable))
+         ,@(for/list ([raise-expected '($raise-argument-error:hasheq-expected
+                                        $raise-argument-error:hasheqv-expected
+                                        $raise-argument-error:hash-expected
+                                        $raise-argument-error:hashalw-expected)])
+             `(func ,raise-expected (unreachable)))
          
-         (func $hasheq-ref/plain
-               (param $ht      (ref eq))     ;; hasheq
-               (param $key     (ref eq))     ;; lookup key
-               (param $failure (ref eq))     ;; value to return if not found
-               (result         (ref eq))
+         ,@(for/list ([hash-ref/plain         '($hasheq-ref/plain
+                                                $hasheqv-ref/plain
+                                                $hashequal-ref/plain
+                                                $hashalw-ref/plain)]
+                      [hash-ref/plain/checked '($hasheq-ref/plain/checked
+                                                $hasheqv-ref/plain/checked
+                                                $hashequal-ref/plain/checked
+                                                $hashalw-ref/plain/checked)]
+                      [type                   '($HashEqMutable
+                                                $HashEqvMutable
+                                                $HashEqualMutable
+                                                $HashEqualAlwaysMutable)]
+                      [raise-expected         '($raise-argument-error:hasheq-expected
+                                                $raise-argument-error:hasheqv-expected
+                                                $raise-argument-error:hash-expected
+                                                $raise-argument-error:hashalw-expected)])
+             `(func ,hash-ref/plain
+                    (param $ht      (ref eq))     ;; hasheq
+                    (param $key     (ref eq))     ;; lookup key
+                    (param $failure (ref eq))     ;; value to return if not found
+                    (result         (ref eq))
 
-               (local $table (ref $HashEqMutable))
+                    (local $table (ref ,type))
 
-               ;; Check that ht is a mutable hasheq
-               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
-                   (then (call $raise-argument-error:hasheq-expected (local.get $ht))
-                         (unreachable)))
+                    ;; Check that ht is a mutable hasheq
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
 
-               ;; Decode
-               (local.set $table (ref.cast (ref $HashEqMutable) (local.get $ht)))
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
 
-               ;; Delegate to checked implementation
-               (call $hasheq-ref/plain/checked
-                     (local.get $table)
-                     (local.get $key)
-                     (local.get $failure)))
+                    ;; Delegate to checked implementation
+                    (call ,hash-ref/plain/checked
+                          (local.get $table)
+                          (local.get $key)
+                          (local.get $failure))))
 
-         (func $hasheq-ref/plain/checked
-               (param $table (ref $HashEqMutable))
-               (param $key   (ref eq))
-               (param $fail  (ref eq))
-               (result       (ref eq))
+         ,@(for/list ([hash-ref/plain/checked '($hasheq-ref/plain/checked
+                                                $hasheqv-ref/plain/checked
+                                                $hashequal-ref/plain/checked
+                                                $hashalw-ref/plain/checked)]
+                      [type                   '($HashEqMutable
+                                                $HashEqvMutable
+                                                $HashEqualMutable
+                                                $HashEqualAlwaysMutable)])
+             `(func ,hash-ref/plain/checked
+                    (param $table (ref ,type))
+                    (param $key   (ref eq))
+                    (param $fail  (ref eq))
+                    (result       (ref eq))
 
-               (local $entries  (ref $Array))
-               (local $capacity i32)
-               (local $index    i32)
-               (local $step     i32)
-               (local $hash     i32)
-               (local $k        (ref eq))
-               (local $slot     i32)
-               (local $proc     (ref $Procedure))
-               (local $inv      (ref $ProcedureInvoker))
-               (local $noargs   (ref $Args))
+                    (local $entries  (ref $Array))
+                    (local $capacity i32)
+                    (local $index    i32)
+                    (local $step     i32)
+                    (local $hash     i32)
+                    (local $k        (ref eq))
+                    (local $slot     i32)
+                    (local $proc     (ref $Procedure))
+                    (local $inv      (ref $ProcedureInvoker))
+                    (local $noargs   (ref $Args))
 
-               ;; Get entries and compute capacity
-               (local.set $entries  (struct.get $HashEqMutable $entries (local.get $table)))
-               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-               ;; Hash key (identity hash)
-               (local.set $hash     (call $eq-hash/i32 (local.get $key)))
-               (local.set $index    (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step     (i32.const 0))
-               (block $not-found
-                      (loop $probe
-                            ;; Stop probing if we've checked all slots
-                            (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
-                            ;; slot = 2 * ((index + step) % capacity)
-                            (local.set $slot
-                                       (i32.shl
-                                        (i32.rem_u
-                                         (i32.add (local.get $index) (local.get $step))
-                                         (local.get $capacity))
-                                        (i32.const 1)))
-                            ;; Get key at slot
-                            (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
-                            ;; Empty slot means not found
-                            (br_if $not-found (ref.eq (local.get $k) (global.get $missing)))
-                            ;; Tombstone? — skip and continue probing
-                            (if (ref.eq (local.get $k) (global.get $tombstone))
-                                (then
+                    ;; Get entries and compute capacity
+                    (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                    ;; Hash key (identity hash)
+                    (local.set $hash     (call $eq-hash/i32 (local.get $key)))
+                    (local.set $index    (i32.rem_u (local.get $hash) (local.get $capacity)))
+                    (local.set $step     (i32.const 0))
+                    (block $not-found
+                           (loop $probe
+                                 ;; Stop probing if we've checked all slots
+                                 (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
+                                 ;; slot = 2 * ((index + step) % capacity)
+                                 (local.set $slot
+                                            (i32.shl
+                                             (i32.rem_u
+                                              (i32.add (local.get $index) (local.get $step))
+                                              (local.get $capacity))
+                                             (i32.const 1)))
+                                 ;; Get key at slot
+                                 (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+                                 ;; Empty slot means not found
+                                 (br_if $not-found (ref.eq (local.get $k) (global.get $missing)))
+                                 ;; Tombstone? — skip and continue probing
+                                 (if (ref.eq (local.get $k) (global.get $tombstone))
+                                     (then
+                                      (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                      (br $probe)))
+                                 ;; Match? — return value at slot + 1
+                                 (if (ref.eq (local.get $k) (local.get $key))
+                                     (then
+                                      (return
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.add (local.get $slot) (i32.const 1))))))
+                                 ;; Continue probing
                                  (local.set $step (i32.add (local.get $step) (i32.const 1)))
                                  (br $probe)))
-                            ;; Match? — return value at slot + 1
-                            (if (ref.eq (local.get $k) (local.get $key))
-                                (then
-                                 (return
-                                  (array.get $Array
-                                             (local.get $entries)
-                                             (i32.add (local.get $slot) (i32.const 1))))))
-                            ;; Continue probing
-                            (local.set $step (i32.add (local.get $step) (i32.const 1)))
-                            (br $probe)))
-               ;; Not found — handle failure result
-               (if (result (ref eq))
-                   (ref.eq (local.get $fail) (global.get $missing))
-                   (then (call $raise-hash-ref-key-not-found (local.get $key))
-                         (unreachable))
-                   (else
+                    ;; Not found — handle failure result
                     (if (result (ref eq))
-                        (ref.test (ref $Procedure) (local.get $fail))
-                        (then
-                         (local.set $proc   (ref.cast (ref $Procedure) (local.get $fail)))
-                         (local.set $inv    (struct.get $Procedure $invoke (local.get $proc)))
-                         (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
-                         (return_call_ref $ProcedureInvoker
-                                          (local.get $proc)
-                                          (local.get $noargs)
-                                          (local.get $inv)))
+                        (ref.eq (local.get $fail) (global.get $missing))
+                        (then (call $raise-hash-ref-key-not-found (local.get $key))
+                              (unreachable))
                         (else
-                         (local.get $fail))))))
+                         (if (result (ref eq))
+                             (ref.test (ref $Procedure) (local.get $fail))
+                             (then
+                              (local.set $proc   (ref.cast (ref $Procedure) (local.get $fail)))
+                              (local.set $inv    (struct.get $Procedure $invoke (local.get $proc)))
+                              (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                              (return_call_ref $ProcedureInvoker
+                                               (local.get $proc)
+                                               (local.get $noargs)
+                                               (local.get $inv)))
+                             (else
+                              (local.get $fail)))))))
 
 
          (func $raise-argument-error:mutable-hasheq-expected (unreachable))
