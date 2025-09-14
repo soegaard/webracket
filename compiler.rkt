@@ -664,6 +664,7 @@
   hash-clear!
   hash-has-key?
   hash-empty?
+  hash-count
 
   
   eq-hash-code

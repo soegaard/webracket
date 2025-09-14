@@ -2121,6 +2121,14 @@
                      (begin (hash-set! h 'a 1)
                             (equal? (hash-empty? h) #f)))))
 
+        (list "hash-count"
+              (let ([h (make-hasheq)])
+                (and (equal? (hash-count h) 0)
+                     (begin
+                       (hash-set! h 'a 1)
+                       (hash-set! h 'b 2)
+                       (equal? (hash-count h) 2)))))
+
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])

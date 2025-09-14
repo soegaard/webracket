@@ -18822,6 +18822,55 @@
                         (then (global.get $true))
                         (else (global.get $false)))))
 
+        ; General hash-count
+        (func $hash-count (type $Prim1)
+              (param $ht (ref eq))
+              (result (ref eq))
+
+              ;; Check type: must be (ref $Hash)
+              (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                  (then (call $raise-argument-error:hash-expected)
+                        (unreachable)))
+              ;; Dispatch on table type
+              (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                  (then (return (call $hasheq-count (local.get $ht)))))
+              (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                  (then (return (call $hasheqv-count (local.get $ht)))))
+              (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                  (then (return (call $hashequal-count (local.get $ht)))))
+              (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                  (then (return (call $hashalw-count (local.get $ht)))))
+              (unreachable))
+
+
+        ,@(for/list ([hash-count       '($hasheq-count
+                                         $hasheqv-count
+                                         $hashequal-count
+                                         $hashalw-count)]
+                     [type             '($HashEqMutable
+                                         $HashEqvMutable
+                                         $HashEqualMutable
+                                         $HashEqualAlwaysMutable)]
+                     [raise-expected   '($raise-argument-error:hasheq-expected
+                                         $raise-argument-error:hasheqv-expected
+                                         $raise-argument-error:hash-expected
+                                         $raise-argument-error:hashalw-expected)])
+            `(func ,hash-count
+                   (param $ht (ref eq))   ;; table
+                   (result (ref eq))      ;; fixnum count
+
+                   (local $table (ref ,type))
+
+                   ;; Check that ht is expected table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise-expected (local.get $ht))
+                             (unreachable)))
+                   ;; Decode
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   ;; Return fixnum of count
+                   (ref.i31
+                    (i32.shl (struct.get ,type $count (local.get $table))
+                             (i32.const 1)))))
          
          ;;;
          ;;; HASH CODES

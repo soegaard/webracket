@@ -493,6 +493,7 @@
  hash-ref hash-set! hash-remove! hash-clear!
  hash-has-key?
  hash-empty?
+ hash-count
 
  make-empty-hasheq
  make-empty-hasheqv
