@@ -19314,6 +19314,218 @@
                    (local.get $acc)))
         
 
+        ;; -------------------------------------------------------------------
+        ;; hash-map/copy
+        ;; Applies `proc` to each key/value in `ht`, producing a new hash.
+        ;; The optional `kind` argument defaults to #f and is currently ignored
+        ;; (only mutable hashes are supported).
+        ;; Note: The original Racket `hash-map/copy` uses keyword arguments.
+        ;; -------------------------------------------------------------------
+
+        (func $hash-map/copy (type $Prim3)
+              (param $ht   (ref eq))   ;; hash table
+              (param $proc (ref eq))   ;; (key value -> (values key value))
+              (param $kind (ref eq))   ;; optional kind, default #f
+              (result      (ref eq))
+
+              ;; Validate argument is a hash table
+              (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                  (then (call $raise-argument-error:hash-expected)
+                        (unreachable)))
+
+              ;; Dispatch on table type
+              (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                  (then (return (call $hasheq-map/copy
+                                      (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $kind)))))
+              (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                  (then (return (call $hasheqv-map/copy
+                                      (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $kind)))))
+              (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                  (then (return (call $hashequal-map/copy
+                                      (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $kind)))))
+              (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                  (then (return (call $hashalw-map/copy
+                                      (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $kind)))))
+              (unreachable))
+
+        ,@(for/list ([hash-map/copy       '($hasheq-map/copy
+                                            $hasheqv-map/copy
+                                            $hashequal-map/copy
+                                            $hashalw-map/copy)]
+                     [hash-map/plain      '($hasheq-map/copy/plain
+                                            $hasheqv-map/copy/plain
+                                            $hashequal-map/copy/plain
+                                            $hashalw-map/copy/plain)])
+            `(func ,hash-map/copy
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $kind (ref eq))
+                   (result      (ref eq))
+
+                   (return_call ,hash-map/plain
+                                (local.get $ht)
+                                (local.get $proc)
+                                (local.get $kind))))
+
+        ,@(for/list ([hash-map/plain       '($hasheq-map/copy/plain
+                                             $hasheqv-map/copy/plain
+                                             $hashequal-map/copy/plain
+                                             $hashalw-map/copy/plain)]
+                     [hash-map/checked     '($hasheq-map/copy/plain/checked
+                                             $hasheqv-map/copy/plain/checked
+                                             $hashequal-map/copy/plain/checked
+                                             $hashalw-map/copy/plain/checked)]
+                     [type                 '($HashEqMutable
+                                             $HashEqvMutable
+                                             $HashEqualMutable
+                                             $HashEqualAlwaysMutable)]
+                     [raise-expected       '($raise-argument-error:hasheq-expected
+                                             $raise-argument-error:hasheqv-expected
+                                             $raise-argument-error:hash-expected
+                                             $raise-argument-error:hashalw-expected)])
+            `(func ,hash-map/plain
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $kind (ref eq))
+                   (result      (ref eq))
+
+                   (local $table (ref ,type))
+                   (local $f     (ref $Procedure))
+                   (local $finv  (ref $ProcedureInvoker))
+
+                   ;; Check hash table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise-expected (local.get $ht))
+                             (unreachable)))
+                   ;; Check procedure
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                             (unreachable)))
+
+                   ;; Decode and fetch invoker
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   (local.set $f     (ref.cast (ref $Procedure) (local.get $proc)))
+                   (local.set $finv  (struct.get $Procedure $invoke (local.get $f)))
+
+                   ;; Delegate
+                   (call ,hash-map/checked
+                         (local.get $table)
+                         (local.get $f)
+                         (local.get $finv)
+                         (local.get $kind))))
+
+        ,@(for/list ([hash-map/checked  '($hasheq-map/copy/plain/checked
+                                          $hasheqv-map/copy/plain/checked
+                                          $hashequal-map/copy/plain/checked
+                                          $hashalw-map/copy/plain/checked)]
+                     [type              '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]
+                     [make-empty        '($make-empty-hasheq
+                                          $make-empty-hasheqv
+                                          $make-empty-hash
+                                          $make-empty-hashalw)]
+                     [set!/checked      '($hasheq-set!/mutable/checked
+                                          $hasheqv-set!/mutable/checked
+                                          $hash-set!/mutable/checked
+                                          $hashalw-set!/mutable/checked)])
+            `(func ,hash-map/checked
+                   (param $table (ref ,type))
+                   (param $f     (ref $Procedure))
+                   (param $finv  (ref $ProcedureInvoker))
+                   (param $kind  (ref eq)) ;; optional kind, ignored
+                   (result (ref eq))
+
+                   (local $entries  (ref $Array))
+                   (local $capacity i32)
+                   (local $i        i32)
+                   (local $key      (ref eq))
+                   (local $val      (ref eq))
+                   (local $nkey     (ref eq))
+                   (local $nval     (ref eq))
+                   (local $dst      (ref ,type))
+                   (local $call     (ref $Args))
+                   (local $res      (ref eq))
+                   (local $vals     (ref $Values))
+
+                   ;; Initialize non-defaultable locals.
+                   (local.set $kind (global.get $false)) ; todo: remove, when kind support is added.
+                   (local.set $nkey (global.get $zero))
+                   (local.set $nval (global.get $zero))
+
+                   ;; Create destination hash. Only mutable hashes are supported.
+                   (local.set $dst (ref.cast (ref ,type) (call ,make-empty)))
+
+                   ;; Prepare iteration
+                   (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                   (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                   (local.set $i        (i32.const 0))
+                   (local.set $call     (array.new_fixed $Args 2 (global.get $null) (global.get $null)))
+
+                   (block $done
+                          (loop $loop
+                                (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+
+                                ;; Load key
+                                (local.set $key (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.shl (local.get $i) (i32.const 1))))
+                                ;; Skip empty or tombstone
+                                (if (ref.eq (local.get $key) (global.get $missing))
+                                    (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                          (br $loop)))
+                                (if (ref.eq (local.get $key) (global.get $tombstone))
+                                    (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                          (br $loop)))
+
+                                ;; Load value
+                                (local.set $val (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                                    (i32.const 1))))
+
+                                ;; Call procedure
+                                (array.set $Args (local.get $call) (i32.const 0) (local.get $key))
+                                (array.set $Args (local.get $call) (i32.const 1) (local.get $val))
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (local.get $f)
+                                                     (local.get $call)
+                                                     (local.get $finv)))
+
+                                ;; Expect two values
+                                (if (ref.test (ref $Values) (local.get $res))
+                                    (then
+                                     (local.set $vals (ref.cast (ref $Values) (local.get $res)))
+                                     (if (i32.ne (array.len (local.get $vals)) (i32.const 2))
+                                         (then (call $raise-wrong-number-of-values-received)
+                                               (unreachable)))
+                                     (local.set $nkey (array.get $Values (local.get $vals) (i32.const 0)))
+                                     (local.set $nval (array.get $Values (local.get $vals) (i32.const 1))))
+                                    (else (call $raise-wrong-number-of-values-received)
+                                          (unreachable)))
+
+                                ;; Insert into destination table
+                                (call ,set!/checked
+                                      (local.get $dst)
+                                      (local.get $nkey)
+                                      (local.get $nval))
+
+                                (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                (br $loop)))
+
+                   (local.get $dst)))
+
+
          ;;;
          ;;; HASH CODES
          ;;;

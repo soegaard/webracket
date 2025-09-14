@@ -496,6 +496,7 @@
  hash->list
  hash-for-each
  hash-map
+ hash-map/copy
 
  make-empty-hasheq
  make-empty-hasheqv
@@ -855,3 +856,9 @@
     [(_) (racket:flrandom)]))
 
 (define unsafe-flrandom flrandom)
+
+
+; A simplified no-keywords version 
+(define (hash-map/copy ht proc [kind #f])
+  (racket:hash-map/copy ht proc kind))
+

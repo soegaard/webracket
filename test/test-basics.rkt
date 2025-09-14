@@ -2165,7 +2165,14 @@
                        (equal? keys2 '(1 2 3))
                        (equal? vals  '(a b c))))))
 
-
+        (list "hash-map/copy"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-set! h 'b 2)
+                (let ([h2 (hash-map/copy h (lambda (k v) (values k (+ v 1))))])
+                  (and (hash? h2)
+                       (equal? (hash-ref h2 'a) 2)
+                       (equal? (hash-ref h2 'b) 3)))))
 
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]

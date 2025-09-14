@@ -668,6 +668,7 @@
   hash->list
   hash-for-each
   hash-map
+  hash-map/copy
   
   eq-hash-code
   eqv-hash-code
@@ -3435,6 +3436,7 @@
          [(hash->list)                 (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
          [(hash-for-each)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(hash-map/copy)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
