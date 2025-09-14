@@ -18044,30 +18044,83 @@
                              (else
                               (local.get $fail)))))))
 
-
-         (func $raise-argument-error:mutable-hasheq-expected (unreachable))
-         
          (func $hash-set!
-               (param $ht  (ref eq))   ;; must be a mutable hasheq
-               (param $key (ref eq))
-               (param $val (ref eq))
-               (result     (ref eq)) ;; return void (an immediate)
+              (param $ht  (ref eq))   ;; hash table
+              (param $key (ref eq))   ;; key
+              (param $val (ref eq))   ;; value
+              (result     (ref eq))   ;; return void (an immediate)
 
-               (local $table (ref $HashEqMutable))
+              ;; Check type: must be (ref $Hash)
+              (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                  (then (call $raise-argument-error:hash-expected)
+                        (unreachable)))
+              ;; Dispatch on table type
+              (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                  (then (return (call $hasheq-set!
+                                          (local.get $ht)
+                                          (local.get $key)
+                                          (local.get $val)))))
+              (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                  (then (return (call $hasheqv-set!
+                                          (local.get $ht)
+                                          (local.get $key)
+                                          (local.get $val)))))
+              (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                  (then (return (call $hashequal-set!
+                                          (local.get $ht)
+                                          (local.get $key)
+                                          (local.get $val)))))
+              (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                  (then (return (call $hashalw-set!
+                                          (local.get $ht)
+                                          (local.get $key)
+                                          (local.get $val)))))
+              (unreachable))
 
-               ;; Check type: must be (ref $HashEqMutable)
-               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $ht)))
-                   (then (call $raise-argument-error:mutable-hasheq-expected (local.get $ht))
-                         (unreachable)))
-               ;; Cast after check
-               (local.set $table (ref.cast (ref $HashEqMutable) (local.get $ht)))
-               ;; Delegate
-               (call $hasheq-set!/mutable/checked
-                     (local.get $table)
-                     (local.get $key)
-                     (local.get $val))
-               ;; Return void
-               (global.get $void))
+         
+         ,@(for/list ([hash-set         '($hasheq-set!
+                                          $hasheqv-set!
+                                          $hashequal-set!
+                                          $hashalw-set!)]
+                      [set!/checked     '($hasheq-set!/mutable/checked
+                                          $hasheqv-set!/mutable/checked
+                                          $hash-set!/mutable/checked
+                                          $hashalw-set!/mutable/checked)]
+                      [type             '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]
+                      [raise-expected   '($raise-argument-error:mutable-hasheq-expected
+                                          $raise-argument-error:mutable-hasheqv-expected
+                                          $raise-argument-error:mutable-hash-expected
+                                          $raise-argument-error:mutable-hashalw-expected)])
+             `(func ,hash-set
+                    (param $ht  (ref eq))   ;; table
+                    (param $key (ref eq))   ;; key
+                    (param $val (ref eq))   ;; value
+                    (result     (ref eq))   ;; return void
+                    
+                    (local $table (ref ,type))
+
+                    ;; Check that ht is expected table type
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                    ;; Delegate
+                    (call ,set!/checked
+                          (local.get $table)
+                          (local.get $key)
+                          (local.get $val))
+                    ; return void
+                    (global.get $void)))
+         
+         ,@(for/list ([raise-expected '($raise-argument-error:mutable-hasheq-expected
+                                        $raise-argument-error:mutable-hasheqv-expected
+                                        $raise-argument-error:mutable-hash-expected
+                                        $raise-argument-error:mutable-hashalw-expected)])
+             `(func ,raise-expected (unreachable)))
 
          (func $raise-hash-insert:table-full (unreachable))
 
@@ -18075,15 +18128,15 @@
          ,@(for/list ([set!/checked     '($hasheq-set!/mutable/checked
                                           $hasheqv-set!/mutable/checked
                                           $hash-set!/mutable/checked
-                                          $hashalw-set!/mutable/checked)]                      
+                                          $hashalw-set!/mutable/checked)]
                       [make-empty       '($make-empty-hasheq
                                           $make-empty-hasheqv
                                           $make-empty-hash
-                                          $make-empty-hashalw)]                                            
+                                          $make-empty-hashalw)]
                       [type             '($HashEqMutable
                                           $HashEqvMutable
                                           $HashEqualMutable
-                                          $HashEqualAlwaysMutable)]                      
+                                          $HashEqualAlwaysMutable)]
                       [maybe-resize     '($maybe-resize-hasheq
                                           $maybe-resize-hasheqv
                                           $maybe-resize-hashequal
@@ -18093,13 +18146,13 @@
                     (param $key   (ref eq))
                     (param $val   (ref eq))
 
-                    (local $entries        (ref $Array))
-                    (local $capacity       i32)
-                    (local $hash           i32)
-                    (local $index          i32)
-                    (local $step           i32)
-                    (local $slot           i32)
-                    (local $k              (ref eq))
+                    (local $entries         (ref $Array))
+                    (local $capacity        i32)
+                    (local $hash            i32)
+                    (local $index           i32)
+                    (local $step            i32)
+                    (local $slot            i32)
+                    (local $k               (ref eq))
                     (local $first-tombstone i32)
 
                     ;; Maybe resize
