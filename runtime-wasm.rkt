@@ -587,10 +587,43 @@
                        (field $hash     (mut i32))
                        (field $mutable? (ref eq)))))
 
+          (type $HashEqv
+                (sub $Hash
+                     (struct
+                       (field $hash     (mut i32))
+                       (field $mutable? (ref eq)))))
+
+          (type $HashEqual
+                (sub $Hash
+                     (struct
+                       (field $hash     (mut i32))
+                       (field $mutable? (ref eq)))))
+
+          
           (type $HashEqMutable
                 ; Mutable hash tables are implemented as an open-addressing hash table
                 ; with linear probing.
-                (sub $Hash
+                (sub $HashEq
+                     (struct
+                       (field $hash     (mut i32))
+                       (field $mutable? (ref eq))
+                       (field $entries  (mut (ref $Array)))  ;; flat array: key0, val0, key1, val1, ...
+                       (field $count    (mut i32)))))        ;; number of key/value pairs currently stored
+
+          (type $HashEqvMutable
+                ; Mutable hash tables are implemented as an open-addressing hash table
+                ; with linear probing.
+                (sub $HashEqv
+                     (struct
+                       (field $hash     (mut i32))
+                       (field $mutable? (ref eq))
+                       (field $entries  (mut (ref $Array)))  ;; flat array: key0, val0, key1, val1, ...
+                       (field $count    (mut i32)))))        ;; number of key/value pairs currently stored
+
+          (type $HashEqualMutable
+                ; Mutable hash tables are implemented as an open-addressing hash table
+                ; with linear probing.
+                (sub $HashEqual
                      (struct
                        (field $hash     (mut i32))
                        (field $mutable? (ref eq))
