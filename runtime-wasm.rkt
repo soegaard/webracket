@@ -19016,6 +19016,9 @@
                (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
                    (then (call $raise-argument-error:hash-expected)
                          (unreachable)))
+               ;; Optional for try-order
+               (if (ref.eq (local.get $try) (global.get $missing))
+                   (then (local.set $try (global.get $false))))
 
                ;; Dispatch on table type
                (if (ref.test (ref $HashEqMutable) (local.get $ht))
@@ -19138,6 +19141,178 @@
 
                    (global.get $void)))
 
+
+        ;; General hash-map
+        (func $hash-map (type $Prim3)
+              (param $ht   (ref eq))   ;; hash table
+              (param $proc (ref eq))   ;; procedure
+              (param $try  (ref eq))   ;; optional try-order? (default #f)
+              (result      (ref eq))   ;; list of results
+
+              ;; Check type: must be (ref $Hash)
+              (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                  (then (call $raise-argument-error:hash-expected)
+                        (unreachable)))
+              ;; Validate procedure
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+              ;; Optional try-order?
+              (if (ref.eq (local.get $try) (global.get $missing))
+                   (then (local.set $try (global.get $false))))
+              ;; Dispatch on table type
+              (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                  (then (return (call $hasheq-map (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $try)))))
+              (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                  (then (return (call $hasheqv-map (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $try)))))
+              (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                  (then (return (call $hashequal-map (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $try)))))
+              (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                  (then (return (call $hashalw-map (local.get $ht)
+                                      (local.get $proc)
+                                      (local.get $try)))))
+              (unreachable))
+
+        
+        ,@(for/list ([hash-map       '($hasheq-map
+                                       $hasheqv-map
+                                       $hashequal-map
+                                       $hashalw-map)]
+                     [hash-map/plain '($hasheq-map/plain
+                                       $hasheqv-map/plain
+                                       $hashequal-map/plain
+                                       $hashalw-map/plain)])
+            `(func ,hash-map
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $try  (ref eq))
+                   (result      (ref eq))
+
+                   (return_call ,hash-map/plain
+                                (local.get $ht)
+                                (local.get $proc)
+                                (local.get $try))))
+
+        ,@(for/list ([hash-map/plain         '($hasheq-map/plain
+                                               $hasheqv-map/plain
+                                               $hashequal-map/plain
+                                               $hashalw-map/plain)]
+                     [hash-map/plain/checked '($hasheq-map/plain/checked
+                                               $hasheqv-map/plain/checked
+                                               $hashequal-map/plain/checked
+                                               $hashalw-map/plain/checked)]
+                     [type                   '($HashEqMutable
+                                               $HashEqvMutable
+                                               $HashEqualMutable
+                                               $HashEqualAlwaysMutable)]
+                     [raise-expected         '($raise-argument-error:hasheq-expected
+                                               $raise-argument-error:hasheqv-expected
+                                               $raise-argument-error:hash-expected
+                                               $raise-argument-error:hashalw-expected)])
+            `(func ,hash-map/plain
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $try  (ref eq)) ;; try-order?, default #f
+                   (result      (ref eq))
+
+                   (local $table (ref ,type))
+
+                   ;; Check that ht is expected table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise-expected (local.get $ht))
+                             (unreachable)))
+                   ;; Decode
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   ;; Delegate to checked implementation
+                   (call ,hash-map/plain/checked
+                         (local.get $table)
+                         (local.get $proc))))
+
+        ,@(for/list ([hash-map/plain/checked '($hasheq-map/plain/checked
+                                               $hasheqv-map/plain/checked
+                                               $hashequal-map/plain/checked
+                                               $hashalw-map/plain/checked)]
+                     [type                   '($HashEqMutable
+                                               $HashEqvMutable
+                                               $HashEqualMutable
+                                               $HashEqualAlwaysMutable)])
+            `(func ,hash-map/plain/checked
+                   (param $table (ref ,type))
+                   (param $proc  (ref eq))
+                   (result       (ref eq))
+
+                   (local $f       (ref $Procedure))
+                   (local $finv    (ref $ProcedureInvoker))
+                   (local $entries (ref $Array))
+                   (local $capacity i32)
+                   (local $i       i32)
+                   (local $key     (ref eq))
+                   (local $val     (ref eq))
+                   (local $args    (ref $Args))
+                   (local $r       (ref eq))
+                   (local $acc     (ref eq))
+
+                   ;; Validate procedure
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                             (unreachable)))
+                   (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                   (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                   (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+
+                   ;; Initialize locals
+                   (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                   (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                   (local.set $i        (i32.const 0))
+                   (local.set $acc      (global.get $null))
+
+                   (block $done
+                          (loop $loop
+                                (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+
+                                ;; Load key
+                                (local.set $key
+                                           (array.get $Array
+                                                      (local.get $entries)
+                                                      (i32.shl (local.get $i) (i32.const 1))))
+                                ;; Skip empty or tombstone slots
+                                (if (ref.eq (local.get $key) (global.get $missing))
+                                    (then
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop)))
+                                (if (ref.eq (local.get $key) (global.get $tombstone))
+                                    (then
+                                     (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                     (br $loop)))
+
+                                ;; Load value
+                                (local.set $val
+                                           (array.get $Array
+                                                      (local.get $entries)
+                                                      (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                               (i32.const 1))))
+                                ;; Prepare arguments and invoke procedure
+                                (array.set $Args (local.get $args) (i32.const 0) (local.get $key))
+                                (array.set $Args (local.get $args) (i32.const 1) (local.get $val))
+                                (local.set $r
+                                           (call_ref $ProcedureInvoker
+                                                     (local.get $f)
+                                                     (local.get $args)
+                                                     (local.get $finv)))
+                                ;; Accumulate result
+                                (local.set $acc (call $cons (local.get $r) (local.get $acc)))
+
+                                (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                (br $loop)))
+
+                   (local.get $acc)))
+        
 
          ;;;
          ;;; HASH CODES

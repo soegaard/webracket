@@ -495,6 +495,7 @@
  hash-count
  hash->list
  hash-for-each
+ hash-map
 
  make-empty-hasheq
  make-empty-hasheqv

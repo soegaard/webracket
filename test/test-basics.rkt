@@ -2146,17 +2146,32 @@
                   (hash-set! h 1 'a)
                   (hash-set! h 2 'b)
                   (hash-set! h 3 'c)
-                  (let ([r (hash-for-each h (λ (k v)
-                                              (set-box! acc (cons (cons k v) (unbox acc)))))]
+                  (let ([r (hash-for-each
+                            h (λ (k v)
+                                (set-box! acc (cons (cons k v) (unbox acc)))))]
                         [expected (list (cons 1 'a) (cons 2 'b) (cons 3 'c))])
                     (and (eq? r (void))
                          (equal? (sort (unbox acc) <<) expected))))))
 
+        (list "hash-map"
+              (let ([h (make-hasheq)])
+                (hash-set! h 1 'a)
+                (hash-set! h 2 'b)
+                (hash-set! h 3 'c)
+                (let ([keys  (sort  (hash-map h (λ (k v) k))     (λ (x y) (< x y)))]
+                      [keys2 (sort  (hash-map h (λ (k v) k) #t)  (λ (x y) (< x y)))]
+                      [vals  (sort  (hash-map h (λ (k v) v))     (λ (x y) (symbol<? x y)))])
+                  (and (equal? keys  '(1 2 3))
+                       (equal? keys2 '(1 2 3))
+                       (equal? vals  '(a b c))))))
+
+
+
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])
-                     (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
-                               (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
+                     (and (eq? (eq-hash-code xs) (eq-hash-code xs))
+                          (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
 
         (list "eqv-hash-code"
               (let ([x1 (fl+ 1.0 0.0)]

@@ -667,6 +667,7 @@
   hash-count
   hash->list
   hash-for-each
+  hash-map
   
   eq-hash-code
   eqv-hash-code
@@ -3269,25 +3270,25 @@
      ;; That is, arguments beyound `min` are optional.
      ;; Passes `default` for missing arguments.
      ;; Note: The same default values is used for all arguments.
-    (define (inline-prim/optional/default sym ae1 min max default)
-      (define filler `(global.get $missing))
-      (define aes (AExpr* ae1))
-      (define n   (length aes))
-      (when (> n max) (error 'primapp "too many arguments: ~a" sym))
-      (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
-      (define optionals (make-list (- max n) default))
-      `(call ,($ sym) ,@aes ,@optionals))
+     (define (inline-prim/optional/default sym ae1 min max default)
+       (define filler `(global.get $missing))
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
+       (define optionals (make-list (- max n) default))
+       `(call ,($ sym) ,@aes ,@optionals))
 
-    (define (inline-range sym ae1)
-      (define aes (AExpr* ae1))
-      (match aes
-        [(list end)
-         `(call ,($ sym) (global.get $missing) ,end (global.get $missing))]
-        [(list start end)
-         `(call ,($ sym) ,start ,end (global.get $missing))]
-        [(list start end step)
-         `(call ,($ sym) ,start ,end ,step)]
-        [_ (error 'primapp "wrong number of arguments: ~a" sym)]))
+     (define (inline-range sym ae1)
+       (define aes (AExpr* ae1))
+       (match aes
+         [(list end)
+          `(call ,($ sym) (global.get $missing) ,end (global.get $missing))]
+         [(list start end)
+          `(call ,($ sym) ,start ,end (global.get $missing))]
+         [(list start end step)
+          `(call ,($ sym) ,start ,end ,step)]
+         [_ (error 'primapp "wrong number of arguments: ~a" sym)]))
 
     (define (build-rest-args aes)
        (let loop ([aes aes])
@@ -3433,6 +3434,7 @@
          [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
          [(hash->list)                 (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
          [(hash-for-each)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
