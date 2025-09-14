@@ -663,6 +663,9 @@
   hash-remove!
   hash-clear!
   hash-has-key?
+  hash-empty?
+
+  
   eq-hash-code
   eqv-hash-code
   

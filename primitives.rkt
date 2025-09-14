@@ -491,7 +491,8 @@
  hash-equal-always?
 
  hash-ref hash-set! hash-remove! hash-clear!
- hash-has-key? eq-hash-code
+ hash-has-key?
+ hash-empty?
 
  make-empty-hasheq
  make-empty-hasheqv
@@ -502,6 +503,8 @@
  make-hasheqv
  make-hash
  make-hashalw
+
+  eq-hash-code
 
  
  ;; 4.20 Procedures

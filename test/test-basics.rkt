@@ -2115,6 +2115,12 @@
                 (and (equal? (hash-has-key? h 'a) #t)
                      (equal? (hash-has-key? h 'b) #f))))
 
+        (list "hash-empty?"
+              (let ([h (make-hasheq)])
+                (and (equal? (hash-empty? h) #t)
+                     (begin (hash-set! h 'a 1)
+                            (equal? (hash-empty? h) #f)))))
+
         (list "eq-hash-code"
               (and (let ([xs (list 1 2 3)]
                          [ys (list 1 2 4)])

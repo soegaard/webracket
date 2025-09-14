@@ -18751,8 +18751,76 @@
                     (struct.set ,type $entries (local.get $ht) (local.get $new-entries))
                     ;; Reset count to 0
                     (struct.set ,type $count (local.get $ht) (i32.const 0))))
-         
 
+
+         
+         ;; hash-empty?
+
+         (func $hash-empty? (type $Prim1)
+               (param $ht (ref eq))
+               (result    (ref eq))
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
+                         (unreachable)))
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-empty? (local.get $ht)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-empty? (local.get $ht)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-empty? (local.get $ht)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-empty? (local.get $ht)))))
+               (unreachable))
+
+
+         ,@(for/list ([hash-empty      '($hasheq-empty?
+                                         $hasheqv-empty?
+                                         $hashequal-empty?
+                                         $hashalw-empty?)]
+                      [empty?/checked  '($hasheq-empty?/mutable/checked
+                                         $hasheqv-empty?/mutable/checked
+                                         $hash-empty?/mutable/checked
+                                         $hashalw-empty?/mutable/checked)]
+                      [type            '($HashEqMutable
+                                         $HashEqvMutable
+                                         $HashEqualMutable
+                                         $HashEqualAlwaysMutable)]
+                      [raise-expected  '($raise-argument-error:hasheq-expected
+                                         $raise-argument-error:hasheqv-expected
+                                         $raise-argument-error:hash-expected
+                                         $raise-argument-error:hashalw-expected)])
+             `(func ,hash-empty
+                    (param $ht (ref eq))   ;; table
+                    (result (ref eq))      ;; boolean result
+
+                    (local $table (ref ,type))
+                    ;; Check that ht is expected table type
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                    ;; Delegate
+                    (call ,empty?/checked (local.get $table))))
+         
+        ,@(for/list ([empty?/checked '($hasheq-empty?/mutable/checked
+                                       $hasheqv-empty?/mutable/checked
+                                       $hash-empty?/mutable/checked
+                                       $hashalw-empty?/mutable/checked)]
+                     [type           '($HashEqMutable
+                                       $HashEqvMutable
+                                       $HashEqualMutable
+                                       $HashEqualAlwaysMutable)])
+             `(func ,empty?/checked
+                    (param $ht (ref ,type))   ;; hash table
+                    (result (ref eq))         ;; boolean result
+
+                    (if (result (ref eq))
+                        (i32.eqz (struct.get ,type $count (local.get $ht)))
+                        (then (global.get $true))
+                        (else (global.get $false)))))
 
          
          ;;;
