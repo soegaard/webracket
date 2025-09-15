@@ -924,10 +924,31 @@
                    (equal? (string>=? "B" "A") #t)
                    (equal? (string>=? "A" "AB") #f)))
         
-        #;(list "string-ci=?"
-                (and (equal? (string-ci=? "A" "a") #t)
-                     (equal? (string-ci=? "A" "B") #f)
-                     (equal? (string-ci=? "A" "AB") #f)))
+        (list "string-ci=?"
+              (and (equal? (string-ci=? "A" "a") #t)
+                   (equal? (string-ci=? "Hello" "hELLo") #t)
+                   (equal? (string-ci=? "A" "B") #f)
+                   (equal? (string-ci=? "A" "AB") #f)))
+
+        (list "string-ci<?"
+              (and (equal? (string-ci<? "A" "b") #t)
+                   (equal? (string-ci<? "apple" "BANANA") #t)
+                   (equal? (string-ci<? "Apple" "apple") #f)))
+
+        (list "string-ci>?"
+              (and (equal? (string-ci>? "b" "A") #t)
+                   (equal? (string-ci>? "BANANA" "apple") #t)
+                   (equal? (string-ci>? "Apple" "apple") #f)))
+
+        (list "string-ci<=?"
+              (and (equal? (string-ci<=? "" "") #t)
+                   (equal? (string-ci<=? "Apple" "apple") #t)
+                   (equal? (string-ci<=? "banana" "Apple") #f)))
+
+        (list "string-ci>=?"
+              (and (equal? (string-ci>=? "" "") #t)
+                   (equal? (string-ci>=? "banana" "Apple") #t)
+                   (equal? (string-ci>=? "apple" "BANANA") #f)))
 
         (list "string-upcase"
               (and (equal? (string-upcase "abc!") "ABC!")

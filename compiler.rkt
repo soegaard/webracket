@@ -602,7 +602,9 @@
   bytes->list list->bytes 
   bytes=? bytes<? bytes>?
 
-  string? string=? string<? string<=? string>? string>=?
+  string?
+  string=?    string<?    string<=?    string>?    string>=?
+  string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
   make-string build-string string-ref string-set! string-length substring
   string-copy!
   string-copy string-fill!

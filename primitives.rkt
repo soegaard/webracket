@@ -287,8 +287,8 @@
  string-titlecase
  string-foldcase
  string->immutable-string
- string=? string<? string<=? string>? string>=?
- string-ci=?  
+ string=?    string<?    string<=?    string>?    string>=?
+ string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
  string-prefix?
  string-suffix?
  string-contains?
