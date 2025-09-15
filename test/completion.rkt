@@ -1323,14 +1323,19 @@
             hash-equal-always?
             hash-equal?
             hash-eqv?
+            hash-filter
+            hash-filter-keys
+            hash-filter-values
             hash-for-each
             hash-has-key?
             hash-keys
             hash-map
             hash-map/copy
             hash-ref
+            hash-ref!
             hash-remove!
             hash-set!
+            hash-update!
             hash-values
             hash?
             immutable-box?
@@ -1638,6 +1643,8 @@
             write-byte
             xor
             zero?)
+
+
 
 
 
