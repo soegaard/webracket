@@ -663,6 +663,7 @@
   hash-equal-always?
   
   hash-ref
+  hash-ref!
   hash-set!
   hash-remove!
   hash-clear!

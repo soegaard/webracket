@@ -490,7 +490,7 @@
  hash-equal?
  hash-equal-always?
 
- hash-ref hash-set! hash-remove! hash-clear!
+ hash-ref hash-ref! hash-set! hash-remove! hash-clear!
  hash-has-key?
  hash-empty?
  hash-count
