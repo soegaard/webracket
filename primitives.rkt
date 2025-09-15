@@ -510,7 +510,9 @@
  make-hash
  make-hashalw
 
-  eq-hash-code
+ eq-hash-code
+ eqv-hash-code
+ equal-hash-code
 
  
  ;; 4.20 Procedures

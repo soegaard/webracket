@@ -17764,6 +17764,13 @@
          ;;; HASH TABLES
          ;;;
 
+         ;; Racket contains quite a few types of hash tables.
+         ;;
+         ;;   eq?/eqv?/equal?/equal-always?    mutable/immutable    strong/weak/ephemerons
+         ;;
+         ;; Currently `webracket` supports mutable, strong hash tables only.
+         
+         
          (func $hash? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
@@ -17818,8 +17825,7 @@
                                 (i32.const 0)                 ;; hash = 0 (placeholder or unused)
                                 (global.get $true)            ;; mutable? = #t
                                 (local.get $entries)          ;; entries array
-                                (i32.const 0)))               ;; count = 0
-             )
+                                (i32.const 0))))              ;; count = 0
 
          (func $raise-argument-error:pair-expected  (unreachable))
          (func $raise-argument-error:pair-expected1 (unreachable))
@@ -19802,6 +19808,193 @@
                              (else (local.get $h))))))))
 
 
+         ;;; Equal Hash Code
+
+         ;; equal-hash-code -- computes a hash code consistent with equal?
+         ;;   Note: currently does not support user-defined extensions via
+         ;;         gen:equal+hash or gen:equal-mode+hash.
+
+         (func $equal-hash-code (type $Prim1)
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (ref.i31
+                (i32.shl (call $equal-hash/i32 (local.get $v))
+                         (i32.const 1))))
+
+         (func $equal-hash/i32
+               (param $v (ref eq))
+               (result i32)
+
+               (local $str   (ref $String))
+               (local $bs    (ref $Bytes))
+               (local $h     i32)
+
+               ;; immediates and numbers fall back to eqv-hash
+               (if (ref.test (ref i31) (local.get $v))
+                   (then (return (call $eqv-hash/i32 (local.get $v)))))
+               (if (ref.test (ref $Flonum) (local.get $v))
+                   (then (return (call $eqv-hash/i32 (local.get $v)))))
+               ;; strings
+               (if (ref.test (ref $String) (local.get $v))
+                   (then (local.set $str (ref.cast (ref $String) (local.get $v)))
+                         (local.set $h (call $string-hash/i32 (local.get $str)))
+                         ;; reset memoized hash so eq-hash-code can still assign
+                         (struct.set $String $hash (local.get $str) (i32.const 0))
+                         (return (local.get $h))))
+               ;; bytes
+               (if (ref.test (ref $Bytes) (local.get $v))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $v)))
+                         (return (call $bytes-hash/i32 (local.get $bs)))))
+               ;; pair
+               (if (ref.test (ref $Pair) (local.get $v))
+                   (then (return_call $equal-hash/pair
+                                      (ref.cast (ref $Pair) (local.get $v)))))
+               ;; box
+               (if (ref.test (ref $Box) (local.get $v))
+                   (then (return_call $equal-hash/box
+                                      (ref.cast (ref $Box) (local.get $v)))))
+               ;; vector
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then (return_call $equal-hash/vector
+                                      (ref.cast (ref $Vector) (local.get $v)))))
+               ;; struct
+               (if (ref.test (ref $Struct) (local.get $v))
+                   (then (return_call $equal-hash/struct
+                                      (ref.cast (ref $Struct) (local.get $v)))))
+               ;; fallback to eqv-hash for other heap objects (symbols, etc.)
+               (return (call $eqv-hash/i32 (local.get $v))))
+
+         (func $equal-hash/pair
+               (param $p (ref $Pair))
+               (result i32)
+
+               (local $heap (ref $Heap))
+               (local $h    i32)
+               (local $ha   i32)
+               (local $hd   i32)
+
+               (local.set $heap (ref.cast (ref $Heap) (local.get $p)))
+               (local.set $h (struct.get $Heap $hash (local.get $heap)))
+               ;; cycle detection
+               (if (i32.eq (local.get $h) (i32.const -2147483648))
+                   (then (return (i32.const 0))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const -2147483648))
+               (local.set $ha (call $equal-hash/i32 (struct.get $Pair $a (local.get $p))))
+               (local.set $hd (call $equal-hash/i32 (struct.get $Pair $d (local.get $p))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const 0))
+               (local.set $h (i32.add (i32.mul (local.get $ha) (i32.const 33))
+                                      (local.get $hd)))
+               (local.get $h))
+
+         (func $equal-hash/box
+               (param $b (ref $Box))
+               (result i32)
+
+               (local $heap (ref $Heap))
+               (local $h    i32)
+
+               (local.set $heap (ref.cast (ref $Heap) (local.get $b)))
+               (local.set $h (struct.get $Heap $hash (local.get $heap)))
+               (if (i32.eq (local.get $h) (i32.const -2147483648))
+                   (then (return (i32.const 0))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const -2147483648))
+               (local.set $h (call $equal-hash/i32 (struct.get $Box $v (local.get $b))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const 0))
+               (i32.add (i32.const 1) (local.get $h)))
+
+         (func $equal-hash/vector
+               (param $v (ref $Vector))
+               (result i32)
+
+               (local $heap (ref $Heap))
+               (local $arr  (ref $Array))
+               (local $len  i32)
+               (local $i    i32)
+               (local $h    i32)
+               (local $elem (ref eq))
+
+               (local.set $heap (ref.cast (ref $Heap) (local.get $v)))
+               (local.set $h (struct.get $Heap $hash (local.get $heap)))
+               (if (i32.eq (local.get $h) (i32.const -2147483648))
+                   (then (return (i32.const 0))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const -2147483648))
+               (local.set $arr (struct.get $Vector $arr (local.get $v)))
+               (local.set $len (array.len (local.get $arr)))
+               (local.set $i   (i32.const 0))
+               (local.set $h   (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+                            (local.set $h (i32.add (i32.mul (local.get $h) (i32.const 33))
+                                                   (call $equal-hash/i32 (local.get $elem))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (struct.set $Heap $hash (local.get $heap) (i32.const 0))
+               (local.get $h))
+
+         (func $equal-hash/struct
+               (param $s (ref $Struct))
+               (result i32)
+
+               (local $heap   (ref $Heap))
+               (local $type   (ref $StructType))
+               (local $fields (ref $Array))
+               (local $len    i32)
+               (local $i      i32)
+               (local $h      i32)
+               (local $elem   (ref eq))
+
+               (local.set $heap (ref.cast (ref $Heap) (local.get $s)))
+               (local.set $h (struct.get $Heap $hash (local.get $heap)))
+               (if (i32.eq (local.get $h) (i32.const -2147483648))
+                   (then (return (i32.const 0))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const -2147483648))
+               (local.set $type   (struct.get $Struct $type (local.get $s)))
+               (local.set $h      (call $eqv-hash/i32 (local.get $type)))
+               (local.set $fields (struct.get $Struct $fields (local.get $s)))
+               (local.set $len    (array.len (local.get $fields)))
+               (local.set $i      (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $elem (array.get $Array (local.get $fields) (local.get $i)))
+                            (local.set $h (i32.add (i32.mul (local.get $h) (i32.const 33))
+                                                   (call $equal-hash/i32 (local.get $elem))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (struct.set $Heap $hash (local.get $heap) (i32.const 0))
+               (local.get $h))
+
+
+
+         (func $bytes-hash/i32 ;  32‑bit FNV‑1a hash algorithm 
+               (param $b (ref $Bytes))
+               (result i32)
+
+               (local $hash i32)
+               (local $arr  (ref $I8Array))
+               (local $len  i32)
+               (local $i    i32)
+               (local $byte i32)
+
+               (local.set $hash (i32.const 2166136261))
+               (local.set $arr  (struct.get $Bytes $bs (local.get $b)))
+               (local.set $len  (array.len (local.get $arr)))
+               (local.set $i    (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                            (local.set $hash
+                                       (i32.mul
+                                        (i32.xor (local.get $hash) (local.get $byte))
+                                        (i32.const 16777619)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (local.get $hash))
+         
          
          ;;;
          ;;; SYMBOL TABLE

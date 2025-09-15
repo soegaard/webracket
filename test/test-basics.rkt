@@ -132,7 +132,13 @@
               (equal? (equal? (integer->char 1024) (integer->char 1025)) #f)
 
               ;; arity
-              (equal? (procedure-arity equal?) 2))))
+              (equal? (procedure-arity equal?) 2)))
+
+       (list "equal-hash-code"
+             (and (fixnum? (equal-hash-code '(1 2)))
+                  (eq? (equal-hash-code '(1 2))         (equal-hash-code '(1 2)))
+                  (eq? (equal-hash-code (vector 'a 'b)) (equal-hash-code (vector 'a 'b)))
+                  (eq? (equal-hash-code (box 1))        (equal-hash-code (box 1))))))
  
  (list "4.2 Booleans"
        (list
