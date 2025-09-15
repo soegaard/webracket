@@ -665,6 +665,7 @@
   hash-ref
   hash-ref!
   hash-set!
+  hash-update!
   hash-remove!
   hash-clear!
   hash-has-key?
@@ -3446,6 +3447,7 @@
          [(hash-for-each)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map/copy)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
+         [(hash-update!)               (inline-prim/optional sym ae1 3 4)]
          
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]

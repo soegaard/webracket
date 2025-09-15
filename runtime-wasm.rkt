@@ -18980,6 +18980,235 @@
                     (local.get $value)))
          
 
+         (func $hash-update!
+               (param $ht   (ref eq))   ;; hash table
+               (param $key  (ref eq))   ;; key
+               (param $proc (ref eq))   ;; updater procedure
+               (param $fail (ref eq))   ;; optional failure result (default = raises error)
+               (result      (ref eq))
+
+               ;; Check type: must be (ref $Hash)
+               (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                   (then (call $raise-argument-error:hash-expected)
+                         (unreachable)))
+
+               ;; Dispatch on table type
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return (call $hasheq-update!
+                                       (local.get $ht)
+                                       (local.get $key)
+                                       (local.get $proc)
+                                       (local.get $fail)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return (call $hasheqv-update!
+                                       (local.get $ht)
+                                       (local.get $key)
+                                       (local.get $proc)
+                                       (local.get $fail)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return (call $hashequal-update!
+                                       (local.get $ht)
+                                       (local.get $key)
+                                       (local.get $proc)
+                                       (local.get $fail)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return (call $hashalw-update!
+                                       (local.get $ht)
+                                       (local.get $key)
+                                       (local.get $proc)
+                                       (local.get $fail)))))
+               (unreachable))
+
+         ,@(for/list ([hash-update       '($hasheq-update!
+                                           $hasheqv-update!
+                                           $hashequal-update!
+                                           $hashalw-update!)]
+                      [hash-update/plain '($hasheq-update!/plain
+                                           $hasheqv-update!/plain
+                                           $hashequal-update!/plain
+                                           $hashalw-update!/plain)])
+             `(func ,hash-update
+                    (param $ht   (ref eq))
+                    (param $key  (ref eq))
+                    (param $proc (ref eq))
+                    (param $fail (ref eq))
+                    (result      (ref eq))
+
+                    (return_call ,hash-update/plain
+                                 (local.get $ht)
+                                 (local.get $key)
+                                 (local.get $proc)
+                                 (local.get $fail))))
+
+         ,@(for/list ([hash-update/plain         '($hasheq-update!/plain
+                                                   $hasheqv-update!/plain
+                                                   $hashequal-update!/plain
+                                                   $hashalw-update!/plain)]
+                      [hash-update/plain/checked '($hasheq-update!/plain/checked
+                                                   $hasheqv-update!/plain/checked
+                                                   $hashequal-update!/plain/checked
+                                                   $hashalw-update!/plain/checked)]
+                      [type                      '($HashEqMutable
+                                                   $HashEqvMutable
+                                                   $HashEqualMutable
+                                                   $HashEqualAlwaysMutable)]
+                      [raise-expected            '($raise-argument-error:mutable-hasheq-expected
+                                                   $raise-argument-error:mutable-hasheqv-expected
+                                                   $raise-argument-error:mutable-hash-expected
+                                                   $raise-argument-error:mutable-hashalw-expected)])
+             `(func ,hash-update/plain
+                    (param $ht   (ref eq))
+                    (param $key  (ref eq))
+                    (param $proc (ref eq))
+                    (param $fail (ref eq))
+                    (result      (ref eq))
+
+                    (local $table (ref ,type))
+                    (local $f     (ref $Procedure))
+
+                    ;; Check that ht is the expected mutable hash table type
+                    (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                        (then (call ,raise-expected (local.get $ht))
+                              (unreachable)))
+
+                    ;; Ensure updater is a procedure
+                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                        (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                              (unreachable)))
+
+                    ;; Decode
+                    (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                    (local.set $f     (ref.cast (ref $Procedure) (local.get $proc)))
+
+                    ;; Delegate to checked implementation
+                    (call ,hash-update/plain/checked
+                          (local.get $table)
+                          (local.get $key)
+                          (local.get $f)
+                          (local.get $fail))))
+
+         ,@(for/list ([hash-update/plain/checked '($hasheq-update!/plain/checked
+                                                   $hasheqv-update!/plain/checked
+                                                   $hashequal-update!/plain/checked
+                                                   $hashalw-update!/plain/checked)]
+                      [type                      '($HashEqMutable
+                                                   $HashEqvMutable
+                                                   $HashEqualMutable
+                                                   $HashEqualAlwaysMutable)]
+                      [set!/checked              '($hasheq-set!/mutable/checked
+                                                   $hasheqv-set!/mutable/checked
+                                                   $hash-set!/mutable/checked
+                                                   $hashalw-set!/mutable/checked)])
+             `(func ,hash-update/plain/checked
+                    (param $table (ref ,type))
+                    (param $key   (ref eq))
+                    (param $proc  (ref $Procedure))
+                    (param $fail  (ref eq))
+                    (result       (ref eq))
+
+                    (local $entries   (ref $Array))
+                    (local $capacity  i32)
+                    (local $hash      i32)
+                    (local $index     i32)
+                    (local $step      i32)
+                    (local $slot      i32)
+                    (local $k         (ref eq))
+                    (local $old-value (ref eq))
+                    (local $new-value (ref eq))
+                    (local $default   (ref eq))
+                    (local $finv      (ref $ProcedureInvoker))
+                    (local $args      (ref $Args))
+                    (local $fail-proc (ref $Procedure))
+                    (local $fail-inv  (ref $ProcedureInvoker))
+                    (local $noargs    (ref $Args))
+
+                    ;; Initialize locals used across branches
+                    (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                    (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                    (local.set $finv    (struct.get $Procedure $invoke (local.get $proc)))
+                    (local.set $args    (array.new $Args (global.get $null) (i32.const 1)))
+
+                    ;; Hash key (identity hash)
+                    (local.set $hash  (call $eq-hash/i32 (local.get $key)))
+                    (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
+                    (local.set $step  (i32.const 0))
+                    (block $not-found
+                           (loop $probe
+                                 ;; Stop probing if we've checked all slots
+                                 (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
+                                 ;; slot = 2 * ((index + step) % capacity)
+                                 (local.set $slot
+                                            (i32.shl
+                                             (i32.rem_u
+                                              (i32.add (local.get $index) (local.get $step))
+                                              (local.get $capacity))
+                                             (i32.const 1)))
+                                 ;; Get key at slot
+                                 (local.set $k (array.get $Array (local.get $entries) (local.get $slot)))
+                                 ;; Empty slot means not found
+                                 (br_if $not-found (ref.eq (local.get $k) (global.get $missing)))
+                                 ;; Tombstone? — skip and continue probing
+                                 (if (ref.eq (local.get $k) (global.get $tombstone))
+                                     (then
+                                      (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                      (br $probe)))
+                                 ;; Match? — compute new value and overwrite existing entry
+                                 (if (ref.eq (local.get $k) (local.get $key))
+                                     (then
+                                      (local.set $old-value
+                                                 (array.get $Array
+                                                            (local.get $entries)
+                                                            (i32.add (local.get $slot) (i32.const 1))))
+                                      (array.set $Args (local.get $args) (i32.const 0) (local.get $old-value))
+                                      (local.set $new-value
+                                                 (call_ref $ProcedureInvoker
+                                                           (local.get $proc)
+                                                           (local.get $args)
+                                                           (local.get $finv)))
+                                      (array.set $Array
+                                                 (local.get $entries)
+                                                 (i32.add (local.get $slot) (i32.const 1))
+                                                 (local.get $new-value))
+                                      (return (global.get $void))))
+                                 ;; Continue probing
+                                 (local.set $step (i32.add (local.get $step) (i32.const 1)))
+                                 (br $probe)))
+
+                    ;; Missing entry — compute default
+                    (if (ref.eq (local.get $fail) (global.get $missing))
+                        (then (call $raise-hash-ref-key-not-found (local.get $key))
+                              (unreachable)))
+
+                    (local.set $default
+                               (if (result (ref eq))
+                                   (ref.test (ref $Procedure) (local.get $fail))
+                                   (then
+                                    (local.set $fail-proc (ref.cast (ref $Procedure) (local.get $fail)))
+                                    (local.set $fail-inv  (struct.get $Procedure $invoke (local.get $fail-proc)))
+                                    (local.set $noargs    (array.new $Args (global.get $null) (i32.const 0)))
+                                    (call_ref $ProcedureInvoker
+                                              (local.get $fail-proc)
+                                              (local.get $noargs)
+                                              (local.get $fail-inv)))
+                                   (else
+                                    (local.get $fail))))
+
+                    ;; Apply updater to default and insert mapping
+                    (array.set $Args (local.get $args) (i32.const 0) (local.get $default))
+                    (local.set $new-value
+                               (call_ref $ProcedureInvoker
+                                         (local.get $proc)
+                                         (local.get $args)
+                                         (local.get $finv)))
+
+                    (call ,set!/checked
+                          (local.get $table)
+                          (local.get $key)
+                          (local.get $new-value))
+
+                    (global.get $void)))
+
+         
 
          (func $raise-argument-error:hasheq-mutable-expected (unreachable))
          
