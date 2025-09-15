@@ -134,6 +134,21 @@
               ;; arity
               (equal? (procedure-arity equal?) 2)))
 
+       (list "eq-hash-code"
+              (and (let ([xs (list 1 2 3)]
+                         [ys (list 1 2 4)])
+                     (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
+                          (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
+
+        (list "eqv-hash-code"
+              (let ([x1 (fl+ 1.0 0.0)]
+                    [x2 (fl+ 0.5 0.5)]
+                    [y  (fl+ 2.0 0.0)])
+                (and (eqv? x1 x2)
+                     (not (eq? x1 x2))
+                     (eq? (eqv-hash-code x1) (eqv-hash-code x2))
+                     (not (eq? (eqv-hash-code x1) (eqv-hash-code y))))))
+       
        (list "equal-hash-code"
              (and (fixnum? (equal-hash-code '(1 2)))
                   (eq? (equal-hash-code '(1 2))         (equal-hash-code '(1 2)))
@@ -2196,20 +2211,7 @@
                   (and (equal? (sort (hash-values h)    (λ (x y) (< x y))) expected)
                        (equal? (sort (hash-values h #t) (λ (x y) (< x y))) expected)))))
         
-        (list "eq-hash-code"
-              (and (let ([xs (list 1 2 3)]
-                         [ys (list 1 2 4)])
-                     (and      (eq? (eq-hash-code xs) (eq-hash-code xs))
-                          (not (eq? (eq-hash-code xs) (eq-hash-code ys)))))))
-
-        (list "eqv-hash-code"
-              (let ([x1 (fl+ 1.0 0.0)]
-                    [x2 (fl+ 0.5 0.5)]
-                    [y  (fl+ 2.0 0.0)])
-                (and (eqv? x1 x2)
-                     (not (eq? x1 x2))
-                     (eq? (eqv-hash-code x1) (eqv-hash-code x2))
-                     (not (eq? (eqv-hash-code x1) (eqv-hash-code y))))))
+        
         ))
 
  (list "Checkers"

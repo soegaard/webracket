@@ -19862,6 +19862,10 @@
                (if (ref.test (ref $Struct) (local.get $v))
                    (then (return_call $equal-hash/struct
                                       (ref.cast (ref $Struct) (local.get $v)))))
+               ;; hash table
+               (if (ref.test (ref $Hash) (local.get $v))
+                   (then (return_call $equal-hash/hash
+                                      (ref.cast (ref $Hash) (local.get $v)))))
                ;; fallback to eqv-hash for other heap objects (symbols, etc.)
                (return (call $eqv-hash/i32 (local.get $v))))
 
@@ -19967,9 +19971,112 @@
                (struct.set $Heap $hash (local.get $heap) (i32.const 0))
                (local.get $h))
 
+         (func $equal-hash/hash
+               (param $ht (ref eq))  ;; hash table
+               (result i32)
+
+               (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                   (then (return_call $equal-hash/hasheq-mutable
+                                      (ref.cast (ref $HashEqMutable) (local.get $ht)))))
+               (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                   (then (return_call $equal-hash/hasheqv-mutable
+                                      (ref.cast (ref $HashEqvMutable) (local.get $ht)))))
+               (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                   (then (return_call $equal-hash/hashequal-mutable
+                                      (ref.cast (ref $HashEqualMutable) (local.get $ht)))))
+               (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                   (then (return_call $equal-hash/hashalw-mutable
+                                      (ref.cast (ref $HashEqualAlwaysMutable) (local.get $ht)))))
+               (return (call $eqv-hash/i32 (local.get $ht))))
+
+         (func $equal-hash/hash-core
+               (param $heap    (ref $Heap))
+               (param $entries (ref $Array))
+               (param $count   i32)
+               (param $salt    i32)
+               (result i32)
+
+               (local $h        i32)
+               (local $capacity i32)
+               (local $i        i32)
+               (local $key      (ref eq))
+               (local $val      (ref eq))
+               (local $entry-h  i32)
+               (local $key-h    i32)
+               (local $val-h    i32)
+
+               (local.set $h (struct.get $Heap $hash (local.get $heap)))
+               (if (i32.eq (local.get $h) (i32.const -2147483648))
+                   (then (return (i32.const 0))))
+               (struct.set $Heap $hash (local.get $heap) (i32.const -2147483648))
+               (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+               (local.set $i (i32.const 0))
+               (local.set $h (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+                            (local.set $key (array.get $Array
+                                                       (local.get $entries)
+                                                       (i32.shl (local.get $i) (i32.const 1))))
+                            (if (i32.or (ref.eq (local.get $key) (global.get $missing))
+                                        (ref.eq (local.get $key) (global.get $tombstone)))
+                                (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                      (br $loop)))
+                            (local.set $val (array.get $Array
+                                                       (local.get $entries)
+                                                       (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                                (i32.const 1))))
+                            (local.set $key-h (call $equal-hash/i32 (local.get $key)))
+                            (local.set $entry-h
+                                       (i32.mul
+                                        (i32.rotl
+                                         (i32.mul (local.get $key-h) (i32.const 0xcc9e2d51))
+                                         (i32.const 15))
+                                        (i32.const 0x1b873593)))
+                            (local.set $val-h (call $equal-hash/i32 (local.get $val)))
+                            (local.set $entry-h
+                                       (i32.xor (local.get $entry-h) (local.get $val-h)))
+                            (local.set $entry-h
+                                       (i32.mul
+                                        (i32.rotl
+                                         (i32.mul (local.get $entry-h) (i32.const 0xcc9e2d51))
+                                         (i32.const 15))
+                                        (i32.const 0x1b873593)))
+                            (local.set $h (i32.add (local.get $h) (local.get $entry-h)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (local.set $h (i32.add (local.get $h) (local.get $count)))
+               (local.set $h (i32.add (local.get $h) (local.get $salt)))
+               (local.set $h
+                          (i32.mul
+                           (i32.rotl
+                            (i32.mul (local.get $h) (i32.const 0xcc9e2d51))
+                            (i32.const 15))
+                           (i32.const 0x1b873593)))
+               (struct.set $Heap $hash (local.get $heap) (i32.const 0))
+               (local.get $h))
+
+         ,@(for/list ([name '($equal-hash/hasheq-mutable
+                              $equal-hash/hasheqv-mutable
+                              $equal-hash/hashequal-mutable
+                              $equal-hash/hashalw-mutable)]
+                      [type '($HashEqMutable
+                              $HashEqvMutable
+                              $HashEqualMutable
+                              $HashEqualAlwaysMutable)]
+                      [salt '(0 1 2 3)])
+             `(func ,name
+                    (param $ht (ref ,type))
+                    (result i32)
+
+                    (return_call $equal-hash/hash-core
+                                 (ref.cast (ref $Heap) (local.get $ht))
+                                 (struct.get ,type $entries (local.get $ht))
+                                 (struct.get ,type $count   (local.get $ht))
+                                 (i32.const ,salt))))
 
 
-         (func $bytes-hash/i32 ;  32‑bit FNV‑1a hash algorithm 
+         (func $bytes-hash/i32 ;  32‑bit FNV‑1a hash algorithm
                (param $b (ref $Bytes))
                (result i32)
 
