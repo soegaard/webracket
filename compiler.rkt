@@ -613,6 +613,8 @@
   string->list list->string
   string->bytes/utf-8 string-utf-8-length string->immutable-string
   non-empty-string?
+  string-split
+  string-trim
 
   string-take        ; not in Racket
   string-take-right  ; not in Racket
@@ -3575,6 +3577,8 @@
         [(bytes-append*)   (inline-prim/variadic sym ae1 1)]
         [(bytes-join)      (inline-prim/fixed sym ae1 2)]
 
+        [(string-trim)     (inline-prim/optional sym ae1 1 5)]
+        [(string-split)    (inline-prim/optional sym ae1 1 4)]
         [(string-join)
          (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
 

@@ -873,6 +873,19 @@
                    (equal? (string-join '("one" "two" "three" "four") " potato ")
                            "one potato two potato three potato four")))
 
+        (list "string-split"
+              (and (equal? (string-split "foo bar baz")
+                           '("foo" "bar" "baz"))
+                   (equal? (string-split "  foo  bar  " " " #t #t)
+                           '("foo" "bar"))
+                   (equal? (string-split "  ") '())
+                   (equal? (string-split "  " " " #f)
+                           '("" "" ""))
+                   (equal? (string-split "" " " #f)
+                           '(""))
+                   (equal? (string-split "abc" "")
+                           '("a" "b" "c"))))
+
         (list "string-copy"
               (let* ([s (string-copy "hello")]
                      [s2 (string-copy s)])
@@ -991,6 +1004,17 @@
               (and (equal? (string-replace "banana" "an" "oo")    "booooa")
                    (equal? (string-replace "banana" "an" "oo" #f) "booana")
                    (equal? (string-replace "ab" "" "-")           "-a-b-")))
+
+        (list "string-trim"
+              (and (equal? (string-trim "  foo bar  baz \r\n\t")
+                           "foo bar  baz")
+                   (equal? (string-trim "  foo bar  baz \r\n\t" " " #t #t #t)
+                           "foo bar  baz \r\n\t")
+                   (equal? (string-trim "aaaxaayaa" "aa") "axaay")
+                   (equal? (string-trim "aaaafooaaaa" "aa") "aafooaa")
+                   (equal? (string-trim "aaaafooaaaa" "aa" #t #t #t) "foo")
+                   (equal? (string-trim "xyzxyzabcxyzxyz" "xyz" #f #t #t)
+                           "xyzxyzabc")))
         ))
 
  (list "4.5 Byte Strings"
@@ -1829,6 +1853,10 @@
                 (set-mcdr! p 3)
                 (and (equal? (mcdr p) 3)
                      (equal? (procedure-arity set-mcdr!) 2))))
+        (list "equal-hash-code mpair"
+              (let ([p1 (mcons (mcons 'a '()) (mcons 'b '()))]
+                    [p2 (mcons (mcons 'a '()) (mcons 'b '()))])
+                (eq? (equal-hash-code p1) (equal-hash-code p2))))
         ))
 
  (list "4.12 Vectors"

@@ -296,7 +296,8 @@
  string-find
  string-take string-take-right
  string-drop string-drop-right
- string-trim-left string-trim-right
+ string-trim string-trim-left string-trim-right
+ string-split
  
  string->list
  string->bytes/utf-8
@@ -865,4 +866,33 @@
 ; A simplified no-keywords version 
 (define (hash-map/copy ht proc [kind #f])
   (racket:hash-map/copy ht proc kind))
+
+
+; A simplified no-keywords version 
+; A simplified positional version of string-split.
+; Notes:
+;   * Keyword arguments are not supported.
+;   * Regular-expression separators are not supported; `sep` must be a string.
+(define (string-split str [sep " "] [trim? #t] [repeat? #f])
+  (unless (string? str) (raise-argument-error 'string-split "string?" str))
+  (unless (string? sep) (raise-argument-error 'string-split "string?" sep))
+  (define trim?-flag   (not (eq? trim? #f)))
+  (define repeat?-flag (not (eq? repeat? #f)))
+  (racket:string-split str sep #:trim? trim?-flag #:repeat? repeat?-flag))
+
+
+; A simplified no-keywords version 
+; A simplified positional version of string-trim.
+; Notes:
+;   * Keyword arguments are not supported.
+;   * Regular-expression separators are not supported; `sep` must be a string.
+(define (string-trim str [sep " "] [left? #t] [right? #t] [repeat? #f])
+  (unless (string? str) (raise-argument-error 'string-trim "string?" str))
+  (unless (string? sep) (raise-argument-error 'string-trim "string?" sep))
+  (define left?-flag    (not (eq? left?   #f)))
+  (define right?-flag   (not (eq? right?  #f)))
+  (define repeat?-flag  (not (eq? repeat? #f)))
+  (racket:string-trim str sep #:left? left?-flag #:right? right?-flag #:repeat? repeat?-flag))
+
+
 
