@@ -677,6 +677,9 @@
   hash-map/copy
   hash-keys
   hash-values
+  hash-filter
+  hash-filter-keys
+  hash-filter-values
   
   eq-hash-code
   eqv-hash-code
@@ -3448,6 +3451,8 @@
          [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-map/copy)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
          [(hash-update!)               (inline-prim/optional sym ae1 3 4)]
+         [(hash-filter hash-filter-keys hash-filter-values)
+          (inline-prim/fixed sym ae1 2)]
          
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]

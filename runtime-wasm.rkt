@@ -20504,6 +20504,215 @@
                    (local.get $dst)))
 
 
+        ;; -------------------------------------------------------------------
+        ;; hash-filter, hash-filter-keys, hash-filter-values
+        ;; -------------------------------------------------------------------
+
+        ,@(for/list ([prim '($hash-filter
+                             $hash-filter-keys
+                             $hash-filter-values)]
+                     [mode '(0 1 2)])
+            `(func ,prim (type $Prim2)
+                   (param $ht   (ref eq))   ;; hash table
+                   (param $proc (ref eq))   ;; predicate
+                   (result      (ref eq))   ;; filtered hash
+
+                   ;; Check type: must be (ref $Hash)
+                   (if (i32.eqz (ref.test (ref $Hash) (local.get $ht)))
+                       (then (call $raise-argument-error:hash-expected)
+                             (unreachable)))
+
+                   ;; Validate predicate
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                             (unreachable)))
+
+                   ;; Dispatch on table type
+                   (if (ref.test (ref $HashEqMutable) (local.get $ht))
+                       (then (return (call $hasheq-filter
+                                           (local.get $ht)
+                                           (local.get $proc)
+                                           (i32.const ,mode)))))
+                   (if (ref.test (ref $HashEqvMutable) (local.get $ht))
+                       (then (return (call $hasheqv-filter
+                                           (local.get $ht)
+                                           (local.get $proc)
+                                           (i32.const ,mode)))))
+                   (if (ref.test (ref $HashEqualMutable) (local.get $ht))
+                       (then (return (call $hashequal-filter
+                                           (local.get $ht)
+                                           (local.get $proc)
+                                           (i32.const ,mode)))))
+                   (if (ref.test (ref $HashEqualAlwaysMutable) (local.get $ht))
+                       (then (return (call $hashalw-filter
+                                           (local.get $ht)
+                                           (local.get $proc)
+                                           (i32.const ,mode)))))
+                   (unreachable)))
+
+        ,@(for/list ([filter '($hasheq-filter
+                               $hasheqv-filter
+                               $hashequal-filter
+                               $hashalw-filter)]
+                     [plain  '($hasheq-filter/plain
+                               $hasheqv-filter/plain
+                               $hashequal-filter/plain
+                               $hashalw-filter/plain)])
+            `(func ,filter
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $mode i32)
+                   (result      (ref eq))
+
+                   (return_call ,plain
+                                (local.get $ht)
+                                (local.get $proc)
+                                (local.get $mode))))
+
+        ,@(for/list ([plain   '($hasheq-filter/plain
+                                $hasheqv-filter/plain
+                                $hashequal-filter/plain
+                                $hashalw-filter/plain)]
+                     [checked '($hasheq-filter/plain/checked
+                                $hasheqv-filter/plain/checked
+                                $hashequal-filter/plain/checked
+                                $hashalw-filter/plain/checked)]
+                     [type    '($HashEqMutable
+                                $HashEqvMutable
+                                $HashEqualMutable
+                                $HashEqualAlwaysMutable)]
+                     [raise   '($raise-argument-error:hasheq-expected
+                                $raise-argument-error:hasheqv-expected
+                                $raise-argument-error:hash-expected
+                                $raise-argument-error:hashalw-expected)])
+            `(func ,plain
+                   (param $ht   (ref eq))
+                   (param $proc (ref eq))
+                   (param $mode i32)
+                   (result      (ref eq))
+
+                   (local $table (ref ,type))
+                   (local $f     (ref $Procedure))
+                   (local $finv  (ref $ProcedureInvoker))
+
+                   ;; Check that ht is expected table type
+                   (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                       (then (call ,raise (local.get $ht))
+                             (unreachable)))
+
+                   ;; Validate predicate
+                   (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                       (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                             (unreachable)))
+
+                   ;; Decode
+                   (local.set $table (ref.cast (ref ,type) (local.get $ht)))
+                   (local.set $f     (ref.cast (ref $Procedure) (local.get $proc)))
+                   (local.set $finv  (struct.get $Procedure $invoke (local.get $f)))
+
+                   ;; Delegate to checked implementation
+                   (call ,checked
+                         (local.get $table)
+                         (local.get $f)
+                         (local.get $finv)
+                         (local.get $mode))))
+
+        ,@(for/list ([checked     '($hasheq-filter/plain/checked
+                                    $hasheqv-filter/plain/checked
+                                    $hashequal-filter/plain/checked
+                                    $hashalw-filter/plain/checked)]
+                     [type        '($HashEqMutable
+                                    $HashEqvMutable
+                                    $HashEqualMutable
+                                    $HashEqualAlwaysMutable)]
+                     [make-empty  '($make-empty-hasheq
+                                    $make-empty-hasheqv
+                                    $make-empty-hash
+                                    $make-empty-hashalw)]
+                     [set!/checked '($hasheq-set!/mutable/checked
+                                     $hasheqv-set!/mutable/checked
+                                     $hash-set!/mutable/checked
+                                     $hashalw-set!/mutable/checked)])
+            `(func ,checked
+                   (param $table (ref ,type))
+                   (param $f     (ref $Procedure))
+                   (param $finv  (ref $ProcedureInvoker))
+                   (param $mode  i32)
+                   (result (ref eq))
+
+                   (local $entries  (ref $Array))
+                   (local $capacity i32)
+                   (local $i        i32)
+                   (local $key      (ref eq))
+                   (local $val      (ref eq))
+                   (local $dst      (ref ,type))
+                   (local $args     (ref $Args))
+                   (local $res      (ref eq))
+
+                   ;; Create destination hash
+                   (local.set $dst (ref.cast (ref ,type) (call ,make-empty)))
+
+                   ;; Prepare iteration
+                   (local.set $entries  (struct.get ,type $entries (local.get $table)))
+                   (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                   (local.set $i        (i32.const 0))
+                   (local.set $args
+                              (if (result (ref $Args))
+                                  (i32.eq (local.get $mode) (i32.const 0))
+                                  (then (array.new $Args (global.get $null) (i32.const 2)))
+                                  (else (array.new $Args (global.get $null) (i32.const 1)))))
+
+                   (block $done
+                          (loop $loop
+                                (br_if $done (i32.ge_u (local.get $i) (local.get $capacity)))
+
+                                ;; Load key
+                                (local.set $key (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.shl (local.get $i) (i32.const 1))))
+                                ;; Skip empty or tombstone slots
+                                (if (ref.eq (local.get $key) (global.get $missing))
+                                    (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                          (br $loop)))
+                                (if (ref.eq (local.get $key) (global.get $tombstone))
+                                    (then (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                          (br $loop)))
+
+                                ;; Load value
+                                (local.set $val (array.get $Array
+                                                           (local.get $entries)
+                                                           (i32.add (i32.shl (local.get $i) (i32.const 1))
+                                                                    (i32.const 1))))
+
+                                ;; Prepare predicate arguments based on mode
+                                (if (i32.eq (local.get $mode) (i32.const 0))
+                                    (then (array.set $Args (local.get $args) (i32.const 0) (local.get $key))
+                                          (array.set $Args (local.get $args) (i32.const 1) (local.get $val)))
+                                    (else (if (i32.eq (local.get $mode) (i32.const 1))
+                                              (then (array.set $Args (local.get $args) (i32.const 0) (local.get $key)))
+                                              (else (array.set $Args (local.get $args) (i32.const 0) (local.get $val))))))
+
+                                ;; Invoke predicate
+                                (local.set $res
+                                           (call_ref $ProcedureInvoker
+                                                     (local.get $f)
+                                                     (local.get $args)
+                                                     (local.get $finv)))
+
+                                ;; Insert when predicate result is not #f
+                                (if (ref.eq (local.get $res) (global.get $false))
+                                    (then (nop))
+                                    (else (call ,set!/checked
+                                                (local.get $dst)
+                                                (local.get $key)
+                                                (local.get $val))))
+
+                                (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                (br $loop)))
+
+                   (local.get $dst)))
+
+        
         ;; General hash-keys and hash-values
 
         ;; The try-order? argument is accepted but ignored.

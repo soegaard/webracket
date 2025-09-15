@@ -501,6 +501,9 @@
  hash-map/copy
  hash-keys
  hash-values
+ hash-filter
+ hash-filter-keys
+ hash-filter-values
 
  make-empty-hasheq
  make-empty-hasheqv
@@ -893,7 +896,74 @@
   (define left?-flag    (not (eq? left?   #f)))
   (define right?-flag   (not (eq? right?  #f)))
   (define repeat?-flag  (not (eq? repeat? #f)))
-  (racket:string-trim str sep #:left? left?-flag #:right? right?-flag #:repeat? repeat?-flag))
+  (racket:string-trim str sep
+                      #:left?   left?-flag
+                      #:right?  right?-flag
+                      #:repeat? repeat?-flag))
 
 
+; Not added until Racket 8.13
+(define (hash-filter ht pred)
+  (define eq?  (hash-eq? ht))
+  (define eqv? (hash-eqv? ht))
+  (define imm? (immutable? ht))
+  (if imm?
+      (let ([pairs (for/list ([(k v) (in-hash ht)]
+                              #:when (pred k v))
+                     (cons k v))])
+        (cond
+          [eq?  (make-immutable-hasheq pairs)]
+          [eqv? (make-immutable-hasheqv pairs)]
+          [else (make-immutable-hash pairs)]))
+      (let ([out (cond
+                   [eq?  (make-hasheq)]
+                   [eqv? (make-hasheqv)]
+                   [else (make-hash)])])
+        (for ([(k v) (in-hash ht)]
+              #:when (pred k v))
+          (hash-set! out k v))
+        out)))
 
+; Not added until Racket 8.12.0.9
+(define (hash-filter-keys ht pred)
+  (define eq?  (hash-eq? ht))
+  (define eqv? (hash-eqv? ht))
+  (define imm? (immutable? ht))
+  (if imm?
+      (let ([pairs (for/list ([(k v) (in-hash ht)]
+                              #:when (pred k))
+                     (cons k v))])
+        (cond
+          [eq?  (make-immutable-hasheq pairs)]
+          [eqv? (make-immutable-hasheqv pairs)]
+          [else (make-immutable-hash pairs)]))
+      (let ([out (cond
+                   [eq?  (make-hasheq)]
+                   [eqv? (make-hasheqv)]
+                   [else (make-hash)])])
+        (for ([(k v) (in-hash ht)]
+              #:when (pred k))
+          (hash-set! out k v))
+        out)))
+
+; Not added until Racket 8.12.0.9
+(define (hash-filter-values ht pred)
+  (define eq?  (hash-eq? ht))
+  (define eqv? (hash-eqv? ht))
+  (define imm? (immutable? ht))
+  (if imm?
+      (let ([pairs (for/list ([(k v) (in-hash ht)]
+                              #:when (pred v))
+                     (cons k v))])
+        (cond
+          [eq?  (make-immutable-hasheq pairs)]
+          [eqv? (make-immutable-hasheqv pairs)]
+          [else (make-immutable-hash pairs)]))
+      (let ([out (cond
+                   [eq?  (make-hasheq)]
+                   [eqv? (make-hasheqv)]
+                   [else (make-hash)])])
+        (for ([(k v) (in-hash ht)]
+              #:when (pred v))
+          (hash-set! out k v))
+        out)))

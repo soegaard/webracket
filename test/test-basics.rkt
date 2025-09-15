@@ -2308,6 +2308,45 @@
                        (equal? (hash-ref h2 'a) 2)
                        (equal? (hash-ref h2 'b) 3)))))
 
+        (list "hash-filter"
+              (let ([h (make-hasheq)])
+                (hash-set! h 1 'a)
+                (hash-set! h 2 'b)
+                (hash-set! h 3 'c)
+                (let ([res (hash-filter h (lambda (k v) (< k 3)))])
+                  (and (hash? res)
+                       (equal? (hash-eq? res) #t)
+                       (equal? (hash-count res) 2)
+                       (equal? (hash-ref res 1) 'a)
+                       (equal? (hash-ref res 2) 'b)
+                       (equal? (hash-has-key? res 3) #f)))))
+
+        (list "hash-filter-keys"
+              (let ([h (make-hasheq)])
+                (hash-set! h 1 'one)
+                (hash-set! h 2 'two)
+                (hash-set! h 3 'three)
+                (let ([res (hash-filter-keys h (lambda (k) (<= k 2)))])
+                  (and (hash? res)
+                       (equal? (hash-eq? res) #t)
+                       (equal? (hash-count res) 2)
+                       (equal? (hash-ref res 1) 'one)
+                       (equal? (hash-ref res 2) 'two)
+                       (equal? (hash-has-key? res 3) #f)))))
+
+        (list "hash-filter-values"
+              (let ([h (make-hasheq)])
+                (hash-set! h 'a 1)
+                (hash-set! h 'b 2)
+                (hash-set! h 'c 3)
+                (let ([res (hash-filter-values h (lambda (v) (< v 3)))])
+                  (and (hash? res)
+                       (equal? (hash-eq? res) #t)
+                       (equal? (hash-count res) 2)
+                       (equal? (hash-ref res 'a) 1)
+                       (equal? (hash-ref res 'b) 2)
+                       (equal? (hash-has-key? res 'c) #f)))))
+        
         (list "hash-keys"
               (let ([h (make-hasheq)])
                 (hash-set! h 'a 1)
