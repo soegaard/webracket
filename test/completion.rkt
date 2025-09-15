@@ -11,42 +11,6 @@
 ; A drop down triangle reveals a list of functions in the chapter.
 ; Each function is linked to its documentation.
 
-(define (string-find/index s contained start)
-  (define s-len (string-length s))
-  (define c-len (string-length contained))
-  (cond
-    [(= c-len 0) start]
-    [(< s-len c-len) #f]
-    [else
-     (let loop ([i start] [limit (- s-len c-len)])
-       (cond
-         [(> i limit) #f]
-         [(string=? (substring s i (+ i c-len)) contained) i]
-         [else (loop (add1 i) limit)]))]))
-
-;; Simple wrapper starting at index 0
-(define (string-find s contained)
-  (string-find/index s contained 0))
-
-;; Replace occurrences of from with to in str; all? controls replacing all occurrences.
-(define (string-replace str from to [all? #t])
-  ; (define all? #t)
-  (define pat-len (string-length from))
-  (define str-len (string-length str))
-
-  (cond
-    [(zero? pat-len) (string-copy str)]
-    [else
-     (let loop ([start 0] [acc ""])
-       (define pos (string-find/index str from start))
-       (if pos
-           (let* ([next (+ pos pat-len)]
-                  [acc2 (string-append acc (substring str start pos) to)])
-             (if all?
-                 (loop next acc2)
-                 (string-append acc2 (substring str next str-len))))
-           (string-append acc (substring str start str-len))))]))
-
 
 (define (format fmt . args)
   (let loop ([s fmt] [args args])
@@ -1176,19 +1140,24 @@
             boxed
             build-list
             build-string
+            build-vector
             byte?
             bytes
             bytes->immutable-bytes
             bytes->list
             bytes->string/utf-8
             bytes-append
+            bytes-append*
             bytes-copy
             bytes-copy!
             bytes-fill!
+            bytes-join
             bytes-length
             bytes-ref
             bytes-set!
+            bytes<?
             bytes=?
+            bytes>?
             bytes?
             call-with-values
             car
@@ -1246,7 +1215,9 @@
             eq-hash-code
             eq?
             equal-always?
+            equal-hash-code
             equal?
+            eqv-hash-code
             eqv?
             even?
             exact->inexact
@@ -1299,6 +1270,7 @@
             floating-point-bytes->real
             flonum?
             floor
+            flrandom
             flround
             flsin
             flsingle
@@ -1343,11 +1315,23 @@
             gcd
             get-output-bytes
             group-by
+            hash->list
             hash-clear!
+            hash-count
+            hash-empty?
+            hash-eq?
+            hash-equal-always?
+            hash-equal?
+            hash-eqv?
+            hash-for-each
             hash-has-key?
+            hash-keys
+            hash-map
+            hash-map/copy
             hash-ref
             hash-remove!
             hash-set!
+            hash-values
             hash?
             immutable-box?
             immutable-bytes?
@@ -1392,9 +1376,15 @@
             list?
             log
             make-bytes
+            make-empty-hash
+            make-empty-hashalw
             make-empty-hasheq
+            make-empty-hasheqv
             make-empty-namespace
+            make-hash
+            make-hashalw
             make-hasheq
+            make-hasheqv
             make-list
             make-string
             make-struct-field-accessor
@@ -1496,6 +1486,7 @@
             single-flonum?
             sinh
             sixth
+            sort
             split-common-prefix
             sqr
             sqrt
@@ -1508,23 +1499,38 @@
             string->symbol
             string->uninterned-symbol
             string-append
+            string-append*
             string-append-immutable
+            string-ci<=?
+            string-ci<?
+            string-ci=?
+            string-ci>=?
+            string-ci>?
             string-contains?
             string-copy
             string-copy!
+            string-downcase
             string-drop
             string-drop-right
             string-fill!
+            string-find
+            string-foldcase
+            string-join
             string-length
             string-port?
             string-prefix?
             string-ref
+            string-replace
             string-set!
+            string-split
             string-suffix?
             string-take
             string-take-right
+            string-titlecase
+            string-trim
             string-trim-left
             string-trim-right
+            string-upcase
             string-utf-8-length
             string<=?
             string<?
@@ -1573,6 +1579,7 @@
             unsafe-fllog
             unsafe-flmax
             unsafe-flmin
+            unsafe-flrandom
             unsafe-flround
             unsafe-flsin
             unsafe-flsingle
@@ -1593,21 +1600,38 @@
             variable-reference-constant?
             variable-reference-from-unsafe?
             vector
+            vector->immutable-vector
             vector->list
+            vector->values
+            vector-append
+            vector-argmax
+            vector-argmin
             vector-copy
             vector-copy!
+            vector-count
             vector-drop
             vector-drop-right
             vector-empty?
+            vector-extend
             vector-fill!
+            vector-filter
+            vector-filter-not
             vector-immutable
             vector-length
             vector-map
             vector-map!
+            vector-member
+            vector-memq
+            vector-memv
             vector-ref
             vector-set!
+            vector-set/copy
+            vector-sort
+            vector-sort!
             vector-split-at
+            vector-split-at-right
             vector-take
+            vector-take-right
             vector?
             void
             void?
