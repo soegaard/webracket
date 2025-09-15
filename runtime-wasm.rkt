@@ -19924,6 +19924,7 @@
 
                (local $str   (ref $String))
                (local $bs    (ref $Bytes))
+               (local $kw    (ref $Keyword))
                (local $h     i32)
 
                ;; immediates and numbers fall back to eqv-hash
@@ -19937,6 +19938,15 @@
                          (local.set $h (call $string-hash/i32 (local.get $str)))
                          ;; reset memoized hash so eq-hash-code can still assign
                          (struct.set $String $hash (local.get $str) (i32.const 0))
+                         (return (local.get $h))))
+               ;; keywords
+               (if (ref.test (ref $Keyword) (local.get $v))
+                   (then (local.set $kw  (ref.cast (ref $Keyword) (local.get $v)))
+                         (local.set $str (struct.get $Keyword $str (local.get $kw)))
+                         (local.set $h   (call $string-hash/i32 (local.get $str)))
+                         ;; reset memoized hashes so eq-hash-code can still assign
+                         (struct.set $String  $hash (local.get $str) (i32.const 0))
+                         (struct.set $Keyword $hash (local.get $kw)  (i32.const 0))
                          (return (local.get $h))))
                ;; bytes
                (if (ref.test (ref $Bytes) (local.get $v))
