@@ -1577,6 +1577,7 @@
                                 (if (i32.eq (local.get $argc) (i32.const 5))
                                     (then (if (ref.test (ref $Prim5) (local.get $code))
                                               (then (return_call_ref $Prim5
+                                                                     (local.get $a0)
                                                                      (local.get $a1)
                                                                      (local.get $a2)
                                                                      (array.get $Args (local.get $args) (i32.const 3))
