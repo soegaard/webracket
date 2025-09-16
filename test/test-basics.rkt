@@ -678,6 +678,11 @@
               (list "flsingle"
                     (and (flonum? (flsingle 1.0))
                          (fl= (flsingle 1.5) 1.5)))
+              (list "flbit-field"
+                    (and (= (flbit-field -0.0 63 64)   1)
+                         (= (flbit-field  0.0 63 64)   0)
+                         (= (flbit-field  1.0 52 63) 1023)
+                         (= (flbit-field  1.5 51 52)   1)))
               (list "flsin"
                     (fl= (flsin 0.0) 0.0))
               (list "flcos"

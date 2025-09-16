@@ -222,6 +222,7 @@
  ->fl
  fl->exact-integer
  flrandom
+ flbit-field
  
  ;; 4.3.3.2 Flonum Vectors
 
@@ -967,3 +968,37 @@
               #:when (pred v))
           (hash-set! out k v))
         out)))
+
+; Added in version 8.15.0.3 of package base.
+(define (flbit-field a start end)
+  ;; Contracts / checks
+  (unless (flonum? a)
+    (raise-argument-error 'flbit-field "flonum?" a))
+  (unless (and (exact-integer? start) (<= 0 start 64))
+    (raise-argument-error 'flbit-field "(integer-in 0 64)" start))
+  (unless (and (exact-integer? end) (<= 0 end 64))
+    (raise-argument-error 'flbit-field "(integer-in 0 64)" end))
+  (when (> start end)
+    (raise-arguments-error 'flbit-field
+      "start must be <= end" "start" start "end" end))
+
+  ;; Get IEEE-754 bytes in a known order (little-endian).
+  (define bs (real->floating-point-bytes a 8 'little-endian))
+
+  ;; Pack bytes into an exact, nonnegative 64-bit integer.
+  (define u64
+    (let loop ([i 0] [acc 0])
+      (if (= i 8)
+          acc
+          (loop (add1 i)
+                (bitwise-ior acc
+                  (arithmetic-shift (bytes-ref bs i) (* 8 i)))))))
+
+  ;; Slice [start, end) from that bitstring.
+  (define width (- end start))
+  (cond
+    [(zero? width) 0]
+    [else
+     (define shifted (arithmetic-shift u64 (- start))) ; right shift
+     (define mask (sub1 (arithmetic-shift 1 width)))   ; (1<<width)-1
+     (bitwise-and shifted mask)]))

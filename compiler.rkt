@@ -576,6 +576,7 @@
   flsin flcos fltan flasin flacos flatan
   flmin flmax flexpt ->fl fl->exact-integer
   flrandom
+  flbit-field
 
   byte?
 
