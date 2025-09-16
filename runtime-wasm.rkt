@@ -12940,7 +12940,7 @@
                (unreachable))
 
          ,@(for/list ([name       '($memq  $memv  $member $memw)]
-                      [type       '($Prim2 $Prim2 $Prim3  $Prim2)]
+                      [type       '($Prim2 $Prim2 $Prim23 $Prim2)]
                       [needs-proc '(0      0      1       0)]
                       [cmp        '((ref.eq (local.get $needle) (local.get $elem))
                                     (ref.eq (call $eqv? (local.get $needle) (local.get $elem))
@@ -13123,7 +13123,7 @@
               (unreachable))
 
 
-        (func $indexes-of (type $Prim3)
+        (func $indexes-of (type $Prim23)
               (param $xs      (ref eq))  ;; list
               (param $v       (ref eq))  ;; value to find
               (param $same?   (ref eq))  ;; optional comparator, default equal?
@@ -13257,7 +13257,7 @@
 
         ;; Groups list elements by a key function. The third parameter is
         ;; optional and defaults to equal?.
-        (func $group-by (type $Prim3)
+        (func $group-by (type $Prim23)
               (param $proc  (ref eq))  ;; key function
               (param $xs    (ref eq))  ;; list
               (param $same? (ref eq))  ;; optional comparator, default equal?
@@ -13856,7 +13856,7 @@
                            (br $loop)))
               (call $reverse (local.get $lst)))
 
-        (func $inclusive-range-proc (type $Prim3)
+        (func $inclusive-range-proc (type $Prim23)
               (param $start (ref eq))
               (param $end   (ref eq))
               (param $step  (ref eq)) ;; $missing for default 1/-1
@@ -13866,7 +13866,7 @@
         ;; Unlike Racket's @racket[inclusive-range], the step defaults to
         ;; either 1 or -1 based on the ordering of @racket[start] and
         ;; @racket[end] when omitted.
-        (func $inclusive-range (type $Prim3)
+        (func $inclusive-range (type $Prim23)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))
               (param $step-raw  (ref eq)) ;; $missing for default 1/-1
@@ -15879,7 +15879,7 @@
                      (br $loop))
                (unreachable))
 
-        (func $remove (type $Prim3)
+        (func $remove (type $Prim23)
               (param $v    (ref eq))   ;; value to remove
               (param $lst  (ref eq))   ;; list
               (param $proc (ref eq))   ;; optional comparator
@@ -16085,7 +16085,7 @@
                                   (local.get $lst)
                                   (global.get ,cmp)))))
 
-        (func $remove* (type $Prim3)
+        (func $remove* (type $Prim23)
               (param $v-lst (ref eq))   ;; list of values
               (param $lst   (ref eq))   ;; list
               (param $proc  (ref eq))   ;; optional comparator, defaults to equal?
@@ -16226,7 +16226,7 @@
                                   (global.get ,cmp)))))
         
 
-        (func $list-prefix? (type $Prim3)
+        (func $list-prefix? (type $Prim23)
               (param $l     (ref eq)) ; list
               (param $r     (ref eq)) ; list
               (param $same? (ref eq)) ; optional, defaults to equal?
@@ -16301,7 +16301,7 @@
               (unreachable))
 
 
-        (func $take-common-prefix (type $Prim3)
+        (func $take-common-prefix (type $Prim23)
               (param $l     (ref eq)) ; list
               (param $r     (ref eq)) ; list
               (param $same? (ref eq)) ; optional, defaults to equal?
@@ -16379,7 +16379,7 @@
               (unreachable))
 
 
-        (func $drop-common-prefix (type $Prim3)
+        (func $drop-common-prefix (type $Prim23)
               (param $l     (ref eq)) ; list
               (param $r     (ref eq)) ; list
               (param $same? (ref eq)) ; optional, defaults to equal?
@@ -16453,7 +16453,7 @@
                     (br $loop))
               (unreachable))
 
-        (func $split-common-prefix (type $Prim3)
+        (func $split-common-prefix (type $Prim23)
               (param $l     (ref eq)) ; list
               (param $r     (ref eq)) ; list
               (param $same? (ref eq)) ; optional, defaults to equal?
@@ -17406,7 +17406,7 @@
          ;       new length: 3
          ;       existing length: 7
          
-         (func $vector-extend (type $Prim3)
+         (func $vector-extend (type $Prim23)
                (param $v        (ref eq))  ;; vector
                (param $new-size (ref eq))  ;; fixnum
                (param $val      (ref eq))  ;; optional, defaults to 0
@@ -18251,7 +18251,7 @@
                         (br $loop))
                   (unreachable))
 
-            (func $vector-member (type $Prim3)
+            (func $vector-member (type $Prim23)
                   (param $v     (ref eq)) ;; value to find
                   (param $vec   (ref eq)) ;; vector to search
                   (param $same? (ref eq)) ;; optional comparator, default equal?
@@ -20472,7 +20472,7 @@
         
          ;; hash-for-each : apply proc to each key/value in a hash table.
          ;; The try-order? argument is accepted but ignored.
-         (func $hash-for-each (type $Prim3)
+         (func $hash-for-each (type $Prim23)
                (param $ht   (ref eq))   ;; hash table
                (param $proc (ref eq))   ;; procedure
                (param $try  (ref eq))   ;; optional try-order? (default #f)
@@ -20609,7 +20609,7 @@
 
 
         ;; General hash-map
-        (func $hash-map (type $Prim3)
+        (func $hash-map (type $Prim23)
               (param $ht   (ref eq))   ;; hash table
               (param $proc (ref eq))   ;; procedure
               (param $try  (ref eq))   ;; optional try-order? (default #f)
@@ -20788,7 +20788,7 @@
         ;; Note: The original Racket `hash-map/copy` uses keyword arguments.
         ;; -------------------------------------------------------------------
 
-        (func $hash-map/copy (type $Prim3)
+        (func $hash-map/copy (type $Prim23)
               (param $ht   (ref eq))   ;; hash table
               (param $proc (ref eq))   ;; (key value -> (values key value))
               (param $kind (ref eq))   ;; optional kind, default #f
