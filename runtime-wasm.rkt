@@ -63,10 +63,18 @@
                  #:when desc)
         `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
 
+    (define (arity-2-3? a)
+      (and (list? a)
+           (let ([uniq (remove-duplicates a)])
+             (and (= (length uniq) 2)
+                  (memq 2 uniq)
+                  (memq 3 uniq)))))
+    
     (define (arity->internal-representation a)
       (match a
         [(arity-at-least n) (- (- n) 1)]
         [(? number? a)      a]
+        [(? arity-2-3?)     2]
         [#f                 #f]
         [_                  #f]
         [_                  (error
@@ -78,6 +86,7 @@
       (match a
         [(arity-at-least n) (+ 6 (min n 3))]
         [(? number? n)      (min n 5)]
+        [(? arity-2-3?)     14]
         [_                  #f]))
 
     (define primitive-variadic-args
@@ -88,7 +97,7 @@
         values
         void))
 
-    (define primitive-shapes '(0 1 2 3 4 5 6 7 8 9 10 11 12 13))
+    (define primitive-shapes '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14))
 
     (define (primitive->shape pr [desc (primitive->description pr)])
       (and desc
@@ -116,6 +125,7 @@
         [11 'primitive-invoke:shape-11]
         [12 'primitive-invoke:shape-12]
         [13 'primitive-invoke:shape-13]
+        [14 'primitive-invoke:shape-14]
         [_  'primitive-invoke]))
 
     (define (primitive-invoker-tail shape)
@@ -298,6 +308,23 @@
                     (else (return (call $raise-code-type-mismatch (local.get $pproc))))))
                (else (return (call $primitive-invoke:raise-arity-error
                                    (local.get $pproc) (local.get $argc)))))
+           (unreachable))]
+        [14 ; between 2 and 3 arguments
+         `((if (i32.lt_u (local.get $argc) (i32.const 2))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (i32.gt_u (local.get $argc) (i32.const 3))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (ref.test (ref $Prim23) (local.get $code))
+               (then (if (i32.eq (local.get $argc) (i32.const 2))
+                         (then (local.set $a2 (global.get $missing))))
+                     (return_call_ref $Prim23
+                                      (local.get $a0)
+                                      (local.get $a1)
+                                      (local.get $a2)
+                                      (ref.cast (ref $Prim23) (local.get $code))))
+               (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
            (unreachable))]
         [_ (error 'primitive-invoker-tail "unknown shape: ~a" shape)]))
 
@@ -660,7 +687,7 @@
           (type $Prim4    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
           (type $Prim5    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
-                                (result (ref eq))))
+                                (result (ref eq))))          
 
           (type $Prim>=0  (func (param (ref eq))      ;; list of args
                                 (result (ref eq))))
@@ -672,6 +699,9 @@
                                 (result (ref eq))))
           (type $Prim>=3  (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (param (ref eq))      ;; rest list
+                                (result (ref eq))))
+
+          (type $Prim23   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
@@ -1382,6 +1412,8 @@
         ;; Shape codes:
         ;;   0: exact 0     1: exact 1     2: exact 2     3: exact 3     4: exact 4
         ;;   5: exact 5     6: at least 0  7: at least 1  8: at least 2  9: at least >=3
+        ;;  10-13: like 6-9 but pass rest arguments as $Args arrays
+        ;;  14: between 2 and 3 arguments (3rd optional)
         (func $primitive-invoke (type $ProcedureInvoker)
               (param $proc (ref $Procedure))
               (param $args (ref $Args))
@@ -9272,10 +9304,10 @@
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))))
                (unreachable))
 
-         (func $substring (type $Prim3)
+         (func $substring (type $Prim23)
               (param $s     (ref eq))
               (param $start (ref eq))
-              (param $end   (ref eq))
+              (param $end   (ref eq)) ; optional, default to (string-length s)
               (result       (ref eq))
 
               (local $str      (ref null $String))
@@ -9297,15 +9329,17 @@
               ;; get array and length
               (local.set $arr (struct.get $String $codepoints (local.get $str)))
               (local.set $len (call $i32array-length (local.get $arr)))
-              ;; decode and check end index (optional)
+              ;; supply default value for the optional end index
               (if (ref.eq (local.get $end) (global.get $missing))
-                  (then (local.set $i32end (local.get $len)))
-                  (else (if (ref.test (ref i31) (local.get $end))
-                            (then (local.set $i32end (i31.get_u (ref.cast (ref i31) (local.get $end))))
-                                  (if (i32.ne (i32.and (local.get $i32end) (i32.const 1)) (i32.const 0))
-                                      (then (call $raise-check-fixnum (local.get $end))))
-                                  (local.set $i32end (i32.shr_u (local.get $i32end) (i32.const 1))))
-                            (else (call $raise-check-fixnum (local.get $end))))))
+                  (then (local.set $end
+                                   (ref.i31 (i32.shl (local.get $len) (i32.const 1))))))
+              ;; decode and check end index
+              (if (ref.test (ref i31) (local.get $end))
+                  (then (local.set $i32end (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                        (if (i32.ne (i32.and (local.get $i32end) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $end))))
+                        (local.set $i32end (i32.shr_u (local.get $i32end) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $end))))
               ;; bounds check: start <= end <= len
               (if (i32.or (i32.gt_u (local.get $i32start) (local.get $i32end))
                           (i32.gt_u (local.get $i32end) (local.get $len)))
