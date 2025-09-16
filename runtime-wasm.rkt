@@ -69,12 +69,20 @@
              (and (= (length uniq) 2)
                   (memq 2 uniq)
                   (memq 3 uniq)))))
+
+    (define (arity-3-4? a)
+      (and (list? a)
+           (let ([uniq (remove-duplicates a)])
+             (and (= (length uniq) 2)
+                  (memq 3 uniq)
+                  (memq 4 uniq)))))
     
     (define (arity->internal-representation a)
       (match a
         [(arity-at-least n) (- (- n) 1)]
         [(? number? a)      a]
         [(? arity-2-3?)     2]
+        [(? arity-3-4?)     3]
         [#f                 #f]
         [_                  #f]
         [_                  (error
@@ -87,6 +95,7 @@
         [(arity-at-least n) (+ 6 (min n 3))]
         [(? number? n)      (min n 5)]
         [(? arity-2-3?)     14]
+        [(? arity-3-4?)     15]
         [_                  #f]))
 
     (define primitive-variadic-args
@@ -97,7 +106,7 @@
         values
         void))
 
-    (define primitive-shapes '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14))
+    (define primitive-shapes '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))
 
     (define (primitive->shape pr [desc (primitive->description pr)])
       (and desc
@@ -126,6 +135,7 @@
         [12 'primitive-invoke:shape-12]
         [13 'primitive-invoke:shape-13]
         [14 'primitive-invoke:shape-14]
+        [15 'primitive-invoke:shape-15]
         [_  'primitive-invoke]))
 
     (define (primitive-invoker-tail shape)
@@ -326,6 +336,26 @@
                                       (ref.cast (ref $Prim23) (local.get $code))))
                (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
            (unreachable))]
+        [15 ; between 3 and 4 arguments
+         `((if (i32.lt_u (local.get $argc) (i32.const 3))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (i32.gt_u (local.get $argc) (i32.const 4))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (ref.test (ref $Prim34) (local.get $code))
+               (then (if (i32.eq (local.get $argc) (i32.const 3))
+                         (then (local.set $a3 (global.get $missing)))
+                         (else (local.set $a3
+                                          (array.get $Args (local.get $args) (i32.const 3)))))
+                     (return_call_ref $Prim34
+                                      (local.get $a0)
+                                      (local.get $a1)
+                                      (local.get $a2)
+                                      (local.get $a3)
+                                      (ref.cast (ref $Prim34) (local.get $code))))
+               (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
+           (unreachable))]
         [_ (error 'primitive-invoker-tail "unknown shape: ~a" shape)]))
 
     (define (primitive-invoker shape)
@@ -351,6 +381,8 @@
              (local.set $a0   (global.get $null))
              (local.set $a1   (global.get $null))
              (local.set $a2   (global.get $null))
+             (local.set $a3   (global.get $null))
+             (local.set $a4   (global.get $null))
              (local.set $rest (global.get $null))
              
              (local.set $pproc
@@ -702,6 +734,8 @@
                                 (result (ref eq))))
 
           (type $Prim23   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (result (ref eq))))
+          (type $Prim34   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
@@ -1414,6 +1448,7 @@
         ;;   5: exact 5     6: at least 0  7: at least 1  8: at least 2  9: at least >=3
         ;;  10-13: like 6-9 but pass rest arguments as $Args arrays
         ;;  14: between 2 and 3 arguments (3rd optional)
+        ;;  15: between 3 and 4 arguments (4th optional)
         (func $primitive-invoke (type $ProcedureInvoker)
               (param $proc (ref $Procedure))
               (param $args (ref $Args))
@@ -11345,7 +11380,7 @@
                (global.get $false))
 
 
-        (func $string-replace (type $Prim4)
+        (func $string-replace (type $Prim34)
               (param $s     (ref eq)) ;; string?
               (param $from  (ref eq)) ;; string?
               (param $to    (ref eq)) ;; string?
@@ -19468,7 +19503,7 @@
                     (local.get $value)))
          
 
-         (func $hash-update!
+         (func $hash-update! (type $Prim34)
                (param $ht   (ref eq))   ;; hash table
                (param $key  (ref eq))   ;; key
                (param $proc (ref eq))   ;; updater procedure
@@ -23224,7 +23259,7 @@
 
               ;; Primitive invokers for the different shapes
               ,@(for/list ([shape (in-list primitive-shapes)])
-                  `(ref.func ,($ (shape->invoker shape))))              
+                  `(ref.func ,($ (shape->invoker shape))))
               ;; Declare all primitives
               ,@(for/list ([pr (in-list (sort (remove* todo-handle-later primitives) symbol<?))])
                   `(ref.func ,($ pr))))
