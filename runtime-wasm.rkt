@@ -10983,7 +10983,7 @@
                      (local.get $dst-start)
                      (struct.get $String $codepoints (local.get $src))
                      (local.get $src-start)
-                     (local.get $len))
+                     (local.get $src-end))
                ;; --- Invalidate destination hash ---
                (struct.set $String $hash (local.get $dst) (i32.const 0)))
 
