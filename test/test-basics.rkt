@@ -2456,6 +2456,12 @@
                      (equal? (string-port? #f) #f)
                      (equal? (string-port? (bytes 1 2)) #f))))
 
+       (list "open-input-bytes default"
+              (string-port? (open-input-bytes (bytes 1 2 3))))
+
+        (list "open-input-bytes custom name"
+              (string-port? (open-input-bytes (bytes 1 2 3) 'source)))
+
         (list "open-input-string default"
               (string-port? (open-input-string "abc")))
 

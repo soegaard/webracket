@@ -22481,8 +22481,8 @@
          ;;       single position.
 
          ;; [x] string-port?
-         ;; [ ] open-input-bytes
-         ;; [ ] open-input-string
+         ;; [x] open-input-bytes
+         ;; [x] open-input-string
          ;; [x] open-output-bytes
          ;; [ ] open-output-string
          ;; [x] get-output-bytes
@@ -22519,6 +22519,63 @@
                                 (struct.get $Location $col  (local.get $loc))
                                 (struct.get $Location $pos  (local.get $loc))))
 
+
+         (func $open-input-bytes (type $Prim2)
+               (param $bstr-raw (ref eq)) ;; bytes?
+               (param $name     (ref eq)) ;; optional any/c, default = 'string
+               (result          (ref eq))
+
+               (local $bstr      (ref $Bytes))
+               (local $port-bs   (ref $Bytes))
+               (local $name-val  (ref eq))
+               (local $src-arr   (ref $I8Array))
+               (local $arr       (ref $I8Array))
+               (local $len       i32)
+               (local $loc       (ref $Location))
+               (local $immutable i32)
+
+               ;; --- Initialize non-defaultable locals ---
+               (local.set $bstr    (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               (local.set $port-bs (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               ;; --- Validate byte string argument ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr-raw)))
+                   (then (call $raise-check-bytes (local.get $bstr-raw))))
+               (local.set $bstr (ref.cast (ref $Bytes) (local.get $bstr-raw)))
+               ;; --- Determine port name, honoring optional argument ---
+               (local.set $name-val
+                          (if (result (ref eq))
+                              (ref.eq (local.get $name) (global.get $missing))
+                              (then (global.get $symbol:string))
+                              (else (local.get $name))))
+               ;; --- Ensure the port holds an immutable copy of the bytes ---
+               (local.set $immutable (struct.get $Bytes $immutable (local.get $bstr)))
+               (local.set $src-arr (struct.get $Bytes $bs (local.get $bstr)))
+               (if (i32.eq (local.get $immutable) (i32.const 1))
+                   (then (local.set $port-bs (local.get $bstr)))
+                   (else
+                    (local.set $port-bs
+                               (struct.new $Bytes
+                                           (struct.get $Bytes $hash (local.get $bstr))
+                                           (i32.const 1)
+                                           (call $i8array-copy
+                                                 (local.get $src-arr)
+                                                 (i32.const 0)
+                                                 (call $i8array-length (local.get $src-arr)))))))
+               ;; --- Cache backing array and byte length ---
+               (local.set $arr (struct.get $Bytes $bs (local.get $port-bs)))
+               (local.set $len (array.len (local.get $arr)))
+               ;; --- Initialize location and construct the port ---
+               (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
+               (struct.new $StringPort
+                           (i32.const 0)         ;; $hash
+                           (local.get $port-bs)  ;; $bytes
+                           (local.get $name-val) ;; $name
+                           (local.get $len)      ;; $len
+                           (i32.const 0)         ;; $idx
+                           (local.get $loc)      ;; $loc
+                           (i32.const 0)         ;; $utf8-len
+                           (i32.const 0)         ;; $utf8-left
+                           (i32.const 0)))       ;; $utf8-bytes
 
          (func $open-input-string (type $Prim2)
                (param $str-raw (ref eq)) ;; string?

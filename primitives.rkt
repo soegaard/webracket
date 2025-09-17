@@ -553,7 +553,7 @@
 
  ;; 13.7 String Ports
  string-port?
- open-input-string 
+ open-input-string open-input-bytes 
  open-output-bytes get-output-bytes write-byte port-next-location
  
  ;; 14.1 Namespaces

@@ -641,7 +641,7 @@
   symbol->immutable-string
   
   string-port?
-  ; open-input-bytes
+  open-input-bytes
   open-input-string  
   open-output-bytes
   ; open-output-string ; (same as open-output-bytes)
@@ -3414,6 +3414,7 @@
          [(bytes-copy!)                (inline-prim/optional sym ae1 3 5)]
 
          [(open-input-string)          (inline-prim/optional sym ae1 1 2)]
+         [(open-input-bytes)           (inline-prim/optional sym ae1 1 2)]
 
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]
