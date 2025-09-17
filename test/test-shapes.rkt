@@ -141,11 +141,13 @@
               [custom  (list-ref results 1)])
          (and (string=? basic "hi")
               (string=? custom "wow")))
-       ;; ; shape 22 — between 2 and 4 arguments with default handling
-       ;; #;(let* ([all (vector-sort '#(5 3 4 1 2) <)]
-       ;;          [partial (vector-sort '#(4 3 2 1 0) < 1 4)])
-       ;;     (and (equal? all '#(1 2 3 4 5))
-       ;;          (equal? partial '#(4 1 2 3 0))))
+       ; shape 22 — between 2 and 4 arguments with default handling
+       #;(let* ([all     (vector-sort '#(5 3 4 1 2) <)]
+                [partial (vector-sort '#(4 3 2 1 0) < 1 4)])
+           (and (equal? all      '#(1 2 3 4 5))
+                (equal? partial '#(4 1 2 3 0))))
+       (map < '(1 2 3) '(11 22 33))
+       
        ;; ; shape 23 — between 2 and 5 arguments with default handling
        ;; (let* ([bs      #"h\xC3\xA9!"]
        ;;        [results (map bytes->string/utf-8
