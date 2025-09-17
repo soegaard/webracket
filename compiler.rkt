@@ -67,6 +67,12 @@
 ;;; TODO
 ;;;
 
+; [ ] Find solution for two types of rest arguments.
+;     For inlining direct calls, the $Args representation is fine (1 allocation)
+;     For `map`, `apply` and others, lists are the natural representation.
+;     Support both?
+;     An extra entry for inlining?
+
 ; [ ] Consider adding extra shapes to `primitive-invoke`.
 ;     The possible shapes:
 ;        (list->set (map (λ (x) (if x (primitive-description-arity x) #f))
@@ -636,7 +642,7 @@
   
   string-port?
   ; open-input-bytes
-  ; open-input-string  
+  open-input-string  
   open-output-bytes
   ; open-output-string ; (same as open-output-bytes)
   get-output-bytes

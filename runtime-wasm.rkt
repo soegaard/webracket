@@ -813,6 +813,7 @@
     (add-runtime-symbol-constant 'in-mlist)
     (add-runtime-symbol-constant 'in-range)
     (add-runtime-symbol-constant 'in-naturals)    
+    (add-runtime-symbol-constant 'string)
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -5735,6 +5736,9 @@
                       (local $x/is-fx i32)
                       (local $x/is-fl i32)
                       (local $x-fx    i32)
+
+                      (drop (call $js-log (local.get $x0)))
+                      (drop (call $js-log (local.get $xs0)))
 
                       (local.set $args (ref.cast (ref $Args) (local.get $xs0)))
                       (local.set $len  (array.len (local.get $args)))
@@ -14616,34 +14620,34 @@
                (local.get $lst))
 
          (func $map (type $Prim>=1)
-               (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
-               (result      (ref eq))
-
+               (param $proc   (ref eq))   ;; procedure
+               (param $xss    (ref eq))   ;; list of lists
+               (result        (ref eq))
+               
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $outer  (ref eq))
                (local $pair   (ref $Pair))
                (local $elem   (ref eq))
                (local $nlists i32)
-
+               
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
                (local $i      i32)
                (local $cur    (ref eq))
                (local $stop   i32)
-
+               
                (local $acc    (ref eq))     ;; reversed accumulator
                (local $res    (ref eq))     ;; final result
                (local $r      (ref eq))
-
+               
                ;; 1) Check that $proc is a procedure and fetch its invoker
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                    (then (call $raise-argument-error:procedure-expected (local.get $proc))
                          (unreachable)))
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
-
+               
                ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (i32.const 0))
                (local.set $outer  (local.get $xss))
@@ -22460,12 +22464,32 @@
                            (global.get $one)        ;; line
                            (global.get $zero)       ;; col
                            (global.get $one)))      ;; pos
-         
-         ;;; STRING PORT
+
+         ;;;
+         ;;; 13.1.6  STRING PORT
+         ;;;
+
+         ;; A string port reads or writes from a byte string. An input
+         ;; string port can be created from either a byte string or a string;
+         ;; in the latter case, the string is effectively converted to a byte
+         ;; string using string->bytes/utf-8. An output string port collects
+         ;; output into a byte string, but get-output-string conveniently converts
+         ;; the accumulated bytes to a string.
+
          ;; Note: the index `idx` and the location position may be different,
          ;;       since the #\return#\newline combination counts as a
          ;;       single position.
 
+         ;; [x] string-port?
+         ;; [ ] open-input-bytes
+         ;; [ ] open-input-string
+         ;; [x] open-output-bytes
+         ;; [ ] open-output-string
+         ;; [x] get-output-bytes
+         ;; [ ] get-output-string
+
+         ;; [ ] write-byte
+         
         (func $raise-check-string-port (param $x (ref eq)) (unreachable))
         (func $raise-check-port-or-false (param $x (ref eq)) (unreachable))
          
@@ -22495,6 +22519,53 @@
                                 (struct.get $Location $col  (local.get $loc))
                                 (struct.get $Location $pos  (local.get $loc))))
 
+
+         (func $open-input-string (type $Prim2)
+               (param $str-raw (ref eq)) ;; string?
+               (param $name    (ref eq)) ;; optional any/c, default = 'string
+               (result         (ref eq))
+
+               (local $str      (ref $String))
+               (local $name-val (ref eq))
+               (local $bytes    (ref $Bytes))
+               (local $arr      (ref $I8Array))
+               (local $len      i32)
+               (local $loc      (ref $Location))
+
+               ;; --- Validate string argument ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $str-raw)))
+                   (then (call $raise-check-string (local.get $str-raw))))
+               (local.set $str (ref.cast (ref $String) (local.get $str-raw)))
+               ;; --- Determine port name, honoring optional argument ---
+               (local.set $name-val
+                          (if (result (ref eq))
+                              (ref.eq (local.get $name) (global.get $missing))
+                              (then (global.get $symbol:string))
+                              (else (local.get $name))))
+               ;; --- Convert string contents to immutable UTF-8 bytes ---
+               (local.set $bytes
+                          (ref.cast (ref $Bytes)
+                                    (call $string->bytes/utf-8
+                                          (local.get $str)
+                                          (global.get $false)
+                                          (global.get $false)
+                                          (global.get $false))))
+               (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+               (local.set $len (array.len (local.get $arr)))
+               ;; --- Initialize location and construct the port ---
+               (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
+               (struct.new $StringPort
+                           (i32.const 0)          ;; $hash
+                           (local.get $bytes)     ;; $bytes
+                           (local.get $name-val)  ;; $name
+                           (local.get $len)       ;; $len (byte length)
+                           (i32.const 0)          ;; $idx
+                           (local.get $loc)       ;; $loc
+                           (i32.const 0)          ;; $utf8-len
+                           (i32.const 0)          ;; $utf8-left
+                           (i32.const 0)))        ;; $utf8-bytes
+
+         
          (func $open-output-bytes (type $Prim0)
                (result (ref eq))
 
@@ -22503,9 +22574,9 @@
                ;; Step 1: Allocate the backing I8Array with capacity 32 and fill with 0
                (local.set $bs
                           (struct.new $Bytes
-                                      (i32.const 0)                          ;; hash = 0
-                                      (i32.const 0)                          ;; mutable = false
-                                      (call $i8make-array (i32.const 32) (i32.const 0)))) ;; backing array
+                            (i32.const 0)                                       ;; hash = 0
+                            (i32.const 0)                                       ;; mutable = false
+                            (call $i8make-array (i32.const 32) (i32.const 0)))) ;; backing array
                ;; Step 2: Make initial location: (line 1, col 0, pos 1)
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
                ;; Step 3: Construct and return the StringPort
@@ -22715,6 +22786,9 @@
                ;; 10. Return void
                (global.get $void))
 
+         
+
+         
          ;;;
          ;;; FFI Helpers
          ;;;

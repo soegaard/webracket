@@ -2448,6 +2448,50 @@
         
         ))
 
+ (list "13.7 String Ports"
+       (list
+        (list "string-port?"
+              (let ([port (open-output-bytes)])
+                (and (equal? (string-port? port) #t)
+                     (equal? (string-port? #f) #f)
+                     (equal? (string-port? (bytes 1 2)) #f))))
+
+        (list "open-input-string default"
+              (string-port? (open-input-string "abc")))
+
+        (list "open-input-string custom name"
+              (string-port? (open-input-string "abc" 'source)))
+
+        (list "open-output-bytes/get-output-bytes"
+              (let ([port (open-output-bytes)])
+                (and (equal? (get-output-bytes port) (bytes))
+                     (void? (write-byte 65 port))
+                     (void? (write-byte 66 port))
+                     (let ([bs (get-output-bytes port)])
+                       (and (equal? bs (bytes 65 66))
+                            (equal? (immutable? bs) #t))))))
+
+        (list "write-byte/resizing"
+              (let* ([port (open-output-bytes)]
+                     [data (build-list 40 (lambda (i) (modulo (+ 60 i) 256)))]
+                     [expected (apply bytes data)])
+                (for-each (lambda (b) (write-byte b port)) data)
+                (equal? (get-output-bytes port) expected)))
+
+        (list "port-next-location"
+              (let* ([port (open-output-bytes)]
+                     [loc (lambda ()
+                            (let-values ([(line col pos) (port-next-location port)])
+                              (list line col pos)))])
+                (and (equal? (loc) '(1 0 1))
+                     (begin (write-byte 65 port)
+                            (equal? (loc) '(1 1 2)))
+                     (begin (write-byte 10 port)
+                            (equal? (loc) '(2 0 3)))
+                     (begin (write-byte 9 port)
+                            (equal? (loc) '(2 8 4)))
+                     (equal? (port-next-location 42) #f))))))
+
  (list "Checkers"
        (list
         (list "check-list"          (equal? (begin (check-list '(1 2 3)) 'ok)            'ok))
