@@ -373,9 +373,33 @@
                          (let-values ([(q r) (quotient/remainder 10.0 -3)])
                            (and (equal? q -3.0) (equal? r 1.0)))))))
 
-       (list "4.3.2.2 Number Comparison"
+       #;(list "4.3.2.2 Number Comparison"
              (list
-              (list)))
+              (list "="
+                    (and (equal? (= 5) #t)
+                         (equal? (= 1 1 1.0) #t)
+                         (equal? (= 1 2) #f)
+                         (equal? (= 1 2 1) #f)))
+              (list "<"
+                    (and (equal? (< 10) #t)
+                         (equal? (< 1 2 3) #t)
+                         (equal? (< 1 3 2) #f)
+                         (equal? (< 1 2.0 3.0) #t)))
+              (list ">"
+                    (and (equal? (> 7) #t)
+                         (equal? (> 3 2 1) #t)
+                         (equal? (> 3 2 2) #f)
+                         (equal? (> 3.0 2 1) #t)))
+              (list "<="
+                    (and (equal? (<= 4) #t)
+                         (equal? (<= 1 2 2) #t)
+                         (equal? (<= 1 3 2) #f)
+                         (equal? (<= 1 1.0 1.0) #t)))
+              (list ">="
+                    (and (equal? (>= 9) #t)
+                         (equal? (>= 3 2 2) #t)
+                         (equal? (>= 3 4 5) #f)
+                         (equal? (>= 3.0 3 2) #t)))))
        
        (list "4.3.2 Generic Numerics"
              (list

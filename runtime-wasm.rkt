@@ -5652,7 +5652,8 @@
                             (br $loop)))
                (local.get $r))
 
-        ,@(let ()
+         ;; Binary number comparators
+         ,@(let ()
              (define (gencmp cmp fxcmp flcmp)
                `(func ,cmp
                       (param $x (ref eq))
@@ -5704,15 +5705,68 @@
                           (then (local.set $y-fl (ref.cast (ref $Flonum) (local.get $y))))
                           (else (local.set $y-fl (call $fx->fl/precise (local.get $y)))))
 
-                     (call ,flcmp
+                      (call ,flcmp
                             (ref.as_non_null (local.get $x-fl))
                             (ref.as_non_null (local.get $y-fl)))))
 
-            (list (gencmp '$=/2  '$fx=/2  '$fl=)   ; maybe specialize this one?
-                  (gencmp '$</2  '$fx</2  '$fl<)
-                  (gencmp '$>/2  '$fx>/2  '$fl>)
-                  (gencmp '$<=/2 '$fx<=/2 '$fl<=)
-                  (gencmp '$>=/2 '$fx>=/2 '$fl>=)))
+             (list (gencmp '$=/2  '$fx=/2  '$fl=)   ; maybe specialize this one?
+                   (gencmp '$</2  '$fx</2  '$fl<)
+                   (gencmp '$>/2  '$fx>/2  '$fl>)
+                   (gencmp '$<=/2 '$fx<=/2 '$fl<=)
+                   (gencmp '$>=/2 '$fx>=/2 '$fl>=)))
+
+         ;; Variadic Number Comparators
+         ,@(let ()
+             (define (gen-variadic-cmp name cmp/2)
+               `(func ,name (type $Prim>=1)
+                      (param $x0  (ref eq))
+                      (param $xs0 (ref eq))
+                      (result     (ref eq))
+
+                      (local $args    (ref $Args))
+                      (local $len     i32)
+                      (local $i       i32)
+                      (local $prev    (ref eq))
+                      (local $curr    (ref eq))
+                      (local $res     (ref eq))
+                      (local $x/is-fx i32)
+                      (local $x/is-fl i32)
+                      (local $x-fx    i32)
+
+                      (local.set $args (ref.cast (ref $Args) (local.get $xs0)))
+                      (local.set $len  (array.len (local.get $args)))
+
+                      ;; Single argument: ensure it is a number and return #t.
+                      (if (i32.eqz (local.get $len))
+                          (then (local.set $x/is-fx (ref.test (ref i31) (local.get $x0)))
+                                (if (local.get $x/is-fx)
+                                    (then (local.set $x-fx (i31.get_u (ref.cast (ref i31) (local.get $x0))))
+                                          (if (i32.and (local.get $x-fx) (i32.const 1))
+                                              (then (call $raise-check-fixnum (local.get $x0)) (unreachable)))))
+                                (local.set $x/is-fl (ref.test (ref $Flonum) (local.get $x0)))
+                                (if (i32.eqz (i32.or (local.get $x/is-fx) (local.get $x/is-fl)))
+                                    (then (call $raise-expected-number (local.get $x0)) (unreachable)))
+                                (return ,(Imm #t))))
+
+                      (local.set $res  ,(Imm #t))
+                      (local.set $prev (local.get $x0))
+                      (local.set $i    (i32.const 0))
+                      (block $done
+                             (loop $loop
+                                   (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                   (local.set $curr (array.get $Args (local.get $args) (local.get $i)))
+                                   (local.set $res  (call ,cmp/2 (local.get $prev) (local.get $curr)))
+                                   (if (ref.eq (local.get $res) ,(Imm #f))
+                                       (then (return ,(Imm #f))))
+                                   (local.set $prev (local.get $curr))
+                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                   (br $loop)))
+                      (local.get $res)))
+             (list (gen-variadic-cmp '$=  '$=/2)
+                   (gen-variadic-cmp '$<  '$</2)
+                   (gen-variadic-cmp '$>  '$>/2)
+                   (gen-variadic-cmp '$<= '$<=/2)
+                   (gen-variadic-cmp '$>= '$>=/2)))
 
         ,@(let ()
             (define (gen-minmax name fxop flop)
@@ -14504,8 +14558,8 @@
                                     (local.set $cur (struct.get $Pair $d (local.get $pair)))
                                     (br $loop)))
                        (local.get $best))))
-             (append (gen-argminmax 'argmax '$<)
-                     (gen-argminmax 'argmin '$>)))
+             (append (gen-argminmax 'argmax '$</2)
+                     (gen-argminmax 'argmin '$>/2)))
 
          (func $raise-argument-error  (param $x (ref eq)) (unreachable))
          (func $raise-expected-fixnum (param $x (ref eq)) (unreachable))
@@ -18434,8 +18488,8 @@
                                    (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                    (br $loop)))
                       (local.get $best))))
-            (append (gen-vector-argminmax '$vector-argmax '$<)
-                    (gen-vector-argminmax '$vector-argmin '$>)))
+            (append (gen-vector-argminmax '$vector-argmax '$</2)
+                    (gen-vector-argminmax '$vector-argmin '$>/2)))
 
         (func $vector-filter/template
               (param $proc (ref eq))  ;; predicate, must accept one argument
