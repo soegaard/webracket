@@ -646,7 +646,7 @@
   open-output-bytes
   ; open-output-string ; (same as open-output-bytes)
   get-output-bytes
-  ; get-output-string
+  get-output-string
   write-byte
   port-next-location
 
@@ -3415,6 +3415,8 @@
 
          [(open-input-string)          (inline-prim/optional sym ae1 1 2)]
          [(open-input-bytes)           (inline-prim/optional sym ae1 1 2)]
+         [(get-output-bytes
+           get-output-string)          (inline-prim/fixed sym ae1 1)]
 
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]

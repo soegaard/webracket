@@ -553,8 +553,9 @@
 
  ;; 13.7 String Ports
  string-port?
- open-input-string open-input-bytes 
- open-output-bytes get-output-bytes write-byte port-next-location
+ open-input-string                   get-output-string
+ open-input-bytes  open-output-bytes get-output-bytes
+ write-byte port-next-location
  
  ;; 14.1 Namespaces
  namespace? make-empty-namespace namespace-variable-value-simple

@@ -22486,7 +22486,7 @@
          ;; [x] open-output-bytes
          ;; [ ] open-output-string
          ;; [x] get-output-bytes
-         ;; [ ] get-output-string
+         ;; [x] get-output-string
 
          ;; [ ] write-byte
          
@@ -22684,6 +22684,23 @@
                                       (local.get $dest)))        ;; backing array
                ;; 7. Return the new Bytes
                (local.get $res))
+
+         (func $get-output-string (type $Prim1)
+               (param $out (ref eq))
+               (result (ref eq))
+
+               (local $bs (ref $Bytes))
+
+               (local.set $bs
+                          (ref.cast (ref $Bytes)
+                                    (call $get-output-bytes (local.get $out))))
+               (call $bytes->string/utf-8
+                     (local.get $bs)
+                     ;; Replacement character #\uFFFD
+                     (ref.i31 (i32.or (i32.shl (i32.const 65533) (i32.const ,char-shift))
+                                      (i32.const ,char-tag)))
+                     (global.get $missing)
+                     (global.get $missing)))
 
 
          ;; (type $StringPort

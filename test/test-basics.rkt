@@ -2477,6 +2477,12 @@
                        (and (equal? bs (bytes 65 66))
                             (equal? (immutable? bs) #t))))))
 
+        (list "get-output-string"
+              (let* ([port (open-output-bytes)]
+                     [data (bytes 72 101 108 108 111 32 206 187)])
+                (for-each (lambda (b) (write-byte b port)) (bytes->list data))
+                (equal? (get-output-string port) "Hello λ")))
+
         (list "write-byte/resizing"
               (let* ([port (open-output-bytes)]
                      [data (build-list 40 (lambda (i) (modulo (+ 60 i) 256)))]
