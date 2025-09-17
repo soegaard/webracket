@@ -980,6 +980,9 @@
                                 (param (ref eq))      ;; rest list
                                 (result (ref eq))))
 
+          
+          
+
           (type $Prim01   (func (param (ref eq)) (result (ref eq))))
           (type $Prim02   (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
 
