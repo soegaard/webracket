@@ -3327,6 +3327,27 @@
        (define rest-args (build-rest-args (drop aes rest-start)))
        `(call ,($ sym) ,@mandatory ,rest-args))
 
+     (define (build-rest-args/args aes)
+      (define n (length aes))
+      (if (zero? n)
+          '(array.new $Args (global.get $null) (i32.const 0))
+          `(array.new_fixed $Args ,n ,@aes)))
+
+     ;; Inlines a call to a primitive with
+     ;;   at least `min` arguments.
+     ;; Arguments from `rest-start` are rest arguments.
+     ;; They are passed in newly allocated $Args
+     ;; Note: Having `rest-start` as well as `min` allows us to
+     ;; share code for (f x ...) and (f x ...+).     
+     (define (inline-prim/variadic-args sym ae1 min [rest-start min])
+       (define n (length ae1))
+       (when (< n min) (error 'primapp "too few arguments: ~a" sym))
+       (define aes       (AExpr* ae1))
+       (define mandatory (take aes rest-start))
+       (define rest-args (build-rest-args/args (drop aes rest-start)))
+       `(call ,($ sym) ,@mandatory ,rest-args))
+
+     
      ;; Allocate a sequence container, fill it from `aes`, and return the container.
      (define (build-seq aes local-name local-type alloc set finish)
        (define n    (length aes))
@@ -3363,6 +3384,14 @@
             [(1)   (first aes)]
             [else  `(array.new_fixed $Values ,n ,@aes)])]
 
+         [(= < > <= >=)
+          (define n      (length ae1))
+          (define aes    (AExpr* ae1))
+          (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
+          (case n
+            [(2) `(call ,$cmp/2 ,@aes)]
+            [else (inline-prim/variadic-args sym ae1 1)])]
+         
         ;;; Standard Inlining
         [(+)                         (inline-prim/variadic sym ae1 0)]
         [(*)                         (inline-prim/variadic sym ae1 0)]
