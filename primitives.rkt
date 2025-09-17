@@ -272,6 +272,7 @@
  list->string
  substring
 
+ string
  string?
  string-ref
  string-set!
@@ -307,6 +308,7 @@
  
  ;; 4.5 Byte Strings
  bytes?
+ bytes
  make-bytes
  bytes-ref
  bytes-set!
