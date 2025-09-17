@@ -1,4 +1,13 @@
-;; The numbering follows the sections in "The Reference".
+;;;
+;;; Test Primitive Invokers
+;;;
+
+;; This file uses `map` to exercise each primitive-call shape.
+;; Since `map` calls a primitive via the invoker of the primitive,
+;; we are using `map` in each test.
+;;
+;; See the list of shapes in `runtime-wasm.rkt`.
+
 (list "map"
       (list
        ; shape 0 — exact 0 arguments

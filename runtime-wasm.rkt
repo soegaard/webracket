@@ -9018,12 +9018,12 @@
          (func $raise-bytes->string/utf-8                  (unreachable))
          (func $raise-bytes->string/utf-8:invalid-err-char (unreachable))
          
-         (func $bytes->string/utf-8 #;(type $Prim14)
-               (param $bstr      (ref eq))
-               (param $err-char  (ref eq)) ; optional, defaults to #f
-               (param $start-raw (ref eq)) ; optional, defaults to 0
-               (param $end-raw   (ref eq)) ; optional, defaults to (bytes-length bstr)
-               (result (ref $String))
+         (func $bytes->string/utf-8 (type $Prim14)
+               (param $bstr         (ref eq))
+               (param $err-char     (ref eq)) ; optional character?, defaults to #f
+               (param $start-raw    (ref eq)) ; optional exact-nonnegative-integer?, defaults to 0
+               (param $end-raw      (ref eq)) ; optional exact-nonnegative-integer?, defaults to (bytes-length bstr)
+               (result              (ref eq))
 
                (local $bs               (ref null $Bytes))
                (local $start            i32)
@@ -9036,29 +9036,41 @@
                    (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
                    (else (call $raise-bytes->string/utf-8)))
                ;; Decode start
-               (if (ref.eq (local.get $start-raw) (global.get $false))
+               (if (ref.eq (local.get $start-raw) (global.get $missing))
                    (then (local.set $start (i32.const 0)))
                    (else
                     (if (ref.test (ref i31) (local.get $start-raw))
                         (then (local.set $start (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
                         (else (call $raise-bytes->string/utf-8)))))
                ;; Decode end
-               (if (ref.eq (local.get $end-raw) (global.get $false))
+               (if (ref.eq (local.get $end-raw) (global.get $missing))
                    (then (local.set $end (array.len (struct.get $Bytes $bs (local.get $bs)))))
                    (else
                     (if (ref.test (ref i31) (local.get $end-raw))
-                        (then (local.set $end (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
+                        (then (local.set $end
+                                         (i32.shr_u
+                                          (i31.get_u (ref.cast (ref i31) (local.get $end-raw)))
+                                          (i32.const 1))))
                         (else (call $raise-bytes->string/utf-8)))))
                ;; Decode err-char
-               (if (ref.eq (local.get $err-char) (global.get $false))
-                   (then (local.set $use-err-char     (i32.const 0))  ; don't use err-char
-                         (local.set $decoded-err-char (i32.const 0))) 
-                   (else (if (ref.test (ref i31) (local.get $err-char))
+               (if (ref.eq (local.get $err-char) (global.get $missing))
+                   ; missing
+                   (then (local.set $use-err-char     (i32.const 0))
+                         (local.set $decoded-err-char (i32.const 0)))
+                   (else
+                    ; false
+                    (if (ref.eq (local.get $err-char) (global.get $false))
+                        (then (local.set $use-err-char     (i32.const 0))
+                              (local.set $decoded-err-char (i32.const 0)))
+                        (else
+                         ; character
+                         (if (ref.test (ref i31) (local.get $err-char))
                              (then (local.set $use-err-char (i32.const 1))
                                    (local.set $decoded-err-char
-                                              (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $err-char)))
-                                                         (i32.const 1))))
-                             (else (call $raise-bytes->string/utf-8:invalid-err-char)))))               
+                                              (i32.shr_u
+                                               (i31.get_u (ref.cast (ref i31) (local.get $err-char)))
+                                               (i32.const 1))))
+                             (else (call $raise-bytes->string/utf-8:invalid-err-char)))))))
                ;; Delegate to implementation
                (call $bytes->string/utf-8:work
                      (ref.as_non_null (local.get $bs))
@@ -9070,11 +9082,12 @@
          (func $bytes->string/utf-8/defaults
                (param $bs (ref $Bytes))
                (result (ref $String))
-               (call $bytes->string/utf-8
-                     (local.get $bs)
-                     (global.get $false)   ;; err-char = #f
-                     (global.get $false)   ;; start = #f → 0
-                     (global.get $false))) ;; end = #f → full length
+               (ref.cast (ref $String)
+                         (call $bytes->string/utf-8
+                               (local.get $bs)
+                               (global.get $missing)    ;; err-char = #f
+                               (global.get $missing)    ;; start    = 0
+                               (global.get $missing)))) ;; end      = full length
 
          (func $bytes->string/utf-8/checked
                (param $bs (ref $Bytes))
