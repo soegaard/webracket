@@ -9018,11 +9018,11 @@
          (func $raise-bytes->string/utf-8                  (unreachable))
          (func $raise-bytes->string/utf-8:invalid-err-char (unreachable))
          
-         (func $bytes->string/utf-8
+         (func $bytes->string/utf-8 #;(type $Prim14)
                (param $bstr      (ref eq))
-               (param $err-char  (ref eq))
-               (param $start-raw (ref eq))
-               (param $end-raw   (ref eq))
+               (param $err-char  (ref eq)) ; optional, defaults to #f
+               (param $start-raw (ref eq)) ; optional, defaults to 0
+               (param $end-raw   (ref eq)) ; optional, defaults to (bytes-length bstr)
                (result (ref $String))
 
                (local $bs               (ref null $Bytes))

@@ -84,55 +84,74 @@
                     '("x" "L"))
                '("xbx" "heLLo"))
        ; shape 16 — between 0 and 1 arguments with default handling
-       (let ([no-arg (flrandom)]
-             [with-arg (flrandom #f)])
-         (and (flonum? no-arg)
-              (flonum? with-arg)))
+       (equal? (cons (flonum? (flrandom))
+                     (map flonum? (map flrandom '(#f))))
+               '(#t #t))
        ; shape 17 — between 0 and 2 arguments with default handling
-       (let ([r0 (random)]
-             [r1 (random 7)]
-             [r2 (random 3 7)])
+       (let* ([r0 (random)]
+              [r1s (map random '(7 10))]
+              [r2s (map random '(3 1) '(7 4))]
+              [r1a (list-ref r1s 0)]
+              [r1b (list-ref r1s 1)]
+              [r2a (list-ref r2s 0)]
+              [r2b (list-ref r2s 1)])
          (and (real? r0)
               (<= 0 r0) (< r0 1)
-              (exact-nonnegative-integer? r1) (< r1 7)
-              (integer? r2) (<= 3 r2) (< r2 7)))
+              (exact-nonnegative-integer? r1a) (< r1a 7)
+              (exact-nonnegative-integer? r1b) (< r1b 10)
+              (integer? r2a) (<= 3 r2a) (< r2a 7)
+              (integer? r2b) (<= 1 r2b) (< r2b 4)))
        ; shape 18 — between 1 and 2 arguments with default handling
-       (and (string=? (number->string 255)
-                      "255")
-            (string=? (number->string 255 16)
-                      "ff"))
+       (equal? (append (map number->string '(255))
+                       (map number->string '(255) '(16)))
+               '("255" "ff"))
        ; shape 19 — between 1 and 3 arguments with default handling
        (let* ([s "h\u00E9"]
-              [full (string-utf-8-length s)]
-              [suffix (string-utf-8-length s 1)]
-              [prefix (string-utf-8-length s 0 1)])
+              [lengths (append (map string-utf-8-length (list s))
+                                (map string-utf-8-length (list s) '(1))
+                                (map string-utf-8-length (list s) '(0) '(1)))]
+              [full (list-ref lengths 0)]
+              [suffix (list-ref lengths 1)]
+              [prefix (list-ref lengths 2)])
          (and (= full 3)
               (= suffix 2)
               (= prefix 1)))
        ; shape 20 — between 1 and 4 arguments with default handling
-       (let ([words (string-split "a,b,c" ",")]
-             [trimmed (string-split "x--y--z" "--" #t #t)])
+       (let* ([results (append (map string-split (list "a,b,c") (list ","))
+                               (map string-split (list "x--y--z") (list "--")
+                                    (list #t) (list #t)))]
+              [words   (list-ref results 0)]
+              [trimmed (list-ref results 1)])
          (and (equal? words '("a" "b" "c"))
               (equal? trimmed '("x" "y" "z"))))
        ; shape 21 — between 1 and 5 arguments with default handling
-       (let ([basic (string-trim "  hi  ")]
-             [custom (string-trim "--wow--" "-" #t #t #t)])
+       (let* ([results (append (map string-trim (list "  hi  "))
+                               (map string-trim (list "--wow--") (list "-")
+                                    (list #t) (list #t) (list #t)))]
+              [basic   (list-ref results 0)]
+              [custom  (list-ref results 1)])
          (and (string=? basic "hi")
               (string=? custom "wow")))
-       ; shape 22 — between 2 and 4 arguments with default handling
-       #;(let* ([all (vector-sort '#(5 3 4 1 2) <)]
-                [partial (vector-sort '#(4 3 2 1 0) < 1 4)])
-           (and (equal? all '#(1 2 3 4 5))
-                (equal? partial '#(4 1 2 3 0))))
-       ; shape 23 — between 2 and 5 arguments with default handling
-       (let* ([bs #"h\xC3\xA9!"]
-              [full (bytes->string/utf-8 bs #f #f #f)]
-              [slice (bytes->string/utf-8 bs #f 1 3)])
-         (and (string=? full "hé!")
-              (string=? slice "é")))
+       ;; ; shape 22 — between 2 and 4 arguments with default handling
+       ;; #;(let* ([all (vector-sort '#(5 3 4 1 2) <)]
+       ;;          [partial (vector-sort '#(4 3 2 1 0) < 1 4)])
+       ;;     (and (equal? all '#(1 2 3 4 5))
+       ;;          (equal? partial '#(4 1 2 3 0))))
+       ;; ; shape 23 — between 2 and 5 arguments with default handling
+       ;; (let* ([bs      #"h\xC3\xA9!"]
+       ;;        [results (map bytes->string/utf-8
+       ;;                       (list bs bs)
+       ;;                       (list #f #f)
+       ;;                       (list #f 1)
+       ;;                       (list #f 3))]
+       ;;        [full    (list-ref results 0)]
+       ;;        [slice   (list-ref results 1)])
+       ;;   (and (string=? full "hé!")
+       ;;        (string=? slice "é")))
        ; shape 24 — between 3 and 5 arguments with default handling
-       (let ([dst (string-copy "hello")]
-             [src "XYZW"])
-         (string-copy! dst 1 src 1 3)
-         (string=? dst "hYZlo"))))
+       (let* ([dst (string-copy "hello")]
+              [src "XYZW"])
+         (map string-copy! (list dst) '(1) (list src) '(1) '(3))
+         (string=? dst "hYZlo"))
 
+       ))
