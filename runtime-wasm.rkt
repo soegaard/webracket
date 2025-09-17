@@ -19305,7 +19305,7 @@
                                         $hasheqv-ref/plain
                                         $hashequal-ref/plain
                                         $hashalw-ref/plain)])
-             `(func ,hash-ref
+             `(func ,hash-ref (type $Prim23) ; todo
                     (param $ht      (ref eq))     ;; hasheq
                     (param $key     (ref eq))     ;; lookup key
                     (param $failure (ref eq))     ;; value to return if not found
@@ -19439,7 +19439,7 @@
                              (else
                               (local.get $fail)))))))
 
-         (func $hash-set!
+         (func $hash-set! (type $Prim3)
               (param $ht  (ref eq))   ;; hash table
               (param $key (ref eq))   ;; key
               (param $val (ref eq))   ;; value
@@ -19489,7 +19489,7 @@
                                           $raise-argument-error:mutable-hasheqv-expected
                                           $raise-argument-error:mutable-hash-expected
                                           $raise-argument-error:mutable-hashalw-expected)])
-             `(func ,hash-set
+             `(func ,hash-set (type $Prim3)
                     (param $ht  (ref eq))   ;; table
                     (param $key (ref eq))   ;; key
                     (param $val (ref eq))   ;; value
@@ -19611,7 +19611,7 @@
                            (call $raise-hash-insert:table-full))))
 
 
-         (func $hash-ref!
+         (func $hash-ref! (type $Prim3)
                (param $ht     (ref eq))  ;; hash table
                (param $key    (ref eq))  ;; lookup key
                (param $to-set (ref eq))  ;; value to insert when missing (optional, default = raises error)
@@ -19840,7 +19840,7 @@
                                            $hasheqv-update!/plain
                                            $hashequal-update!/plain
                                            $hashalw-update!/plain)])
-             `(func ,hash-update
+             `(func ,hash-update #;(type $Prim34) ;todo
                     (param $ht   (ref eq))
                     (param $key  (ref eq))
                     (param $proc (ref eq))
