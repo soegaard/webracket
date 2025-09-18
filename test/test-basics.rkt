@@ -2607,6 +2607,61 @@
                            (equal? (char-ready? port) #t)
                            (equal? (read-char port) #\x)
                            (equal? (char-ready? port) #f))))
+
+              (list "read-line/basic"
+                    (let* ([port   (open-input-string "alpha\nbeta\n")]
+                           [first  (read-line port)]
+                           [second (read-line port)]
+                           [third  (read-line port)])
+                      (and (equal? first "alpha")
+                           (equal? second "beta")
+                           (eof-object? third))))
+
+              #;(list "read-line/return"
+                    (let* ([port (open-input-string "a\rb\rc")]
+                           [first   (read-line port 'return)]
+                           [second  (read-line port 'return)]
+                           [third   (read-line port 'return)]
+                           [fourth  (read-line port 'return)])
+                      (and (equal? first "a")
+                           (equal? second "b")
+                           (equal? third "c")
+                           (eof-object? fourth))))
+
+              #;(list "read-line/return-linefeed"
+                    (let* ([port (open-input-string "x\r\ny\r\nz")]
+                           [first   (read-line port 'return-linefeed)]
+                           [second  (read-line port 'return-linefeed)]
+                           [third   (read-line port 'return-linefeed)]
+                           [fourth  (read-line port 'return-linefeed)])
+                      (and (equal? first "x")
+                           (equal? second "y")
+                           (equal? third "z")
+                           (eof-object? fourth))))
+
+              #;(list "read-line/any"
+                    (let* ([port (open-input-string "x\r\ny\nz")]
+                           [first   (read-line port 'any)]
+                           [second  (read-line port 'any)]
+                           [third   (read-line port 'any)]
+                           [fourth  (read-line port 'any)])
+                      (and (equal? first "x")
+                           (equal? second "y")
+                           (equal? third "z")
+                           (eof-object? fourth))))
+
+              #;(list "read-line/any-one"
+                    (let* ([port (open-input-string "x\r\ny\r\n")]
+                           [first   (read-line port 'any-one)]
+                           [second  (read-line port 'any-one)]
+                           [third   (read-line port 'any-one)]
+                           [fourth  (read-line port 'any-one)]
+                           [fifth   (read-line port 'any-one)])
+                      (and (equal? first "x")
+                           (equal? second "")
+                           (equal? third "y")
+                           (equal? fourth "")
+                           (eof-object? fifth))))
               
              )
        

@@ -661,6 +661,7 @@
   read-string
   byte-ready?
   char-ready?
+  read-line
   
   write-byte
   write-char
@@ -3448,6 +3449,7 @@
          [(read-string!)               (inline-prim/optional sym ae1 1 4)]
          [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
          [(read-string)                (inline-prim/optional sym ae1 1 2)]
+         [(read-line)                  (inline-prim/optional sym ae1 0 2)]
          
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
          [(newline)                    (inline-prim/optional sym ae1 0 1)]

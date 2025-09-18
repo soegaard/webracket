@@ -558,6 +558,7 @@
  read-string
  byte-ready?
  char-ready?
+ read-line
  
  ;; 13.3 Byte and String Output
  write-byte
