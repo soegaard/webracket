@@ -23026,6 +23026,79 @@
                ;; Delegate to write-char with the newline character.
                (call $write-char ,(Imm #\newline) (local.get $out)))
 
+
+         ;; Like Racket's write-bytes, but currently only string ports are supported
+         ;; as output destinations.
+         (func $write-bytes (type $Prim14)
+               (param $bstr  (ref eq)) ;; bytes?
+               (param $out   (ref eq)) ;; output-port?               (optional, default = (current-output-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result       (ref eq))
+
+               (local $bs    (ref $Bytes))
+               (local $arr   (ref $I8Array))
+               (local $len   i32)
+               (local $from  i32)
+               (local $to    i32)
+               (local $count i32)
+               (local $idx   i32)
+               (local $byte  i32)
+               (local $i     i32)
+               (local $res   (ref eq))
+
+               ;; --- Validate byte string argument ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr)))
+                   (then (call $raise-check-bytes (local.get $bstr)) (unreachable)))
+               (local.set $bs  (ref.cast (ref $Bytes) (local.get $bstr)))
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+               ;; --- Determine output port ---
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $out)))
+                   (then (call $raise-check-string-port (local.get $out)) (unreachable)))
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to)) (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to)) (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               ;; --- Write the requested slice byte by byte ---
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $count)))
+                            (local.set $idx (i32.add (local.get $from) (local.get $i)))
+                            (local.set $byte (call $i8array-ref (local.get $arr) (local.get $idx)))
+                            (local.set $res
+                                       (call $write-byte
+                                             (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                             (local.get $out)))
+                            (if (ref.eq (local.get $res) (global.get $false))
+                                (then (return (global.get $false))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; --- Report number of bytes written ---
+               (ref.i31 (i32.shl (local.get $count) (i32.const 1))))
+
          
          ;;;
          ;;; FFI Helpers

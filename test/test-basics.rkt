@@ -2444,20 +2444,71 @@
                 (let ([expected '(1 2)])
                   (and (equal? (sort (hash-values h)    (λ (x y) (< x y))) expected)
                        (equal? (sort (hash-values h #t) (λ (x y) (< x y))) expected)))))
-        
-        
+               
         ))
 
  ;;;
  ;;;  13  Input and Output
  ;;;
 
- (list "13.5 Writing"
+ (list "13.3 Byte and String Output"
        (list
+        (list "write-byte/resizing"
+              (let* ([port (open-output-bytes)]
+                     [data (build-list 40 (lambda (i) (modulo (+ 60 i) 256)))]
+                     [expected (apply bytes data)])
+                (for-each (lambda (b) (write-byte b port)) data)
+                (equal? (get-output-bytes port) expected)))
+
+        (list "open-output-string/write-char"
+              (let ([port (open-output-string)])
+                (and (void? (write-char #\A port))
+                     (equal? (get-output-string port) "A"))))
+        
+        (list "write-char/utf8"
+              (let ([port (open-output-string)])
+                (and (void? (write-char #\λ port))
+                     (equal? (get-output-string port) "λ"))))
+
+        (list "open-output-string/write-byte"
+              (let ([port (open-output-string)])
+                (and (void? (write-byte 65 port))
+                     (equal? (bytes->string/utf-8 (get-output-bytes port)) "A"))))
+
+        (list "open-output-bytes/get-output-bytes"
+              (let ([port (open-output-bytes)])
+                (and (equal? (get-output-bytes port) (bytes))
+                     (void? (write-byte 65 port))
+                     (void? (write-byte 66 port))
+                     (let ([bs (get-output-bytes port)])
+                       (and (equal? bs (bytes 65 66))
+                            (equal? (immutable? bs) #t))))))
+
         (list "newline"
               (let ([port (open-output-string)])
                 (and (void? (newline port))
-                     (equal? (get-output-string port) "\n"))))))
+                     (equal? (get-output-string port) "\n"))))
+
+        (list "write-bytes/basic"
+              (let* ([port (open-output-bytes)]
+                     [data (bytes 65 66 67)]
+                     [count (write-bytes data port)])
+                (and (equal? count 3)
+                     (equal? (get-output-bytes port) data))))
+
+        (list "write-bytes/with-range"
+              (let* ([port (open-output-bytes)]
+                     [data (bytes 70 71 72 73)]
+                     [count (write-bytes data port 1 3)])
+                (and (equal? count 2)
+                     (equal? (get-output-bytes port)
+                             (subbytes data 1 3)))))
+        ))
+
+
+ 
+ (list "13.5 Writing"
+       (list))
 
  (list "13.7 String Ports"
        (list
@@ -2487,19 +2538,6 @@
         (list "open-output-string custom name"
               (string-port? (open-output-string 'sink)))
 
-        (list "open-output-string/write-byte"
-              (let ([port (open-output-string)])
-                (and (void? (write-byte 65 port))
-                     (equal? (bytes->string/utf-8 (get-output-bytes port)) "A"))))
-
-        (list "open-output-bytes/get-output-bytes"
-              (let ([port (open-output-bytes)])
-                (and (equal? (get-output-bytes port) (bytes))
-                     (void? (write-byte 65 port))
-                     (void? (write-byte 66 port))
-                     (let ([bs (get-output-bytes port)])
-                       (and (equal? bs (bytes 65 66))
-                            (equal? (immutable? bs) #t))))))
 
         (list "get-output-string"
               (let* ([port (open-output-bytes)]
@@ -2507,22 +2545,7 @@
                 (for-each (lambda (b) (write-byte b port)) (bytes->list data))
                 (equal? (get-output-string port) "Hello λ")))
 
-        (list "write-byte/resizing"
-              (let* ([port (open-output-bytes)]
-                     [data (build-list 40 (lambda (i) (modulo (+ 60 i) 256)))]
-                     [expected (apply bytes data)])
-                (for-each (lambda (b) (write-byte b port)) data)
-                (equal? (get-output-bytes port) expected)))
 
-        (list "open-output-string/write-char"
-              (let ([port (open-output-string)])
-                (and (void? (write-char #\A port))
-                     (equal? (get-output-string port) "A"))))
-
-        (list "write-char/utf8"
-              (let ([port (open-output-string)])
-                (and (void? (write-char #\λ port))
-                     (equal? (get-output-string port) "λ"))))
 
         (list "port-next-location"
               (let* ([port (open-output-bytes)]
