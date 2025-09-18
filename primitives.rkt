@@ -561,6 +561,8 @@
  read-line
  peek-bytes!
  peek-string!
+ peek-byte
+ peek-char
  
  ;; 13.3 Byte and String Output
  write-byte

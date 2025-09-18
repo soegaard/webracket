@@ -2732,6 +2732,56 @@
                       (and (eof-object? result)
                            (equal? buffer "_")
                            (char=? first #\λ))))
+
+              (list "peek-byte/basic"
+                    (let* ([port       (open-input-bytes (bytes 65 66))]
+                           [first      (peek-byte port)]
+                           [second     (peek-byte port)]
+                           [consumed   (read-byte port)]
+                           [after-read (peek-byte port)])
+                      (and (equal? first 65)
+                           (equal? second 65)
+                           (equal? consumed 65)
+                           (equal? after-read 66))))
+
+              (list "peek-byte/skip"
+                    (let* ([port   (open-input-bytes (bytes 1 2 3))]
+                           [value  (peek-byte port 1)]
+                           [first  (read-byte port)])
+                      (and (equal? value 2)
+                           (equal? first 1))))
+
+              (list "peek-byte/eof"
+                    (let* ([port   (open-input-bytes (bytes 1 2))]
+                           [value  (peek-byte port 5)]
+                           [first  (read-byte port)])
+                      (and (eof-object? value)
+                           (equal? first 1))))
+
+              (list "peek-char/basic"
+                    (let* ([port       (open-input-string "λx")]
+                           [first      (peek-char port)]
+                           [second     (peek-char port)]
+                           [consumed   (read-char port)]
+                           [after-read (peek-char port)])
+                      (and (char=? first #\λ)
+                           (char=? second #\λ)
+                           (char=? consumed #\λ)
+                           (char=? after-read #\x))))
+
+              (list "peek-char/skip"
+                    (let* ([port   (open-input-string "λx")]
+                           [value  (peek-char port 1)]
+                           [first  (read-char port)])
+                      (and (char=? value #\x)
+                           (char=? first #\λ))))
+
+              (list "peek-char/eof"
+                    (let* ([port   (open-input-string "λ")]
+                           [value  (peek-char port 1)]
+                           [first  (read-char port)])
+                      (and (eof-object? value)
+                           (char=? first #\λ))))
               
              )
        
