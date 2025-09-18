@@ -2617,7 +2617,7 @@
                            (equal? second "beta")
                            (eof-object? third))))
 
-              #;(list "read-line/return"
+              (list "read-line/return"
                     (let* ([port (open-input-string "a\rb\rc")]
                            [first   (read-line port 'return)]
                            [second  (read-line port 'return)]
@@ -2628,7 +2628,7 @@
                            (equal? third "c")
                            (eof-object? fourth))))
 
-              #;(list "read-line/return-linefeed"
+              (list "read-line/return-linefeed"
                     (let* ([port (open-input-string "x\r\ny\r\nz")]
                            [first   (read-line port 'return-linefeed)]
                            [second  (read-line port 'return-linefeed)]
@@ -2639,7 +2639,7 @@
                            (equal? third "z")
                            (eof-object? fourth))))
 
-              #;(list "read-line/any"
+              (list "read-line/any"
                     (let* ([port (open-input-string "x\r\ny\nz")]
                            [first   (read-line port 'any)]
                            [second  (read-line port 'any)]
@@ -2650,7 +2650,7 @@
                            (equal? third "z")
                            (eof-object? fourth))))
 
-              #;(list "read-line/any-one"
+              (list "read-line/any-one"
                     (let* ([port (open-input-string "x\r\ny\r\n")]
                            [first   (read-line port 'any-one)]
                            [second  (read-line port 'any-one)]
