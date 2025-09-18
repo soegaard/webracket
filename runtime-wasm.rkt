@@ -24209,7 +24209,10 @@
                (if (i32.ne (i32.and (local.get $peeked) (i32.const 1)) (i32.const 0))
                    (then (return (global.get $false))))
                (local.set $peeked (i32.shr_u (local.get $peeked) (i32.const 1)))
-
+               ;; When no characters were peeked, signal EOF
+               (if (i32.eqz (local.get $peeked))
+                   (then (return (global.get $eof))))
+               
                ;; Shrink buffer on partial peek
                (if (i32.lt_u (local.get $peeked) (local.get $count))
                    (then (local.set $arr (struct.get $Bytes $bs (local.get $buf)))
@@ -24301,7 +24304,12 @@
                    (then (return (global.get $false))))
                (local.set $peeked (i32.shr_u (local.get $peeked) (i32.const 1)))
 
+               ;; Return EOF when no characters were peeked.
+               (if (i32.eqz (local.get $peeked))
+                   (then (return (global.get $eof))))
+               
                (local.set $arr (struct.get $String $codepoints (local.get $buf)))
+               
 
                ;; Shrink buffer on partial peek
                (if (i32.lt_u (local.get $peeked) (local.get $count))

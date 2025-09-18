@@ -2844,7 +2844,7 @@
                            [first  (read-char port)]
                            [second (read-char port)])
                       (and (eof-object? result)
-                           (equal? first #\h)
+                           (equal? first  #\h)
                            (equal? second #\i))))              
              )
        
