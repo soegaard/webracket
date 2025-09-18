@@ -23502,7 +23502,7 @@
                 (if (ref.eq (local.get $mode-val) (global.get $symbol:any))
                     (then (local.set $mode-code (i32.const 3)) (br 1)))
                 (if (ref.eq (local.get $mode-val) (global.get $symbol:any-one))
-                    (then (local.set $mode-code (i32.const 4)) (br 1)))
+                   (then (local.set $mode-code (i32.const 4)) (br 1)))
                 (call $raise-read-line:bad-mode (local.get $mode-val))
                 (unreachable))
 
@@ -23568,9 +23568,9 @@
                             (if (i32.eq (local.get $mode-code) (i32.const 4))
                                 (then (if (i32.or (i32.eq (local.get $cp) (i32.const 10))
                                                   (i32.eq (local.get $cp) (i32.const 13)))
-                                          (then (local.set $append (i32.const 0))
-                                                (local.set $break (i32.const 1))))))
-
+                                          (then (local.set $append (i32.const 0)))
+                                          (else (local.set $break (i32.const 1))))))
+                            
                             (if (i32.eq (local.get $append) (i32.const 1))
                                 (then (call $i32growable-array-add! (local.get $buf) (local.get $cp))
                                       (local.set $count (i32.add (local.get $count) (i32.const 1)))))
@@ -27016,6 +27016,9 @@
                ;; --- Case: void ---
                (if (ref.eq (local.get $v) (global.get $void))
                    (then (return (ref.cast (ref $String) (global.get $string:void)))))
+               ;; --- Case: eof ---
+               (if (ref.eq (local.get $v) (global.get $eof))
+                   (then (return (ref.cast (ref $String) (global.get $string:eof)))))
                ;; --- Case: missing ---
                (if (ref.eq (local.get $v) (global.get $missing))
                    (then (return (ref.cast (ref $String) (global.get $string:missing)))))
