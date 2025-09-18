@@ -23305,6 +23305,136 @@
 
                (local.get $buf))
 
+         (func $byte-ready?:one-argument-is-not-yet-supported (unreachable))
+
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $byte-ready? (type $Prim01)
+               (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
+               (result    (ref eq))
+
+               (local $sp  (ref null $StringPort))
+               (local $idx i32)
+               (local $len i32)
+
+               ;; Require an explicit string port argument for now.
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $byte-ready?:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               ;; Ensure the input is a string port.
+               (if (ref.test (ref $StringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+                   (else (return (global.get $false))))
+
+               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
+               (local.set $len (struct.get $StringPort $len (local.get $sp)))
+
+               (if (result (ref eq))
+                   (i32.lt_u (local.get $idx) (local.get $len))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $char-ready?:one-argument-is-not-yet-supported (unreachable))
+
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $char-ready? (type $Prim01)
+               (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
+               (result    (ref eq))
+
+               (local $sp        (ref null $StringPort))
+               (local $bs        (ref eq))
+               (local $arr       (ref $I8Array))
+               (local $idx       i32)
+               (local $len       i32)
+               (local $byte      i32)
+               (local $need      i32)
+               (local $acc       i32)
+               (local $initial   i32)
+               (local $available i32)
+               (local $cp        i32)
+               (local $i         i32)
+               (local $scan      i32)
+               (local $cont      i32)
+
+               ;; Require an explicit string port argument for now.
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $char-ready?:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               ;; Ensure the input is a string port.
+               (if (ref.test (ref $StringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+                   (else (return (global.get $false))))
+
+               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
+               (local.set $len (struct.get $StringPort $len (local.get $sp)))
+
+               ;; No characters remain when at EOF.
+               (if (i32.ge_u (local.get $idx) (local.get $len))
+                   (then (return (global.get $false))))
+
+               (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
+               (local.set $arr (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
+               (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+
+               ;; ASCII characters are always ready when a byte is available.
+               (if (i32.lt_u (local.get $byte) (i32.const 128))
+                   (then (return (global.get $true))))
+
+               ;; Determine continuation requirements for the UTF-8 sequence.
+               (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
+               (local.set $acc)
+               (local.set $need)
+               (local.set $initial (local.get $need))
+
+               ;; Reject invalid lead bytes.
+               (if (i32.lt_s (local.get $need) (i32.const 0))
+                   (then (return (global.get $false))))
+
+               ;; Ensure enough bytes remain to finish the character.
+               (local.set $available (i32.sub (local.get $len) (local.get $idx)))
+               (if (i32.lt_u (local.get $available)
+                             (i32.add (local.get $need) (i32.const 1)))
+                   (then (return (global.get $false))))
+
+               (local.set $cp (local.get $acc))
+               (local.set $i (i32.const 0))
+               (local.set $scan (local.get $idx))
+
+               ;; Validate continuation bytes and build the code point.
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $need)))
+                            (local.set $scan (i32.add (local.get $scan) (i32.const 1)))
+                            (local.set $cont (array.get_u $I8Array (local.get $arr)
+                                                              (local.get $scan)))
+                            (if (i32.or (i32.lt_u (local.get $cont) (i32.const 128))
+                                        (i32.ge_u (local.get $cont) (i32.const 192)))
+                                (then (return (global.get $false))))
+                            (local.set $cp
+                                       (i32.or (i32.shl (local.get $cp) (i32.const 6))
+                                               (i32.and (local.get $cont) (i32.const 63))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; Reject invalid Unicode scalars and overlong encodings.
+               (if (i32.gt_u (local.get $cp) (i32.const #x10FFFF))
+                   (then (return (global.get $false))))
+               (if (i32.and (i32.ge_u (local.get $cp) (i32.const #xD800))
+                            (i32.le_u (local.get $cp) (i32.const #xDFFF)))
+                   (then (return (global.get $false))))
+               (if (i32.eq (local.get $initial) (i32.const 1))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x80))
+                             (then (return (global.get $false))))))
+               (if (i32.eq (local.get $initial) (i32.const 2))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x800))
+                             (then (return (global.get $false))))))
+               (if (i32.eq (local.get $initial) (i32.const 3))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
+                             (then (return (global.get $false))))))
+
+               (global.get $true))
+
          
          ;;;
          ;;;  13.3  Byte and String Output

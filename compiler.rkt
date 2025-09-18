@@ -659,7 +659,9 @@
   read-string!
   read-bytes
   read-string
-
+  byte-ready?
+  char-ready?
+  
   write-byte
   write-char
   newline
@@ -3438,6 +3440,8 @@
            get-output-string)          (inline-prim/fixed sym ae1 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
 
+         [(byte-ready?)                (inline-prim/optional sym ae1 0 1)]
+         [(char-ready?)                (inline-prim/optional sym ae1 0 1)]
          [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
          [(read-char)                  (inline-prim/optional sym ae1 0 1)]
          [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]

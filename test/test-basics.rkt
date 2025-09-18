@@ -2591,6 +2591,22 @@
                            [rest  (read-string 4 port)])
                       (and (equal? empty "")
                            (equal? rest "data"))))
+
+              (list "byte-ready?/basic"
+                    (let ([port (open-input-bytes (bytes 65 66))])
+                      (and (equal? (byte-ready? port) #t)
+                           (equal? (read-byte port) 65)
+                           (equal? (byte-ready? port) #t)
+                           (equal? (read-byte port) 66)
+                           (equal? (byte-ready? port) #f))))
+
+              (list "char-ready?/basic"
+                    (let ([port (open-input-string "λx")])
+                      (and (equal? (char-ready? port) #t)
+                           (equal? (read-char port) #\λ)
+                           (equal? (char-ready? port) #t)
+                           (equal? (read-char port) #\x)
+                           (equal? (char-ready? port) #f))))
               
              )
        
