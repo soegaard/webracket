@@ -22870,6 +22870,190 @@
                                       (ref.i31 (i32.shl (local.get $int-pos)  (i32.const 1)))))
               ;; Return the read byte as a fixnum.
               (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
+
+
+         (func $read-char:one-argument-is-not-yet-supported (unreachable))
+
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $read-char (type $Prim01)
+               (param $in (ref eq)) ;; optional input-port?, default = (current-input-port)
+               (result    (ref eq))
+
+               (local $first        (ref eq))
+               (local $next         (ref eq))
+               (local $byte         i32)
+               (local $need         i32)
+               (local $initial-need i32)
+               (local $acc          i32)
+               (local $cp           i32)
+               (local $cont         i32)
+
+               ;; Require an explicit string port argument for now.
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $read-char:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               ;; Ensure the input is a string port.
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (return (global.get $false))))
+
+               (local.set $first (call $read-byte (local.get $in)))
+               (if (ref.eq (local.get $first) (global.get $eof))
+                   (then (return (global.get $eof))))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $first)))
+                   (then (return (global.get $false))))
+
+               (local.set $byte
+                          (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $first)))
+                                     (i32.const 1)))
+
+               ;; ASCII fast path.
+               (if (i32.lt_u (local.get $byte) (i32.const 128))
+                   (then (return (ref.i31 (i32.or (i32.shl (local.get $byte) (i32.const ,char-shift))
+                                                 (i32.const ,char-tag))))))
+
+               ;; Determine continuation byte count and initial accumulator bits.
+               (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
+               (local.set $acc)
+               (local.set $need)
+               (local.set $initial-need (local.get $need))
+
+               ;; Reject invalid lead bytes.
+               (if (i32.lt_s (local.get $need) (i32.const 0))
+                   (then (return (global.get $false))))
+
+               (local.set $cp (local.get $acc))
+
+               ;; Consume required continuation bytes.
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.eqz (local.get $need)))
+                            (local.set $next (call $read-byte (local.get $in)))
+                            (if (ref.eq (local.get $next) (global.get $eof))
+                                (then (return (global.get $eof))))
+                            (if (i32.eqz (ref.test (ref i31) (local.get $next)))
+                                (then (return (global.get $false))))
+                            (local.set $cont
+                                       (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $next)))
+                                                  (i32.const 1)))
+                            ;; Continuation bytes must have the form #b10xxxxxx.
+                            (if (i32.or (i32.lt_u (local.get $cont) (i32.const 128))
+                                        (i32.ge_u (local.get $cont) (i32.const 192)))
+                                (then (return (global.get $false))))
+                            (local.set $cp
+                                       (i32.or (i32.shl (local.get $cp) (i32.const 6))
+                                               (i32.and (local.get $cont) (i32.const 63))))
+                            (local.set $need (i32.sub (local.get $need) (i32.const 1)))
+                            (br $loop)))
+
+               ;; Validate resulting code point: reject surrogates, overlong encodings, and out-of-range values.
+               (if (i32.gt_u (local.get $cp) (i32.const #x10FFFF))
+                   (then (return (global.get $false))))
+               (if (i32.and (i32.ge_u (local.get $cp) (i32.const #xD800))
+                            (i32.le_u (local.get $cp) (i32.const #xDFFF)))
+                   (then (return (global.get $false))))
+               (if (i32.eq (local.get $initial-need) (i32.const 1))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x80))
+                             (then (return (global.get $false))))))
+               (if (i32.eq (local.get $initial-need) (i32.const 2))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x800))
+                             (then (return (global.get $false))))))
+               (if (i32.eq (local.get $initial-need) (i32.const 3))
+                   (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
+                             (then (return (global.get $false))))))
+
+               ;; Construct and return the character immediate.
+               (ref.i31 (i32.or (i32.shl (local.get $cp) (i32.const ,char-shift))
+                                (i32.const ,char-tag))))
+
+
+         (func $read-bytes!:one-argument-is-not-yet-supported (unreachable))
+         
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $read-bytes! (type $Prim14)
+               (param $bstr  (ref eq)) ;; bytes?
+               (param $in    (ref eq)) ;; input-port?               (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result       (ref eq))
+
+               (local $bs        (ref $Bytes))
+               (local $arr       (ref $I8Array))
+               (local $len       i32)
+               (local $from      i32)
+               (local $to        i32)
+               (local $count     i32)
+               (local $i         i32)
+               (local $res       (ref eq))
+               (local $byte      i32)
+               (local $dest-idx  i32)
+
+               ;; --- Validate byte string argument ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr)))
+                   (then (call $raise-check-bytes (local.get $bstr)) (unreachable)))
+               (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr)))
+               ;; Reject immutable byte strings
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $bs)) (i32.const 1))
+                   (then (call $raise-expected-mutable-bytes (local.get $bstr)) (unreachable)))
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $read-bytes!:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to))
+                         (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               (local.set $i (i32.const 0))
+               ;; --- Read bytes into destination ---
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $count)))
+                            (local.set $res (call $read-byte (local.get $in)))
+                            (if (ref.eq (local.get $res) (global.get $false))
+                                (then (return (global.get $false))))
+                            (if (ref.eq (local.get $res) (global.get $eof))
+                                (then (if (i32.eqz (local.get $i))
+                                          (then (return (global.get $eof))))
+                                      (br $done)))
+                            (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                                (then (return (global.get $false))))
+                            (local.set $byte (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $res)))
+                                                        (i32.const 1)))
+                            (local.set $dest-idx (i32.add (local.get $from) (local.get $i)))
+                            (call $i8array-set! (local.get $arr) (local.get $dest-idx) (local.get $byte))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; --- Report number of bytes read ---
+               (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
          
          ;;;
          ;;;  13.3  Byte and String Output
@@ -23241,6 +23425,81 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $loop)))
                ;; --- Report number of bytes written ---
+               (ref.i31 (i32.shl (local.get $count) (i32.const 1))))
+
+
+         (func $raise-bad-string-range (param $x (ref eq)) (param i32) (param i32) (unreachable))
+         
+         ;; Like Racket's write-string, but currently only string ports are supported
+         ;; as output destinations. The port argument must be provided explicitly.
+         (func $write-string (type $Prim14)
+               (param $str   (ref eq)) ;; string?
+               (param $out   (ref eq)) ;; output-port?               (optional, default = (current-output-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (string-length str))
+               (result       (ref eq))
+
+               (local $s     (ref $String))
+               (local $arr   (ref $I32Array))
+               (local $len   i32)
+               (local $from  i32)
+               (local $to    i32)
+               (local $count i32)
+               (local $bytes (ref $Bytes))
+               (local $res   (ref eq))
+
+               ;; --- Validate string argument ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $str)))
+                   (then (call $raise-check-string (local.get $str)) (unreachable)))
+               (local.set $s   (ref.cast (ref $String) (local.get $str)))
+               (local.set $arr (struct.get $String $codepoints (local.get $s)))
+               (local.set $len (call $i32array-length (local.get $arr)))
+               ;; --- Determine output port ---
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $out)))
+                   (then (call $raise-check-string-port (local.get $out)) (unreachable)))
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to)) (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to)) (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               ;; --- Convert requested slice to bytes ---
+               (local.set $bytes
+                          (ref.cast (ref $Bytes)
+                                    (call $string->bytes/utf-8
+                                          (local.get $str)
+                                          (global.get $false)
+                                          (ref.i31 (i32.shl (local.get $from) (i32.const 1)))
+                                          (ref.i31 (i32.shl (local.get $to)   (i32.const 1))))))
+               ;; --- Delegate to write-bytes ---
+               (local.set $res
+                          (call $write-bytes
+                                (local.get $bytes)
+                                (local.get $out)
+                                (global.get $missing)
+                                (global.get $missing)))
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               ;; --- Report number of characters written ---
                (ref.i31 (i32.shl (local.get $count) (i32.const 1))))
 
          

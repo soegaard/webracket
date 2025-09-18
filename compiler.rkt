@@ -654,11 +654,14 @@
   get-output-string
 
   read-byte
+  read-char
+  read-bytes!
 
   write-byte
   write-char
   newline
   write-bytes
+  write-string
   
   port-next-location
 
@@ -3431,7 +3434,11 @@
          [(get-output-bytes
            get-output-string)          (inline-prim/fixed sym ae1 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
+
          [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
+         [(read-char)                  (inline-prim/optional sym ae1 0 1)]
+         [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
+         
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
          [(newline)                    (inline-prim/optional sym ae1 0 1)]
          [(write-bytes)                (inline-prim/optional sym ae1 1 4)]

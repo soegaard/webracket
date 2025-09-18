@@ -551,6 +551,8 @@
 
  ;; 13.2 Byte and String Input
  read-byte
+ read-char
+ read-bytes!
  
  ;; 13.3 Byte and String Output
  write-byte
