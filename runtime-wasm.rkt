@@ -24157,6 +24157,8 @@
                (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
 
                ;; --- Decode optional skip amount ---
+               (local.set $skip-arg (ref.i31 (i32.const 0)))
+               (local.set $skip-val (i32.const 0))
                (if (ref.eq (local.get $skip) (global.get $missing))
                    (then (local.set $skip-arg (ref.i31 (i32.const 0)))
                          (local.set $skip-val (i32.const 0)))
@@ -24250,6 +24252,8 @@
                (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
 
                ;; --- Decode optional skip amount ---
+               (local.set $skip-arg (ref.i31 (i32.const 0)))
+               (local.set $skip-val (i32.const 0))
                (if (ref.eq (local.get $skip) (global.get $missing))
                    (then (local.set $skip-arg (ref.i31 (i32.const 0)))
                          (local.set $skip-val (i32.const 0)))
