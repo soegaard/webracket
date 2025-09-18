@@ -316,7 +316,9 @@
                     empty      ; '() racket/list
                     true       ;     racket/bool (not racket/base)
                     false      ;     racket/bool (not racket/base)
-                    pi))       ;     racket/math
+                    pi         ;     racket/math
+                    eof        ;     racket/base
+                    ))
 
 (define (constant-value c)
   (case c
@@ -325,6 +327,7 @@
     [(false)      #f]
     [(undefined)  datum:undefined]
     [(pi)         pi]
+    [(eof)        eof]
     [else         (error 'constant-value "got: ~a" c)]))
   
 
@@ -640,6 +643,8 @@
   string->uninterned-symbol symbol-interned?
   symbol->immutable-string
   
+  eof-object?
+
   string-port?
   open-input-bytes
   open-input-string  
@@ -647,6 +652,9 @@
   open-output-string   
   get-output-bytes
   get-output-string
+
+  read-byte
+
   write-byte
   write-char
   newline
@@ -3178,27 +3186,28 @@
                            (cond
                              ; We keep these for now, to get a more readable output.
                              ; In all likelyhood (Imm '()), (Imm (void)), etc. are better.
-                             [(flonum? v)  (define l (case v
-                                                       [(+nan.0) 'nan] [(-nan.0) '-nan]
-                                                       [(+inf.0) 'inf] [(-inf.0) '-inf]
-                                                       [else v]))
-                                           `(struct.new $Flonum (i32.const 0) (f64.const ,l))]
-                             [(null? v)    '(global.get $null)]
-                             [(void? v)    '(global.get $void)]
-                             [(eq? v #t)   '(global.get $true)]  
-                             [(eq? v #f)   '(global.get $false)]
-                             [(fixnum? v)  (Imm v)]
-                             [(char? v)    (Imm v)]
-                             [(string? v)  (define name         (add-quoted-string v))
-                                           (define $string:name (string->symbol (~a "$string:" name)))
-                                           `(global.get ,$string:name)]
-                             [(bytes? v)   (define name         (add-quoted-bytes v))
-                                           (define $bytes:name  (string->symbol (~a "$bytes:" name)))
-                                           `(global.get ,$bytes:name)]
-                             [(symbol? v)  (define name         (add-quoted-symbol v))
-                                           (define $symbol:name (string->symbol (~a "$symbol:" name)))
-                                           `(global.get ,$symbol:name)]
-                             [else         `',v]))])]
+                             [(flonum? v)     (define l (case v
+                                                          [(+nan.0) 'nan] [(-nan.0) '-nan]
+                                                          [(+inf.0) 'inf] [(-inf.0) '-inf]
+                                                          [else v]))
+                                              `(struct.new $Flonum (i32.const 0) (f64.const ,l))]
+                             [(null? v)       '(global.get $null)]
+                             [(void? v)       '(global.get $void)]
+                             [(eq? v #t)      '(global.get $true)]  
+                             [(eq? v #f)      '(global.get $false)]
+                             [(eof-object? v) '(global.get $eof)]
+                             [(fixnum? v)     (Imm v)]
+                             [(char? v)       (Imm v)]
+                             [(string? v)     (define name         (add-quoted-string v))
+                                              (define $string:name (string->symbol (~a "$string:" name)))
+                                              `(global.get ,$string:name)]
+                             [(bytes? v)      (define name         (add-quoted-bytes v))
+                                              (define $bytes:name  (string->symbol (~a "$bytes:" name)))
+                                              `(global.get ,$bytes:name)]
+                             [(symbol? v)     (define name         (add-quoted-symbol v))
+                                              (define $symbol:name (string->symbol (~a "$symbol:" name)))
+                                              `(global.get ,$symbol:name)]
+                             [else            `',v]))])]
     [(top ,s ,x)
      ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
      ;       Note that if x is present in a top-level define-values
@@ -3422,6 +3431,7 @@
          [(get-output-bytes
            get-output-string)          (inline-prim/fixed sym ae1 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
+         [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
          [(newline)                    (inline-prim/optional sym ae1 0 1)]
          [(write-bytes)                (inline-prim/optional sym ae1 1 4)]

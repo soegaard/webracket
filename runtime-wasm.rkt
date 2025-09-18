@@ -827,6 +827,7 @@
     (add-runtime-string-constant 'hash-t                     "#t")
     (add-runtime-string-constant 'hash-f                     "#f")
     (add-runtime-string-constant 'null                       "()")
+    (add-runtime-string-constant 'eof                        "#<eof>")
     (add-runtime-string-constant 'void                       "#<void>")
     (add-runtime-string-constant 'undefined                  "#<undefined>")
     (add-runtime-string-constant 'unspecified                "#<unspecified>")
@@ -1564,6 +1565,7 @@
          (global $void       (ref eq) ,(Imm (void)))
          (global $false      (ref eq) ,(Imm #f))  ; (ref.i31 (i32.const ?))
          (global $true       (ref eq) ,(Imm #t))
+         (global $eof        (ref eq) ,(Imm eof))
          (global $error      (ref eq) ,(R 77))
          (global $missing    (ref eq) ,(R missing-value))   ; #x7fffffff
          (global $tombstone  (ref eq) ,(R tombstone-value)) ; #x3fffffff"
@@ -22469,6 +22471,8 @@
          ;;; 13.1.6  STRING PORT
          ;;;
 
+         ;; https://docs.racket-lang.org/reference/ports.html
+
          ;; A string port reads or writes from a byte string. An input
          ;; string port can be created from either a byte string or a string;
          ;; in the latter case, the string is effectively converted to a byte
@@ -22721,11 +22725,151 @@
                      (global.get $missing)
                      (global.get $missing)))
 
+
+         (func $eof-object? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $v) (global.get $eof))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
          ;;;
          ;;;  13.2  Byte and String Input
          ;;;
 
+         (func $read-byte:one-argument-is-not-yet-supported (unreachable))
          
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $read-byte (type $Prim01)
+              (param $in (ref eq)) ;; optional input-port?, default = (current-input-port)
+              (result    (ref eq))
+
+              (local $sp        (ref null $StringPort))
+              (local $bs        (ref eq))
+              (local $arr       (ref $I8Array))
+              (local $idx       i32)
+              (local $limit     i32)
+              (local $byte      i32)
+              (local $loc       (ref $Location))
+
+              (local $pos       (ref eq))
+              (local $line      (ref eq))
+              (local $col       (ref eq))
+
+              (local $int-pos   i32)
+              (local $int-line  i32)
+              (local $int-col   i32)
+
+              (local $len       i32)
+              (local $left      i32)
+              (local $seen      i32)
+
+              ;; Require an explicit string port argument for now.
+              (if (ref.eq (local.get $in) (global.get $missing))
+                  (then (call $read-byte:one-argument-is-not-yet-supported)
+                        (unreachable)))
+              ;; Ensure the input is a string port.
+              (if (ref.test (ref $StringPort) (local.get $in))
+                  (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+                  (else (return (global.get $false))))
+              
+              (local.set $idx   (struct.get $StringPort $idx (local.get $sp)))
+              (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+              ;; Return the EOF object when no more bytes remain.
+              (if (i32.ge_u (local.get $idx) (local.get $limit))
+                  (then (return (ref.i31 (i32.const ,eof-value)))))
+
+              (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
+              (local.set $arr (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
+              (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+
+              (struct.set $StringPort $idx (local.get $sp)
+                          (i32.add (local.get $idx) (i32.const 1)))
+              ;; Load the existing location information.
+              (local.set $loc  (struct.get $StringPort $loc  (local.get $sp)))
+              (local.set $pos  (struct.get $Location   $pos  (local.get $loc)))
+              (local.set $line (struct.get $Location   $line (local.get $loc)))
+              (local.set $col  (struct.get $Location   $col  (local.get $loc)))
+
+              (local.set $int-pos  (if (result i32)
+                                       (ref.test (ref i31) (local.get $pos))
+                                       (then ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $pos)))))
+                                       (else (i32.const 0))))
+              (local.set $int-line (if (result i32)
+                                       (ref.test (ref i31) (local.get $line))
+                                       (then ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $line)))))
+                                       (else (i32.const 0))))
+              (local.set $int-col  (if (result i32)
+                                       (ref.test (ref i31) (local.get $col))
+                                       (then ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $col)))))
+                                       (else (i32.const 0))))
+              ;; Update UTF-8 state and column tracking using the read byte.
+              (local.set $len  (struct.get $StringPort $utf8-len   (local.get $sp)))
+              (local.set $left (struct.get $StringPort $utf8-left  (local.get $sp)))
+              (local.set $seen (struct.get $StringPort $utf8-bytes (local.get $sp)))
+              (if (i32.eqz (local.get $len))
+                  (then
+                   ;; Start of UTF-8 sequence
+                   (if (i32.lt_u (local.get $byte) (i32.const 128))
+                       (then (local.set $int-col (i32.add (local.get $int-col) (i32.const 1))))
+                       (else
+                        (if (i32.and (i32.ge_u (local.get $byte) (i32.const 192))
+                                     (i32.le_u (local.get $byte) (i32.const 253)))
+                            (then
+                             (block
+                              (local.set $len
+                                         (i32.clz (i32.xor (i32.shl (local.get $byte) (i32.const 24))
+                                                           (i32.const 0xFF000000))))
+                              (local.set $len
+                                         (select
+                                          (local.get $len)
+                                          (i32.const 4)
+                                          (i32.lt_u (local.get $len) (i32.const 4))))
+                              (struct.set $StringPort $utf8-len   (local.get $sp) (local.get $len))
+                              (struct.set $StringPort $utf8-left  (local.get $sp)
+                                          (i32.sub (local.get $len) (i32.const 1)))
+                              (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 1))))))))
+                  (else
+                   (block
+                    (local.set $seen (i32.add (local.get $seen) (i32.const 1)))
+                    (local.set $left (i32.sub (local.get $left) (i32.const 1)))
+                    (struct.set $StringPort $utf8-left  (local.get $sp) (local.get $left))
+                    (struct.set $StringPort $utf8-bytes (local.get $sp) (local.get $seen))
+                    (if (i32.eqz (local.get $left))
+                        (then
+                         (local.set $int-col
+                                    (i32.sub (local.get $int-col)
+                                             (i32.sub (local.get $seen) (i32.const 1))))
+                         (struct.set $StringPort $utf8-len   (local.get $sp) (i32.const 0))
+                         (struct.set $StringPort $utf8-left  (local.get $sp) (i32.const 0))
+                         (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 0)))))))
+              ;; Handle newline, return, and tab characters.
+              (if (i32.eq (local.get $byte) (i32.const 10))
+                  (then (local.set $int-line (i32.add (local.get $int-line) (i32.const 1)))
+                        (local.set $int-col  (i32.const 0))))
+              (if (i32.eq (local.get $byte) (i32.const 13))
+                  (then (local.set $int-line (i32.add (local.get $int-line) (i32.const 1)))
+                        (local.set $int-col  (i32.const 0))))
+              (if (i32.eq (local.get $byte) (i32.const 9))
+                  (then (local.set $int-col
+                              (i32.add (local.get $int-col)
+                                       (i32.sub
+                                        (i32.const 8)
+                                        (i32.rem_u (local.get $int-col) (i32.const 8)))))))
+              ;; Always advance the absolute position.
+              (local.set $int-pos (i32.add (local.get $int-pos) (i32.const 1)))
+              ;; Store updated location back into the port.
+              (struct.set $StringPort $loc (local.get $sp)
+                          (struct.new $Location
+                                      (i32.const 0)
+                                      (ref.i31 (i32.shl (local.get $int-line) (i32.const 1)))
+                                      (ref.i31 (i32.shl (local.get $int-col)  (i32.const 1)))
+                                      (ref.i31 (i32.shl (local.get $int-pos)  (i32.const 1)))))
+              ;; Return the read byte as a fixnum.
+              (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
          
          ;;;
          ;;;  13.3  Byte and String Output

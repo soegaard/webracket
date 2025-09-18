@@ -2451,6 +2451,37 @@
  ;;;  13  Input and Output
  ;;;
 
+ #;(list "13.1 Ports"
+       (list
+        (list "eof-object?"
+              (and (equal? (eof-object? (eof-object)) #t)
+                   (equal? (eof-object? '()) #f)
+                   (equal? (eof-object? 123) #f)))))
+
+ 
+ (list "13.3 Byte and String Input"
+       (list
+        (list "read-byte/basic"
+              (let ([port (open-input-bytes (bytes 65 66))])
+                (and (equal? (read-byte port) 65)
+                     (equal? (read-byte port) 66)
+                     (eof-object? (read-byte port))
+                     (eof-object? (read-byte port)))))
+
+        (list "read-byte/location"
+              (let* ([port (open-input-bytes (bytes 65 10 9))]
+                     [loc  (lambda ()
+                             (let-values ([(line col pos) (port-next-location port)])
+                               (list line col pos)))])
+                (and (equal? (loc) '(1 0 1))
+                     (equal? (read-byte port) 65)
+                     (equal? (loc) '(1 1 2))
+                     (equal? (read-byte port) 10)
+                     (equal? (loc) '(2 0 3))
+                     (equal? (read-byte port) 9)
+                     (equal? (loc) '(2 8 4))
+                     (eof-object? (read-byte port)))))))
+ 
  (list "13.3 Byte and String Output"
        (list
         (list "write-byte/resizing"

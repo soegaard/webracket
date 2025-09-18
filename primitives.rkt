@@ -545,15 +545,25 @@
  raise
  raise-argument-error
  ; raise-unbound-variable-reference
+
+ ;; 13   Input and Output
+ ;; 13.1 Ports
+
+ ;; 13.2 Byte and String Input
+ read-byte
  
- ;; 13.5 Writing
- display
- displayln
+ ;; 13.3 Byte and String Output
  write-byte
  write-char
  newline
  write-bytes
  write-string
+
+ ;; 13.4 Reading
+ 
+ ;; 13.5 Writing
+ display
+ displayln
 
  ;; 13.7 String Ports
  string-port?
