@@ -550,6 +550,9 @@
  display
  displayln
  newline
+ write-byte
+ write-char
+ 
 
  ;; 13.7 String Ports
  string-port?

@@ -2503,6 +2503,16 @@
                 (for-each (lambda (b) (write-byte b port)) data)
                 (equal? (get-output-bytes port) expected)))
 
+        (list "open-output-string/write-char"
+              (let ([port (open-output-string)])
+                (and (void? (write-char #\A port))
+                     (equal? (get-output-string port) "A"))))
+
+        (list "write-char/utf8"
+              (let ([port (open-output-string)])
+                (and (void? (write-char #\λ port))
+                     (equal? (get-output-string port) "λ"))))
+
         (list "port-next-location"
               (let* ([port (open-output-bytes)]
                      [loc (lambda ()

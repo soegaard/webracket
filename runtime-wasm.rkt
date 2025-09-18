@@ -22721,6 +22721,9 @@
                      (global.get $missing)
                      (global.get $missing)))
 
+         ;;;
+         ;;;  13.3  Byte and String Output
+         ;;;
 
          ;; (type $StringPort
          ;;       (struct
@@ -22877,6 +22880,130 @@
                                        (ref.i31 (i32.shl (local.get $int-col)  (i32.const 1)))
                                        (ref.i31 (i32.shl (local.get $int-pos)  (i32.const 1)))))
                ;; 10. Return void
+               (global.get $void))
+
+         (func $write-char (type $Prim2)
+               (param $char (ref eq)) ;; character?
+               (param $out  (ref eq)) ;; optional output-port?, default = (current-output-port)
+               (result      (ref eq))
+
+               (local $cp   i32)
+               (local $byte i32)
+               (local $res  (ref eq))
+
+               ;; Decode the character argument to a Unicode scalar value.
+               (local.set $cp (call $char->integer/i32 (local.get $char)))
+
+               ;; Fast path for ASCII characters (1-byte UTF-8 sequence).
+               (if (i32.le_u (local.get $cp) (i32.const 0x7f))
+                   (then
+                    (local.set $byte (local.get $cp))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (return (global.get $void))))
+
+               ;; Two-byte UTF-8 sequence for U+0080 .. U+07FF.
+               (if (i32.le_u (local.get $cp) (i32.const 0x7ff))
+                   (then
+                    (local.set $byte
+                               (i32.or (i32.shr_u (local.get $cp) (i32.const 6))
+                                       (i32.const 0xc0)))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (local.set $byte
+                               (i32.or (i32.and (local.get $cp) (i32.const 0x3f))
+                                       (i32.const 0x80)))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (return (global.get $void))))
+
+               ;; Three-byte UTF-8 sequence for U+0800 .. U+FFFF.
+               (if (i32.le_u (local.get $cp) (i32.const 0xffff))
+                   (then
+                    (local.set $byte
+                               (i32.or (i32.shr_u (local.get $cp) (i32.const 12))
+                                       (i32.const 0xe0)))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (local.set $byte
+                               (i32.or (i32.and (i32.shr_u (local.get $cp) (i32.const 6))
+                                                (i32.const 0x3f))
+                                       (i32.const 0x80)))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (local.set $byte
+                               (i32.or (i32.and (local.get $cp) (i32.const 0x3f))
+                                       (i32.const 0x80)))
+                    (local.set $res
+                               (call $write-byte
+                                     (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                     (local.get $out)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (global.get $false))))
+                    (return (global.get $void))))
+
+               ;; Four-byte UTF-8 sequence for U+10000 .. U+10FFFF.
+               (local.set $byte
+                          (i32.or (i32.shr_u (local.get $cp) (i32.const 18))
+                                  (i32.const 0xf0)))
+               (local.set $res
+                          (call $write-byte
+                                (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                (local.get $out)))
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (local.set $byte
+                          (i32.or (i32.and (i32.shr_u (local.get $cp) (i32.const 12))
+                                           (i32.const 0x3f))
+                                  (i32.const 0x80)))
+               (local.set $res
+                          (call $write-byte
+                                (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                (local.get $out)))
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (local.set $byte
+                          (i32.or (i32.and (i32.shr_u (local.get $cp) (i32.const 6))
+                                           (i32.const 0x3f))
+                                  (i32.const 0x80)))
+               (local.set $res
+                          (call $write-byte
+                                (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                (local.get $out)))
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (local.set $byte
+                          (i32.or (i32.and (local.get $cp) (i32.const 0x3f))
+                                  (i32.const 0x80)))
+               (local.set $res
+                          (call $write-byte
+                                (ref.i31 (i32.shl (local.get $byte) (i32.const 1)))
+                                (local.get $out)))
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (return (global.get $void))
+
+               ;; Should be unreachable because all cases return above.
                (global.get $void))
 
          
