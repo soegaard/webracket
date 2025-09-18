@@ -2468,6 +2468,19 @@
         (list "open-input-string custom name"
               (string-port? (open-input-string "abc" 'source)))
 
+        (list "open-output-string default"
+              (let ([port (open-output-string)])
+                (and (string-port? port)
+                     (equal? (get-output-bytes port) (bytes)))))
+
+        (list "open-output-string custom name"
+              (string-port? (open-output-string 'sink)))
+
+        (list "open-output-string/write-byte"
+              (let ([port (open-output-string)])
+                (and (void? (write-byte 65 port))
+                     (equal? (bytes->string/utf-8 (get-output-bytes port)) "A"))))
+
         (list "open-output-bytes/get-output-bytes"
               (let ([port (open-output-bytes)])
                 (and (equal? (get-output-bytes port) (bytes))

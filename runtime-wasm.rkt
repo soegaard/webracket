@@ -22484,7 +22484,7 @@
          ;; [x] open-input-bytes
          ;; [x] open-input-string
          ;; [x] open-output-bytes
-         ;; [ ] open-output-string
+         ;; [x] open-output-string
          ;; [x] get-output-bytes
          ;; [x] get-output-string
 
@@ -22647,6 +22647,25 @@
                            (i32.const 0)                 ;; $utf8-len
                            (i32.const 0)                 ;; $utf8-left
                            (i32.const 0)))               ;; $utf8-bytes
+
+         (func $open-output-string (type $Prim1)
+               (param $name (ref eq)) ;; optional any/c, default = 'string
+               (result (ref eq))
+
+               (local $port     (ref $StringPort))
+               (local $name-val (ref eq))
+               ;; Determine the port name, defaulting to 'string when omitted
+               (local.set $name-val
+                          (if (result (ref eq))
+                              (ref.eq (local.get $name) (global.get $missing))
+                              (then (global.get $symbol:string))
+                              (else (local.get $name))))
+               ;; Reuse the byte-backed string port and update its name field
+               (local.set $port
+                          (ref.cast (ref $StringPort)
+                                    (call $open-output-bytes)))
+               (struct.set $StringPort $name (local.get $port) (local.get $name-val))
+               (local.get $port))
 
          (func $get-output-bytes (type $Prim1)
                (param $out (ref eq))

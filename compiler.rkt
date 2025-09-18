@@ -644,7 +644,7 @@
   open-input-bytes
   open-input-string  
   open-output-bytes
-  ; open-output-string ; (same as open-output-bytes)
+  open-output-string   
   get-output-bytes
   get-output-string
   write-byte
@@ -3417,6 +3417,7 @@
          [(open-input-bytes)           (inline-prim/optional sym ae1 1 2)]
          [(get-output-bytes
            get-output-string)          (inline-prim/fixed sym ae1 1)]
+         [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
 
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]
@@ -3425,6 +3426,7 @@
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
+         [(bytes->string/utf-8)        (inline-prim/optional sym ae1 1 4)]
 
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
          [(vector->values)             (inline-prim/optional sym ae1 1 3)]
