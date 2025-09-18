@@ -2782,7 +2782,70 @@
                            [first  (read-char port)])
                       (and (eof-object? value)
                            (char=? first #\λ))))
-              
+
+              (list "peek-bytes/basic"
+                    (let* ([port  (open-input-bytes (bytes 65 66 67 68))]
+                           [chunk (peek-bytes 3 0 port)]
+                           [a     (read-byte port)]
+                           [b     (read-byte port)]
+                           [c     (read-byte port)]
+                           [d     (read-byte port)]
+                           [e     (read-byte port)])
+                      (and (equal? chunk (bytes 65 66 67))
+                           (equal? a 65)
+                           (equal? b 66)
+                           (equal? c 67)
+                           (equal? d 68)
+                           (eof-object? e))))
+
+              (list "peek-bytes/skip"
+                    (let* ([port  (open-input-bytes (bytes 1 2 3 4))]
+                           [chunk (peek-bytes 2 1 port)]
+                           [first (read-byte port)]
+                           [rest  (read-bytes 3 port)])
+                      (and (equal? chunk (bytes 2 3))
+                           (equal? first 1)
+                           (equal? rest (bytes 2 3 4)))))
+
+              (list "peek-bytes/eof"
+                    (let* ([port   (open-input-bytes (bytes 9 10))]
+                           [result (peek-bytes 1 5 port)]
+                           [first  (read-byte port)]
+                           [second (read-byte port)])
+                      (and (eof-object? result)
+                           (equal? first 9)
+                           (equal? second 10))))
+
+              (list "peek-string/basic"
+                    (let* ([port  (open-input-string "webRacket")]
+                           [chunk (peek-string 3 0 port)]
+                           [w     (read-char port)]
+                           [e     (read-char port)]
+                           [b     (read-char port)]
+                           [rest  (read-string 6 port)])
+                      (and (equal? chunk "web")
+                           (equal? w #\w)
+                           (equal? e #\e)
+                           (equal? b #\b)
+                           (equal? rest "Racket"))))
+
+              (list "peek-string/skip"
+                    (let* ([port  (open-input-string "abcd")]
+                           [chunk (peek-string 2 1 port)]
+                           [first (read-char port)]
+                           [rest  (read-string 3 port)])
+                      (and (equal? chunk "bc")
+                           (equal? first #\a)
+                           (equal? rest "bcd"))))
+
+              (list "peek-string/eof"
+                    (let* ([port   (open-input-string "hi")]
+                           [result (peek-string 1 5 port)]
+                           [first  (read-char port)]
+                           [second (read-char port)])
+                      (and (eof-object? result)
+                           (equal? first #\h)
+                           (equal? second #\i))))              
              )
        
        (list "13.3 Byte and String Output"

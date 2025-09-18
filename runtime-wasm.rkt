@@ -24126,6 +24126,191 @@
                (ref.i31 (i32.or (i32.shl (local.get $cp) (i32.const ,char-shift))
                                 (i32.const ,char-tag))))
 
+
+         (func $peek-bytes:two-arguments-are-not-yet-supported (unreachable))
+
+         ;; Like Racket's peek-bytes, but currently only string ports are supported.
+         ;; The optional skip argument defaults to 0.
+         (func $peek-bytes (type $Prim13)
+               (param $amt  (ref eq)) ;; exact-nonnegative-integer?
+               (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (result      (ref eq))
+
+               (local $count-i31 (ref i31))
+               (local $count     i32)
+               (local $skip-arg  (ref eq))
+               (local $skip-val  i32)
+               (local $buf       (ref $Bytes))
+               (local $res       (ref eq))
+               (local $peeked    i32)
+               (local $arr       (ref $I8Array))
+               (local $new-arr   (ref $I8Array))
+
+               ;; --- Decode amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $amt)))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count-i31 (ref.cast (ref i31) (local.get $amt)))
+               (local.set $count (i31.get_u (local.get $count-i31)))
+               (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
+
+               ;; --- Decode optional skip amount ---
+               (if (ref.eq (local.get $skip) (global.get $missing))
+                   (then (local.set $skip-arg (ref.i31 (i32.const 0)))
+                         (local.set $skip-val (i32.const 0)))
+                   (else (if (i32.eqz (ref.test (ref i31) (local.get $skip)))
+                             (then (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+                         (local.set $skip-val (i31.get_u (ref.cast (ref i31) (local.get $skip))))
+                         (if (i32.eqz (i32.and (local.get $skip-val) (i32.const 1)))
+                             (then (local.set $skip-val (i32.shr_u (local.get $skip-val) (i32.const 1)))
+                                   (local.set $skip-arg (local.get $skip)))
+                             (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $peek-bytes:two-arguments-are-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+
+               ;; --- Handle zero-length peek ---
+               (if (i32.eqz (local.get $count))
+                   (then (return (global.get $bytes:empty))))
+
+               ;; --- Allocate destination buffer ---
+               (local.set $buf
+                          (ref.cast (ref $Bytes)
+                                    (call $make-bytes
+                                          (ref.i31 (i32.shl (local.get $count) (i32.const 1)))
+                                          (global.get $missing))))
+
+               ;; --- Fill buffer using peek-bytes! ---
+               (local.set $res
+                          (call $peek-bytes!
+                                (local.get $buf)
+                                (local.get $skip-arg)
+                                (local.get $in)
+                                (global.get $missing)
+                                (global.get $missing)))
+
+               ;; Propagate failure conditions
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (if (ref.eq (local.get $res) (global.get $eof))
+                   (then (return (global.get $eof))))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                   (then (return (global.get $false))))
+               (local.set $peeked (i31.get_u (ref.cast (ref i31) (local.get $res))))
+               (if (i32.ne (i32.and (local.get $peeked) (i32.const 1)) (i32.const 0))
+                   (then (return (global.get $false))))
+               (local.set $peeked (i32.shr_u (local.get $peeked) (i32.const 1)))
+
+               ;; Shrink buffer on partial peek
+               (if (i32.lt_u (local.get $peeked) (local.get $count))
+                   (then (local.set $arr (struct.get $Bytes $bs (local.get $buf)))
+                         (local.set $new-arr
+                                    (call $i8array-copy
+                                          (local.get $arr)
+                                          (i32.const 0)
+                                          (local.get $peeked)))
+                         (struct.set $Bytes $bs (local.get $buf) (local.get $new-arr))))
+
+               (local.get $buf))
+
+         (func $peek-string:two-arguments-are-not-yet-supported (unreachable))
+
+         ;; Like Racket's peek-string, but currently only string ports are supported.
+         ;; The optional skip argument defaults to 0.
+         (func $peek-string (type $Prim13)
+               (param $amt  (ref eq)) ;; exact-nonnegative-integer?
+               (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $in   (ref eq)) ;; input-port?               (optional, default = (current-input-port))
+               (result      (ref eq))
+
+               (local $count-i31 (ref i31))
+               (local $count     i32)
+               (local $skip-arg  (ref eq))
+               (local $skip-val  i32)
+               (local $buf       (ref $String))
+               (local $res       (ref eq))
+               (local $peeked    i32)
+               (local $arr       (ref $I32Array))
+               (local $new-arr   (ref $I32Array))
+
+               ;; --- Decode amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $amt)))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count-i31 (ref.cast (ref i31) (local.get $amt)))
+               (local.set $count (i31.get_u (local.get $count-i31)))
+               (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
+
+               ;; --- Decode optional skip amount ---
+               (if (ref.eq (local.get $skip) (global.get $missing))
+                   (then (local.set $skip-arg (ref.i31 (i32.const 0)))
+                         (local.set $skip-val (i32.const 0)))
+                   (else (if (i32.eqz (ref.test (ref i31) (local.get $skip)))
+                             (then (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+                         (local.set $skip-val (i31.get_u (ref.cast (ref i31) (local.get $skip))))
+                         (if (i32.eqz (i32.and (local.get $skip-val) (i32.const 1)))
+                             (then (local.set $skip-val (i32.shr_u (local.get $skip-val) (i32.const 1)))
+                                   (local.set $skip-arg (local.get $skip)))
+                             (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $peek-string:two-arguments-are-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+
+               ;; --- Handle zero-length peek ---
+               (if (i32.eqz (local.get $count))
+                   (then (return (global.get $string:empty))))
+
+               ;; --- Allocate destination string ---
+               (local.set $buf (call $make-string/checked (local.get $count) (i32.const 0)))
+
+               ;; --- Fill buffer using peek-string! ---
+               (local.set $res
+                          (call $peek-string!
+                                (local.get $buf)
+                                (local.get $skip-arg)
+                                (local.get $in)
+                                (global.get $missing)
+                                (global.get $missing)))
+
+               ;; Propagate failure conditions
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (if (ref.eq (local.get $res) (global.get $eof))
+                   (then (return (global.get $eof))))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                   (then (return (global.get $false))))
+               (local.set $peeked (i31.get_u (ref.cast (ref i31) (local.get $res))))
+               (if (i32.ne (i32.and (local.get $peeked) (i32.const 1)) (i32.const 0))
+                   (then (return (global.get $false))))
+               (local.set $peeked (i32.shr_u (local.get $peeked) (i32.const 1)))
+
+               (local.set $arr (struct.get $String $codepoints (local.get $buf)))
+
+               ;; Shrink buffer on partial peek
+               (if (i32.lt_u (local.get $peeked) (local.get $count))
+                   (then (local.set $new-arr
+                                    (call $i32array-copy
+                                          (local.get $arr)
+                                          (i32.const 0)
+                                          (local.get $peeked)))
+                         (struct.set $String $codepoints (local.get $buf) (local.get $new-arr))))
+
+               (struct.set $String $hash (local.get $buf) (i32.const 0))
+
+               (local.get $buf))
          
          ;;;
          ;;;  13.3  Byte and String Output

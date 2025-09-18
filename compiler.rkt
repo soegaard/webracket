@@ -664,6 +664,8 @@
   read-line
   peek-bytes!
   peek-string!
+  peek-bytes
+  peek-string
   peek-byte
   peek-char
   
@@ -3456,6 +3458,8 @@
          [(read-line)                  (inline-prim/optional sym ae1 0 2)]
          [(peek-bytes!)                (inline-prim/optional sym ae1 2 5)]
          [(peek-string!)               (inline-prim/optional sym ae1 2 5)]
+         [(peek-bytes)                 (inline-prim/optional sym ae1 1 3)]
+         [(peek-string)                (inline-prim/optional sym ae1 1 3)]
          [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
          [(peek-char)                  (inline-prim/optional sym ae1 0 2)]
          
