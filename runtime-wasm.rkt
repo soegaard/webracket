@@ -23589,7 +23589,338 @@
                (local.set $res (call $i32growable-array->immutable-string (local.get $buf)))
                (local.get $res))
 
+         (func $peek-bytes!:two-arguments-are-not-yet-supported (unreachable))
 
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $peek-bytes! (type $Prim15)
+               (param $bstr  (ref eq)) ;; bytes?
+               (param $skip  (ref eq)) ;; exact-nonnegative-integer?
+               (param $in    (ref eq)) ;; input-port?               (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result       (ref eq))
+
+               (local $bs          (ref $Bytes))
+               (local $arr         (ref $I8Array))
+               (local $len         i32)
+               (local $from        i32)
+               (local $to          i32)
+               (local $count       i32)
+               (local $skip-count  i32)
+               (local $sp          (ref null $StringPort))
+               (local $port-bytes  (ref $Bytes))
+               (local $port-arr    (ref $I8Array))
+               (local $idx         i32)
+               (local $limit       i32)
+               (local $remaining   i32)
+               (local $peek-start  i32)
+               (local $copy-count  i32)
+               (local $i           i32)
+               (local $dest-idx    i32)
+               (local $byte        i32)
+
+               ;; --- Validate byte string argument ---
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr)))
+                   (then (call $raise-check-bytes (local.get $bstr)) (unreachable)))
+               (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr)))
+               ;; Reject immutable byte strings
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $bs)) (i32.const 1))
+                   (then (call $raise-expected-mutable-bytes (local.get $bstr)) (unreachable)))
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (call $i8array-length (local.get $arr)))
+
+               ;; --- Decode skip amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $skip)))
+                   (then (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+               (local.set $skip-count (i31.get_u (ref.cast (ref i31) (local.get $skip))))
+               (if (i32.eqz (i32.and (local.get $skip-count) (i32.const 1)))
+                   (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1))))
+                   (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $peek-bytes!:two-arguments-are-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $from) (local.get $to))
+                         (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               (if (i32.eqz (local.get $count))
+                   (then (return (ref.i31 (i32.const 0)))))
+
+               ;; --- Determine peek window ---
+               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
+               (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+               (local.set $remaining (i32.sub (local.get $limit) (local.get $idx)))
+               (if (i32.le_u (local.get $remaining) (local.get $skip-count))
+                   (then (return (global.get $eof))))
+               (local.set $peek-start (i32.add (local.get $idx) (local.get $skip-count)))
+               (local.set $remaining (i32.sub (local.get $limit) (local.get $peek-start)))
+
+               ;; --- Determine number of bytes to copy ---
+               (local.set $copy-count (local.get $count))
+               (if (i32.lt_u (local.get $remaining) (local.get $copy-count))
+                   (then (local.set $copy-count (local.get $remaining))))
+
+               (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
+               (local.set $port-arr (struct.get $Bytes $bs (local.get $port-bytes)))
+               (local.set $i (i32.const 0))
+               ;; --- Copy bytes without consuming the port ---
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $copy-count)))
+                            (local.set $dest-idx (i32.add (local.get $from) (local.get $i)))
+                            (local.set $byte
+                                       (array.get_u $I8Array
+                                                    (local.get $port-arr)
+                                                    (i32.add (local.get $peek-start) (local.get $i))))
+                            (call $i8array-set! (local.get $arr) (local.get $dest-idx) (local.get $byte))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; --- Report number of bytes peeked ---
+               (ref.i31 (i32.shl (local.get $copy-count) (i32.const 1))))
+
+
+         (func $peek-string!:two-arguments-are-not-yet-supported (unreachable))
+
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $peek-string! (type $Prim15)
+               (param $str   (ref eq)) ;; string?
+               (param $skip  (ref eq)) ;; exact-nonnegative-integer?
+               (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (string-length str))
+               (result       (ref eq))
+
+               (local $s            (ref $String))
+               (local $arr          (ref $I32Array))
+               (local $len          i32)
+               (local $from         i32)
+               (local $to           i32)
+               (local $count        i32)
+               (local $skip-count   i32)
+               (local $sp           (ref null $StringPort))
+               (local $port-bytes   (ref $Bytes))
+               (local $src          (ref $I8Array))
+               (local $idx          i32)
+               (local $limit        i32)
+               (local $peek-start   i32)
+               (local $skipped      i32)
+               (local $written      i32)
+               (local $byte         i32)
+               (local $need         i32)
+               (local $initial-need i32)
+               (local $acc          i32)
+               (local $cp           i32)
+               (local $cont         i32)
+               (local $dest-idx     i32)
+
+               ;; --- Validate string argument ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $str)))
+                   (then (call $raise-check-string (local.get $str)) (unreachable)))
+               (local.set $s (ref.cast (ref $String) (local.get $str)))
+               ;; Reject immutable strings
+               (if (i32.ne (struct.get $String $immutable (local.get $s)) (i32.const 0))
+                   (then (call $raise-immutable-string (local.get $str)) (unreachable)))
+               (local.set $arr (struct.get $String $codepoints (local.get $s)))
+               (local.set $len (call $i32array-length (local.get $arr)))
+
+               ;; --- Decode skip amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $skip)))
+                   (then (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+               (local.set $skip-count (i31.get_u (ref.cast (ref i31) (local.get $skip))))
+               (if (i32.eqz (i32.and (local.get $skip-count) (i32.const 1)))
+                   (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1))))
+                   (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $peek-string!:two-arguments-are-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to))
+                         (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               (if (i32.eqz (local.get $count))
+                   (then (return (ref.i31 (i32.const 0)))))
+
+               ;; --- Determine peek window and skip characters ---
+               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
+               (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+               (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
+               (local.set $src (struct.get $Bytes $bs (local.get $port-bytes)))
+               (local.set $peek-start (local.get $idx))
+               (local.set $skipped (i32.const 0))
+               (block $skip-done
+                      (loop $skip
+                            (br_if $skip-done (i32.ge_u (local.get $skipped) (local.get $skip-count)))
+                            (if (i32.ge_u (local.get $peek-start) (local.get $limit))
+                                (then (return (global.get $eof))))
+                            (local.set $byte (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
+                            (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
+                            (if (i32.lt_u (local.get $byte) (i32.const 128))
+                                (then (local.set $skipped (i32.add (local.get $skipped) (i32.const 1))))
+                                (else
+                                 (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
+                                 (local.set $acc)
+                                 (local.set $need)
+                                 (local.set $initial-need (local.get $need))
+                                 (if (i32.lt_s (local.get $need) (i32.const 0))
+                                     (then (return (global.get $false))))
+                                 (local.set $cp (local.get $acc))
+                                 (block $skip-cont-done
+                                        (loop $skip-cont
+                                              (br_if $skip-cont-done (i32.eqz (local.get $need)))
+                                              (if (i32.ge_u (local.get $peek-start) (local.get $limit))
+                                                  (then (return (global.get $eof))))
+                                              (local.set $cont (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
+                                              (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
+                                              (if (i32.or (i32.lt_u (local.get $cont) (i32.const 128))
+                                                          (i32.ge_u (local.get $cont) (i32.const 192)))
+                                                  (then (return (global.get $false))))
+                                              (local.set $cp
+                                                         (i32.or (i32.shl (local.get $cp) (i32.const 6))
+                                                                 (i32.and (local.get $cont) (i32.const 63))))
+                                              (local.set $need (i32.sub (local.get $need) (i32.const 1)))
+                                              (br $skip-cont)))
+                                 (if (i32.gt_u (local.get $cp) (i32.const #x10FFFF))
+                                     (then (return (global.get $false))))
+                                 (if (i32.and (i32.ge_u (local.get $cp) (i32.const #xD800))
+                                              (i32.le_u (local.get $cp) (i32.const #xDFFF)))
+                                     (then (return (global.get $false))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 1))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x80))
+                                               (then (return (global.get $false))))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 2))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x800))
+                                               (then (return (global.get $false))))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 3))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
+                                               (then (return (global.get $false))))))
+                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1)))))))
+
+               (local.set $written (i32.const 0))
+
+               ;; --- Decode characters without consuming the port ---
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $written) (local.get $count)))
+                            (if (i32.ge_u (local.get $peek-start) (local.get $limit))
+                                (then (if (i32.eqz (local.get $written))
+                                          (then (return (global.get $eof)))
+                                          (else (br $done)))))
+                            (local.set $byte (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
+                            (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
+                            (if (i32.lt_u (local.get $byte) (i32.const 128))
+                                (then (local.set $cp (local.get $byte))
+                                      (local.set $initial-need (i32.const 0)))
+                                (else
+                                 (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
+                                 (local.set $acc)
+                                 (local.set $need)
+                                 (local.set $initial-need (local.get $need))
+                                 (if (i32.lt_s (local.get $need) (i32.const 0))
+                                     (then (return (global.get $false))))
+                                 (local.set $cp (local.get $acc))
+                                 (block $cont-done
+                                        (loop $cont
+                                              (br_if $cont-done (i32.eqz (local.get $need)))
+                                              (if (i32.ge_u (local.get $peek-start) (local.get $limit))
+                                                  (then (if (i32.eqz (local.get $written))
+                                                            (then (return (global.get $eof)))
+                                                            (else (br $done)))))
+                                              (local.set $cont (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
+                                              (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
+                                              (if (i32.or (i32.lt_u (local.get $cont) (i32.const 128))
+                                                          (i32.ge_u (local.get $cont) (i32.const 192)))
+                                                  (then (return (global.get $false))))
+                                              (local.set $cp
+                                                         (i32.or (i32.shl (local.get $cp) (i32.const 6))
+                                                                 (i32.and (local.get $cont) (i32.const 63))))
+                                              (local.set $need (i32.sub (local.get $need) (i32.const 1)))
+                                              (br $cont)))
+                                 (if (i32.gt_u (local.get $cp) (i32.const #x10FFFF))
+                                     (then (return (global.get $false))))
+                                 (if (i32.and (i32.ge_u (local.get $cp) (i32.const #xD800))
+                                              (i32.le_u (local.get $cp) (i32.const #xDFFF)))
+                                     (then (return (global.get $false))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 1))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x80))
+                                               (then (return (global.get $false))))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 2))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x800))
+                                               (then (return (global.get $false))))))
+                                 (if (i32.eq (local.get $initial-need) (i32.const 3))
+                                     (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
+                                               (then (return (global.get $false))))))))
+                            (local.set $dest-idx (i32.add (local.get $from) (local.get $written)))
+                            (call $i32array-set! (local.get $arr) (local.get $dest-idx) (local.get $cp))
+                            (local.set $written (i32.add (local.get $written) (i32.const 1)))
+                            (br $loop)))
+
+               ;; --- Reset hash if characters were written ---
+               (if (i32.gt_u (local.get $written) (i32.const 0))
+                   (then (struct.set $String $hash (local.get $s) (i32.const 0))))
+
+               ;; --- Report number of characters peeked ---
+               (ref.i31 (i32.shl (local.get $written) (i32.const 1))))
          
          
          ;;;

@@ -559,6 +559,8 @@
  byte-ready?
  char-ready?
  read-line
+ peek-bytes!
+ peek-string!
  
  ;; 13.3 Byte and String Output
  write-byte

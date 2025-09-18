@@ -2657,11 +2657,81 @@
                            [third   (read-line port 'any-one)]
                            [fourth  (read-line port 'any-one)]
                            [fifth   (read-line port 'any-one)])
-                      (and (equal? first "x")
-                           (equal? second "")
-                           (equal? third "y")
-                           (equal? fourth "")
-                           (eof-object? fifth))))
+                      (list (list first "x")
+                            (list second "")
+                            (list third "y")
+                            (list fourth "")
+                            (list (eof-object? fifth) #t))))
+
+              (list "peek-bytes!/basic"
+                    (let* ([buffer (make-bytes 6 (char->integer #\_))]
+                           [port   (open-input-bytes (bytes 65 66 67 68))]
+                           [count  (peek-bytes! buffer 0 port 1 5)]
+                           [a      (read-byte port)]
+                           [b      (read-byte port)]
+                           [c      (read-byte port)]
+                           [d      (read-byte port)]
+                           [e      (read-byte port)])
+                      (and (equal? count 4)
+                           (equal? buffer (bytes 95 65 66 67 68 95))
+                           (equal? a 65)
+                           (equal? b 66)
+                           (equal? c 67)
+                           (equal? d 68)
+                           (eof-object? e))))
+
+              (list "peek-bytes!/skip"
+                    (let* ([buffer (make-bytes 3 0)]
+                           [port   (open-input-bytes (bytes 1 2 3 4))]
+                           [count  (peek-bytes! buffer 2 port 0 3)]
+                           [first  (read-byte port)])
+                      (and (equal? count 2)
+                           (equal? buffer (bytes 3 4 0))
+                           (equal? first 1))))
+
+              (list "peek-bytes!/eof"
+                    (let* ([buffer (make-bytes 1 0)]
+                           [port   (open-input-bytes (bytes 1 2))]
+                           [result (peek-bytes! buffer 5 port 0 1)]
+                           [first  (read-byte port)])
+                      (and (eof-object? result)
+                           (equal? buffer (bytes 0))
+                           (equal? first 1))))
+
+              (list "peek-string!/basic"
+                    (let* ([buffer (make-string 6 #\_)]
+                           [port   (open-input-string "ABCD")]
+                           [count  (peek-string! buffer 0 port 1 5)]
+                           [a      (read-char port)]
+                           [b      (read-char port)]
+                           [c      (read-char port)]
+                           [d      (read-char port)]
+                           [e      (read-char port)])
+                      (and (equal? count 4)
+                           (equal? buffer "_ABCD_")
+                           (char=? a #\A)
+                           (char=? b #\B)
+                           (char=? c #\C)
+                           (char=? d #\D)
+                           (eof-object? e))))
+
+              (list "peek-string!/skip"
+                    (let* ([buffer (make-string 2 #\_)]
+                           [port   (open-input-string "λx")]
+                           [count  (peek-string! buffer 1 port 0 1)]
+                           [first  (read-char port)])
+                      (and (equal? count 1)
+                           (equal? buffer "x_")
+                           (char=? first #\λ))))
+
+              (list "peek-string!/eof"
+                    (let* ([buffer (make-string 1 #\_)]
+                           [port   (open-input-string "λ")]
+                           [result (peek-string! buffer 1 port 0 1)]
+                           [first  (read-char port)])
+                      (and (eof-object? result)
+                           (equal? buffer "_")
+                           (char=? first #\λ))))
               
              )
        
