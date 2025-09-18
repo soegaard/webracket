@@ -90,10 +90,11 @@
     (displayln (list 'immediate-rep x)))
   (define (shift x m) (arithmetic-shift x m))
   (cond
-    [(fixnum?    x)              (shift x                 fixnum-shift)]  ; the tag is 0
-    [(boolean?   x) (bitwise-ior (shift (if x 1 0)        boolean-shift)   boolean-tag)]
-    [(char?      x) (bitwise-ior (shift (char->integer x) char-shift)      char-tag)]
-    [(null?      x) empty-value]
-    [(void?      x) void-value]
-    [(undefined? x) undefined-value]
-    [else          (error 'immediate-rep "expected immediate value, got: ~a" x)]))
+    [(fixnum?     x)              (shift x                 fixnum-shift)]  ; the tag is 0
+    [(boolean?    x) (bitwise-ior (shift (if x 1 0)        boolean-shift)   boolean-tag)]
+    [(char?       x) (bitwise-ior (shift (char->integer x) char-shift)      char-tag)]
+    [(null?       x) empty-value]
+    [(void?       x) void-value]
+    [(eof-object? x) eof-value]
+    [(undefined?  x) undefined-value]
+    [else           (error 'immediate-rep "expected immediate value, got: ~a" x)]))
