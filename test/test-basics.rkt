@@ -2517,7 +2517,7 @@
                       (and (equal? count 4)
                            (equal? buffer (bytes 95 65 66 67 68 95))
                            (eof-object? (read-byte port)))))
-
+              
               (list "read-bytes!/eof"
                     (let* ([buffer (make-bytes 4 0)]
                            [port   (open-input-bytes (bytes 1 2))]
@@ -2525,7 +2525,73 @@
                            [second (read-bytes! buffer port 0 4)])
                       (and (equal? first 2)
                            (equal? buffer (bytes 1 2 0 0))
+                           (eof-object? second))))
+
+              (list "read-string!/basic"
+                    (let* ([buffer (make-string 6 #\_)]
+                           [port   (open-input-string "ABCD")]
+                           [count  (read-string! buffer port 1 5)])
+                      (and (equal? count 4)
+                           (equal? buffer "_ABCD_")
+                           (eof-object? (read-char port)))))
+
+              (list "read-string!/eof"
+                    (let* ([buffer (make-string 4 #\_)]
+                           [port   (open-input-string "hi")]
+                           [first  (read-string! buffer port 0 4)]
+                           [second (read-string! buffer port 0 4)])
+                      (and (equal? first 2)
+                           (equal? buffer "hi__")
                            (eof-object? second)))))
+
+             (list "read-bytes/basic"
+                    (let* ([port (open-input-bytes (bytes 65 66 67 68))]
+                           [chunk (read-bytes 3 port)]
+                           [tail  (read-bytes 1 port)]
+                           [next  (read-bytes 1 port)])
+                      (and (equal? chunk (bytes 65 66 67))
+                           (equal? tail (bytes 68))
+                           (eof-object? next))))
+
+              (list "read-bytes/partial"
+                    (let* ([port (open-input-bytes (bytes 1 2))]
+                           [first  (read-bytes 4 port)]
+                           [second (read-bytes 1 port)])
+                      (and (equal? first (bytes 1 2))
+                           (eof-object? second))))
+
+              (list "read-bytes/zero"
+                    (let* ([port (open-input-bytes (bytes 7 8 9))]
+                           [empty (read-bytes 0 port)]
+                           [rest  (read-bytes 3 port)])
+                      (and (equal? empty (bytes))
+                           (equal? rest (bytes 7 8 9)))))
+
+              (list "read-string/basic"
+                    (let* ([port (open-input-string "webRacket")]
+                           [chunk (read-string 3 port)]
+                           [tail  (read-string 2 port)]
+                           [more  (read-string 4 port)]
+                           [done  (read-string 1 port)])
+                      (and (equal? chunk "web")
+                           (equal? tail "Ra")
+                           (equal? more "cket")
+                           (eof-object? done))))
+
+              (list "read-string/partial"
+                    (let* ([port (open-input-string "λx")]
+                           [first  (read-string 5 port)]
+                           [second (read-string 1 port)])
+                      (and (equal? first "λx")
+                           (eof-object? second))))
+
+              (list "read-string/zero"
+                    (let* ([port (open-input-string "data")]
+                           [empty (read-string 0 port)]
+                           [rest  (read-string 4 port)])
+                      (and (equal? empty "")
+                           (equal? rest "data"))))
+              
              )
        
        (list "13.3 Byte and String Output"

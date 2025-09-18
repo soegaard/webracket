@@ -553,6 +553,9 @@
  read-byte
  read-char
  read-bytes!
+ read-string!
+ read-bytes
+ read-string
  
  ;; 13.3 Byte and String Output
  write-byte

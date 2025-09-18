@@ -23054,6 +23054,257 @@
                             (br $loop)))
                ;; --- Report number of bytes read ---
                (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+
+
+         (func $read-string!:one-argument-is-not-yet-supported (unreachable))
+
+         ;; NOTE: The optional input-port argument currently needs to be
+         ;;       supplied explicitly until (current-input-port) exists.
+         (func $read-string! (type $Prim14)
+               (param $str   (ref eq)) ;; string?
+               (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (string-length str))
+               (result       (ref eq))
+
+               (local $s        (ref $String))
+               (local $arr      (ref $I32Array))
+               (local $len      i32)
+               (local $from     i32)
+               (local $to       i32)
+               (local $count    i32)
+               (local $i        i32)
+               (local $res      (ref eq))
+               (local $tagged   i32)
+               (local $cp       i32)
+               (local $dest-idx i32)
+
+               ;; --- Validate string argument ---
+               (if (i32.eqz (ref.test (ref $String) (local.get $str)))
+                   (then (call $raise-check-string (local.get $str)) (unreachable)))
+               (local.set $s (ref.cast (ref $String) (local.get $str)))
+               ;; Reject immutable strings
+               (if (i32.ne (struct.get $String $immutable (local.get $s)) (i32.const 0))
+                   (then (call $raise-immutable-string (local.get $str)) (unreachable)))
+               (local.set $arr (struct.get $String $codepoints (local.get $s)))
+               (local.set $len (call $i32array-length (local.get $arr)))
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $read-string!:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+               ;; --- Decode optional start index ---
+               (if (ref.eq (local.get $start) (global.get $missing))
+                   (then (local.set $from (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start))
+                             (then (local.set $from (i31.get_u (ref.cast (ref i31) (local.get $start))))
+                                   (if (i32.eqz (i32.and (local.get $from) (i32.const 1)))
+                                       (then (local.set $from (i32.shr_u (local.get $from) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $start)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $start)) (unreachable)))))
+               ;; --- Decode optional end index ---
+               (if (ref.eq (local.get $end) (global.get $missing))
+                   (then (local.set $to (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end))
+                             (then (local.set $to (i31.get_u (ref.cast (ref i31) (local.get $end))))
+                                   (if (i32.eqz (i32.and (local.get $to) (i32.const 1)))
+                                       (then (local.set $to (i32.shr_u (local.get $to) (i32.const 1))))
+                                       (else (call $raise-check-fixnum (local.get $end)) (unreachable))))
+                             (else (call $raise-check-fixnum (local.get $end)) (unreachable)))))
+               ;; --- Bounds checks ---
+               (if (i32.gt_u (local.get $from) (local.get $to))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $to) (local.get $len))
+                   (then (call $raise-bad-string-range (local.get $str) (local.get $from) (local.get $to))
+                         (unreachable)))
+
+               (local.set $count (i32.sub (local.get $to) (local.get $from)))
+               (local.set $i (i32.const 0))
+               ;; --- Read characters into destination ---
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $count)))
+                            (local.set $res (call $read-char (local.get $in)))
+                            (if (ref.eq (local.get $res) (global.get $false))
+                                (then (return (global.get $false))))
+                            (if (ref.eq (local.get $res) (global.get $eof))
+                                (then (if (i32.eqz (local.get $i))
+                                          (then (return (global.get $eof))))
+                                      (br $done)))
+                            (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                                (then (return (global.get $false))))
+                            (local.set $tagged (i31.get_u (ref.cast (ref i31) (local.get $res))))
+                            (if (i32.ne (i32.and (local.get $tagged) (i32.const ,char-mask)) (i32.const ,char-tag))
+                                (then (return (global.get $false))))
+                            (local.set $cp (i32.shr_u (local.get $tagged) (i32.const ,char-shift)))
+                            (local.set $dest-idx (i32.add (local.get $from) (local.get $i)))
+                            (call $i32array-set! (local.get $arr) (local.get $dest-idx) (local.get $cp))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               ;; --- Reset hash if characters were written ---
+               (if (i32.gt_u (local.get $i) (i32.const 0))
+                   (then (struct.set $String $hash (local.get $s) (i32.const 0))))
+               ;; --- Report number of characters read ---
+               (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
+
+
+         (func $read-bytes:one-argument-is-not-yet-supported (unreachable))
+
+         ;; Like Racket's read-bytes, but currently only string ports are supported
+         (func $read-bytes (type $Prim12)
+               (param $amt (ref eq)) ;; exact-nonnegative-integer?
+               (param $in  (ref eq)) ;; input-port? (optional, default = (current-input-port))
+               (result     (ref eq))
+
+               (local $count-i31 (ref i31))
+               (local $count     i32)
+               (local $buf       (ref $Bytes))
+               (local $res       (ref eq))
+               (local $read      i32)
+               (local $arr       (ref $I8Array))
+               (local $new-arr   (ref $I8Array))
+
+               ;; --- Decode amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $amt)))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count-i31 (ref.cast (ref i31) (local.get $amt)))
+               (local.set $count (i31.get_u (local.get $count-i31)))
+               (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
+
+               ;; --- Handle zero-length read ---
+               (if (i32.eqz (local.get $count))
+                   (then (return (global.get $bytes:empty))))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $read-bytes:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+
+               ;; --- Allocate destination buffer ---
+               (local.set $buf
+                          (ref.cast (ref $Bytes)
+                                    (call $make-bytes
+                                          (ref.i31 (i32.shl (local.get $count) (i32.const 1)))
+                                          (global.get $missing))))
+
+               ;; --- Fill buffer using read-bytes! ---
+               (local.set $res
+                          (call $read-bytes!
+                                (local.get $buf)
+                                (local.get $in)
+                                (global.get $missing)
+                                (global.get $missing)))
+
+               ;; Propagate failure conditions
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (if (ref.eq (local.get $res) (global.get $eof))
+                   (then (return (global.get $eof))))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                   (then (return (global.get $false))))
+               (local.set $read (i31.get_u (ref.cast (ref i31) (local.get $res))))
+               (if (i32.ne (i32.and (local.get $read) (i32.const 1)) (i32.const 0))
+                   (then (return (global.get $false))))
+               (local.set $read (i32.shr_u (local.get $read) (i32.const 1)))
+
+               ;; Shrink buffer on partial read
+               (if (i32.lt_u (local.get $read) (local.get $count))
+                   (then (local.set $arr (struct.get $Bytes $bs (local.get $buf)))
+                         (local.set $new-arr
+                                    (call $i8array-copy
+                                          (local.get $arr)
+                                          (i32.const 0)
+                                          (local.get $read)))
+                         (struct.set $Bytes $bs (local.get $buf) (local.get $new-arr))))
+
+               ;; Freeze buffer to make result immutable
+               #;(struct.set $Bytes $immutable (local.get $buf) (i32.const 1))
+
+               (local.get $buf))
+                  
+
+         (func $read-string:one-argument-is-not-yet-supported (unreachable))
+
+         ;; Like Racket's read-string, but currently only string ports are supported
+         (func $read-string (type $Prim12)
+               (param $amt (ref eq)) ;; exact-nonnegative-integer?
+               (param $in  (ref eq)) ;; input-port?               (optional, default = (current-input-port))
+               (result     (ref eq))
+
+               (local $count-i31 (ref i31))
+               (local $count     i32)
+               (local $buf       (ref $String))
+               (local $res       (ref eq))
+               (local $read      i32)
+               (local $arr       (ref $I32Array))
+               (local $new-arr   (ref $I32Array))
+
+               ;; --- Decode amount ---
+               (if (i32.eqz (ref.test (ref i31) (local.get $amt)))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count-i31 (ref.cast (ref i31) (local.get $amt)))
+               (local.set $count (i31.get_u (local.get $count-i31)))
+               (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                   (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
+               (local.set $count (i32.shr_u (local.get $count) (i32.const 1)))
+
+               ;; --- Handle zero-length read ---
+               (if (i32.eqz (local.get $count))
+                   (then (return (global.get $string:empty))))
+
+               ;; --- Determine input port ---
+               (if (ref.eq (local.get $in) (global.get $missing))
+                   (then (call $read-string:one-argument-is-not-yet-supported)
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
+
+               ;; --- Allocate destination string ---
+               (local.set $buf (call $make-string/checked (local.get $count) (i32.const 0)))
+
+               ;; --- Fill buffer using read-string! ---
+               (local.set $res
+                          (call $read-string!
+                                (local.get $buf)
+                                (local.get $in)
+                                (global.get $missing)
+                                (global.get $missing)))
+
+               ;; Propagate failure conditions
+               (if (ref.eq (local.get $res) (global.get $false))
+                   (then (return (global.get $false))))
+               (if (ref.eq (local.get $res) (global.get $eof))
+                   (then (return (global.get $eof))))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                   (then (return (global.get $false))))
+               (local.set $read (i31.get_u (ref.cast (ref i31) (local.get $res))))
+               (if (i32.ne (i32.and (local.get $read) (i32.const 1)) (i32.const 0))
+                   (then (return (global.get $false))))
+               (local.set $read (i32.shr_u (local.get $read) (i32.const 1)))
+
+               (local.set $arr (struct.get $String $codepoints (local.get $buf)))
+
+               ;; Shrink buffer on partial read
+               (if (i32.lt_u (local.get $read) (local.get $count))
+                   (then (local.set $new-arr
+                                    (call $i32array-copy
+                                          (local.get $arr)
+                                          (i32.const 0)
+                                          (local.get $read)))
+                         (struct.set $String $codepoints (local.get $buf) (local.get $new-arr))))
+
+               (struct.set $String $hash (local.get $buf) (i32.const 0))
+
+               (local.get $buf))
+
          
          ;;;
          ;;;  13.3  Byte and String Output

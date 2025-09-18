@@ -656,6 +656,9 @@
   read-byte
   read-char
   read-bytes!
+  read-string!
+  read-bytes
+  read-string
 
   write-byte
   write-char
@@ -3438,6 +3441,9 @@
          [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
          [(read-char)                  (inline-prim/optional sym ae1 0 1)]
          [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
+         [(read-string!)               (inline-prim/optional sym ae1 1 4)]
+         [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
+         [(read-string)                (inline-prim/optional sym ae1 1 2)]
          
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
          [(newline)                    (inline-prim/optional sym ae1 0 1)]
