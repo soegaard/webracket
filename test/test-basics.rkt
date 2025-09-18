@@ -2448,6 +2448,17 @@
         
         ))
 
+ ;;;
+ ;;;  13  Input and Output
+ ;;;
+
+ (list "13.5 Writing"
+       (list
+        (list "newline"
+              (let ([port (open-output-string)])
+                (and (void? (newline port))
+                     (equal? (get-output-string port) "\n"))))))
+
  (list "13.7 String Ports"
        (list
         (list "string-port?"

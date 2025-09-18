@@ -22722,6 +22722,12 @@
                      (global.get $missing)))
 
          ;;;
+         ;;;  13.2  Byte and String Input
+         ;;;
+
+         
+         
+         ;;;
          ;;;  13.3  Byte and String Output
          ;;;
 
@@ -22882,7 +22888,7 @@
                ;; 10. Return void
                (global.get $void))
 
-         (func $write-char (type $Prim2)
+         (func $write-char (type $Prim12)
                (param $char (ref eq)) ;; character?
                (param $out  (ref eq)) ;; optional output-port?, default = (current-output-port)
                (result      (ref eq))
@@ -23006,7 +23012,19 @@
                ;; Should be unreachable because all cases return above.
                (global.get $void))
 
-         
+
+         (func $newline (type $Prim01)
+               (param $out (ref eq)) ;; optional output-port?, default = (current-output-port)
+               (result     (ref eq))
+
+               (local $res (ref eq))
+
+               ; TODO : Handle current output port
+               #;(if (ref.eq (local.get $out) (global.get $missing))
+                   (local.set $out (call $current-output-port)))
+               
+               ;; Delegate to write-char with the newline character.
+               (call $write-char ,(Imm #\newline) (local.get $out)))
 
          
          ;;;

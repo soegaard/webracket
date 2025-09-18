@@ -649,6 +649,7 @@
   get-output-string
   write-byte
   write-char
+  newline
   port-next-location
 
   s-exp->fasl
@@ -3420,6 +3421,7 @@
            get-output-string)          (inline-prim/fixed sym ae1 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
+         [(newline)                    (inline-prim/optional sym ae1 0 1)]
 
          [(make-vector)                (inline-prim/optional sym ae1 1 2)]
          [(make-string)                (inline-prim/optional sym ae1 1 2)]

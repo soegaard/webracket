@@ -549,9 +549,9 @@
  ;; 13.5 Writing
  display
  displayln
- newline
  write-byte
  write-char
+ newline
  
 
  ;; 13.7 String Ports
