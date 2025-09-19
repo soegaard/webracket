@@ -23735,7 +23735,7 @@
                (local $idx          i32)
                (local $limit        i32)
                (local $peek-start   i32)
-               (local $skip-left    i32)
+               (local $skipped      i32)
                (local $written      i32)
                (local $byte         i32)
                (local $need         i32)
@@ -23807,27 +23807,24 @@
                (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
                (local.set $src (struct.get $Bytes $bs (local.get $port-bytes)))
                (local.set $peek-start (local.get $idx))
-               (local.set $skip-left (local.get $skip-count))
+               (local.set $skipped (i32.const 0))
                (block $skip-done
                       (loop $skip
-                            (br_if $skip-done (i32.eqz (local.get $skip-left)))
+                            (br_if $skip-done (i32.ge_u (local.get $skipped) (local.get $skip-count)))
                             (if (i32.ge_u (local.get $peek-start) (local.get $limit))
                                 (then (return (global.get $eof))))
                             (local.set $byte (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
-                            (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
-                            (local.set $skip-left  (i32.sub (local.get $skip-left)  (i32.const 1)))
+                            (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))                            
                             (if (i32.lt_u (local.get $byte) (i32.const 128))
-                                (then)
+                                (then
+                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1))))
                                 (else
                                  (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
                                  (local.set $acc)
                                  (local.set $need)
                                  (local.set $initial-need (local.get $need))
                                  (if (i32.lt_s (local.get $need) (i32.const 0))
-                                     (then (return (global.get $false))))
-                                 (if (i32.lt_u (local.get $skip-left) (local.get $need))
-                                     (then (return (global.get $false))))
-                                 (local.set $skip-left (i32.sub (local.get $skip-left) (local.get $need)))
+                                     (then (return (global.get $false))))                                 
                                  (local.set $cp (local.get $acc))
                                  (block $skip-cont-done
                                         (loop $skip-cont
