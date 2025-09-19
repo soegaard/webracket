@@ -3460,7 +3460,7 @@
          [(peek-string!)               (inline-prim/optional sym ae1 2 5)]
          [(peek-bytes)                 (inline-prim/optional sym ae1 1 3)]
          [(peek-string)                (inline-prim/optional sym ae1 1 3)]
-         [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
+          [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
          [(peek-char)                  (inline-prim/optional sym ae1 0 2)]
          
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]

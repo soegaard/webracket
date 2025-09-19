@@ -23735,7 +23735,7 @@
                (local $idx          i32)
                (local $limit        i32)
                (local $peek-start   i32)
-               (local $skipped      i32)
+               (local $skip-left    i32)
                (local $written      i32)
                (local $byte         i32)
                (local $need         i32)
@@ -23807,16 +23807,17 @@
                (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
                (local.set $src (struct.get $Bytes $bs (local.get $port-bytes)))
                (local.set $peek-start (local.get $idx))
-               (local.set $skipped (i32.const 0))
+               (local.set $skip-left (local.get $skip-count))
                (block $skip-done
                       (loop $skip
-                            (br_if $skip-done (i32.ge_u (local.get $skipped) (local.get $skip-count)))
+                            (br_if $skip-done (i32.eqz (local.get $skip-left)))
                             (if (i32.ge_u (local.get $peek-start) (local.get $limit))
                                 (then (return (global.get $eof))))
                             (local.set $byte (array.get_u $I8Array (local.get $src) (local.get $peek-start)))
                             (local.set $peek-start (i32.add (local.get $peek-start) (i32.const 1)))
+                            (local.set $skip-left  (i32.sub (local.get $skip-left)  (i32.const 1)))
                             (if (i32.lt_u (local.get $byte) (i32.const 128))
-                                (then (local.set $skipped (i32.add (local.get $skipped) (i32.const 1))))
+                                (then)
                                 (else
                                  (call $bytes->string/utf-8:determine-utf-8-sequence (local.get $byte))
                                  (local.set $acc)
@@ -23824,6 +23825,9 @@
                                  (local.set $initial-need (local.get $need))
                                  (if (i32.lt_s (local.get $need) (i32.const 0))
                                      (then (return (global.get $false))))
+                                 (if (i32.lt_u (local.get $skip-left) (local.get $need))
+                                     (then (return (global.get $false))))
+                                 (local.set $skip-left (i32.sub (local.get $skip-left) (local.get $need)))
                                  (local.set $cp (local.get $acc))
                                  (block $skip-cont-done
                                         (loop $skip-cont
@@ -23854,7 +23858,8 @@
                                  (if (i32.eq (local.get $initial-need) (i32.const 3))
                                      (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
                                                (then (return (global.get $false))))))
-                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1)))))))
+                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1)))))
+                            (br $skip)))
 
                (local.set $written (i32.const 0))
 
@@ -24075,7 +24080,8 @@
                                  (if (i32.eq (local.get $initial-need) (i32.const 3))
                                      (then (if (i32.lt_u (local.get $cp) (i32.const #x10000))
                                                (then (return (global.get $false))))))
-                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1)))))))
+                                 (local.set $skipped (i32.add (local.get $skipped) (i32.const 1)))))
+                            (br $skip-loop)))
 
                ;; Peek the next character without consuming the port.
                (if (i32.ge_u (local.get $peek-start) (local.get $limit))
@@ -24232,7 +24238,7 @@
          (func $peek-string (type $Prim13)
                (param $amt  (ref eq)) ;; exact-nonnegative-integer?
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
-               (param $in   (ref eq)) ;; input-port?               (optional, default = (current-input-port))
+               (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
                (result      (ref eq))
 
                (local $count-i31 (ref i31))
@@ -24244,7 +24250,7 @@
                (local $peeked    i32)
                (local $arr       (ref $I32Array))
                (local $new-arr   (ref $I32Array))
-
+               
                ;; --- Decode amount ---
                (if (i32.eqz (ref.test (ref i31) (local.get $amt)))
                    (then (call $raise-check-fixnum (local.get $amt)) (unreachable)))
