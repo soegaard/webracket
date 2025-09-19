@@ -78,10 +78,12 @@
       equal-always-hash-code/recur
       equal-always-secondary-hash-code
       equal-always?
+      equal-always?/recur
       equal-hash-code
       equal-hash-code/recur
       equal-secondary-hash-code
       equal?
+      equal?/recur
       eqv-hash-code
       eqv?
       gen:equal+hash
@@ -116,8 +118,10 @@
     
     
     (numbers
-      *
       +
+      -
+      *
+      /
       <
       <=
       =
@@ -125,6 +129,11 @@
       >=
       abs
       acos
+      acosh
+      asin
+      asinh
+      atan
+      atanh
       add1
       angle
       arithmetic-shift
@@ -142,6 +151,7 @@
       cos
       cosh
       crypto-random-bytes
+      current-pseudo-random-generator
       degrees->radians
       denominator
       double-flonum?
@@ -203,6 +213,7 @@
       quotient
       quotient/remainder
       radians->degrees
+      random
       random-ref
       random-sample
       random-seed
@@ -427,33 +438,41 @@
       symbol?
       )
     (regexps
-      byte-pregexp?
-      byte-regexp?
-      pregexp?
-      regexp-capture-group-count
-      regexp-match
-      regexp-match*
-      regexp-match-exact?
-      regexp-match-peek
-      regexp-match-peek-immediate
-      regexp-match-peek-positions
-      regexp-match-peek-positions*
-      regexp-match-peek-positions-immediate
-      regexp-match-peek-positions-immediate/end
-      regexp-match-peek-positions/end
-      regexp-match-positions
-      regexp-match-positions*
-      regexp-match-positions/end
-      regexp-match/end
-      regexp-match?
-      regexp-max-lookbehind
-      regexp-replace
-      regexp-replace*
-      regexp-replaces
-      regexp-split
-      regexp-try-match
-      regexp?
-    )
+     byte-pregexp
+     byte-pregexp?
+     byte-regexp
+     byte-regexp?
+     pregexp
+     pregexp?
+     pregexp-quote
+
+     regexp
+     regexp-quote
+     regexp-capture-group-count
+     regexp-match
+     regexp-match*
+     regexp-match-exact?
+     regexp-match-peek
+     regexp-match-peek-immediate
+     regexp-match-peek-positions
+     regexp-match-peek-positions*
+     regexp-match-peek-positions-immediate
+     regexp-match-peek-positions-immediate/end
+     regexp-match-peek-positions/end
+     regexp-match-positions
+     regexp-match-positions*
+     regexp-match-positions/end
+     regexp-match/end
+     regexp-match?
+     regexp-max-lookbehind
+     regexp-replace
+     regexp-replace*
+     regexp-replaces
+     regexp-replace-quote
+     regexp-split
+     regexp-try-match
+     regexp?
+     )
     (keywords
       keyword->immutable-string
       keyword->string
@@ -820,6 +839,10 @@
       in-ephemeron-hash-keys
       in-ephemeron-hash-pairs
       in-ephemeron-hash-values
+      in-hash
+      in-hash-keys
+      in-hash-pairs
+      in-hash-values
       in-immutable-hash
       in-immutable-hash-keys
       in-immutable-hash-pairs
@@ -838,6 +861,8 @@
       in-naturals
       in-parallel
       in-port
+      in-producer
+      in-range
       in-sequences
       in-slice
       in-stream
@@ -939,6 +964,7 @@
       in-dict-keys
       in-dict-pairs
       in-dict-values
+      keyword-apply/dict
       make-custom-hash
       make-custom-hash-types
       make-immutable-custom-hash
@@ -1019,47 +1045,50 @@
       weak-seteqv
     )
     (procedures
-      apply
-      arity-includes?
-      arity=?
-      checked-procedure-check-and-extract
-      compose
-      compose1
-      conjoin
-      const
-      const*
-      disjoin
-      identity
-      keyword-apply
-      make-keyword-procedure
-      negate
-      normalize-arity
-      normalized-arity?
-      primitive-closure?
-      primitive-result-arity
-      primitive?
-      procedure->method
-      procedure-arity
-      procedure-arity-includes?
-      procedure-arity-mask
-      procedure-arity?
-      procedure-closure-contents-eq?
-      procedure-extract-target
-      procedure-keywords
-      procedure-realm
-      procedure-reduce-arity
-      procedure-reduce-arity-mask
-      procedure-reduce-keyword-arity
-      procedure-reduce-keyword-arity-mask
-      procedure-rename
-      procedure-result-arity
-      procedure-specialize
-      procedure-struct-type?
-      procedure?
-      prop:arity-string
-      prop:checked-procedure
-      prop:procedure
-    )
+     apply
+     arity=?
+     arity-at-least
+     arity-includes?
+     checked-procedure-check-and-extract
+     compose
+     compose1
+     conjoin
+     const
+     const*
+     curry
+     curryr
+     disjoin
+     identity
+     keyword-apply
+     make-keyword-procedure
+     negate
+     normalize-arity
+     normalized-arity?
+     primitive-closure?
+     primitive-result-arity
+     primitive?
+     procedure->method
+     procedure-arity
+     procedure-arity-includes?
+     procedure-arity-mask
+     procedure-arity?
+     procedure-closure-contents-eq?
+     procedure-extract-target
+     procedure-keywords
+     procedure-realm
+     procedure-reduce-arity
+     procedure-reduce-arity-mask
+     procedure-reduce-keyword-arity
+     procedure-reduce-keyword-arity-mask
+     procedure-rename
+     procedure-result-arity
+     procedure-specialize
+     procedure-struct-type?
+     procedure?
+     prop:arity-string
+     prop:checked-procedure
+     prop:procedure
+     )
     (racket/flonum
       fl+
       fl-
