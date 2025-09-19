@@ -13399,6 +13399,75 @@
                           (br $search))
                     (unreachable)))
 
+         ,@(for/list ([name       '($assoc  $assw  $assv  $assq)]
+                      [type       '($Prim23 $Prim2 $Prim2 $Prim2)]
+                      [needs-proc '(1       0       0       0)]
+                      [cmp        '((ref.eq (call $equal? (local.get $needle) (local.get $key))
+                                            (global.get $true))
+                                    (ref.eq (call $equal-always? (local.get $needle) (local.get $key))
+                                            (global.get $true))
+                                    (ref.eq (call $eqv? (local.get $needle) (local.get $key))
+                                            (global.get $true))
+                                    (ref.eq (local.get $needle) (local.get $key)))])
+             `(func ,name (type ,type)
+                    (param $needle (ref eq))  ;; key to locate
+                    (param $alist  (ref eq))  ;; association list
+                    ,@(if (zero? needs-proc)
+                          '()
+                          '((param $same? (ref eq)))) ;; optional comparator for assoc
+                    (result (ref eq))
+
+                    (local $list-pair  (ref $Pair))
+                    (local $entry      (ref eq))
+                    (local $entry-pair (ref $Pair))
+                    (local $key        (ref eq))
+                    ,@(if (zero? needs-proc) '() '((local $args     (ref $Args))
+                                                   (local $res      (ref eq))
+                                                   (local $use-proc i32)))
+                    ,@(if (zero? needs-proc)
+                          '()
+                          `((if (ref.eq (local.get $same?) (global.get $missing))
+                                (then (local.set $use-proc (i32.const 0)))
+                                (else
+                                 (if (i32.eqz (ref.test (ref $Procedure) (local.get $same?)))
+                                     (then (call $raise-argument-error:procedure-expected (local.get $same?))
+                                           (unreachable)))
+                                 (local.set $use-proc (i32.const 1))))
+                            (local.set $args (array.new $Args (global.get $null) (i32.const 2)))))
+                    (loop $search
+                          (if (ref.eq (local.get $alist) (global.get $null))
+                              (then (return (global.get $false))))
+                          (if (i32.eqz (ref.test (ref $Pair) (local.get $alist)))
+                              (then (call $raise-pair-expected (local.get $alist))
+                                    (unreachable)))
+                          (local.set $list-pair (ref.cast (ref $Pair) (local.get $alist)))
+                          (local.set $entry (struct.get $Pair $a (local.get $list-pair)))
+                          (if (i32.eqz (ref.test (ref $Pair) (local.get $entry)))
+                              (then (call $raise-pair-expected (local.get $entry))
+                                    (unreachable)))
+                          (local.set $entry-pair (ref.cast (ref $Pair) (local.get $entry)))
+                          (local.set $key (struct.get $Pair $a (local.get $entry-pair)))
+                          ,(if (zero? needs-proc)
+                               `(if ,cmp (then (return (local.get $entry))))
+                               `(if (i32.eqz (local.get $use-proc))
+                                    (then
+                                     (if (ref.eq (call $equal? (local.get $needle) (local.get $key))
+                                                 (global.get $true))
+                                         (then (return (local.get $entry)))))
+                                    (else
+                                     (array.set $Args (local.get $args) (i32.const 0) (local.get $needle))
+                                     (array.set $Args (local.get $args) (i32.const 1) (local.get $key))
+                                     (local.set $res
+                                                (call_ref $ProcedureInvoker
+                                                          (ref.cast (ref $Procedure) (local.get $same?))
+                                                          (local.get $args)
+                                                          (struct.get $Procedure $invoke
+                                                                      (ref.cast (ref $Procedure) (local.get $same?)))))
+                                     (if (ref.eq (local.get $res) (global.get $true))
+                                         (then (return (local.get $entry)))))))
+                          (local.set $alist (struct.get $Pair $d (local.get $list-pair)))
+                          (br $search))
+                    (unreachable)))
          
          (func $index-of (type $Prim3)
                (param $xs     (ref eq))  ;; list

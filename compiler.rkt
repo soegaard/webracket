@@ -425,41 +425,101 @@
   bytes             ; used in datum construction
   string            ; used in datum construction
 
-  pair? cons? null? empty?
-  cons car cdr
-  list              ; not first order yet
-  list? length list-ref list-tail list-set list-update
-  first rest last last-pair
+  ; 4.10.1 Pair constructors and selectors
+  pair?
+  null?
+  cons car cdr  
+  list?
+  list
+  list*
+  build-list
+  ; 4.10.2 List Operations
+  length
+  list-ref
+  list-tail
+  append ; variadic list primitive
+  reverse alt-reverse ; used in expansion of for/list
+  ; 4.10.3 List Iteration
+  map
+  andmap
+  ormap
+  for-each
+  foldl
+  foldr
+  
+  ; 4.10.4 More List Iteration
+  ; running-foldl
+  ; running-foldr
+  ; 4.10.5 List Filtering
+  filter
+  remove  remq  remv  remw  remf
+  remove* remq* remv* remw* remf*
+  sort
+  ; 4.10.6 List Searching
+  member  memq  memv memw
+  ; memf   todo
+  ; findf  todo
+  assoc assw assv assq
+  ; assf   todo
+
+  ; 4.10.7 Pair Accessor Shorthands
+  ; caar ... cddddr  todo
+
+  ; 4.10.8 Additional List Functions and Synonyms
+  cons?
+  empty?
+  first rest
   second third fourth fifth sixth seventh eighth ninth tenth
   eleventh twelfth thirteenth fourteenth fifteenth
-  
-  append ; variadic list primitive
-  foldl foldr
-  flatten
-  reverse alt-reverse ; used in expansion of for/list
-  map andmap ormap count for-each append-map
-  add-between ; simplified
-  list* 
-  cartesian-product
-  permutations
-  filter filter-map filter-not shuffle partition
-  member memq memv memw  
-  remove  remf  remq  remv  remw
-  remove* remf* remq* remv* remw*
-  
+  last last-pair
+  make-list
+  list-update
+  list-set
   index-of index-where indexes-of indexes-where
+  ; take todo
+  ; drop todo
+  ; split-at todo
+  ; takef
+  ; dropf
+  ; splitf-at
+  ; take-right
+  ; drop-right
+  ; split-at-right
+  ; takef-right
+  ; dropf-right
+  ; splitf-at-right
   list-prefix?
   take-common-prefix
   drop-common-prefix
   split-common-prefix
-  make-list
-  build-list
-  range range-proc
-  inclusive-range inclusive-range-proc
-  argmax argmin
+  add-between ; simplified
+  ; append*
+  flatten
+  ; check-duplicates
+  ; remove-duplicates
+  filter-map
+  append-map
+  count
+  partition
+  range           range-proc
+  inclusive-range inclusive-range-proc  
+  filter-not shuffle
+  ; combinations
+  ; in-combinations
+  permutations
+  ; in-permutations
+  argmin argmax
   group-by
-  sort
+  cartesian-product
+  
+  ; 4.10.9 More List Grouping
+  ; windows
+  ; slice-by
 
+  ; 4.10.10 Immutable Cyclic Data
+  
+  
+  ; 4.21 Void
   void?
   make-void  ; zero arguments
   void
@@ -3510,6 +3570,8 @@
          [(vector-filter vector-filter-not) (inline-prim/fixed sym ae1 2)]
          [(vector-argmax vector-argmin)     (inline-prim/fixed sym ae1 2)]
 
+         [(assoc)                      (inline-prim/optional sym ae1 2 3)]
+         [(assw assv assq)             (inline-prim/fixed sym ae1 2)]
          [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
          [(remove)                     (inline-prim/optional sym ae1 2 3)]

@@ -43,7 +43,7 @@
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1))))))
 
- #;(list "4. Datatypes"
+ (list "4. Datatypes"
        (list "4.1 Equality"
              (list "eqv?"
                    (and (equal? (eqv? 'a 'a) #t)
@@ -1798,6 +1798,26 @@
                          (equal? (memw 1/2 '(1/2)) '(1/2))
                          (equal? (memw '(1 2) '(1 2 (1 2))) '((1 2)))
                          (equal? (procedure-arity memw) 2)))
+              (list "assq"
+                    (and (equal? (assq 'b '((a 1) (b 2) (c 3))) '(b 2))
+                         (equal? (assq 'd '((a 1) (b 2) (c 3))) #f)
+                         (equal? (assq '(a) '(((a)) ((b)) ((c)))) #f)
+                         (equal? (procedure-arity assq) 2)))
+              (list "assv"
+                    (and (equal? (assv 1/2 '((0 a) (1/2 b) (3 c))) '(1/2 b))
+                         (equal? (assv 2 '((1 a) (3 b))) #f)
+                         (equal? (procedure-arity assv) 2)))
+              (list "assw"
+                    (let ([b1 (box 0)]
+                          [b2 (box 0)])
+                      (and (equal? (assw '(b) '(((a)) ((b) 1) ((c)))) '((b) 1))
+                           (equal? (assw 'd '((a 1) (b 2))) #f)
+                           (equal? (assw b2 (list (cons b1 1) (cons b2 2))) (cons b2 2))
+                           (equal? (procedure-arity assw) 2))))
+              #;(list "assoc"
+                    (and (equal? (assoc '(b) '(((a)) ((b) 1) ((c)))) '((b) 1))
+                         (equal? (assoc 'd '((a 1) (b 2))) #f)
+                         (equal? (assoc "B" '(("a" 1) ("b" 2)) string-ci=?) '("b" 2))))
               (list "argmax"
                     (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
                          (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))
@@ -2450,7 +2470,7 @@
               )))
 
 
- (list "13. Input and Output"
+ #;(list "13. Input and Output"
 
        (list "13.1 Ports"
              (list

@@ -443,10 +443,7 @@
  sort
  
  ; findf
- ; assoc
- ; assw
- ; assv
- ; assq
+ assoc assw assv assq
  ; assf
 
  ; caar
@@ -548,7 +545,9 @@
 
  ;; 13   Input and Output
  ;; 13.1 Ports
-
+ eof
+ eof-object?
+ 
  ;; 13.2 Byte and String Input
  read-byte
  read-char
