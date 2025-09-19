@@ -464,17 +464,30 @@
     (pairs
       add-between
       andmap
+      append
+      append*
       append-map
       argmax
       argmin
+      assf
+      assoc
+      assq
+      assv
+      assw
       build-list
       car
       cartesian-product
       cdr
       check-duplicates
+      combinations
+      cons
       cons?
       count
+      drop
       drop-common-prefix
+      drop-right
+      dropf
+      dropf-right
       eighth
       eleventh
       empty
@@ -484,6 +497,7 @@
       filter
       filter-map
       filter-not
+      findf
       first
       flatten
       foldl
@@ -493,6 +507,7 @@
       fourth
       group-by
       hash-placeholder?
+      in-combinations
       in-permutations
       inclusive-range
       index-of
@@ -503,8 +518,11 @@
       last-pair
       length
       list
+      list*
       list-prefix?
+      list-ref
       list-set
+      list-tail
       list-update
       list?
       make-hash-placeholder
@@ -515,6 +533,11 @@
       make-placeholder
       make-reader-graph
       map
+      member
+      memf
+      memq
+      memv
+      memw
       ninth
       null
       null?
@@ -525,6 +548,7 @@
       placeholder-get
       placeholder-set!
       placeholder?
+      range
       remf
       remf*
       remove
@@ -546,8 +570,16 @@
       sixth
       slice-by
       sort
+      split-at
+      split-at-right
       split-common-prefix
+      splitf-at
+      splitf-at-right
+      take
       take-common-prefix
+      take-right
+      takef
+      takef-right
       tenth
       third
       thirteenth
