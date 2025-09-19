@@ -2021,13 +2021,34 @@
      `(section              
        (div (h2 ,(make-gauge pct (length implemented) (length primitives) title))
             (span (@ (id      ,tri-id)
+                     (class   "section-tri")
                      (onclick ,toggle-script)
                      (style   "cursor:pointer;"))
                   "▶")
             (ul (@ (id    ,list-id)
+                   (class "section-list")
                    (style "display:none;"))
                 ,@(map primitive-li (sort-symbols primitives)))
             (hr)))]))
+
+
+(define toggle-all-script
+  (string-append
+   "var btn=document.getElementById('toggle-all');"
+   "var open=btn.getAttribute('data-open')==='true';"
+   "var lists=document.getElementsByClassName('section-list');"
+   "var tris=document.getElementsByClassName('section-tri');"
+   "if(open){"
+   "for(var i=0;i<lists.length;i++){lists[i].style.display='none';}"
+   "for(var i=0;i<tris.length;i++){tris[i].textContent='\\u25B6';}"
+   "btn.setAttribute('data-open','false');"
+   "btn.textContent='Expand All';"
+   "}else{"
+   "for(var i=0;i<lists.length;i++){lists[i].style.display='';}"
+   "for(var i=0;i<tris.length;i++){tris[i].textContent='\\u25BC';}"
+   "btn.setAttribute('data-open','true');"
+   "btn.textContent='Collapse All';"
+   "}"))
 
 
 (define-values (chapters-sxml _)
@@ -2054,6 +2075,11 @@
               ,(number->string (length implemented-primitives)))
         (div "Missing: "
              ,(number->string missing-primitives))
+        (button (@ (id "toggle-all")
+                    (data-open "false")
+                    (onclick ,toggle-all-script)
+                    (style "margin: 1em 0; padding: 0.5em 1em;"))
+                "Expand All")
         ,@chapters-sxml))
 
 (js-append-child! (js-document-body) (sxml->dom page))
