@@ -1,5 +1,7 @@
 ;;;
-;;; Completion of functions in Data Structure chapter
+;;; Completion of functions in the chapters:
+;;;   Data Structures
+;;;   Input and Output
 ;;;
 
 ; time racket -l errortrace -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
@@ -11,6 +13,7 @@
 ; A drop down triangle reveals a list of functions in the chapter.
 ; Each function is linked to its documentation.
 
+(define (cadr x) (car (cdr x)))
 
 (define (format fmt . args)
   (let loop ([s fmt] [args args])
@@ -1143,7 +1146,186 @@
       undefined
     )
   ))
-  
+
+
+(define io-primitives
+  '((ports
+      call-with-input-bytes
+      call-with-input-file
+      call-with-input-file*
+      call-with-input-string
+      call-with-output-bytes
+      call-with-output-file
+      call-with-output-file*
+      call-with-output-string
+      close-input-port
+      close-output-port
+      combine-output
+      convert-stream
+      copy-port
+      current-error-port
+      current-input-port
+      current-locale
+      current-output-port
+      display-lines
+      dup-input-port
+      dup-output-port
+      eof
+      eof-evt
+      eof-object?
+      file-position
+      file-position*
+      file-stream-buffer-mode
+      file-stream-port?
+      file-truncate
+      filter-read-input-port
+      flush-output
+      get-output-bytes
+      get-output-string
+      input-port-append
+      input-port?
+      make-input-port
+      make-input-port/read-to-peek
+      make-limited-input-port
+      make-output-port
+      make-pipe
+      make-pipe-with-specials
+      merge-input
+      open-input-bytes
+      open-input-file
+      open-input-nowhere
+      open-input-output-file
+      open-input-string
+      open-output-bytes
+      open-output-file
+      open-output-nowhere
+      open-output-string
+      output-port?
+      peek-bytes-evt
+      peek-string!-evt
+      peek-string-evt
+      peeking-input-port
+      pipe-content-length
+      pipe-port?
+      port->bytes
+      port->bytes-lines
+      port->lines
+      port->list
+      port->string
+      port-closed-evt
+      port-closed?
+      port-count-lines!
+      port-count-lines-enabled
+      port-counts-lines?
+      port-file-identity
+      port-file-stat
+      port-file-unlock
+      port-next-location
+      port-try-file-lock?
+      port-waiting-peer?
+      port?
+      prop:input-port
+      prop:output-port
+      read-bytes!-evt
+      read-bytes-avail!-evt
+      read-bytes-evt
+      read-bytes-line-evt
+      read-line-evt
+      read-string!-evt
+      read-string-evt
+      reencode-input-port
+      reencode-output-port
+      regexp-match-evt
+      relocate-input-port
+      relocate-output-port
+      set-port-next-location!
+      special-filter-input-port
+      string-port?
+      terminal-port?
+      transplant-input-port
+      transplant-output-port
+      with-input-from-bytes
+      with-input-from-file
+      with-input-from-string
+      with-output-to-bytes
+      with-output-to-file
+      with-output-to-string)
+    (byte-and-string-input
+      byte-ready?
+      char-ready?
+      peek-byte
+      peek-byte-or-special
+      peek-bytes
+      peek-bytes!
+      peek-bytes-avail!
+      peek-bytes-avail!*
+      peek-bytes-avail!/enable-break
+      peek-char
+      peek-char-or-special
+      peek-string
+      peek-string!
+      port-commit-peeked
+      port-progress-evt
+      port-provides-progress-evts?
+      progress-evt?
+      read-byte
+      read-byte-or-special
+      read-bytes
+      read-bytes!
+      read-bytes-avail!
+      read-bytes-avail!*
+      read-bytes-avail!/enable-break
+      read-bytes-line
+      read-char
+      read-char-or-special
+      read-line
+      read-string
+      read-string!)
+    (byte-and-string-output
+      newline
+      port-writes-atomic?
+      port-writes-special?
+      write-byte
+      write-bytes
+      write-bytes-avail
+      write-bytes-avail*
+      write-bytes-avail-evt
+      write-bytes-avail/enable-break
+      write-char
+      write-special
+      write-special-avail*
+      write-special-evt
+      write-string)
+    (reading
+      call-with-default-reading-parameterization
+      current-reader-guard
+      current-readtable
+      port-read-handler
+      read
+      read-accept-bar-quote
+      read-accept-box
+      read-accept-compiled
+      read-accept-dot
+      read-accept-graph
+      read-accept-infix-dot
+      read-accept-lang
+      read-accept-quasiquote
+      read-accept-reader
+      read-case-sensitive
+      read-cdot
+      read-curly-brace-as-paren
+      read-curly-brace-with-tag
+      read-decimal-as-inexact
+      read-language
+      read-on-demand-source
+      read-single-flonum
+      read-square-bracket-as-paren
+      read-square-bracket-with-tag
+      read-syntax
+      read-syntax-accept-graph
+      read-syntax/recursive
+      read/recursive)
+    ))
 
 #;(define (symbol->title s)
     ; todo : implement string-titlecase
@@ -1184,6 +1366,10 @@
             arithmetic-shift
             asin
             asinh
+            assoc
+            assq
+            assv
+            assw
             atan
             atanh
             bitwise-and
@@ -1202,6 +1388,7 @@
             build-list
             build-string
             build-vector
+            byte-ready?
             byte?
             bytes
             bytes->immutable-bytes
@@ -1243,6 +1430,7 @@
             char-lower-case?
             char-numeric?
             char-punctuation?
+            char-ready?
             char-symbolic?
             char-title-case?
             char-titlecase
@@ -1273,6 +1461,7 @@
             eighth
             eleventh
             empty?
+            eof-object?
             eq-hash-code
             eq?
             equal-always?
@@ -1320,6 +1509,7 @@
             flasin
             flatan
             flatten
+            flbit-field
             flceiling
             flcos
             flexp
@@ -1375,6 +1565,7 @@
             fxzero?
             gcd
             get-output-bytes
+            get-output-string
             group-by
             hash->list
             hash-clear!
@@ -1485,6 +1676,7 @@
             natural?
             negative-integer?
             negative?
+            newline
             ninth
             non-empty-string?
             nonnegative-integer?
@@ -1494,11 +1686,20 @@
             number->string
             number?
             odd?
+            open-input-bytes
+            open-input-string
             open-output-bytes
+            open-output-string
             order-of-magnitude
             ormap
             pair?
             partition
+            peek-byte
+            peek-bytes
+            peek-bytes!
+            peek-char
+            peek-string
+            peek-string!
             permutations
             port-next-location
             positive-integer?
@@ -1521,6 +1722,13 @@
             random
             range
             range-proc
+            read-byte
+            read-bytes
+            read-bytes!
+            read-char
+            read-line
+            read-string
+            read-string!
             real->double-flonum
             real->floating-point-bytes
             real?
@@ -1702,27 +1910,35 @@
             void
             void?
             write-byte
+            write-bytes
+            write-char
+            write-string
             xor
             zero?)
-
-
-
-
-
           ))
 
-(define sections
-  (for/list ([entry (in-list datatypes-primitives)])
-    (list (symbol->title (car entry)) (cdr entry))))
+(define chapter-datasets
+  (list (list "Datatype Functions and Constants" datatypes-primitives)
+        (list "Input and Output" io-primitives)))
 
 (define total-primitives-cnt
-  (for/sum ([entry (in-list datatypes-primitives)])
-    (length (cdr entry))))
+  (for/sum ([chapter (in-list chapter-datasets)])
+    (for/sum ([entry (in-list (cadr chapter))])
+      (length (cdr entry)))))
 
 (define missing-primitives
   (- total-primitives-cnt (length implemented-primitives)))
 
-; (js-log sections)
+(define prepared-chapters
+  (for/list ([chapter (in-list chapter-datasets)])
+    (let ()
+      (define title (car chapter))
+      (define raw-sections (cadr chapter))
+      (list title
+            (for/list ([entry (in-list raw-sections)])
+              (list (symbol->title (car entry)) (cdr entry)))))))
+
+; (js-log prepared-chapters)
 
 
 ;;; Gauge component: renders a flex container with a gradient-filled bar
@@ -1814,18 +2030,30 @@
             (hr)))]))
 
 
-(define sections
-  (for/list ([s (in-list sections)]
-             [i (in-naturals)])
-    (section->sxml s i)))
+(define-values (chapters-sxml _)
+  (for/fold ([nodes '()] [idx 0])
+            ([chapter (in-list prepared-chapters)])
+    (let ()
+      (define title    (car chapter))
+      (define sections (cadr chapter))
+      (define rendered
+        (for/list ([section (in-list sections)]
+                   [i       (in-naturals idx)])
+          (section->sxml section i)))
+      (values (append nodes
+                      (list `(h2 (@ (style "color:red; font-size: 2.5rem; font-family: sans-serif;"))
+                                 ,title))
+                      rendered
+                      #;(add-between rendered '(div)))
+              (+ idx (length sections))))))
 
 (define page
-  `(div (h1 "Progress: Primitives in WebRacket")
+  `(div (h1 (@ (style "font-size: 3.5rem; font-family: sans-serif;"))
+            "WebRacket Implementation Progress")
         (span "Implemented: "
               ,(number->string (length implemented-primitives)))
         (div "Missing: "
              ,(number->string missing-primitives))
-        (h2 "Datatype Functions and Constants")
-        ,@sections))
+        ,@chapters-sxml))
 
 (js-append-child! (js-document-body) (sxml->dom page))
