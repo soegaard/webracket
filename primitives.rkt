@@ -33,7 +33,7 @@
 
 (provide
  match
-
+ ; in-list
  
  ;; Test functions
  always-throw ; todo - remove
@@ -403,6 +403,7 @@
  last
  last-pair
  append
+ append*
  flatten
  reverse
 
@@ -1034,3 +1035,6 @@
      (define shifted (arithmetic-shift u64 (- start))) ; right shift
      (define mask (sub1 (arithmetic-shift 1 width)))   ; (1<<width)-1
      (bitwise-and shifted mask)]))
+
+
+(define (in-list xs) 'in-list)

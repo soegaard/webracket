@@ -14,7 +14,8 @@
          racket/port 
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
-                              index-where append-map make-list rest take drop)
+                  index-where append-map make-list rest take drop
+                  group-by)         
          (only-in racket/set  list->set))
 (require
   ; (prefix-in ur- urlang)
@@ -26,6 +27,8 @@
   ; (rename-in racket/match [match Match])
   ; (only-in srfi/1 list-index)cha
   '#%paramz) ; contains the identifier parameterization-key
+
+
 
 ;;; todo - just for testing FFI
 
@@ -220,6 +223,24 @@
                        (values (cons x xs) ρ)))]))
   (f* xs ρ))
 
+
+;; Added in new versions of Racket. See docs.
+(define (slice-by proc lst)
+  ;; Build slices by scanning adjacent pairs. If (proc x y) holds, keep extending
+  ;; the current slice; otherwise, close the slice and start a new one at y.
+  (let loop ([xs lst] [curr '()] [acc '()])
+    (match xs
+      ['()
+       (reverse (if (null? curr) acc (cons (reverse curr) acc)))]
+      [(list x)
+       (reverse (cons (reverse (cons x curr)) acc))]
+      [(cons x (cons y rest))
+       (define new-curr (cons x curr))
+       (if (proc x y)
+           (loop (cons y rest) new-curr acc)
+           (loop (cons y rest) '()
+                 (cons (reverse new-curr) acc)))])))
+
 ;;;
 ;;; VARIABLES
 ;;;
@@ -384,6 +405,8 @@
 (define-primitives
   ; call/cc ; todo remove - we use it for our test function
 
+  ; in-list
+  
   always-throw  ; test function: throws an exception
 
   raise
@@ -438,6 +461,7 @@
   list-ref
   list-tail
   append ; variadic list primitive
+  
   reverse alt-reverse ; used in expansion of for/list
   ; 4.10.3 List Iteration
   map
@@ -493,7 +517,7 @@
   drop-common-prefix
   split-common-prefix
   add-between ; simplified
-  ; append*
+  append*
   flatten
   ; check-duplicates
   ; remove-duplicates
@@ -2797,7 +2821,7 @@
 ;;; CATEGORIZE VARIABLES 
 ;;;
 
-; The goal of this pass is to categorize assignments according to the
+; The goal of this pass is to categorize variables according to the
 ; variable type: top-level, module-level, local.
 
 ; This pass is local to the pass `generate-code`.
@@ -2812,6 +2836,7 @@
     (define (AExpr*                AEs) (for-each AExpr                AEs))
     (define (ConvertedAbstraction* ABs) (for-each ConvertedAbstraction ABs))
     (define (ClosureAllocation*    CAs) (for-each ClosureAllocation    CAs))
+    (define (RawProvideSpec*      RPSs) (for-each RawProvideSpec      RPSs))
 
     (define top '()) ; top     (outside modules)
     (define mod '()) ; modules
@@ -2826,17 +2851,26 @@
     (define (loc!* xs) (for-each loc! xs))
     (define (lab!* xs) (for-each lab! xs))
 
-    (define add! (make-parameter top!*)))
+    ; variable x is provided from module with name mn
+    (define provides '())
+    (define (provide! mn x-from x-to)
+      ; x-from : original name
+      ; x-to   : name after alpha-renaming
+      (set! provides (cons (list mn x-from x-to) provides)))
+    
+    (define prov! (make-parameter #f))    ; begin at top-level
+    (define add!  (make-parameter top!*)))
     
   (TopLevelForm : TopLevelForm (T) -> * ()
     [(define-label ,l ,cab)         (lab! l) (ConvertedAbstraction cab)]
     [(topbegin ,s ,t ...)           (TopLevelForm* t)]
     [(#%expression ,s ,e)           (Expr e)]
-    [(topmodule ,s ,mn ,mp ,mf ...) (parameterize ([add! mod!*])
+    [(topmodule ,s ,mn ,mp ,mf ...) (parameterize ([add!  mod!*]
+                                                   [prov! (λ (x0 x1) (provide! mn x0 x1))])
                                       (ModuleLevelForm* mf))]
     [,g                             (GeneralTopLevelForm g)])
   (ModuleLevelForm : ModuleLevelForm (M) -> * ()
-    [(#%provide ,rps ...)           (void)] ; todo : collect provided vars
+    [(#%provide ,rps ...)           (RawProvideSpec* rps)] ; todo : collect provided vars
     [(define-label ,l ,cab)         (lab! l) (ConvertedAbstraction cab)]
     [,g                             (GeneralTopLevelForm g)])
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> * ()
@@ -2888,16 +2922,42 @@
   (CaseClosureAllocation : CaseClosureAllocation (CCA) -> * ()
     [(case-closure ,s ,l [,ar ,ca] ...) (ClosureAllocation* ca)])
 
+  (RawProvideSpec : RawProvideSpec (RPS) -> * ()
+    [,ps (PhaselessSpec ps)])
+
+  (PhaselessSpec : PhaselessSpec (PS) -> * ()
+    [,sls (SpacelessSpec sls)])
+
+  (SpacelessSpec : SpacelessSpec (SS) -> * ()
+    [[,x0 ,x1]  ((prov!) x0 x1)])
+
+
   ; Fill in `top`, `mod` and `loc`
   (parameterize ([add! top!*])
     (TopLevelForm T))
   ; Convert to set
   (define sets (map (λ (xs) (apply make-id-set xs))
                     (list top mod loc)))
+
+  (define (group-provides)
+    (define grouped (group-by first (reverse provides)))
+    (define (same-module-name? x y) (eq? (car x) (car y)))
+    (define slices (slice-by same-module-name? grouped))
+    (for/list ([slice slices])
+       (define mod-name (first (first (car slice))))
+       (cons mod-name (map rest (car slice)))))
+
+  ; Output:
+  ;   (list
+  ;      (cons module-name0  (list from-name alpha-renamed-name) ...)
+  ;      (cons module-name1  (list from-name alpha-renamed-name) ...)
+  ;      ...)
+  
   ; (displayln sets)
   (values (first  sets)
           (second sets)
-          (third  sets)))
+          (third  sets)
+          (group-provides)))
 
 ;;;
 ;;; Representation of immediates
@@ -3022,8 +3082,10 @@
 (define-pass generate-code : LANF+closure (T) -> * ()
   (definitions
     ;; 1. Classify variables
-    (define-values (top-vars module-vars local-vars)
+    (define-values (top-vars module-vars local-vars provides)
       (classify-variables T))
+    (displayln "-- Provides --" (current-error-port))
+    (displayln provides         (current-error-port))
     (define (top-variable? v)    (set-in? v top-vars))    ; boxed
     (define (module-variable? v) (set-in? v module-vars))
     (define (local-variable? v)  (set-in? v local-vars))
@@ -3721,6 +3783,9 @@
              [(list v1 v2)  `(call $append/2 ,v1 ,v2)]
              [(list* vs)    `(call $append ,(build-rest-args aes))]))]
 
+        [(append*)
+         (inline-prim/variadic sym ae1 1)]
+        
         [(cartesian-product)
          (inline-prim/variadic sym ae1 0)]
 

@@ -1296,12 +1296,47 @@
                 (field $hash (mut i32))
                 (field $v    (ref null extern)))))
 
-          ;; (Placeholder) module registry
+          ;; (Placeholder) module registry          
           (type $ModuleRegistry
                 (sub $Heap
                      (struct
                        (field $hash  (mut i32))
                        (field $table (mut (ref $Array))))))
+
+          ; A namespace has a module registry.
+          ; The registry maps a module names to module declarations.
+          ; The registry is shared by all phases.
+          ; The namespace holds a distinct set of top-level variables for each phase.
+          ; Module instances are (can be) distinct for each phase.
+          ; Each namespace has a base phase.
+          ; The base phase is used by `eval` and `dynamic-require`.
+
+          
+          ; The first step in evaluating any compiled expression is to
+          ; link its top-level variable and module-level variable references to
+          ; specific variables in the namespace.
+
+          ; At all times during evaluation, some namespace is designated as the current namespace.
+
+          ; How does provide and require work?
+
+          ; A module body is executed only when the module is
+          ; explicitly instantiated via require or dynamic-require.
+          
+          ; On invocation, imported modules are instantiated in the order in which
+          ; they are required into the module (although earlier instantiations or
+          ; transitive requires can trigger the instantiation of a module before
+          ; its order within a given module).
+
+          ; Then, expressions and definitions
+          ; are evaluated in order as they appear within the module.
+
+          ; - for each module we need an $module:<module-name>:instantiate
+          ;    - allocate a $ModuleInstance
+          ;    - require modules
+          ;    - setup module level variables
+          ;    - evaluate expressions and definitions
+          
 
           ;; Namespace now maps Symbol → Boxed via a single hasheq/mutable table
           (type $Namespace
@@ -13238,6 +13273,59 @@
                                                 (local.get $ys))))
                              (else (call $raise-pair-expected (local.get $xs))
                                    (unreachable))))))
+
+         (func $append* (type $Prim>=1)
+               (param $lst  (ref eq))  ;; preceding list argument
+               (param $rest (ref eq))  ;; list of remaining arguments; last supplies more append args
+               (result      (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $acc  (ref eq))
+               (local $last (ref eq))
+               (local $args (ref eq))
+
+               ;; initialize locals with no defaults
+               (local.set $last (global.get $false))
+
+               ;; no extra args: first argument already provides list of append arguments
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then (return (call $append (local.get $lst)))))
+
+               ;; separate final list argument from preceding list values
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $loop
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (if (ref.eq (local.get $xs) (global.get $null))
+                                (then (local.set $last (struct.get $Pair $a (local.get $node)))
+                                      (br $done))
+                                (else (local.set $acc
+                                                 (struct.new $Pair
+                                                             (i32.const 0)
+                                                             (struct.get $Pair $a (local.get $node))
+                                                             (local.get $acc)))
+                                      (br $loop)))))
+
+               ;; rebuild argument list so that last argument's list is appended at the end
+               (local.set $args (local.get $last))
+               (block $done2
+                      (loop $loop2
+                            (br_if $done2 (ref.eq (local.get $acc) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $acc)))
+                            (local.set $args (struct.new $Pair
+                                                         (i32.const 0)
+                                                         (struct.get $Pair $a (local.get $node))
+                                                         (local.get $args)))
+                            (local.set $acc (struct.get $Pair $d (local.get $node)))
+                            (br $loop2)))
+
+               (local.set $args (struct.new $Pair (i32.const 0)
+                                            (local.get $lst)
+                                            (local.get $args)))
+               (call $append (local.get $args)))
 
          (func $flatten (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (local $stack (ref eq))

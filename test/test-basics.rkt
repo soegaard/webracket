@@ -1502,6 +1502,12 @@
                     #;(procedure-arity-includes? append 2)
                     #;(procedure-arity-includes? append 3)))
 
+              (list "append*"
+                    (and (equal? (append* '())                         '())
+                         (equal? (append* '((a) (b c)))               '(a b c))
+                         (equal? (append* '(a) '((b) (c)))            '(a b c))
+                         (equal? (append* '(a) '(b) '((c d) (e)))     '(a b c d e))
+                         (equal? (append* '(1 2) '((3 . 4)))          '(1 2 3 . 4))))
 
               (list "reverse"
                     (and (equal? (reverse '(a b c))             '(c b a))
