@@ -3908,9 +3908,16 @@
                  [(fx+ fl+
                      fx* fl*
                      - fx- fl-) ; (+ a b c ...) = (+ (+ a b) c ...)
+                  (define identity
+                    (case sym
+                      [(fx+ fx- -) '(global.get $zero)]
+                      [(fl+ fl-)    '(global.get $flzero)]
+                      [(fx*)        '(global.get $one)]
+                      [(fl*)        '(global.get $flone)]
+                      [else         '(global.get $zero)]))
                   (let loop ([aes (AExpr* ae1)])
                     (match aes
-                      [(list)              `(global.get $zero)]
+                      [(list)              identity]
                       [(list  ae0)         ae0]
                       [(list* ae0 ae1 aes) `(call ,(Prim pr)
                                                   (call ,(Prim pr) ,ae0 ,ae1)

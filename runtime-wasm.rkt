@@ -6630,9 +6630,9 @@
          (func $fixnum->i32 (param $x (ref eq)) (result i32)
                (local $val i32)
                (if (ref.test (ref i31) (local.get $x))
-                   (then (local.set $val (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                   (then (local.set $val (i31.get_s (ref.cast (ref i31) (local.get $x))))
                          (if (i32.eqz (i32.and (local.get $val) (i32.const 1)))
-                             (then (return (i32.shr_u (local.get $val) (i32.const 1)))) ;; return unboxed i32
+                             (then (return (i32.shr_s (local.get $val) (i32.const 1)))) ;; return unboxed i32
                              (else (call $raise-not-fixnum (local.get $x)))))
                    (else (call $raise-not-fixnum (local.get $x))))
                (unreachable))
@@ -6666,42 +6666,44 @@
         (func $double-flonum? (type $Prim1) (param $a (ref eq)) (result (ref eq))
               (call $flonum? (local.get $a)))
 
-         (func $fx->fl/precise (param $v (ref eq)) (result (ref $Flonum))
-               (local $v/i32 i32)
-               ;; Check that v is a fixnum (ref i31) and has low bit 0
-               (if (i32.eqz (ref.test (ref i31) (local.get $v)))
-                   (then (call $raise-check-fixnum (local.get $v))
-                         (unreachable)))
-               (local.set $v/i32 (i31.get_u (ref.cast (ref i31) (local.get $v))))
-               (if (i32.and (local.get $v/i32) (i32.const 1))
-                   (then (call $raise-check-fixnum (local.get $v))
-                         (unreachable)))
-               ;; Convert fixnum to flonum
-               (struct.new $Flonum
-                           (i32.const 0)                             ;; hash = 0
-                           (f64.convert_i32_s (i32.shr_u (local.get $v/i32) (i32.const 1)))))
+        (func $fx->fl/precise (param $v (ref eq)) (result (ref $Flonum))
+              (local $v/i32 i32)
+              ;; Check that v is a fixnum (ref i31) and has low bit 0
+              (if (i32.eqz (ref.test (ref i31) (local.get $v)))
+                  (then (call $raise-check-fixnum (local.get $v))
+                        (unreachable)))
+              (local.set $v/i32 (i31.get_s (ref.cast (ref i31) (local.get $v))))
+              (if (i32.and (local.get $v/i32) (i32.const 1))
+                  (then (call $raise-check-fixnum (local.get $v))
+                        (unreachable)))
+              ;; Convert fixnum to flonum
+              (struct.new $Flonum
+                          (i32.const 0)                             ;; hash = 0
+                          (f64.convert_i32_s (i32.shr_s (local.get $v/i32) (i32.const 1)))))        
 
-         (func $fx->fl (type $Prim1)
-               (param $v (ref eq))
-               (result   (ref eq))  ; a $Flonum
+        (func $fx->fl (type $Prim1)
+              (param $v (ref eq))
+              (result   (ref eq))  ; a $Flonum
 
-               (local $v/i32 i32)
-               ;; Check that v is a fixnum (ref i31) and has low bit 0
-               (if (i32.eqz (ref.test (ref i31) (local.get $v)))
-                   (then (call $raise-check-fixnum (local.get $v))
-                         (unreachable)))
-               (local.set $v/i32 (i31.get_u (ref.cast (ref i31) (local.get $v))))
-               (if (i32.and (local.get $v/i32) (i32.const 1))
-                   (then (call $raise-check-fixnum (local.get $v))
-                         (unreachable)))
-               ;; Convert fixnum to flonum
-               (struct.new $Flonum
-                           (i32.const 0)                             ;; hash = 0
-                           (f64.convert_i32_s (i32.shr_u (local.get $v/i32) (i32.const 1)))))
+              (local $v/i32 i32)
+              ;; Check that v is a fixnum (ref i31) and has low bit 0
+              (if (i32.eqz (ref.test (ref i31) (local.get $v)))
+                  (then (call $raise-check-fixnum (local.get $v))
+                        (unreachable)))
+              (local.set $v/i32 (i31.get_s (ref.cast (ref i31) (local.get $v))))
+              (if (i32.and (local.get $v/i32) (i32.const 1))
+                  (then (call $raise-check-fixnum (local.get $v))
+                        (unreachable)))
+              ;; Convert fixnum to flonum
+              (struct.new $Flonum
+                          (i32.const 0)                             ;; hash = 0
+                          (f64.convert_i32_s (i32.shr_s (local.get $v/i32) (i32.const 1)))))
+
         (func $->fl (type $Prim1)
               (param $v (ref eq))
               (result (ref eq))
               (call $fx->fl (local.get $v)))
+
         (func $raise-fl->fx (param $x (ref eq)) (unreachable))
 
         (func $fl->fx (type $Prim1)
