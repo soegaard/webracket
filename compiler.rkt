@@ -32,7 +32,7 @@
 
 ;;; todo - just for testing FFI
 
-  ;; (define ffi-files '("dom.ffi"))
+  ;; (define ffi-files '("dom.ffi" "standard.ffi"))
   ;; (for ([ffi-filename ffi-files])
   ;;   (unless (file-exists? ffi-filename)
   ;;     (error 'drive-compilation (~a "ffi file not found: " ffi-filename))))
@@ -1200,7 +1200,7 @@
         ;; Temporarily expand letrec such that letrec only binds lambdas
         [(letrec-values ([(x ...) e] ...) e0 e1 ...)
          ;    (letrec-values ([(x ...) ce] ...) e)
-         ; => (let ([x undefined] ... ...])
+         ; => (let ([x undefined] ... ...)
          ;      (letrec ([xl le] ...)
          ;        (let-values ([(t ...) ce])
          ;           (set! x t) ...)
@@ -1231,8 +1231,10 @@
                       (syntax-parse complex
                         [[(xc)     ce]  (Expr #'(set! xc ce))]
                         [[(xc ...) ce]  (with-syntax ([(tc ...) (generate-temporaries #'(xc ...))])
-                                          (Expr #'(let-values ([(tc ...) ce])
-                                                    (set! xc tc) ...)))]))
+                                          (if (eq? (syntax-e #'(xc ...)) '())
+                                              (Expr #'ce)
+                                              (Expr #'(let-values ([(tc ...) ce])
+                                                        (set! xc tc) ...))))]))
                   (Expr* #'(e0 e1 ...))))))]
         [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
