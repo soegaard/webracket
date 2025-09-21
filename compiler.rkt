@@ -3898,9 +3898,9 @@
                  [(-)           `(call ,(Prim pr)
                                        ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                  [(fx+ fx- fx*) `(call ,(Prim pr)
-                                      ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                  [(fl+ fl- fl*) `(call ,(Prim pr)
-                                      ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
+                                       ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                  ; / needs to signal an Racket error if denominator is zero
                  [else   `(call ,(Prim pr)
                                 ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
@@ -3922,6 +3922,15 @@
                       [(list* ae0 ae1 aes) `(call ,(Prim pr)
                                                   (call ,(Prim pr) ,ae0 ,ae1)
                                                   ,(loop aes))]))]
+                 [(fx/ fl/)
+                  (define aes (AExpr* ae1))
+                  (define first-two
+                    `(call ,(Prim pr)
+                           ,(car aes)
+                           ,(cadr aes)))
+                  (for/fold ([acc first-two])
+                            ([arg (in-list (cddr aes))])
+                    `(call ,(Prim pr) ,acc ,arg))]
                  [else
                   ; TODO - INSERT ARITY CHECK
                   `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
