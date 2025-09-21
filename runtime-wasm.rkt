@@ -4016,7 +4016,7 @@
                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
                        (then (return (struct.new $Flonum (i32.const 0)
                                                  (f64.convert_i32_s
-                                                  (i32.shr_u (local.get $bits)
+                                                  (i32.shr_s (local.get $bits)
                                                              (i32.const 1)))))))))
 
               ;; Not a number
@@ -4041,7 +4041,7 @@
                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
                        (then (return (struct.new $Flonum (i32.const 0)
                                                  (f64.convert_i32_s
-                                                  (i32.shr_u (local.get $bits)
+                                                  (i32.shr_s (local.get $bits)
                                                              (i32.const 1)))))))))
 
               ;; Not a number

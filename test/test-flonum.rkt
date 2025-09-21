@@ -1,6 +1,13 @@
 ;; Additional flonum tests focused on arithmetic operations.
 (list
  (list "4.3.3 Flonums — Arithmetic"
+       (list "exact->inexact"
+             (let ([neg-fixnum (exact->inexact -12)]
+                   [pos-fixnum (exact->inexact  12)]
+                   [zero       (exact->inexact   0)])
+               (list (fl= neg-fixnum -12.0)
+                     (fl= pos-fixnum  12.0)
+                     (fl= zero         0.0))))
        (list "fl+"
              (let* ([three-halves   (exact->inexact 3/2)]
                     [five-halves    (exact->inexact 5/2)]
