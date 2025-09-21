@@ -5780,8 +5780,8 @@
                       (local $x/is-fl i32)
                       (local $x-fx    i32)
 
-                      (drop (call $js-log (local.get $x0)))
-                      (drop (call $js-log (local.get $xs0)))
+                      #;(drop (call $js-log (local.get $x0)))
+                      #;(drop (call $js-log (local.get $xs0)))
 
                       (local.set $args (ref.cast (ref $Args) (local.get $xs0)))
                       (local.set $len  (array.len (local.get $args)))
