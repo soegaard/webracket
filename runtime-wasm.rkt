@@ -4012,7 +4012,7 @@
               ;; If z is a fixnum, ensure LSB = 0 and convert
               (if (ref.test (ref i31) (local.get $z))
                   (then
-                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $z))))
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $z))))
                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
                        (then (return (struct.new $Flonum (i32.const 0)
                                                  (f64.convert_i32_s
@@ -4037,7 +4037,7 @@
               ;; If x is a fixnum, ensure LSB = 0 and convert
               (if (ref.test (ref i31) (local.get $x))
                   (then
-                   (local.set $bits (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
                    (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
                        (then (return (struct.new $Flonum (i32.const 0)
                                                  (f64.convert_i32_s

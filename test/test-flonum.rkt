@@ -5,9 +5,9 @@
              (let ([neg-fixnum (exact->inexact -12)]
                    [pos-fixnum (exact->inexact  12)]
                    [zero       (exact->inexact   0)])
-               (list (fl= neg-fixnum -12.0)
-                     (fl= pos-fixnum  12.0)
-                     (fl= zero         0.0))))
+               (and (list neg-fixnum -12.0)
+                    (fl= pos-fixnum  12.0)
+                    (fl= zero         0.0))))
        (list "fl+"
              (let* ([three-halves   (exact->inexact 3/2)]
                     [five-halves    (exact->inexact 5/2)]
@@ -39,14 +39,14 @@
              (let* ([half         (exact->inexact 1/2)]
                     [three-halves (exact->inexact 3/2)]
                     [nan-prod     (fl* +nan.0 2.0)])
-               (list (fl= (fl*) 1.0)
+               (and (fl= (fl*) 1.0)
                      (fl= (fl* three-halves) three-halves)
                      (fl= (fl* 2.0 3.0) 6.0)
                      (fl= (fl* -2.0 4.0 three-halves) (exact->inexact -12))
                      (fl= (fl* half half half half) (exact->inexact 1/16))
                      (fl= (fl* -1.0 -1.0 -1.0 -1.0) 1.0)
                      (nan? nan-prod))))
-       #;(list "fl/"
+       (list "fl/"
              (let* ([one-quarter  (exact->inexact 1/4)]
                     [one-eighth   (exact->inexact 1/8)]
                     [half         (exact->inexact 1/2)]
