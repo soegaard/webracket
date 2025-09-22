@@ -438,7 +438,9 @@
  takef takef-right
  drop  drop-right
  dropf dropf-right
-
+ split-at
+ split-at-right
+ 
  member  memq  memv  memw  memf  findf
  remove  remq  remv  remw  remf  
  remove* remq* remv* remw* remf* 

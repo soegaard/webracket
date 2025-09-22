@@ -13507,6 +13507,43 @@
               (if (ref.eq (local.get $tail) (global.get $null))
                   (then (return (local.get $rev))))
               (return (call $append/2 (local.get $rev) (local.get $tail))) )
+
+
+        (func $split-at (type $Prim2)
+              (param $lst (ref eq))  ; list
+              (param $pos (ref eq))  ; exact-nonnegative-integer?
+              (result (ref eq))      ; returns two values
+
+              (local $prefix (ref eq))
+              (local $suffix (ref eq))
+
+              (local.set $prefix (global.get $null))
+              (local.set $suffix (global.get $null))
+
+              (local.set $prefix (call $take (local.get $lst) (local.get $pos)))
+              (local.set $suffix (call $drop (local.get $lst) (local.get $pos)))
+
+              (array.new_fixed $Values 2
+                               (local.get $prefix)
+                               (local.get $suffix)))
+
+        (func $split-at-right (type $Prim2)
+              (param $lst (ref eq))  ; list
+              (param $pos (ref eq))  ; exact-nonnegative-integer?
+              (result (ref eq))      ; returns two values
+
+              (local $prefix (ref eq))
+              (local $suffix (ref eq))
+
+              (local.set $prefix (global.get $null))
+              (local.set $suffix (global.get $null))
+
+              (local.set $prefix (call $drop-right (local.get $lst) (local.get $pos)))
+              (local.set $suffix (call $take-right (local.get $lst) (local.get $pos)))
+
+              (array.new_fixed $Values 2
+                               (local.get $prefix)
+                               (local.get $suffix)))
         
          (func $append (type $Prim>=0)
                (param $xs (ref eq))        ;; list of arguments

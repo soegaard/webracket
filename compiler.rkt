@@ -506,9 +506,8 @@
   drop-right
   dropf-right
 
-  ; split-at todo
+  split-at split-at-right
   ; splitf-at
-  ; split-at-right
   ; splitf-at-right
 
   list-prefix?
