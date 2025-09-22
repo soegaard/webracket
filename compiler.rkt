@@ -502,10 +502,10 @@
   take  take-right
   takef takef-right
   
-  ; drop todo
-  ; dropf
-  ; drop-right
-  ; dropf-right
+  drop 
+  dropf
+  drop-right
+  dropf-right
 
   ; split-at todo
   ; splitf-at
@@ -3677,6 +3677,8 @@
          [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
          [(take  take-right)           (inline-prim/fixed sym ae1 2)]
          [(takef takef-right)          (inline-prim/fixed sym ae1 2)]
+         [(drop drop-right
+          dropf dropf-right)           (inline-prim/fixed sym ae1 2)]
          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
@@ -3812,6 +3814,8 @@
              [(list* ae0 ae1 aes*)
              `(call ,$op (call ,$op ,ae0 ,ae1) ,(loop aes*))]))]
 
+        
+        
         [(append)
          (let loop ([aes (AExpr* ae1)])
            (match aes

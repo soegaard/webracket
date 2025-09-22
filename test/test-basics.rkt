@@ -1885,6 +1885,26 @@
                     (and (equal? (takef-right '(2 4 5 8) even?) '(8))
                          (equal? (takef-right '(1 3 5) even?) '())
                          (equal? (takef-right 'non-list even?) 'non-list)))
+              (list "drop"
+                    (and (equal? (drop '(1 2 3 4) 2) '(3 4))
+                         (equal? (drop '(1 2 3 . 4) 3) 4)
+                         (equal? (drop 'non-list 0) 'non-list)
+                         (equal? (procedure-arity drop) 2)))
+              (list "drop-right"
+                    (and (equal? (drop-right '(1 2 3 4 5) 2) '(1 2 3))
+                         (equal? (drop-right '(1 2 3 . 4) 1) '(1 2 . 4))
+                         (equal? (drop-right 'non-list 0) 'non-list)
+                         (equal? (procedure-arity drop-right) 2)))
+              (list "dropf"
+                    (and (equal? (dropf '(2 4 5 8) even?) '(5 8))
+                         (equal? (dropf '(2 4 6 8) odd?) '(2 4 6 8))
+                         (equal? (dropf 'non-list even?) 'non-list)
+                         (equal? (procedure-arity dropf) 2)))
+              (list "dropf-right"
+                    (and (equal? (dropf-right '(1 2 3 4 5) odd?) '(1 2 3 4))
+                         (equal? (dropf-right '(1 2 . 4) even?) '(1 . 4))
+                         (equal? (dropf-right 'non-list even?) 'non-list)
+                         (equal? (procedure-arity dropf-right) 2)))
               (list "list-prefix?"
                     (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
                          (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))

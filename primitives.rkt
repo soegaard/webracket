@@ -436,6 +436,8 @@
 
  take  take-right
  takef takef-right
+ drop  drop-right
+ dropf dropf-right
 
  member  memq  memv  memw  memf
  remove  remq  remv  remw  remf  
