@@ -1811,6 +1811,11 @@
                          (equal? (memf (λ (x) (= x 7)) '(7 8 9 10 11)) '(7 8 9 10 11))
                          (equal? (memf (λ (x) (< x 0)) '(7 8 9 10 11)) #f)
                          (equal? (procedure-arity memf) 2)))
+              (list "findf"
+                    (and (equal? (findf (λ (x) (> x 9)) '(7 8 9 10 11)) 10)
+                         (eq?    (findf (λ (x) (eq? x 'b)) '(a b c))    'b)
+                         (equal? (findf (λ (x) (< x 0)) '(7 8 9 10 11)) #f)
+                         (equal? (procedure-arity findf) 2)))
               (list "assq"
                     (and (equal? (assq 'b '((a 1) (b 2) (c 3))) '(b 2))
                          (equal? (assq 'd '((a 1) (b 2) (c 3))) #f)

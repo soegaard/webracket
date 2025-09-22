@@ -439,15 +439,14 @@
  drop  drop-right
  dropf dropf-right
 
- member  memq  memv  memw  memf
+ member  memq  memv  memw  memf  findf
  remove  remq  remv  remw  remf  
  remove* remq* remv* remw* remf* 
 
  argmax argmin
  group-by
- sort
+ sort 
  
- ; findf
  assoc assw assv assq assf
 
  ; caar

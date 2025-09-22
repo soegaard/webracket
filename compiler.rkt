@@ -481,7 +481,7 @@
   sort
   ; 4.10.6 List Searching
   member  memq  memv memw   memf
-  ; findf  todo
+  findf  
   assoc assw assv assq assf
 
   ; 4.10.7 Pair Accessor Shorthands
@@ -3669,7 +3669,7 @@
          [(assw assv assq assf)        (inline-prim/fixed sym ae1 2)]
          [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
-         [(memf)                       (inline-prim/fixed sym ae1 2)]
+         [(memf findf)                 (inline-prim/fixed sym ae1 2)]
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(remove*)                    (inline-prim/optional sym ae1 2 3)]
          [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
