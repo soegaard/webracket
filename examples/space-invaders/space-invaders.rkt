@@ -1,16 +1,19 @@
 (let ()
+  ;;;
+  ;;; Utilities
+  ;;;
+  
+  (define (inexact x)
+    (if (exact? x) (exact->inexact x) x))
+
+  ;;;
+  ;;; Representation of the player, the bullets and the enemies.
+  ;;;
+  
   (struct bullet (x y) #:mutable)
   (struct enemy  (x y) #:mutable)
   (struct player (x y) #:mutable)
-
-  (define (inexact x)
-    (if (exact? x) (exact->inexact x) x))
   
-  (define canvas-width  480)
-  (define canvas-height 640)
-  (define width         (inexact canvas-width))
-  (define height        (inexact canvas-height))
-
   (define player-width      48.)
   (define player-height     20.)
   (define half-player-width (/ player-width 2.))
@@ -43,14 +46,31 @@
              (+ enemy-start-y (* row enemy-spacing-y)))))
   (define enemies-dir 1)
 
-  (define status         'playing)
-  (define left-pressed?  #f)
-  (define right-pressed? #f)
-  (define space-pressed? #f)
-  (define time-since-last-shot shoot-cooldown)
+  
+  ;;;
+  ;;; Game Area
+  ;;;
+  
+  (define canvas-width  480)
+  (define canvas-height 640)
+  (define width         (inexact canvas-width))
+  (define height        (inexact canvas-height))
 
-  (define last-time #f)
+  ;;;
+  ;;; GUI Status
+  ;;;
 
+  (define status               'playing)        ; 'playing, 'won or 'lost
+  (define left-pressed?        #f)              ; set on key down, reset on key up
+  (define right-pressed?       #f)              ; ditto
+  (define space-pressed?       #f)              ; ditto
+  (define time-since-last-shot shoot-cooldown)  ; time passed since last shot
+  (define last-time            #f)              ; timestamp from last tick
+
+  ;;;
+  ;;; DOM
+  ;;;
+  
   (define canvas (js-create-element "canvas"))
   (js-set-canvas-width!  canvas canvas-width)
   (js-set-canvas-height! canvas canvas-height)
@@ -64,6 +84,10 @@
 
   (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
 
+  ;;;
+  ;;; Key Event Handlers
+  ;;;
+  
   (define (left-key? key)
     (or (string=? key "ArrowLeft")
         (string=? key "Left")
@@ -125,6 +149,11 @@
   (js-add-event-listener! (js-window-window) "keydown" key-down-handler)
   (js-add-event-listener! (js-window-window) "keyup"   key-up-handler)
 
+
+  ;;;
+  ;;; Game State 
+  ;;;
+  
   (define (clamp-player x)
     (min (- width half-player-width)
          (max half-player-width x)))
@@ -196,7 +225,7 @@
     (when (eq? status 'playing)
       (set! time-since-last-shot (+ time-since-last-shot dt))
       (define movement 0.)
-      (when left-pressed? (set! movement (- movement 1.)))
+      (when left-pressed?  (set! movement (- movement 1.)))
       (when right-pressed? (set! movement (+ movement 1.)))
       (unless (zero? movement)
         (set-player-x! player-pos
@@ -213,18 +242,25 @@
         (when (enemy-reached-bottom?)
           (set! status 'lost)))))
 
+  ;;;
+  ;;; Render game state to canvas
+  ;;; 
+  
   (define instruction-text "←/→ or A/D to move, Space to shoot")
 
   (define (render!)
+    ; Background
     (js-set-canvas2d-fill-style! ctx "#000")
     (js-canvas2d-fill-rect ctx 0. 0. (inexact width) (inexact height))
 
+    ; Player
     (js-set-canvas2d-fill-style! ctx "#0ff")
     (define player-left (- (player-x player-pos) half-player-width))
     (js-canvas2d-fill-rect ctx
                            (inexact player-left)  (inexact (player-y player-pos))
                            (inexact player-width) (inexact player-height))
 
+    ; Bullets
     (js-set-canvas2d-fill-style! ctx "#ff0")
     (for ([b (in-list bullets)])
       (js-canvas2d-fill-rect ctx
@@ -232,19 +268,21 @@
                              (inexact (bullet-y b))
                              (inexact bullet-width)
                              (inexact bullet-height)))
-
+    ; Enemies
     (js-set-canvas2d-fill-style! ctx "#f66")
     (for ([e (in-list enemies)])
       (js-canvas2d-fill-rect ctx
                              (inexact (enemy-x e)) (inexact (enemy-y e))
                              (inexact enemy-width) (inexact enemy-height)))
 
+    ; Instruction Text
     (js-set-canvas2d-fill-style!    ctx "#fff")
     (js-set-canvas2d-font!          ctx "16px sans-serif")
     (js-set-canvas2d-text-align!    ctx "center")
     (js-set-canvas2d-text-baseline! ctx "top")
     (js-canvas2d-fill-text          ctx instruction-text (/ width 2.) 16. (void))
 
+    ; Final Message
     (unless (eq? status 'playing)
       (js-set-canvas2d-font!          ctx "32px sans-serif")
       (js-set-canvas2d-text-baseline! ctx "middle")
@@ -258,6 +296,10 @@
                              (+ (/ height 2.) 36.)
                              (void))))
 
+  ;;;
+  ;;; Timer Events
+  ;;;
+  
   (define tick-external #f)
 
   (define (tick timestamp)
