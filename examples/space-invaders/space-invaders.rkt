@@ -1,6 +1,7 @@
 (let ()
   (struct bullet (x y) #:mutable)
   (struct enemy  (x y) #:mutable)
+  (struct player (x y) #:mutable)
 
   (define (inexact x)
     (if (exact? x) (exact->inexact x) x))
@@ -13,8 +14,7 @@
   (define player-width      48.)
   (define player-height     20.)
   (define half-player-width (/ player-width 2.))
-  (define player-x          (/ width 2.))
-  (define player-y          (- height (+ player-height 24.)))
+  (define player-pos        (player (/ width 2.) (- height (+ player-height 24.))))
   (define player-speed      260.)
 
   (define bullet-speed      520.)
@@ -132,7 +132,9 @@
   (define (fire!)
     (when (and (eq? status 'playing)
                (>= time-since-last-shot shoot-cooldown))
-      (set! bullets (cons (bullet player-x (- player-y bullet-height)) bullets))
+      (define new-bullet (bullet (player-x player-pos)
+                                 (- (player-y player-pos) bullet-height)))
+      (set! bullets (cons new-bullet bullets))
       (set! time-since-last-shot 0.)))
 
   (define (bullet-hits-enemy? b e)
@@ -152,9 +154,9 @@
   (define (find-hit-enemy b)
     (let loop ([rest enemies])
       (cond
-        [(null? rest) #f]
+        [(null? rest)                      #f]
         [(bullet-hits-enemy? b (car rest)) (car rest)]
-        [else (loop (cdr rest))])))
+        [else                              (loop (cdr rest))])))
 
   (define (update-bullets dt)
     (define new-bullets '())
@@ -172,19 +174,19 @@
   (define (update-enemies dt)
     (when (pair? enemies)
       (define dx (* enemy-speed dt enemies-dir))
-      (define drop? #f)
+      (js-log (vector enemy-speed dt enemies-dir))
+      (js-log dx)
+      (define drop?
+        (for/or ([e (in-list enemies)])
+          (define new-x (+ (enemy-x e) dx))
+          (or (< new-x enemy-margin)
+              (> (+ new-x enemy-width) (- width enemy-margin)))))
+      (when drop?
+        (set! enemies-dir (- enemies-dir))
+        (for ([e (in-list enemies)])
+          (set-enemy-y! e (+ (enemy-y e) enemy-drop))))
       (for ([e (in-list enemies)])
-        (define new-x (+ (enemy-x e) dx))
-        (when (or (< new-x enemy-margin)
-                  (> (+ new-x enemy-width) (- width enemy-margin)))
-          (set! drop? #t)))
-      (if drop?
-          (begin
-            (for ([e (in-list enemies)])
-              (set-enemy-y! e (+ (enemy-y e) enemy-drop)))
-            (set! enemies-dir (- enemies-dir)))
-          (for ([e (in-list enemies)])
-            (set-enemy-x! e (+ (enemy-x e) dx))))))
+        (set-enemy-x! e (+ (enemy-x e) dx)))))
 
   (define (enemy-reached-bottom?)
     (for/or ([e (in-list enemies)])
@@ -197,7 +199,10 @@
       (when left-pressed? (set! movement (- movement 1.)))
       (when right-pressed? (set! movement (+ movement 1.)))
       (unless (zero? movement)
-        (set! player-x (clamp-player (+ player-x (* movement player-speed dt)))))
+        (set-player-x! player-pos
+                       (clamp-player
+                        (+ (player-x player-pos)
+                           (* movement player-speed dt)))))
       (when space-pressed?
         (fire!))
       (update-bullets dt)
@@ -215,9 +220,9 @@
     (js-canvas2d-fill-rect ctx 0. 0. (inexact width) (inexact height))
 
     (js-set-canvas2d-fill-style! ctx "#0ff")
-    (define player-left (- player-x half-player-width))
+    (define player-left (- (player-x player-pos) half-player-width))
     (js-canvas2d-fill-rect ctx
-                           (inexact player-left)  (inexact player-y)
+                           (inexact player-left)  (inexact (player-y player-pos))
                            (inexact player-width) (inexact player-height))
 
     (js-set-canvas2d-fill-style! ctx "#ff0")
