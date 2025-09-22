@@ -1926,7 +1926,6 @@
                            (and (equal? prefix '())
                                 (equal? suffix 'non-list)))))
               (list "split-at-right"
-                    (let ([and list] [equal? list])
                     (and (let-values ([(prefix suffix) (split-at-right '(1 2 3 4 5) 2)])
                            (and (equal? prefix '(1 2 3))
                                 (equal? suffix '(4 5))))
@@ -1935,7 +1934,7 @@
                                 (equal? suffix '(2 . 3))))
                          (let-values ([(prefix suffix) (split-at-right 'non-list 0)])
                            (and (equal? prefix '())
-                                (equal? suffix 'non-list))))))
+                                (equal? suffix 'non-list)))))
               (list "list-prefix?"
                     (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
                          (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))

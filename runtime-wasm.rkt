@@ -13532,14 +13532,36 @@
               (param $pos (ref eq))  ; exact-nonnegative-integer?
               (result (ref eq))      ; returns two values
 
-              (local $prefix (ref eq))
-              (local $suffix (ref eq))
+              (local $prefix  (ref eq))
+              (local $suffix  (ref eq))
+              (local $acc      (ref eq))
+              (local $current  (ref eq))
+              (local $pair     (ref $Pair))
 
-              (local.set $prefix (global.get $null))
-              (local.set $suffix (global.get $null))
-
-              (local.set $prefix (call $drop-right (local.get $lst) (local.get $pos)))
+              (local.set $prefix  (global.get $null))
+              (local.set $suffix  (global.get $null))
+              (local.set $acc     (global.get $null))
+              (local.set $current (global.get $null))
+              (local.set $pair    (global.get $dummy-pair))
+              
               (local.set $suffix (call $take-right (local.get $lst) (local.get $pos)))
+              (local.set $current (local.get $lst))
+              (block $done
+                     (loop $build
+                           (if (ref.eq (local.get $current) (local.get $suffix))
+                               (then (br $done)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $current)))
+                               (then (call $raise-pair-expected (local.get $current))
+                                     (unreachable)))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $current)))
+                           (local.set $acc
+                                      (call $cons
+                                            (struct.get $Pair $a (local.get $pair))
+                                            (local.get $acc)))
+                           (local.set $current (struct.get $Pair $d (local.get $pair)))
+                           (br $build)))
+
+              (local.set $prefix (call $reverse (local.get $acc)))
 
               (array.new_fixed $Values 2
                                (local.get $prefix)
