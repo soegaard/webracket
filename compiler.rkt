@@ -506,9 +506,8 @@
   drop-right
   dropf-right
 
-  split-at split-at-right
-  ; splitf-at
-  ; splitf-at-right
+  split-at  split-at-right
+  splitf-at splitf-at-right
 
   list-prefix?
   take-common-prefix

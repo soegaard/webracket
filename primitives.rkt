@@ -434,12 +434,12 @@
  drop-common-prefix
  split-common-prefix
 
- take  take-right
- takef takef-right
- drop  drop-right
- dropf dropf-right
- split-at
- split-at-right
+ take           take-right
+ takef          takef-right
+ drop           drop-right
+ dropf          dropf-right
+ split-at       splitf-at 
+ split-at-right splitf-at-right
  
  member  memq  memv  memw  memf  findf
  remove  remq  remv  remw  remf  
