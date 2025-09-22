@@ -989,7 +989,7 @@
     (formals x)                  => x)
   (TopLevelForm (t)
     ; turns out it is best keep unique tags (Expr also has a begin)
-    (topbegin s t ...)           => (begin t ...)
+    (topbegin s t ...)           => (topbegin t ...)
     (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
     (#%expression s e)           => (#%expression e)
     g)
@@ -1122,6 +1122,7 @@
       (syntax-parse G #:literal-sets (kernel-literals) ; keywords in fully expanded programs
         [(define-values   (x ...) e)  `(define-values   ,G (,(variable* #'(x ...)) ...) ,(Expr #'e))]
         [(#%require rrs ...)          `(#%require       ,G ,(RawRequireSpec* #'(rrs ...)) ...)]
+        
         [(define-syntaxes (x ...) e)  (Expr #''"define-syntaxes is ignored")]
         ; Note: The (Expr #'e) will fail. The syntax patterns will fail: the literals are
         ;       in phase 0 and the expression e is in phase 1.
@@ -1282,7 +1283,36 @@
                   '(module test webracket (#%plain-module-begin '11)))
     (check-equal? (test #'(module test webracket (fx+ 11 22)))
                   '(module test webracket (#%plain-module-begin (fx+ '11 '22))))))
-    
+
+
+;;;
+;;; FLATTEN TOP-LEVEL BEGIN
+;;;
+
+(define-pass flatten-topbegin : LFE (T) ->  LFE ()
+  (definitions)
+
+  (TopLevelForm     : TopLevelForm        (T) -> TopLevelForm ()
+    [(topbegin ,s ,t0 ...)
+     (let ()
+       (define (topbegin? t)
+         (nanopass-case (LFE TopLevelForm) t
+           [(topbegin ,s ,t0 ...) #t]
+           [else                  #f]))
+
+       (let loop ([ts t0])
+         ; we loop until there are no `topbegin`s left
+         (cond
+           [(memf topbegin? ts)
+            ; for each t we return a list of `TopLevelForm`.
+            (define tss
+              (for/list ([t ts])
+                (nanopass-case (LFE TopLevelForm) t
+                  [(topbegin ,s ,t0  ...) t0]
+                  [else                   (list t)])))
+            (loop (append* tss))]
+           [else
+            `(topbegin ,s ,ts ...)])))]))
 
 ;;;
 ;;; QUOTATIONS
@@ -2461,6 +2491,8 @@
     (define (bound-at-top-level ts)
       ; return set of all xs occuring in a 
       ;     (define-values   ,s (,x ...) ,[e xs])
+      ; Note: The method of collecting below assumes that `topbegin`
+      ;       has been flattened.
       (for/fold ([bound empty-set]) ([t ts])
         (define newly-bound
           (nanopass-case (LANF TopLevelForm) t
@@ -4587,20 +4619,21 @@
 (define (comp stx)
   (reset-counter!)
   (strip
-    (generate-code
-     (flatten-begin
-      (closure-conversion
-       (anormalize
-        (categorize-applications
-         (assignment-conversion
-          (α-rename
-           (explicit-case-lambda
-            (explicit-begin
-             (convert-quotations
+   (generate-code
+    (flatten-begin
+     (closure-conversion
+      (anormalize
+       (categorize-applications
+        (assignment-conversion
+         (α-rename
+          (explicit-case-lambda
+           (explicit-begin
+            (convert-quotations
+             (flatten-topbegin
               (parse
                (let ([t (topexpand stx)])
                  ; (displayln (pretty-print (syntax->datum t)))
-                 t))))))))))))))
+                 t)))))))))))))))
 
 (define (comp- stx)
   (reset-counter!)
@@ -4615,8 +4648,9 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (parse
-              (topexpand stx))))))))))))))
+             (flatten-topbegin
+              (parse
+               (topexpand stx)))))))))))))))
 
 (define (comp-- stx)
   (reset-counter!)
@@ -4629,8 +4663,9 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (parse
-              (topexpand stx))))))))))))
+             (flatten-topbegin
+              (parse
+               (topexpand stx)))))))))))))
 
 (define (comp--- stx)
   (reset-counter!)
@@ -4642,13 +4677,14 @@
        (explicit-case-lambda
         (explicit-begin
          (convert-quotations
-          (parse
-           (topexpand stx)))))))))))
+          (flatten-topbegin
+           (parse
+            (topexpand stx))))))))))))
 
 (define (test stx)
   (reset-counter!)
-  (classify-variables
-   (flatten-begin
+  (values ; classify-variables
+   (values ; flatten-begin
     (closure-conversion
      (anormalize
       (categorize-applications
@@ -4657,8 +4693,9 @@
          (explicit-case-lambda
           (explicit-begin
            (convert-quotations
-            (parse
-             (topexpand stx)))))))))))))
+            (flatten-topbegin
+             (parse             
+              (topexpand stx))))))))))))))
 
 
 

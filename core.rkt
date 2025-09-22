@@ -118,13 +118,13 @@
 
 ;; 3.18 Iterations and comprehensions
 (require (only-in racket/base
-                  for for/list for/vector for/sum
-                  in-list in-vector
-                  in-range in-naturals
+                  for  for/list  for/vector  for/sum  for/or  for/and
+                  for* for*/list for*/vector for*/sum for*/or for*/and
+                  in-list in-vector in-range in-naturals
                   ))
-(provide for for/list for/vector for/sum
-         in-list in-vector
-         in-range in-naturals)
+(provide for  for/list  for/vector  for/sum  for/fold for/or for/and
+         for* for*/list for*/vector for*/sum for/fold for*/or for*/and
+         in-list in-vector in-range in-naturals)
 
 ;; 3.19 Continuations marks
 ;; (require (only-in racket/base with-continuation-mark))
@@ -156,6 +156,10 @@
                   null))
 (provide null)
 
+;; 5.   Structures
+;; 5.1  Defining Structure Types:  struct
+
+(provide struct)
 
 ;; 13.10
 
