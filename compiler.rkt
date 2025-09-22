@@ -989,7 +989,7 @@
     (formals x)                  => x)
   (TopLevelForm (t)
     ; turns out it is best keep unique tags (Expr also has a begin)
-    (topbegin s t ...)           => (topbegin t ...)
+    (topbegin s t ...)           => (begin t ...)
     (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
     (#%expression s e)           => (#%expression e)
     g)
