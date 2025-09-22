@@ -448,8 +448,7 @@
  sort
  
  ; findf
- assoc assw assv assq
- ; assf
+ assoc assw assv assq assf
 
  ; caar
  ; cadr

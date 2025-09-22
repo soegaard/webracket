@@ -1831,6 +1831,11 @@
                     (and (equal? (assoc '(b) '(((a)) ((b) 1) ((c)))) '((b) 1))
                          (equal? (assoc 'd '((a 1) (b 2))) #f)
                          (equal? (assoc "B" '(("a" 1) ("b" 2)) string-ci=?) '("b" 2))))
+              (list "assf"
+                    (and (equal? (assf (λ (x) (> x 2)) '((1 a) (3 b) (5 c))) '(3 b))
+                         (equal? (assf (λ (x) (< x 0)) '((1 a) (3 b))) #f)
+                         (equal? (assf (λ (x) (and (> x 3) 'found)) '((1 a) (4 b))) '(4 b))
+                         (equal? (procedure-arity assf) 2)))
               (list "argmax"
                     (and (equal? (argmax car '((3 pears) (1 banana) (2 apples))) '(3 pears))
                          (equal? (argmax car '((3 pears) (3 oranges))) '(3 pears))))

@@ -482,8 +482,7 @@
   ; 4.10.6 List Searching
   member  memq  memv memw   memf
   ; findf  todo
-  assoc assw assv assq
-  ; assf   todo
+  assoc assw assv assq assf
 
   ; 4.10.7 Pair Accessor Shorthands
   ; caar ... cddddr  todo
@@ -3667,7 +3666,7 @@
          [(vector-argmax vector-argmin)     (inline-prim/fixed sym ae1 2)]
 
          [(assoc)                      (inline-prim/optional sym ae1 2 3)]
-         [(assw assv assq)             (inline-prim/fixed sym ae1 2)]
+         [(assw assv assq assf)        (inline-prim/fixed sym ae1 2)]
          [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
          [(memf)                       (inline-prim/fixed sym ae1 2)]

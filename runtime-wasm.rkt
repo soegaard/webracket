@@ -13813,7 +13813,8 @@
                                (br $search)))
                      (return (local.get $cur)))
                (unreachable))
-         
+
+        
          ,@(for/list ([name       '($assoc  $assw  $assv  $assq)]
                       [type       '($Prim23 $Prim2 $Prim2 $Prim2)]
                       [needs-proc '(1       0       0       0)]
@@ -13883,6 +13884,52 @@
                           (local.set $alist (struct.get $Pair $d (local.get $list-pair)))
                           (br $search))
                     (unreachable)))
+
+         (func $assf (type $Prim2)
+               (param $proc  (ref eq)) ;; predicate
+               (param $alist (ref eq)) ;; association list
+               (result       (ref eq))
+
+               (local $f          (ref $Procedure))
+               (local $finv       (ref $ProcedureInvoker))
+               (local $list-pair  (ref $Pair))
+               (local $entry      (ref eq))
+               (local $entry-pair (ref $Pair))
+               (local $key        (ref eq))
+               (local $args       (ref $Args))
+               (local $res        (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+               (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+               (loop $search
+                     (if (ref.eq (local.get $alist) (global.get $null))
+                         (then (return (global.get $false))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $alist)))
+                         (then (call $raise-pair-expected (local.get $alist))
+                               (unreachable)))
+                     (local.set $list-pair (ref.cast (ref $Pair) (local.get $alist)))
+                     (local.set $entry (struct.get $Pair $a (local.get $list-pair)))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $entry)))
+                         (then (call $raise-pair-expected (local.get $entry))
+                               (unreachable)))
+                     (local.set $entry-pair (ref.cast (ref $Pair) (local.get $entry)))
+                     (local.set $key (struct.get $Pair $a (local.get $entry-pair)))
+                     (array.set $Args (local.get $args) (i32.const 0) (local.get $key))
+                     (local.set $res
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $args)
+                                          (local.get $finv)))
+                     (if (ref.eq (local.get $res) (global.get $false))
+                         (then (local.set $alist (struct.get $Pair $d (local.get $list-pair)))
+                               (br $search)))
+                     (return (local.get $entry)))
+               (unreachable))
          
          (func $index-of (type $Prim3)
                (param $xs     (ref eq))  ;; list
