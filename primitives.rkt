@@ -434,10 +434,9 @@
  drop-common-prefix
  split-common-prefix
 
- member memq memv memw
- ; memf
- remove  remf  remq  remv  remw
- remove* remf* remq* remv* remw*
+ member  memq  memv  memw  memf
+ remove  remq  remv  remw  remf  
+ remove* remq* remv* remw* remf* 
 
  argmax argmin
  group-by

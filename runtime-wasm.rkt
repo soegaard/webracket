@@ -13489,6 +13489,47 @@
                           (br $search))
                     (unreachable)))
 
+         (func $memf (type $Prim2)
+               (param $proc (ref eq)) ;; predicate
+               (param $lst  (ref eq)) ;; list to search
+               (result      (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+               (local $cur  (ref eq))
+               (local $pair (ref $Pair))
+               (local $elem (ref eq))
+               (local $args (ref $Args))
+               (local $res  (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+               (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+               (local.set $cur (local.get $lst))
+               (loop $search
+                     (if (ref.eq (local.get $cur) (global.get $null))
+                         (then (return (global.get $false))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                         (then (call $raise-pair-expected (local.get $cur))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                     (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                     (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                     (local.set $res
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $args)
+                                          (local.get $finv)))
+                     (if (ref.eq (local.get $res) (global.get $false))
+                         (then (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                               (br $search)))
+                     (return (local.get $cur)))
+               (unreachable))
+         
          ,@(for/list ([name       '($assoc  $assw  $assv  $assq)]
                       [type       '($Prim23 $Prim2 $Prim2 $Prim2)]
                       [needs-proc '(1       0       0       0)]

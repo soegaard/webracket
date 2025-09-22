@@ -1806,6 +1806,11 @@
                          (equal? (memw 1/2 '(1/2)) '(1/2))
                          (equal? (memw '(1 2) '(1 2 (1 2))) '((1 2)))
                          (equal? (procedure-arity memw) 2)))
+              (list "memf"
+                    (and (equal? (memf (λ (x) (> x 9)) '(7 8 9 10 11)) '(10 11))
+                         (equal? (memf (λ (x) (= x 7)) '(7 8 9 10 11)) '(7 8 9 10 11))
+                         (equal? (memf (λ (x) (< x 0)) '(7 8 9 10 11)) #f)
+                         (equal? (procedure-arity memf) 2)))
               (list "assq"
                     (and (equal? (assq 'b '((a 1) (b 2) (c 3))) '(b 2))
                          (equal? (assq 'd '((a 1) (b 2) (c 3))) #f)

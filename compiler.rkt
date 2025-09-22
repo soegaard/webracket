@@ -480,8 +480,7 @@
   remove* remq* remv* remw* remf*
   sort
   ; 4.10.6 List Searching
-  member  memq  memv memw
-  ; memf   todo
+  member  memq  memv memw   memf
   ; findf  todo
   assoc assw assv assq
   ; assf   todo
@@ -3670,6 +3669,7 @@
          [(assw assv assq)             (inline-prim/fixed sym ae1 2)]
          [(group-by)                   (inline-prim/optional sym ae1 2 3)]
          [(member)                     (inline-prim/optional sym ae1 2 3)]
+         [(memf)                       (inline-prim/fixed sym ae1 2)]
          [(remove)                     (inline-prim/optional sym ae1 2 3)]
          [(remove*)                    (inline-prim/optional sym ae1 2 3)]
          [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
