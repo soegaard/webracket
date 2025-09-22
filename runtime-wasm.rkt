@@ -12902,6 +12902,30 @@
                          (unreachable))))
 
 
+         ,@(for/list ([name '(caar cadr cdar cddr
+                             caaar caadr cadar caddr
+                             cdaar cdadr cddar cdddr
+                             caaaar caaadr caadar caaddr
+                             cadaar cadadr caddar cadddr
+                             cdaaar cdaadr cdadar cdaddr
+                             cddaar cddadr cdddar cddddr)])
+            (let* ([str      (symbol->string name)]
+                   [letters  (substring str 1 (sub1 (string-length str)))]
+                   [ops      (for/list ([ch (in-list (reverse (string->list letters)))])
+                               (case ch
+                                 [(#\a) 'car]
+                                 [(#\d) 'cdr]
+                                 [else (error 'generate-runtime
+                                              "invalid pair accessor name: ~a" name)]))]
+                   [body     (for/fold ([expr '(local.get $v)]) ([op (in-list ops)])
+                               (case op
+                                 [(car) `(call $car ,expr)]
+                                 [(cdr) `(call $cdr ,expr)]))])
+              `(func ,(string->symbol (~a "$" name)) (type $Prim1)
+                     (param $v (ref eq))
+                     (result (ref eq))
+                     ,body)))
+         
          (func $list? (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (block $exit (result (ref eq))
                       (loop $loop

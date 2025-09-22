@@ -451,10 +451,13 @@
  
  assoc assw assv assq assf
 
- ; caar
- ; cadr
- ; cdar
- ; cddr
+ caar  cadr  cdar  cddr
+ caaar caadr cadar caddr
+ cdaar cdadr cddar cdddr
+ caaaar caaadr caadar caaddr
+ cadaar cadadr caddar cadddr
+ cdaaar cdaadr cdadar cdaddr
+ cddaar cddadr cdddar cddddr
 
  ;; 4.11 Mutable Pairs and Lists
 

@@ -485,7 +485,13 @@
   assoc assw assv assq assf
 
   ; 4.10.7 Pair Accessor Shorthands
-  ; caar ... cddddr  todo
+  caar  cadr  cdar  cddr
+  caaar caadr cadar caddr
+  cdaar cdadr cddar cdddr
+  caaaar caaadr caadar caaddr
+  cadaar cadadr caddar cadddr
+  cdaaar cdaadr cdadar cdaddr
+  cddaar cddadr cdddar cddddr
 
   ; 4.10.8 Additional List Functions and Synonyms
   cons?

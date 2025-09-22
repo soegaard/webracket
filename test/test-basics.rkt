@@ -1996,6 +1996,109 @@
                          (equal? (add-between '(x) 'and)     '(x))
                          (equal? (add-between '() 'and)      '())))
 
+              (list "caar..cddddr"
+                    (let ([tree (letrec ([build (λ (depth path)
+                                                  (if (zero? depth)
+                                                      (string->symbol path)
+                                                      (cons (build (sub1 depth) (string-append path "a"))
+                                                            (build (sub1 depth) (string-append path "d")))))])
+                                  (build 4 ""))])
+                      (define (selector-result name)
+                        (define str (symbol->string name))
+                        (define letters
+                          (reverse (string->list (substring str 1 (sub1 (string-length str))))))
+                        (let loop ([v tree] [chs letters])
+                          (if (null? chs)
+                              v
+                              (loop ((if (char=? (car chs) #\a) car cdr) v)
+                                    (cdr chs)))))
+                      (list
+                       (list "caar"
+                             (and (equal? (caar tree) (selector-result 'caar))
+                                  (equal? (procedure-arity caar) 1)))
+                       (list "cadr"
+                             (and (equal? (cadr tree) (selector-result 'cadr))
+                                  (equal? (procedure-arity cadr) 1)))
+                       (list "cdar"
+                             (and (equal? (cdar tree) (selector-result 'cdar))
+                                  (equal? (procedure-arity cdar) 1)))
+                       (list "cddr"
+                             (and (equal? (cddr tree) (selector-result 'cddr))
+                                  (equal? (procedure-arity cddr) 1)))
+                       (list "caaar"
+                             (and (equal? (caaar tree) (selector-result 'caaar))
+                                  (equal? (procedure-arity caaar) 1)))
+                       (list "caadr"
+                             (and (equal? (caadr tree) (selector-result 'caadr))
+                                  (equal? (procedure-arity caadr) 1)))
+                       (list "cadar"
+                             (and (equal? (cadar tree) (selector-result 'cadar))
+                                  (equal? (procedure-arity cadar) 1)))
+                       (list "caddr"
+                             (and (equal? (caddr tree) (selector-result 'caddr))
+                                  (equal? (procedure-arity caddr) 1)))
+                       (list "cdaar"
+                             (and (equal? (cdaar tree) (selector-result 'cdaar))
+                                  (equal? (procedure-arity cdaar) 1)))
+                       (list "cdadr"
+                             (and (equal? (cdadr tree) (selector-result 'cdadr))
+                                  (equal? (procedure-arity cdadr) 1)))
+                       (list "cddar"
+                             (and (equal? (cddar tree) (selector-result 'cddar))
+                                  (equal? (procedure-arity cddar) 1)))
+                       (list "cdddr"
+                             (and (equal? (cdddr tree) (selector-result 'cdddr))
+                                  (equal? (procedure-arity cdddr) 1)))
+                       (list "caaaar"
+                             (and (equal? (caaaar tree) (selector-result 'caaaar))
+                                  (equal? (procedure-arity caaaar) 1)))
+                       (list "caaadr"
+                             (and (equal? (caaadr tree) (selector-result 'caaadr))
+                                  (equal? (procedure-arity caaadr) 1)))
+                       (list "caadar"
+                             (and (equal? (caadar tree) (selector-result 'caadar))
+                                  (equal? (procedure-arity caadar) 1)))
+                       (list "caaddr"
+                             (and (equal? (caaddr tree) (selector-result 'caaddr))
+                                  (equal? (procedure-arity caaddr) 1)))
+                       (list "cadaar"
+                             (and (equal? (cadaar tree) (selector-result 'cadaar))
+                                  (equal? (procedure-arity cadaar) 1)))
+                       (list "cadadr"
+                             (and (equal? (cadadr tree) (selector-result 'cadadr))
+                                  (equal? (procedure-arity cadadr) 1)))
+                       (list "caddar"
+                             (and (equal? (caddar tree) (selector-result 'caddar))
+                                  (equal? (procedure-arity caddar) 1)))
+                       (list "cadddr"
+                             (and (equal? (cadddr tree) (selector-result 'cadddr))
+                                  (equal? (procedure-arity cadddr) 1)))
+                       (list "cdaaar"
+                             (and (equal? (cdaaar tree) (selector-result 'cdaaar))
+                                  (equal? (procedure-arity cdaaar) 1)))
+                       (list "cdaadr"
+                             (and (equal? (cdaadr tree) (selector-result 'cdaadr))
+                                  (equal? (procedure-arity cdaadr) 1)))
+                       (list "cdadar"
+                             (and (equal? (cdadar tree) (selector-result 'cdadar))
+                                  (equal? (procedure-arity cdadar) 1)))
+                       (list "cdaddr"
+                             (and (equal? (cdaddr tree) (selector-result 'cdaddr))
+                                  (equal? (procedure-arity cdaddr) 1)))
+                       (list "cddaar"
+                             (and (equal? (cddaar tree) (selector-result 'cddaar))
+                                  (equal? (procedure-arity cddaar) 1)))
+                       (list "cddadr"
+                             (and (equal? (cddadr tree) (selector-result 'cddadr))
+                                  (equal? (procedure-arity cddadr) 1)))
+                       (list "cdddar"
+                             (and (equal? (cdddar tree) (selector-result 'cdddar))
+                                  (equal? (procedure-arity cdddar) 1)))
+                       (list "cddddr"
+                             (and (equal? (cddddr tree) (selector-result 'cddddr))
+                                  (equal? (procedure-arity cddddr) 1))))))
+
+
               ; The test of map need to test all shapes (see $primitive-invoke)
               #;(list "map"
                       (and
