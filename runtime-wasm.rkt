@@ -16819,6 +16819,213 @@
                                   (local.get $v-lst)
                                   (local.get $lst)
                                   (global.get ,cmp)))))
+
+        (func $raise-take:bad-length
+              (param $xs  (ref eq))
+              (param $n   i32)
+              (param $len i32)
+              (unreachable))
+
+        (func $raise-take-right:bad-length
+              (param $xs  (ref eq))
+              (param $n   i32)
+              (param $len i32)
+              (unreachable))
+
+        (func $take (type $Prim2)
+              (param $xs    (ref eq))
+              (param $n/fx  (ref eq))
+              (result       (ref eq))
+
+              (local $count      i32)
+              (local $orig-count i32)
+              (local $taken      i32)
+              (local $cur        (ref eq))
+              (local $pair       (ref $Pair))
+              (local $elem       (ref eq))
+              (local $acc        (ref eq))
+
+              (if (ref.test (ref i31) (local.get $n/fx))
+                  (then (local.set $count (i31.get_u (ref.cast (ref i31) (local.get $n/fx))))
+                        (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $n/fx))))
+                        (local.set $count (i32.shr_u (local.get $count) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $n/fx))))
+
+              (local.set $orig-count (local.get $count))
+
+              (if (i32.eqz (local.get $count))
+                  (then (return (global.get $null))))
+
+              (local.set $cur  (local.get $xs))
+              (local.set $pair (global.get $dummy-pair))
+              (local.set $acc  (global.get $null))
+              (local.set $taken (i32.const 0))
+
+              (loop $loop
+                    (if (i32.eqz (local.get $count))
+                        (then (return (call $reverse (local.get $acc)))))
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (call $raise-take:bad-length
+                                    (local.get $xs)
+                                    (local.get $orig-count)
+                                    (local.get $taken))
+                              (unreachable)))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (local.set $acc  (call $cons (local.get $elem) (local.get $acc)))
+                    (local.set $cur  (struct.get $Pair $d (local.get $pair)))
+                    (local.set $count (i32.sub (local.get $count) (i32.const 1)))
+                    (local.set $taken (i32.add (local.get $taken) (i32.const 1)))
+                    (br $loop))
+              (unreachable))
+
+        (func $take-right (type $Prim2)
+              (param $xs    (ref eq))
+              (param $n/fx  (ref eq))
+              (result       (ref eq))
+
+              (local $count      i32)
+              (local $orig-count i32)
+              (local $remaining  i32)
+              (local $available  i32)
+              (local $lead       (ref eq))
+              (local $lag        (ref eq))
+              (local $pair       (ref $Pair))
+              (local $lag-pair   (ref $Pair))
+
+              (if (ref.test (ref i31) (local.get $n/fx))
+                  (then (local.set $count (i31.get_u (ref.cast (ref i31) (local.get $n/fx))))
+                        (if (i32.ne (i32.and (local.get $count) (i32.const 1)) (i32.const 0))
+                            (then (call $raise-check-fixnum (local.get $n/fx))))
+                        (local.set $count (i32.shr_u (local.get $count) (i32.const 1))))
+                  (else (call $raise-check-fixnum (local.get $n/fx))))
+
+              (local.set $orig-count (local.get $count))
+
+              (if (i32.eqz (local.get $count))
+                  (then (return (local.get $xs))))
+
+              (local.set $lead      (local.get $xs))
+              (local.set $remaining (local.get $count))
+              (local.set $available (i32.const 0))
+              (local.set $pair      (global.get $dummy-pair))
+              (local.set $lag-pair  (global.get $dummy-pair))
+
+              (block $advance-done
+                     (loop $advance
+                           (if (i32.eqz (local.get $remaining))
+                               (then (br $advance-done)))
+                           (if (i32.eqz (ref.test (ref $Pair) (local.get $lead)))
+                               (then (call $raise-take-right:bad-length
+                                           (local.get $xs)
+                                           (local.get $orig-count)
+                                           (local.get $available))
+                                     (unreachable)))
+                           (local.set $pair (ref.cast (ref $Pair) (local.get $lead)))
+                           (local.set $lead (struct.get $Pair $d (local.get $pair)))
+                           (local.set $remaining (i32.sub (local.get $remaining) (i32.const 1)))
+                           (local.set $available (i32.add (local.get $available) (i32.const 1)))
+                           (br $advance)))
+
+              (local.set $lag (local.get $xs))
+
+              (loop $slide
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $lead)))
+                        (then (return (local.get $lag))))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $lead)))
+                    (local.set $lag-pair (ref.cast (ref $Pair) (local.get $lag)))
+                    (local.set $lead (struct.get $Pair $d (local.get $pair)))
+                    (local.set $lag  (struct.get $Pair $d (local.get $lag-pair)))
+                    (br $slide))
+              (unreachable))
+
+        (func $takef (type $Prim2)
+              (param $xs   (ref eq))
+              (param $proc (ref eq))
+              (result      (ref eq))
+
+              (local $f    (ref $Procedure))
+              (local $inv  (ref $ProcedureInvoker))
+              (local $args (ref $Args))
+              (local $res  (ref eq))
+              (local $cur  (ref eq))
+              (local $pair (ref $Pair))
+              (local $elem (ref eq))
+              (local $acc  (ref eq))
+
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+
+              (local.set $f   (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $inv (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              (local.set $cur  (local.get $xs))
+              (local.set $pair (global.get $dummy-pair))
+              (local.set $acc  (global.get $null))
+
+              (loop $loop
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (return (call $reverse (local.get $acc)))))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                    (local.set $res
+                               (call_ref $ProcedureInvoker
+                                         (local.get $f)
+                                         (local.get $args)
+                                         (local.get $inv)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (return (call $reverse (local.get $acc)))))
+                    (local.set $acc (call $cons (local.get $elem) (local.get $acc)))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (br $loop))
+              (unreachable))
+
+        (func $takef-right (type $Prim2)
+              (param $xs   (ref eq))
+              (param $proc (ref eq))
+              (result      (ref eq))
+
+              (local $f      (ref $Procedure))
+              (local $inv    (ref $ProcedureInvoker))
+              (local $args   (ref $Args))
+              (local $res    (ref eq))
+              (local $cur    (ref eq))
+              (local $pair   (ref $Pair))
+              (local $elem   (ref eq))
+              (local $suffix (ref eq))
+
+              (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                  (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                        (unreachable)))
+
+              (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+              (local.set $inv  (struct.get $Procedure $invoke (local.get $f)))
+              (local.set $args (array.new $Args (global.get $null) (i32.const 1)))
+
+              (local.set $cur    (local.get $xs))
+              (local.set $pair   (global.get $dummy-pair))
+              (local.set $suffix (local.get $xs))
+
+              (loop $loop
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $cur)))
+                        (then (return (local.get $suffix))))
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $cur)))
+                    (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                    (array.set $Args (local.get $args) (i32.const 0) (local.get $elem))
+                    (local.set $res
+                               (call_ref $ProcedureInvoker
+                                         (local.get $f)
+                                         (local.get $args)
+                                         (local.get $inv)))
+                    (if (ref.eq (local.get $res) (global.get $false))
+                        (then (local.set $suffix (struct.get $Pair $d (local.get $pair)))))
+                    (local.set $cur (struct.get $Pair $d (local.get $pair)))
+                    (br $loop))
+              (unreachable))
         
 
         (func $list-prefix? (type $Prim23)

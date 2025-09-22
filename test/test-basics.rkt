@@ -1869,6 +1869,22 @@
                     (equal? (indexes-of '(1 2 1 2 1) 2) '(1 3)))
               (list "indexes-where"
                     (equal? (indexes-where '(1 2 3 4) even?) '(1 3)))
+              (list "take"
+                    (and (equal? (take '(1 2 3 4) 2) '(1 2))
+                         (equal? (take '(a b . c) 1) '(a))
+                         (equal? (take 'non-list 0) '())))
+              (list "take-right"
+                    (and (equal? (take-right '(1 2 3 4) 2) '(3 4))
+                         (equal? (take-right '(a b . c) 1) '(b . c))
+                         (equal? (take-right 'non-list 0) 'non-list)))
+              (list "takef"
+                    (and (equal? (takef '(2 4 5 8) even?) '(2 4))
+                         (equal? (takef '(1 3 5) even?) '())
+                         (equal? (takef 'non-list even?) '())))
+              (list "takef-right"
+                    (and (equal? (takef-right '(2 4 5 8) even?) '(8))
+                         (equal? (takef-right '(1 3 5) even?) '())
+                         (equal? (takef-right 'non-list even?) 'non-list)))
               (list "list-prefix?"
                     (and (equal? (list-prefix? '(1 2) '(1 2 3 4 5)) #t)
                          (equal? (list-prefix? '(1 3) '(1 2 3 4 5)) #f)))

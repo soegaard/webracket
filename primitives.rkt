@@ -434,6 +434,9 @@
  drop-common-prefix
  split-common-prefix
 
+ take  take-right
+ takef takef-right
+
  member  memq  memv  memw  memf
  remove  remq  remv  remw  remf  
  remove* remq* remv* remw* remf* 

@@ -499,18 +499,19 @@
   list-update
   list-set
   index-of index-where indexes-of indexes-where
-  ; take todo
+  take  take-right
+  takef takef-right
+  
   ; drop todo
-  ; split-at todo
-  ; takef
   ; dropf
-  ; splitf-at
-  ; take-right
   ; drop-right
-  ; split-at-right
-  ; takef-right
   ; dropf-right
+
+  ; split-at todo
+  ; splitf-at
+  ; split-at-right
   ; splitf-at-right
+
   list-prefix?
   take-common-prefix
   drop-common-prefix
@@ -3674,6 +3675,8 @@
          [(remove*)                    (inline-prim/optional sym ae1 2 3)]
          [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
          [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
+         [(take  take-right)           (inline-prim/fixed sym ae1 2)]
+         [(takef takef-right)          (inline-prim/fixed sym ae1 2)]
          [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
          [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
          [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
