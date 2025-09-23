@@ -120,7 +120,7 @@
 
    (list -1.0 +0.0 +1.0)     ; 21
    (list -1.0 0.5 +nan.0)    ; 22
-   (list -1.0 +inf.0 +1.0)   ; 23
+   (list -1.0 +inf.0 1.0)    ; 23 (this follows IEEE 704-2019)
 
    (list 0.5 +inf.0 +0.0)    ; 24
    (list 1.5 +inf.0 +inf.0)  ; 25
@@ -194,11 +194,11 @@
   (list
    (list +nan.0 +0.0 +1.0)
    (list +nan.0 -0.0 +1.0)
-   (list +1.0 +nan.0 +1.0)
+   (list +1.0 +nan.0 +1.0)     ; 
    (list -1.0 +nan.0 +nan.0)))
 
 (define (check-flexpt cases)
-  (map (lambda (case)
+  (andmap (lambda (case)
             (let ([base     (car case)]
                   [exponent (cadr case)]
                   [expected (caddr case)])
@@ -296,7 +296,7 @@
        (list "NaN handling"
              (check-flexpt flexpt-nan-tests)))
  
- #;(list "4.3.3 Flonums — Log and Sqrt"
+ (list "4.3.3 Flonums — Log and Sqrt"
        (list "fllog"
              (and (fl-value=? (fllog 0.0) -inf.0)
                   (fl-value=? (fllog -0.0) -inf.0)
@@ -304,7 +304,8 @@
        (list "flsqrt"
              (and (fl-value=? (flsqrt -0.0) -0.0)
                   (nan? (flsqrt -1.0)))))
- 
+
+ ; This test contains bignums.
  #;(list "4.3.3 Flonums — flbit-field"
      (list "bit extraction"
            (let ([sample 3.141579e132]
