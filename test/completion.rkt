@@ -1359,6 +1359,7 @@
             always-throw
             andmap
             append
+            append*
             append-map
             apply
             argmax
@@ -1457,7 +1458,11 @@
             current-inspector
             degrees->radians
             double-flonum?
+            drop
             drop-common-prefix
+            drop-right
+            dropf
+            dropf-right
             eighth
             eleventh
             empty?
@@ -1655,6 +1660,7 @@
             mcdr
             mcons
             member
+            memf
             memq
             memv
             memw
@@ -1828,7 +1834,11 @@
             symbol=?
             symbol?
             system-big-endian?
+            take
             take-common-prefix
+            take-right
+            takef
+            takef-right
             tan
             tanh
             tenth
@@ -1915,6 +1925,7 @@
             write-string
             xor
             zero?)
+
           ))
 
 (define chapter-datasets
