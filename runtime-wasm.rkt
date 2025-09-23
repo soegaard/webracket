@@ -4176,6 +4176,30 @@
               (call $raise-expected-number (local.get $n))
               (unreachable))
 
+        ; Note:
+        ;   The JavaScript math.pow function handles pow(-1,inf.0) does not follow IEEE 704,
+        ;   which says 1 is the result (in order to preserve a correct magnitude).
+        (func $pow-special
+              (param $base f64)
+              (param $exp  f64)
+              (result      f64)
+
+              (local $abs-base f64)
+
+              (local.set $abs-base (f64.abs (local.get $base)))
+              (if (f64.eq (local.get $abs-base) (f64.const 1.0))
+                  (then
+                   (if (f64.eq (local.get $exp) (f64.const inf))
+                       (then (return (f64.const 1.0))))
+                   (if (f64.eq (local.get $exp) (f64.const -inf))
+                       (then (return (f64.const 1.0))))))
+
+              ; Handle 1.0^w according to IEEE 704-2019.
+              (if (f64.eq (local.get $base) (f64.const 1.0))
+                  (then (return (f64.const 1.0))))
+
+              (call $js-math-pow (local.get $base) (local.get $exp)))
+        
         (func $expt (type $Prim2)
               (param $z (ref eq))
               (param $w (ref eq))
@@ -4229,8 +4253,13 @@
                            (i32.eq (i32.shr_s (local.get $zbits) (i32.const 1)) (i32.const 1)))
                   (then (return (ref.i31 (i32.const 2)))))
 
+              ;; Handle the 1.0^w case explicitly because JavaScript's Math.pow
+              ;; produces +nan.0 when w is +nan.0, while Racket (IEEE 704) specifies 1.0.
+              (if (f64.eq (local.get $zf64) (f64.const 1.0))
+                  (then (return (struct.new $Flonum (i32.const 0) (f64.const 1.0)))))
+              
               ;; Compute using JS pow
-              (local.set $res (call $js-math-pow (local.get $zf64) (local.get $wf64)))
+              (local.set $res (call $pow-special (local.get $zf64) (local.get $wf64)))
 
               ;; If both operands exact and result integral within range, return fixnum
               (if (i32.and (local.get $exactz) (local.get $exactw))
@@ -6925,7 +6954,7 @@
         ;; flonum flonum -> flonum
         ,@(let ([ops '((flmin/2  (f64.min (local.get $a/f64) (local.get $b/f64)))
                        (flmax/2  (f64.max (local.get $a/f64) (local.get $b/f64)))
-                       (flexpt   (call $js-math-pow (local.get $a/f64) (local.get $b/f64))))])
+                       (flexpt   (call $pow-special (local.get $a/f64) (local.get $b/f64))))])
              (append
               (for/list ([p ops])
                 (define name (car p))
