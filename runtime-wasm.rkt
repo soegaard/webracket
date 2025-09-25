@@ -867,13 +867,16 @@
     (add-runtime-string-constant 'word-space                 "space")
     (add-runtime-string-constant 'word-rubout                "rubout")
     (add-runtime-string-constant 'word-nul                   "nul")
-    (add-runtime-string-constant 'hash-less-procedure-colon  "#<procedure:")
-    (add-runtime-string-constant 'hash-less-primitive-colon  "#<primitive:")
-    (add-runtime-string-constant 'hash-less-path-colon       "#<path:")
     (add-runtime-string-constant 'unknown                    "unknown")
     (add-runtime-string-constant 'colon                      ":")
     (add-runtime-string-constant '->                         ">")
-    (add-runtime-string-constant 'hash-less-boxed-colon      "#<boxed:")
+
+    (add-runtime-string-constant 'hash-less-boxed-colon        "#<boxed:")
+    (add-runtime-string-constant 'hash-less-procedure-colon    "#<procedure:")
+    (add-runtime-string-constant 'hash-less-primitive-colon    "#<primitive:")
+    (add-runtime-string-constant 'hash-less-path-colon         "#<path:")
+    (add-runtime-string-constant 'hash-less-unix-path-colon    "#<unix-path:")
+    (add-runtime-string-constant 'hash-less-windows-path-colon "#<windows-path:")
 
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
@@ -27756,6 +27759,10 @@
 
          
          ;; 10.2 Exceptions
+
+         ; 
+
+         
          ;; 10.3 Delayed Evaluation
          ;; 10.4 Continuations
          ;; 10.5 Continuation Marks
@@ -29355,26 +29362,35 @@
                (param $p (ref $Path))
                (result   (ref $String))
 
-               (local $conv  (ref eq))
-               (local $bytes (ref $Bytes))
-               (local $out   (ref $GrowableArray))
+               (local $conv   (ref eq))
+               (local $bytes  (ref $Bytes))
+               (local $prefix (ref $String))
+               (local $out    (ref $GrowableArray))
                
                ;; Extract path convention and byte representation.
                (local.set $conv  (struct.get $Path $convention (local.get $p)))
                (local.set $bytes (struct.get $Path $bytes      (local.get $p)))
-               ;; If the path uses the current system convention, display it as-is.
+               ;; Choose an appropriate prefix based on the path convention.
+               (local.set $prefix (ref.cast (ref $String)
+                                            (global.get $string:hash-less-path-colon)))
+
                (if (ref.eq (local.get $conv) (global.get $system-path-convention))
-                   (then (return (call $bytes->string/utf-8/checked (local.get $bytes)))))
-               ;; Otherwise fall back to an unreadable path descriptor that records the convention.
-               (local.set $out (call $make-growable-array (i32.const 5)))
-               (call $growable-array-add! (local.get $out)
-                     (ref.cast (ref $String)
-                               (global.get $string:hash-less-path-colon)))
-               (call $growable-array-add! (local.get $out)
-                     (call $format/display (local.get $conv)))
-               (call $growable-array-add! (local.get $out)
-                     (ref.cast (ref $String)
-                               (global.get $string:colon)))
+                   (then (nop))
+                   (else
+                    (if (ref.eq (local.get $conv) (global.get $symbol:unix))
+                        (then (local.set $prefix
+                                         (ref.cast (ref $String)
+                                                   (global.get $string:hash-less-unix-path-colon))))
+                        (else
+                         (if (ref.eq (local.get $conv) (global.get $symbol:windows))
+                             (then
+                              (local.set
+                               $prefix
+                               (ref.cast (ref $String)
+                                         (global.get $string:hash-less-windows-path-colon)))))))))
+               ;; Render the unreadable path descriptor.
+               (local.set $out (call $make-growable-array (i32.const 3)))
+               (call $growable-array-add! (local.get $out) (local.get $prefix))
                (call $growable-array-add! (local.get $out)
                      (call $bytes->string/utf-8/checked (local.get $bytes)))
                (call $growable-array-add! (local.get $out)
@@ -29382,6 +29398,7 @@
                                (global.get $string:->)))
                (call $growable-array-of-strings->string (local.get $out)))
 
+         
          ; Note: This uses the write conventions instead of display.
          (func $format/display:char
                (param $v (ref eq))
