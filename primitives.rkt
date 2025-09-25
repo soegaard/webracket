@@ -552,6 +552,10 @@
  raise-argument-error
  ; raise-unbound-variable-reference
 
+ ;; 10.2.5 Source Locations
+ srcloc make-srcloc
+ srcloc? srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
+ 
  ;; 13   Input and Output
  ;; 13.1 Ports
  eof
@@ -602,6 +606,7 @@
  ; namespace-variable-value
  ; namespace-has-key?
 
+ 
  ;; 15.1 Paths
  path?
  path-for-some-system?
@@ -1050,3 +1055,8 @@
 
 
 (define (in-list xs) 'in-list)
+
+
+; Redefine to avoid `srcloc` being bound as syntax
+(define (srcloc source line column position span)
+  (racket:srcloc source line column position span))

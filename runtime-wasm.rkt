@@ -822,6 +822,15 @@
     (add-runtime-symbol-constant 'return-linefeed)
     (add-runtime-symbol-constant 'any)
     (add-runtime-symbol-constant 'any-one)
+
+    (add-runtime-symbol-constant 'srcloc)
+    (add-runtime-symbol-constant 'make-srcloc)
+    (add-runtime-symbol-constant 'srcloc?)
+    (add-runtime-symbol-constant 'srcloc-source)
+    (add-runtime-symbol-constant 'srcloc-line)
+    (add-runtime-symbol-constant 'srcloc-column)
+    (add-runtime-symbol-constant 'srcloc-position)
+    (add-runtime-symbol-constant 'srcloc-span)
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -883,6 +892,10 @@
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
+
+    (add-runtime-string-constant 'srcloc?                    "srcloc?")
+    (add-runtime-string-constant 'srcloc-positive-or-false   "(or/c exact-positive-integer? #f)")
+    (add-runtime-string-constant 'srcloc-nonnegative-or-false "(or/c exact-nonnegative-integer? #f)")
     
     (add-runtime-bytes-constant  'empty                     #"")
 
@@ -1651,6 +1664,9 @@
          ;; Commonly used realms
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
+
+         ;; Cached srcloc struct type descriptor
+         (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
 
          ;; Module Registry
          (global $empty-module-registry (ref $ModuleRegistry)
@@ -30221,6 +30237,275 @@
 
                      (local.set $tab (struct.get $Namespace $table (local.get $ns)))
                      (call $hash-has-key? (ref.cast (ref eq) (local.get $tab)) (local.get $sym)))
+
+
+               ;;;
+               ;;; 14.2 Source Locations
+               ;;;
+
+               (func $ensure-srcloc-type
+                     (result (ref $StructType))
+
+                     (local $existing (ref null $StructType))
+                     (local $std      (ref $StructType))
+                     (local $indices  (ref eq))
+
+                     (local.set $existing (global.get $srcloc-type))
+                     (if (ref.is_null (local.get $existing))
+                         (then
+                          (local.set $indices (call $list-from-range/checked (i32.const 0) (i32.const 5)))
+                          (local.set $std
+                                     (struct.new $StructType
+                                                 (i32.const 0)
+                                                 (ref.cast (ref $Symbol) (global.get $symbol:srcloc))
+                                                 (global.get $false)
+                                                 (i32.const 5)
+                                                 (local.get $indices)
+                                                 (global.get $null)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false)
+                                                 (local.get $indices)
+                                                 (global.get $false)
+                                                 (ref.cast (ref $Symbol) (global.get $symbol:srcloc))))
+                          (global.set $srcloc-type (local.get $std))
+                          (local.set $existing (local.get $std))))
+                     (ref.as_non_null (local.get $existing)))
+
+               (func $srcloc/make
+                     (param $source   (ref eq))
+                     (param $line     (ref eq))
+                     (param $column   (ref eq))
+                     (param $position (ref eq))
+                     (param $span     (ref eq))
+                     (result (ref $Struct))
+
+                     (local $std    (ref $StructType))
+                     (local $fields (ref $Array))
+
+                     (local.set $std (call $ensure-srcloc-type))
+                     (local.set $fields
+                                (array.new_fixed $Array 5
+                                                 (local.get $source)
+                                                 (local.get $line)
+                                                 (local.get $column)
+                                                 (local.get $position)
+                                                 (local.get $span)))
+                     (struct.new $Struct
+                                 (i32.const 0)
+                                 (global.get $false)
+                                 (ref.i31 (i32.const 0))
+                                 (global.get $false)
+                                 (ref.func $invoke-struct)
+                                 (local.get $std)
+                                 (local.get $fields)))
+
+               (func $srcloc-check-positive
+                     (param $who (ref eq))
+                     (param $v   (ref eq))
+                     (result (ref eq))
+
+                     (if (result (ref eq))
+                         (ref.eq (local.get $v) (global.get $false))
+                         (then (local.get $v))
+                         (else (if (result (ref eq))
+                                   (ref.eq (call $exact-positive-integer? (local.get $v)) (global.get $true))
+                                   (then (local.get $v))
+                                   (else (call $raise-argument-error1 (local.get $who)
+                                               (global.get $string:srcloc-positive-or-false)
+                                               (local.get $v))
+                                         (unreachable))))))
+
+               (func $srcloc-check-nonnegative
+                     (param $who (ref eq))
+                     (param $v   (ref eq))
+                     (result (ref eq))
+
+                     (if (result (ref eq))
+                         (ref.eq (local.get $v) (global.get $false))
+                         (then (local.get $v))
+                         (else (if (result (ref eq))
+                                   (ref.eq (call $exact-nonnegative-integer? (local.get $v)) (global.get $true))
+                                   (then (local.get $v))
+                                   (else (call $raise-argument-error1 (local.get $who)
+                                               (global.get $string:srcloc-nonnegative-or-false)
+                                               (local.get $v))
+                                         (unreachable))))))
+
+               (func $srcloc-build
+                     (param $who (ref eq))
+                     (param $source   (ref eq))
+                     (param $line     (ref eq))
+                     (param $column   (ref eq))
+                     (param $position (ref eq))
+                     (param $span     (ref eq))
+                     (result (ref eq))
+
+                     (local $line-checked     (ref eq))
+                     (local $column-checked   (ref eq))
+                     (local $position-checked (ref eq))
+                     (local $span-checked     (ref eq))
+
+                     (local.set $line-checked
+                                (call $srcloc-check-positive (local.get $who) (local.get $line)))
+                     (local.set $column-checked
+                                (call $srcloc-check-nonnegative (local.get $who) (local.get $column)))
+                     (local.set $position-checked
+                                (call $srcloc-check-positive (local.get $who) (local.get $position)))
+                     (local.set $span-checked
+                                (call $srcloc-check-nonnegative (local.get $who) (local.get $span)))
+                     (call $srcloc/make
+                           (local.get $source)
+                           (local.get $line-checked)
+                           (local.get $column-checked)
+                           (local.get $position-checked)
+                           (local.get $span-checked)))
+
+               (func $srcloc (type $Prim5)
+                     (param $source (ref eq))
+                     (param $line (ref eq))
+                     (param $column (ref eq))
+                     (param $position (ref eq))
+                     (param $span (ref eq))
+                     (result (ref eq))
+
+                     (call $srcloc-build
+                           (global.get $symbol:srcloc)
+                           (local.get $source)
+                           (local.get $line)
+                           (local.get $column)
+                           (local.get $position)
+                           (local.get $span)))
+
+               (func $make-srcloc (type $Prim5)
+                     (param $source (ref eq))
+                     (param $line (ref eq))
+                     (param $column (ref eq))
+                     (param $position (ref eq))
+                     (param $span (ref eq))
+                     (result (ref eq))
+
+                     (call $srcloc-build
+                           (global.get $symbol:make-srcloc)
+                           (local.get $source)
+                           (local.get $line)
+                           (local.get $column)
+                           (local.get $position)
+                           (local.get $span)))
+
+               (func $srcloc? (type $Prim1)
+                     (param $v (ref eq))
+                     (result   (ref eq))
+
+                     (local $struct (ref $Struct))
+                     (local $type   (ref eq))
+                     (local $std    (ref $StructType))
+                     (local $ok     i32)
+
+                     (local.set $std (call $ensure-srcloc-type))
+                     (if (result (ref eq))
+                         (ref.test (ref $Struct) (local.get $v))
+                         (then
+                          (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                          (local.set $type (struct.get $Struct $type (local.get $struct)))
+                          (local.set $ok (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                          (if (result (ref eq))
+                              (local.get $ok)
+                              (then (global.get $true))
+                              (else (global.get $false))))
+                         (else (global.get $false))))
+               
+               (func $raise-argument-error:srcloc-expected
+                     (param $who (ref eq))
+                     (param $got (ref eq))
+
+                     (call $raise-argument-error1
+                           (local.get $who)
+                           (global.get $string:srcloc?)
+                           (local.get $got)))
+
+               (func $srcloc-unwrap
+                     (param $who (ref eq))
+                     (param $v   (ref eq))
+                     (result (ref $Array))
+
+                     (local $struct (ref $Struct))
+                     (local $type   (ref eq))
+                     (local $std    (ref $StructType))
+                     (local $ok     i32)
+
+                     (local.set $std (call $ensure-srcloc-type))
+                     (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                         (then (call $raise-argument-error:srcloc-expected (local.get $who) (local.get $v))
+                               (unreachable)))
+                     (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                     (local.set $type (struct.get $Struct $type (local.get $struct)))
+                     (local.set $ok (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                     (if (i32.eqz (local.get $ok))
+                         (then (call $raise-argument-error:srcloc-expected (local.get $who) (local.get $v))
+                               (unreachable)))
+                     (struct.get $Struct $fields (local.get $struct)))
+
+               (func $srcloc-source (type $Prim1)
+                     (param $loc (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields
+                                (call $srcloc-unwrap
+                                      (global.get $symbol:srcloc-source)
+                                      (local.get $loc)))
+                     (array.get $Array (local.get $fields) (i32.const 0)))
+
+               (func $srcloc-line (type $Prim1)
+                     (param $loc (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields
+                                (call $srcloc-unwrap
+                                      (global.get $symbol:srcloc-line)
+                                      (local.get $loc)))
+                     (array.get $Array (local.get $fields) (i32.const 1)))
+
+               (func $srcloc-column (type $Prim1)
+                     (param $loc (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields
+                                (call $srcloc-unwrap
+                                      (global.get $symbol:srcloc-column)
+                                      (local.get $loc)))
+                     (array.get $Array (local.get $fields) (i32.const 2)))
+
+               (func $srcloc-position (type $Prim1)
+                     (param $loc (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields
+                                (call $srcloc-unwrap
+                                      (global.get $symbol:srcloc-position)
+                                      (local.get $loc)))
+                     (array.get $Array (local.get $fields) (i32.const 3)))
+
+               (func $srcloc-span (type $Prim1)
+                     (param $loc (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields
+                                (call $srcloc-unwrap
+                                      (global.get $symbol:srcloc-span)
+                                      (local.get $loc)))
+                     (array.get $Array (local.get $fields) (i32.const 4)))
+
 
                ;;;
                ;;; 15. OPERATING SYSTEM

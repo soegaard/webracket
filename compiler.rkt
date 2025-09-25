@@ -837,6 +837,17 @@
   ;; 10. Control Flow
   call-with-values
 
+  ; 10.2 Exceptions
+  make-srcloc
+  srcloc 
+  srcloc?
+  srcloc-source
+  srcloc-line
+  srcloc-column
+  srcloc-position
+  srcloc-span
+
+  
   ;; 15.1 Paths
   path?
   path-for-some-system?
