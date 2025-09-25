@@ -11,6 +11,7 @@
          racket/math
          racket/mpair         
          racket/mutability
+         racket/path
          racket/port
          racket/string
          racket/symbol
@@ -593,8 +594,19 @@
  port-next-location
  
  ;; 14.1 Namespaces
- namespace? make-empty-namespace namespace-variable-value-simple
- namespace-set-variable-value! namespace-undefine-variable!
+ namespace?
+ make-empty-namespace
+ namespace-variable-value-simple
+ namespace-set-variable-value!
+ namespace-undefine-variable! 
+ ; namespace-variable-value
+ ; namespace-has-key?
+
+ ;; 15.1 Paths
+ path?
+ path-string?
+ path->bytes
+ path->string
 
  ;; 17. Unsafe Operations
  unsafe-fx+ unsafe-fl/
@@ -605,17 +617,8 @@
  unsafe-flrandom 
  unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector-length unsafe-vector-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
+
  
-
- ;; 14.1 Namespaces
-
- namespace?
- make-empty-namespace
- ; namespace-variable-value
- namespace-set-variable-value!
- namespace-undefine-variable!
- ; namespace-has-key?
-
  ;; FFI
  
  s-exp->fasl

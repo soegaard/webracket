@@ -814,6 +814,8 @@
     (add-runtime-symbol-constant 'in-range)
     (add-runtime-symbol-constant 'in-naturals)    
     (add-runtime-symbol-constant 'string)
+    (add-runtime-symbol-constant 'unix)
+    (add-runtime-symbol-constant 'windows)
 
     (add-runtime-symbol-constant 'linefeed)
     (add-runtime-symbol-constant 'return)
@@ -1182,6 +1184,13 @@
                                    (field $line  (mut (ref eq)))    ; #f or line number (fixnum)
                                    (field $col   (mut (ref eq)))    ; #f or column number
                                    (field $pos   (mut (ref eq)))))) ; #f or position
+
+          (type $Path      (sub $Heap
+                                (struct
+                                  (field $hash       (mut i32))          ;; cached hash
+                                  (field $bytes      (ref $Bytes))       ;; raw byte representation (bytes)
+                                  (field $convention (ref eq)))))        ;; 'unix or 'windows symbol
+
           (type $StringPort (sub $Heap
                                  (struct
                                    (field $hash  (mut i32))
@@ -30160,6 +30169,107 @@
                      (local.set $tab (struct.get $Namespace $table (local.get $ns)))
                      (call $hash-has-key? (ref.cast (ref eq) (local.get $tab)) (local.get $sym)))
 
+               ;;;
+               ;;; 15. OPERATING SYSTEM
+               ;;;
+
+               ;;; 15.1 Paths
+
+               (func $raise-path-expected (param $x (ref eq))
+                     (call $js-log (local.get $x))
+                     (unreachable))
+
+               (func $path? (type $Prim1)
+                     (param $v (ref eq)) ;; any/c
+                     (result   (ref eq))
+
+                     (local $path (ref $Path))
+                     (local $conv (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $v)))
+                         (then (return (global.get $false))))
+                     
+                     (local.set $path (ref.cast (ref $Path) (local.get $v)))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $conv) (global.get $system-path-convention))
+                         (then (global.get $true))
+                         (else (global.get $false))))
+
+               (func $non-empty-string-without-nuls
+                     (param $str (ref $String)) ;; string?
+                     (result     (ref eq))      ;; boolean?
+
+                     (local $len i32)
+                     (local $i   i32)
+                     (local $cp  i32)
+
+                     (local.set $len (call $string-length/checked/i32 (local.get $str)))
+                     (if (i32.eqz (local.get $len))
+                         (then (return (global.get $false))))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $cp (call $string-ref/checked/i32 (local.get $str)
+                                                       (local.get $i)))
+                                  (if (i32.eqz (local.get $cp))
+                                      (then (return (global.get $false))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (global.get $true))
+
+               (func $path-string? (type $Prim1)
+                     (param $v (ref eq)) ;; any/c
+                     (result (ref eq))
+
+                     (local $path? (ref eq))
+                     (local $str   (ref $String))
+                     ;; If it's already a path for the current system, succeed.
+                     (local.set $path? (call $path? (local.get $v)))
+                     (if (ref.eq (local.get $path?) (global.get $true))
+                         (then (return (global.get $true))))
+                     ;; Otherwise accept non-empty strings with no nul characters.
+                     (if (i32.eqz (ref.test (ref $String) (local.get $v)))
+                         (then (return (global.get $false))))
+                     (local.set $str (ref.cast (ref $String) (local.get $v)))
+                     (call $non-empty-string-without-nuls (local.get $str)))
+               
+
+               (func $path->bytes (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-for-some-system?
+                     (result (ref eq))          ;; bytes?
+
+                     (local $path (ref $Path))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (struct.get $Path $bytes (local.get $path)))
+
+               (func $path->string (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path?
+                     (result (ref eq))          ;; string?
+
+                     (local $path  (ref $Path))
+                     (local $bytes (ref $Bytes))
+                     (local $conv  (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (if (i32.eqz (ref.eq (local.get $conv) (global.get $system-path-convention)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (call $bytes->string/utf-8/checked (local.get $bytes)))
+         
                
                ;;;
                ;;; FFI
@@ -30203,7 +30313,8 @@
                ;;  - the host calls $get-bytes which copies the result-bytes
                ;;    into the linear memory, where the host can read it.
 
-               (global $result-bytes (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $system-path-convention (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $result-bytes           (mut (ref eq)) (ref.i31 (i32.const 0)))
 
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
@@ -30235,6 +30346,9 @@
                      ,@(initialize-runtime-bytes-constants)
                      ;; Initialize symbol constants used in the runtime
                      ,@(initialize-runtime-symbol-constants)
+
+                     ;; Default to the host platform's path convention (currently Unix)
+                     (global.set $system-path-convention (global.get $symbol:unix))
 
                      (global.set $char-general-category-symbols
                                  (array.new_fixed $Array 30

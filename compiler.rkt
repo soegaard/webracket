@@ -836,6 +836,12 @@
 
   ;; 10. Control Flow
   call-with-values
+
+  ;; 15.1 Paths
+  path?
+  path-string?
+  path->bytes
+  path->string
   
   ;; 17. Unsafe Operations
   unsafe-fx+
@@ -1714,7 +1720,9 @@
                                                        (values `(define-values ,s (,x ...) ,e) ρ)))]
                                           [else
                                            ; TODO - lift this restriction?
-                                           (define x-prim (ormap (λ (x) (and (primitive? (variable-id x)) (variable-id x))) x))
+                                           (define x-prim (ormap (λ (x) (and (primitive? (variable-id x))
+                                                                             (variable-id x)))
+                                                                 x))
                                            (when x-prim
                                              (raise-syntax-error 'α-rename
                                                     "In webracket it is not allowed to redefine a primitive at the top-level"
