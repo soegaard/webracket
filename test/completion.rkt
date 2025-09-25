@@ -13,7 +13,7 @@
 ; A drop down triangle reveals a list of functions in the chapter.
 ; Each function is linked to its documentation.
 
-(define (cadr x) (car (cdr x)))
+; (define (cadr x) (car (cdr x)))
 
 (define (format fmt . args)
   (let loop ([s fmt] [args args])
@@ -1367,6 +1367,7 @@
             arithmetic-shift
             asin
             asinh
+            assf
             assoc
             assq
             assv
@@ -1408,9 +1409,37 @@
             bytes=?
             bytes>?
             bytes?
+            caaaar
+            caaadr
+            caaar
+            caadar
+            caaddr
+            caadr
+            caar
+            cadaar
+            cadadr
+            cadar
+            caddar
+            cadddr
+            caddr
+            cadr
             call-with-values
             car
             cartesian-product
+            cdaaar
+            cdaadr
+            cdaar
+            cdadar
+            cdaddr
+            cdadr
+            cdar
+            cddaar
+            cddadr
+            cddar
+            cdddar
+            cddddr
+            cdddr
+            cddr
             cdr
             ceiling
             char->integer
@@ -1496,6 +1525,7 @@
             filter
             filter-map
             filter-not
+            findf
             first
             fixnum?
             fl*
@@ -1767,7 +1797,11 @@
             sinh
             sixth
             sort
+            split-at
+            split-at-right
             split-common-prefix
+            splitf-at
+            splitf-at-right
             sqr
             sqrt
             string
@@ -1925,6 +1959,7 @@
             write-string
             xor
             zero?)
+
 
           ))
 
