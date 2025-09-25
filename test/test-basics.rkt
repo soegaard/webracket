@@ -3226,9 +3226,21 @@
                            (equal? (path->bytes u) #"unix")
                            (equal? (path->bytes w) #"win"))))
               (list "path?"
-                    (and (equal? (path? "a") #f)
-                         (equal? (path? 'a)  #f)
-                         (equal? (path? (bytes 1 2 3)) #f)))
+                    (let ([unix-path (bytes->path #"hello")] ; default is unix
+                          [win-path  (bytes->path #"world" 'windows)])
+                      (and (equal? (path? unix-path)     #t)
+                           (equal? (path? win-path)      #f)
+                           (equal? (path? "a")           #f)
+                           (equal? (path? 'a)            #f)
+                           (equal? (path? (bytes 1 2 3)) #f))))
+              (list "path-for-some-system?"
+                    (let ([unix-path (bytes->path #"hello")]
+                          [win-path  (bytes->path #"world" 'windows)])
+                      (and (equal? (path-for-some-system? unix-path)     #t)
+                           (equal? (path-for-some-system? win-path)      #t)
+                           (equal? (path-for-some-system? "a")           #f)
+                           (equal? (path-for-some-system? 'a)            #f)
+                           (equal? (path-for-some-system? (bytes 1 2 3)) #f))))
               (list "path-string?"
                     (and (equal? (path-string? "hello")        #t)
                          (equal? (path-string? "")             #f)

@@ -839,6 +839,7 @@
 
   ;; 15.1 Paths
   path?
+  path-for-some-system?
   path-string?
   path->bytes
   path->string

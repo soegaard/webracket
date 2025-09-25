@@ -30196,6 +30196,14 @@
                          (then (global.get $true))
                          (else (global.get $false))))
 
+               (func $path-for-some-system? (type $Prim1)
+                     (param $v (ref eq)) ;; any/c
+                     (result   (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $v)))
+                         (then (return (global.get $false))))
+                     (global.get $true))
+
                (func $unix-or-windows
                      (param $sym (ref $Symbol)) ;; symbol?
                      (result     (ref eq))      ;; boolean?
