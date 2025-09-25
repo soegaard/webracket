@@ -30196,6 +30196,16 @@
                          (then (global.get $true))
                          (else (global.get $false))))
 
+               (func $unix-or-windows
+                     (param $sym (ref $Symbol)) ;; symbol?
+                     (result     (ref eq))      ;; boolean?
+
+                     (if (ref.eq (local.get $sym) (global.get $symbol:unix))
+                         (then (return (global.get $true))))
+                     (if (ref.eq (local.get $sym) (global.get $symbol:windows))
+                         (then (return (global.get $true))))
+                     (global.get $false))
+               
                (func $non-empty-bytes-without-nuls
                      (param $bs (ref $Bytes)) ;; bytes?
                      (result (ref eq))        ;; boolean?
@@ -30312,62 +30322,40 @@
 
                      (local $input-bytes (ref $Bytes))
                      (local $bytes       (ref $Bytes))
-                     (local $arr         (ref $I8Array))
-                     (local $len         i32)
-                     (local $i           i32)
-                     (local $byte        i32)
                      (local $conv        (ref eq))
+                     (local $type        (ref $Symbol))
 
+                     ;; Initialize non-defaultable locals
+                     (local.set $conv (global.get $system-path-convention))
                      ;; Ensure the source is a byte string.
                      (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr-raw)))
                          (then (call $raise-check-bytes (local.get $bstr-raw))
                                (unreachable)))
-
                      (local.set $input-bytes (ref.cast (ref $Bytes) (local.get $bstr-raw)))
-
-                     ;; Reject byte strings that contain a NUL byte.
-                     (local.set $arr (struct.get $Bytes $bs (local.get $input-bytes)))
-                     (local.set $len (array.len (local.get $arr)))
-                     (local.set $i (i32.const 0))
-                     (block $done
-                            (loop $loop
-                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                                  (local.set $byte
-                                             (array.get_u $I8Array
-                                                          (local.get $arr)
-                                                          (local.get $i)))
-                                  (if (i32.eqz (local.get $byte))
-                                      (then (call $raise-bytes->path:nul (local.get $bstr-raw))
-                                            (unreachable)))
-                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                  (br $loop)))
-
+                     ;; Reject byte strings that are empty or contain a NUL byte.
+                     (if (i32.eqz (ref.eq (call $non-empty-bytes-without-nuls (local.get $input-bytes))
+                                          (global.get $true)))
+                         (then (call $raise-bytes->path:nul (local.get $bstr-raw))
+                               (unreachable)))
                      ;; Normalize to an immutable byte string for storage.
-                     (local.set $bytes
-                                (ref.cast (ref $Bytes)
-                                          (call $bytes->immutable-bytes (local.get $bstr-raw))))
-
+                     (local.set $bytes (ref.cast (ref $Bytes)
+                                                 (call $bytes->immutable-bytes (local.get $bstr-raw))))
                      ;; Determine the path convention symbol.
                      (if (ref.eq (local.get $type-raw) (global.get $missing))
-                         (then (local.set $conv (global.get $system-path-convention)))
-                         (else
-                          (if (i32.eqz (ref.test (ref $Symbol) (local.get $type-raw)))
-                              (then (call $raise-check-symbol (local.get $type-raw))
-                                    (unreachable)))
-                          (local.set $conv (local.get $type-raw))
-                          (if (i32.eqz (ref.eq (local.get $conv) (global.get $symbol:unix)))
-                              (then
-                               (if (ref.eq (local.get $conv) (global.get $symbol:windows))
-                                   (then (nop))
-                                   (else (call $raise-bytes->path:bad-type (local.get $type-raw))
-                                         (unreachable))))))
-
+                         (then (nop)) ; the default is system path convention
+                         (else (if (i32.eqz (ref.test (ref $Symbol) (local.get $type-raw)))
+                                   (then (call $raise-check-symbol (local.get $type-raw)) (unreachable)))
+                               
+                               (local.set $type (ref.cast (ref $Symbol) (local.get $type-raw)))
+                               (if (i32.eqz (ref.eq (call $unix-or-windows (local.get $type))
+                                                    (global.get $true)))
+                                   (then (call $raise-bytes->path:bad-type (local.get $type-raw)) (unreachable)))
+                               (local.set $conv (local.get $type-raw))))
                      ;; Construct and return the new path struct.
                      (struct.new $Path
                                  (i32.const 0)
                                  (local.get $bytes)
                                  (local.get $conv)))
-         
                
                ;;;
                ;;; FFI

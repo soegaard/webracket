@@ -3213,19 +3213,28 @@
                            (equal? (port-next-location 42) #f))))))
              )
 
-       (list "15. Operating System"
-             (list "15. Paths"
-                   (list
-                    (list "path?"
-                          (and (equal? (path? "a") #f)
-                               (equal? (path? 'a) #f)
-                               (equal? (path? (bytes 1 2 3)) #f)))
-                    (list "path-string?"
-                          (and (equal? (path-string? "hello") #t)
-                               (equal? (path-string? "") #f)
-                               (equal? (path-string? (string #\nul)) #f)
-                               (equal? (path-string? 'a) #f)
-                               (equal? (path-string? (bytes 1 2 3)) #f))))))
+ (list "15. Operating System"
+       (list "15. Paths"
+             (list
+              (list "bytes->path"
+                    (let* ([p (bytes->path #"hello")]
+                           [u (bytes->path #"unix" 'unix)]
+                           [w (bytes->path #"win"  'windows)])
+                      (and (path? p)
+                           (path? u)
+                           (equal? (path->bytes p) #"hello")
+                           (equal? (path->bytes u) #"unix")
+                           (equal? (path->bytes w) #"win"))))
+              (list "path?"
+                    (and (equal? (path? "a") #f)
+                         (equal? (path? 'a)  #f)
+                         (equal? (path? (bytes 1 2 3)) #f)))
+              (list "path-string?"
+                    (and (equal? (path-string? "hello")        #t)
+                         (equal? (path-string? "")             #f)
+                         (equal? (path-string? (string #\nul)) #f)
+                         (equal? (path-string? 'a)             #f)
+                         (equal? (path-string? (bytes 1 2 3))  #f))))))
        
  #;(list "Checkers"
        (list

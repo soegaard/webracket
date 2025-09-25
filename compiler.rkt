@@ -842,6 +842,7 @@
   path-string?
   path->bytes
   path->string
+  bytes->path
   
   ;; 17. Unsafe Operations
   unsafe-fx+
@@ -3878,6 +3879,8 @@
         [(string-join)
          (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
 
+        [(bytes->path)
+         (inline-prim/optional/default sym ae1 1 2 '(global.get $missing))]
         
         [(vector-append)
          (let loop ([aes (AExpr* ae1)])
