@@ -869,6 +869,7 @@
     (add-runtime-string-constant 'word-nul                   "nul")
     (add-runtime-string-constant 'hash-less-procedure-colon  "#<procedure:")
     (add-runtime-string-constant 'hash-less-primitive-colon  "#<primitive:")
+    (add-runtime-string-constant 'hash-less-path-colon       "#<path:")
     (add-runtime-string-constant 'unknown                    "unknown")
     (add-runtime-string-constant 'colon                      ":")
     (add-runtime-string-constant '->                         ">")
@@ -29351,12 +29352,35 @@
                (call $growable-array-of-strings->string (local.get $out)))
 
          (func $format/display:path
-               (param $path (ref $Path))
-               (result      (ref $String))
-               ;; Paths display as the string that path->string would produce.
-               (ref.cast (ref $String)
-                         (call $path->string
-                               (ref.cast (ref eq) (local.get $path)))))
+               (param $p (ref $Path))
+               (result   (ref $String))
+
+               (local $conv  (ref eq))
+               (local $bytes (ref $Bytes))
+               (local $out   (ref $GrowableArray))
+               
+               ;; Extract path convention and byte representation.
+               (local.set $conv  (struct.get $Path $convention (local.get $p)))
+               (local.set $bytes (struct.get $Path $bytes      (local.get $p)))
+               ;; If the path uses the current system convention, display it as-is.
+               (if (ref.eq (local.get $conv) (global.get $system-path-convention))
+                   (then (return (call $bytes->string/utf-8/checked (local.get $bytes)))))
+               ;; Otherwise fall back to an unreadable path descriptor that records the convention.
+               (local.set $out (call $make-growable-array (i32.const 5)))
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String)
+                               (global.get $string:hash-less-path-colon)))
+               (call $growable-array-add! (local.get $out)
+                     (call $format/display (local.get $conv)))
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String)
+                               (global.get $string:colon)))
+               (call $growable-array-add! (local.get $out)
+                     (call $bytes->string/utf-8/checked (local.get $bytes)))
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String)
+                               (global.get $string:->)))
+               (call $growable-array-of-strings->string (local.get $out)))
 
          ; Note: This uses the write conventions instead of display.
          (func $format/display:char
