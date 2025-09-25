@@ -833,6 +833,16 @@
     (add-runtime-symbol-constant 'srcloc-span)
 
     (add-runtime-symbol-constant 'srcloc->string)
+
+    (add-runtime-symbol-constant 'syntax)
+    (add-runtime-symbol-constant 'make-syntax)
+    (add-runtime-symbol-constant 'syntax?)
+    (add-runtime-symbol-constant 'syntax-e)
+    (add-runtime-symbol-constant 'syntax-scopes)
+    (add-runtime-symbol-constant 'syntax-shifted-multi-scopes)
+    (add-runtime-symbol-constant 'syntax-srcloc)
+    (add-runtime-symbol-constant 'syntax-props)
+    (add-runtime-symbol-constant 'empty-props)
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -898,6 +908,9 @@
     (add-runtime-string-constant 'srcloc?                    "srcloc?")
     (add-runtime-string-constant 'srcloc-positive-or-false   "(or/c exact-positive-integer? #f)")
     (add-runtime-string-constant 'srcloc-nonnegative-or-false "(or/c exact-nonnegative-integer? #f)")
+
+    (add-runtime-string-constant 'syntax?                    "syntax?")
+    (add-runtime-string-constant 'hash?                      "hash?")
     
     (add-runtime-bytes-constant  'empty                     #"")
 
@@ -1669,6 +1682,11 @@
 
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
+
+         ;; Cached syntax struct type descriptor
+         (global $syntax-type (mut (ref null $StructType)) (ref.null $StructType))
+         ;; Shared empty syntax properties table
+         (global $syntax-empty-props (mut (ref eq)) ,(Undefined))
 
          ;; Module Registry
          (global $empty-module-registry (ref $ModuleRegistry)
@@ -30582,6 +30600,268 @@
                                                      (local.get $separator)
                                                      (local.get $column-str))))))
 
+               ;;;
+               ;;; 12. Macors
+               ;;;
+
+               ;;; 12.2 Syntax Object COntent
+
+               (func $ensure-syntax-type
+                     (result (ref $StructType))
+
+                     (local $existing (ref null $StructType))
+                     (local $std      (ref $StructType))
+                     (local $indices  (ref eq))
+
+                     (local.set $existing (global.get $syntax-type))
+                     (if (ref.is_null (local.get $existing))
+                         (then
+                          (local.set $indices (call $list-from-range/checked (i32.const 0) (i32.const 5)))
+                          (local.set $std
+                                     (struct.new $StructType
+                                                 (i32.const 0)
+                                                 (ref.cast (ref $Symbol) (global.get $symbol:syntax))
+                                                 (global.get $false)
+                                                 (i32.const 5)
+                                                 (local.get $indices)
+                                                 (global.get $null)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false)
+                                                 (local.get $indices)
+                                                 (global.get $false)
+                                                 (ref.cast (ref $Symbol) (global.get $symbol:syntax))))
+                          (global.set $syntax-type (local.get $std))
+                          (local.set $existing (local.get $std))))
+                     (ref.as_non_null (local.get $existing)))
+
+               (func $ensure-syntax-empty-props
+                     (result (ref eq))
+
+                     (local $props (ref eq))
+
+                     (local.set $props (global.get $syntax-empty-props))
+                     (if (ref.eq (local.get $props) (global.get $undefined))
+                         (then
+                          (local.set $props (call $make-hash (global.get $missing)))
+                          (global.set $syntax-empty-props (local.get $props))))
+                     (local.get $props))
+
+               (func $syntax/make
+                     (param $e        (ref eq))
+                     (param $scopes   (ref eq))
+                     (param $shifted  (ref eq))
+                     (param $srcloc   (ref eq))
+                     (param $props    (ref eq))
+                     (result (ref $Struct))
+
+                     (local $std    (ref $StructType))
+                     (local $fields (ref $Array))
+
+                     (local.set $std (call $ensure-syntax-type))
+                     (local.set $fields
+                                (array.new_fixed $Array 5
+                                                 (local.get $e)
+                                                 (local.get $scopes)
+                                                 (local.get $shifted)
+                                                 (local.get $srcloc)
+                                                 (local.get $props)))
+                     (struct.new $Struct
+                                 (i32.const 0)
+                                 (global.get $false)
+                                 (ref.i31 (i32.const 0))
+                                 (global.get $false)
+                                 (ref.func $invoke-struct)
+                                 (local.get $std)
+                                 (local.get $fields)))
+
+               (func $raise-argument-error:syntax-expected
+                     (param $who (ref eq))
+                     (param $got (ref eq))
+
+                     (call $raise-argument-error1
+                           (local.get $who)
+                           (global.get $string:syntax?)
+                           (local.get $got)))
+
+               (func $syntax-build
+                     (param $who      (ref eq))
+                     (param $e        (ref eq))
+                     (param $scopes   (ref eq))
+                     (param $shifted  (ref eq))
+                     (param $srcloc   (ref eq))
+                     (param $props    (ref eq))
+                     (result (ref eq))
+
+                     (local $srcloc-checked (ref eq))
+                     (local $props-checked  (ref eq))
+
+                     ;; Initialize non-defaultable locals
+                     (local.set $srcloc-checked (global.get $false))
+                     (local.set $props-checked  (global.get $false))
+                     
+                     (if (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (local.set $srcloc-checked (local.get $srcloc)))
+                         (else
+                          (if (ref.eq (call $srcloc? (local.get $srcloc)) (global.get $true))
+                              (then (local.set $srcloc-checked (local.get $srcloc)))
+                              (else (call $raise-argument-error:srcloc-expected (local.get $who)
+                                                                             (local.get $srcloc))
+                                    (unreachable)))))
+
+                     (if (ref.eq (local.get $props) (global.get $missing))
+                         (then (local.set $props-checked (call $ensure-syntax-empty-props)))
+                         (else
+                          (if (ref.eq (call $hash? (local.get $props)) (global.get $true))
+                              (then (local.set $props-checked (local.get $props)))
+                              (else (call $raise-argument-error1 (local.get $who)
+                                                                  (global.get $string:hash?)
+                                                                  (local.get $props))
+                                    (unreachable)))))
+
+                     (call $syntax/make
+                           (local.get $e)
+                           (local.get $scopes)
+                           (local.get $shifted)
+                           (local.get $srcloc-checked)
+                           (local.get $props-checked)))
+
+               (func $syntax #;(type $Prim5)
+                     (param $e        (ref eq))
+                     (param $scopes   (ref eq))
+                     (param $shifted  (ref eq))
+                     (param $srcloc   (ref eq))
+                     (param $props    (ref eq))
+                     (result (ref eq))
+
+                     (call $syntax-build
+                           (global.get $symbol:syntax)
+                           (local.get $e)
+                           (local.get $scopes)
+                           (local.get $shifted)
+                           (local.get $srcloc)
+                           (local.get $props)))
+
+               (func $make-syntax #;(type $Prim5)
+                     (param $e        (ref eq))
+                     (param $scopes   (ref eq))
+                     (param $shifted  (ref eq))
+                     (param $srcloc   (ref eq))
+                     (param $props    (ref eq))
+                     (result (ref eq))
+
+                     (call $syntax-build
+                           (global.get $symbol:make-syntax)
+                           (local.get $e)
+                           (local.get $scopes)
+                           (local.get $shifted)
+                           (local.get $srcloc)
+                           (local.get $props)))
+
+               (func $syntax? (type $Prim1)
+                     (param $v (ref eq))
+                     (result   (ref eq))
+
+                     (local $struct (ref $Struct))
+                     (local $type   (ref eq))
+                     (local $std    (ref $StructType))
+                     (local $ok     i32)
+
+                     (local.set $std (call $ensure-syntax-type))
+                     (if (result (ref eq))
+                         (ref.test (ref $Struct) (local.get $v))
+                         (then
+                          (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                          (local.set $type (struct.get $Struct $type (local.get $struct)))
+                          (local.set $ok (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                          (if (result (ref eq))
+                              (local.get $ok)
+                              (then (global.get $true))
+                              (else (global.get $false))))
+                         (else (global.get $false))))
+
+               (func $syntax-unwrap
+                     (param $who (ref eq))
+                     (param $v   (ref eq))
+                     (result     (ref $Array))
+
+                     (local $struct (ref $Struct))
+                     (local $type   (ref eq))
+                     (local $std    (ref $StructType))
+                     (local $ok     i32)
+
+                     (local.set $std (call $ensure-syntax-type))
+                     (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                         (then (call $raise-argument-error:syntax-expected (local.get $who) (local.get $v))
+                               (unreachable)))
+                     (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                     (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                     (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                     (if (i32.eqz (local.get $ok))
+                         (then (call $raise-argument-error:syntax-expected (local.get $who) (local.get $v))
+                               (unreachable)))
+                     (struct.get $Struct $fields (local.get $struct)))
+
+               (func $syntax-e (type $Prim1)
+                     (param $stx (ref eq))
+                     (result     (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-e)
+                                              (local.get $stx)))
+                     (array.get $Array (local.get $fields) (i32.const 0)))
+
+               (func $syntax-scopes #;(type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-scopes)
+                                              (local.get $stx)))
+                     (array.get $Array (local.get $fields) (i32.const 1)))
+
+               (func $syntax-shifted-multi-scopes #;(type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-shifted-multi-scopes)
+                                              (local.get $stx)))
+                     (array.get $Array (local.get $fields) (i32.const 2)))
+
+               (func $syntax-srcloc #;(type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-srcloc)
+                                              (local.get $stx)))
+                     (array.get $Array (local.get $fields) (i32.const 3)))
+
+               (func $syntax-props #;(type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-props)
+                                              (local.get $stx)))
+                     (array.get $Array (local.get $fields) (i32.const 4)))
+
+               (func $empty-props #;(type $Prim0)
+                     (result (ref eq))
+
+                     (call $ensure-syntax-empty-props))
+               
 
                ;;;
                ;;; 15. OPERATING SYSTEM

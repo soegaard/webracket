@@ -556,6 +556,10 @@
  srcloc make-srcloc
  srcloc? srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
  srcloc->string
+
+ ;; 12.2 Syntac Object Content
+ syntax?
+ syntax-e
  
  ;; 13   Input and Output
  ;; 13.1 Ports

@@ -849,6 +849,16 @@
 
   srcloc->string
 
+  ;; 12.2 Syntax Object Content
+  syntax?
+  syntax-e
+  ; make-syntax
+  ; syntax
+  ; syntax-scopes
+  ; syntax-shifted-multi-scopes
+  ; syntax-srcloc
+  ; syntax-props
+  ; empty-props
   
   ;; 15.1 Paths
   path?
