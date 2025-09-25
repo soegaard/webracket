@@ -30196,6 +30196,33 @@
                          (then (global.get $true))
                          (else (global.get $false))))
 
+               (func $non-empty-bytes-without-nuls
+                     (param $bs (ref $Bytes)) ;; bytes?
+                     (result (ref eq))        ;; boolean?
+
+                     (local $arr (ref $I8Array))
+                     (local $len i32)
+                     (local $i   i32)
+                     (local $b   i32)
+
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+                     (local.set $len (array.len (local.get $arr)))
+
+                     (if (i32.eqz (local.get $len))
+                         (then (return (global.get $false))))
+
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $b (call $i8array-ref (local.get $arr)
+                                                      (local.get $i)))
+                                  (if (i32.eqz (local.get $b))
+                                      (then (return (global.get $false))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (global.get $true))
+               
                (func $non-empty-string-without-nuls
                      (param $str (ref $String)) ;; string?
                      (result     (ref eq))      ;; boolean?
@@ -30269,6 +30296,77 @@
 
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
                      (call $bytes->string/utf-8/checked (local.get $bytes)))
+
+               (func $raise-bytes->path:nul (param $bstr (ref eq))
+                     (call $js-log (local.get $bstr))
+                     (unreachable))
+
+               (func $raise-bytes->path:bad-type (param $type (ref eq))
+                     (call $js-log (local.get $type))
+                     (unreachable))
+
+               (func $bytes->path (type $Prim12)
+                     (param $bstr-raw (ref eq)) ;; bytes?
+                     (param $type-raw (ref eq)) ;; optional, defaults to (system-path-convention-type)
+                     (result          (ref eq)) ;; path?
+
+                     (local $input-bytes (ref $Bytes))
+                     (local $bytes       (ref $Bytes))
+                     (local $arr         (ref $I8Array))
+                     (local $len         i32)
+                     (local $i           i32)
+                     (local $byte        i32)
+                     (local $conv        (ref eq))
+
+                     ;; Ensure the source is a byte string.
+                     (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr-raw)))
+                         (then (call $raise-check-bytes (local.get $bstr-raw))
+                               (unreachable)))
+
+                     (local.set $input-bytes (ref.cast (ref $Bytes) (local.get $bstr-raw)))
+
+                     ;; Reject byte strings that contain a NUL byte.
+                     (local.set $arr (struct.get $Bytes $bs (local.get $input-bytes)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $byte
+                                             (array.get_u $I8Array
+                                                          (local.get $arr)
+                                                          (local.get $i)))
+                                  (if (i32.eqz (local.get $byte))
+                                      (then (call $raise-bytes->path:nul (local.get $bstr-raw))
+                                            (unreachable)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+
+                     ;; Normalize to an immutable byte string for storage.
+                     (local.set $bytes
+                                (ref.cast (ref $Bytes)
+                                          (call $bytes->immutable-bytes (local.get $bstr-raw))))
+
+                     ;; Determine the path convention symbol.
+                     (if (ref.eq (local.get $type-raw) (global.get $missing))
+                         (then (local.set $conv (global.get $system-path-convention)))
+                         (else
+                          (if (i32.eqz (ref.test (ref $Symbol) (local.get $type-raw)))
+                              (then (call $raise-check-symbol (local.get $type-raw))
+                                    (unreachable)))
+                          (local.set $conv (local.get $type-raw))
+                          (if (i32.eqz (ref.eq (local.get $conv) (global.get $symbol:unix)))
+                              (then
+                               (if (ref.eq (local.get $conv) (global.get $symbol:windows))
+                                   (then (nop))
+                                   (else (call $raise-bytes->path:bad-type (local.get $type-raw))
+                                         (unreachable))))))
+
+                     ;; Construct and return the new path struct.
+                     (struct.new $Path
+                                 (i32.const 0)
+                                 (local.get $bytes)
+                                 (local.get $conv)))
          
                
                ;;;

@@ -607,6 +607,7 @@
  path-string?
  path->bytes
  path->string
+ bytes->path
 
  ;; 17. Unsafe Operations
  unsafe-fx+ unsafe-fl/
