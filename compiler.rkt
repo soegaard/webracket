@@ -847,6 +847,8 @@
   srcloc-position
   srcloc-span
 
+  srcloc->string
+
   
   ;; 15.1 Paths
   path?

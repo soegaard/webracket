@@ -831,6 +831,8 @@
     (add-runtime-symbol-constant 'srcloc-column)
     (add-runtime-symbol-constant 'srcloc-position)
     (add-runtime-symbol-constant 'srcloc-span)
+
+    (add-runtime-symbol-constant 'srcloc->string)
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -30427,8 +30429,8 @@
                (func $srcloc-unwrap
                      (param $who (ref eq))
                      (param $v   (ref eq))
-                     (result (ref $Array))
-
+                     (result     (ref $Array))
+                     
                      (local $struct (ref $Struct))
                      (local $type   (ref eq))
                      (local $std    (ref $StructType))
@@ -30439,8 +30441,8 @@
                          (then (call $raise-argument-error:srcloc-expected (local.get $who) (local.get $v))
                                (unreachable)))
                      (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
-                     (local.set $type (struct.get $Struct $type (local.get $struct)))
-                     (local.set $ok (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                     (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                     (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
                      (if (i32.eqz (local.get $ok))
                          (then (call $raise-argument-error:srcloc-expected (local.get $who) (local.get $v))
                                (unreachable)))
@@ -30452,10 +30454,9 @@
 
                      (local $fields (ref $Array))
 
-                     (local.set $fields
-                                (call $srcloc-unwrap
-                                      (global.get $symbol:srcloc-source)
-                                      (local.get $loc)))
+                     (local.set $fields (call $srcloc-unwrap
+                                              (global.get $symbol:srcloc-source)
+                                              (local.get $loc)))
                      (array.get $Array (local.get $fields) (i32.const 0)))
 
                (func $srcloc-line (type $Prim1)
@@ -30464,10 +30465,9 @@
 
                      (local $fields (ref $Array))
 
-                     (local.set $fields
-                                (call $srcloc-unwrap
-                                      (global.get $symbol:srcloc-line)
-                                      (local.get $loc)))
+                     (local.set $fields (call $srcloc-unwrap
+                                              (global.get $symbol:srcloc-line)
+                                              (local.get $loc)))
                      (array.get $Array (local.get $fields) (i32.const 1)))
 
                (func $srcloc-column (type $Prim1)
@@ -30476,10 +30476,9 @@
 
                      (local $fields (ref $Array))
 
-                     (local.set $fields
-                                (call $srcloc-unwrap
-                                      (global.get $symbol:srcloc-column)
-                                      (local.get $loc)))
+                     (local.set $fields (call $srcloc-unwrap
+                                              (global.get $symbol:srcloc-column)
+                                              (local.get $loc)))
                      (array.get $Array (local.get $fields) (i32.const 2)))
 
                (func $srcloc-position (type $Prim1)
@@ -30488,10 +30487,9 @@
 
                      (local $fields (ref $Array))
 
-                     (local.set $fields
-                                (call $srcloc-unwrap
-                                      (global.get $symbol:srcloc-position)
-                                      (local.get $loc)))
+                     (local.set $fields (call $srcloc-unwrap
+                                              (global.get $symbol:srcloc-position)
+                                              (local.get $loc)))
                      (array.get $Array (local.get $fields) (i32.const 3)))
 
                (func $srcloc-span (type $Prim1)
@@ -30505,6 +30503,84 @@
                                       (global.get $symbol:srcloc-span)
                                       (local.get $loc)))
                      (array.get $Array (local.get $fields) (i32.const 4)))
+
+               ; Formats an `srcloc` into a string suitable for use in an error message.
+               (func $srcloc->string (type $Prim1)
+                     (param $loc (ref eq))
+                     (result     (ref eq))
+
+                     (local $fields        (ref $Array))
+                     (local $source        (ref eq))
+                     (local $line          (ref eq))
+                     (local $column        (ref eq))
+                     (local $source-str    (ref $String))
+                     (local $line-str      (ref $String))
+                     (local $column-str    (ref $String))
+                     (local $with-source   (ref $String))
+                     (local $with-line     (ref $String))
+                     (local $separator     (ref $String))
+
+                     (local.set $fields (call $srcloc-unwrap
+                                              (global.get $symbol:srcloc->string)
+                                              (local.get $loc)))
+                     (local.set $source (array.get $Array (local.get $fields) (i32.const 0)))
+                     (local.set $line   (array.get $Array (local.get $fields) (i32.const 1)))
+                     (local.set $column (array.get $Array (local.get $fields) (i32.const 2)))
+
+                     ; defaults
+                     (local.set $source-str (ref.cast (ref $String) (global.get $string:empty)))
+                     (local.set $line-str   (ref.cast (ref $String) (global.get $string:empty)))
+                     (local.set $column-str (ref.cast (ref $String) (global.get $string:empty)))
+
+                     ; souce string
+                     (if (ref.test (ref $String) (local.get $source))
+                         (then (local.set $source-str
+                                          (ref.cast (ref $String)
+                                                    (local.get $source))))
+                         (else
+                          (if (ref.test (ref $Symbol) (local.get $source))
+                              (then (local.set $source-str
+                                               (ref.cast (ref $String)
+                                                         (call $symbol->string
+                                                               (local.get $source)))))
+                              (else
+                               (if (ref.test (ref $Path) (local.get $source))
+                                   (then
+                                    ;; TODO: Support current-directory-for-user adjustments.
+                                    (local.set $source-str
+                                               (ref.cast (ref $String)
+                                                         (call $path->string
+                                                               (local.get $source)))))
+                                   (else (return (global.get $false))))))))
+
+                     (local.set $line-str (ref.cast (ref $String)
+                                                    (call $number->string
+                                                          (local.get $line)
+                                                          (global.get $missing))))
+                     (local.set $column-str (ref.cast (ref $String)
+                                                      (call $number->string
+                                                            (local.get $column)
+                                                            (global.get $missing))))
+                     (local.set $separator  (ref.cast (ref $String)
+                                                      (global.get $string:colon)))
+
+                     (local.set $with-source
+                                (ref.cast (ref $String)
+                                          (call $string-append/2
+                                                (local.get $source-str)
+                                                (local.get $separator))))
+                     (local.set $with-line
+                                (ref.cast (ref $String)
+                                          (call $string-append/2
+                                                (local.get $with-source)
+                                                (local.get $line-str))))
+                     (ref.cast (ref $String)
+                               (call $string-append/2
+                                     (local.get $with-line)
+                                     (ref.cast (ref $String)
+                                               (call $string-append/2
+                                                     (local.get $separator)
+                                                     (local.get $column-str))))))
 
 
                ;;;

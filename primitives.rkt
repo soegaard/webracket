@@ -555,6 +555,7 @@
  ;; 10.2.5 Source Locations
  srcloc make-srcloc
  srcloc? srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
+ srcloc->string
  
  ;; 13   Input and Output
  ;; 13.1 Ports
