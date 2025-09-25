@@ -1,6 +1,7 @@
 #lang racket/base
 (module+ test (require rackunit))
 (provide (all-defined-out))
+  (require racket/set)
 
 (require "expander.rkt"       ; provides topexpand
          "assembler.rkt"
@@ -69,6 +70,9 @@
 ;;;
 ;;; TODO
 ;;;
+
+; [ ] Redefining a primitive on top-level, like `(define (cadr x) (car (cdr x)))`
+;     leads to problems. The error is strange (runtime error). Find the underlying problem.
 
 ; [ ] Find solution for two types of rest arguments.
 ;     For inlining direct calls, the $Args representation is fine (1 allocation)
@@ -1093,15 +1097,6 @@
     (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps))))
   
   
-  (Formals : * (F) -> Formals ()
-    (with-output-language (LFE Formals)
-      (syntax-parse F
-        [(x:id ...)               `(formals (,(variable* #'(x ...)) ...))]
-        [(x0:id x:id ... . xd:id) `(formals (,(variable #'x0) ,(variable* #'(x ...)) ...
-                                                              . ,(variable #'xd)))]
-        [x:id                     `(formals ,(variable #'x))]
-        [_ (raise-syntax-error 'parse "expected formals" F)])))
-  
   (TopLevelForm : * (T) -> TopLevelForm ()
     (with-output-language (LFE TopLevelForm)
       (syntax-parse T #:literal-sets (kernel-literals) ; keywords in fully expanded programs
@@ -1132,6 +1127,7 @@
         ; `(define-syntaxes ,G (,(variable* #'(x ...)) ...) ,(Expr #'e))]
         
         [e                            `,(Expr #'e)])))
+  
   
   (RawRequireSpec : * (RRS) -> RawRequireSpec ()
     (with-output-language (LFE RawRequireSpec)
@@ -1177,6 +1173,15 @@
          #;(expand (id . datum))
          #;(expand (id . datum) orig-form)
          [x   `,(variable #'x)])))
+
+  (Formals : * (F) -> Formals ()
+           (with-output-language (LFE Formals)
+             (syntax-parse F
+               [(x:id ...)               `(formals (,(variable* #'(x ...)) ...))]
+               [(x0:id x:id ... . xd:id) `(formals (,(variable #'x0) ,(variable* #'(x ...)) ...
+                                                                     . ,(variable #'xd)))]
+               [x:id                     `(formals ,(variable #'x))]
+               [_ (raise-syntax-error 'parse "expected formals" F)])))
   
   (Expr : * (E) -> Expr ()
     (with-output-language (LFE Expr)
@@ -1466,8 +1471,9 @@
                   (unparse-all
                    (unparse-LFE1
                     (explicit-begin
-                     (parse                  
-                      (expand-syntax stx))))))])
+                     (flatten-topbegin
+                      (parse                  
+                       (expand-syntax stx)))))))])
       (check-equal? (test #'(let-values ([(x) 1]) 2 3))
                     '(let-values ([(x) '1]) (begin '2 '3)))))
 
@@ -1529,8 +1535,6 @@
 
 
 
-
-
 ;;;
 ;;; α-RENAMING
 ;;;
@@ -1548,7 +1552,7 @@
 ; mapped to themselves in order not to rename primitives in the output.
 
 ; FACT: α-renaming will not rename identifiers bound to primitives.
-;       After renaming an indentifier that "looks like a primitive is a
+;       After renaming an identifier that "looks like a primitive is a
 ;       primitive".
 ;       Example:  (begin (define + 42) (+ 1 2))))))
 ;         becomes (begin (define-values (|+.8|) '42) (|+.8| '1 '2))
@@ -1629,7 +1633,7 @@
     [,sls `,(SpacelessSpec sls)])
 
   (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ()
-    [,x  `[,x ,(ρ x)]]))
+    [,x  `[,x ,(ρ x)]]))  ; <-- before and after renaming
 
 
 (define-pass α-rename/pass1 : LFE2 (T) -> LFE2 (ρ)
@@ -1709,6 +1713,12 @@
                                                  (letv ((e _) (Expr e ρ))
                                                        (values `(define-values ,s (,x ...) ,e) ρ)))]
                                           [else
+                                           ; TODO - lift this restriction?
+                                           (define x-prim (ormap (λ (x) (and (primitive? (variable-id x)) (variable-id x))) x))
+                                           (when x-prim
+                                             (raise-syntax-error 'α-rename
+                                                    "In webracket it is not allowed to redefine a primitive at the top-level"
+                                                    s x-prim))
                                            ; top-level variables aren't renamed
                                            ; but in order to see that they are defined,
                                            ; they must map to themselves. 
@@ -1824,7 +1834,10 @@
                    (unparse-LFE2+ (α-rename
                                   (explicit-case-lambda
                                    (explicit-begin
-                                    (parse (expand-syntax stx)))))))))])
+                                    (flatten-topbegin
+                                     (parse
+                                      (expand-syntax stx))))))))))])
+        
       (check-equal? (test #'(let ([x 10])
                               (let ([x 1]
                                     [y x])
@@ -2022,8 +2035,10 @@
            (α-rename
             (explicit-case-lambda
              (explicit-begin
-              (parse
-               (expand-syntax stx))))))))))
+              (flatten-topbegin
+               (parse
+                (expand-syntax stx)))))))))))
+    
     (check-equal? (test #'(set! x 1)) '(set-boxed! x '1))
     (check-equal? (test #'(λ (x) (set! x 1) x))
                   '(#%expression
@@ -2142,8 +2157,9 @@
             (α-rename
              (explicit-case-lambda
               (explicit-begin
-               (parse
-                (expand-syntax stx)))))))))))
+               (flatten-topbegin
+                (parse
+                 (expand-syntax stx))))))))))))
     (check-equal? (test #'(+ 1 2)) '(primapp + '1 '2))
     (check-equal? (test #'(begin (define foo 3)    (foo 1 2)))
                   ; At the top-level the expression is evaluted before
@@ -2424,8 +2440,9 @@
              (α-rename
               (explicit-case-lambda
                (explicit-begin
-                (parse
-                 (expand-syntax stx))))))))))))
+                (flatten-topbegin
+                 (parse
+                  (expand-syntax stx)))))))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
     (check-equal? (test #'(+ 2 (* 4 5)))
@@ -4485,6 +4502,18 @@
   ; variables bound by let-values and others at the top-level
   ; are represented in the runtime as local variables of a function `entry`.
   (define entry-locals (*locals*))
+
+  (define primitives-also-declared-as-variables-at-top-level
+    (sort (set->list
+           (set-intersect (list->set (map syntax-e (map variable-id top-vars)))
+                          (list->set primitives)))
+          symbol<?))
+  
+  (displayln "-- variables declared at top-level --")
+  (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
+  (displayln "-- primitives also declared as variables at top-level --")
+  (displayln primitives-also-declared-as-variables-at-top-level)
+  
   
   (generate-runtime
    dls                              ; define-labels
