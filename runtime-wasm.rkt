@@ -28838,7 +28838,7 @@
                ;; --- Case: bytes ---
                 (if (ref.test (ref $Bytes) (local.get $v))
                     (then (return (call $format/display:bytes
-                                        (ref.cast (ref $Bytes) (local.get $v))))))
+                                        (ref.cast (ref $Bytes) (local.get $v))))))                
                ;; --- Case: pair ---
                (if (ref.test (ref $Pair) (local.get $v))
                    (then (return (call $format/display:pair
@@ -28897,6 +28897,10 @@
                    #;(then (call $raise-format/display:got-boxed))
                    (then (return (call $format/display:boxed
                                        (ref.cast (ref $Boxed) (local.get $v))))))
+               ;; --- Case: path ---
+               (if (ref.test (ref $Path) (local.get $v))
+                   (then (return (call $format/display:path
+                                           (ref.cast (ref $Path) (local.get $v))))))
                ;; --- Fallback ---
                (call $raise-format/display:unknown-datatype)
                (unreachable))
@@ -29346,10 +29350,18 @@
                ;; Combine and return
                (call $growable-array-of-strings->string (local.get $out)))
 
+         (func $format/display:path
+               (param $path (ref $Path))
+               (result      (ref $String))
+               ;; Paths display as the string that path->string would produce.
+               (ref.cast (ref $String)
+                         (call $path->string
+                               (ref.cast (ref eq) (local.get $path)))))
+
          ; Note: This uses the write conventions instead of display.
          (func $format/display:char
                (param $v (ref eq))
-               (result (ref $String))
+               (result   (ref $String))
 
                (local $cp i32)                 ;; codepoint
                (local $s  (ref $String))       ;; temporary string
