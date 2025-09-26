@@ -31613,6 +31613,20 @@
                      (if (ref.eq (local.get $sym) (global.get $symbol:windows))
                          (then (return (global.get $true))))
                      (global.get $false))
+
+               ; / is a separator on both unix and windows
+               ; \ is a separator on windows
+               (func $is-path-sep?
+                     (param $cp   i32)      ;; codepoint (char->integer)
+                     (param $conv (ref eq)) ;; symbol?
+                     (result      (ref eq)) ;; boolean?
+
+                     (if (i32.eq (local.get $cp) (i32.const 47))           ; #\/
+                         (then (return (global.get $true))))
+                     (if (ref.eq (local.get $conv) (global.get $symbol:windows))
+                         (then (if (i32.eq (local.get $cp) (i32.const 92)) ; #\\
+                                   (then (return (global.get $true))))))
+                     (global.get $false))
                
                (func $non-empty-bytes-without-nuls
                      (param $bs (ref $Bytes)) ;; bytes?
