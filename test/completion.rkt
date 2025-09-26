@@ -1403,6 +1403,7 @@
       syntax-debug-info))
   )
 
+
 #;(define (symbol->title s)
     ; todo : implement string-titlecase
     (string-titlecase (symbol->string s)))
@@ -1703,6 +1704,7 @@
             hash-update!
             hash-values
             hash?
+            identifier?
             immutable-box?
             immutable-bytes?
             immutable-hash?
@@ -1959,12 +1961,15 @@
             symbol<?
             symbol=?
             symbol?
+            syntax->datum
+            syntax->list
             syntax-column
             syntax-e
             syntax-line
             syntax-position
             syntax-source
             syntax-span
+            syntax-srcloc
             syntax?
             system-big-endian?
             take
@@ -2058,6 +2063,7 @@
             write-string
             xor
             zero?)
+
 
 
           ))
