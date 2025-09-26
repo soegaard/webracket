@@ -9586,11 +9586,12 @@
 
                ;; Fill array with characters from either representation
                (local.set $i (i32.const 0))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                            (if (i32.eqz (local.get $use-args?))
-                                (then
+               (if (i32.eqz (local.get $use-args?))
+                   (then
+                    (local.set $node (local.get $list))
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
                                  (if (ref.test (ref $Pair) (local.get $node))
                                      (then
                                       (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
@@ -9598,15 +9599,24 @@
                                       (local.set $node (struct.get $Pair $d (local.get $pair))))
                                      (else
                                       (call $raise-pair-expected (local.get $node))
-                                      (unreachable))))
-                                (else
-                                 (local.set $ch (array.get $Args (local.get $argv) (local.get $i)))))
-                            (array.set $I32Array
-                                       (local.get $arr)
-                                       (local.get $i)
-                                       (call $char->integer/i32 (local.get $ch)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
+                                      (unreachable)))
+                                 (array.set $I32Array
+                                            (local.get $arr)
+                                            (local.get $i)
+                                            (call $char->integer/i32 (local.get $ch)))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop))))
+                   (else
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                 (local.set $ch (array.get $Args (local.get $argv) (local.get $i)))
+                                 (array.set $I32Array
+                                            (local.get $arr)
+                                            (local.get $i)
+                                            (call $char->integer/i32 (local.get $ch)))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop)))))
                ;; Construct mutable string
                (struct.new $String
                            (i32.const 0)  ;; hash
