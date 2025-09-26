@@ -850,6 +850,8 @@
     (add-runtime-symbol-constant 'syntax-position)
     (add-runtime-symbol-constant 'syntax-span)
     (add-runtime-symbol-constant 'datum->syntax)
+    (add-runtime-symbol-constant 'syntax->datum)
+    (add-runtime-symbol-constant 'syntax->list)
     (add-runtime-symbol-constant 'identifier?)
 
     
@@ -30823,6 +30825,39 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 0)))
 
+               (func $syntax->list (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $current (ref eq))
+                     (local $pair    (ref $Pair))
+                     (local $elem    (ref eq))
+                     (local $acc     (ref eq))
+                     (local $result  (ref eq))
+
+                     (local.set $acc     (global.get $null))
+                     (local.set $result  (global.get $false))
+                     (local.set $current (call $syntax-e (local.get $stx)))
+
+                     (block $done
+                            (block $fail
+                                   (loop $loop
+                                         (if (ref.eq (local.get $current) (global.get $null))
+                                             (then
+                                              (local.set $result (call $reverse (local.get $acc)))
+                                              (br $done)))
+                                         (if (i32.eqz (ref.test (ref $Pair) (local.get $current)))
+                                             (then (br $fail)))
+                                         (local.set $pair (ref.cast (ref $Pair) (local.get $current)))
+                                         (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                                         (local.set $acc  (struct.new $Pair
+                                                                      (i32.const 0)
+                                                                      (local.get $elem)
+                                                                      (local.get $acc)))
+                                         (local.set $current (struct.get $Pair $d (local.get $pair)))
+                                         (br $loop))))
+                     (local.get $result))
+
                (func $syntax-scopes 
                      (param $stx (ref eq))
                      (result (ref eq))
@@ -31440,6 +31475,100 @@
                ;;             (local.get $srcloc)
                ;;             (local.get $props)))
 
+
+               (func $syntax->datum/convert
+                     (param $who (ref eq))
+                     (param $v   (ref eq))
+                     (result (ref eq))
+
+                     (local $fields      (ref $Array))
+                     (local $e           (ref eq))
+                     (local $pair        (ref $Pair))
+                     (local $car-raw     (ref eq))
+                     (local $cdr-raw     (ref eq))
+                     (local $car-datum   (ref eq))
+                     (local $cdr-datum   (ref eq))
+                     (local $vec         (ref $Vector))
+                     (local $arr         (ref $Array))
+                     (local $new-arr     (ref $Array))
+                     (local $len         i32)
+                     (local $i           i32)
+                     (local $elem        (ref eq))
+                     (local $elem-datum  (ref eq))
+                     (local $hash        i32)
+                     (local $immutable   i32)
+                     (local $box         (ref $Box))
+                     (local $box-val     (ref eq))
+
+                     ;; Unwrap nested syntax objects recursively.
+                     (if (ref.eq (call $syntax? (local.get $v)) (global.get $true))
+                         (then
+                          (local.set $fields (call $syntax-unwrap (local.get $who) (local.get $v)))
+                          (local.set $e (array.get $Array (local.get $fields) (i32.const 0)))
+                          (return (call $syntax->datum/convert (local.get $who) (local.get $e)))))
+
+                     ;; Convert pairs.
+                     (if (ref.test (ref $Pair) (local.get $v))
+                         (then
+                          (local.set $pair (ref.cast (ref $Pair) (local.get $v)))
+                          (local.set $car-raw (struct.get $Pair $a (local.get $pair)))
+                          (local.set $cdr-raw (struct.get $Pair $d (local.get $pair)))
+                          (local.set $car-datum (call $syntax->datum/convert (local.get $who) (local.get $car-raw)))
+                          (local.set $cdr-datum (call $syntax->datum/convert (local.get $who) (local.get $cdr-raw)))
+                          (return (call $cons (local.get $car-datum) (local.get $cdr-datum)))))
+
+                     ;; Convert vectors element-wise.
+                     (if (ref.test (ref $Vector) (local.get $v))
+                         (then
+                          (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                          (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                          (local.set $len (array.len (local.get $arr)))
+                          (local.set $new-arr (call $make-array (local.get $len) (global.get $false)))
+                          (local.set $i (i32.const 0))
+                          (block $done
+                                 (loop $loop
+                                       (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                       (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+                                       (local.set $elem-datum (call $syntax->datum/convert (local.get $who) (local.get $elem)))
+                                       (array.set $Array (local.get $new-arr) (local.get $i) (local.get $elem-datum))
+                                       (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                       (br $loop)))
+                          (local.set $hash (struct.get $Vector $hash (local.get $vec)))
+                          (local.set $immutable (struct.get $Vector $immutable (local.get $vec)))
+                          (return (struct.new $Vector
+                                              (local.get $hash)
+                                              (local.get $immutable)
+                                              (local.get $new-arr)))))
+
+                     ;; Convert boxes.
+                     (if (ref.test (ref $Box) (local.get $v))
+                         (then
+                          (local.set $box (ref.cast (ref $Box) (local.get $v)))
+                          (local.set $box-val (struct.get $Box $v (local.get $box)))
+                          (local.set $box-val (call $syntax->datum/convert (local.get $who) (local.get $box-val)))
+                          (local.set $hash (struct.get $Box $hash (local.get $box)))
+                          (local.set $immutable (struct.get $Box $immutable (local.get $box)))
+                          (return (struct.new $Box
+                                              (local.get $hash)
+                                              (local.get $immutable)
+                                              (local.get $box-val)))))
+
+                     (local.get $v))
+
+               (func $syntax->datum (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $e      (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax->datum)
+                                              (local.get $stx)))
+                     (local.set $e (array.get $Array (local.get $fields) (i32.const 0)))
+                     (call $syntax->datum/convert (global.get $symbol:syntax->datum) (local.get $e)))
+
+               
                ;;;
                ;;; 15. OPERATING SYSTEM
                ;;;

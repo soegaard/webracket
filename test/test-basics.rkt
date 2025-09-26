@@ -3285,7 +3285,42 @@
                           (equal? (identifier? list-stx) #f)
                           (equal? (identifier? number-stx) #f)
                           (equal? (identifier? 'pear) #f)
-                          (equal? (identifier? 5) #f))))))
+                          (equal? (identifier? 5) #f))))
+
+             (list "syntax->datum/basic"
+                    (let* ([stx (datum->syntax #f 'pear)]
+                           [datum (syntax->datum stx)])
+                      (and (equal? datum 'pear)
+                           (equal? (syntax? datum) #f))))
+
+             (list "syntax->datum/nested"
+                    (let* ([inner   (datum->syntax #f 'x)]
+                           [payload (list inner 'y (datum->syntax #f '(1 2)))]
+                           [stx     (datum->syntax #f payload)]
+                           [datum   (syntax->datum stx)])
+                      (equal? datum '(x y (1 2)))))
+
+              (list "syntax->datum/vector-box"
+                    (let* ([vec-stx (datum->syntax #f (vector (datum->syntax #f 'a) 'b))]
+                           [box-stx (datum->syntax #f (box (datum->syntax #f 'c)))]
+                           [vec     (syntax->datum vec-stx)]
+                           [bx      (syntax->datum box-stx)])
+                      (and (equal? (vector? vec) #t)
+                           (equal? (vector-ref vec 0) 'a)
+                           (equal? (vector-ref vec 1) 'b)
+                           (equal? (unbox bx) 'c))))
+
+              (list "syntax->list"
+                    (let* ([stx   (datum->syntax #f '(a b c))]
+                           [lst   (syntax->list stx)]
+                           [empty (syntax->list (datum->syntax #f '()))])
+                      (list (pair? lst)
+                            lst
+                            #;(equal? (map (λ (stx) (syntax-e stx)) lst) '(a b c))
+                            (equal? empty '())
+                            (equal? (syntax->list (datum->syntax #f '(a . b))) #f)
+                            (equal? (syntax->list (datum->syntax #f 'a))       #f))))
+              ))
 
  
  (list "15. Operating System"

@@ -574,6 +574,8 @@
  syntax-span
 
  datum->syntax
+ syntax->datum
+ syntax->list
   
  ;; 13   Input and Output
  ;; 13.1 Ports

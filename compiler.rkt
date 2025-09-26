@@ -862,6 +862,8 @@
   identifier?
 
   datum->syntax
+  syntax->datum
+  syntax->list
   
   ; make-syntax
   ; syntax
