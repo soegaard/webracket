@@ -3260,7 +3260,7 @@
                     (let* ([base (datum->syntax #f 'base)]
                            [stx  (datum->syntax base 'value #f base base)])
                       (equal? (syntax? stx) #t))))
- 
+             
              (list "syntax location accessors"
                    (let* ([stx    (datum->syntax #f 'demo)]
                           [no-loc (datum->syntax #f 'placeholder)]
@@ -3276,7 +3276,16 @@
                           (equal? (syntax-line no-loc)     #f)
                           (equal? (syntax-column no-loc)   #f)
                           (equal? (syntax-position no-loc) #f)
-                          (equal? (syntax-span no-loc)     #f))))))
+                          (equal? (syntax-span no-loc)     #f))))
+             (list "identifier?"
+                   (let* ([id-stx     (datum->syntax #f 'pear)]
+                          [list-stx   (datum->syntax #f '(pear core))]
+                          [number-stx (datum->syntax #f 5)])
+                     (and (equal? (identifier? id-stx) #t)
+                          (equal? (identifier? list-stx) #f)
+                          (equal? (identifier? number-stx) #f)
+                          (equal? (identifier? 'pear) #f)
+                          (equal? (identifier? 5) #f))))))
 
  
  (list "15. Operating System"

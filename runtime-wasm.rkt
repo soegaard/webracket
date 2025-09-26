@@ -837,7 +837,7 @@
     (add-runtime-symbol-constant 'syntax)
     (add-runtime-symbol-constant 'make-syntax)
     (add-runtime-symbol-constant 'syntax?)
-    (add-runtime-symbol-constant 'syntax-e)
+    (add-runtime-symbol-constant 'syntax-e)    
     (add-runtime-symbol-constant 'syntax-scopes)
     (add-runtime-symbol-constant 'syntax-shifted-multi-scopes)
     (add-runtime-symbol-constant 'syntax-srcloc)
@@ -850,6 +850,7 @@
     (add-runtime-symbol-constant 'syntax-position)
     (add-runtime-symbol-constant 'syntax-span)
     (add-runtime-symbol-constant 'datum->syntax)
+    (add-runtime-symbol-constant 'identifier?)
 
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
@@ -30950,6 +30951,26 @@
                          (ref.eq (local.get $srcloc) (global.get $false))
                          (then (global.get $false))
                          (else (call $srcloc-span (local.get $srcloc)))))
+
+               (func $identifier? (type $Prim1)
+                     (param $v (ref eq))
+                     (result   (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $datum  (ref eq))
+
+                     (if (result (ref eq))
+                         (ref.eq (call $syntax? (local.get $v)) (global.get $true))
+                         (then
+                          (local.set $fields (call $syntax-unwrap
+                                                   (global.get $symbol:identifier?)
+                                                   (local.get $v)))
+                          (local.set $datum (array.get $Array (local.get $fields) (i32.const 0)))
+                          (if (result (ref eq))
+                              (ref.eq (call $symbol? (local.get $datum)) (global.get $true))
+                              (then (global.get $true))
+                              (else (global.get $false))))
+                         (else (global.get $false))))
 
                ;; NOTE: This initial implementation does not yet recursively convert
                ;;       datum contents (pairs, vectors, boxes, etc.) as Racket's

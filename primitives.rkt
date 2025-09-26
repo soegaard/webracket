@@ -558,6 +558,8 @@
  srcloc? srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
  srcloc->string
 
+ identifier?
+ 
  syntax-srcloc  ; in racket/syntax-srcloc
 
 

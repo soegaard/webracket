@@ -859,6 +859,8 @@
   syntax-position
   syntax-span
 
+  identifier?
+
   datum->syntax
   
   ; make-syntax
