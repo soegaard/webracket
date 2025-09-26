@@ -560,7 +560,15 @@
  ;; 12.2 Syntac Object Content
  syntax?
  syntax-e
- 
+
+ syntax-source
+ syntax-line
+ syntax-column
+ syntax-position
+ syntax-span
+
+ datum->syntax
+  
  ;; 13   Input and Output
  ;; 13.1 Ports
  eof
@@ -1065,3 +1073,18 @@
 ; Redefine to avoid `srcloc` being bound as syntax
 (define (srcloc source line column position span)
   (racket:srcloc source line column position span))
+
+(define (syntax-source stx)
+  (racket:syntax-source stx))
+
+(define (syntax-line stx)
+  (racket:syntax-line stx))
+
+(define (syntax-column stx)
+  (racket:syntax-column stx))
+
+(define (syntax-position stx)
+  (racket:syntax-position stx))
+
+(define (syntax-span stx)
+  (racket:syntax-span stx))

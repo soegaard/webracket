@@ -852,6 +852,15 @@
   ;; 12.2 Syntax Object Content
   syntax?
   syntax-e
+  
+  syntax-source
+  syntax-line
+  syntax-column
+  syntax-position
+  syntax-span
+
+  datum->syntax
+  
   ; make-syntax
   ; syntax
   ; syntax-scopes
@@ -3771,6 +3780,7 @@
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0
 
+         [(datum->syntax)              (inline-prim/optional sym ae1 2 5)]
          
          
         [(fx= fx< fx> fx<= fx>=)

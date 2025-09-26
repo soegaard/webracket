@@ -3235,6 +3235,49 @@
                        (equal? (srcloc-position loc2) #f)
                        (equal? (srcloc-span loc2)     #f)
                        (equal? (srcloc->string loc2) "file")))))))
+
+ (list "12. Macros"
+       (list "12.2 Syntax Object Content"
+             (list
+              (list "datum->syntax/basic"
+                    (let ([stx (datum->syntax #f 'apple)])
+                      (and (equal? (syntax? stx) #t)
+                           (equal? (syntax-e stx) 'apple))))
+
+              #;(list "datum->syntax/srcloc"
+                    (let* ([loc (make-srcloc 'src 1 0 0 0)]
+                           [stx (datum->syntax #f 'x loc)])
+                      (equal? (syntax-srcloc stx) loc)))
+
+              #;(list "datum->syntax/srcloc-from-syntax"
+                    (let* ([loc (make-srcloc 'src 2 1 10 3)]
+                           [ctx (datum->syntax #f 'dummy loc)]
+                           [stx (datum->syntax ctx 'value ctx)])
+                      (and (equal? (syntax? stx) #t)
+                           (equal? (syntax-srcloc stx) loc))))
+
+              (list "datum->syntax/prop-ignored"
+                    (let* ([base (datum->syntax #f 'base)]
+                           [stx  (datum->syntax base 'value #f base base)])
+                      (equal? (syntax? stx) #t))))
+ 
+             (list "syntax location accessors"
+                   (let* ([stx    (datum->syntax #f 'demo)]
+                          [no-loc (datum->syntax #f 'placeholder)]
+                          [loc    (make-srcloc 'src 3 0 10 5)])
+                     (unsafe-struct-set! stx    3 loc)
+                     (unsafe-struct-set! no-loc 3 #f)
+                     (and (equal? (syntax-source stx)      'src)
+                          (equal? (syntax-line stx)         3)
+                          (equal? (syntax-column stx)       0)
+                          (equal? (syntax-position stx)    10)
+                          (equal? (syntax-span stx)         5)
+                          (equal? (syntax-source no-loc)   #f)
+                          (equal? (syntax-line no-loc)     #f)
+                          (equal? (syntax-column no-loc)   #f)
+                          (equal? (syntax-position no-loc) #f)
+                          (equal? (syntax-span no-loc)     #f))))))
+
  
  (list "15. Operating System"
        (list "15. Paths"

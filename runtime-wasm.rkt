@@ -843,6 +843,14 @@
     (add-runtime-symbol-constant 'syntax-srcloc)
     (add-runtime-symbol-constant 'syntax-props)
     (add-runtime-symbol-constant 'empty-props)
+
+    (add-runtime-symbol-constant 'syntax-source)
+    (add-runtime-symbol-constant 'syntax-line)
+    (add-runtime-symbol-constant 'syntax-column)
+    (add-runtime-symbol-constant 'syntax-position)
+    (add-runtime-symbol-constant 'syntax-span)
+    (add-runtime-symbol-constant 'datum->syntax)
+
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -909,8 +917,9 @@
     (add-runtime-string-constant 'srcloc-positive-or-false   "(or/c exact-positive-integer? #f)")
     (add-runtime-string-constant 'srcloc-nonnegative-or-false "(or/c exact-nonnegative-integer? #f)")
 
-    (add-runtime-string-constant 'syntax?                    "syntax?")
     (add-runtime-string-constant 'hash?                      "hash?")
+
+    (add-runtime-string-constant 'syntax?                    "syntax?")
     
     (add-runtime-bytes-constant  'empty                     #"")
     (add-runtime-bytes-constant  'non-empty                 #"_")
@@ -30810,7 +30819,7 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 0)))
 
-               (func $syntax-scopes #;(type $Prim1)
+               (func $syntax-scopes 
                      (param $stx (ref eq))
                      (result (ref eq))
 
@@ -30821,7 +30830,7 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 1)))
 
-               (func $syntax-shifted-multi-scopes #;(type $Prim1)
+               (func $syntax-shifted-multi-scopes 
                      (param $stx (ref eq))
                      (result (ref eq))
 
@@ -30832,7 +30841,7 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 2)))
 
-               (func $syntax-srcloc #;(type $Prim1)
+               (func $syntax-srcloc 
                      (param $stx (ref eq))
                      (result (ref eq))
 
@@ -30843,7 +30852,7 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 3)))
 
-               (func $syntax-props #;(type $Prim1)
+               (func $syntax-props
                      (param $stx (ref eq))
                      (result (ref eq))
 
@@ -30854,11 +30863,334 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 4)))
 
-               (func $empty-props #;(type $Prim0)
+               (func $empty-props 
                      (result (ref eq))
 
                      (call $ensure-syntax-empty-props))
-               
+
+               (func $syntax-source (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $srcloc (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-source)
+                                              (local.get $stx)))
+                     (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (global.get $false))
+                         (else (call $srcloc-source (local.get $srcloc)))))
+
+               (func $syntax-line (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $srcloc (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-line)
+                                              (local.get $stx)))
+                     (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (global.get $false))
+                         (else (call $srcloc-line (local.get $srcloc)))))
+
+               (func $syntax-column (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $srcloc (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-column)
+                                              (local.get $stx)))
+                     (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (global.get $false))
+                         (else (call $srcloc-column (local.get $srcloc)))))
+
+               (func $syntax-position (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $srcloc (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-position)
+                                              (local.get $stx)))
+                     (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (global.get $false))
+                         (else (call $srcloc-position (local.get $srcloc)))))
+
+               (func $syntax-span (type $Prim1)
+                     (param $stx (ref eq))
+                     (result (ref eq))
+
+                     (local $fields (ref $Array))
+                     (local $srcloc (ref eq))
+
+                     (local.set $fields (call $syntax-unwrap
+                                              (global.get $symbol:syntax-span)
+                                              (local.get $stx)))
+                     (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $srcloc) (global.get $false))
+                         (then (global.get $false))
+                         (else (call $srcloc-span (local.get $srcloc)))))
+
+               ;; NOTE: This initial implementation does not yet recursively convert
+               ;;       datum contents (pairs, vectors, boxes, etc.) as Racket's
+               ;;       datum->syntax does. Nested data are left unchanged.
+               (func $datum->syntax (type $Prim15)
+                     (param $ctxt    (ref eq))  ;; syntax? or #f
+                     (param $datum   (ref eq))  ;; any/c
+                     (param $srcloc  (ref eq))  ;; optional srcloc? (default: #f)
+                     (param $prop    (ref eq))  ;; optional syntax? (default: #f)
+                     (param $ignored (ref eq))  ;; optional syntax? (default: #f)
+                     (result         (ref eq))
+
+                     (local $who             (ref eq))
+                     (local $fields          (ref $Array))
+                     (local $scopes          (ref eq))
+                     (local $shifted         (ref eq))
+                     (local $srcloc-checked  (ref eq))
+                     (local $props-checked   (ref eq))
+                     (local $is-syntax       (ref eq))
+
+                     (local.set $who            (global.get $symbol:datum->syntax))
+                     (local.set $scopes         (global.get $null))
+                     (local.set $shifted        (global.get $null))
+                     (local.set $srcloc-checked (global.get $false))
+                     (local.set $props-checked  (global.get $missing))
+
+                     (if (ref.eq (local.get $ctxt) (global.get $false))
+                         (then (nop))
+                         (else
+                          (local.set $fields (call $syntax-unwrap
+                                                    (local.get $who)
+                                                    (local.get $ctxt)))
+                          (local.set $scopes
+                                     (array.get $Array (local.get $fields) (i32.const 1)))
+                          (local.set $shifted
+                                     (array.get $Array (local.get $fields) (i32.const 2)))))
+
+                     (if (ref.eq (local.get $srcloc) (global.get $missing))
+                         (then (nop))
+                         (else
+                          (if (ref.eq (local.get $srcloc) (global.get $false))
+                              (then (nop))
+                              (else
+                               (if (ref.eq (call $syntax? (local.get $srcloc)) (global.get $true))
+                                   (then
+                                    (local.set $srcloc-checked
+                                               (call $syntax-srcloc (local.get $srcloc))))
+                                   (else
+                                    (if (ref.eq (call $srcloc? (local.get $srcloc))
+                                                (global.get $true))
+                                        (then (local.set $srcloc-checked (local.get $srcloc)))
+                                        (else
+                                         (call $raise-argument-error:srcloc-expected
+                                               (local.get $who)
+                                               (local.get $srcloc))
+                                         (unreachable)))))))))
+
+                     (if (ref.eq (local.get $prop) (global.get $missing))
+                         (then (nop))
+                         (else
+                          (if (ref.eq (local.get $prop) (global.get $false))
+                              (then (nop))
+                              (else
+                               (if (ref.eq (call $syntax? (local.get $prop)) (global.get $true))
+                                   (then
+                                    (local.set $props-checked
+                                               (call $syntax-props (local.get $prop))))
+                                   (else
+                                    (call $raise-argument-error:syntax-expected
+                                          (local.get $who)
+                                          (local.get $prop))
+                                    (unreachable)))))))
+
+                     (if (ref.eq (local.get $ignored) (global.get $missing))
+                         (then (nop))
+                         (else
+                          (if (ref.eq (local.get $ignored) (global.get $false))
+                              (then (nop))
+                              (else
+                               (if (ref.eq (call $syntax? (local.get $ignored))
+                                           (global.get $true))
+                                   (then (nop))
+                                   (else
+                                    (call $raise-argument-error:syntax-expected
+                                          (local.get $who)
+                                          (local.get $ignored))
+                                    (unreachable)))))))
+
+                     (local.set $is-syntax (call $syntax? (local.get $datum)))
+                     (if (ref.eq (local.get $is-syntax) (global.get $true))
+                         (then (return (local.get $datum))))
+
+                     (call $syntax-build
+                           (local.get $who)
+                           (local.get $datum)
+                           (local.get $scopes)
+                           (local.get $shifted)
+                           (local.get $srcloc-checked)
+                           (local.get $props-checked)))
+
+
+               ;; (func $datum->syntax-copy
+               ;;       (param $v (ref eq))
+               ;;       (result (ref eq))
+
+               ;;       (local $pair      (ref $Pair))
+               ;;       (local $new-car   (ref eq))
+               ;;       (local $new-cdr   (ref eq))
+               ;;       (local $vec       (ref $Vector))
+               ;;       (local $arr       (ref $Array))
+               ;;       (local $new-arr   (ref $Array))
+               ;;       (local $len       i32)
+               ;;       (local $i         i32)
+               ;;       (local $elem      (ref eq))
+               ;;       (local $converted (ref eq))
+               ;;       (local $box       (ref $Box))
+
+               ;;       ;; Leave existing syntax objects untouched.
+               ;;       (if (ref.eq (call $syntax? (local.get $v)) (global.get $true))
+               ;;           (then (return (local.get $v))))
+
+               ;;       ;; Copy pairs recursively.
+               ;;       (if (ref.test (ref $Pair) (local.get $v))
+               ;;           (then
+               ;;            (local.set $pair (ref.cast (ref $Pair) (local.get $v)))
+               ;;            (local.set $new-car (call $datum->syntax-copy
+               ;;                                           (struct.get $Pair $a (local.get $pair))))
+               ;;            (local.set $new-cdr (call $datum->syntax-copy
+               ;;                                           (struct.get $Pair $d (local.get $pair))))
+               ;;            (return (call $cons (local.get $new-car) (local.get $new-cdr)))))
+
+               ;;       ;; Copy vectors and ensure the result is immutable.
+               ;;       (if (ref.test (ref $Vector) (local.get $v))
+               ;;           (then
+               ;;            (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+               ;;            (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+               ;;            (local.set $len (array.len (local.get $arr)))
+               ;;            (local.set $new-arr (call $make-array (local.get $len) (global.get $false)))
+               ;;            (local.set $i (i32.const 0))
+               ;;            (block $done
+               ;;                   (loop $loop
+               ;;                         (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+               ;;                         (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+               ;;                         (local.set $converted (call $datum->syntax-copy (local.get $elem)))
+               ;;                         (array.set $Array (local.get $new-arr) (local.get $i) (local.get $converted))
+               ;;                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
+               ;;                         (br $loop)))
+               ;;            (return (struct.new $Vector
+               ;;                                (i32.const 0)
+               ;;                                (i32.const 1)
+               ;;                                (local.get $new-arr)))))
+
+               ;;       ;; Copy boxes and make them immutable.
+               ;;       (if (ref.test (ref $Box) (local.get $v))
+               ;;           (then
+               ;;            (local.set $box (ref.cast (ref $Box) (local.get $v)))
+               ;;            (local.set $converted (call $datum->syntax-copy
+               ;;                                              (struct.get $Box $v (local.get $box))))
+               ;;            (return (call $box-immutable (local.get $converted)))))
+
+               ;;       (local.get $v))
+
+               ;; (func $datum->syntax (type $Prim15)
+               ;;       (param $ctxt        (ref eq))
+               ;;       (param $v           (ref eq))
+               ;;       (param $srcloc-raw  (ref eq))
+               ;;       (param $prop-raw    (ref eq))
+               ;;       (param $ignored     (ref eq))
+               ;;       (result (ref eq))
+
+               ;;       (local $scopes   (ref eq))
+               ;;       (local $shifted  (ref eq))
+               ;;       (local $srcloc   (ref eq))
+               ;;       (local $props    (ref eq))
+               ;;       (local $fields   (ref $Array))
+               ;;       (local $prop     (ref eq))
+               ;;       (local $converted (ref eq))
+
+               ;;       ;; Default context fields.
+               ;;       (local.set $scopes (global.get $null))
+               ;;       (local.set $shifted (global.get $null))
+               ;;       (local.set $srcloc (global.get $false))
+               ;;       (local.set $props (global.get $missing))
+
+               ;;       ;; If v is already a syntax object, return it unchanged.
+               ;;       (if (ref.eq (call $syntax? (local.get $v)) (global.get $true))
+               ;;           (then (return (local.get $v))))
+
+               ;;       ;; Extract lexical information from the context.
+               ;;       (if (ref.eq (local.get $ctxt) (global.get $false))
+               ;;           (then (nop))
+               ;;           (else
+               ;;            (if (ref.eq (call $syntax? (local.get $ctxt)) (global.get $true))
+               ;;                (then
+               ;;                 (local.set $fields (call $syntax-unwrap
+               ;;                                               (global.get $symbol:datum->syntax)
+               ;;                                               (local.get $ctxt)))
+               ;;                 (local.set $scopes (array.get $Array (local.get $fields) (i32.const 1)))
+               ;;                 (local.set $shifted (array.get $Array (local.get $fields) (i32.const 2)))
+               ;;                 (if (ref.eq (local.get $srcloc-raw) (global.get $missing))
+               ;;                     (then (local.set $srcloc (array.get $Array (local.get $fields) (i32.const 3))))))
+               ;;                (else
+               ;;                 (call $raise-argument-error1
+               ;;                       (global.get $symbol:datum->syntax)
+               ;;                       (global.get $string:syntax?)
+               ;;                       (local.get $ctxt))
+               ;;                 (unreachable)))))
+
+               ;;       ;; Interpret the srcloc argument if provided.
+               ;;       (if (ref.eq (local.get $srcloc-raw) (global.get $missing))
+               ;;           (then (nop))
+               ;;           (else
+               ;;            (if (ref.eq (local.get $srcloc-raw) (global.get $false))
+               ;;                (then (local.set $srcloc (global.get $false)))
+               ;;                (else
+               ;;                 (if (ref.eq (call $syntax? (local.get $srcloc-raw)) (global.get $true))
+               ;;                     (then (local.set $srcloc (call $syntax-srcloc (local.get $srcloc-raw))))
+               ;;                     (else (local.set $srcloc (local.get $srcloc-raw)))))))
+
+               ;;       ;; Determine properties to attach.
+               ;;       (local.set $prop (local.get $prop-raw))
+               ;;       (if (ref.eq (local.get $prop) (global.get $missing))
+               ;;           (then (local.set $props (global.get $missing)))
+               ;;           (else
+               ;;            (if (ref.eq (local.get $prop) (global.get $false))
+               ;;                (then (local.set $props (global.get $missing)))
+               ;;                (else
+               ;;                 (if (ref.eq (call $syntax? (local.get $prop)) (global.get $true))
+               ;;                     (then (local.set $props (call $syntax-props (local.get $prop))))
+               ;;                     (else
+               ;;                      (call $raise-argument-error1
+               ;;                            (global.get $symbol:datum->syntax)
+               ;;                            (global.get $string:syntax?)
+               ;;                            (local.get $prop))
+               ;;                      (unreachable))))))
+
+               ;;       (local.set $converted (call $datum->syntax-copy (local.get $v)))
+               ;;       (call $syntax-build
+               ;;             (global.get $symbol:datum->syntax)
+               ;;             (local.get $converted)
+               ;;             (local.get $scopes)
+               ;;             (local.get $shifted)
+               ;;             (local.get $srcloc)
+               ;;             (local.get $props)))
 
                ;;;
                ;;; 15. OPERATING SYSTEM
