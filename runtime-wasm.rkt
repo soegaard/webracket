@@ -119,6 +119,10 @@
         [(? (λ (a) (arity-range? a 3 5)))  24]
         [_ #f]))
 
+    ; These functions are variadic function that can handle the
+    ; rest arguments both as an $Args array and as a list.
+    ; The $Args convention is used by inlining.
+    ; The list  convention by `apply`, `map` and others.
     (define primitive-variadic-args
       '(bytes
         string
@@ -9623,38 +9627,6 @@
                            (i32.const 0)  ;; mutable
                            (local.get $arr)))
          
-         #;(func $string (type $Prim>=0)
-               (param $args (ref eq))
-               (result      (ref eq))
-
-               (local $argv (ref $Args))
-               (local $len  i32)
-               (local $arr  (ref $I32Array))
-               (local $i    i32)
-               (local $ch   (ref eq))
-
-               ;; Cast argument list and determine length
-               (local.set $argv (ref.cast (ref $Args) (local.get $args)))
-               (local.set $len  (array.len (local.get $argv)))
-               ;; Allocate array for codepoints
-               (local.set $arr (array.new $I32Array (i32.const 0) (local.get $len)))
-               ;; Fill array with characters
-               (local.set $i (i32.const 0))
-               (block $done
-                      (loop $loop
-                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                            (local.set $ch (array.get $Args (local.get $argv) (local.get $i)))
-                            (array.set $I32Array
-                                       (local.get $arr)
-                                       (local.get $i)
-                                       (call $char->integer/i32 (local.get $ch)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $loop)))
-               ;; Construct mutable string
-               (struct.new $String
-                           (i32.const 0)  ;; hash
-                           (i32.const 0)  ;; mutable
-                           (local.get $arr)))
 
          (func $raise-make-string:bad-length       (unreachable))
          (func $raise-make-string:bad-char         (unreachable))
@@ -27939,48 +27911,49 @@
                (param $args (ref eq))
                (result      (ref eq))
 
-               ; todo ...
+               (local $use-args? i32)
+               (local $as        (ref $Args))
+               (local $arr       (ref $Array))
+               (local $len       i32)
+               (local $vals      (ref $Values))
 
-               )
+               ;; Initialize non-defaultable locals.
+               (local.set $as   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $arr  (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $vals (array.new $Values (global.get $null) (i32.const 0)))
+               (local.set $len  (i32.const 0))
 
+               ;; Determine whether the rest arguments are in an $Args array or a list.
+               (local.set $use-args? (ref.test (ref $Args) (local.get $args)))
+               (if (local.get $use-args?)
+                   (then (local.set $as  (ref.cast (ref $Args) (local.get $args)))
+                         (local.set $len (array.len (local.get $as))))
+                   (else (local.set $arr (call $list->array (local.get $args)))
+                         (local.set $len (array.len (local.get $arr)))))
+
+               ;; Single argument -> return it directly.
+               (if (i32.eq (local.get $len) (i32.const 1))
+                   (then (if (local.get $use-args?)
+                             (then (return (array.get $Args  (local.get $as) (i32.const 0))))
+                             (else (return (array.get $Array (local.get $arr) (i32.const 0)))))))
+
+               ;; No arguments -> return an empty $Values array (zero values).
+               (if (i32.eqz (local.get $len))
+                   (then (return (local.get $vals))))
+
+               ;; Multiple arguments -> pack them into a new $Values array.
+               (local.set $vals (array.new $Values (global.get $null) (local.get $len)))
+               (if (local.get $use-args?)
+                   (then (array.copy $Values $Args
+                                     (local.get $vals) (i32.const 0)
+                                     (local.get $as)  (i32.const 0)
+                                     (local.get $len)))
+                   (else (array.copy $Values $Array
+                                     (local.get $vals) (i32.const 0)
+                                     (local.get $arr) (i32.const 0)
+                                     (local.get $len))))
+               (local.get $vals))
          
-         #;(func $values (type $Prim>=0)
-               (param $args (ref eq))
-               (result      (ref eq))
-
-               (local $as   (ref $Args))
-               (local $n    i32)
-               (local $vals (ref $Values))
-               (local $i    i32)
-
-               ;; Cast argument array
-               (local.set $as (ref.cast (ref $Args) (local.get $args)))
-               (local.set $n  (array.len (local.get $as)))
-               ;; Single argument -> return directly
-               (if (i32.eq (local.get $n) (i32.const 1))
-                   (then (return (array.get $Args (local.get $as) (i32.const 0)))))
-               ;; Allocate $Values array
-
-              ;; Allocate array and copy arguments
-              (local.set $vals (array.new $Values (global.get $null) (local.get $n)))
-              (array.copy $Values $Args
-                          (local.get $vals) (i32.const 0)
-                          (local.get $as)   (i32.const 0)
-                          (local.get $n))
-              (local.get $vals)
-               
-              ;; (local.set $vals
-              ;;            (array.new_default $Values (global.get $false) (local.get $len)))
-              ;; (local.set $i (i32.const 0))
-              ;; (block $done
-              ;;        (loop $loop
-              ;;              (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-              ;;              (array.set $Values (local.get $vals) (local.get $i)
-              ;;                         (array.get $Args (local.get $as) (local.get $i)))
-              ;;              (local.set $i (i32.add (local.get $i) (i32.const 1)))
-              ;;              (br $loop)))
-              ;; (local.get $vals)
-              )
 
          (func $call-with-values (type $Prim2)
                (param $gen (ref eq))
