@@ -18486,66 +18486,15 @@
          (func $vector (type $Prim>=0)
                (param $args (ref eq))
                (result      (ref eq))
+               
+               ; todo
 
-               (local $as        (ref $Args))
-               (local $len       i32)
-               (local $arr       (ref $Array))
-               (local $use-args? i32)
-               (local $list      (ref eq))
-               (local $node      (ref eq))
-               (local $pair      (ref $Pair))
-               (local $i         i32)
-               (local $x         (ref eq))
-
-               ;; Initialize non-defaultable locals
-               (local.set $as  (array.new $Args (global.get $null) (i32.const 0)))
-               (local.set $x   (global.get $false))
-
-               ;; Determine whether we received an $Args array or a list of rest arguments.
-               (local.set $use-args? (ref.test (ref $Args) (local.get $args)))
-               (local.set $list      (global.get $null))
-               (local.set $node      (global.get $null))
-               (local.set $len       (if (result i32) (local.get $use-args?)
-                                         (then
-                                          (local.set $as (ref.cast (ref $Args) (local.get $args)))
-                                          (array.len (local.get $as)))
-                                         (else
-                                          (local.set $list (local.get $args))
-                                          (local.set $node (local.get $list))
-                                          (call $length/i32 (local.get $list)))))
-               ;; Allocate backing array
-               (local.set $arr (call $make-array (local.get $len) (global.get $false)))
-               ;; Copy arguments from either $Args or list form
-               (local.set $i (i32.const 0))
-               (block $done
-                      (if (i32.eqz (local.get $use-args?))
-                          (then
-                           (local.set $node (local.get $list))
-                           (loop $loop-list
-                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                                 (if (ref.test (ref $Pair) (local.get $node))
-                                     (then
-                                      (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
-                                      (local.set $x    (struct.get $Pair $a (local.get $pair)))
-                                      (local.set $node (struct.get $Pair $d (local.get $pair))))
-                                     (else
-                                      (call $raise-pair-expected (local.get $node))
-                                      (unreachable)))
-                                 (array.set $Array (local.get $arr) (local.get $i) (local.get $x))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $loop-list)))
-                          (else
-                           (loop $loop-args
-                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                                 (local.set $x (array.get $Args (local.get $as) (local.get $i)))
-                                 (array.set $Array (local.get $arr) (local.get $i) (local.get $x))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $loop-args)))))
-              ;; Wrap in a mutable vector structure
-              (struct.new $Vector
-                          (i32.const 0)          ;; hash
-                          (i32.const 0)          ;; mutable
-                          (local.get $arr)))
+               
+               ;; Wrap in a mutable vector structure
+               (struct.new $Vector
+                           (i32.const 0)          ;; hash
+                           (i32.const 0)          ;; mutable
+                           (local.get $arr)))
          
          #;(func $vector (type $Prim>=0)
                (param $args (ref eq))
