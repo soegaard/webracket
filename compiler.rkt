@@ -26,7 +26,7 @@
   racket/syntax
   (except-in syntax/parse str) ; the identifier str is used in the runtime 
   ; (rename-in racket/match [match Match])
-  ; (only-in srfi/1 list-index)cha
+  ; (only-in srfi/1 list-index)
   '#%paramz) ; contains the identifier parameterization-key
 
 
@@ -169,7 +169,7 @@
 
 ; [ ] Implement guards for structs.
 
-; [ ] String ports.
+; [x] String ports.
 
 ; [ ] Parameters.
 
@@ -4863,19 +4863,18 @@
           (equal? (run '(char=? #\a #\b)) #f)
           (equal? (run '(char=? #\a #\a #\a)) #t)
           (equal? (run '(char=? #\a #\b #\a)) #f)
-          ;; TODO: implement these
-          ;; (equal? (run '(char<? #\a #\b)) #t)
-          ;; (equal? (run '(char<? #\b #\a)) #f)
-          ;; (equal? (run '(char<? #\a #\a)) #f)
-          ;; (equal? (run '(char>? #\a #\b)) #f)
-          ;; (equal? (run '(char>? #\b #\a)) #t)
-          ;; (equal? (run '(char>? #\a #\a)) #f)
-          ;; (equal? (run '(char<=? #\a #\b)) #t)
-          ;; (equal? (run '(char<=? #\b #\a)) #f)
-          ;; (equal? (run '(char<=? #\a #\a)) #t)
-          ;; (equal? (run '(char>=? #\a #\b)) #f)
-          ;; (equal? (run '(char>=? #\b #\a)) #t)
-          ;; (equal? (run '(char>=? #\a #\a)) #t)
+          (equal? (run '(char<? #\a #\b)) #t)
+          (equal? (run '(char<? #\b #\a)) #f)
+          (equal? (run '(char<? #\a #\a)) #f)
+          (equal? (run '(char>? #\a #\b)) #f)
+          (equal? (run '(char>? #\b #\a)) #t)
+          (equal? (run '(char>? #\a #\a)) #f)
+          (equal? (run '(char<=? #\a #\b)) #t)
+          (equal? (run '(char<=? #\b #\a)) #f)
+          (equal? (run '(char<=? #\a #\a)) #t)
+          (equal? (run '(char>=? #\a #\b)) #f)
+          (equal? (run '(char>=? #\b #\a)) #t)
+          (equal? (run '(char>=? #\a #\a)) #t)
     ))
   (define (test-let)
     ; (define equal? list)
