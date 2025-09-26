@@ -18487,60 +18487,150 @@
                (param $args (ref eq))
                (result      (ref eq))
                
-               ; todo
+               (local $as        (ref $Args))
+               (local $len       i32)
+               (local $arr       (ref $Array))
+               (local $use-args? i32)
+               (local $list      (ref eq))
+               (local $node      (ref eq))
+               (local $pair      (ref $Pair))
+               (local $i         i32)
+               (local $x         (ref eq))
 
-               
+               ;; Initialize non-defaultable locals
+               (local.set $as   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $x    (global.get $false))
+               (local.set $list (global.get $null))
+               (local.set $node (global.get $null))
+
+               ;; Determine whether we received an $Args array or a list of rest arguments.
+               (local.set $use-args? (ref.test (ref $Args) (local.get $args)))
+               (if (local.get $use-args?)
+                   (then
+                    (local.set $as (ref.cast (ref $Args) (local.get $args)))
+                    (local.set $len (array.len (local.get $as))))
+                   (else
+                    (local.set $list (local.get $args))
+                    (local.set $node (local.get $list))
+                    (local.set $len (call $length/i32 (local.get $list)))))
+
+               ;; Allocate backing array
+               (local.set $arr (call $make-array (local.get $len) (global.get $false)))
+               (local.set $i   (i32.const 0))
+
+               ;; Copy arguments from either $Args or list form
+               (if (local.get $use-args?)
+                   (then
+                    (block $done-args
+                           (loop $loop-args
+                                 (br_if $done-args
+                                        (i32.ge_u (local.get $i) (local.get $len)))
+                                 (local.set $x (array.get $Args (local.get $as) (local.get $i)))
+                                 (array.set $Array (local.get $arr)
+                                            (local.get $i)
+                                            (local.get $x))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop-args))))
+                   (else
+                    (local.set $node (local.get $list))
+                    (block $done-list
+                           (loop $loop-list
+                                 (br_if $done-list
+                                        (i32.ge_u (local.get $i) (local.get $len)))
+                                 (if (ref.test (ref $Pair) (local.get $node))
+                                     (then
+                                      (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                                      (local.set $x (struct.get $Pair $a (local.get $pair)))
+                                      (local.set $node (struct.get $Pair $d (local.get $pair))))
+                                     (else
+                                      (call $raise-pair-expected (local.get $node))
+                                      (unreachable)))
+                                 (array.set $Array (local.get $arr)
+                                            (local.get $i)
+                                            (local.get $x))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop-list)))))
+
                ;; Wrap in a mutable vector structure
                (struct.new $Vector
                            (i32.const 0)          ;; hash
                            (i32.const 0)          ;; mutable
                            (local.get $arr)))
-         
-         #;(func $vector (type $Prim>=0)
+
+
+         (func $vector-immutable (type $Prim>=0)
                (param $args (ref eq))
-               (result (ref eq))
+               (result      (ref eq))
+               
+               (local $as        (ref $Args))
+               (local $len       i32)
+               (local $arr       (ref $Array))
+               (local $use-args? i32)
+               (local $list      (ref eq))
+               (local $node      (ref eq))
+               (local $pair      (ref $Pair))
+               (local $i         i32)
+               (local $x         (ref eq))
 
-               (local $as  (ref $Args))
-               (local $len i32)
-               (local $arr (ref $Array))
+               ;; Initialize non-defaultable locals
+               (local.set $as   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $x    (global.get $false))
+               (local.set $list (global.get $null))
+               (local.set $node (global.get $null))
 
-               (local.set $as  (ref.cast (ref $Args) (local.get $args)))
-               (local.set $len (array.len (local.get $as)))
-               (local.set $arr (call $make-array
-                                     (local.get $len) (global.get $false)))
-               (array.copy $Array $Args
-                           (local.get $arr)
-                           (i32.const 0)
-                           (local.get $as)
-                           (i32.const 0)
-                           (local.get $len))
+               ;; Determine whether we received an $Args array or a list of rest arguments.
+               (local.set $use-args? (ref.test (ref $Args) (local.get $args)))
+               (if (local.get $use-args?)
+                   (then
+                    (local.set $as (ref.cast (ref $Args) (local.get $args)))
+                    (local.set $len (array.len (local.get $as))))
+                   (else
+                    (local.set $list (local.get $args))
+                    (local.set $node (local.get $list))
+                    (local.set $len (call $length/i32 (local.get $list)))))
+
+               ;; Allocate backing array
+               (local.set $arr (call $make-array (local.get $len) (global.get $false)))
+               (local.set $i   (i32.const 0))
+
+               ;; Copy arguments from either $Args or list form
+               (if (local.get $use-args?)
+                   (then
+                    (block $done-args
+                           (loop $loop-args
+                                 (br_if $done-args
+                                        (i32.ge_u (local.get $i) (local.get $len)))
+                                 (local.set $x (array.get $Args (local.get $as) (local.get $i)))
+                                 (array.set $Array (local.get $arr)
+                                            (local.get $i)
+                                            (local.get $x))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop-args))))
+                   (else
+                    (local.set $node (local.get $list))
+                    (block $done-list
+                           (loop $loop-list
+                                 (br_if $done-list
+                                        (i32.ge_u (local.get $i) (local.get $len)))
+                                 (if (ref.test (ref $Pair) (local.get $node))
+                                     (then
+                                      (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                                      (local.set $x (struct.get $Pair $a (local.get $pair)))
+                                      (local.set $node (struct.get $Pair $d (local.get $pair))))
+                                     (else
+                                      (call $raise-pair-expected (local.get $node))
+                                      (unreachable)))
+                                 (array.set $Array (local.get $arr)
+                                            (local.get $i)
+                                            (local.get $x))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop-list)))))
+
+               ;; Wrap in a mutable vector structure
                (struct.new $Vector
                            (i32.const 0)          ;; hash
-                           (i32.const 0)          ;; mutable
+                           (i32.const 1)          ;; immutable
                            (local.get $arr)))
-
-        (func $vector-immutable (type $Prim>=0)
-              (param $args (ref eq))
-              (result (ref eq))
-
-              (local $as  (ref $Args))
-              (local $len i32)
-              (local $arr (ref $Array))
-
-              (local.set $as  (ref.cast (ref $Args) (local.get $args)))
-              (local.set $len (array.len (local.get $as)))
-              (local.set $arr (call $make-array
-                                    (local.get $len) (global.get $false)))
-              (array.copy $Array $Args
-                          (local.get $arr)
-                          (i32.const 0)
-                          (local.get $as)
-                          (i32.const 0)
-                          (local.get $len))
-              (struct.new $Vector
-                          (i32.const 0)          ;; hash
-                          (i32.const 1)          ;; immutable
-                          (local.get $arr)))
 
 
         (func $build-vector (type $Prim2)
