@@ -1327,6 +1327,82 @@
       read/recursive)
     ))
 
+(define operating-system-primitives
+  '((paths
+     path?
+     path-string?
+     path-for-some-system?
+     string->path
+     bytes->path
+     path->string
+     path->bytes
+     string->path-element
+     bytes->path-element
+     path-element->string
+     path-element->bytes
+     path<?
+     path-convention-type
+     system-path-convention-type
+     build-path
+     build-path/convention-type
+     absolute-path?
+     relative-path?
+     complete-path?
+     path->complete-path
+     path->directory-path
+     resolve-path
+     cleanse-path
+     expand-user-path
+     simplify-path
+     normal-case-path
+     split-path
+     explode-path
+     path-replace-extension
+     path-add-extension
+     path-replace-suffix
+     path-add-suffix
+     reroot-path
+     file-name-from-path
+     path-get-extension
+     path-has-extension?
+     filename-extension
+     find-relative-path
+     normalize-path
+     path-element?
+     path-only
+     simple-form-path
+     some-system-path->string
+     string->some-system-path
+     shrink-path-wrt)))
+
+(define macros-primitives
+  '((syntax-object-content
+      syntax?
+      identifier?
+      syntax-source
+      syntax-line
+      syntax-column
+      syntax-position
+      syntax-span
+      syntax-original?
+      syntax-source-module
+      syntax-e
+      syntax->list
+      syntax->datum
+      datum->syntax
+      syntax-binding-set?
+      syntax-binding-set
+      syntax-binding-set->syntax
+      syntax-binding-set-extend
+      datum-intern-literal
+      syntax-shift-phase-level
+      generate-temporaries
+      identifier-prune-lexical-context
+      identifier-prune-to-source-module
+      syntax-recertify
+      syntax-debug-info))
+  )
+
 #;(define (symbol->title s)
     ; todo : implement string-titlecase
     (string-titlecase (symbol->string s)))
@@ -1730,6 +1806,10 @@
             ormap
             pair?
             partition
+            path->bytes
+            path->string
+            path-string?
+            path?
             peek-byte
             peek-bytes
             peek-bytes!
@@ -1961,11 +2041,14 @@
             zero?)
 
 
+
           ))
 
 (define chapter-datasets
-  (list (list "Datatype Functions and Constants" datatypes-primitives)
-        (list "Input and Output" io-primitives)))
+  (list (list "Datatype Functions and Constants"        datatypes-primitives)
+        (list "Input and Output"                               io-primitives)
+        (list "Operating System"                 operating-system-primitives)
+        (list "Macros"                                     macros-primitives)))
 
 (define total-primitives-cnt
   (for/sum ([chapter (in-list chapter-datasets)])
