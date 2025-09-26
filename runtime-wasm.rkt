@@ -913,6 +913,7 @@
     (add-runtime-string-constant 'hash?                      "hash?")
     
     (add-runtime-bytes-constant  'empty                     #"")
+    (add-runtime-bytes-constant  'non-empty                 #"_")
 
     
     `(module
@@ -30527,78 +30528,74 @@
                      (param $loc (ref eq))
                      (result     (ref eq))
 
-                     (local $fields        (ref $Array))
-                     (local $source        (ref eq))
-                     (local $line          (ref eq))
-                     (local $column        (ref eq))
-                     (local $source-str    (ref $String))
-                     (local $line-str      (ref $String))
-                     (local $column-str    (ref $String))
-                     (local $with-source   (ref $String))
-                     (local $with-line     (ref $String))
-                     (local $separator     (ref $String))
+                     (local $fields    (ref $Array))
+                     (local $source    (ref eq))
+                     (local $line      (ref eq))
+                     (local $column    (ref eq))
+                     (local $position  (ref eq))
+                     (local $span      (ref eq))
+                     (local $parts     (ref eq))
+                     (local $part      (ref eq))
+                     (local $path      (ref $Path))
+                     (local $reversed  (ref eq))
+                     (local $with-seps (ref eq))
 
+                     ;; Initialize non-defaultable locals
+                     (local.set $part (global.get $string:empty))
+                     (local.set $path (ref.cast (ref $Path)
+                                                (call $bytes->path
+                                                      (global.get $bytes:non-empty) ; ignored
+                                                      (global.get $missing))))
+                     ;; Extract fields
                      (local.set $fields (call $srcloc-unwrap
                                               (global.get $symbol:srcloc->string)
-                                              (local.get $loc)))
-                     (local.set $source (array.get $Array (local.get $fields) (i32.const 0)))
-                     (local.set $line   (array.get $Array (local.get $fields) (i32.const 1)))
-                     (local.set $column (array.get $Array (local.get $fields) (i32.const 2)))
+                                              (local.get $loc)))                     
+                     (local.set $source   (array.get $Array (local.get $fields) (i32.const 0)))
+                     (local.set $line     (array.get $Array (local.get $fields) (i32.const 1)))
+                     (local.set $column   (array.get $Array (local.get $fields) (i32.const 2)))
+                     (local.set $position (array.get $Array (local.get $fields) (i32.const 3)))
+                     (local.set $span     (array.get $Array (local.get $fields) (i32.const 4)))
 
-                     ; defaults
-                     (local.set $source-str (ref.cast (ref $String) (global.get $string:empty)))
-                     (local.set $line-str   (ref.cast (ref $String) (global.get $string:empty)))
-                     (local.set $column-str (ref.cast (ref $String) (global.get $string:empty)))
+                     ;; Accumulate output in parts
+                     (local.set $parts (global.get $null))
 
-                     ; souce string
-                     (if (ref.test (ref $String) (local.get $source))
-                         (then (local.set $source-str
-                                          (ref.cast (ref $String)
-                                                    (local.get $source))))
+                     (if (ref.eq (local.get $source) (global.get $false))
+                         (then (nop))
                          (else
-                          (if (ref.test (ref $Symbol) (local.get $source))
-                              (then (local.set $source-str
-                                               (ref.cast (ref $String)
-                                                         (call $symbol->string
-                                                               (local.get $source)))))
+                          (if (ref.test (ref $String) (local.get $source))
+                              (then (local.set $part (local.get $source)))
                               (else
                                (if (ref.test (ref $Path) (local.get $source))
                                    (then
                                     ;; TODO: Support current-directory-for-user adjustments.
-                                    (local.set $source-str
-                                               (ref.cast (ref $String)
-                                                         (call $path->string
-                                                               (local.get $source)))))
-                                   (else (return (global.get $false))))))))
+                                    (local.set $path (ref.cast (ref $Path) (local.get $source)))
+                                    (local.set $part (call $path->string (local.get $path))))
+                                   (else
+                                    (local.set $part (call $format/display (local.get $source)))))))
+                          (local.set $parts (call $cons (local.get $part) (local.get $parts)))))
 
-                     (local.set $line-str (ref.cast (ref $String)
-                                                    (call $number->string
-                                                          (local.get $line)
-                                                          (global.get $missing))))
-                     (local.set $column-str (ref.cast (ref $String)
-                                                      (call $number->string
-                                                            (local.get $column)
-                                                            (global.get $missing))))
-                     (local.set $separator  (ref.cast (ref $String)
-                                                      (global.get $string:colon)))
+                     (if (ref.eq (local.get $line) (global.get $false))
+                         (then (nop))
+                         (else
+                          (local.set $part  (call $number->string (local.get $line) (global.get $missing)))
+                          (local.set $parts (call $cons (local.get $part) (local.get $parts)))))
 
-                     (local.set $with-source
-                                (ref.cast (ref $String)
-                                          (call $string-append/2
-                                                (local.get $source-str)
-                                                (local.get $separator))))
-                     (local.set $with-line
-                                (ref.cast (ref $String)
-                                          (call $string-append/2
-                                                (local.get $with-source)
-                                                (local.get $line-str))))
-                     (ref.cast (ref $String)
-                               (call $string-append/2
-                                     (local.get $with-line)
-                                     (ref.cast (ref $String)
-                                               (call $string-append/2
-                                                     (local.get $separator)
-                                                     (local.get $column-str))))))
+                     (if (ref.eq (local.get $column) (global.get $false))
+                         (then (nop))
+                         (else
+                          (local.set $part (call $number->string (local.get $column) (global.get $missing)))
+                          (local.set $parts (call $cons (local.get $part) (local.get $parts)))))
+
+                     ;; Note: support for position/span depends on struct-type-property?
+                     ;; which is not yet implemented, so skip them for now.
+                     (drop (local.get $position))
+                     (drop (local.get $span))
+
+                     (local.set $reversed  (call $reverse (local.get $parts)))
+                     (local.set $with-seps (call $add-between
+                                                 (local.get $reversed)
+                                                 (global.get $string:colon)))
+                     (call $string-append* (local.get $with-seps) (global.get $null)))
 
                ;;;
                ;;; 12. Macors
