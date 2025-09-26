@@ -27926,32 +27926,39 @@
                ;; Determine whether the rest arguments are in an $Args array or a list.
                (local.set $use-args? (ref.test (ref $Args) (local.get $args)))
                (if (local.get $use-args?)
-                   (then (local.set $as  (ref.cast (ref $Args) (local.get $args)))
-                         (local.set $len (array.len (local.get $as))))
-                   (else (local.set $arr (call $list->array (local.get $args)))
-                         (local.set $len (array.len (local.get $arr)))))
-
-               ;; Single argument -> return it directly.
-               (if (i32.eq (local.get $len) (i32.const 1))
-                   (then (if (local.get $use-args?)
-                             (then (return (array.get $Args  (local.get $as) (i32.const 0))))
-                             (else (return (array.get $Array (local.get $arr) (i32.const 0)))))))
-
-               ;; No arguments -> return an empty $Values array (zero values).
-               (if (i32.eqz (local.get $len))
-                   (then (return (local.get $vals))))
-
-               ;; Multiple arguments -> pack them into a new $Values array.
-               (local.set $vals (array.new $Values (global.get $null) (local.get $len)))
-               (if (local.get $use-args?)
-                   (then (array.copy $Values $Args
-                                     (local.get $vals) (i32.const 0)
-                                     (local.get $as)  (i32.const 0)
-                                     (local.get $len)))
-                   (else (array.copy $Values $Array
-                                     (local.get $vals) (i32.const 0)
-                                     (local.get $arr) (i32.const 0)
-                                     (local.get $len))))
+                   ;; -- $Args case --
+                   (then
+                    (local.set $as  (ref.cast (ref $Args) (local.get $args)))
+                    (local.set $len (array.len (local.get $as)))
+                    ;; Single argument -> return it directly.
+                    (if (i32.eq (local.get $len) (i32.const 1))
+                        (then (return (array.get $Args (local.get $as) (i32.const 0)))))
+                    ;; No arguments -> return an empty $Values array (zero values).
+                    (if (i32.eqz (local.get $len))
+                        (then (return (local.get $vals))))
+                    ;; Multiple arguments -> pack them into a new $Values array.
+                    (local.set $vals (array.new $Values (global.get $null) (local.get $len)))
+                    (array.copy $Values $Args
+                                (local.get $vals) (i32.const 0)
+                                (local.get $as)  (i32.const 0)
+                                (local.get $len)))
+                   ;; -- list case --
+                   (else
+                    (local.set $arr (call $list->array (local.get $args)))
+                    (local.set $len (array.len (local.get $arr)))
+                    ;; Single argument -> return it directly.
+                    (if (i32.eq (local.get $len) (i32.const 1))
+                        (then (return (array.get $Array (local.get $arr) (i32.const 0)))))
+                    ;; No arguments -> return an empty $Values array (zero values).
+                    (if (i32.eqz (local.get $len))
+                        (then (return (local.get $vals))))
+                    ;; Multiple arguments -> pack them into a new $Values array.
+                    (local.set $vals (array.new $Values (global.get $null) (local.get $len)))
+                    (array.copy $Values $Array
+                                (local.get $vals) (i32.const 0)
+                                (local.get $arr) (i32.const 0)
+                                (local.get $len))))
+               
                (local.get $vals))
          
 
