@@ -30844,7 +30844,7 @@
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 2)))
 
-               (func $syntax-srcloc 
+               (func $syntax-srcloc (type $Prim1)
                      (param $stx (ref eq))
                      (result (ref eq))
 

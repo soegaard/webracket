@@ -3216,7 +3216,7 @@
  (list "10.2 Exceptions"
        (list
         (list "srcloc basics"
-              (let ([and list] [equal? list])
+              (let () 
                 (let* ([loc   (make-srcloc 'src 3 0 10 5)]
                        [loc2  (srcloc "file" #f #f #f #f)]
                        [loc3  (make-srcloc (bytes->path #"foo") 3 0 10 5)])

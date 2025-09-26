@@ -15,10 +15,11 @@
          racket/port
          racket/string
          racket/symbol
+         racket/syntax-srcloc
          racket/vector
          racket/unsafe/ops
          ; racket/namespace
-
+         
          math/flonum
          (only-in math/base
                   asinh acosh atanh
@@ -556,6 +557,9 @@
  srcloc make-srcloc
  srcloc? srcloc-source srcloc-line srcloc-column srcloc-position srcloc-span
  srcloc->string
+
+ syntax-srcloc  ; in racket/syntax-srcloc
+
 
  ;; 12.2 Syntac Object Content
  syntax?

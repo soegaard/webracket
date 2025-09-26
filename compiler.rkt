@@ -865,10 +865,11 @@
   ; syntax
   ; syntax-scopes
   ; syntax-shifted-multi-scopes
-  ; syntax-srcloc
   ; syntax-props
   ; empty-props
-  
+
+  syntax-srcloc  ; in racket/syntax-srcloc
+
   ;; 15.1 Paths
   path?
   path-for-some-system?
