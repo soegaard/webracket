@@ -3314,12 +3314,11 @@
                     (let* ([stx   (datum->syntax #f '(a b c))]
                            [lst   (syntax->list stx)]
                            [empty (syntax->list (datum->syntax #f '()))])
-                      (list (pair? lst)
-                            lst
-                            #;(equal? (map (λ (stx) (syntax-e stx)) lst) '(a b c))
-                            (equal? empty '())
-                            (equal? (syntax->list (datum->syntax #f '(a . b))) #f)
-                            (equal? (syntax->list (datum->syntax #f 'a))       #f))))
+                      (and (pair? lst)
+                           (equal? (map (λ (stx) (syntax-e stx)) lst) '(a b c))
+                           (equal? empty '())
+                           (equal? (syntax->list (datum->syntax #f '(a . b))) #f)
+                           (equal? (syntax->list (datum->syntax #f 'a))       #f))))
               ))
 
  

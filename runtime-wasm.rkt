@@ -30842,20 +30842,29 @@
                      (block $done
                             (block $fail
                                    (loop $loop
+                                         ; current = '()  => done
                                          (if (ref.eq (local.get $current) (global.get $null))
                                              (then
                                               (local.set $result (call $reverse (local.get $acc)))
                                               (br $done)))
-                                         (if (i32.eqz (ref.test (ref $Pair) (local.get $current)))
-                                             (then (br $fail)))
-                                         (local.set $pair (ref.cast (ref $Pair) (local.get $current)))
-                                         (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                                         (local.set $acc  (struct.new $Pair
-                                                                      (i32.const 0)
-                                                                      (local.get $elem)
-                                                                      (local.get $acc)))
-                                         (local.set $current (struct.get $Pair $d (local.get $pair)))
-                                         (br $loop))))
+                                         ; current = (cons elem ...) => cons `elem` to $acc
+                                         (if (ref.test (ref $Pair) (local.get $current))
+                                             (then
+                                              (local.set $pair (ref.cast (ref $Pair) (local.get $current)))
+                                              (local.set $elem (struct.get $Pair $a (local.get $pair)))
+                                              (local.set $acc  (struct.new $Pair
+                                                                           (i32.const 0)
+                                                                           (local.get $elem)
+                                                                           (local.get $acc)))
+                                              (local.set $current (struct.get $Pair $d (local.get $pair)))
+                                              (br $loop)))
+                                         ; unwrap syntax in the cdr, if necessary
+                                         (if (ref.eq (call $syntax? (local.get $current))
+                                                     (global.get $true))
+                                             (then
+                                              (local.set $current (call $syntax-e (local.get $current)))
+                                              (br $loop)))
+                                         (br $fail))))
                      (local.get $result))
 
                (func $syntax-scopes 
