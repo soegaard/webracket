@@ -1471,6 +1471,7 @@
             bytes
             bytes->immutable-bytes
             bytes->list
+            bytes->path
             bytes->string/utf-8
             bytes-append
             bytes-append*
@@ -1561,6 +1562,7 @@
             cosh
             count
             current-inspector
+            datum->syntax
             degrees->radians
             double-flonum?
             drop
@@ -1754,6 +1756,7 @@
             make-hasheq
             make-hasheqv
             make-list
+            make-srcloc
             make-string
             make-struct-field-accessor
             make-struct-field-mutator
@@ -1808,6 +1811,7 @@
             partition
             path->bytes
             path->string
+            path-for-some-system?
             path-string?
             path?
             peek-byte
@@ -1884,6 +1888,14 @@
             splitf-at-right
             sqr
             sqrt
+            srcloc
+            srcloc->string
+            srcloc-column
+            srcloc-line
+            srcloc-position
+            srcloc-source
+            srcloc-span
+            srcloc?
             string
             string->bytes/utf-8
             string->immutable-string
@@ -1947,6 +1959,13 @@
             symbol<?
             symbol=?
             symbol?
+            syntax-column
+            syntax-e
+            syntax-line
+            syntax-position
+            syntax-source
+            syntax-span
+            syntax?
             system-big-endian?
             take
             take-common-prefix
@@ -2039,7 +2058,6 @@
             write-string
             xor
             zero?)
-
 
 
           ))
