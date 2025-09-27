@@ -3584,12 +3584,148 @@
                     (return (global.get $true))))
                (return (global.get $false)))
 
-         ;; TODO Placeholder for equal-always? until a dedicated implementation
+         ;; equal-always?
          (func $equal-always? (type $Prim2)
                (param $v1 (ref eq))
                (param $v2 (ref eq))
                (result    (ref eq))
-               (return_call $equal? (local.get $v1) (local.get $v2)))
+
+               ;; Fast path: identical references
+               (if (ref.eq (local.get $v1) (local.get $v2))
+                   (then (return (global.get $true))))
+               ;; Numbers, characters, etc.
+               (if (ref.eq (call $eqv? (local.get $v1) (local.get $v2)) (global.get $true))
+                   (then (return (global.get $true))))
+               ;; Structural comparison that enforces immutability contracts
+               (return (call $equal-always?/slow (local.get $v1) (local.get $v2))))
+
+         (func $equal-always?/slow
+               (param $v1 (ref eq))
+               (param $v2 (ref eq))
+               (result    (ref eq))
+
+               ;; Mutable pairs must be eq?
+               (if (i32.or (ref.test (ref $MPair) (local.get $v1))
+                           (ref.test (ref $MPair) (local.get $v2)))
+                   (then (return (global.get $false))))
+               ;; --- Pair ---
+               (if (i32.and (ref.test (ref $Pair) (local.get $v1))
+                            (ref.test (ref $Pair) (local.get $v2)))
+                   (then (return_call $equal-always?/pair
+                                      (ref.cast (ref $Pair) (local.get $v1))
+                                      (ref.cast (ref $Pair) (local.get $v2)))))
+               ;; --- Box ---
+               (if (i32.and (ref.test (ref $Box) (local.get $v1))
+                            (ref.test (ref $Box) (local.get $v2)))
+                   (then (return_call $equal-always?/box
+                                      (ref.cast (ref $Box) (local.get $v1))
+                                      (ref.cast (ref $Box) (local.get $v2)))))
+               ;; --- Vector ---
+               (if (i32.and (ref.test (ref $Vector) (local.get $v1))
+                            (ref.test (ref $Vector) (local.get $v2)))
+                   (then (return_call $equal-always?/vector
+                                      (ref.cast (ref $Vector) (local.get $v1))
+                                      (ref.cast (ref $Vector) (local.get $v2)))))
+               ;; --- String ---
+               (if (i32.and (ref.test (ref $String) (local.get $v1))
+                            (ref.test (ref $String) (local.get $v2)))
+                   (then (return_call $equal-always?/string
+                                      (ref.cast (ref $String) (local.get $v1))
+                                      (ref.cast (ref $String) (local.get $v2)))))
+               ;; --- Bytes ---
+               (if (i32.and (ref.test (ref $Bytes) (local.get $v1))
+                            (ref.test (ref $Bytes) (local.get $v2)))
+                   (then (return_call $equal-always?/bytes
+                                      (ref.cast (ref $Bytes) (local.get $v1))
+                                      (ref.cast (ref $Bytes) (local.get $v2)))))
+               ;; Fallback: not equal-always
+               (return (global.get $false)))
+
+         ;; Compare pairs with equal-always?
+         (func $equal-always?/pair
+               (param $p1 (ref $Pair))
+               (param $p2 (ref $Pair))
+               (result    (ref eq))
+
+               (if (ref.eq (call $equal-always? (struct.get $Pair $a (local.get $p1))
+                                 (struct.get $Pair $a (local.get $p2)))
+                           (global.get $true))
+                   (then (return_call $equal-always? (struct.get $Pair $d (local.get $p1))
+                                      (struct.get $Pair $d (local.get $p2))))
+                   (else (return (global.get $false))))
+               (unreachable))
+
+         ;; Compare boxes (immutable only)
+         (func $equal-always?/box
+               (param $b1 (ref $Box))
+               (param $b2 (ref $Box))
+               (result    (ref eq))
+
+               (if (i32.eq (struct.get $Box $immutable (local.get $b1)) (i32.const 1))
+                   (then
+                    (if (i32.eq (struct.get $Box $immutable (local.get $b2)) (i32.const 1))
+                        (then (return_call $equal-always?
+                                           (struct.get $Box $v (local.get $b1))
+                                           (struct.get $Box $v (local.get $b2)))))))
+               (return (global.get $false)))
+
+         ;; Compare vectors (immutable only)
+         (func $equal-always?/vector
+               (param $v1 (ref $Vector))
+               (param $v2 (ref $Vector))
+               (result    (ref eq))
+
+               (local $a1  (ref $Array))
+               (local $a2  (ref $Array))
+               (local $len i32)
+               (local $i   i32)
+               (local $x1  (ref eq))
+               (local $x2  (ref eq))
+
+               (if (i32.ne (struct.get $Vector $immutable (local.get $v1)) (i32.const 1))
+                   (then (return (global.get $false))))
+               (if (i32.ne (struct.get $Vector $immutable (local.get $v2)) (i32.const 1))
+                   (then (return (global.get $false))))
+               (local.set $a1  (struct.get $Vector $arr (local.get $v1)))
+               (local.set $a2  (struct.get $Vector $arr (local.get $v2)))
+               (local.set $len (array.len (local.get $a1)))
+               (if (i32.ne (local.get $len) (array.len (local.get $a2)))
+                   (then (return (global.get $false))))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (local.set $x1 (array.get $Array (local.get $a1) (local.get $i)))
+                            (local.set $x2 (array.get $Array (local.get $a2) (local.get $i)))
+                            (if (ref.eq (call $equal-always? (local.get $x1) (local.get $x2)) (global.get $false))
+                                (then (return (global.get $false))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (return (global.get $true)))
+
+         ;; Compare strings (immutable only)
+         (func $equal-always?/string
+               (param $s1 (ref $String))
+               (param $s2 (ref $String))
+               (result    (ref eq))
+
+               (if (i32.eq (struct.get $String $immutable (local.get $s1)) (i32.const 1))
+                   (then
+                    (if (i32.eq (struct.get $String $immutable (local.get $s2)) (i32.const 1))
+                        (then (return_call $string=? (local.get $s1) (local.get $s2))))))
+               (return (global.get $false)))
+
+         ;; Compare byte strings (immutable only)
+         (func $equal-always?/bytes
+               (param $b1 (ref $Bytes))
+               (param $b2 (ref $Bytes))
+               (result    (ref eq))
+
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $b1)) (i32.const 1))
+                   (then
+                    (if (i32.eq (struct.get $Bytes $immutable (local.get $b2)) (i32.const 1))
+                        (then (return_call $bytes=?/2/checked (local.get $b1) (local.get $b2))))))
+               (return (global.get $false)))
 
          ;;;
          ;;; 4.2 Booleans
