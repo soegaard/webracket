@@ -23649,7 +23649,7 @@
 
 
          (func $symbol-table-resize
-               (param $old (ref $SymbolTable))
+               (param $table (ref $SymbolTable))
                (result (ref $SymbolTable))
 
                (local $old-entries (ref $Array))
@@ -23663,7 +23663,7 @@
                (local $val         (ref eq))
 
                ;; Get old table size and entries
-               (local.set $old-entries (struct.get $SymbolTable $entries (local.get $old)))
+               (local.set $old-entries (struct.get $SymbolTable $entries (local.get $table)))
                (local.set $old-cap     (i32.div_u (array.len (local.get $old-entries)) (i32.const 2)))
                (local.set $new-cap     (i32.mul (local.get $old-cap) (i32.const 2)))
                ;; Allocate new entries array with (2 * new-capacity) slots filled with $missing
@@ -23689,8 +23689,12 @@
                             ;; Step to next pair
                             (local.set $i (i32.add (local.get $i) (i32.const 2)))
                             (br $loop)))
-               (local.get $new-table))
-
+               ; Store changes in the original table
+               (struct.set $SymbolTable $entries (local.get $table) (local.get $new-array))
+               (struct.set $SymbolTable $count   (local.get $table) (struct.get $SymbolTable $count
+                                                                                (local.get $new-table)))
+               (local.get $table))
+         
          (func $maybe-resize-symbol-table
                (param $table    (ref $SymbolTable))
                (result          (ref $SymbolTable))
