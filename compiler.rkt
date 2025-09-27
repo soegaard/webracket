@@ -71,16 +71,18 @@
 ;;; TODO
 ;;;
 
-; [ ] Redefining a primitive on top-level, like `(define (cadr x) (car (cdr x)))`
+; [/] Redefining a primitive on top-level, like `(define (cadr x) (car (cdr x)))`
 ;     leads to problems. The error is strange (runtime error). Find the underlying problem.
+;     For now we simply report an error, that this is not allowed in webracket.
 
-; [ ] Find solution for two types of rest arguments.
+; [x] Find solution for two types of rest arguments.
 ;     For inlining direct calls, the $Args representation is fine (1 allocation)
 ;     For `map`, `apply` and others, lists are the natural representation.
 ;     Support both?
-;     An extra entry for inlining?
+;     All variadic functions must accept the rest arguments as a list.
+;     Some also accepts them as an $Args - this is used in inlining.
 
-; [ ] Consider adding extra shapes to `primitive-invoke`.
+; [/] Consider adding extra shapes to `primitive-invoke`.
 ;     The possible shapes:
 ;        (list->set (map (λ (x) (if x (primitive-description-arity x) #f))
 ;                          (map primitive->description primitives)))
@@ -93,7 +95,7 @@
 ;     [ ] struct:keyword-procedure/arity-error
 ;     [ ] prop:named-keyword-procedure
 ;     [ ] missing-kw
-;     [ ] null
+;     [x] null
 
 ; [x] $vector-immutable - Make the returned vector immutable
 
@@ -177,7 +179,9 @@
 
 
 ; [ ] Hash tables
-; [x] - mutable hasheq tables
+; [x] - mutable hasheq  (eq?)    tables
+; [x] - mutable hasheqv (eqv?)   tables
+; [x] - mutable hash    (equal?) tables
 
 ; [ ] Sets
 

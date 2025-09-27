@@ -860,7 +860,13 @@
               (list "string-set!"
                     (let ([f (make-string 3 #\*)])
                       (and (equal? (begin (string-set! f 0 #\?) f) "?**")
-                           (equal? (procedure-arity string-set!) 3))))
+                           (equal? (procedure-arity string-set!) 3)
+                           ; string-set! doesn't affect the eq-hash-code
+                           (let ([b (string #\a)])
+                             (define h0 (eq-hash-code b))
+                             (string-set! b 0 #\b)
+                             (define h1 (eq-hash-code b))
+                             (equal? h0 h1)))))
 
               (list "string-length"
                     (and (equal? (string-length "abc") 3)

@@ -9913,8 +9913,7 @@
                (local.set $arr (struct.get $String $codepoints (local.get $str)))
                (if (i32.lt_u (local.get $idx) (call $i32array-length (local.get $arr)))
                    (then (call $i32array-set! (local.get $arr) (local.get $idx) (local.get $cp))
-                         ;; Reset hash to 0
-                         (struct.set $String $hash (local.get $str) (i32.const 0))
+                         ;; Keep the hash. The eq-identity doesn't change.
                          (return (global.get $void)))
                    (else (call $raise-bad-string-index/i32 (local.get $s) (local.get $idx))))
                (unreachable))
@@ -23073,6 +23072,7 @@
 
                (if (result i32)
                    (ref.test (ref i31) (local.get $v))
+                   ;; Immediates
                    (then
                     ;; --- Mix i31 immediate using Murmur3-style scramble ---
                     (local.set $v-i31 (i31.get_u (ref.cast (ref i31) (local.get $v))))
@@ -23103,6 +23103,7 @@
                    ;;         (i32.mul (local.get $x) (i32.const 0xcc9e2d51))
                    ;;         (i32.const 15))
                    ;;        (i32.const 0x1b873593)))
+                   
                    (else
                     ;; --- Heap object: return or assign hash without mixing for now ---
                     (local.set $heap (ref.cast (ref $Heap) (local.get $v)))
