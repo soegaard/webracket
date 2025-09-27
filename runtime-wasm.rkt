@@ -23548,6 +23548,7 @@
                (local $hash     i32)
                (local $index    i32)
                (local $step     i32)
+               (local $slot     i32)
                (local $k        (ref eq))
                ;; Get the entries array and capacity
                (local.set $entries  (struct.get $SymbolTable $entries (local.get $table)))
@@ -23561,14 +23562,14 @@
                       (loop $probe
                             ;; Stop probing if we’ve gone through every slot
                             (br_if $not-found (i32.ge_u (local.get $step) (local.get $capacity)))
-                            ;; Compute probe index: (index + step) % capacity
-                            (local.set $index (i32.rem_u (i32.add (local.get $index) (local.get $step))
-                                                         (local.get $capacity)))
-                            ;; Load key at 2 * index
+                            ;; Compute probe slot: (index + step) % capacity
+                            (local.set $slot (i32.rem_u (i32.add (local.get $index) (local.get $step))
+                                                        (local.get $capacity)))
+                            ;; Load key at 2 * slot
                             (local.set $k
                                        (array.get $Array
                                                   (local.get $entries)
-                                                  (i32.shl (local.get $index) (i32.const 1)))) ;; 2 * index
+                                                  (i32.shl (local.get $slot) (i32.const 1))))
                             ;; If slot is unused, stop
                             (br_if $not-found
                                    (ref.eq (local.get $k) (global.get $missing)))
@@ -23577,10 +23578,10 @@
                                       (call $string=?/i32 (local.get $k) (local.get $key)))
                                 (call $string=?/i32 (local.get $k) (local.get $key))
                                 (then
-                                 (return ; returns value at index 2*index+1.
+                                 (return ; returns value at slot 2*slot+1.
                                   (array.get $Array
                                              (local.get $entries)
-                                             (i32.add (i32.shl (local.get $index) (i32.const 1))
+                                             (i32.add (i32.shl (local.get $slot) (i32.const 1))
                                                       (i32.const 1))))))
                             ;; Try next slot
                             (local.set $step (i32.add (local.get $step) (i32.const 1)))
@@ -23603,14 +23604,14 @@
                (local $k        (ref eq))
                (local $slot     i32)
                ;; Possibly resize before inserting
-               (local.set $table (call $maybe-resize-symbol-table (local.get $table)))
+               (local.set $table    (call $maybe-resize-symbol-table (local.get $table)))
                ;; Get updated entries array and capacity
                (local.set $entries  (struct.get $SymbolTable $entries (local.get $table)))
                (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
                ;; Compute hash and initial index
-               (local.set $hash  (call $string-hash/i32 (local.get $key)))
-               (local.set $index (i32.rem_u (local.get $hash) (local.get $capacity)))
-               (local.set $step  (i32.const 0))
+               (local.set $hash     (call $string-hash/i32 (local.get $key))) ; 
+               (local.set $index    (i32.rem_u (local.get $hash) (local.get $capacity)))
+               (local.set $step     (i32.const 0))
                
                (block $done
                       (block $full
@@ -23645,8 +23646,6 @@
                                    (br $probe)))
                       ;; Failed to insert — table full (should not happen if resizing is correct)
                       (call $raise-symbol-table-insert:table-full)))
-
-         
 
 
          (func $symbol-table-resize
@@ -23746,9 +23745,6 @@
                     ;; Memoize
                     (struct.set $String $hash (local.get $s) (local.get $hash))
                     (local.get $hash))))
-
-
-
 
          
          ;;;

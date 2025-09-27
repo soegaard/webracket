@@ -1395,13 +1395,19 @@
                 (list "symbol/string interop"
                       (and (equal? x "cb")
                            (equal? (symbol->string y) "ab")
-                           (equal? (string->symbol "ab") (string->symbol "ab")) ; hash table problem?
+                           (let ([ab1 (string->symbol "ab")]
+                                 [ab2 (string->symbol "ab")])
+                             (list (equal? ab1 ab2)
+                                   (eq-hash-code ab1)
+                                   (eq-hash-code ab2)
+                                   (equal-hash-code ab1)
+                                   (equal-hash-code ab2))) ; hash table problem?
                            (equal? (string->symbol "ab") y)
                            (list (string->symbol "ab") y
                                  (symbol->string (string->symbol "ab")) (symbol->string y))
                            ;; symbol->string returns fresh strings (not eq?)
                            (equal? (eq? (symbol->string 'apple)
-                                          (symbol->string 'apple))
+                                        (symbol->string 'apple))
                                    #f)
                            (equal? (symbol->immutable-string 'apple) "apple")
                            (equal? (immutable? (symbol->immutable-string 'apple)) #t)
