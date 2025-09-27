@@ -1448,12 +1448,20 @@
        ; (displayln (list 'generate-ur: 'quote-syntax s d (list src l c p sp)))
        ; srcloc(source,line,column,position,span)
        ; make_syntax_object(source_location,lexical_info,datum)       
-       (Expr `(quote ,s ,(datum s #f))) ; todo: use the definition below instead
-
+       #;(Expr `(quote ,s ,(datum s #f))) ; todo: use the definition below instead
        #;`(app ,s ,(var:make-syntax-object)
              (app ,s ,(var:srcloc) ,src ,l ,c ,p ,sp) ; source location
              ,false                                   ; lexical info
-             ,v))])
+             ,v)
+       `(app ,s
+             ,(var:datum->syntax)
+             ,false ; context
+             ,v     ; datum
+             ,`(app ,s ,(var:make-srcloc) ,src ,l ,c ,p ,sp)
+             ,false ; prop
+             ,false ; ignored
+             )
+       )])
   (TopLevelForm    : TopLevelForm    (t)  -> TopLevelForm    ())
 
   (let ([T (TopLevelForm T)]

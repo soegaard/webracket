@@ -3733,142 +3733,115 @@
 
          ;; https://docs.racket-lang.org/reference/booleans.html
 
-         ;; [x] boolean?
-         ;; [x] not
-         ;; [x] immutable?
-         
-         ;;; Boolean Aliases
-         ;; [ ] true
-         ;; [ ] false
-        ;; [ ] symbol=?
-        ;; [x] boolean=?
-        ;; [x] false?
-         ;; [ ] nand
-         ;; [ ] nor
-         ;; [ ] implies
-        ;; [x] xor
-
-         ;;; Mutability Predicates
-        ;; [x] mutable-string?
-        ;; [x] immutable-string?
-        ;; [x] mutable-bytes?
-        ;; [x] immutable-bytes?
-        ;; [x] mutable-vector?
-        ;; [x] immutable-vector?
-        ;; [x] mutable-box?
-        ;; [x] immutable-box?
-        ;; [x] mutable-hash?
-        ;; [x] immutable-hash?
-
-        (func $mutable-string? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $String) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $mutable-string? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $String) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $String $immutable
                                                  (ref.cast (ref $String) (local.get $v)))
-                                      (i32.const 0))
+                                     (i32.const 0))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $immutable-string? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $String) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $immutable-string? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $String) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $String $immutable
                                                  (ref.cast (ref $String) (local.get $v)))
-                                      (i32.const 1))
+                                     (i32.const 1))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $mutable-bytes? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Bytes) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $mutable-bytes? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Bytes) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Bytes $immutable
                                                  (ref.cast (ref $Bytes) (local.get $v)))
-                                      (i32.const 0))
+                                     (i32.const 0))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $immutable-bytes? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Bytes) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $immutable-bytes? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Bytes) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Bytes $immutable
                                                  (ref.cast (ref $Bytes) (local.get $v)))
-                                      (i32.const 1))
+                                     (i32.const 1))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $mutable-vector? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Vector) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $mutable-vector? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Vector) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Vector $immutable
                                                  (ref.cast (ref $Vector) (local.get $v)))
-                                      (i32.const 0))
+                                     (i32.const 0))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $immutable-vector? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Vector) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $immutable-vector? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Vector) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Vector $immutable
                                                  (ref.cast (ref $Vector) (local.get $v)))
-                                      (i32.const 1))
+                                     (i32.const 1))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $mutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Box) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $mutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Box) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Box $immutable
                                                  (ref.cast (ref $Box) (local.get $v)))
-                                      (i32.const 0))
+                                     (i32.const 0))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $immutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Box) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $immutable-box? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Box) (local.get $v))
+                   (then (if (result (ref eq))
                              (i32.eq (struct.get $Box $immutable
                                                  (ref.cast (ref $Box) (local.get $v)))
-                                      (i32.const 1))
+                                     (i32.const 1))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $mutable-hash? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Hash) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $mutable-hash? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Hash) (local.get $v))
+                   (then (if (result (ref eq))
                              (ref.eq (struct.get $Hash $mutable?
                                                  (ref.cast (ref $Hash) (local.get $v)))
                                      (global.get $true))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
 
-        (func $immutable-hash? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Hash) (local.get $v))
-                  (then (if (result (ref eq))
+         (func $immutable-hash? (type $Prim1) (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq))
+                   (ref.test (ref $Hash) (local.get $v))
+                   (then (if (result (ref eq))
                              (ref.eq (struct.get $Hash $mutable?
                                                  (ref.cast (ref $Hash) (local.get $v)))
                                      (global.get $false))
                              (then (global.get $true))
                              (else (global.get $false))))
-                  (else (global.get $false))))
+                   (else (global.get $false))))
          
          ; todo: Benchmark the two implementations of $boolean? below
 
@@ -29214,6 +29187,10 @@
                ;; --- Case: undefined ---
                (if (ref.eq (local.get $v) (global.get $undefined))
                    (then (return (ref.cast (ref $String) (global.get $string:undefined)))))
+               ;; --- Case: struct (must appear before procedure) ---
+               (if (ref.test (ref $Struct) (local.get $v))
+                   (then (return (call $format/display:struct
+                                       (ref.cast (ref $Struct) (local.get $v))))))
                ;; --- Case: closure ---
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
@@ -29265,10 +29242,6 @@
                (if (ref.test (ref $Values) (local.get $v))
                    (then (return (call $format/display:values
                                        (ref.cast (ref $Values) (local.get $v))))))
-               ;; --- Case: struct ---
-               (if (ref.test (ref $Struct) (local.get $v))
-                   (then (return (call $format/display:struct
-                                       (ref.cast (ref $Struct) (local.get $v))))))
                ;; --- Case: external ---
                (if (ref.test (ref $External) (local.get $v))
                    (then (return (call $format/display:external
@@ -30781,8 +30754,8 @@
                          (ref.test (ref $Struct) (local.get $v))
                          (then
                           (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
-                          (local.set $type (struct.get $Struct $type (local.get $struct)))
-                          (local.set $ok (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                          (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                          (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
                           (if (result (ref eq))
                               (local.get $ok)
                               (then (global.get $true))
