@@ -936,7 +936,13 @@
                     (let ([s (string-copy "hello")])
                       (string-fill! s #\x)
                       (and (equal? s "xxxxx")
-                           (equal? (procedure-arity string-fill!) 2))))
+                           (equal? (procedure-arity string-fill!) 2)
+                           ; string-fill! doesn't affect the eq-hash-code
+                           (let ([b (string #\a)])
+                             (define h0 (eq-hash-code b))
+                             (string-fill! b #\b)
+                             (define h1 (eq-hash-code b))
+                             (equal? h0 h1)))))
 
               (list "string-copy!"
                     (let ([s (make-string 10 #\x)])
@@ -1387,24 +1393,19 @@
                 ;; (js-log (symbol->string y))
                 (let ([and list] #;[equal? list])
                 (list "symbol/string interop"
-                      (and #;(equal? x "cb")
-                           #;(equal? (symbol->string y) "ab")
+                      (and (equal? x "cb")
+                           (equal? (symbol->string y) "ab")
                            (equal? (string->symbol "ab") (string->symbol "ab")) ; hash table problem?
-                           #;(equal? (string->symbol "ab") y)
-                           #;(list (string->symbol "ab") y
+                           (equal? (string->symbol "ab") y)
+                           (list (string->symbol "ab") y
                                  (symbol->string (string->symbol "ab")) (symbol->string y))
-                           ;; error cases
-                           #;(with-handlers ([exn:fail? (λ _ #t)])
-                               (string->symbol 10) #f)
-                           #;(with-handlers ([exn:fail? (λ _ #t)])
-                               (string->symbol 'oops) #f)
                            ;; symbol->string returns fresh strings (not eq?)
-                           #;(equal? (eq? (symbol->string 'apple)
-                                        (symbol->string 'apple))
+                           (equal? (eq? (symbol->string 'apple)
+                                          (symbol->string 'apple))
                                    #f)
-                           #;(equal? (symbol->immutable-string 'apple) "apple")
-                           #;(equal? (immutable? (symbol->immutable-string 'apple)) #t)
-                           #;(equal? (immutable? (symbol->immutable-string 'box))   #t)))))
+                           (equal? (symbol->immutable-string 'apple) "apple")
+                           (equal? (immutable? (symbol->immutable-string 'apple)) #t)
+                           (equal? (immutable? (symbol->immutable-string 'box))   #t)))))
 
               (let ([a (string->uninterned-symbol "a")]
                     [b (string->uninterned-symbol "a")])

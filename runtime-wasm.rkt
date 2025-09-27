@@ -10012,10 +10012,9 @@
                (if (i32.ne (i32.and (local.get $cp) (i32.const ,char-mask)) (i32.const ,char-tag))
                    (then (call $raise-check-char (local.get $ch))))
                (local.set $cp (i32.shr_u (local.get $cp) (i32.const ,char-shift)))
-               ;; --- 4. Fill and reset hash ---
+               ;; --- 4. Fill (keep eq-hash-code) ---
                (local.set $arr (struct.get $String $codepoints (local.get $str)))
-               (call $i32array-fill! (local.get $arr) (local.get $cp))
-               (struct.set $String $hash (local.get $str) (i32.const 0))
+               (call $i32array-fill! (local.get $arr) (local.get $cp))               
                ;; --- 5. Return void ---
                (global.get $void))
 
@@ -24454,9 +24453,6 @@
                             (call $i32array-set! (local.get $arr) (local.get $dest-idx) (local.get $cp))
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $loop)))
-               ;; --- Reset hash if characters were written ---
-               (if (i32.gt_u (local.get $i) (i32.const 0))
-                   (then (struct.set $String $hash (local.get $s) (i32.const 0))))
                ;; --- Report number of characters read ---
                (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
 
@@ -25221,10 +25217,6 @@
                             (call $i32array-set! (local.get $arr) (local.get $dest-idx) (local.get $cp))
                             (local.set $written (i32.add (local.get $written) (i32.const 1)))
                             (br $loop)))
-
-               ;; --- Reset hash if characters were written ---
-               (if (i32.gt_u (local.get $written) (i32.const 0))
-                   (then (struct.set $String $hash (local.get $s) (i32.const 0))))
 
                ;; --- Report number of characters peeked ---
                (ref.i31 (i32.shl (local.get $written) (i32.const 1))))
