@@ -369,6 +369,26 @@
 
 (define primitives '())  ; includes the ffi-primitives
 
+(define primitive-arity-cache (make-hasheq))
+
+(define (primitive-arity sym)
+  (hash-ref! primitive-arity-cache sym
+             (λ ()
+               (define desc (primitive->description sym))
+               (and desc (primitive-description-arity desc)))))
+
+(define (arity-accepts? arity n)
+  (cond
+    [(arity-at-least? arity) (>= n (arity-at-least-value arity))]
+    [(integer? arity)        (= n arity)]
+    [(list? arity)           (for/or ([sub arity]) (arity-accepts? sub n))]
+    [else                    #t]))
+
+(define (primitive-arity-accepts? sym n)
+  (define arity (primitive-arity sym))
+  (or (not arity) (arity-accepts? arity n)))
+
+
 
 ;; Most primitives are either primitives or procedures in standard Racket.
 ;; We can therefore use reflection to lookup information about arities,
@@ -1435,24 +1455,17 @@
     [(quote ,s ,d)
      (datum->construction-expr s (datum-value d))]
     [(quote-syntax ,s ,d)
-     (let* ([src (syntax-source s)]
-            [src (if (path? src)   (path->string src)   src)] ; no paths yet ...
-            [src (if (symbol? src) (symbol->string src) src)] ; keep it simple for now ...
+     (let* ([src   (syntax-source s)]
+            [src   (if (path? src)   (path->string src)   src)] ; no paths yet ...
+            [src   (if (symbol? src) (symbol->string src) src)] ; keep it simple for now ...
             [src   (Expr `(quote ,s ,(datum s src)))]
+            
             [l     (Expr `(quote ,s ,(datum s (syntax-line s))))]
             [c     (Expr `(quote ,s ,(datum s (syntax-column s))))]
             [p     (Expr `(quote ,s ,(datum s (syntax-position s))))]
             [sp    (Expr `(quote ,s ,(datum s (syntax-span s))))]
             [false (Expr `(quote ,s ,(datum s #f)))]
             [v     (Expr `(quote ,s ,d))])
-       ; (displayln (list 'generate-ur: 'quote-syntax s d (list src l c p sp)))
-       ; srcloc(source,line,column,position,span)
-       ; make_syntax_object(source_location,lexical_info,datum)       
-       #;(Expr `(quote ,s ,(datum s #f))) ; todo: use the definition below instead
-       #;`(app ,s ,(var:make-syntax-object)
-             (app ,s ,(var:srcloc) ,src ,l ,c ,p ,sp) ; source location
-             ,false                                   ; lexical info
-             ,v)
        `(app ,s
              ,(var:datum->syntax)
              ,false ; context
@@ -1460,8 +1473,7 @@
              ,`(app ,s ,(var:make-srcloc) ,src ,l ,c ,p ,sp) 
              ,false ; prop
              ,false ; ignored
-             )
-       )])
+             ))])
   (TopLevelForm    : TopLevelForm    (t)  -> TopLevelForm    ())
 
   (let ([T (TopLevelForm T)]
@@ -4053,8 +4065,25 @@
                             ([arg (in-list (cddr aes))])
                     `(call ,(Prim pr) ,acc ,arg))]
                  [else
-                  ; TODO - INSERT ARITY CHECK
-                  `(call ,(Prim pr) ,@(AExpr* ae1))])])]))
+                  ;; Without arity checks, this is simply:
+                  ;;     `(call ,(Prim pr) ,@(AExpr* ae1))
+                  ;; But this gives a compile time error from the web assembly compiler,
+                  ;; due to too many or too few arguments on the stack.
+
+                  (define (primapp-arity-error sym aes)
+                    `(block (result (ref eq))
+                            ,@(for/list ([ae aes]) `(drop ,ae))
+                            (call $primitive-invoke:raise-arity-error
+                                  (ref.cast (ref $PrimitiveProcedure)
+                                            (global.get ,($ (prim: sym))))
+                                  (i32.const ,(length aes)))))
+
+                  (let* ([aes (AExpr* ae1)]
+                         [n   (length aes)])
+                    (if (primitive-arity-accepts? sym n)
+                        `(call ,(Prim pr) ,@aes)
+                        (primapp-arity-error sym aes)))])])]))
+
      (match dd
        [(or '<value> '<effect>)
         (match cd
