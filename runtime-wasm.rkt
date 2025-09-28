@@ -30747,7 +30747,6 @@
                      (local $struct (ref $Struct))
                      (local $type   (ref eq))
                      (local $std    (ref $StructType))
-                     (local $ok     i32)
 
                      (local.set $std (call $ensure-srcloc-type))
                      (if (result (ref eq))
@@ -30755,9 +30754,8 @@
                          (then
                           (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
                           (local.set $type   (struct.get $Struct $type (local.get $struct)))
-                          (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
                           (if (result (ref eq))
-                              (local.get $ok)
+                              (ref.eq (local.get $type) (local.get $std))
                               (then (global.get $true))
                               (else (global.get $false))))
                          (else (global.get $false))))
@@ -31028,8 +31026,9 @@
                          (else
                           (if (ref.eq (call $srcloc? (local.get $srcloc)) (global.get $true))
                               (then (local.set $srcloc-checked (local.get $srcloc)))
-                              (else (call $raise-argument-error:srcloc-expected (local.get $who)
-                                                                             (local.get $srcloc))
+                              (else (call $raise-argument-error:srcloc-expected
+                                          (local.get $who)
+                                          (local.get $srcloc))
                                     (unreachable)))))
 
                      (if (ref.eq (local.get $props) (global.get $missing))
@@ -31583,7 +31582,7 @@
                      (local $default-props  (ref eq))
                      (local $srcloc-checked (ref eq))
                      (local $props-checked  (ref eq))
-
+                     
                      ;; Initialize defaults.
                      (local.set $scopes         (global.get $null))
                      (local.set $shifted        (global.get $null))
