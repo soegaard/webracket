@@ -26447,30 +26447,31 @@
                                    (unreachable))))))
 
          (func $struct-type-is-a?/i32
-                ; is $a a subtype of $b ?
+               ; is $a a subtype of $b ?
                (param $a (ref eq)) (param $b (ref eq))
                (result i32)
 
                (local $cur (ref eq))
                (local.set $cur (local.get $a))
 
-               (block $exit
-                      (loop $walk
-                            ;; if cur == b => success
-                            (br_if $exit (ref.eq (local.get $cur) (local.get $b)))
-                            ;; if cur == #f => fail
-                            (br_if $exit (ref.eq (local.get $cur) (global.get $false)))
-                            ;; if cur is not a struct type => fail
-                            (br_if $exit (i32.eqz (ref.test (ref $StructType) (local.get $cur))))
-                            ;; climb to supertype
-                            (local.set $cur
-                                       (struct.get $StructType $super
-                                                   (ref.cast (ref $StructType) (local.get $cur))))
-                            (br $walk))
-                      ;; If we exited the loop early, we failed
-                      (return (i32.const 0)))
-               ;; If we fell through the loop, we succeeded
-               (i32.const 1))
+               (loop $walk
+                     ;; Success: found a matching struct type in the hierarchy.
+                     (if (ref.eq (local.get $cur) (local.get $b))
+                         (then (return (i32.const 1))))
+
+                     ;; Failure: reached the end of the chain or encountered a
+                     ;; non-struct descriptor before finding $b.
+                     (if (ref.eq (local.get $cur) (global.get $false))
+                         (then (return (i32.const 0))))
+                     (if (i32.eqz (ref.test (ref $StructType) (local.get $cur)))
+                         (then (return (i32.const 0))))
+
+                     ;; Walk up the supertype chain and continue searching.
+                     (local.set $cur
+                                (struct.get $StructType $super
+                                            (ref.cast (ref $StructType) (local.get $cur))))
+                     (br $walk))
+               (unreachable))
 
          (func $raise-format/display:struct:expected-struct (unreachable))
          
