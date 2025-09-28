@@ -3264,12 +3264,12 @@
                       (and (equal? (syntax? stx) #t)
                            (equal? (syntax-e stx) 'apple))))
 
-              #;(list "datum->syntax/srcloc"
-                    (let* ([loc (make-srcloc 'src 1 0 0 0)]
+              (list "datum->syntax/srcloc"
+                    (let* ([loc (make-srcloc 'src 1 1 1 1)]
                            [stx (datum->syntax #f 'x loc)])
                       (equal? (syntax-srcloc stx) loc)))
 
-              #;(list "datum->syntax/srcloc-from-syntax"
+              (list "datum->syntax/srcloc-from-syntax"
                     (let* ([loc (make-srcloc 'src 2 1 10 3)]
                            [ctx (datum->syntax #f 'dummy loc)]
                            [stx (datum->syntax ctx 'value ctx)])
