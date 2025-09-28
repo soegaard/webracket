@@ -30772,6 +30772,7 @@
                      (local $struct (ref $Struct))
                      (local $type   (ref eq))
                      (local $std    (ref $StructType))
+                     (local $ok     i32)
 
                      (local.set $std (call $ensure-srcloc-type))
                      (if (result (ref eq))
@@ -30779,8 +30780,11 @@
                          (then
                           (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
                           (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                          (local.set $ok     (call $struct-type-is-a?/i32
+                                                   (local.get $type)
+                                                   (local.get $std)))
                           (if (result (ref eq))
-                              (ref.eq (local.get $type) (local.get $std))
+                              (local.get $ok)
                               (then (global.get $true))
                               (else (global.get $false))))
                          (else (global.get $false))))
