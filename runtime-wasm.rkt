@@ -907,6 +907,8 @@
     (add-runtime-string-constant 'colon                      ":")
     (add-runtime-string-constant '->                         ">")
 
+    (add-runtime-string-constant 'syntax-open                  "#<syntax ")
+    (add-runtime-string-constant 'syntax-close                 ">")
     (add-runtime-string-constant 'hash-less-boxed-colon        "#<boxed:")
     (add-runtime-string-constant 'hash-less-procedure-colon    "#<procedure:")
     (add-runtime-string-constant 'hash-less-primitive-colon    "#<primitive:")
@@ -29187,6 +29189,9 @@
                ;; --- Case: undefined ---
                (if (ref.eq (local.get $v) (global.get $undefined))
                    (then (return (ref.cast (ref $String) (global.get $string:undefined)))))
+                ;; --- Case: syntax ---
+               (if (ref.eq (call $syntax? (local.get $v)) (global.get $true))
+                   (then (return (call $format/display:syntax (local.get $v)))))
                ;; --- Case: struct (must appear before procedure) ---
                (if (ref.test (ref $Struct) (local.get $v))
                    (then (return (call $format/display:struct
@@ -29759,6 +29764,26 @@
                (call $growable-array-add! (local.get $out)
                      (ref.cast (ref $String)
                                (global.get $string:->)))
+               (call $growable-array-of-strings->string (local.get $out)))
+
+         (func $format/display:syntax
+               (param $stx (ref eq))
+               (result (ref $String))
+
+               (local $out   (ref $GrowableArray))
+               (local $datum (ref eq))
+
+               (local.set $out (call $make-growable-array (i32.const 3)))
+               (call $growable-array-add!
+                     (local.get $out)
+                     (ref.cast (ref $String) (global.get $string:syntax-open)))
+               (local.set $datum (call $syntax-e (local.get $stx)))
+               (call $growable-array-add!
+                     (local.get $out)
+                     (call $format/display (local.get $datum)))
+               (call $growable-array-add!
+                     (local.get $out)
+                     (ref.cast (ref $String) (global.get $string:syntax-close)))
                (call $growable-array-of-strings->string (local.get $out)))
 
          
