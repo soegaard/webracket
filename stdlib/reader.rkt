@@ -24,11 +24,18 @@
   (make-srcloc source start-line start-col start-pos (- end-pos start-pos)))
 
 (define (raise-read-error who msg loc)
+  (define srclocs
+    (cond
+      [(list? loc)   loc]
+      [(srcloc? loc) (list loc)]
+      [(not loc)     '()]
+      [else
+       (raise-argument-error 'raise-read-error "(or/c srcloc? (listof srcloc?) #f)" loc)]))
   (raise
    (exn:fail:read
     (format "~a: ~a" who msg)
     (current-continuation-marks)
-    loc)))
+    srclocs)))
 
 (define (hex-digit->val ch)
   (cond [(and (char>=? ch #\0) (char<=? ch #\9)) (- (char->integer ch) (char->integer #\0))]
