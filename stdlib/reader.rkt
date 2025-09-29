@@ -1,8 +1,8 @@
 #lang racket/base
-;; WebRacket Reader — Lexer (booleans + radix/exactness) — parens fixed v2
-;; - #true / #false (case-insensitive, delimiter-checked)
-;; - Radix/exactness prefixes (#x #o #b #d #e #i), including chains like #e#x10
-;; - Strings and byte strings, characters, quote-like, delimiters, barewords
+;; WebRacket Reader — Lexer (booleans + radix/exactness)
+;; - Honors #i (inexact) and #e (exact) by leaving prefixes for string->number
+;; - Strings and byte strings treat \x...; correctly (do not include ';')
+;; - Booleans, characters, quote-like, delimiters, barewords
 ;; - Skips whitespace, BOM, ';' comments, and nested #| ... |# comments
 
 (require racket/port
@@ -140,7 +140,9 @@
   (unless (char=? ch0 #\") (error 'scan-string* "internal: expected opening \""))
   (define out-str (open-output-string))
   (define out-bytes (if bytes? (open-output-bytes) #f))
-  (define (return x) x)
+  (define (emit c)
+    (write-char c out-str)
+    (when bytes? (write-byte (char->integer c) out-bytes)))
   (let loop ()
     (define ch (read-char in))
     (cond
@@ -156,8 +158,8 @@
        (define val (if bytes?
                        (get-output-bytes out-bytes)
                        (get-output-string out-str)))
-       (return (token (if bytes? 'bytes 'string) val lexeme
-                      (make-srcloc-from-port in (lx-source L) sl sc sp)))]
+       (token (if bytes? 'bytes 'string) val lexeme
+              (make-srcloc-from-port in (lx-source L) sl sc sp))]
       [(char=? ch #\\)
        (define esc (read-char in))
        (cond
@@ -165,68 +167,46 @@
           (raise-read-error 'scan-string* "dangling escape in string"
                             (make-srcloc (lx-source L) sl sc sp 1))]
          [(member esc '(#\n #\r #\t #\" #\\))
-          (define real
-            (case esc
-              [(#\n) #\newline]
-              [(#\r) #\return]
-              [(#\t) #\tab]
-              [(#\") #\"]
-              [(#\\) #\\]))
-          (write-char real out-str)
-          (when bytes?
-            (define b (char->integer real))
-            (when (>= b 256)
-              (raise-read-error 'scan-string* "non-byte in byte string escape"
-                                (make-srcloc (lx-source L) sl sc sp 1)))
-            (write-byte b out-bytes))
+          (emit (case esc
+                  [(#\n) #\newline]
+                  [(#\r) #\return]
+                  [(#\t) #\tab]
+                  [(#\") #\"]
+                  [(#\\) #\\]))
           (loop)]
          [(char=? esc #\x)
-          ;; \xHEX...; terminated by ';'
-          (define (read-hex-acc acc)
-            (define c (read-char in))
+          ;; read hex digits, then require and consume ';'
+          (define acc 0)
+          (let hex-loop ()
+            (define c (peek-char in))
             (cond
               [(eof-object? c)
                (raise-read-error 'scan-string* "unterminated \\x...; escape"
                                  (make-srcloc (lx-source L) sl sc sp 1))]
               [(char=? c #\;)
-               acc]
+               (read-char in) ; consume ';' and finish
+               (void)]
               [else
                (define v (hex-digit->val c))
                (unless v (raise-read-error 'scan-string* "invalid hex digit in \\x"
                                            (make-srcloc (lx-source L) sl sc sp 1)))
-               (read-hex-acc (+ (* acc 16) v))]))
-          (define code (read-hex-acc 0))
-          (when (and bytes? (>= code 256))
+               (read-char in)
+               (set! acc (+ (* acc 16) v))
+               (hex-loop)]))
+          (when (and bytes? (>= acc 256))
             (raise-read-error 'scan-string* "byte value > 255 in byte string"
                               (make-srcloc (lx-source L) sl sc sp 1)))
-          (define ch2 (integer->char code))
-          (write-char ch2 out-str)
-          (when bytes? (write-byte code out-bytes))
+          (emit (integer->char acc))
           (loop)]
          [else
-          (write-char esc out-str)
-          (when bytes?
-            (define b (char->integer esc))
-            (when (>= b 256)
-              (raise-read-error 'scan-string* "non-byte in byte string"
-                                (make-srcloc (lx-source L) sl sc sp 1)))
-            (write-byte b out-bytes))
+          (emit esc)
           (loop)])]
       [else
-       (write-char ch out-str)
-       (when bytes?
-         (define b (char->integer ch))
-         (when (>= b 256)
-           (raise-read-error 'scan-string* "non-byte character in byte string"
-                             (make-srcloc (lx-source L) sl sc sp 1)))
-         (write-byte b out-bytes))
+       (emit ch)
        (loop)])))
 
-(define (scan-string L)
-  (scan-string* L))
-
-(define (scan-bytes L)
-  (scan-string* L #:bytes? #t))
+(define (scan-string L) (scan-string* L))
+(define (scan-bytes  L) (scan-string* L #:bytes? #t))
 
 ;; --------------------------- Booleans & Chars ------------------------------
 (define (scan-boolean L)
@@ -311,6 +291,9 @@
     [(and (string? s2) (string=? s2 "#("))
      (read-char in) (read-char in)
      (token 'vector-start #f "#(" (make-srcloc-from-port in (lx-source L) sl sc sp))]
+    [(and (string? s2) (string=? s2 "#&"))
+     (read-char in) (read-char in)
+     (token 'box-start #f "#&" (make-srcloc-from-port in (lx-source L) sl sc sp))]
     [(and (string? s2) (string=? s2 "#\\")) (scan-char L)]
     [(and (string? s2) (string=? s2 "#\"")) (scan-bytes L)]
     ;; boolean aliases #true / #false (case-insensitive)
@@ -397,6 +380,7 @@
           (loop #t)])])))
 
 (define (classify-bareword s)
+  ;; Let Racket honor #e/#i and radix prefixes via string->number
   (define maybe-num (string->number s))
   (if (number? maybe-num)
       (cons 'number maybe-num)
@@ -454,30 +438,142 @@
 
 ;; ============================== Tests =====================================
 
-(require rackunit)
+(require rackunit
+         racket/port
+         #;"reader.rkt")
+
+;; Helpers -------------------------------------------------------------------
+(define (lex-from-string s [source 'string])
+  (define in (open-input-string s))
+  (make-lexer in source))
+
+(define (collect-types L)
+  (let loop ([acc '()])
+    (define t (lexer-next L))
+    (define ty (token-type t))
+    (define acc* (cons ty acc))
+    (if (eq? ty 'eof) (reverse acc*) (loop acc*))))
+
+(define (collect-types+lexemes L)
+  (let loop ([acc '()])
+    (define t (lexer-next L))
+    (define ty (token-type t))
+    (define lx (token-lexeme t))
+    (define acc* (cons (cons ty lx) acc))
+    (if (eq? ty 'eof) (reverse acc*) (loop acc*))))
+
+(define (token-span t)
+  (srcloc-span (token-loc t)))
 
 (module+ test
-  (define (lex-from-string s [source 'string])
-    (make-lexer (open-input-string s) source))
+  ;; 1) Empty input → EOF with zero-span location
+  (test-case "empty input → eof"
+    (define L (lex-from-string "" 'empty))
+    (define t (lexer-next L))
+    (check-equal? (token-type t) 'eof)
+    (check-equal? (srcloc-span (token-loc t)) 0))
 
-  (define (collect-types+lexemes L)
-    (let loop ([acc '()])
-      (define t  (lexer-next L))
-      (define ty (token-type t))
-      (define lx (token-lexeme t))
-      (define acc* (cons (cons ty lx) acc))
-      (if (eq? ty 'eof) (reverse acc*) (loop acc*))))
+  ;; 2) Delimiters, with whitespace/newlines between
+  (test-case "delimiters basic"
+    (define L (lex-from-string "(\n) [ ] { } ." 'delims))
+    (check-equal?
+     (collect-types+lexemes L)
+     '((lparen . "(") (rparen . ")") (lbracket . "[") (rbracket . "]")
+       (lbrace . "{") (rbrace . "}") (dot . ".") (eof . ""))))
 
-  (define (kinds s)
-    (map car (collect-types+lexemes (lex-from-string s 'k))))
+  ;; 3) Quote-like tokens
+  (test-case "quote-like"
+    (define L (lex-from-string "'  ` ,  ,@" 'quotes))
+    (check-equal?
+     (collect-types+lexemes L)
+     '((quote . "'") (quasiquote . "`") (unquote . ",")
+       (unquote-splicing . ",@") (eof . ""))))
 
-  ;; boolean aliases
-  (test-case "boolean aliases"
-    (check-equal? (kinds "#true #false #t #f")
-                  '(boolean boolean boolean boolean eof)))
+  ;; 4) Nested block comments are skipped
+  (test-case "nested block comments"
+    (define L (lex-from-string "#| a #| b |# c |# (" 'blocks))
+    (define t (lexer-next L))
+    (check-equal? (token-type t) 'lparen)
+    (check-equal? (token-lexeme t) "(")
+    (check-equal? (token-span t) 1)
+    (check-equal? (token-type (lexer-next L)) 'eof))
 
-  ;; radix/exactness + chaining → numbers
-  (test-case "radix/exactness prefixes"
-    (check-equal? (kinds "#x1f #o77 #b1010 #d9 #e10 #i3.0 #e#x10")
-                  '(number number number number number number number eof))))
+  ;; 5) BOM + line comment are skipped
+  (test-case "bom + line comment"
+    (define L (lex-from-string (string #\uFEFF ; BOM
+                                       #\; #\c #\o #\m #\m #\e #\n #\t
+                                       #\newline
+                                       #\() 'bom+line))
+    (define t (lexer-next L))
+    (check-equal? (token-type t) 'lparen)
+    (check-equal? (token-lexeme t) "(")
+    (check-equal? (token-span t) 1))
 
+  ;; 6) Span checks for ', and ,@
+  (test-case "span of quote-like lexemes"
+    (define L (lex-from-string "',@" 'spans))
+    (define t1 (lexer-next L))
+    (define t2 (lexer-next L))
+    (check-equal? (token-type t1) 'quote)
+    (check-equal? (token-span t1) 1)
+    (check-equal? (token-type t2) 'unquote-splicing)
+    (check-equal? (token-span t2) 2))
+
+  ;; 7) Booleans (short and long)
+  (test-case "booleans short & long"
+    (define L (lex-from-string "#t #f #true #false" 'bools))
+    (define t1 (lexer-next L)) (define t2 (lexer-next L))
+    (define t3 (lexer-next L)) (define t4 (lexer-next L))
+    (check-equal? (map token-type (list t1 t2 t3 t4)) '(boolean boolean boolean boolean))
+    (check-equal? (map token-val (list t1 t2 t3 t4)) (list #t #f #t #f))
+    (check-equal? (token-type (lexer-next L)) 'eof))
+
+  ;; 8) Characters
+  (test-case "characters: literal, name, hex"
+    (define L (lex-from-string "#\\a #\\space #\\x41" 'chars))
+    (define t1 (lexer-next L)) (define t2 (lexer-next L)) (define t3 (lexer-next L))
+    (check-equal? (map token-type (list t1 t2 t3)) '(char char char))
+    (check-equal? (token-val t1) #\a)
+    (check-equal? (token-val t2) #\space)
+    (check-equal? (token-val t3) #\A)
+    (check-equal? (token-type (lexer-next L)) 'eof))
+
+  ;; 9) Strings and byte strings
+  (test-case "strings & bytes"
+    (define L (lex-from-string "\"hi\\n\" #\"A\" #\"\x41;\"" 'strings))
+    (define t1 (lexer-next L))
+    (define t2 (lexer-next L))
+    (define t3 (lexer-next L))
+    (check-equal? (token-type t1) 'string)
+    (check-equal? (token-val t1) "hi\n")
+    (check-equal? (token-type t2) 'bytes)
+    (check-equal? (bytes->list (token-val t2)) (bytes->list #"A"))
+    (check-equal? (token-type t3) 'bytes)
+    (check-equal? (bytes->list (token-val t3)) (bytes->list #"A;"))
+    (check-equal? (token-type (lexer-next L)) 'eof))
+
+  ;; 10) Radix/exactness prefixes + dot numbers
+  (test-case "radix & exactness prefixes + dotted numbers"
+    (define L (lex-from-string "#x10 #o10 #b1011 #d42 #e#x10 #i#o77 3. .5" 'radix))
+    (define ts (for/list ([i (in-range 9)]) (lexer-next L)))
+    (check-equal? (map token-type ts)
+                  '(number number number number number number number number eof))
+    (check-equal? (map token-val ts)
+                  (list 16 8 11 42 16 63.0 3.0 0.5 #f)))
+
+  ;; 11) Dots as delimiters when isolated
+  (test-case "isolated dot remains a delimiter"
+    (define L (lex-from-string "1 . 2" 'dots))
+    (check-equal? (collect-types L)
+                  '(number dot number eof)))
+
+  ;; 12) Sharp dispatch tokens we recognize but do not expand
+  (test-case "sharp-dispatch: datum-comment and vector-start"
+    (define L (lex-from-string "#; ( #(" 'sharp))
+    (define t1 (lexer-next L))
+    (check-equal? (token-type t1) 'datum-comment)
+    (define t2 (lexer-next L))
+    (check-equal? (token-type t2) 'lparen)
+    (define t3 (lexer-next L))
+    (check-equal? (token-type t3) 'vector-start)
+    (check-equal? (token-type (lexer-next L)) 'eof)))
