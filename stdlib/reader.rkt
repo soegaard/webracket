@@ -427,6 +427,195 @@
 (define (lexer-unread L t)
   (set-lx-buf! L (cons t (lx-buf L))))
 
+
+;; ============================== Parser ====================================
+
+(define (srcloc-end-position loc)
+  (define pos (srcloc-position loc))
+  (define span (srcloc-span loc))
+  (and pos span (+ pos span)))
+
+(define (srcloc-join start end)
+  (define src (or (srcloc-source start) (srcloc-source end)))
+  (define line (srcloc-line start))
+  (define col (srcloc-column start))
+  (define pos (srcloc-position start))
+  (define end-pos (srcloc-end-position end))
+  (define span (and pos end-pos (- end-pos pos)))
+  (make-srcloc src line col pos span))
+
+(define (closer-for opener-type)
+  (case opener-type
+    [(lparen) 'rparen]
+    [(lbracket) 'rbracket]
+    [else (error 'closer-for (format "unexpected opener ~a" opener-type))]))
+
+(define (delimiter->string type)
+  (case type
+    [(lparen) "("]
+    [(rparen) ")"]
+    [(lbracket) "["]
+    [(rbracket) "]"]
+    [(lbrace) "{"]
+    [(rbrace) "}"]
+    [else (symbol->string type)]))
+
+(define (quote-token->sym ty)
+  (case ty
+    [(quote) 'quote]
+    [(quasiquote) 'quasiquote]
+    [(unquote) 'unquote]
+    [(unquote-splicing) 'unquote-splicing]
+    [else (error 'quote-token->sym (format "unexpected token ~a" ty))]))
+
+(define (raise-unexpected-closing closer)
+  (raise-read-error 'read
+                    (format "unexpected ~a" (token-lexeme closer))
+                    (token-loc closer)))
+
+(define (raise-mismatched closer expected opener)
+  (raise-read-error 'read
+                    (format "expected ~a to close ~a, found ~a"
+                            (delimiter->string expected)
+                            (token-lexeme opener)
+                            (token-lexeme closer))
+                    (token-loc closer)))
+
+(define (parse-quote-like L tok context)
+  (define sym (quote-token->sym (token-type tok)))
+  (when (and (eq? sym 'unquote-splicing) (not (eq? context 'list)))
+    (raise-read-error 'read "unquote-splicing outside list" (token-loc tok)))
+  (define-values (datum _start end) (parse-datum L 'datum))
+  (when (eof-object? datum)
+    (raise-read-error 'read
+                      (format "unexpected EOF after ~a" (token-lexeme tok))
+                      (token-loc tok)))
+  (values (list sym datum) (token-loc tok) end))
+
+(define (parse-list L opener)
+  (define opener-type (token-type opener))
+  (define expected (closer-for opener-type))
+  (define elems '())
+  (define seen-dot? #f)
+  (define dot-tail #f)
+  (let loop ()
+    (define t (lexer-next L))
+    (define ty (token-type t))
+    (case ty
+      [(datum-comment)
+       (define-values (_1 _2 _3) (parse-datum L 'list))
+       (loop)]
+      [(eof)
+       (raise-read-error 'read
+                         (format "unexpected EOF: expected ~a to close ~a"
+                                 (delimiter->string expected)
+                                 (token-lexeme opener))
+                         (token-loc opener))]
+      [(dot)
+       (cond
+         [seen-dot?
+          (raise-read-error 'read "multiple '.' in list" (token-loc t))]
+         [(null? elems)
+          (raise-read-error 'read "'.' cannot appear at start of list" (token-loc t))]
+         [else
+          (define-values (tail _ts _te) (parse-datum L 'list))
+          (when (eof-object? tail)
+            (raise-read-error 'read "unexpected EOF after '.'" (token-loc t)))
+          (set! seen-dot? #t)
+          (set! dot-tail tail)
+          (loop)])]
+      [(rparen rbracket)
+       (if (eq? ty expected)
+           (let ([result (if seen-dot?
+                             (for/fold ([rest dot-tail]) ([elem (in-list elems)])
+                               (cons elem rest))
+                             (reverse elems))])
+             (values result (token-loc opener) (token-loc t)))
+           (raise-mismatched t expected opener))]
+      [(rbrace)
+       (raise-mismatched t expected opener)]
+      [else
+       (lexer-unread L t)
+       (when seen-dot?
+         (raise-read-error 'read "unexpected datum after '.'" (token-loc t)))
+       (define-values (datum _ds _de) (parse-datum L 'list))
+       (set! elems (cons datum elems))
+       (loop)])))
+
+(define (parse-vector L start-token)
+  (define elems '())
+  (let loop ()
+    (define t (lexer-next L))
+    (define ty (token-type t))
+    (case ty
+      [(datum-comment)
+       (define-values (_1 _2 _3) (parse-datum L 'vector))
+       (loop)]
+      [(eof)
+       (raise-read-error 'read "unexpected EOF: expected ) to close #("
+                         (token-loc start-token))]
+      [(rparen)
+       (values (list->vector (reverse elems))
+               (token-loc start-token)
+               (token-loc t))]
+      [(rbracket rbrace)
+       (raise-read-error 'read
+                         (format "expected ) to close #(, found ~a" (token-lexeme t))
+                         (token-loc t))]
+      [else
+       (lexer-unread L t)
+       (define-values (datum _ds _de) (parse-datum L 'vector))
+       (set! elems (cons datum elems))
+       (loop)])))
+
+(define (parse-datum L context)
+  (let loop ()
+    (define tok (lexer-next L))
+    (define ty (token-type tok))
+    (case ty
+      [(datum-comment)
+       (define-values (_1 _2 _3) (parse-datum L context))
+       (loop)]
+      [(eof)
+       (values eof (token-loc tok) (token-loc tok))]
+      [(lparen lbracket)
+       (parse-list L tok)]
+      [(rparen rbracket rbrace)
+       (raise-unexpected-closing tok)]
+      [(dot)
+       (raise-read-error 'read "unexpected '.'" (token-loc tok))]
+      [(vector-start)
+       (parse-vector L tok)]
+      [(box-start)
+       (raise-read-error 'read "box literals are not supported" (token-loc tok))]
+      [(lbrace)
+       (raise-read-error 'read "{...} literals are not supported" (token-loc tok))]
+      [(quote quasiquote unquote unquote-splicing)
+       (parse-quote-like L tok context)]
+      [(string bytes number char boolean symbol)
+       (values (token-val tok) (token-loc tok) (token-loc tok))]
+      [else
+       (raise-read-error 'read
+                         (format "unexpected token type ~a" ty)
+                         (token-loc tok))])))
+
+(define (do-read in source syntax?)
+  (define L (make-lexer in source))
+  (define-values (datum start end) (parse-datum L 'top))
+  (if (eof-object? datum)
+      datum
+      (if syntax?
+          (datum->syntax #f datum (srcloc-join start end))
+          datum)))
+
+(define (read [in (current-input-port)])
+  (do-read in (object-name in) #f))
+
+(define (read-syntax source [in (current-input-port)])
+  (do-read in source #t))
+
+
+
 (provide token
          lx make-lexer
          lexer-next lexer-peek lexer-unread
@@ -434,7 +623,9 @@
          scan-delim-or-dot scan-quote-like scan-sharp-dispatch
          scan-string scan-bytes scan-bareword scan-boolean scan-char
          next-token
-         make-srcloc-from-port)
+         make-srcloc-from-port
+         parse-datum
+         do-read read read-syntax)
 
 ;; ============================== Tests =====================================
 
@@ -464,6 +655,12 @@
 
 (define (token-span t)
   (srcloc-span (token-loc t)))
+
+(define (read-from-string s #:source [source 'string] #:syntax? [syntax? #f])
+  (define in (open-input-string s))
+  (if syntax?
+      (read-syntax source in)
+      (read in)))
 
 (module+ test
   ;; 1) Empty input → EOF with zero-span location
@@ -576,4 +773,72 @@
     (check-equal? (token-type t2) 'lparen)
     (define t3 (lexer-next L))
     (check-equal? (token-type t3) 'vector-start)
-    (check-equal? (token-type (lexer-next L)) 'eof)))
+    (check-equal? (token-type (lexer-next L)) 'eof))
+
+  ;; Parser tests ------------------------------------------------------------
+  (test-case "parser: basic lists and vectors"
+    (check-equal? (read-from-string "()") '())
+    (check-equal? (read-from-string "[]") '())
+    (check-equal? (read-from-string "(1 2)") '(1 2))
+    (check-equal? (read-from-string "[1 2 (3)]") '(1 2 (3)))
+    (check-equal? (read-from-string "#(1 (2) [3])") '#(1 (2) (3))))
+
+  (test-case "parser: mismatched brackets track location"
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"expected \\)" (exn-message e))
+            (let ([loc (car (exn:fail:read-srclocs e))])
+              (and (= (srcloc-line loc) 1)
+                   (= (srcloc-column loc) 2)))))
+     (lambda () (read-from-string "(]"))))
+
+  (test-case "parser: dotted pairs"
+    (check-equal? (read-from-string "(a . b)") (cons 'a 'b))
+    (check-equal? (read-from-string "(1 2 . 3)") (cons 1 (cons 2 3))))
+
+  (test-case "parser: dotted pair errors"
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"cannot appear" (exn-message e))))
+     (lambda () (read-from-string "( . a)")))
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"unexpected" (exn-message e))))
+     (lambda () (read-from-string "(a . )")))
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"unexpected datum" (exn-message e))))
+     (lambda () (read-from-string "(a . b c)"))))
+
+  (test-case "parser: quote-like forms"
+    (check-equal? (read-from-string "'x") '(quote x))
+    (check-equal? (read-from-string "`x") '(quasiquote x))
+    (check-equal? (read-from-string ",x") '(unquote x))
+    (check-equal? (read-from-string "(,@x)") '((unquote-splicing x)))
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"unquote-splicing outside list" (exn-message e))))
+     (lambda () (read-from-string ",@x"))))
+
+  (test-case "parser: datum comments"
+    (check-equal? (read-from-string "#; 1 2") 2)
+    (check-equal? (read-from-string "#; (1 2) 3") 3))
+
+  (test-case "parser: read-syntax carries srcloc"
+    (define stx (read-from-string "(1 2 3)" #:source 'src #:syntax? #t))
+    (check-true (syntax? stx))
+    (check-equal? (syntax-e stx) '(1 2 3))
+    (check-equal? (syntax-source stx) 'src)
+    (check-true (positive? (syntax-span stx)))
+    (check-equal? (syntax-position stx) 1))
+
+  (test-case "parser: datum comment before eof yields eof"
+    (define in (open-input-string "#; 1"))
+    (check-true (eof-object? (read in)))
+    (check-true (eof-object? (read in)))))
+
