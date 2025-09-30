@@ -426,6 +426,234 @@
 ;;;
 
 
+(define (print datum [out (current-output-port)] [quote-depth 0])
+  (define (print-self-evaluating? v)
+    (or (number? v)
+        (boolean? v)
+        (char? v)
+        (string? v)
+        (bytes? v)
+        (keyword? v)))
+
+  (define (print-quotable? v)
+    (cond
+      [(null? v)    #t]
+      [(pair? v)    (let loop ([rest v])
+                      (cond
+                        [(pair? rest)
+                         (and (print-quotable? (car rest))
+                              (loop (cdr rest)))]
+                        [(null? rest) #t]
+                        [else (print-quotable? rest)]))]
+      [(vector? v)  (let ([len (vector-length v)])
+                      (let loop ([i 0])
+                        (cond
+                          [(= i len) #t]
+                          [else
+                           (and (print-quotable? (vector-ref v i))
+                                (loop (+ i 1)))])))]
+      [(symbol? v)  #t]
+      [(keyword? v) #t]
+      [(print-self-evaluating? v) #t]
+      [else #f]))
+
+  (define (print-needs-quote? v depth)
+    (and (= depth 0)
+         (print-quotable? v)
+         (not (print-self-evaluating? v))))
+
+  (if (not (print-as-expression))
+      (begin (write datum out) (void))
+      (let ()
+        (define (emit str)
+          (write-string str out)
+          (void))
+
+        (define (emit-char ch)
+          (write-char ch out)
+          (void))
+
+        (define (emit-hex-prefix prefix n digits)
+          (define hex (string-upcase (number->string n 16)))
+          (define len (string-length hex))
+          (define padded
+            (if (< len digits)
+                (string-append (make-string (- digits len) #\0) hex)
+                hex))
+          (emit prefix)
+          (emit padded))
+
+        (define (emit-unicode-escape n)
+          (emit "\\u{")
+          (emit (string-upcase (number->string n 16)))
+          (emit "}"))
+
+        (define (write-string-char ch)
+          (cond
+            [(char=? ch #\")         (emit "\\\"")]
+            [(char=? ch #\\)         (emit "\\\\")]
+            [(char=? ch #\newline)   (emit "\\n")]
+            [(char=? ch #\return)    (emit "\\r")]
+            [(char=? ch #\tab)       (emit "\\t")]
+            [(char=? ch #\backspace) (emit "\\b")]
+            [(char=? ch #\vtab)      (emit "\\v")]
+            [(char=? ch #\page)      (emit "\\f")]
+            [else
+             (define code (char->integer ch))
+             (if (or (< code 32) (= code 127))
+                 (emit-unicode-escape code)
+                 (emit-char ch))]))
+
+        (define (write-string-literal str)
+          (emit "\"")
+          (let ([len (string-length str)])
+            (let loop ([i 0])
+              (if (< i len)
+                  (begin
+                    (write-string-char (string-ref str i))
+                    (loop (+ i 1)))
+                  (void))))
+          (emit "\"")
+          (void))
+
+        (define (write-bytes-literal bs)
+          (emit "#\"")
+          (let ([len (bytes-length bs)])
+            (let loop ([i 0])
+              (if (< i len)
+                  (let ()
+                    (define b (bytes-ref bs i))
+                    (cond
+                      [(or (= b (char->integer #\")) (= b (char->integer #\\)))
+                       (emit "\\")
+                       (emit-char (integer->char b))]
+                      [(or (< b 32) (= b 127))
+                       (emit "\\x")
+                       (emit-hex-prefix "" b 2)]
+                      [else (emit-char (integer->char b))])
+                    (loop (+ i 1)))
+                  (void))))
+          (emit "\"")
+          (void))
+
+        (define (write-char-literal ch)
+          (emit "#\\")
+          (cond
+            [(char=? ch #\space)      (emit "space")]
+            [(char=? ch #\newline)    (emit "newline")]
+            [(char=? ch #\return)     (emit "return")]
+            [(char=? ch #\tab)        (emit "tab")]
+            [(char=? ch #\backspace)  (emit "backspace")]
+            [(char=? ch #\vtab)       (emit "vtab")]
+            [(char=? ch #\page)       (emit "page")]
+            [(char=? ch #\nul)        (emit "nul")]
+            [else
+             (define code (char->integer ch))
+             (if (or (< code 32) (= code 127))
+                 (begin (emit "\\u{")
+                        (emit (string-upcase (number->string code 16)))
+                        (emit "}"))
+                 (emit-char ch))])
+          (void))
+
+        (define (write-symbol sym)
+          (emit (symbol->string sym)))
+
+        (define (write-keyword kw)
+          (emit "#:")
+          (emit (keyword->string kw)))
+
+        (define (print-proper-list lst depth)
+          (define curly? (print-pair-curly-braces))
+          (define quote? (print-needs-quote? lst depth))
+          (when quote? (emit "'"))
+          (emit (if curly? "{" "("))
+          (let loop ([rest lst] [first? #t])
+            (cond
+              [(pair? rest)
+               (if first? (void) (emit " "))
+               (print-value (car rest) (if quote? 1 depth))
+               (loop (cdr rest) #f)]
+              [(null? rest)
+               (emit (if curly? "}" ")"))]
+              [else
+               (emit " . ")
+               (print-value rest (if quote? 1 depth))
+               (emit (if curly? "}" ")"))]))
+          (void))
+
+        (define (print-mpair lst depth)
+          (define curly? (print-mpair-curly-braces))
+          (emit "#m")
+          (emit (if curly? "{" "("))
+          (let loop ([rest lst] [first? #t])
+            (cond
+              [(mpair? rest)
+               (if first? (void) (emit " "))
+               (print-value (mcar rest) depth)
+               (loop (mcdr rest) #f)]
+              [(null? rest)
+               (emit (if curly? "}" ")"))]
+              [else
+               (emit " . ")
+               (print-value rest depth)
+               (emit (if curly? "}" ")"))]))
+          (void))
+
+        (define (print-vector vec depth)
+          (define quote? (print-needs-quote? vec depth))
+          (when quote? (emit "'"))
+          (emit "#(")
+          (let ([len (vector-length vec)])
+            (let loop ([i 0])
+              (if (< i len)
+                  (begin
+                    (if (> i 0) (emit " ") (void))
+                    (print-value (vector-ref vec i) (if quote? 1 depth))
+                    (loop (+ i 1)))
+                  (void))))
+          (emit ")")
+          (void))
+
+        (define (print-boolean v)
+          (emit (if v "#t" "#f")))
+
+        (define (print-value v depth)
+          (cond
+            [(boolean? v)    (print-boolean v)]
+            [(void? v)       (emit "#<void>")]
+            [(eof-object? v) (emit "#<eof>")]
+            [(null? v)
+             (when (print-needs-quote? v depth) (emit "'"))
+             (emit "()")]
+            [(pair? v)       (print-proper-list v depth)]
+            [(mpair? v)      (print-mpair v depth)]
+            [(symbol? v)
+             (when (print-needs-quote? v depth) (emit "'"))
+             (write-symbol v)]
+            [(keyword? v)    (write-keyword v)]
+            [(char? v)       (write-char-literal v)]
+            [(string? v)     (write-string-literal v)]
+            [(bytes? v)      (write-bytes-literal v)]
+            [(number? v)     (emit (number->string v))]
+            [(vector? v)     (print-vector v depth)]
+            [(struct? v)    (let ([vec (struct->vector v)])
+                              (if (print-struct)
+                                  (print-vector vec depth)
+                                  (begin
+                                    (emit "#<")
+                                    (write-symbol (vector-ref vec 0))
+                                    (emit ">"))))]
+            [(box? v)       (emit "#&")
+                             (print-value (unbox v) depth)]
+            [(procedure? v) (emit "#<procedure>")]
+            [else           (emit "#<unknown>")])
+          (void))
+
+        (print-value datum quote-depth)
+        (void))))
+
+
 ;;;
 ;;; DERIVED
 ;;;
@@ -438,7 +666,7 @@
   (display datum out)
   (newline out))
 
-#;(define (println datum [out (current-output-port)] [quote-depth 0])
+(define (println datum [out (current-output-port)] [quote-depth 0])
   (print datum out quote-depth)
   (newline out))
 
