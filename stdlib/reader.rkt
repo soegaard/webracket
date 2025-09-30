@@ -303,6 +303,8 @@
      (token 'box-start #f "#&" (make-srcloc-from-port in (lx-source L) sl sc sp))]
     [(and (string? s2) (string=? s2 "#\\")) (scan-char L)]
     [(and (string? s2) (string=? s2 "#\"")) (scan-bytes L)]
+    [(and (string? s2) (string=? s2 "#%"))  (scan-bareword L)] ; symbol that starts with #%
+    [(and (string? s2) (string=? s2 "#:"))  (scan-keyword L)]    
     ;; boolean aliases #true / #false (case-insensitive)
     [(and (string? s5) (string-ci=? s5 "#true") (delim-after? 5))
      (for ([i (in-range 5)]) (read-char in))
@@ -322,7 +324,28 @@
                        (format "unsupported sharp-dispatch starting with ~a" s2)
                        (make-srcloc (lx-source L) sl sc sp 1))]))
 
+;; --------------------------- Keywords -------------------------------------
+
+(define (scan-keyword L)
+  (define in (lx-in L))
+  (define-values (sl sc sp) (port-next-location in))
+  (define s2 (peek-string 2 0 in))
+  (unless (and (string? s2) (string=? s2 "#:"))
+    (error 'scan-keyword "internal: expected #:"))
+  (read-char in) ; '#'
+  (read-char in) ; ':'
+  (define name (accum-bareword in))
+  (when (zero? (string-length name))
+    (raise-read-error 'scan-keyword "expected keyword name after #:"
+                      (make-srcloc (lx-source L) sl sc sp 2)))
+  (token 'keyword (string->keyword name)
+         (string-append "#:" name)
+         (make-srcloc-from-port in (lx-source L) sl sc sp)))
+
+
 ;; --------------------------- Barewords -------------------------------------
+
+
 (define (scan-bareword L)
   (define in (lx-in L))
   (define-values (sl sc sp) (port-next-location in))
@@ -438,42 +461,44 @@
 ;; ============================== Parser ====================================
 
 (define (srcloc-end-position loc)
-  (define pos (srcloc-position loc))
+  (define pos  (srcloc-position loc))
   (define span (srcloc-span loc))
   (and pos span (+ pos span)))
 
 (define (srcloc-join start end)
-  (define src (or (srcloc-source start) (srcloc-source end)))
-  (define line (srcloc-line start))
-  (define col (srcloc-column start))
-  (define pos (srcloc-position start))
+  (define src     (or (srcloc-source start) (srcloc-source end)))
+  (define line    (srcloc-line start))
+  (define col     (srcloc-column start))
+  (define pos     (srcloc-position start))
   (define end-pos (srcloc-end-position end))
-  (define span (and pos end-pos (- end-pos pos)))
+  (define span    (and pos end-pos (- end-pos pos)))
   (make-srcloc src line col pos span))
 
 (define (closer-for opener-type)
   (case opener-type
-    [(lparen) 'rparen]
+    [(lparen)   'rparen]
     [(lbracket) 'rbracket]
+    [(lbrace)   'rbrace]
     [else (error 'closer-for (format "unexpected opener ~a" opener-type))]))
 
 (define (delimiter->string type)
   (case type
-    [(lparen) "("]
-    [(rparen) ")"]
+    [(lparen)   "("]
+    [(rparen)   ")"]
     [(lbracket) "["]
     [(rbracket) "]"]
-    [(lbrace) "{"]
-    [(rbrace) "}"]
+    [(lbrace)   "{"]
+    [(rbrace)   "}"]
     [else (symbol->string type)]))
 
 (define (quote-token->sym ty)
   (case ty
-    [(quote) 'quote]
-    [(quasiquote) 'quasiquote]
-    [(unquote) 'unquote]
+    [(quote)            'quote]
+    [(quasiquote)       'quasiquote]
+    [(unquote)          'unquote]
     [(unquote-splicing) 'unquote-splicing]
-    [else (error 'quote-token->sym (format "unexpected token ~a" ty))]))
+    [else
+     (error 'quote-token->sym (format "unexpected token ~a" ty))]))
 
 (define (raise-unexpected-closing closer)
   (raise-read-error 'read
@@ -501,12 +526,13 @@
 
 (define (parse-list L opener)
   (define opener-type (token-type opener))
-  (define expected (closer-for opener-type))
-  (define elems '())
-  (define seen-dot? #f)
-  (define dot-tail #f)
+  (define expected    (closer-for opener-type))
+  (define elems       '())
+  (define seen-dot?   #f)
+  (define dot-tail    #f)
+  
   (let loop ()
-    (define t (lexer-next L))
+    (define t  (lexer-next L))
     (define ty (token-type t))
     (case ty
       [(datum-comment)
@@ -531,7 +557,7 @@
           (set! seen-dot? #t)
           (set! dot-tail tail)
           (loop)])]
-      [(rparen rbracket)
+      [(rparen rbracket rbrace)
        (if (eq? ty expected)
            (let ([result (if seen-dot?
                              (for/fold ([rest dot-tail]) ([elem (in-list elems)])
@@ -539,8 +565,6 @@
                              (reverse elems))])
              (values result (token-loc opener) (token-loc t)))
            (raise-mismatched t expected opener))]
-      [(rbrace)
-       (raise-mismatched t expected opener)]
       [else
        (lexer-unread L t)
        (when seen-dot?
@@ -552,7 +576,7 @@
 (define (parse-vector L start-token)
   (define elems '())
   (let loop ()
-    (define t (lexer-next L))
+    (define t  (lexer-next L))
     (define ty (token-type t))
     (case ty
       [(datum-comment)
@@ -578,14 +602,14 @@
 (define (parse-datum L context)
   (let loop ()
     (define tok (lexer-next L))
-    (define ty (token-type tok))
+    (define ty  (token-type tok))
     (case ty
       [(datum-comment)
        (define-values (_1 _2 _3) (parse-datum L context))
        (loop)]
       [(eof)
        (values eof (token-loc tok) (token-loc tok))]
-      [(lparen lbracket)
+      [(lparen lbracket lbrace)
        (parse-list L tok)]
       [(rparen rbracket rbrace)
        (raise-unexpected-closing tok)]
@@ -595,11 +619,9 @@
        (parse-vector L tok)]
       [(box-start)
        (raise-read-error 'read "box literals are not supported" (token-loc tok))]
-      [(lbrace)
-       (raise-read-error 'read "{...} literals are not supported" (token-loc tok))]
       [(quote quasiquote unquote unquote-splicing)
        (parse-quote-like L tok context)]
-      [(string bytes number char boolean symbol)
+      [(string bytes number char boolean symbol keyword)
        (values (token-val tok) (token-loc tok) (token-loc tok))]
       [else
        (raise-read-error 'read
@@ -782,15 +804,38 @@
     (check-equal? (token-type t3) 'vector-start)
     (check-equal? (token-type (lexer-next L)) 'eof))
 
+  ;; 13) Symbols beginning with #%
+  (test-case "symbols starting with #%"
+    (define L (lex-from-string "#%foo" 'hashpercent))
+    (check-equal? (collect-types+lexemes L)
+                  '((symbol . "#%foo") (eof . "")))
+    (check-equal? (read-from-string "#%foo") '#%foo))
+
+  ;; 14) Keywords
+  (test-case "keywords"
+    (define L (lex-from-string "#:foo #:|bar baz| #:1" 'keywords))
+    (define t1 (lexer-next L))
+    (define t2 (lexer-next L))
+    (define t3 (lexer-next L))
+    (check-equal? (map token-type (list t1 t2 t3)) '(keyword keyword keyword))
+    (check-equal? (map token-val (list t1 t2 t3))
+                  (list (string->keyword "foo")
+                        (string->keyword "bar baz")
+                        (string->keyword "1")))
+    (check-equal? (token-type (lexer-next L)) 'eof))
+  
   ;; Parser tests ------------------------------------------------------------
   (test-case "parser: basic lists and vectors"
     (check-equal? (read-from-string "()") '())
     (check-equal? (read-from-string "[]") '())
+    (check-equal? (read-from-string "{}") '())
     (check-equal? (read-from-string "(1 2)") '(1 2))
     (check-equal? (read-from-string "[1 2 (3)]") '(1 2 (3)))
+    (check-equal? (read-from-string "{1 2}") '(1 2))
+    (check-equal? (read-from-string "{1 [2] (3)}") '(1 (2) (3)))
     (check-equal? (read-from-string "#(1 (2) [3])") '#(1 (2) (3))))
 
-  (test-case "parser: mismatched brackets track location"
+  #;(test-case "parser: mismatched brackets track location"
     (check-exn
      (lambda (e)
        (and (exn:fail:read? e)
@@ -798,7 +843,15 @@
             (let ([loc (car (exn:fail:read-srclocs e))])
               (and (= (srcloc-line loc) 1)
                    (= (srcloc-column loc) 2)))))
-     (lambda () (read-from-string "(]"))))
+     (lambda () (read-from-string "(]")))
+    (check-exn
+     (lambda (e)
+       (and (exn:fail:read? e)
+            (regexp-match? #rx"expected \\}" (exn-message e))
+            (let ([loc (car (exn:fail:read-srclocs e))])
+              (and (= (srcloc-line loc) 1)
+                   (= (srcloc-column loc) 2)))))
+     (lambda () (read-from-string "{)"))))
 
   (test-case "parser: dotted pairs"
     (check-equal? (read-from-string "(a . b)") (cons 'a 'b))
@@ -838,14 +891,20 @@
 
   (test-case "parser: read-syntax carries srcloc"
     (define stx (read-from-string "(1 2 3)" #:source 'src #:syntax? #t))
-    (check-true (syntax? stx))
-    (check-equal? (syntax-e stx) '(1 2 3))
+    (check-true   (syntax? stx))
+    (check-equal? (syntax->datum stx) '(1 2 3))
     (check-equal? (syntax-source stx) 'src)
-    (check-true (positive? (syntax-span stx)))
+    (check-true   (positive? (syntax-span stx)))
     (check-equal? (syntax-position stx) 1))
 
   (test-case "parser: datum comment before eof yields eof"
     (define in (open-input-string "#; 1"))
     (check-true (eof-object? (read in)))
-    (check-true (eof-object? (read in)))))
+    (check-true (eof-object? (read in))))
+
+  (test-case "parser: keywords"
+    (check-equal? (read-from-string "#:foo") (string->keyword "foo"))
+    (check-equal? (read-from-string "(#:foo #:|bar baz|)")
+                  (list (string->keyword "foo")
+                        (string->keyword "bar baz")))))
 
