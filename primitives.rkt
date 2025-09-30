@@ -582,6 +582,10 @@
   
  ;; 13   Input and Output
  ;; 13.1 Ports
+ port?
+ input-port?
+ output-port?
+ 
  eof
  eof-object?
  
@@ -1108,3 +1112,6 @@
 (require (prefix-in racket: racket/struct))
 (define (struct->list s [on-opaque 'error])
   (racket:struct->list s on-opaque))
+
+(define (struct->vector s [opaque-v '...])
+  (racket:struct->vector s opaque-v))

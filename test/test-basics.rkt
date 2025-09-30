@@ -2748,7 +2748,28 @@
               (list "eof-object?"
                     (and (equal? (eof-object? eof) #t)
                          (equal? (eof-object? '()) #f)
-                         (equal? (eof-object? 123) #f)))))
+                         (equal? (eof-object? 123) #f)))
+
+              (list "port?/classification"
+                     (let* ([in  (open-input-string "data")]
+                            [out (open-output-string)])
+                       (and (equal? (port? in) #t)
+                            (equal? (port? out) #t)
+                            (equal? (port? 42) #f))))
+
+               (list "input-port?/only-input"
+                     (let* ([in  (open-input-bytes (bytes 1 2 3))]
+                            [out (open-output-string)])
+                       (and (equal? (input-port? in) #t)
+                            (equal? (input-port? out) #f)
+                            (equal? (input-port? 'not-a-port) #f))))
+
+               (list "output-port?/after-write"
+                     (let ([out (open-output-string)])
+                       (write-string "ok" out)
+                       (and (equal? (output-port? out) #t)
+                            (equal? (output-port? (open-input-string "x")) #f)
+                            (equal? (output-port? #f) #f))))))
 
        
        (list "13.3 Byte and String Input"

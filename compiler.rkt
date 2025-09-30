@@ -762,7 +762,11 @@
   
   eof-object?
 
+  port?
+  input-port?
+  output-port?  
   string-port?
+  
   open-input-bytes
   open-input-string  
   open-output-bytes

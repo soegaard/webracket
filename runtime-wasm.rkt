@@ -23941,6 +23941,66 @@
                   (else (global.get $false))))
 
         ;; Note:
+        ;;   Currently WebRacket only supports string ports. Distinguish
+        ;;   between input and output ports based on the mutability of the
+        ;;   underlying byte string: input ports store immutable bytes, while
+        ;;   output ports keep a mutable byte buffer that grows as data is
+        ;;   written.
+
+        (func $port? (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+              (if (result (ref eq))
+                  (ref.test (ref $StringPort) (local.get $v))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        (func $input-port? (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+
+              (local $port  (ref $StringPort))
+              (local $bytes (ref $Bytes))
+              (local $immutable i32)
+
+              (if (result (ref eq))
+                  (ref.test (ref $StringPort) (local.get $v))
+                  (then
+                   (local.set $port (ref.cast (ref $StringPort) (local.get $v)))
+                   (local.set $bytes
+                              (ref.cast (ref $Bytes)
+                                        (struct.get $StringPort $bytes (local.get $port))))
+                   (local.set $immutable (struct.get $Bytes $immutable (local.get $bytes)))
+                   (if (result (ref eq))
+                       (i32.eq (local.get $immutable) (i32.const 1))
+                       (then (global.get $true))
+                       (else (global.get $false))))
+                  (else (global.get $false))))
+
+        (func $output-port? (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+
+              (local $port  (ref $StringPort))
+              (local $bytes (ref $Bytes))
+              (local $immutable i32)
+
+              (if (result (ref eq))
+                  (ref.test (ref $StringPort) (local.get $v))
+                  (then
+                   (local.set $port (ref.cast (ref $StringPort) (local.get $v)))
+                   (local.set $bytes
+                              (ref.cast (ref $Bytes)
+                                        (struct.get $StringPort $bytes (local.get $port))))
+                   (local.set $immutable (struct.get $Bytes $immutable (local.get $bytes)))
+                   (if (result (ref eq))
+                       (i32.eq (local.get $immutable) (i32.const 0))
+                       (then (global.get $true))
+                       (else (global.get $false))))
+                  (else (global.get $false))))
+
+        
+        ;; Note:
         ;;   WebRacket's current string ports always track line and column
         ;;   information, so enabling line counting is a no-op.
         ;; 
