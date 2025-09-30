@@ -1,13 +1,13 @@
-#lang racket/base
+#lang webracket
 ;; WebRacket Reader — Lexer (booleans + radix/exactness)
 ;; - Honors #i (inexact) and #e (exact) by leaving prefixes for string->number
 ;; - Strings and byte strings treat \x...; correctly (do not include ';')
 ;; - Booleans, characters, quote-like, delimiters, barewords
 ;; - Skips whitespace, BOM, ';' comments, and nested #| ... |# comments
 
-(require racket/port
-         racket/format
-         racket/string)
+;; ----------------------------- Exceptions ---------------------------------------
+
+(define (exn:fail:read . xs) (cons 'exn:fail:read xs))
 
 ;; ----------------------------- Data ---------------------------------------
 (struct token (type val lexeme loc) #:transparent)

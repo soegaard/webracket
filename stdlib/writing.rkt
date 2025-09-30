@@ -1,5 +1,5 @@
 #lang webracket
-
+ 
 ;;;
 ;;; 13.5 Writing
 ;;;
@@ -212,14 +212,14 @@
   (define (write-char-literal ch)
     (emit "#\\")
     (cond
-      [(char=? ch #\space) (emit "space")]
-      [(char=? ch #\newline) (emit "newline")]
-      [(char=? ch #\return) (emit "return")]
-      [(char=? ch #\tab) (emit "tab")]
-      [(char=? ch #\backspace) (emit "backspace")]
-      [(char=? ch #\vtab) (emit "vtab")]
-      [(char=? ch #\page) (emit "page")]
-      [(char=? ch #\nul) (emit "nul")]
+      [(char=? ch #\space)      (emit "space")]
+      [(char=? ch #\newline)    (emit "newline")]
+      [(char=? ch #\return)     (emit "return")]
+      [(char=? ch #\tab)        (emit "tab")]
+      [(char=? ch #\backspace)  (emit "backspace")]
+      [(char=? ch #\vtab)       (emit "vtab")]
+      [(char=? ch #\page)       (emit "page")]
+      [(char=? ch #\nul)        (emit "nul")]
       ; [(char=? ch #\alarm) (emit "alarm")]
         [else
          (define code (char->integer ch))
@@ -301,6 +301,13 @@
       [(bytes? v)     (write-bytes-literal v)]
       [(number? v)    (emit (number->string v))]
       [(vector? v)    (write-vector v)]
+      [(struct? v)    (let ([vec (struct->vector v)])
+                        (if (print-struct)
+                            (write-vector vec)
+                            (begin
+                              (emit "#<")
+                              (write-symbol (vector-ref vec 0))
+                              (emit ">"))))]
       [(box? v)       (emit "#&")
                       (write-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
@@ -321,4 +328,91 @@
   (write x)
   (get-output-string (current-output-port)))
 
-(test-write #"foo")
+(define (write-test-case label datum expected)
+  (let ([actual (test-write datum)])
+    (list label (string=? actual expected) actual expected)))
+
+(define (write-test-case/with parameter new-value label datum expected)
+  (let ([original (parameter)])
+    (parameter new-value)
+    (define result (write-test-case label datum expected))
+    (parameter original)
+    result))
+
+(define write-tests
+  (list
+   (list "booleans"
+         (write-test-case "#t" #t "#t")
+         (write-test-case "#f" #f "#f"))
+
+   (list "special values"
+         (write-test-case "void" (void) "#<void>")
+         #;(write-test-case "eof" (eof-object) "#<eof>")
+         (write-test-case "null" '() "()"))
+
+   (list "numbers"
+         (write-test-case "zero" 0 "0")
+         (write-test-case "negative fixnum" -42 "-42")
+         (write-test-case "flonum" 3.25 "3.25"))
+
+   (list "characters"
+         (write-test-case "letter" #\a "#\\a")
+         (write-test-case "newline" #\newline "#\\newline")
+         (write-test-case "nul" #\nul "#\\nul"))
+
+   (list "strings"
+         (write-test-case "empty" "" (string #\" #\"))
+         (write-test-case "newline escape" "a\nb"
+                          (string #\" #\a #\\ #\n #\b #\"))
+         (write-test-case "backslash escape" "a\\b"
+                          (string #\" #\a #\\ #\\ #\b #\"))
+         (write-test-case "double quote escape" "a\"b"
+                          (string #\" #\a #\\ #\" #\b #\")))
+
+   (list "bytes"
+         (write-test-case "plain" #"A" (string #\# #\" #\A #\"))
+         (write-test-case "hex escape" #"\n"
+                          (string #\# #\" #\\ #\x #\0 #\A #\"))
+         (write-test-case "quoted characters" #"\"\\"
+                          (string #\# #\" #\\ #\" #\\ #\\ #\")))
+
+   (list "symbols and keywords"
+         (write-test-case "symbol" 'sample "sample")
+         (write-test-case "keyword" '#:sample "#:sample"))
+
+   (list "pairs and lists"
+         (write-test-case "list" '(1 2 3) "(1 2 3)")
+         (write-test-case "nested list" '(1 (2) 3) "(1 (2) 3)")
+         (write-test-case "improper list" (cons 1 2) "(1 . 2)"))
+
+   (list "pair parameters"
+         (write-test-case/with print-pair-curly-braces #t
+                               "curly braces" '(1 2) "{1 2}")
+         (write-test-case "pair parameter reset" '(1 2) "(1 2)"))
+
+   (list "vectors and boxes"
+         (write-test-case "vector" '#(1 2 (3)) "#(1 2 (3))")
+         (write-test-case "box" (box 'a) "#&a"))
+
+   (list "procedures"
+         (write-test-case "lambda" (lambda (x) x) "#<procedure>"))
+
+   (list "write/struct-transparent"
+         (let ()
+           (struct write-point (x y) #:transparent)
+           (let* ([port (open-output-string)]
+                  [p    (write-point 1 2)])
+             (write p port)
+             (equal? (get-output-string port) "#(struct:write-point 1 2)"))))
+
+   (list "write/struct-print-disabled"
+         (let ()
+           (struct hidden-point (x) #:transparent)
+           (let* ([port (open-output-string)]
+                  [p    (hidden-point 42)]
+                  [old  (print-struct)])
+             (print-struct #f)
+             (write p port)
+             (print-struct old)
+             (equal? (get-output-string port) "#<struct:hidden-point>"))))
+   ))
