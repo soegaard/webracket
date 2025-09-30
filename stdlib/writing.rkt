@@ -421,6 +421,26 @@
   (void))
 
 
+;;;
+;;; PRINT
+;;;
+
+
+;;;
+;;; DERIVED
+;;;
+
+(define (writeln datum [out (current-output-port)])
+  (write datum out)
+  (newline out))
+
+(define (displayln datum [out (current-output-port)])
+  (display datum out)
+  (newline out))
+
+#;(define (println datum [out (current-output-port)] [quote-depth 0])
+  (print datum out quote-depth)
+  (newline out))
 
 
 
@@ -522,3 +542,98 @@
              (print-struct old)
              (equal? (get-output-string port) "#<struct:hidden-point>"))))
    ))
+
+
+(define (test-display x)
+  (reset-current-output-port!)
+  (display x)
+  (get-output-string (current-output-port)))
+
+(define (display-test-case label datum expected)
+  (let ([actual (test-display datum)])
+    (list label (string=? actual expected) actual expected)))
+
+(define (display-test-case/with parameter new-value label datum expected)
+  (let ([original (parameter)])
+    (parameter new-value)
+    (define result (display-test-case label datum expected))
+    (parameter original)
+    result))
+
+(define display-tests
+  (list
+   (list "booleans"
+         (display-test-case "#t" #t "#t")
+         (display-test-case "#f" #f "#f"))
+
+   (list "special values"
+         (display-test-case "void" (void) "#<void>")
+         (display-test-case "null" '() "()"))
+
+   (list "numbers"
+         (display-test-case "zero" 0 "0")
+         (display-test-case "negative" -7 "-7")
+         (display-test-case "flonum" 1.25 "1.25"))
+
+   (list "characters"
+         (display-test-case "letter" #\a (string #\a))
+         (display-test-case "newline" #\newline (string #\newline)))
+
+   (list "strings"
+         (display-test-case "empty" "" "")
+         (display-test-case "plain" "hello" "hello")
+         (display-test-case "with quotes" "a\"b" "a\"b"))
+
+   (list "bytes"
+         (display-test-case "plain" #"A" "A")
+         (display-test-case "multiple" #"ABC" "ABC"))
+
+   (list "symbols and keywords"
+         (display-test-case "symbol" 'sample "sample")
+         (display-test-case "keyword" '#:sample "#:sample"))
+
+   (list "pairs and lists"
+         (display-test-case "list" '(1 2 3) "(1 2 3)")
+         (display-test-case "nested" '(1 "a" 3) "(1 a 3)")
+         (display-test-case "improper" (cons 1 2) "(1 . 2)"))
+
+   (list "pair parameters"
+         (display-test-case/with print-pair-curly-braces #t
+                                 "curly braces" '(1 2) "{1 2}")
+         (display-test-case "pair parameter reset" '(1 2) "(1 2)"))
+
+   (list "vectors and boxes"
+         (display-test-case "vector" '#(1 "a" 3) "#(1 a 3)")
+         (display-test-case "box" (box 'a) "#&a"))
+
+   (list "procedures"
+         (display-test-case "lambda" (lambda (x) x) "#<procedure>"))
+
+   (list "display/mpair"
+         (display-test-case "mutable pair" (mcons 1 (mcons 2 null)) "#m(1 2)"))
+
+   (list "display/struct"
+         (let ()
+           (struct display-point (x y) #:transparent)
+           (let* ([port (open-output-string)]
+                  [p    (display-point 1 2)])
+             (display p port)
+             (equal? (get-output-string port) "#(struct:display-point 1 2)"))))
+
+   (list "display/struct-print-disabled"
+         (let ()
+           (struct hidden-point (x) #:transparent)
+           (let* ([port (open-output-string)]
+                  [p    (hidden-point 42)]
+                  [old  (print-struct)])
+             (print-struct #f)
+             (display p port)
+             (print-struct old)
+             (equal? (get-output-string port) "#<struct:hidden-point>"))))
+   ))
+
+;;;
+;;; INITIALIZE
+;;;
+
+(reset-current-output-port!)
