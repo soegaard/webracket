@@ -858,6 +858,11 @@
     (add-runtime-symbol-constant 'syntax->list)
     (add-runtime-symbol-constant 'identifier?)
 
+    (add-runtime-symbol-constant 'struct->list)
+    (add-runtime-symbol-constant 'error)
+    (add-runtime-symbol-constant 'return-false)
+    (add-runtime-symbol-constant 'skip)
+
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -890,8 +895,12 @@
     (add-runtime-string-constant 'vector-prefix              "#(")
     (add-runtime-string-constant 'values-prefix              "(values")
     (add-runtime-string-constant 'g                          "g")
+
     (add-runtime-string-constant 'struct-type-descriptor     "#<struct-type-descriptor>")
     (add-runtime-string-constant 'struct-open                "#(struct ")
+    (add-runtime-string-constant 'struct?                    "struct?")
+    (add-runtime-string-constant 'struct->list:on-opaque     "one of 'error, 'return-false, or 'skip")
+    
     (add-runtime-string-constant 'hash-colon                 "#:")
     (add-runtime-string-constant 'hash-backslash             "#\\")
     (add-runtime-string-constant 'hash-backslash-u           "#\\u")
@@ -23947,6 +23956,8 @@
                         (unreachable)))
               (global.get $void))
 
+        ;; Note:
+        ;;   See previous note.
         (func $port-counts-lines? (type $Prim1)
               (param $p (ref eq))
               (result   (ref eq))
@@ -23954,7 +23965,6 @@
                   (then (call $raise-check-string-port (local.get $p))
                         (unreachable)))
               (global.get $true))
-
         
 
          (func $port-next-location (type $Prim1)
@@ -26437,7 +26447,7 @@
 
          ;; 5.6.1 Additional Structure Utilities
          ;; [ ] make-constructor-style-printer
-         ;; [ ] struct->list
+         ;; [x] struct->list
          
          (func $struct?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $Struct) (local.get $v)))
@@ -26504,6 +26514,71 @@
                      (br $walk))
                (unreachable))
 
+         ;; Note: The #:on-opaque keyword is accepted as a positional optional argument.
+         ;;       Keyword arguments are not yet supported, so callers must pass the
+         ;;       mode as the second argument directly.
+         (func $struct->list (type $Prim02)
+               (param $v (ref eq))
+               (param $mode-raw (ref eq)) ;; optional, defaults to 'error
+               (result (ref eq))
+
+               (local $mode    (ref eq))
+               (local $s       (ref $Struct))
+               (local $fields  (ref $Array))
+               (local $i       i32)
+               (local $count   i32)
+               (local $acc     (ref eq))
+               (local $field   (ref eq))
+
+               ;; Decode optional #:on-opaque mode.
+               (local.set $mode (global.get $symbol:error))
+               (if (ref.eq (local.get $mode-raw) (global.get $missing))
+                   (then)
+                   (else (if (ref.eq (local.get $mode-raw) (global.get $symbol:error))
+                             (then)
+                             (else (if (ref.eq (local.get $mode-raw) (global.get $symbol:return-false))
+                                       (then (local.set $mode (global.get $symbol:return-false)))
+                                       (else (if (ref.eq (local.get $mode-raw) (global.get $symbol:skip))
+                                                 (then (local.set $mode (global.get $symbol:skip)))
+                                                 (else (call $raise-argument-error1
+                                                             (global.get $symbol:struct->list)
+                                                             (global.get $string:struct->list:on-opaque)
+                                                             (local.get $mode-raw))
+                                                       (unreachable)))))))))
+
+               ;; Handle non-struct inputs according to on-opaque mode.
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (if (ref.eq (local.get $mode) (global.get $symbol:error))
+                             (then (call $raise-argument-error1
+                                         (global.get $symbol:struct->list)
+                                         (global.get $string:struct?)
+                                         (local.get $v))
+                                   (unreachable))
+                             (else (if (ref.eq (local.get $mode) (global.get $symbol:return-false))
+                                       (then (return (global.get $false)))
+                                       (else (return (global.get $null))))))))
+
+               ;; Convert accessible struct fields to a list.
+               (local.set $s      (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $fields (struct.get $Struct $fields (local.get $s)))
+               (local.set $count  (array.len (local.get $fields)))
+               (local.set $acc    (global.get $null))
+               (local.set $i      (i32.sub (local.get $count) (i32.const 1)))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.lt_s (local.get $i) (i32.const 0)))
+                            (local.set $field (array.get $Array (local.get $fields) (local.get $i)))
+                            (local.set $acc
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (local.get $field)
+                                                   (local.get $acc)))
+                            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               (local.get $acc))
+         
          (func $raise-format/display:struct:expected-struct (unreachable))
          
          (func $format/display:struct

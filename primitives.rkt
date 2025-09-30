@@ -14,6 +14,7 @@
          racket/path
          racket/port
          racket/string
+         racket/struct
          racket/symbol
          racket/syntax-srcloc
          racket/vector
@@ -542,7 +543,7 @@
  make-struct-type make-struct-field-accessor make-struct-field-mutator
  struct-constructor-procedure? struct-predicate-procedure?
  struct-accessor-procedure? struct-mutator-procedure?
- struct? struct-type? current-inspector
+ struct? struct-type? current-inspector struct->list
  
  ;; 10.1 Multiple Values
  values
@@ -1098,3 +1099,10 @@
 
 (define (syntax-span stx)
   (racket:syntax-span stx))
+
+
+; Redefine to avoid `struct->list` being bound as syntax
+; And to avoid keyword arguments.
+(require (prefix-in racket: racket/struct))
+(define (struct->list s [on-opaque 'error])
+  (racket:struct->list s on-opaque))

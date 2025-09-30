@@ -2711,6 +2711,21 @@
               
               )))
 
+ (list "5. Structures"
+       (list "5.6 Structure Utilities"
+             (list
+              (list "struct->list/basic"
+                    (let ()
+                      (struct point (x y) #:transparent)
+                      (let ([p (point 1 'two)])
+                        (equal? (struct->list p) '(1 two)))))
+
+              (list "struct->list/on-opaque return-false"
+                    (equal? (struct->list 'not-a-struct 'return-false) #f))
+
+              (list "struct->list/on-opaque skip"
+                    (equal? (struct->list 'not-a-struct 'skip) '())))))
+
 
  (list "13. Input and Output"
 
