@@ -1,5 +1,84 @@
 #lang webracket
- 
+
+;;;
+;;; Current Output Port
+;;;
+
+
+(define current-output-port
+  (let ([value (open-output-string)])
+    (case-lambda
+      [() value]
+      [(path)
+       (set! value path)
+       value])))
+
+(define (reset-current-output-port!)
+  (current-output-port (open-output-string)))
+
+(define current-error-port
+  (let ([value (open-output-string)])
+    (case-lambda
+      [() value]
+      [(path)
+       (set! value path)
+       value])))
+
+(define (reset-current-error-port!)
+  (current-output-port (open-output-string)))
+
+;;;
+;;; Exceptions
+;;;
+
+(struct exn (message continuation-marks)
+  ; message is a string
+  ; continuation-marks is a continuation-mark-set (not available yet)
+  #:extra-constructor-name make-exn
+  #:transparent)
+
+(struct exn:fail exn ()
+  #:extra-constructor-name make-exn:fail
+  #:transparent)
+
+(define error
+  (case-lambda
+    [(message-sym) (define message (string-append "error: " (symbol->string message-sym)))
+                   (raise (make-exn message #f))]
+    [(arg0 . args) (cond
+                     [(string? arg0)
+                      ; Included for compatibility.
+                      ; Use `raise-arguments-error` instead`. 
+                      (define message-str arg0)
+                      (define vs          args)
+                      (define v-strs      (map (λ (v)
+                                                 (let ([old-out (current-output-port)]
+                                                       [out     (open-output-string)])
+                                                   (current-output-port out)
+                                                   (print v)
+                                                   (let ([str (get-output-string out)])
+                                                     (current-output-port old-out)
+                                                     str)))
+                                               vs))
+                      (define message (string-append* (cons message-str (add-between v-strs " "))))
+                      (raise (make-exn message #f))]
+                     [(symbol? arg0)
+                      ; Included for compatibility.
+                      ; Use `raise-argument-error` instead`. 
+                      (define who-sym arg0)
+                      (unless (pair? args)
+                        (error 'error "format string expected after who-symbol"))
+                      (define format-str (car args))
+                      (unless (string? format-str)
+                        (error 'error "format string expected after who-symbol"))
+                      (define vs (cdr args))
+                      
+                      (define message (apply format (string-append "~s: " format-str)
+                                             who-sym vs))
+                      (raise (make-exn message #f))]
+                     [else
+                      (error 'error "expected: (or/c symbol? string?)")])]))
+
 ;;;
 ;;; 13.5 Writing
 ;;;
@@ -120,32 +199,6 @@
        (set! value path)
        value])))
 
-;;;
-;;; Current Output Port
-;;;
-
-
-(define current-output-port
-  (let ([value (open-output-string)])
-    (case-lambda
-      [() value]
-      [(path)
-       (set! value path)
-       value])))
-
-(define (reset-current-output-port!)
-  (current-output-port (open-output-string)))
-
-(define current-error-port
-  (let ([value (open-output-string)])
-    (case-lambda
-      [() value]
-      [(path)
-       (set! value path)
-       value])))
-
-(define (reset-current-error-port!)
-  (current-output-port (open-error-string)))
 
 ;;;
 ;;; WRITE
@@ -680,6 +733,216 @@
 (define (println datum [out (current-output-port)] [quote-depth 0])
   (print datum out quote-depth)
   (newline out))
+
+;;;
+;;; FORMAT
+;;;
+
+
+(define (truncate-to-width str width)
+  (cond
+    [(or (not (exact-integer? width)) (< width 0)) str]
+    [(>= width (string-length str))   str]
+    [(<= width 3)                     (substring str 0 width)]
+    [else
+     (string-append (substring str 0 (- width 3)) "...")]))
+
+(define error-print-width
+  (let ([value 1024])
+    (case-lambda
+      [() value]
+      [(width)
+       (unless (and (exact-integer? width) (>= width 3))
+         (error 'error-print-width
+                "expected exact integer >= 3, got ~a"
+                width))
+       (set! value width)
+       value])))
+
+(define (default-error-value->string-handler value width)
+  (define port (open-output-string))
+  (print value port)
+  (truncate-to-width (get-output-string port) width))
+
+(define error-value->string-handler
+  (let ([value default-error-value->string-handler])
+    (case-lambda
+      [() value]
+      [(handler)
+       (unless (and (procedure? handler)
+                    (procedure-arity-includes? handler 2))
+         (error 'error-value->string-handler
+                "expected procedure of two arguments, got ~a"
+                handler))
+       (set! value handler)
+       value])))
+
+
+(define (fprintf out form . vs)
+  (unless (output-port? out)
+    (error 'fprintf "expected output port, got ~a" out))
+  (unless (string? form)
+    (error 'fprintf "expected format string, got ~a" form))
+
+  (define args vs)
+  (define len  (string-length form))
+
+  (define (next-arg who)
+    (if (pair? args)
+        (let ([v (car args)])
+          (set! args (cdr args))
+          v)
+        (error 'fprintf "missing argument for ~a" who)))
+
+  (define (emit-string str)
+    (write-string str out)
+    (void))
+
+  (define (emit-char ch)
+    (write-char ch out)
+    (void))
+
+  (define (emit-newline)
+    (emit-char #\newline))
+
+  (define (emit-number value base uppercase? who)
+    (unless (and (number? value) (exact-integer? value))
+      (error 'fprintf "~a expects an exact integer, got ~a" who value))
+    (define str (number->string value base))
+    (emit-string (if uppercase? (string-upcase str) str)))
+
+  (define (emit-truncated writer value)
+    (define port (open-output-string))
+    (writer value port)
+    (define truncated
+      (truncate-to-width (get-output-string port) (error-print-width)))
+    (emit-string truncated)
+    (void))
+
+  (define (emit-error value)
+    (define handler (error-value->string-handler))
+    (define width (error-print-width))
+    (define raw (handler value width))
+    (define str (cond
+                  [(string? raw) raw]
+                  [(bytes? raw) (bytes->string/utf-8 raw)]
+                  [else "..."]))
+    (emit-string (truncate-to-width str width)))
+
+  (define (newline-char? ch)
+    (or (char=? ch #\newline) (char=? ch #\return)))
+
+  (define (skip-whitespace start)
+    (let loop ([idx start] [saw-newline? #f])
+      (if (>= idx len)
+          len
+          (let ([ch (string-ref form idx)])
+            (if (char-whitespace? ch)
+                (cond
+                  [(newline-char? ch)
+                   (if saw-newline?
+                       idx
+                       (if (and (char=? ch #\return)
+                                (< (+ idx 1) len)
+                                (char=? (string-ref form (+ idx 1)) #\newline))
+                           (loop (+ idx 2) #t)
+                           (loop (+ idx 1) #t)))]
+                  [else (loop (+ idx 1) saw-newline?)])
+                idx)))))
+
+  (define (handle-format idx)
+    (when (>= idx len)
+      (error 'fprintf "dangling ~a at end of format string" #\~))
+    (let ([marker (string-ref form idx)])
+      (cond
+        [(char=? marker #\~)
+         (emit-char #\~)
+         (+ idx 1)]
+        [(or (char=? marker #\%) (char=? marker #\n))
+         (emit-newline)
+         (+ idx 1)]
+        [(or (char=? marker #\a) (char=? marker #\A))
+         (define value (next-arg "~a"))
+         (display value out)
+         (+ idx 1)]
+        [(or (char=? marker #\s) (char=? marker #\S))
+          (define value (next-arg "~s"))
+          (write value out)
+          (+ idx 1)]
+        [(or (char=? marker #\v) (char=? marker #\V))
+         (define value (next-arg "~v"))
+         (print value out)
+         (+ idx 1)]
+        [(char=? marker #\.)
+         (when (>= (+ idx 1) len)
+           (error 'fprintf "dangling ~a at end of format string" #\~))
+         (let ([sub (string-ref form (+ idx 1))])
+           (cond
+             [(or (char=? sub #\a) (char=? sub #\A))
+              (emit-truncated (lambda (v port) (display v port))
+                              (next-arg "~.a"))]
+             [(or (char=? sub #\s) (char=? sub #\S))
+              (emit-truncated (lambda (v port) (write v port))
+                              (next-arg "~.s"))]
+             [(or (char=? sub #\v) (char=? sub #\V))
+              (emit-truncated (lambda (v port) (print v port))
+                              (next-arg "~.v"))]
+             [else (error 'fprintf "unknown format directive ~a~a" #\~ sub)])
+           (+ idx 2))]
+        [(or (char=? marker #\e) (char=? marker #\E))
+         (emit-error (next-arg "~e"))
+         (+ idx 1)]
+        [(or (char=? marker #\c) (char=? marker #\C))
+         (define value (next-arg "~c"))
+         (unless (char? value)
+           (error 'fprintf "~a expects a character, got ~a" "~c" value))
+         (emit-char value)
+         (+ idx 1)]
+        [(or (char=? marker #\b) (char=? marker #\B))
+         (define uppercase? (char=? marker #\B))
+         (emit-number (next-arg (if uppercase? "~B" "~b"))
+                      2
+                      uppercase?
+                      (if uppercase? "~B" "~b"))
+         (+ idx 1)]
+        [(or (char=? marker #\o) (char=? marker #\O))
+         (define uppercase? (char=? marker #\O))
+         (emit-number (next-arg (if uppercase? "~O" "~o"))
+                      8
+                      uppercase?
+                      (if uppercase? "~O" "~o"))
+         (+ idx 1)]
+        [(or (char=? marker #\x) (char=? marker #\X))
+         (define uppercase? (char=? marker #\X))
+         (emit-number (next-arg (if uppercase? "~X" "~x"))
+                      16
+                      uppercase?
+                      (if uppercase? "~X" "~x"))
+         (+ idx 1)]
+        [(char-whitespace? marker)
+         (skip-whitespace idx)]
+        [else
+         (error 'fprintf "unknown format directive ~a" marker)])))
+
+  (let loop ([idx 0])
+    (if (>= idx len)
+        (begin
+          (when (pair? args)
+            (error 'fprintf "format string has unused arguments"))
+          (void))
+        (let ([ch (string-ref form idx)])
+          (if (char=? ch #\~)
+              (loop (handle-format (+ idx 1)))
+              (begin
+                (emit-char ch)
+                (loop (+ idx 1)))))))
+
+  (void))
+
+(define (format form . vs)
+  (let ([o (open-output-string)])
+    (apply fprintf o form vs)
+    (get-output-string o)))
 
 
 
