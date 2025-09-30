@@ -136,6 +136,17 @@
 (define (reset-current-output-port!)
   (current-output-port (open-output-string)))
 
+(define current-error-port
+  (let ([value (open-output-string)])
+    (case-lambda
+      [() value]
+      [(path)
+       (set! value path)
+       value])))
+
+(define (reset-current-error-port!)
+  (current-output-port (open-error-string)))
+
 ;;;
 ;;; WRITE
 ;;;
@@ -772,93 +783,161 @@
    ))
 
 
-(define (test-display x)
-  (reset-current-output-port!)
-  (display x)
-  (get-output-string (current-output-port)))
+#;(define (test-writing)
 
-(define (display-test-case label datum expected)
-  (let ([actual (test-display datum)])
-    (list label (string=? actual expected) actual expected)))
+  (define (test-display x)
+    (reset-current-output-port!)
+    (display x)
+    (get-output-string (current-output-port)))
 
-(define (display-test-case/with parameter new-value label datum expected)
-  (let ([original (parameter)])
-    (parameter new-value)
-    (define result (display-test-case label datum expected))
-    (parameter original)
-    result))
+  (define (display-test-case label datum expected)
+    (let ([actual (test-display datum)])
+      (list label (string=? actual expected) actual expected)))
 
-(define display-tests
-  (list
-   (list "booleans"
-         (display-test-case "#t" #t "#t")
-         (display-test-case "#f" #f "#f"))
+  (define (display-test-case/with parameter new-value label datum expected)
+    (let ([original (parameter)])
+      (parameter new-value)
+      (define result (display-test-case label datum expected))
+      (parameter original)
+      result))
 
-   (list "special values"
-         (display-test-case "void" (void) "#<void>")
-         (display-test-case "null" '() "()"))
+  (define display-tests
+    (list
+     (list "booleans"
+           (display-test-case "#t" #t "#t")
+           (display-test-case "#f" #f "#f"))
 
-   (list "numbers"
-         (display-test-case "zero" 0 "0")
-         (display-test-case "negative" -7 "-7")
-         (display-test-case "flonum" 1.25 "1.25"))
+     (list "special values"
+           (display-test-case "void" (void) "#<void>")
+           (display-test-case "null" '() "()"))
 
-   (list "characters"
-         (display-test-case "letter" #\a (string #\a))
-         (display-test-case "newline" #\newline (string #\newline)))
+     (list "numbers"
+           (display-test-case "zero" 0 "0")
+           (display-test-case "negative" -7 "-7")
+           (display-test-case "flonum" 1.25 "1.25"))
 
-   (list "strings"
-         (display-test-case "empty" "" "")
-         (display-test-case "plain" "hello" "hello")
-         (display-test-case "with quotes" "a\"b" "a\"b"))
+     (list "characters"
+           (display-test-case "letter" #\a (string #\a))
+           (display-test-case "newline" #\newline (string #\newline)))
 
-   (list "bytes"
-         (display-test-case "plain" #"A" "A")
-         (display-test-case "multiple" #"ABC" "ABC"))
+     (list "strings"
+           (display-test-case "empty" "" "")
+           (display-test-case "plain" "hello" "hello")
+           (display-test-case "with quotes" "a\"b" "a\"b"))
 
-   (list "symbols and keywords"
-         (display-test-case "symbol" 'sample "sample")
-         (display-test-case "keyword" '#:sample "#:sample"))
+     (list "bytes"
+           (display-test-case "plain" #"A" "A")
+           (display-test-case "multiple" #"ABC" "ABC"))
 
-   (list "pairs and lists"
-         (display-test-case "list" '(1 2 3) "(1 2 3)")
-         (display-test-case "nested" '(1 "a" 3) "(1 a 3)")
-         (display-test-case "improper" (cons 1 2) "(1 . 2)"))
+     (list "symbols and keywords"
+           (display-test-case "symbol" 'sample "sample")
+           (display-test-case "keyword" '#:sample "#:sample"))
 
-   (list "pair parameters"
-         (display-test-case/with print-pair-curly-braces #t
-                                 "curly braces" '(1 2) "{1 2}")
-         (display-test-case "pair parameter reset" '(1 2) "(1 2)"))
+     (list "pairs and lists"
+           (display-test-case "list" '(1 2 3) "(1 2 3)")
+           (display-test-case "nested" '(1 "a" 3) "(1 a 3)")
+           (display-test-case "improper" (cons 1 2) "(1 . 2)"))
 
-   (list "vectors and boxes"
-         (display-test-case "vector" '#(1 "a" 3) "#(1 a 3)")
-         (display-test-case "box" (box 'a) "#&a"))
+     (list "pair parameters"
+           (display-test-case/with print-pair-curly-braces #t
+                                   "curly braces" '(1 2) "{1 2}")
+           (display-test-case "pair parameter reset" '(1 2) "(1 2)"))
 
-   (list "procedures"
-         (display-test-case "lambda" (lambda (x) x) "#<procedure>"))
+     (list "vectors and boxes"
+           (display-test-case "vector" '#(1 "a" 3) "#(1 a 3)")
+           (display-test-case "box" (box 'a) "#&a"))
 
-   (list "display/mpair"
-         (display-test-case "mutable pair" (mcons 1 (mcons 2 null)) "#m(1 2)"))
+     (list "procedures"
+           (display-test-case "lambda" (lambda (x) x) "#<procedure>"))
 
-   (list "display/struct"
-         (let ()
-           (struct display-point (x y) #:transparent)
-           (let* ([port (open-output-string)]
-                  [p    (display-point 1 2)])
-             (display p port)
-             (equal? (get-output-string port) "#(struct:display-point 1 2)"))))
+     (list "display/mpair"
+           (display-test-case "mutable pair" (mcons 1 (mcons 2 null)) "#m(1 2)"))
 
-   (list "display/struct-print-disabled"
-         (let ()
-           (struct hidden-point (x) #:transparent)
-           (let* ([port (open-output-string)]
-                  [p    (hidden-point 42)]
-                  [old  (print-struct)])
-             (print-struct #f)
-             (display p port)
-             (print-struct old)
-             (equal? (get-output-string port) "#<struct:hidden-point>"))))
-   ))
+     (list "display/struct"
+           (let ()
+             (struct display-point (x y) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (display-point 1 2)])
+               (display p port)
+               (equal? (get-output-string port) "#(struct:display-point 1 2)"))))
+
+     (list "display/struct-print-disabled"
+           (let ()
+             (struct hidden-point (x) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (hidden-point 42)]
+                    [old  (print-struct)])
+               (print-struct #f)
+               (display p port)
+               (print-struct old)
+               (equal? (get-output-string port) "#<struct:hidden-point>"))))
+     ))
+
+  (define (test-print x [quote-depth 0])
+    (reset-current-output-port!)
+    (let ([out (current-output-port)])
+      (print x out quote-depth)
+      (get-output-string out)))
+
+  (define (print-test-case label datum expected [quote-depth 0])
+    (let ([actual (test-print datum quote-depth)])
+      (list label (string=? actual expected) actual expected)))
+
+  (define (print-test-case/with parameter new-value label datum expected [quote-depth 0])
+    (let ([original (parameter)])
+      (parameter new-value)
+      (define result (print-test-case label datum expected quote-depth))
+      (parameter original)
+      result))
+
+  (define print-tests
+    (list
+     (list "self-evaluating"
+           (print-test-case "boolean" #t "#t")
+           (print-test-case "number" 42 "42")
+           (print-test-case "string" "hi" (string #\" #\h #\i #\"))
+           (print-test-case "bytes" #"hi" (string #\# #\" #\h #\i #\"))
+           (print-test-case "char" #\a "#\\a"))
+
+     (list "quotable values"
+           (print-test-case "null" '() "'()")
+           (print-test-case "symbol" 'sample "'sample")
+           (print-test-case "list" '(1 2) "'(1 2)")
+           (print-test-case "vector" '#(1 2) "'#(1 2)"))
+
+     (list "quote depth"
+           (print-test-case "symbol depth 1" 'sample "sample" 1)
+           (print-test-case "list depth 1" '(1 2) "(1 2)" 1))
+
+     (list "print parameters"
+           (print-test-case/with print-pair-curly-braces #t
+                                 "curly braces" '(1 2) "'{1 2}")
+           (print-test-case "pair parameter reset" '(1 2) "'(1 2)")
+           (print-test-case/with print-as-expression #f
+                                 "print-as-expression #f" '(1 2) "(1 2)"))
+
+     (list "struct printing"
+           (let ()
+             (struct print-point (x y) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (print-point 1 2)])
+               (print p port)
+               (equal? (get-output-string port) "'#(struct:print-point 1 2)"))))
+
+     (list "struct printing disabled"
+           (let ()
+             (struct hidden-point (x) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (hidden-point 42)]
+                    [old  (print-struct)])
+               (print-struct #f)
+               (print p port)
+               (print-struct old)
+               (equal? (get-output-string port) "#<struct:hidden-point>"))))))
+
+  (list write-tests display-tests print-tests))
+
+#;(test-writing)
 
 ;;;
 ;;; INITIALIZE
