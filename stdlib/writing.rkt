@@ -121,8 +121,9 @@
        value])))
 
 ;;;
-;;; WRITE
+;;; Current Output Port
 ;;;
+
 
 (define current-output-port
   (let ([value (open-output-string)])
@@ -134,6 +135,10 @@
 
 (define (reset-current-output-port!)
   (current-output-port (open-output-string)))
+
+;;;
+;;; WRITE
+;;;
 
 
 (define (write datum [out (current-output-port)])
@@ -316,6 +321,107 @@
 
   (write-value datum)
   (void))
+
+;;;
+;;; DISPLAY
+;;;
+
+(define (display datum [out (current-output-port)])
+  (define (emit str)
+    (write-string str out)
+    (void))
+
+  (define (emit-char ch)
+    (write-char ch out)
+    (void))
+
+  (define (emit-bytes bs)
+    (write-bytes bs out)
+    (void))
+
+  (define (display-proper-list lst open close)
+    (emit open)
+    (let loop ([rest lst] [first? #t])
+      (cond
+        [(pair? rest)
+         (if first? (void) (emit " "))
+         (display-value (car rest))
+         (loop (cdr rest) #f)]
+        [(null? rest) (emit close)]
+        [else
+         (emit " . ")
+         (display-value rest)
+         (emit close)]))
+    (void))
+
+  (define (display-mpair lst)
+    (define curly? (print-mpair-curly-braces))
+    (emit "#m")
+    (emit (if curly? "{" "("))
+    (let loop ([rest lst] [first? #t])
+      (cond
+        [(mpair? rest)
+         (if first? (void) (emit " "))
+         (display-value (mcar rest))
+         (loop (mcdr rest) #f)]
+        [(null? rest)
+         (emit (if curly? "}" ")"))]
+        [else
+         (emit " . ")
+         (display-value rest)
+         (emit (if curly? "}" ")"))]))
+    (void))
+
+  (define (display-vector vec)
+    (emit "#(")
+    (let ([len (vector-length vec)])
+      (let loop ([i 0])
+        (if (< i len)
+            (begin
+              (if (> i 0) (emit " ") (void))
+              (display-value (vector-ref vec i))
+              (loop (+ i 1)))
+            (void))))
+    (emit ")")
+    (void))
+
+  (define (display-value v)
+    (cond
+      [(boolean? v)    (emit (if v "#t" "#f"))]
+      [(void? v)       (emit "#<void>")]
+      [(eof-object? v) (emit "#<eof>")]
+      [(null? v)       (emit "()")]
+      [(pair? v)       (let ([curly? (print-pair-curly-braces)])
+                         (display-proper-list v
+                                              (if curly? "{" "(")
+                                              (if curly? "}" ")")))]
+      [(mpair? v)     (display-mpair v)]
+      [(symbol? v)    (emit (symbol->string v))]
+      [(keyword? v)   (begin (emit "#:")
+                              (emit (keyword->string v)))]
+      [(char? v)      (emit-char v)]
+      [(string? v)    (emit v)]
+      [(bytes? v)     (emit-bytes v)]
+      [(number? v)    (emit (number->string v))]
+      [(vector? v)    (display-vector v)]
+      [(struct? v)    (let ([vec (struct->vector v)])
+                        (if (print-struct)
+                            (display-vector vec)
+                            (begin
+                              (emit "#<")
+                              (emit (symbol->string (vector-ref vec 0)))
+                              (emit ">"))))]
+      [(box? v)       (emit "#&")
+                      (display-value (unbox v))]
+      [(procedure? v) (emit "#<procedure>")]
+      [else           (emit "#<unknown>")])
+    (void))
+
+  (display-value datum)
+  (void))
+
+
+
 
 
 ;;;
