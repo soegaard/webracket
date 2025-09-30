@@ -939,11 +939,18 @@
 
   (void))
 
+
+(define (printf form v . vs)
+  (apply fprintf (current-output-port) form vs))
+
+(define (eprintf form v . vs)
+  (apply fprintf (current-error-port) form vs))
+
+
 (define (format form . vs)
   (let ([o (open-output-string)])
     (apply fprintf o form vs)
     (get-output-string o)))
-
 
 
 ;;;
@@ -951,102 +958,101 @@
 ;;;
 
 
-(define (test-write x)
-  (reset-current-output-port!)
-  (write x)
-  (get-output-string (current-output-port)))
-
-(define (write-test-case label datum expected)
-  (let ([actual (test-write datum)])
-    (list label (string=? actual expected) actual expected)))
-
-(define (write-test-case/with parameter new-value label datum expected)
-  (let ([original (parameter)])
-    (parameter new-value)
-    (define result (write-test-case label datum expected))
-    (parameter original)
-    result))
-
-(define write-tests
-  (list
-   (list "booleans"
-         (write-test-case "#t" #t "#t")
-         (write-test-case "#f" #f "#f"))
-
-   (list "special values"
-         (write-test-case "void" (void) "#<void>")
-         #;(write-test-case "eof" (eof-object) "#<eof>")
-         (write-test-case "null" '() "()"))
-
-   (list "numbers"
-         (write-test-case "zero" 0 "0")
-         (write-test-case "negative fixnum" -42 "-42")
-         (write-test-case "flonum" 3.25 "3.25"))
-
-   (list "characters"
-         (write-test-case "letter" #\a "#\\a")
-         (write-test-case "newline" #\newline "#\\newline")
-         (write-test-case "nul" #\nul "#\\nul"))
-
-   (list "strings"
-         (write-test-case "empty" "" (string #\" #\"))
-         (write-test-case "newline escape" "a\nb"
-                          (string #\" #\a #\\ #\n #\b #\"))
-         (write-test-case "backslash escape" "a\\b"
-                          (string #\" #\a #\\ #\\ #\b #\"))
-         (write-test-case "double quote escape" "a\"b"
-                          (string #\" #\a #\\ #\" #\b #\")))
-
-   (list "bytes"
-         (write-test-case "plain" #"A" (string #\# #\" #\A #\"))
-         (write-test-case "hex escape" #"\n"
-                          (string #\# #\" #\\ #\x #\0 #\A #\"))
-         (write-test-case "quoted characters" #"\"\\"
-                          (string #\# #\" #\\ #\" #\\ #\\ #\")))
-
-   (list "symbols and keywords"
-         (write-test-case "symbol" 'sample "sample")
-         (write-test-case "keyword" '#:sample "#:sample"))
-
-   (list "pairs and lists"
-         (write-test-case "list" '(1 2 3) "(1 2 3)")
-         (write-test-case "nested list" '(1 (2) 3) "(1 (2) 3)")
-         (write-test-case "improper list" (cons 1 2) "(1 . 2)"))
-
-   (list "pair parameters"
-         (write-test-case/with print-pair-curly-braces #t
-                               "curly braces" '(1 2) "{1 2}")
-         (write-test-case "pair parameter reset" '(1 2) "(1 2)"))
-
-   (list "vectors and boxes"
-         (write-test-case "vector" '#(1 2 (3)) "#(1 2 (3))")
-         (write-test-case "box" (box 'a) "#&a"))
-
-   (list "procedures"
-         (write-test-case "lambda" (lambda (x) x) "#<procedure>"))
-
-   (list "write/struct-transparent"
-         (let ()
-           (struct write-point (x y) #:transparent)
-           (let* ([port (open-output-string)]
-                  [p    (write-point 1 2)])
-             (write p port)
-             (equal? (get-output-string port) "#(struct:write-point 1 2)"))))
-
-   (list "write/struct-print-disabled"
-         (let ()
-           (struct hidden-point (x) #:transparent)
-           (let* ([port (open-output-string)]
-                  [p    (hidden-point 42)]
-                  [old  (print-struct)])
-             (print-struct #f)
-             (write p port)
-             (print-struct old)
-             (equal? (get-output-string port) "#<struct:hidden-point>"))))
-   ))
-
-
 #;(define (test-writing)
+
+  (define (test-write x)
+    (reset-current-output-port!)
+    (write x)
+    (get-output-string (current-output-port)))
+
+  (define (write-test-case label datum expected)
+    (let ([actual (test-write datum)])
+      (list label (string=? actual expected) actual expected)))
+
+  (define (write-test-case/with parameter new-value label datum expected)
+    (let ([original (parameter)])
+      (parameter new-value)
+      (define result (write-test-case label datum expected))
+      (parameter original)
+      result))
+
+  (define write-tests
+    (list
+     (list "booleans"
+           (write-test-case "#t" #t "#t")
+           (write-test-case "#f" #f "#f"))
+
+     (list "special values"
+           (write-test-case "void" (void) "#<void>")
+           #;(write-test-case "eof" (eof-object) "#<eof>")
+           (write-test-case "null" '() "()"))
+
+     (list "numbers"
+           (write-test-case "zero" 0 "0")
+           (write-test-case "negative fixnum" -42 "-42")
+           (write-test-case "flonum" 3.25 "3.25"))
+
+     (list "characters"
+           (write-test-case "letter" #\a "#\\a")
+           (write-test-case "newline" #\newline "#\\newline")
+           (write-test-case "nul" #\nul "#\\nul"))
+
+     (list "strings"
+           (write-test-case "empty" "" (string #\" #\"))
+           (write-test-case "newline escape" "a\nb"
+                            (string #\" #\a #\\ #\n #\b #\"))
+           (write-test-case "backslash escape" "a\\b"
+                            (string #\" #\a #\\ #\\ #\b #\"))
+           (write-test-case "double quote escape" "a\"b"
+                            (string #\" #\a #\\ #\" #\b #\")))
+
+     (list "bytes"
+           (write-test-case "plain" #"A" (string #\# #\" #\A #\"))
+           (write-test-case "hex escape" #"\n"
+                            (string #\# #\" #\\ #\x #\0 #\A #\"))
+           (write-test-case "quoted characters" #"\"\\"
+                            (string #\# #\" #\\ #\" #\\ #\\ #\")))
+
+     (list "symbols and keywords"
+           (write-test-case "symbol" 'sample "sample")
+           (write-test-case "keyword" '#:sample "#:sample"))
+
+     (list "pairs and lists"
+           (write-test-case "list" '(1 2 3) "(1 2 3)")
+           (write-test-case "nested list" '(1 (2) 3) "(1 (2) 3)")
+           (write-test-case "improper list" (cons 1 2) "(1 . 2)"))
+
+     (list "pair parameters"
+           (write-test-case/with print-pair-curly-braces #t
+                                 "curly braces" '(1 2) "{1 2}")
+           (write-test-case "pair parameter reset" '(1 2) "(1 2)"))
+
+     (list "vectors and boxes"
+           (write-test-case "vector" '#(1 2 (3)) "#(1 2 (3))")
+           (write-test-case "box" (box 'a) "#&a"))
+
+     (list "procedures"
+           (write-test-case "lambda" (lambda (x) x) "#<procedure>"))
+
+     (list "write/struct-transparent"
+           (let ()
+             (struct write-point (x y) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (write-point 1 2)])
+               (write p port)
+               (equal? (get-output-string port) "#(struct:write-point 1 2)"))))
+
+     (list "write/struct-print-disabled"
+           (let ()
+             (struct hidden-point (x) #:transparent)
+             (let* ([port (open-output-string)]
+                    [p    (hidden-point 42)]
+                    [old  (print-struct)])
+               (print-struct #f)
+               (write p port)
+               (print-struct old)
+               (equal? (get-output-string port) "#<struct:hidden-point>"))))
+     ))
 
   (define (test-display x)
     (reset-current-output-port!)
@@ -1198,7 +1204,47 @@
                (print-struct old)
                (equal? (get-output-string port) "#<struct:hidden-point>"))))))
 
-  (list write-tests display-tests print-tests))
+  (define (format-test-case label expected form . vs)
+    (let ([actual (apply format form vs)])
+      (list label (string=? actual expected) actual expected)))
+
+  (define (format-test-case/with parameter new-value label expected form . vs)
+    (let ([original (parameter)])
+      (parameter new-value)
+      (define result (apply format-test-case label expected form vs))
+      (parameter original)
+      result))
+
+  (define format-tests
+    (list
+     (list "literal output"
+           (format-test-case "no arguments" "hello" "hello")
+           (format-test-case "escaped tilde" "~" "~~"))
+
+     (list "value directives"
+           (format-test-case "~a" "sample" "~a" 'sample)
+           (format-test-case "~s" "\"a\"" "~s" "a")
+           (format-test-case "~v" "'(1 2)" "~v" '(1 2)))
+
+     (list "number directives"
+           (format-test-case "~b" "101" "~b" 5)
+           (format-test-case "~X" "1F" "~X" 31))
+
+     (list "newline and characters"
+           (format-test-case "~%" "line1\nline2" "line1~%line2")
+           (format-test-case "~c" "A" "~c" #\A))
+
+     (list "truncation"
+           (format-test-case/with error-print-width 5
+                                  "~.a" "ab..." "~.a" "abcdef"))
+
+     (list "error handler"
+           (format-test-case/with error-value->string-handler
+                                  (lambda (value width) "error")
+                                  "~e" "error" "~e" 'ignored))
+     ))
+
+  (list write-tests display-tests print-tests format-tests))
 
 #;(test-writing)
 
