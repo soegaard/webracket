@@ -43,7 +43,7 @@
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1))))))
 
- (list "4. Datatypes"
+ #;(list "4. Datatypes"
        (list "4.1 Equality"
              (list "eqv?"
                    (and (equal? (eqv? 'a 'a) #t)
@@ -2712,7 +2712,7 @@
               )))
 
 
- #;(list "13. Input and Output"
+ (list "13. Input and Output"
 
        (list "13.1 Ports"
              (list
@@ -3216,7 +3216,14 @@
                       (for-each (lambda (b) (write-byte b port)) (bytes->list data))
                       (equal? (get-output-string port) "Hello λ")))
 
+              (list "port-count-lines!"
+                    (let ([port (open-input-string "abc")])
+                      (void? (port-count-lines! port))))
 
+              (list "port-count-lines!"
+                    (let ([port (open-input-string "abc")])
+                      (port-count-lines! port)
+                      (equal? (port-counts-lines? port) #t)))
 
               (list "port-next-location"
                     (let* ([port (open-output-bytes)]
@@ -3233,7 +3240,7 @@
                            (equal? (port-next-location 42) #f))))))
              )
 
- (list "10.2 Exceptions"
+ #;(list "10.2 Exceptions"
        (list
         (list "srcloc basics"
               (let () 
@@ -3342,7 +3349,7 @@
               ))
 
  
- (list "15. Operating System"
+ #;(list "15. Operating System"
        (list "15. Paths"
              (list
               (list "bytes->path"

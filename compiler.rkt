@@ -791,6 +791,8 @@
   write-string
   
   port-next-location
+  port-count-lines!
+  port-counts-lines?
 
   s-exp->fasl
   fasl->s-exp
@@ -2812,8 +2814,8 @@
             [ar   (map formals->arity fs*)]
             [ab   (map Abstraction ab)]           
             [E    (with-output-language (LANF+closure AExpr)
-                    `(quote ,#'h ,(datum #'42 42)))])
-       (case-lift! l fs* E)
+                    `(quote ,#'h ,(datum #'42 42)))]) ; TODO TODO 
+       #;(case-lift! l fs* E)  ; TODO <---- is uncommenting this correct?
        `(case-closure ,h ,l [,ar ,ab] ...))])
   (AExpr : AExpr (AE) -> AExpr ()
     [,x ; note: x is kept for debugging purposes

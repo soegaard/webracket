@@ -617,6 +617,8 @@
  open-input-string open-output-string get-output-string
  open-input-bytes  open-output-bytes  get-output-bytes
  port-next-location
+ port-count-lines!
+ port-counts-lines?
  
  ;; 14.1 Namespaces
  namespace?

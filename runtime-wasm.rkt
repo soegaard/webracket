@@ -1245,6 +1245,8 @@
                                   (field $bytes      (ref $Bytes))       ;; raw byte representation (bytes)
                                   (field $convention (ref eq)))))        ;; 'unix or 'windows symbol
 
+
+
           (type $StringPort (sub $Heap
                                  (struct
                                    (field $hash  (mut i32))
@@ -23918,13 +23920,42 @@
         (func $raise-check-string-port (param $x (ref eq)) (unreachable))
         (func $raise-check-port-or-false (param $x (ref eq)) (unreachable))
          
-         (func $string-port? (type $Prim1)
-               (param $v (ref eq))
-               (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StringPort) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+        (func $string-port? (type $Prim1)
+              (param $v (ref eq))
+              (result (ref eq))
+              (if (result (ref eq))
+                  (ref.test (ref $StringPort) (local.get $v))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        ;; Note:
+        ;;   WebRacket's current string ports always track line and column
+        ;;   information, so enabling line counting is a no-op.
+        ;; 
+        ;;   For now the primitives port-count-lines! and port-counts-lines?
+        ;;   exists to preserve compatibility with Racket
+        ;;   programs that explicitly request line counting.
+        ;;
+        ;;   When support for file ports is added, these functions needs
+        ;;   to be revised.
+        
+        (func $port-count-lines! (type $Prim1)
+              (param $p (ref eq))
+              (result   (ref eq))
+              (if (i32.eqz (ref.test (ref $StringPort) (local.get $p)))
+                  (then (call $raise-check-string-port (local.get $p))
+                        (unreachable)))
+              (global.get $void))
+
+        (func $port-counts-lines? (type $Prim1)
+              (param $p (ref eq))
+              (result   (ref eq))
+              (if (i32.eqz (ref.test (ref $StringPort) (local.get $p)))
+                  (then (call $raise-check-string-port (local.get $p))
+                        (unreachable)))
+              (global.get $true))
+
+        
 
          (func $port-next-location (type $Prim1)
                (param $p (ref eq))
