@@ -459,6 +459,7 @@
   struct?
   struct-type?
   struct->list
+  struct->vector
 
   current-inspector          ; todo
   
@@ -3745,6 +3746,7 @@
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(struct->list)               (inline-prim/optional/default sym ae1 1  2 '(global.get $symbol:error))]
+         [(struct->vector)             (inline-prim/optional         sym ae1 1  2)]
          [(log)                        (inline-prim/optional sym ae1 1 2)]
          [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
          ; Todo: map and for-each needs to check that the first argument is a procedure

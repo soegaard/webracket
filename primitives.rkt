@@ -543,7 +543,9 @@
  make-struct-type make-struct-field-accessor make-struct-field-mutator
  struct-constructor-procedure? struct-predicate-procedure?
  struct-accessor-procedure? struct-mutator-procedure?
- struct? struct-type? current-inspector struct->list
+ struct? struct-type? current-inspector
+ struct->list
+ struct->vector
  
  ;; 10.1 Multiple Values
  values

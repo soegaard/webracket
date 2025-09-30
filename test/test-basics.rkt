@@ -2724,7 +2724,21 @@
                     (equal? (struct->list 'not-a-struct 'return-false) #f))
 
               (list "struct->list/on-opaque skip"
-                    (equal? (struct->list 'not-a-struct 'skip) '())))))
+                    (equal? (struct->list 'not-a-struct 'skip) '()))
+
+              (list "struct->vector/basic"
+                    (let ()
+                      (struct vect-point (x y) #:transparent)
+                      (let ([p (vect-point 1 'two)])
+                        (equal? (struct->vector p)
+                                '#(struct:vect-point 1 two)))))
+
+              (list "struct->vector/optional"
+                    (let ()
+                      (struct vect-point2 (x y) #:transparent)
+                      (let ([p (vect-point2 3 4)])
+                        (equal? (struct->vector p 'placeholder)
+                                '#(struct:vect-point2 3 4))))))))
 
 
  (list "13. Input and Output"

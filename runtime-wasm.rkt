@@ -859,10 +859,12 @@
     (add-runtime-symbol-constant 'identifier?)
 
     (add-runtime-symbol-constant 'struct->list)
+    (add-runtime-symbol-constant 'struct->vector)
+    
     (add-runtime-symbol-constant 'error)
     (add-runtime-symbol-constant 'return-false)
     (add-runtime-symbol-constant 'skip)
-
+    (add-runtime-symbol-constant '...)
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
@@ -900,6 +902,7 @@
     (add-runtime-string-constant 'struct-open                "#(struct ")
     (add-runtime-string-constant 'struct?                    "struct?")
     (add-runtime-string-constant 'struct->list:on-opaque     "one of 'error, 'return-false, or 'skip")
+    (add-runtime-string-constant 'struct:prefix              "struct:")
     
     (add-runtime-string-constant 'hash-colon                 "#:")
     (add-runtime-string-constant 'hash-backslash             "#\\")
@@ -26432,7 +26435,7 @@
          ;; [ ] struct-copy      [syntax]
 
          ;; 5.6 Structure Utilities
-         ;; [ ] struct->vector
+         ;; [x] struct->vector
          ;; [x] struct?
          ;; [x] struct-type?
          ;; [x] struct-constructor-procedure?
@@ -26578,6 +26581,76 @@
                             (br $loop)))
 
                (local.get $acc))
+
+
+         (func $struct->vector (type $Prim02)
+               (param $v          (ref eq))
+               (param $opaque-raw (ref eq)) ;; optional, defaults to '...
+               (result            (ref eq))
+
+               (local $opaque   (ref eq))
+               (local $s        (ref $Struct))
+               (local $type     (ref $StructType))
+               (local $name     (ref $Symbol))
+               (local $name-str (ref $String))
+               (local $tag-str  (ref $String))
+               (local $tag      (ref $Symbol))
+               (local $fields   (ref $Array))
+               (local $arr      (ref $Array))
+               (local $count    i32)
+               (local $i        i32)
+               (local $field    (ref eq))
+
+               ;; Decode optional opaque value argument.
+               (local.set $opaque (global.get $symbol:...))
+               (if (ref.eq (local.get $opaque-raw) (global.get $missing))
+                   (then)
+                   (else (local.set $opaque (local.get $opaque-raw))))
+
+               ;; Validate struct argument.
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:struct->vector)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+
+               ;; Extract struct information.
+               (local.set $s        (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $fields   (struct.get $Struct $fields (local.get $s)))
+               (local.set $count    (array.len (local.get $fields)))
+               (local.set $type     (struct.get $Struct $type (local.get $s)))
+               (local.set $name     (struct.get $StructType $name (local.get $type)))
+               (local.set $name-str (ref.cast (ref $String)
+                                               (call $symbol->immutable-string (local.get $name))))
+               (local.set $tag-str  (call $string-append/2
+                                          (global.get $string:struct:prefix)
+                                          (local.get $name-str)))
+               (local.set $tag      (call $string->symbol/checked (local.get $tag-str)))
+
+               ;; Allocate result vector backing array.
+               (local.set $arr   (array.new $Array
+                                            (global.get $false)
+                                            (i32.add (local.get $count) (i32.const 1))))
+               (array.set $Array (local.get $arr) (i32.const 0) (local.get $tag))
+
+               ;; Copy fields after the tag entry.
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $count)))
+                            (local.set $field (array.get $Array (local.get $fields) (local.get $i)))
+                            (array.set $Array (local.get $arr)
+                                       (i32.add (local.get $i) (i32.const 1))
+                                       (local.get $field))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               ;; Build and return the vector.
+               (struct.new $Vector
+                           (i32.const 0)
+                           (i32.const 0)
+                           (local.get $arr)))
          
          (func $raise-format/display:struct:expected-struct (unreachable))
          
