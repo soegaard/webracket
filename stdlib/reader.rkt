@@ -295,9 +295,9 @@
     [(and (string? s2) (string=? s2 "#;"))
      (read-char in) (read-char in)
      (token 'datum-comment #f "#;" (make-srcloc-from-port in (lx-source L) sl sc sp))]
-    [(and (string? s2) (string=? s2 "#("))
+    [(and (string? s2) (or (string=? s2 "#(") (string=? s2 "#[") (string=? s2 "#{")))
      (read-char in) (read-char in)
-     (token 'vector-start #f "#(" (make-srcloc-from-port in (lx-source L) sl sc sp))]
+     (token 'vector-start #f s2 (make-srcloc-from-port in (lx-source L) sl sc sp))]
     [(and (string? s2) (string=? s2 "#&"))
      (read-char in) (read-char in)
      (token 'box-start #f "#&" (make-srcloc-from-port in (lx-source L) sl sc sp))]
@@ -575,6 +575,17 @@
 
 (define (parse-vector L start-token)
   (define elems '())
+  (define start-lexeme (token-lexeme start-token))
+  (define expected-type
+    (cond [(string=? start-lexeme "#(") 'rparen]
+          [(string=? start-lexeme "#[") 'rbracket]
+          [(string=? start-lexeme "#{") 'rbrace]
+          [else 'rparen]))
+  (define expected-char
+    (cond [(eq? expected-type 'rparen)   ")"]
+          [(eq? expected-type 'rbracket) "]"]
+          [(eq? expected-type 'rbrace)   "}"]
+          [else ")"]))
   (let loop ()
     (define t  (lexer-next L))
     (define ty (token-type t))
@@ -583,12 +594,22 @@
        (define-values (_1 _2 _3) (parse-datum L 'vector))
        (loop)]
       [(eof)
-       (raise-read-error 'read "unexpected EOF: expected ) to close #("
+       (raise-read-error 'read
+                         (string-append "unexpected EOF: expected "
+                                        expected-char
+                                        " to cloce "
+                                        start-lexeme)
                          (token-loc start-token))]
-      [(rparen)
-       (values (list->vector (reverse elems))
-               (token-loc start-token)
-               (token-loc t))]
+      [(rparen rbracket rbrace)
+       (if (eq? ty expected-type)
+           (values (list->vector (reverse elems))
+                   (token-loc start-token)
+                   (token-loc t))
+           (raise-read-error 'read
+                             (string-append "expected " expected-char
+                                            "to close " start-lexeme
+                                            ", found "  (token-lexeme t))
+                             (token-loc t)))]
       [(rbracket rbrace)
        (raise-read-error 'read
                          (format "expected ) to close #(, found ~a" (token-lexeme t))
@@ -804,6 +825,14 @@
     (check-equal? (token-type t3) 'vector-start)
     (check-equal? (token-type (lexer-next L)) 'eof))
 
+  (test-case "sharp-dispatch: alternate vector starts"
+    (define L (lex-from-string "#[ #{" 'sharp-alt))
+    (define t1 (lexer-next L))
+    (define t2 (lexer-next L))
+    (check-equal? (map token-type (list t1 t2)) '(vector-start vector-start))
+    (check-equal? (map token-lexeme (list t1 t2)) '("#[" "#{"))
+    (check-equal? (token-type (lexer-next L)) 'eof))
+  
   ;; 13) Symbols beginning with #%
   (test-case "symbols starting with #%"
     (define L (lex-from-string "#%foo" 'hashpercent))
@@ -826,14 +855,16 @@
   
   ;; Parser tests ------------------------------------------------------------
   (test-case "parser: basic lists and vectors"
-    (check-equal? (read-from-string "()") '())
-    (check-equal? (read-from-string "[]") '())
-    (check-equal? (read-from-string "{}") '())
-    (check-equal? (read-from-string "(1 2)") '(1 2))
-    (check-equal? (read-from-string "[1 2 (3)]") '(1 2 (3)))
-    (check-equal? (read-from-string "{1 2}") '(1 2))
-    (check-equal? (read-from-string "{1 [2] (3)}") '(1 (2) (3)))
-    (check-equal? (read-from-string "#(1 (2) [3])") '#(1 (2) (3))))
+    (check-equal? (read-from-string "()")           '())
+    (check-equal? (read-from-string "[]")           '())
+    (check-equal? (read-from-string "{}")           '())
+    (check-equal? (read-from-string "(1 2)")        '(1 2))
+    (check-equal? (read-from-string "[1 2 (3)]")    '(1 2 (3)))
+    (check-equal? (read-from-string "{1 2}")        '(1 2))
+    (check-equal? (read-from-string "{1 [2] (3)}")  '(1 (2) (3)))
+    (check-equal? (read-from-string "#(1 (2) [3])") '#(1 (2) (3)))
+    (check-equal? (read-from-string "#[1 (2) {3}]") '#(1 (2) (3)))
+    (check-equal? (read-from-string "#{1 (2) [3]}") '#(1 (2) (3))))
 
   #;(test-case "parser: mismatched brackets track location"
     (check-exn
