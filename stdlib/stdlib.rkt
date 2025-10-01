@@ -2,7 +2,7 @@
 (include/reader "exceptions.rkt" read-syntax/skip-first-line)
 (include/reader "ports.rkt"      read-syntax/skip-first-line)
 (include/reader "writing.rkt"    read-syntax/skip-first-line)
-(include/reader "reader.rkt"     read-syntax/skip-first-line)
+(include/reader "reading.rkt"    read-syntax/skip-first-line)
 
 
 ;; The standard library consists of files above.

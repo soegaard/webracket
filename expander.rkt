@@ -7,9 +7,8 @@
   (define ns (make-base-empty-namespace))
   (parameterize ([current-namespace ns])
     (namespace-require 'webracket)
-    (namespace-require 'webracket/core)
+    (namespace-require 'webracket/core))
     #;(namespace-require '(for-syntax webracket/core))
-    )
   ns)
 
 ; Notes:
@@ -26,7 +25,6 @@
     ; the `webracket` module is available.
     (expand-top-level-with-compile-time-evals top-level-form-stx)
     #;(expand top-level-form-stx)
-
     ))
 
 
