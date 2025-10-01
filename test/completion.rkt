@@ -4,8 +4,8 @@
 ;;;   Input and Output
 ;;;
 
-; time racket -l errortrace -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
-; racket -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
+;; time racket -l errortrace -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
+;; racket -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
 
 ; This program displays a web-page with a section for each section in
 ; the Data Structure chapter in the reference.
@@ -1721,6 +1721,7 @@
             inexact-real?
             inexact?
             infinite?
+            input-port?
             integer->char
             integer-length
             integer-sqrt
@@ -1763,6 +1764,7 @@
             make-struct-field-accessor
             make-struct-field-mutator
             make-struct-type
+            make-struct-type-property
             make-vector
             make-void
             map
@@ -1802,6 +1804,7 @@
             null?
             number->string
             number?
+            object-name
             odd?
             open-input-bytes
             open-input-string
@@ -1809,6 +1812,7 @@
             open-output-string
             order-of-magnitude
             ormap
+            output-port?
             pair?
             partition
             path->bytes
@@ -1823,7 +1827,10 @@
             peek-string
             peek-string!
             permutations
+            port-count-lines!
+            port-counts-lines?
             port-next-location
+            port?
             positive-integer?
             positive?
             primitive-closure?
@@ -1946,10 +1953,15 @@
             string>=?
             string>?
             string?
+            struct->list
+            struct->vector
             struct-accessor-procedure?
             struct-constructor-procedure?
             struct-mutator-procedure?
             struct-predicate-procedure?
+            struct-type-property-accessor-procedure?
+            struct-type-property-predicate-procedure?
+            struct-type-property?
             struct-type?
             struct?
             sub1
