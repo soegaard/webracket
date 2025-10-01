@@ -28134,11 +28134,13 @@
                                       (local.set $super-prop
                                                  (ref.cast (ref $StructTypeProperty)
                                                            (local.get $super-prop-raw)))
-                                      (local.set $super-proc
+                                      (local.set $super-proc-raw
                                                  (struct.get $Pair $d (local.get $supers-entry)))
-                                      (if (i32.eqz (ref.test (ref $Procedure) (local.get $super-proc)))
-                                          (then (call $raise-argument-error (local.get $super-proc))
+                                      (if (i32.eqz (ref.test (ref $Procedure) (local.get $super-proc-raw)))
+                                          (then (call $raise-argument-error (local.get $super-proc-raw))
                                                 (unreachable)))
+                                      (local.set $super-proc
+                                                 (ref.cast (ref $Procedure) (local.get $super-proc-raw)))
                                       (local.set $supers-cursor
                                                  (struct.get $Pair $d (local.get $supers-cell)))
                                       (br $walk)))))))
