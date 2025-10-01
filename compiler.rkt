@@ -450,15 +450,20 @@
   
   ; structures
   make-struct-type
-  make-struct-field-accessor 
+  make-struct-field-accessor
   make-struct-field-mutator
   make-struct-type-property
+
   struct-constructor-procedure?
   struct-predicate-procedure?
   struct-accessor-procedure?
   struct-mutator-procedure?
   struct?
   struct-type?
+  struct-type-property?
+  struct-type-property-accessor-procedure?
+  struct-type-property-predicate-procedure?
+  
   struct->list
   struct->vector
 
@@ -3754,6 +3759,9 @@
          [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
          [(make-struct-type-property)  (inline-prim/optional/default sym ae1 1  7 (Imm #f))]
+         [(struct-type-property?)      (inline-prim/fixed             sym ae1 1)]
+         [(struct-type-property-accessor-procedure?)  (inline-prim/fixed            sym ae1 1)]
+         [(struct-type-property-predicate-procedure?) (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
          [(struct->list)               (inline-prim/optional/default sym ae1 1  2 '(global.get $symbol:error))]
          [(struct->vector)             (inline-prim/optional         sym ae1 1  2)]
          [(log)                        (inline-prim/optional sym ae1 1 2)]

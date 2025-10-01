@@ -26501,9 +26501,9 @@
 
          ;; 5.3 Structure Type Properties
          ;; [x] make-struct-type-property
-         ;; [ ] struct-type-property?
-         ;; [ ] struct-type-property-accessor-procedure?
-         ;; [ ] struct-type-property-predicate-procedure?
+         ;; [x] struct-type-property?
+         ;; [x] struct-type-property-accessor-procedure?
+         ;; [x] struct-type-property-predicate-procedure?
 
          ;; 5.4 Generic Interfaces (racket/generic)
          ;; ...
@@ -28102,6 +28102,161 @@
                    (else (return (local.get $val))))
 
                (unreachable))
+
+         (func $struct-type-property-predicate->descriptor
+               (param $proc (ref $Closure))   ;; predicate closure
+               (result (ref eq))              ;; descriptor or #f
+
+               (local $free (ref $Free))
+               (local $len  i32)
+               (local $prop (ref eq))
+               (local $tag  (ref eq))
+
+               (local.set $free (struct.get $Closure $free (local.get $proc)))
+               (local.set $len  (array.len (local.get $free)))
+               (if (i32.lt_u (local.get $len) (i32.const 2))
+                   (then (return (global.get $false))))
+
+               (local.set $prop (array.get $Free (local.get $free) (i32.const 0)))
+               (local.set $tag  (array.get $Free (local.get $free) (i32.const 1)))
+
+               (if (i32.eqz (ref.test (ref $StructTypeProperty) (local.get $prop)))
+                   (then (return (global.get $false))))
+               (if (i32.eqz (ref.eq (local.get $prop) (local.get $tag)))
+                   (then (return (global.get $false))))
+
+               (local.get $prop))
+
+         (func $struct-type-property-accessor->descriptor
+               (param $proc (ref $Closure))   ;; accessor closure
+               (result (ref eq))              ;; descriptor or #f
+
+               (local $free          (ref $Free))
+               (local $len           i32)
+               (local $prop          (ref eq))
+               (local $tag           (ref eq))
+               (local $desc          (ref $StructTypeProperty))
+               (local $contract      (ref eq))
+               (local $name-string   (ref eq))
+               (local $realm-record  (ref eq))
+               (local $accessor-name (ref eq))
+               (local $clos-name     (ref eq))
+               (local $clos-realm    (ref eq))
+
+               (local.set $free (struct.get $Closure $free (local.get $proc)))
+               (local.set $len  (array.len (local.get $free)))
+               (if (i32.lt_u (local.get $len) (i32.const 6))
+                   (then (return (global.get $false))))
+
+               (local.set $prop (array.get $Free (local.get $free) (i32.const 0)))
+               (local.set $tag  (array.get $Free (local.get $free) (i32.const 1)))
+
+               (if (i32.eqz (ref.test (ref $StructTypeProperty) (local.get $prop)))
+                   (then (return (global.get $false))))
+               (if (i32.eqz (ref.eq (local.get $prop) (local.get $tag)))
+                   (then (return (global.get $false))))
+
+               (local.set $desc          (ref.cast (ref $StructTypeProperty) (local.get $prop)))
+               (local.set $contract      (array.get $Free (local.get $free) (i32.const 2)))
+               (local.set $name-string   (array.get $Free (local.get $free) (i32.const 3)))
+               (local.set $realm-record  (array.get $Free (local.get $free) (i32.const 4)))
+               (local.set $accessor-name (array.get $Free (local.get $free) (i32.const 5)))
+               (local.set $clos-name  (struct.get $Closure $name  (local.get $proc)))
+               (local.set $clos-realm (struct.get $Closure $realm (local.get $proc)))
+
+               ;; Contract metadata must be #f or a string.
+               (if (i32.eqz (ref.eq (local.get $contract) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $String) (local.get $contract)))
+                             (then (return (global.get $false))))))
+
+               ;; Cached property name string must remain a string when present.
+               (if (i32.eqz (ref.eq (local.get $name-string) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $String) (local.get $name-string)))
+                             (then (return (global.get $false))))))
+
+               ;; Realm metadata must be #f or a symbol, matching the closure field.
+               (if (i32.eqz (ref.eq (local.get $realm-record) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $Symbol) (local.get $realm-record)))
+                             (then (return (global.get $false))))))
+               (if (i32.eqz (ref.eq (local.get $clos-realm) (local.get $realm-record)))
+                   (then (return (global.get $false))))
+
+               ;; Accessor names must agree with closure metadata and descriptor hints.
+               (if (i32.eqz (ref.eq (local.get $accessor-name) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $String) (local.get $accessor-name)))
+                             (then (return (global.get $false))))))
+               (if (i32.eqz (ref.eq (local.get $clos-name) (local.get $accessor-name)))
+                   (then (return (global.get $false))))
+               (if (i32.eqz (ref.eq (struct.get $StructTypeProperty $accessor-name-info (local.get $desc))
+                                    (local.get $accessor-name)))
+                   (then (return (global.get $false))))
+
+               (local.get $prop))
+
+         (func $struct-type-property? (type $Prim1)
+               (param $v (ref eq))             ;; any/c
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.test (ref $StructTypeProperty) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $struct-type-property-accessor-procedure? (type $Prim1)
+               (param $v (ref eq))             ;; procedure?
+               (result (ref eq))
+
+               (local $clos (ref $Closure))
+               (local $prop (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Closure) (local.get $v)))
+                   (then (return (global.get $false))))
+
+               (local.set $clos (ref.cast (ref $Closure) (local.get $v)))
+               (local.set $prop (call $struct-type-property-accessor->descriptor
+                                       (local.get $clos)))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $prop) (global.get $false))
+                   (then (global.get $false))
+                   (else (global.get $true))))
+
+         (func $struct-type-property-predicate-procedure? (type $Prim02)
+               (param $v          (ref eq))  ;; procedure?
+               (param $prop-info  (ref eq))  ;; optional struct-type-property? (#f default)
+               (result            (ref eq))
+
+               (local $clos     (ref $Closure))
+               (local $prop     (ref eq))
+               (local $expected (ref eq))
+
+               (local.set $expected (global.get $false))
+               (if (ref.eq (local.get $prop-info) (global.get $false))
+                   (then)
+                   (else
+                    (if (i32.eqz (ref.test (ref $StructTypeProperty) (local.get $prop-info)))
+                        (then (call $raise-argument-error (local.get $prop-info))
+                              (unreachable)))
+                    (local.set $expected (local.get $prop-info))))
+
+               (if (i32.eqz (ref.test (ref $Closure) (local.get $v)))
+                   (then (return (global.get $false))))
+
+               (local.set $clos (ref.cast (ref $Closure) (local.get $v)))
+               (local.set $prop (call $struct-type-property-predicate->descriptor
+                                      (local.get $clos)))
+
+               (if (ref.eq (local.get $prop) (global.get $false))
+                   (then (return (global.get $false))))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $expected) (global.get $false))
+                   (then (global.get $true))
+                   (else
+                    (if (result (ref eq))
+                        (ref.eq (local.get $prop) (local.get $expected))
+                        (then (global.get $true))
+                        (else (global.get $false))))))
          
          (func $make-struct-type-property-descriptor
                (param $name               (ref eq))

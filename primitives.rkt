@@ -569,9 +569,13 @@
  make-struct-field-accessor
  make-struct-field-mutator
  make-struct-type-property
+ 
  struct-constructor-procedure? struct-predicate-procedure?
  struct-accessor-procedure? struct-mutator-procedure?
  struct? struct-type? current-inspector
+ struct-type-property?
+ struct-type-property-accessor-procedure?
+ struct-type-property-predicate-procedure?
  struct->list
  struct->vector
  
