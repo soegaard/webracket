@@ -26913,16 +26913,15 @@
                                (call $make-list/checked (local.get $afc) (local.get $auto-value)))))
 
                ;; Structure type properties
-               (if (ref.test (ref $HashEqMutable) (local.get $props))
-                   (then (local.set $props-table
-                                     (ref.cast (ref $HashEqMutable) (local.get $props))))
-                   (else
-                    (local.set $props-table
-                               (ref.cast (ref $HashEqMutable)
-                                         (call $struct-type-properties-normalize
-                                               (local.get $has-super)
-                                               (local.get $super-typed)
-                                               (local.get $props))))))
+               (local.set $props-table
+                          (if (result (ref $HashEqMutable))
+                              (ref.test (ref $HashEqMutable) (local.get $props))
+                              (then (ref.cast (ref $HashEqMutable) (local.get $props)))
+                              (else (ref.cast (ref $HashEqMutable)
+                                              (call $struct-type-properties-normalize
+                                                    (local.get $has-super)
+                                                    (local.get $super-typed)
+                                                    (local.get $props))))))
                
                ;; Compute total field count
                (local.set $total-fields
