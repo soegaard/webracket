@@ -816,7 +816,9 @@
     (add-runtime-symbol-constant 'in-list)
     (add-runtime-symbol-constant 'in-mlist)
     (add-runtime-symbol-constant 'in-range)
-    (add-runtime-symbol-constant 'in-naturals)    
+    (add-runtime-symbol-constant 'in-naturals)
+    (add-runtime-symbol-constant 'can-impersonate)
+    
     (add-runtime-symbol-constant 'string)
     (add-runtime-symbol-constant 'unix)
     (add-runtime-symbol-constant 'windows)
@@ -26497,7 +26499,7 @@
          ;;       - a sealed struct can not be a supertype of another structure type
 
          ;; 5.3 Structure Type Properties
-         ;; [ ] make-struct-type-property
+         ;; [x] make-struct-type-property
          ;; [ ] struct-type-property?
          ;; [ ] struct-type-property-accessor-procedure?
          ;; [ ] struct-type-property-predicate-procedure?
@@ -27981,7 +27983,7 @@
               (param $has-super i32)
               (param $super     (ref null $StructType))
               (param $raw       (ref eq))
-              (result (ref eq))
+              (result           (ref eq))
 
               (local $table (ref $HashEqMutable))
               (local $spec  (ref eq))
@@ -28017,11 +28019,372 @@
                                     (ref.cast (ref $HashEqMutable) (local.get $spec))))
                    (local.set $spec (local.get $alist))))
 
-              (call $struct-type-property-merge-list!
-                    (local.get $table)
-                    (local.get $spec))
+              (drop (call $struct-type-property-merge-list!
+                          (local.get $table)
+                          (local.get $spec)))
 
               (ref.cast (ref eq) (local.get $table)))
+        
+        (func $make-struct-type-property
+              (param $name               (ref eq))  ;; symbol
+              ;; optional parameters (defaults in parentheses):
+              (param $guard-info         (ref eq))  ;; guard/#f ('#f)
+              (param $supers-spec        (ref eq))  ;; list of (cons prop proc)/#f ('())
+              (param $can-impersonate?   (ref eq))  ;; any/c (#f)
+              (param $accessor-name-info (ref eq))  ;; symbol/string/#f (#f)
+              (param $contract-info      (ref eq))  ;; string/symbol/#f (#f)
+              (param $realm-info         (ref eq))  ;; symbol/#f ('racket)
+              (result                    (ref eq))
+
+              (local $name-sym      (ref $Symbol))
+              (local $name-string   (ref $String))
+              (local $guard         (ref eq))
+              (local $supers        (ref eq))
+              (local $impersonate   (ref eq))
+              (local $accessor-name (ref eq))
+              (local $contract-str  (ref eq))
+              (local $realm         (ref eq))
+              (local $prop          (ref $StructTypeProperty))
+              (local $pred          (ref eq))
+              (local $acc           (ref eq))
+              (local $pred-free     (ref $Free))
+              (local $acc-free      (ref $Free))
+              (local $supers-cursor (ref eq))
+              (local $supers-cell   (ref $Pair))
+              (local $supers-entry  (ref $Pair))
+              (local $super-prop    (ref $StructTypeProperty))
+              (local $super-proc    (ref $Procedure))
+              (local $closure-name  (ref eq))
+
+               ;; Validate property name and capture its string form.
+              (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                   (then (call $raise-argument-error (local.get $name))
+                         (unreachable)))
+               (local.set $name-sym    (ref.cast (ref $Symbol) (local.get $name)))
+               (local.set $name-string (ref.cast (ref $String)
+                                                 (call $symbol->immutable-string
+                                                       (local.get $name-sym))))
+
+               ;; Default optional arguments.
+               (local.set $guard         (global.get $false))
+               (local.set $supers        (global.get $null))
+               (local.set $impersonate   (global.get $false))
+               (local.set $accessor-name (global.get $false))
+               (local.set $contract-str  (global.get $false))
+               (local.set $realm         (global.get $symbol:racket))
+               (local.set $closure-name  (global.get $false))
+
+               ;; Guard: allow #f, a procedure, or the symbol 'can-impersonate.
+               (if (ref.eq (local.get $guard-info) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $guard-info) (global.get $false))
+                        (then)
+                        (else
+                         (if (ref.test (ref $Symbol) (local.get $guard-info))
+                             (then
+                              (if (i32.eq (call $symbol=?/i32 (local.get $guard-info)
+                                                          (global.get $symbol:can-impersonate))
+                                          (i32.const 1))
+                                  (then (local.set $impersonate (global.get $true)))
+                                  (else (call $raise-argument-error (local.get $guard-info))
+                                        (unreachable))))
+                             (else
+                              (if (i32.eqz (ref.test (ref $Procedure) (local.get $guard-info)))
+                                  (then (call $raise-argument-error (local.get $guard-info))
+                                        (unreachable)))
+                              (local.set $guard (local.get $guard-info))))))))
+
+               ;; Supers: expect a list of (cons prop proc) pairs.
+               (if (ref.eq (local.get $supers-spec) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $supers-spec) (global.get $false))
+                        (then)
+                        (else
+                         (local.set $supers        (local.get $supers-spec))
+                         (local.set $supers-cursor (local.get $supers))
+                         (block $done
+                                (loop $walk
+                                      (br_if $done (ref.eq (local.get $supers-cursor)
+                                                           (global.get $null)))
+                                      (if (i32.eqz (ref.test (ref $Pair)
+                                                             (local.get $supers-cursor)))
+                                          (then (call $raise-argument-error (local.get $supers-cursor))
+                                                (unreachable)))
+                                      (local.set $supers-cell
+                                                 (ref.cast (ref $Pair)
+                                                           (local.get $supers-cursor)))
+                                      (local.set $supers-entry
+                                                 (struct.get $Pair $a (local.get $supers-cell)))
+                                      (if (i32.eqz (ref.test (ref $Pair) (local.get $supers-entry)))
+                                          (then (call $raise-argument-error (local.get $supers-entry))
+                                                (unreachable)))
+                                      (local.set $supers-entry
+                                                 (ref.cast (ref $Pair) (local.get $supers-entry)))
+                                      (local.set $super-prop
+                                                 (struct.get $Pair $a (local.get $supers-entry)))
+                                      (if (i32.eqz (ref.test (ref $StructTypeProperty)
+                                                             (local.get $super-prop)))
+                                          (then (call $raise-argument-error (local.get $super-prop))
+                                                (unreachable)))
+                                      (local.set $super-prop
+                                                 (ref.cast (ref $StructTypeProperty)
+                                                           (local.get $super-prop)))
+                                      (local.set $super-proc
+                                                 (struct.get $Pair $d (local.get $supers-entry)))
+                                      (if (i32.eqz (ref.test (ref $Procedure) (local.get $super-proc)))
+                                          (then (call $raise-argument-error (local.get $super-proc))
+                                                (unreachable)))
+                                      (local.set $supers-cursor
+                                                 (struct.get $Pair $d (local.get $supers-cell)))
+                                      (br $walk)))))))
+
+               ;; can-impersonate? treats any non-#f as true.
+               (if (ref.eq (local.get $can-impersonate?) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $can-impersonate?) (global.get $false))
+                        (then (local.set $impersonate (global.get $false)))
+                        (else (local.set $impersonate (global.get $true))))))
+
+               ;; Accessor name: allow #f, string, or symbol (converted to string).
+               (if (ref.eq (local.get $accessor-name-info) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $accessor-name-info) (global.get $false))
+                        (then)
+                        (else
+                         (if (ref.test (ref $Symbol) (local.get $accessor-name-info))
+                             (then
+                              (local.set $accessor-name
+                                         (ref.cast (ref eq)
+                                                   (ref.cast (ref $String)
+                                                             (call $symbol->immutable-string
+                                                                   (ref.cast (ref $Symbol)
+                                                                             (local.get $accessor-name-info)))))))
+                             (else
+                              (if (ref.test (ref $String) (local.get $accessor-name-info))
+                                  (then (local.set $accessor-name
+                                                   (ref.cast (ref eq)
+                                                             (ref.cast (ref $String)
+                                                                       (local.get $accessor-name-info)))))
+                                  (else (call $raise-argument-error (local.get $accessor-name-info))
+                                        (unreachable)))))))))
+               (if (ref.eq (local.get $accessor-name) (global.get $false))
+                   (then (local.set $closure-name (global.get $false)))
+                   (else (local.set $closure-name (local.get $accessor-name))))
+
+               ;; Contract string: allow #f, string, or symbol (converted to string).
+               (if (ref.eq (local.get $contract-info) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $contract-info) (global.get $false))
+                        (then)
+                        (else
+                         (if (ref.test (ref $Symbol) (local.get $contract-info))
+                             (then (local.set $contract-str
+                                              (ref.cast (ref eq)
+                                                        (ref.cast (ref $String)
+                                                                  (call $symbol->immutable-string
+                                                                        (ref.cast (ref $Symbol)
+                                                                                  (local.get $contract-info)))))))
+                             (else
+                              (if (ref.test (ref $String) (local.get $contract-info))
+                                  (then (local.set $contract-str
+                                                   (ref.cast (ref eq)
+                                                             (ref.cast (ref $String)
+                                                                       (local.get $contract-info)))))
+                                  (else (call $raise-argument-error (local.get $contract-info))
+                                        (unreachable)))))))))
+
+               ;; Realm defaults to 'racket unless a symbol is supplied.
+               (if (ref.eq (local.get $realm-info) (global.get $missing))
+                   (then)
+                   (else
+                    (if (ref.eq (local.get $realm-info) (global.get $false))
+                        (then)
+                        (else
+                         (if (i32.eqz (ref.test (ref $Symbol) (local.get $realm-info)))
+                             (then (call $raise-argument-error (local.get $realm-info))
+                                   (unreachable)))
+                         (local.set $realm (local.get $realm-info))))))
+
+               ;; Construct descriptor and cached procedures.
+               (local.set $prop
+                          (call $make-struct-type-property-descriptor/checked
+                                (local.get $name-sym)
+                                (local.get $guard)
+                                (local.get $supers)
+                                (local.get $impersonate)
+                                (local.get $accessor-name)))
+
+               (local.set $pred-free
+                          (array.new_fixed $Free 2
+                                           (ref.cast (ref eq) (local.get $prop))
+                                           (ref.cast (ref eq) (local.get $prop))))
+               (local.set $pred
+                          (struct.new $Closure
+                                      (i32.const 0)
+                                      (global.get $false)
+                                      (ref.i31 (i32.const 2))     ; arity = 1
+                                      (global.get $false)
+                                      (ref.func $invoke-closure)
+                                      (ref.func $struct-type-property-predicate)
+                                      (local.get $pred-free)))
+
+               (local.set $acc-free
+                          (array.new_fixed $Free 6
+                                           (ref.cast (ref eq) (local.get $prop))
+                                           (ref.cast (ref eq) (local.get $prop))
+                                           (local.get $contract-str)
+                                           (ref.cast (ref eq) (local.get $name-string))
+                                           (local.get $realm)
+                                           (local.get $accessor-name)))
+               (local.set $acc
+                          (struct.new $Closure
+                                      (i32.const 0)
+                                      (local.get $closure-name)
+                                      (ref.i31 (i32.const -4))    ; arity-at-least 1 (optional fallback)
+                                      (local.get $realm)
+                                      (ref.func $invoke-closure)
+                                      (ref.func $struct-type-property-accessor)
+                                      (local.get $acc-free)))
+
+               (struct.set $StructTypeProperty $predicate-cache
+                           (local.get $prop) (local.get $pred))
+               (struct.set $StructTypeProperty $accessor-cache
+                           (local.get $prop) (local.get $acc))
+
+               (array.new_fixed $Values 3
+                                (ref.cast (ref eq) (local.get $prop))
+                                (ref.cast (ref eq) (local.get $pred))
+                                (ref.cast (ref eq) (local.get $acc))))
+
+         (func $struct-type-property-lookup
+               (param $std      (ref $StructType))
+               (param $prop     (ref $StructTypeProperty))
+               (param $sentinel (ref eq))
+               (result (ref eq))
+
+               (local $table (ref eq))
+
+               (local.set $table (struct.get $StructType $properties (local.get $std)))
+               (call $hasheq-ref/plain
+                     (local.get $table)
+                     (ref.cast (ref eq) (local.get $prop))
+                     (local.get $sentinel)))
+
+         (func $struct-type-property-predicate
+               (type $ClosureCode)
+               (param $clos (ref $Closure))
+               (param $args (ref $Args))
+               (result (ref eq))
+
+               (local $free     (ref $Free))
+               (local $prop     (ref $StructTypeProperty))
+               (local $target   (ref eq))
+               (local $std      (ref $StructType))
+               (local $struct   (ref $Struct))
+               (local $sentinel (ref eq))
+               (local $val      (ref eq))
+
+               (local.set $free (struct.get $Closure $free (local.get $clos)))
+               (local.set $prop
+                          (ref.cast (ref $StructTypeProperty)
+                                    (array.get $Free (local.get $free) (i32.const 0))))
+               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
+
+               (if (ref.test (ref $StructType) (local.get $target))
+                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
+                   (else
+                    (if (ref.test (ref $Struct) (local.get $target))
+                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
+                              (local.set $std (struct.get $Struct $type (local.get $struct))))
+                        (else (return (global.get $false))))))
+
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $val
+                          (call $struct-type-property-lookup
+                                (local.get $std)
+                                (local.get $prop)
+                                (local.get $sentinel)))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $val) (local.get $sentinel))
+                   (then (global.get $false))
+                   (else (global.get $true))))
+
+         (func $struct-type-property-accessor
+               (type $ClosureCode)
+               (param $clos (ref $Closure))
+               (param $args (ref $Args))
+               (result (ref eq))
+
+               (local $free     (ref $Free))
+               (local $prop     (ref $StructTypeProperty))
+               (local $argc     i32)
+               (local $target   (ref eq))
+               (local $fallback (ref eq))
+               (local $std      (ref $StructType))
+               (local $struct   (ref $Struct))
+               (local $sentinel (ref eq))
+               (local $val      (ref eq))
+               (local $proc     (ref $Procedure))
+               (local $inv      (ref $ProcedureInvoker))
+               (local $noargs   (ref $Args))
+
+               (local.set $free (struct.get $Closure $free (local.get $clos)))
+               (local.set $prop
+                          (ref.cast (ref $StructTypeProperty)
+                                    (array.get $Free (local.get $free) (i32.const 0))))
+
+               (local.set $argc (array.len (local.get $args)))
+               (if (i32.gt_u (local.get $argc) (i32.const 2))
+                   (then (call $raise-arity-mismatch)
+                         (unreachable)))
+
+               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
+               (local.set $fallback
+                          (if (result (ref eq))
+                              (i32.gt_u (local.get $argc) (i32.const 1))
+                              (then (array.get $Args (local.get $args) (i32.const 1)))
+                              (else (global.get $missing))))
+
+               (if (ref.test (ref $StructType) (local.get $target))
+                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
+                   (else
+                    (if (ref.test (ref $Struct) (local.get $target))
+                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
+                              (local.set $std (struct.get $Struct $type (local.get $struct))))
+                        (else (call $raise-argument-error (local.get $target))
+                              (unreachable)))))
+
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $val
+                          (call $struct-type-property-lookup
+                                (local.get $std)
+                                (local.get $prop)
+                                (local.get $sentinel)))
+
+               (if (ref.eq (local.get $val) (local.get $sentinel))
+                   (then
+                    (if (ref.eq (local.get $fallback) (global.get $missing))
+                        (then (call $raise-argument-error (local.get $target))
+                              (unreachable))
+                        (else
+                         (if (ref.test (ref $Procedure) (local.get $fallback))
+                             (then (local.set $proc (ref.cast (ref $Procedure) (local.get $fallback)))
+                                   (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+                                   (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                                   (return_call_ref $ProcedureInvoker
+                                                    (local.get $proc)
+                                                    (local.get $noargs)
+                                                    (local.get $inv)))
+                             (else (return (local.get $fallback)))))))
+                   (else (return (local.get $val))))
+
+               (unreachable))
 
          
          ;;;

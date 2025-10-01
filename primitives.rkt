@@ -565,7 +565,10 @@
  void? make-void void
 
  ;; 5.1 Structures
- make-struct-type make-struct-field-accessor make-struct-field-mutator
+ make-struct-type
+ make-struct-field-accessor
+ make-struct-field-mutator
+ make-struct-type-property
  struct-constructor-procedure? struct-predicate-procedure?
  struct-accessor-procedure? struct-mutator-procedure?
  struct? struct-type? current-inspector
