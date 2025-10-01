@@ -27261,6 +27261,8 @@
               (ref.func $struct-predicate)                  ; closure body
               (ref.func $struct-field-accessor/specialized) ; closure body
               (ref.func $struct-mutator/specialized)
+              (ref.func $struct-type-property-predicate)    ; closure body
+              (ref.func $struct-type-property-accessor)     ; closure body
               (ref.func $invoke-struct)
               (ref.func $primitive-invoke)
               (ref.func $code:case-lambda-dispatch)
