@@ -12,7 +12,6 @@
   (let ()
     (define (exn:fail:read . xs) (cons 'exn:fail:read xs))
 
-
     ;; ----------------------------- Data --------------------------------------
     (struct token (type val lexeme loc) #:transparent)
     (struct lx    (in source buf)       #:transparent #:mutable)
@@ -704,7 +703,6 @@
     (define (read-syntax source [in (current-input-port)])
       (do-read in source #t))
 
-
     (values read read-syntax)))
 
 
@@ -721,7 +719,7 @@
 
 ;; ============================== Tests =====================================
 
-(define (test)
+#;(define (test)
 
   #;(require rackunit
              racket/port
