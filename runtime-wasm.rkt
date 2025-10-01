@@ -27888,7 +27888,7 @@
                (local $free     (ref $Free))
                (local $prop     (ref $StructTypeProperty))
                (local $target   (ref eq))
-               (local $std      (ref $StructType))
+               (local $std      (ref null $StructType))
                (local $struct   (ref $Struct))
                (local $sentinel (ref eq))
                (local $val      (ref eq))
@@ -27898,6 +27898,7 @@
                           (ref.cast (ref $StructTypeProperty)
                                     (array.get $Free (local.get $free) (i32.const 0))))
                (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
+               (local.set $std (ref.null $StructType))
 
                (block $validated
                       (if (ref.test (ref $StructType) (local.get $target))
@@ -27914,7 +27915,7 @@
                (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
                (local.set $val
                           (call $struct-type-property-lookup
-                                (local.get $std)
+                                (ref.as_non_null (local.get $std))
                                 (local.get $prop)
                                 (local.get $sentinel)))
 
@@ -27923,11 +27924,10 @@
                    (then (global.get $false))
                    (else (global.get $true))))
 
-         (func $struct-type-property-accessor
-               (type $ClosureCode)
+         (func $struct-type-property-accessor (type $ClosureCode)
                (param $clos (ref $Closure))
                (param $args (ref $Args))
-               (result (ref eq))
+               (result      (ref eq))
 
                (local $free     (ref $Free))
                (local $prop     (ref $StructTypeProperty))
