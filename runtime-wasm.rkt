@@ -27899,13 +27899,17 @@
                                     (array.get $Free (local.get $free) (i32.const 0))))
                (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
 
-               (if (ref.test (ref $StructType) (local.get $target))
-                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
-                   (else
-                    (if (ref.test (ref $Struct) (local.get $target))
-                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
-                              (local.set $std (struct.get $Struct $type (local.get $struct))))
-                        (else (return (global.get $false))))))
+               (block $validated
+                      (if (ref.test (ref $StructType) (local.get $target))
+                          (then
+                           (local.set $std (ref.cast (ref $StructType) (local.get $target)))
+                           (br $validated)))
+                      (if (ref.test (ref $Struct) (local.get $target))
+                          (then
+                           (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
+                           (local.set $std (struct.get $Struct $type (local.get $struct)))
+                           (br $validated)))
+                      (return (global.get $false)))
 
                (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
                (local.set $val
