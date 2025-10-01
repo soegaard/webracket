@@ -2712,6 +2712,109 @@
               )))
 
  (list "5. Structures"
+       (list "5.1 Structure Type Properties"
+             (list
+              (list "make-struct-type-property/basic"
+                    (let*-values ([(prop:p prop:p? prop:p-get)
+                                  (make-struct-type-property 'prop:p)]
+                                 [(prop:q prop:q? prop:q-get)
+                                  (make-struct-type-property
+                                   'prop:q #f
+                                   (list (cons prop:p (lambda (qv) (list 'p-from qv)))))]
+                                 [(p-std make-p p? p-acc p-mut)
+                                  (make-struct-type
+                                   'type:p #f 0 0 #f
+                                   (list (cons prop:p 'p-type-value))
+                                   (current-inspector)
+                                   #f #f #f 'make-p)]
+                                 [(q-std make-q q? q-acc q-mut)
+                                  (make-struct-type
+                                   'type:q
+                                   #f
+                                   0
+                                   0
+                                   #f
+                                   (list (cons prop:q 'q-type-value))
+                                   (current-inspector)
+                                   #f
+                                   #f
+                                   #f
+                                   'make-q)])
+                      (let* ([p-instance        (make-p)]
+                             [q-instance        (make-q)]
+                             [sentinel          '(fallback-value)]
+                             [fallback          (lambda () sentinel)]
+                             [p-from-q          (prop:p-get q-std)]
+                             [p-from-q-instance (prop:p-get q-instance)])
+                        (list
+                         (struct-type-property? prop:p)
+                         (struct-type-property? prop:q)
+                         (struct-type-property-predicate-procedure? prop:p?)
+                         (struct-type-property-predicate-procedure? prop:p? prop:p)
+                         (equal? (struct-type-property-predicate-procedure? prop:p? prop:q) #f)
+                         (struct-type-property-accessor-procedure? prop:p-get)
+                         (struct-type-property-accessor-procedure? prop:q-get)
+                         (prop:p? p-std)
+                         (prop:p? p-instance)
+                         (equal? (prop:p-get p-std) 'p-type-value)
+                         (equal? (prop:p-get p-instance) 'p-type-value)
+                         (equal? (prop:q? p-std) #f)
+                         (equal? (prop:q? p-instance) #f)
+                         (prop:q? q-std)
+                         (prop:q? q-instance)
+                         (prop:p? q-std)
+                         (prop:p? q-instance)
+                         (equal? (prop:q-get q-std) 'q-type-value)
+                         (equal? (prop:q-get q-instance) 'q-type-value)
+                         (equal? p-from-q '(p-from q-type-value))
+                         (equal? p-from-q-instance '(p-from q-type-value))
+                         (equal? (prop:q-get p-std fallback) sentinel)))))
+
+              (list "make-struct-type-property/basic 2"
+                    (let ()
+                      (define-values (prop:p p? p-ref)
+                        (make-struct-type-property 'p))
+                      (define-values (prop:q q? q-ref)
+                        (make-struct-type-property 'q
+                                                   (lambda (v _si) (add1 v))
+                                                   (list (cons prop:p sqrt))))
+                      (define-values (struct:a make-a a? a-ref a-set!)
+                        (make-struct-type 'a #f 1 0 #f (list (cons prop:p 8))))
+                      (define-values (struct:plain make-plain plain? plain-ref plain-set!)
+                        (make-struct-type 'plain #f 0 0))
+                      (define-values (struct:c make-c c? c-ref c-set!)
+                        (make-struct-type 'c #f 0 0 #f (list (cons prop:q 8))))
+                      (define a-instance (make-a 'payload))
+                      (define plain-instance (make-plain))
+                      (define c-instance (make-c))
+                      (define fallback-symbol 'no-prop)
+                      (list (equal? (struct-type-property? prop:p) #t)
+                           (equal? (struct-type-property? prop:q) #t)
+                           (equal? (struct-type-property? 'p) #f)
+                           (equal? (struct-type-property-predicate-procedure? p?) #t)
+                           (equal? (struct-type-property-predicate-procedure? p? prop:p) #t)
+                           (equal? (struct-type-property-predicate-procedure? p? prop:q) #f)
+                           (equal? (struct-type-property-predicate-procedure? q? prop:q) #t)
+                           (equal? (struct-type-property-accessor-procedure? p-ref) #t)
+                           (equal? (struct-type-property-accessor-procedure? q-ref) #t)
+                           (equal? (p? struct:a) #t)
+                           (equal? (p? a-instance) #t)
+                           (equal? (p? struct:plain) #f)
+                           (equal? (p? plain-instance) #f)
+                           (equal? (p-ref struct:a) 8)
+                           (equal? (p-ref a-instance) 8)
+                           (equal? (p-ref struct:plain (lambda () fallback-symbol)) fallback-symbol)
+                           (equal? (p-ref plain-instance (lambda () 'instance-fallback)) 'instance-fallback)
+                           (equal? (q? struct:c) #t)
+                           (equal? (q? c-instance) #t)
+                           (equal? (q-ref struct:c) 9)
+                           (equal? (q-ref c-instance) 9)
+                           (equal? (p? struct:c) #t)
+                           (equal? (p? c-instance) #t)
+                           (equal? (p-ref struct:c) 3)
+                           (equal? (p-ref c-instance) 3))))
+              ))
+
        (list "5.6 Structure Utilities"
              (list
               (list "struct->list/basic"
