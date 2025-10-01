@@ -29248,6 +29248,51 @@
          (func $current-inspector (type $Prim0)   ; TODO: dummy 
                (result (ref eq))
                (global.get $false))
+
+         ;; Racket's object-name recognizes additional values such as regexp objects,
+         ;; loggers, prompt tags, and structures with the prop:object-name property.
+         ;; WebRacket currently supports procedures, structure instances, structure
+         ;; type descriptors, and string ports.
+         (func $object-name (type $Prim1)
+               (param $v (ref eq)) ;; any/c
+               (result   (ref eq))
+
+               (local $proc   (ref $Procedure))
+               (local $struct (ref $Struct))
+               (local $type   (ref $StructType))
+               (local $name   (ref eq))
+
+               ;; Structure instances report the associated struct type name.
+               (if (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                    (return (struct.get $StructType $name (local.get $type)))))
+
+               ;; Structure type descriptors return their recorded name symbol.
+               (if (ref.test (ref $StructType) (local.get $v))
+                   (then
+                    (return (struct.get $StructType $name
+                                        (ref.cast (ref $StructType) (local.get $v))))))
+
+               ;; String ports expose the stored port name.
+               (if (ref.test (ref $StringPort) (local.get $v))
+                   (then
+                    (return (struct.get $StringPort $name
+                                        (ref.cast (ref $StringPort) (local.get $v))))))
+
+               ;; Procedures use the cached name field when available.
+               (if (ref.test (ref $Procedure) (local.get $v))
+                   (then
+                    (local.set $proc (ref.cast (ref $Procedure) (local.get $v)))
+                    (local.set $name (struct.get $Procedure $name (local.get $proc)))
+                    (return (if (result (ref eq))
+                                (ref.eq (local.get $name) (global.get $false))
+                                (then (global.get $false))
+                                (else (local.get $name))))))
+
+               ;; Unnamed objects fall back to #f.
+               (global.get $false))
          
          ;; 14.10 Code Inspectors
          ;; 14.11 Plumbers

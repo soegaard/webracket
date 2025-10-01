@@ -6,6 +6,7 @@
          racket/fixnum
          racket/flonum
          racket/hash
+         racket/include
          racket/keyword
          racket/list
          racket/math
@@ -29,8 +30,31 @@
          
          (prefix-in imm: "immediates.rkt")
 
-         racket/match
+         racket/match)
+
+(provide include
+         include/reader
+         (for-syntax read-syntax/skip-first-line))
+
+;; The functions are implemented in `stdlib` as webracket functions
+(provide error ; [twice to force indentation]
+         ;; stdlib/exceptions.rkt
+         error
+         ;; stdlib/ports.rkt
+         current-input-port
+         current-output-port
+         current-error-port
+         reset-current-input-port!
+         reset-current-output-port!
+         reset-current-error-port!
+         ;; stdlib/writing.rkt
+         write
+         display
+         print
+         format         
          )
+
+
 
 ;; The primitives are 
 
@@ -362,6 +386,7 @@
  keyword?
  keyword->string
  keyword<?
+ string->keyword
  ; 4.9.1 Additional Keyword Functions
  keyword->immutable-string
  
@@ -582,13 +607,14 @@
   
  ;; 13   Input and Output
  ;; 13.1 Ports
+ eof
+ eof-object?
+
  port?
  input-port?
  output-port?
  
- eof
- eof-object?
- 
+
  ;; 13.2 Byte and String Input
  read-byte
  read-char
@@ -636,6 +662,8 @@
  ; namespace-variable-value
  ; namespace-has-key?
 
+ ;; 14.9 Structure Inspectors
+ object-name
  
  ;; 15.1 Paths
  path?
@@ -1115,3 +1143,38 @@
 
 (define (struct->vector s [opaque-v '...])
   (racket:struct->vector s opaque-v))
+
+;;;
+;;; STANDARD LIBRARY
+;;;
+
+;; The standard library contains implementations of many primitives.
+;; For most we simply use the Racket counter parts.
+;; A few non-Racket functions are needed across the stdlib-files,
+;; so we need implementations to make `#lang webracket` work.
+
+;;; ports.rkt
+
+(define (reset-current-output-port!)
+  (current-output-port (open-output-string)))
+
+(define (reset-current-error-port!)
+  (current-output-port (open-output-string)))
+
+(define (reset-current-input-port!)
+  (current-input-port (open-input-string "")))
+
+
+;;;
+;;; Inclusion
+;;;
+
+(require (for-syntax racket/base))
+
+(begin-for-syntax
+  (define (read-syntax/skip-first-line
+           [source-name (object-name (current-input-port))]
+           [in          (current-input-port)])
+    (read-line in) ; skip first line
+    (read-syntax source-name in)))
+

@@ -906,6 +906,9 @@
 
   syntax-srcloc  ; in racket/syntax-srcloc
 
+  ;; 14.9 Structure Inspectors
+  object-name
+  
   ;; 15.1 Paths
   path?
   path-for-some-system?
