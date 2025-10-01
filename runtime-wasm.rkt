@@ -27866,201 +27866,325 @@
          ;; Structure Type Properties
          ;; -------------------------------------------------------------------
 
+         (func $struct-type-property-lookup
+               (param $std      (ref $StructType))
+               (param $prop     (ref $StructTypeProperty))
+               (param $sentinel (ref eq))
+               (result (ref eq))
+
+               (local $table (ref eq))
+
+               (local.set $table (struct.get $StructType $properties (local.get $std)))
+               (call $hasheq-ref/plain
+                     (local.get $table)
+                     (ref.cast (ref eq) (local.get $prop))
+                     (local.get $sentinel)))
+
+         (func $struct-type-property-predicate (type $ClosureCode)
+               (param $clos     (ref $Closure))
+               (param $args     (ref $Args))
+               (result          (ref eq))
+
+               (local $free     (ref $Free))
+               (local $prop     (ref $StructTypeProperty))
+               (local $target   (ref eq))
+               (local $std      (ref $StructType))
+               (local $struct   (ref $Struct))
+               (local $sentinel (ref eq))
+               (local $val      (ref eq))
+
+               (local.set $free (struct.get $Closure $free (local.get $clos)))
+               (local.set $prop
+                          (ref.cast (ref $StructTypeProperty)
+                                    (array.get $Free (local.get $free) (i32.const 0))))
+               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
+
+               (if (ref.test (ref $StructType) (local.get $target))
+                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
+                   (else
+                    (if (ref.test (ref $Struct) (local.get $target))
+                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
+                              (local.set $std (struct.get $Struct $type (local.get $struct))))
+                        (else (return (global.get $false))))))
+
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $val
+                          (call $struct-type-property-lookup
+                                (local.get $std)
+                                (local.get $prop)
+                                (local.get $sentinel)))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $val) (local.get $sentinel))
+                   (then (global.get $false))
+                   (else (global.get $true))))
+
+         (func $struct-type-property-accessor
+               (type $ClosureCode)
+               (param $clos (ref $Closure))
+               (param $args (ref $Args))
+               (result (ref eq))
+
+               (local $free     (ref $Free))
+               (local $prop     (ref $StructTypeProperty))
+               (local $argc     i32)
+               (local $target   (ref eq))
+               (local $fallback (ref eq))
+               (local $std      (ref $StructType))
+               (local $struct   (ref $Struct))
+               (local $sentinel (ref eq))
+               (local $val      (ref eq))
+               (local $proc     (ref $Procedure))
+               (local $inv      (ref $ProcedureInvoker))
+               (local $noargs   (ref $Args))
+
+               (local.set $free (struct.get $Closure $free (local.get $clos)))
+               (local.set $prop
+                          (ref.cast (ref $StructTypeProperty)
+                                    (array.get $Free (local.get $free) (i32.const 0))))
+
+               (local.set $argc (array.len (local.get $args)))
+               (if (i32.gt_u (local.get $argc) (i32.const 2))
+                   (then (call $raise-arity-mismatch)
+                         (unreachable)))
+
+               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
+               (local.set $fallback
+                          (if (result (ref eq))
+                              (i32.gt_u (local.get $argc) (i32.const 1))
+                              (then (array.get $Args (local.get $args) (i32.const 1)))
+                              (else (global.get $missing))))
+
+               (if (ref.test (ref $StructType) (local.get $target))
+                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
+                   (else
+                    (if (ref.test (ref $Struct) (local.get $target))
+                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
+                              (local.set $std (struct.get $Struct $type (local.get $struct))))
+                        (else (call $raise-argument-error (local.get $target))
+                              (unreachable)))))
+
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $val
+                          (call $struct-type-property-lookup
+                                (local.get $std)
+                                (local.get $prop)
+                                (local.get $sentinel)))
+
+               (if (ref.eq (local.get $val) (local.get $sentinel))
+                   (then
+                    (if (ref.eq (local.get $fallback) (global.get $missing))
+                        (then (call $raise-argument-error (local.get $target))
+                              (unreachable))
+                        (else
+                         (if (ref.test (ref $Procedure) (local.get $fallback))
+                             (then (local.set $proc (ref.cast (ref $Procedure) (local.get $fallback)))
+                                   (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+                                   (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                                   (return_call_ref $ProcedureInvoker
+                                                    (local.get $proc)
+                                                    (local.get $noargs)
+                                                    (local.get $inv)))
+                             (else (return (local.get $fallback)))))))
+                   (else (return (local.get $val))))
+
+               (unreachable))
+         
          (func $make-struct-type-property-descriptor
-              (param $name               (ref eq))
-              (param $guard-info         (ref eq))
-              (param $supers             (ref eq))
-              (param $can-impersonate    (ref eq))
-              (param $accessor-name-info (ref eq))
+               (param $name               (ref eq))
+               (param $guard-info         (ref eq))
+               (param $supers             (ref eq))
+               (param $can-impersonate    (ref eq))
+               (param $accessor-name-info (ref eq))
 
-              (result (ref $StructTypeProperty))
+               (result (ref $StructTypeProperty))
 
-              (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
-                  (then (call $raise-argument-error (local.get $name))
-                        (unreachable)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                   (then (call $raise-argument-error (local.get $name))
+                         (unreachable)))
 
-              (call $make-struct-type-property-descriptor/checked
-                    (ref.cast (ref $Symbol) (local.get $name))
-                    (local.get $guard-info)
-                    (local.get $supers)
-                    (local.get $can-impersonate)
-                    (local.get $accessor-name-info)))
+               (call $make-struct-type-property-descriptor/checked
+                     (ref.cast (ref $Symbol) (local.get $name))
+                     (local.get $guard-info)
+                     (local.get $supers)
+                     (local.get $can-impersonate)
+                     (local.get $accessor-name-info)))
 
-        (func $make-struct-type-property-descriptor/checked
-              (param $name               (ref $Symbol))
-              (param $guard-info         (ref eq))
-              (param $supers             (ref eq))
-              (param $can-impersonate    (ref eq))
-              (param $accessor-name-info (ref eq))
+         (func $make-struct-type-property-descriptor/checked
+               (param $name               (ref $Symbol))
+               (param $guard-info         (ref eq))
+               (param $supers             (ref eq))
+               (param $can-impersonate    (ref eq))
+               (param $accessor-name-info (ref eq))
 
-              (result (ref $StructTypeProperty))
+               (result (ref $StructTypeProperty))
 
-              (local $guard        (ref eq))
-              (local $supers-list  (ref eq))
-              (local $impersonate  (ref eq))
-              (local $accessor-tag (ref eq))
+               (local $guard        (ref eq))
+               (local $supers-list  (ref eq))
+               (local $impersonate  (ref eq))
+               (local $accessor-tag (ref eq))
 
-              (local.set $guard (local.get $guard-info))
-              (if (ref.eq (local.get $guard) (global.get $missing))
-                  (then (local.set $guard (global.get $false))))
+               (local.set $guard (local.get $guard-info))
+               (if (ref.eq (local.get $guard) (global.get $missing))
+                   (then (local.set $guard (global.get $false))))
 
-              (local.set $supers-list (local.get $supers))
-              (if (ref.eq (local.get $supers-list) (global.get $missing))
-                  (then (local.set $supers-list (global.get $null)))
-                  (else (if (ref.eq (local.get $supers-list) (global.get $false))
-                            (then (local.set $supers-list (global.get $null))))))
+               (local.set $supers-list (local.get $supers))
+               (if (ref.eq (local.get $supers-list) (global.get $missing))
+                   (then (local.set $supers-list (global.get $null)))
+                   (else (if (ref.eq (local.get $supers-list) (global.get $false))
+                             (then (local.set $supers-list (global.get $null))))))
 
-              (local.set $impersonate (local.get $can-impersonate))
-              (if (ref.eq (local.get $impersonate) (global.get $missing))
-                  (then (local.set $impersonate (global.get $false))))
+               (local.set $impersonate (local.get $can-impersonate))
+               (if (ref.eq (local.get $impersonate) (global.get $missing))
+                   (then (local.set $impersonate (global.get $false))))
 
-              (local.set $accessor-tag (local.get $accessor-name-info))
-              (if (ref.eq (local.get $accessor-tag) (global.get $missing))
-                  (then (local.set $accessor-tag (global.get $false))))
+               (local.set $accessor-tag (local.get $accessor-name-info))
+               (if (ref.eq (local.get $accessor-tag) (global.get $missing))
+                   (then (local.set $accessor-tag (global.get $false))))
 
-              (struct.new $StructTypeProperty
-                          (i32.const 0)
-                          (local.get $name)
-                          (local.get $guard)
-                          (local.get $supers-list)
-                          (local.get $impersonate)
-                          (local.get $accessor-tag)
-                          (global.get $false)
-                          (global.get $false)))
+               (struct.new $StructTypeProperty
+                           (i32.const 0)
+                           (local.get $name)
+                           (local.get $guard)
+                           (local.get $supers-list)
+                           (local.get $impersonate)
+                           (local.get $accessor-tag)
+                           (global.get $false)
+                           (global.get $false)))
 
-        (func $struct-type-property-table-empty
-              (result (ref $HashEqMutable))
+         (func $struct-type-property-table-empty
+               (result (ref $HashEqMutable))
 
-              (ref.cast (ref $HashEqMutable)
-                        (call $make-empty-hasheq)))
+               (ref.cast (ref $HashEqMutable)
+                         (call $make-empty-hasheq)))
 
-        (func $struct-type-property-table-copy
-              (param $table (ref $HashEqMutable))
-              (result (ref $HashEqMutable))
+         (func $struct-type-property-table-copy
+               (param $table (ref $HashEqMutable))
+               (result (ref $HashEqMutable))
 
-              (local $alist (ref eq))
-              (local $copy  (ref eq))
+               (local $alist (ref eq))
+               (local $copy  (ref eq))
 
-              (local.set $alist (call $hasheq->list/plain/checked (local.get $table)))
-              (local.set $copy  (call $make-hasheq (local.get $alist)))
-              (ref.cast (ref $HashEqMutable) (local.get $copy)))
+               (local.set $alist (call $hasheq->list/plain/checked (local.get $table)))
+               (local.set $copy  (call $make-hasheq (local.get $alist)))
+               (ref.cast (ref $HashEqMutable) (local.get $copy)))
 
-        (func $struct-type-property-merge-list!
-              (param $table (ref $HashEqMutable))
-              (param $list  (ref eq))
-              (result (ref $HashEqMutable))
+         (func $struct-type-property-merge-list!
+               (param $table (ref $HashEqMutable))
+               (param $list  (ref eq))
+               (result (ref $HashEqMutable))
 
-              (local $cursor (ref eq))
-              (local $cell   (ref $Pair))
-              (local $entry  (ref $Pair))
-              (local $prop   (ref $StructTypeProperty))
-              (local $val    (ref eq))
+               (local $cursor (ref eq))
+               (local $cell   (ref $Pair))
+               (local $entry  (ref $Pair))
+               (local $prop   (ref $StructTypeProperty))
+               (local $val    (ref eq))
 
-              (local.set $cursor (local.get $list))
-              (block $done
-                     (loop $walk
-                           (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
+               (local.set $cursor (local.get $list))
+               (block $done
+                      (loop $walk
+                            (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
 
-                           (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
-                           (local.set $entry
-                                      (ref.cast (ref $Pair)
-                                                (struct.get $Pair $a (local.get $cell))))
-                           (local.set $prop
-                                      (ref.cast (ref $StructTypeProperty)
-                                                (struct.get $Pair $a (local.get $entry))))
-                           (local.set $val (struct.get $Pair $d (local.get $entry)))
+                            (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
+                            (local.set $entry
+                                       (ref.cast (ref $Pair)
+                                                 (struct.get $Pair $a (local.get $cell))))
+                            (local.set $prop
+                                       (ref.cast (ref $StructTypeProperty)
+                                                 (struct.get $Pair $a (local.get $entry))))
+                            (local.set $val (struct.get $Pair $d (local.get $entry)))
 
-                           (call $hasheq-set!/mutable/checked
-                                 (local.get $table)
-                                 (ref.cast (ref eq) (local.get $prop))
-                                 (local.get $val))
+                            (call $hasheq-set!/mutable/checked
+                                  (local.get $table)
+                                  (ref.cast (ref eq) (local.get $prop))
+                                  (local.get $val))
 
-                           (local.set $cursor (struct.get $Pair $d (local.get $cell)))
-                           (br $walk)))
-              (local.get $table))
+                            (local.set $cursor (struct.get $Pair $d (local.get $cell)))
+                            (br $walk)))
+               (local.get $table))
 
-        (func $struct-type-properties-normalize
-              (param $has-super i32)
-              (param $super     (ref null $StructType))
-              (param $raw       (ref eq))
-              (result           (ref eq))
+         (func $struct-type-properties-normalize
+               (param $has-super i32)
+               (param $super     (ref null $StructType))
+               (param $raw       (ref eq))
+               (result           (ref eq))
 
-              (local $table (ref $HashEqMutable))
-              (local $spec  (ref eq))
-              (local $alist (ref eq))
+               (local $table (ref $HashEqMutable))
+               (local $spec  (ref eq))
+               (local $alist (ref eq))
 
-              ;; Initialize non-defaultable locals
-              (local.set $table (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
+               ;; Initialize non-defaultable locals
+               (local.set $table (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
 
-              
-              (if (local.get $has-super)
-                  (then
-                   (local.set $table
-                              (call $struct-type-property-table-copy
-                                    (ref.cast (ref $HashEqMutable)
-                                              (struct.get $StructType $properties
-                                                          (ref.as_non_null (local.get $super)))))))
-                  (else
-                   (local.set $table (call $struct-type-property-table-empty))))
+               
+               (if (local.get $has-super)
+                   (then
+                    (local.set $table
+                               (call $struct-type-property-table-copy
+                                     (ref.cast (ref $HashEqMutable)
+                                               (struct.get $StructType $properties
+                                                           (ref.as_non_null (local.get $super)))))))
+                   (else
+                    (local.set $table (call $struct-type-property-table-empty))))
 
-              (local.set $spec (local.get $raw))
-              (if (ref.eq (local.get $spec) (global.get $missing))
-                  (then (local.set $spec (global.get $null))))
-              (if (ref.eq (local.get $spec) (global.get $false))
-                  (then (local.set $spec (global.get $null))))
+               (local.set $spec (local.get $raw))
+               (if (ref.eq (local.get $spec) (global.get $missing))
+                   (then (local.set $spec (global.get $null))))
+               (if (ref.eq (local.get $spec) (global.get $false))
+                   (then (local.set $spec (global.get $null))))
 
-              (if (ref.eq (local.get $spec) (global.get $null))
-                  (then (return (ref.cast (ref eq) (local.get $table)))))
+               (if (ref.eq (local.get $spec) (global.get $null))
+                   (then (return (ref.cast (ref eq) (local.get $table)))))
 
-              (if (ref.test (ref $HashEqMutable) (local.get $spec))
-                  (then
-                   (local.set $alist
-                              (call $hasheq->list/plain/checked
-                                    (ref.cast (ref $HashEqMutable) (local.get $spec))))
-                   (local.set $spec (local.get $alist))))
+               (if (ref.test (ref $HashEqMutable) (local.get $spec))
+                   (then
+                    (local.set $alist
+                               (call $hasheq->list/plain/checked
+                                     (ref.cast (ref $HashEqMutable) (local.get $spec))))
+                    (local.set $spec (local.get $alist))))
 
-              (drop (call $struct-type-property-merge-list!
-                          (local.get $table)
-                          (local.get $spec)))
+               (drop (call $struct-type-property-merge-list!
+                           (local.get $table)
+                           (local.get $spec)))
 
-              (ref.cast (ref eq) (local.get $table)))
-        
-        (func $make-struct-type-property
-              (param $name               (ref eq))  ;; symbol
-              ;; optional parameters (defaults in parentheses):
-              (param $guard-info         (ref eq))  ;; guard/#f ('#f)
-              (param $supers-spec        (ref eq))  ;; list of (cons prop proc)/#f ('())
-              (param $can-impersonate?   (ref eq))  ;; any/c (#f)
-              (param $accessor-name-info (ref eq))  ;; symbol/string/#f (#f)
-              (param $contract-info      (ref eq))  ;; string/symbol/#f (#f)
-              (param $realm-info         (ref eq))  ;; symbol/#f ('racket)
-              (result                    (ref eq))
+               (ref.cast (ref eq) (local.get $table)))
+         
+         (func $make-struct-type-property
+               (param $name               (ref eq))  ;; symbol
+               ;; optional parameters (defaults in parentheses):
+               (param $guard-info         (ref eq))  ;; guard/#f ('#f)
+               (param $supers-spec        (ref eq))  ;; list of (cons prop proc)/#f ('())
+               (param $can-impersonate?   (ref eq))  ;; any/c (#f)
+               (param $accessor-name-info (ref eq))  ;; symbol/string/#f (#f)
+               (param $contract-info      (ref eq))  ;; string/symbol/#f (#f)
+               (param $realm-info         (ref eq))  ;; symbol/#f ('racket)
+               (result                    (ref eq))
 
-              (local $name-sym         (ref $Symbol))
-              (local $name-string      (ref $String))
-              (local $guard            (ref eq))
-              (local $supers           (ref eq))
-              (local $impersonate      (ref eq))
-              (local $accessor-name    (ref eq))
-              (local $contract-str     (ref eq))
-              (local $realm            (ref eq))
-              (local $prop             (ref $StructTypeProperty))
-              (local $pred             (ref eq))
-              (local $acc              (ref eq))
-              (local $pred-free        (ref $Free))
-              (local $acc-free         (ref $Free))
-              (local $supers-cursor    (ref eq))
-              (local $supers-cell      (ref $Pair))
-              (local $supers-entry     (ref $Pair))
-              (local $supers-entry-raw (ref eq))
-              (local $super-prop       (ref $StructTypeProperty))
-              (local $super-prop-raw   (ref eq))
-              (local $super-proc       (ref $Procedure))
-              (local $super-proc-raw   (ref eq))
-              (local $closure-name     (ref eq))
+               (local $name-sym         (ref $Symbol))
+               (local $name-string      (ref $String))
+               (local $guard            (ref eq))
+               (local $supers           (ref eq))
+               (local $impersonate      (ref eq))
+               (local $accessor-name    (ref eq))
+               (local $contract-str     (ref eq))
+               (local $realm            (ref eq))
+               (local $prop             (ref $StructTypeProperty))
+               (local $pred             (ref eq))
+               (local $acc              (ref eq))
+               (local $pred-free        (ref $Free))
+               (local $acc-free         (ref $Free))
+               (local $supers-cursor    (ref eq))
+               (local $supers-cell      (ref $Pair))
+               (local $supers-entry     (ref $Pair))
+               (local $supers-entry-raw (ref eq))
+               (local $super-prop       (ref $StructTypeProperty))
+               (local $super-prop-raw   (ref eq))
+               (local $super-proc       (ref $Procedure))
+               (local $super-proc-raw   (ref eq))
+               (local $closure-name     (ref eq))
 
                ;; Validate property name and capture its string form.
-              (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
                    (then (call $raise-argument-error (local.get $name))
                          (unreachable)))
                (local.set $name-sym    (ref.cast (ref $Symbol) (local.get $name)))
@@ -28087,7 +28211,7 @@
                          (if (ref.test (ref $Symbol) (local.get $guard-info))
                              (then
                               (if (i32.eq (call $symbol=?/i32 (local.get $guard-info)
-                                                          (global.get $symbol:can-impersonate))
+                                                (global.get $symbol:can-impersonate))
                                           (i32.const 1))
                                   (then (local.set $impersonate (global.get $true)))
                                   (else (call $raise-argument-error (local.get $guard-info))
@@ -28265,131 +28389,6 @@
                                 (ref.cast (ref eq) (local.get $prop))
                                 (ref.cast (ref eq) (local.get $pred))
                                 (ref.cast (ref eq) (local.get $acc))))
-
-         (func $struct-type-property-lookup
-               (param $std      (ref $StructType))
-               (param $prop     (ref $StructTypeProperty))
-               (param $sentinel (ref eq))
-               (result (ref eq))
-
-               (local $table (ref eq))
-
-               (local.set $table (struct.get $StructType $properties (local.get $std)))
-               (call $hasheq-ref/plain
-                     (local.get $table)
-                     (ref.cast (ref eq) (local.get $prop))
-                     (local.get $sentinel)))
-
-         (func $struct-type-property-predicate
-               (type $ClosureCode)
-               (param $clos (ref $Closure))
-               (param $args (ref $Args))
-               (result (ref eq))
-
-               (local $free     (ref $Free))
-               (local $prop     (ref $StructTypeProperty))
-               (local $target   (ref eq))
-               (local $std      (ref $StructType))
-               (local $struct   (ref $Struct))
-               (local $sentinel (ref eq))
-               (local $val      (ref eq))
-
-               (local.set $free (struct.get $Closure $free (local.get $clos)))
-               (local.set $prop
-                          (ref.cast (ref $StructTypeProperty)
-                                    (array.get $Free (local.get $free) (i32.const 0))))
-               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
-
-               (if (ref.test (ref $StructType) (local.get $target))
-                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
-                   (else
-                    (if (ref.test (ref $Struct) (local.get $target))
-                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
-                              (local.set $std (struct.get $Struct $type (local.get $struct))))
-                        (else (return (global.get $false))))))
-
-               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
-               (local.set $val
-                          (call $struct-type-property-lookup
-                                (local.get $std)
-                                (local.get $prop)
-                                (local.get $sentinel)))
-
-               (if (result (ref eq))
-                   (ref.eq (local.get $val) (local.get $sentinel))
-                   (then (global.get $false))
-                   (else (global.get $true))))
-
-         (func $struct-type-property-accessor
-               (type $ClosureCode)
-               (param $clos (ref $Closure))
-               (param $args (ref $Args))
-               (result (ref eq))
-
-               (local $free     (ref $Free))
-               (local $prop     (ref $StructTypeProperty))
-               (local $argc     i32)
-               (local $target   (ref eq))
-               (local $fallback (ref eq))
-               (local $std      (ref $StructType))
-               (local $struct   (ref $Struct))
-               (local $sentinel (ref eq))
-               (local $val      (ref eq))
-               (local $proc     (ref $Procedure))
-               (local $inv      (ref $ProcedureInvoker))
-               (local $noargs   (ref $Args))
-
-               (local.set $free (struct.get $Closure $free (local.get $clos)))
-               (local.set $prop
-                          (ref.cast (ref $StructTypeProperty)
-                                    (array.get $Free (local.get $free) (i32.const 0))))
-
-               (local.set $argc (array.len (local.get $args)))
-               (if (i32.gt_u (local.get $argc) (i32.const 2))
-                   (then (call $raise-arity-mismatch)
-                         (unreachable)))
-
-               (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $fallback
-                          (if (result (ref eq))
-                              (i32.gt_u (local.get $argc) (i32.const 1))
-                              (then (array.get $Args (local.get $args) (i32.const 1)))
-                              (else (global.get $missing))))
-
-               (if (ref.test (ref $StructType) (local.get $target))
-                   (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
-                   (else
-                    (if (ref.test (ref $Struct) (local.get $target))
-                        (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
-                              (local.set $std (struct.get $Struct $type (local.get $struct))))
-                        (else (call $raise-argument-error (local.get $target))
-                              (unreachable)))))
-
-               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
-               (local.set $val
-                          (call $struct-type-property-lookup
-                                (local.get $std)
-                                (local.get $prop)
-                                (local.get $sentinel)))
-
-               (if (ref.eq (local.get $val) (local.get $sentinel))
-                   (then
-                    (if (ref.eq (local.get $fallback) (global.get $missing))
-                        (then (call $raise-argument-error (local.get $target))
-                              (unreachable))
-                        (else
-                         (if (ref.test (ref $Procedure) (local.get $fallback))
-                             (then (local.set $proc (ref.cast (ref $Procedure) (local.get $fallback)))
-                                   (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
-                                   (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
-                                   (return_call_ref $ProcedureInvoker
-                                                    (local.get $proc)
-                                                    (local.get $noargs)
-                                                    (local.get $inv)))
-                             (else (return (local.get $fallback)))))))
-                   (else (return (local.get $val))))
-
-               (unreachable))
 
          
          ;;;
