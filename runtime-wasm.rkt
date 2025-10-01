@@ -27140,7 +27140,8 @@
                                                 (i32.add (local.get $init) (local.get $auto))))
 
                ;; --- Initialize property tables ---
-               (local.set $props-new (call $struct-type-property-table-empty))
+               (local.set $props-new   (call $struct-type-property-table-empty))
+               (local.set $props-final (call $struct-type-property-table-empty))
                (if (local.get $has-super)
                    (then
                     (local.set $props-final
@@ -27153,8 +27154,7 @@
                                         (ref.cast (ref $Symbol) (global.get $symbol:prop:sealed)))
                                  (i32.const 1))
                         (then (call $raise-argument-error (local.get $super))
-                              (unreachable))))
-                   (else (local.set $props-final (call $struct-type-property-table-empty))))
+                              (unreachable)))))
 
                ;; --- Canonicalize properties specification ---
                (local.set $props-spec (local.get $props))
