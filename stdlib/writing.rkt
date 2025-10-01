@@ -1,9 +1,8 @@
-#lang webracket
+; #lang webracket
 
 ;;;
-;;; Current Output Port
+;;; Current Output and Error Ports
 ;;;
-
 
 (define current-output-port
   (let ([value (open-output-string)])
@@ -44,7 +43,7 @@
 (define error
   (case-lambda
     [(message-sym) (define message (string-append "error: " (symbol->string message-sym)))
-                   (raise (make-exn message #f))]
+                   (raise (make-exn:fail message #f))]
     [(arg0 . args) (cond
                      [(string? arg0)
                       ; Included for compatibility.
@@ -61,7 +60,7 @@
                                                      str)))
                                                vs))
                       (define message (string-append* (cons message-str (add-between v-strs " "))))
-                      (raise (make-exn message #f))]
+                      (raise (make-exn:fail message #f))]
                      [(symbol? arg0)
                       ; Included for compatibility.
                       ; Use `raise-argument-error` instead`. 
@@ -75,7 +74,7 @@
                       
                       (define message (apply format (string-append "~s: " format-str)
                                              who-sym vs))
-                      (raise (make-exn message #f))]
+                      (raise (make-exn:fail message #f))]
                      [else
                       (error 'error "expected: (or/c symbol? string?)")])]))
 
