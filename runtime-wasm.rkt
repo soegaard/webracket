@@ -818,7 +818,8 @@
     (add-runtime-symbol-constant 'in-range)
     (add-runtime-symbol-constant 'in-naturals)
     (add-runtime-symbol-constant 'can-impersonate)
-    
+    (add-runtime-symbol-constant 'prop:sealed)    
+
     (add-runtime-symbol-constant 'string)
     (add-runtime-symbol-constant 'unix)
     (add-runtime-symbol-constant 'windows)
@@ -26868,6 +26869,7 @@
                (local $auto-indices (ref eq))
                (local $auto-values  (ref eq))
                (local $total-fields i32)
+               (local $props-table  (ref $HashEqMutable))
 
                ;; Default all list fields
                (local.set $init-indices (global.get $false))
@@ -26911,11 +26913,16 @@
                                (call $make-list/checked (local.get $afc) (local.get $auto-value)))))
 
                ;; Structure type properties
-               (local.set $props
-                          (call $struct-type-properties-normalize
-                                (local.get $has-super)
-                                (local.get $super-typed)
-                                (local.get $props)))
+               (if (ref.test (ref $HashEqMutable) (local.get $props))
+                   (then (local.set $props-table
+                                     (ref.cast (ref $HashEqMutable) (local.get $props))))
+                   (else
+                    (local.set $props-table
+                               (ref.cast (ref $HashEqMutable)
+                                         (call $struct-type-properties-normalize
+                                               (local.get $has-super)
+                                               (local.get $super-typed)
+                                               (local.get $props))))))
                
                ;; Compute total field count
                (local.set $total-fields
@@ -26931,7 +26938,7 @@
                            (local.get $init-indices)
                            (local.get $auto-indices)
                            (local.get $auto-values)
-                           (local.get $props)
+                           (ref.cast (ref eq) (local.get $props-table))
                            (local.get $inspector)
                            (local.get $immutables)
                            (local.get $guard)
@@ -27076,6 +27083,22 @@
                (local $acc            (ref eq))
                (local $mut            (ref eq))
                (local $super-count-fx (ref eq))
+               (local $has-super      i32)
+               (local $super-typed    (ref null $StructType))
+               (local $props-final    (ref $HashEqMutable))
+               (local $props-new      (ref $HashEqMutable))
+               (local $props-spec     (ref eq))
+               (local $props-list     (ref eq))
+               (local $props-cursor   (ref eq))
+               (local $props-cell     (ref $Pair))
+               (local $entry          (ref $Pair))
+               (local $entry-raw      (ref eq))
+               (local $prop-desc      (ref $StructTypeProperty))
+               (local $prop-raw       (ref eq))
+               (local $value          (ref eq))
+               (local $sti            (ref eq))
+               (local $sentinel       (ref eq))
+               (local $new-list       (ref eq))
 
                ;; --- Type checks ---
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
@@ -27101,15 +27124,51 @@
                (local.set $auto (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $auto-count))) (i32.const 1)))
 
                ;; --- Super field count ---
+               (local.set $has-super (i32.eqz (ref.eq (local.get $super) (global.get $false))))
+               (if (local.get $has-super)
+                   (then (local.set $super-typed (ref.cast (ref $StructType) (local.get $super))))
+                   (else (local.set $super-typed (ref.null $StructType))))
+               
                (local.set $super-count
                           (if (result i32)
-                              (i32.eqz (ref.eq (local.get $super) (global.get $false)))
-                              (then (struct.get $StructType $field-count (ref.cast (ref $StructType) (local.get $super))))
+                              (local.get $has-super)
+                              (then (struct.get $StructType $field-count
+                                                (ref.as_non_null (local.get $super-typed))))
                               (else (i32.const 0))))
                (local.set $super-count-fx (ref.i31 (i32.shl (local.get $super-count) (i32.const 1))))
 
                (local.set $field-count (i32.add (local.get $super-count)
                                                 (i32.add (local.get $init) (local.get $auto))))
+
+               ;; --- Initialize property tables ---
+               (local.set $props-new (call $struct-type-property-table-empty))
+               (if (local.get $has-super)
+                   (then
+                    (local.set $props-final
+                               (call $struct-type-property-table-copy
+                                     (ref.cast (ref $HashEqMutable)
+                                               (struct.get $StructType $properties
+                                                           (ref.as_non_null (local.get $super-typed))))))
+                    (if (i32.eq (call $struct-type-property-table-has-name?/i32
+                                        (local.get $props-final)
+                                        (ref.cast (ref $Symbol) (global.get $symbol:prop:sealed)))
+                                 (i32.const 1))
+                        (then (call $raise-argument-error (local.get $super))
+                              (unreachable))))
+                   (else (local.set $props-final (call $struct-type-property-table-empty))))
+
+               ;; --- Canonicalize properties specification ---
+               (local.set $props-spec (local.get $props))
+               (if (ref.eq (local.get $props-spec) (global.get $missing))
+                   (then (local.set $props-spec (global.get $null))))
+               (if (ref.eq (local.get $props-spec) (global.get $false))
+                   (then (local.set $props-spec (global.get $null))))
+               (local.set $props-list (local.get $props-spec))
+               (if (ref.test (ref $HashEqMutable) (local.get $props-list))
+                   (then (local.set $props-list
+                                    (call $hasheq->list/plain/checked
+                                          (ref.cast (ref $HashEqMutable) (local.get $props-list))))))
+
 
                ;; --- Create struct type descriptor ---
                (local.set $std
@@ -27119,12 +27178,59 @@
                                 (local.get $init)
                                 (local.get $auto)
                                 (local.get $auto-val)
-                                (local.get $props)
+                                (ref.cast (ref eq) (local.get $props-final))
                                 (local.get $inspector)
                                 (local.get $proc-spec)
                                 (local.get $immutables)
                                 (local.get $guard)
                                 (local.get $constructor-name)))
+
+               ;; --- Prepare struct-type-info for property guards ---
+               (local.set $sti
+                          (call $struct-type-info-for-guard
+                                (local.get $std)
+                                (ref.cast (ref $Symbol) (local.get $name))
+                                (local.get $init)
+                                (local.get $auto)
+                                (local.get $super)
+                                (local.get $super-count-fx)
+                                (local.get $immutables)))
+
+               ;; --- Process property associations ---
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $props-cursor (local.get $props-list))
+               (block $done
+                      (loop $walk
+                            (br_if $done (ref.eq (local.get $props-cursor) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $props-cursor)))
+                                (then (call $raise-argument-error (local.get $props-cursor))
+                                      (unreachable)))
+                            (local.set $props-cell (ref.cast (ref $Pair) (local.get $props-cursor)))
+                            (local.set $entry-raw (struct.get $Pair $a (local.get $props-cell)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $entry-raw)))
+                                (then (call $raise-argument-error (local.get $entry-raw))
+                                      (unreachable)))
+                            (local.set $entry (ref.cast (ref $Pair) (local.get $entry-raw)))
+                            (local.set $prop-raw (struct.get $Pair $a (local.get $entry)))
+                            (if (i32.eqz (ref.test (ref $StructTypeProperty) (local.get $prop-raw)))
+                                (then (call $raise-argument-error (local.get $prop-raw))
+                                      (unreachable)))
+                            (local.set $prop-desc (ref.cast (ref $StructTypeProperty) (local.get $prop-raw)))
+                            (local.set $value (struct.get $Pair $d (local.get $entry)))
+                            (drop (call $struct-type-property-attach!
+                                        (local.get $prop-desc)
+                                        (local.get $value)
+                                        (local.get $props-new)
+                                        (local.get $sti)
+                                        (local.get $sentinel)))
+                            (local.set $props-cursor (struct.get $Pair $d (local.get $props-cell)))
+                            (br $walk)))
+
+               ;; --- Merge processed properties into final table ---
+               (local.set $new-list (call $hasheq->list/plain/checked (local.get $props-new)))
+               (drop (call $struct-type-property-merge-list!
+                           (local.get $props-final)
+                           (local.get $new-list)))
 
                ;; --- Create constructor ---
                (local.set $ctor (call $make-struct-constructor/checked (local.get $std)))
@@ -28110,6 +28216,207 @@
                             (local.set $cursor (struct.get $Pair $d (local.get $cell)))
                             (br $walk)))
                (local.get $table))
+
+         (func $struct-type-property-guard-apply
+               (param $prop  (ref $StructTypeProperty))
+               (param $value (ref eq))
+               (param $sti   (ref eq))
+               (result (ref eq))
+
+               (local $guard (ref eq))
+               (local $proc  (ref $Procedure))
+               (local $inv   (ref $ProcedureInvoker))
+               (local $args  (ref $Args))
+
+               (local.set $guard (struct.get $StructTypeProperty $guard-info (local.get $prop)))
+               (if (ref.eq (local.get $guard) (global.get $false))
+                   (then (return (local.get $value))))
+
+               (local.set $proc (ref.cast (ref $Procedure) (local.get $guard)))
+               (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+               (local.set $args (array.new $Args (global.get $null) (i32.const 2)))
+               (array.set $Args (local.get $args) (i32.const 0) (local.get $value))
+               (array.set $Args (local.get $args) (i32.const 1) (local.get $sti))
+               (call_ref $ProcedureInvoker
+                         (local.get $proc)
+                         (local.get $args)
+                         (local.get $inv)))
+
+         (func $struct-type-property-attach!
+               (param $prop     (ref $StructTypeProperty))
+               (param $value    (ref eq))
+               (param $table    (ref $HashEqMutable))
+               (param $sti      (ref eq))
+               (param $sentinel (ref eq))
+               (result i32)
+
+               (local $processed   (ref eq))
+               (local $existing    (ref eq))
+               (local $sealed      i32)
+               (local $supers      (ref eq))
+               (local $cursor      (ref eq))
+               (local $cell        (ref $Pair))
+               (local $entry       (ref $Pair))
+               (local $entry-raw   (ref eq))
+               (local $super-prop  (ref $StructTypeProperty))
+               (local $converter   (ref $Procedure))
+               (local $converter-raw (ref eq))
+               (local $conv-inv    (ref $ProcedureInvoker))
+               (local $conv-args   (ref $Args))
+               (local $converted   (ref eq))
+
+               (local.set $sealed (i32.const 0))
+               (local.set $processed
+                          (call $struct-type-property-guard-apply
+                                (local.get $prop)
+                                (local.get $value)
+                                (local.get $sti)))
+               (local.set $existing
+                          (call $hasheq-ref/plain
+                                (ref.cast (ref eq) (local.get $table))
+                                (ref.cast (ref eq) (local.get $prop))
+                                (local.get $sentinel)))
+
+               (if (ref.eq (local.get $existing) (local.get $sentinel))
+                   (then
+                    (call $hasheq-set!/mutable/checked
+                          (local.get $table)
+                          (ref.cast (ref eq) (local.get $prop))
+                          (local.get $processed))
+                    (if (i32.eq (call $symbol=?/i32
+                                       (struct.get $StructTypeProperty $name (local.get $prop))
+                                       (global.get $symbol:prop:sealed))
+                                 (i32.const 1))
+                        (then (local.set $sealed (i32.const 1))))
+                    (local.set $supers (struct.get $StructTypeProperty $supers (local.get $prop)))
+                    (block $done
+                           (loop $walk
+                                 (br_if $done (ref.eq (local.get $supers) (global.get $null)))
+                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $supers)))
+                                     (then (call $raise-argument-error (local.get $supers))
+                                           (unreachable)))
+                                 (local.set $cell (ref.cast (ref $Pair) (local.get $supers)))
+                                 (local.set $entry-raw (struct.get $Pair $a (local.get $cell)))
+                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $entry-raw)))
+                                     (then (call $raise-argument-error (local.get $entry-raw))
+                                           (unreachable)))
+                                 (local.set $entry (ref.cast (ref $Pair) (local.get $entry-raw)))
+                                 (local.set $super-prop
+                                            (ref.cast (ref $StructTypeProperty)
+                                                      (struct.get $Pair $a (local.get $entry))))
+                                 (local.set $converter-raw (struct.get $Pair $d (local.get $entry)))
+                                 (if (i32.eqz (ref.test (ref $Procedure) (local.get $converter-raw)))
+                                     (then (call $raise-argument-error (local.get $converter-raw))
+                                           (unreachable)))
+                                 (local.set $converter (ref.cast (ref $Procedure) (local.get $converter-raw)))
+                                 (local.set $conv-inv (struct.get $Procedure $invoke (local.get $converter)))
+                                 (local.set $conv-args (array.new $Args (global.get $null) (i32.const 1)))
+                                 (array.set $Args (local.get $conv-args) (i32.const 0) (local.get $processed))
+                                 (local.set $converted
+                                            (call_ref $ProcedureInvoker
+                                                      (local.get $converter)
+                                                      (local.get $conv-args)
+                                                      (local.get $conv-inv)))
+                                 (local.set $sealed
+                                            (i32.or (local.get $sealed)
+                                                    (call $struct-type-property-attach!
+                                                          (local.get $super-prop)
+                                                          (local.get $converted)
+                                                          (local.get $table)
+                                                          (local.get $sti)
+                                                          (local.get $sentinel))))
+                                 (local.set $supers (struct.get $Pair $d (local.get $cell)))
+                                 (br $walk))))
+                   (else
+                    (if (i32.eqz (ref.eq (local.get $existing) (local.get $processed)))
+                        (then (call $raise-argument-error (local.get $value))
+                              (unreachable))
+                        (else
+                         (if (i32.eq (call $symbol=?/i32
+                                           (struct.get $StructTypeProperty $name (local.get $prop))
+                                           (global.get $symbol:prop:sealed))
+                                     (i32.const 1))
+                             (then (local.set $sealed (i32.const 1))))))))
+               (local.get $sealed))
+
+         (func $struct-type-property-table-has-name?/i32
+               (param $table (ref $HashEqMutable))
+               (param $name  (ref $Symbol))
+               (result i32)
+
+               (local $alist  (ref eq))
+               (local $cursor (ref eq))
+               (local $cell   (ref $Pair))
+               (local $entry  (ref $Pair))
+               (local $entry-raw (ref eq))
+               (local $prop   (ref $StructTypeProperty))
+
+               (local.set $alist (call $hasheq->list/plain/checked (local.get $table)))
+               (local.set $cursor (local.get $alist))
+               (block $done
+                      (loop $walk
+                            (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cursor)))
+                                (then (call $raise-argument-error (local.get $cursor))
+                                      (unreachable)))
+                            (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
+                            (local.set $entry-raw (struct.get $Pair $a (local.get $cell)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $entry-raw)))
+                                (then (call $raise-argument-error (local.get $entry-raw))
+                                      (unreachable)))
+                            (local.set $entry (ref.cast (ref $Pair) (local.get $entry-raw)))
+                            (local.set $prop
+                                       (ref.cast (ref $StructTypeProperty)
+                                                 (struct.get $Pair $a (local.get $entry))))
+                            (if (i32.eq (call $symbol=?/i32
+                                               (struct.get $StructTypeProperty $name (local.get $prop))
+                                               (local.get $name))
+                                         (i32.const 1))
+                                (then (return (i32.const 1))))
+                            (local.set $cursor (struct.get $Pair $d (local.get $cell)))
+                            (br $walk)))
+               (i32.const 0))
+
+         (func $struct-type-info-for-guard
+               (param $std            (ref $StructType))
+               (param $name           (ref $Symbol))
+               (param $init-count     i32)
+               (param $auto-count     i32)
+               (param $super          (ref eq))
+               (param $super-count-fx (ref eq))
+               (param $immutables     (ref eq))
+               (result (ref eq))
+
+               (local $init-fx          (ref eq))
+               (local $auto-fx          (ref eq))
+               (local $immutables-list  (ref eq))
+               (local $accessor         (ref eq))
+               (local $mutator          (ref eq))
+               (local $list             (ref eq))
+
+               (local.set $init-fx (ref.i31 (i32.shl (local.get $init-count) (i32.const 1))))
+               (local.set $auto-fx (ref.i31 (i32.shl (local.get $auto-count) (i32.const 1))))
+               (local.set $immutables-list (local.get $immutables))
+               (if (ref.eq (local.get $immutables-list) (global.get $false))
+                   (then (local.set $immutables-list (global.get $null))))
+               (local.set $accessor
+                          (call $make-struct-accessor/checked
+                                (local.get $std)
+                                (local.get $super-count-fx)))
+               (local.set $mutator
+                          (call $make-struct-mutator/checked
+                                (local.get $std)
+                                (local.get $super-count-fx)))
+               (local.set $list (global.get $null))
+               (local.set $list (call $cons (global.get $false) (local.get $list)))
+               (local.set $list (call $cons (local.get $super) (local.get $list)))
+               (local.set $list (call $cons (local.get $immutables-list) (local.get $list)))
+               (local.set $list (call $cons (local.get $mutator) (local.get $list)))
+               (local.set $list (call $cons (local.get $accessor) (local.get $list)))
+               (local.set $list (call $cons (local.get $auto-fx) (local.get $list)))
+               (local.set $list (call $cons (local.get $init-fx) (local.get $list)))
+               (local.set $list (call $cons (ref.cast (ref eq) (local.get $name)) (local.get $list)))
+               (local.get $list))
 
          (func $struct-type-properties-normalize
                (param $has-super i32)
