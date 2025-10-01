@@ -1162,6 +1162,22 @@
                        (field $type   (ref $StructType))      ;; Pointer to struct type descriptor
                        (field $fields (ref $Array)))))        ;; Array of (ref eq), holds field values
 
+          (type $StructType
+                (sub $Heap
+                     (struct
+                       (field $hash             (mut i32))            ;; Computed lazily, starts at 0
+                       (field $name             (ref $Symbol))        ;; Struct name
+                       (field $super            (ref eq))             ;; Supertype or #f (use global $false)
+                       (field $field-count      i32)                  ;; Total number of fields
+                       (field $init-indices     (ref eq))             ;; List of init field indices ($Pair or $null)
+                       (field $auto-indices     (ref eq))             ;; List of auto field indices
+                       (field $auto-values      (ref eq))             ;; List of values for auto fields
+                       (field $properties       (ref eq))             ;; Property table: hash table
+                       (field $inspector        (ref eq))             ;; Inspector object or #f
+                       (field $immutables       (ref eq))             ;; Immutables descriptor or #f
+                       (field $guard            (ref eq))             ;; Guard procedure or #f
+                       (field $constructor-name (ref eq)))))          ;; For error reporting / printing ($Symbol or #f)
+
           (type $StructConstructorProcedure
                 ; current representation is a plain closure
                 (sub $Closure
@@ -1173,6 +1189,7 @@
                        (field $invoke (ref $ProcedureInvoker))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
+          
 
           (type $StructPredicateProcedure
                 ; current representation is a plain closure
@@ -1209,6 +1226,18 @@
                        (field $invoke (ref $ProcedureInvoker))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
+
+          (type $StructTypeProperty
+                (sub $Heap
+                     (struct
+                       (field $hash               (mut i32))          ;; Cached hash, lazily computed
+                       (field $name               (ref $Symbol))      ;; Property name
+                       (field $guard-info         (ref eq))           ;; Guard metadata or #f
+                       (field $supers             (ref eq))           ;; List of super property descriptors
+                       (field $can-impersonate    (ref eq))           ;; Boolean indicating impersonation support
+                       (field $accessor-name-info (ref eq))           ;; Accessor naming hints or #f
+                       (field $predicate-cache    (mut (ref eq)))     ;; Cached predicate procedure or #f
+                       (field $accessor-cache     (mut (ref eq))))))  ;; Cached accessor procedure or #f
 
           (type $Number (sub $Heap    ; abstract super type for boxed numbers
                              (struct
@@ -1272,21 +1301,6 @@
                                    (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
                                    (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
 
-          (type $StructType
-                (sub $Heap
-                     (struct
-                       (field $hash             (mut i32))            ;; Computed lazily, starts at 0
-                       (field $name             (ref $Symbol))        ;; Struct name
-                       (field $super            (ref eq))             ;; Supertype or #f (use global $false)
-                       (field $field-count      i32)                  ;; Total number of fields
-                       (field $init-indices     (ref eq))             ;; List of init field indices ($Pair or $null)
-                       (field $auto-indices     (ref eq))             ;; List of auto field indices
-                       (field $auto-values      (ref eq))             ;; List of values for auto fields
-                       (field $properties       (ref eq))             ;; Property table: hash table
-                       (field $inspector        (ref eq))             ;; Inspector object or #f
-                       (field $immutables       (ref eq))             ;; Immutables descriptor or #f
-                       (field $guard            (ref eq))             ;; Guard procedure or #f
-                       (field $constructor-name (ref eq)))))          ;; For error reporting / printing ($Symbol or #f)
           
           (type $Hash   ; abstract super type for hashtables
                 (sub $Heap
@@ -26804,10 +26818,11 @@
                (local.set $afc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $auto-field-count))) (i32.const 1)))
 
                ;; --- Handle optional props ---
-               (local.set $props (if (result (ref eq))
-                                     (ref.eq (local.get $opt-props) (global.get $false))
-                                     (then (array.new $Array (global.get $false) (i32.const 0)))
-                                     (else (local.get $opt-props))))
+               (local.set $props (local.get $opt-props))
+               (if (ref.eq (local.get $props) (global.get $missing))
+                   (then (local.set $props (global.get $null)))
+                   (else (if (ref.eq (local.get $props) (global.get $false))
+                             (then (local.set $props (global.get $null))))))
 
                ;; --- Cast super if not #f ---
                #;(local.set $super (if (result (ref $StructType))
@@ -26828,77 +26843,7 @@
                      (local.get $immutables)
                      (local.get $opt-guard)
                      (local.get $constructor-name)))
-
          
-         #;(func $make-struct-type-descriptor
-               ;; Required
-               (param $name               (ref eq))  ;; (ref $Symbol)
-               (param $super-type         (ref eq))  ;; (ref $StructType) or #f
-               (param $init-field-count   (ref eq))  ;; fixnum (even i31)
-               (param $auto-field-count   (ref eq))  ;; fixnum (even i31)
-               (param $auto-field-value   (ref eq))  ;; value to repeat for each auto field
-               
-               ;; Optional (pass #f if not used)
-               (param $opt-props          (ref eq))  ;; hash table or #f
-               (param $inspector          (ref eq))  ;; inspector object or #f
-               (param $proc-spec          (ref eq))  ;; currently unused
-               (param $immutables         (ref eq))  ;; immutables descriptor or #f
-               (param $opt-guard          (ref eq))  ;; guard procedure or #f
-               (param $constructor-name   (ref eq))  ;; (ref $Symbol) or #f
-
-               (result (ref $StructType))
-
-               (local $ifc i32)
-               (local $afc i32)
-               (local $props (ref eq))
-
-               ;; --- Type checks ---
-               (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
-                   (then (call $raise-argument-error (local.get $name))))
-
-               (if (i32.and (i32.eqz (ref.eq (local.get $super-type) (global.get $false)))
-                            (i32.eqz (ref.test (ref $StructType) (local.get $super-type))))
-                   (then (call $raise-argument-error (local.get $super-type))))
-
-               (if (i32.or (i32.eqz (ref.test (ref i31) (local.get $init-field-count)))
-                           (i32.ne (i32.and (i31.get_u (ref.cast (ref i31)
-                                                                 (local.get $init-field-count)))
-                                            (i32.const 1))
-                                   (i32.const 0)))
-                   (then (call $raise-argument-error (local.get $init-field-count))))
-
-               (if (i32.or
-                    (i32.eqz (ref.test (ref i31) (local.get $auto-field-count)))
-                    (i32.ne (i32.and (i31.get_u (ref.cast (ref i31)
-                                                          (local.get $auto-field-count)))
-                                     (i32.const 1))
-                            (i32.const 0)))
-                   (then (call $raise-argument-error (local.get $auto-field-count))))
-
-               ;; --- Decode fixnums ---
-               (local.set $ifc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $init-field-count))) (i32.const 1)))
-               (local.set $afc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $auto-field-count))) (i32.const 1)))
-
-               ;; --- Properties ---
-               (local.set $props
-                          (if (result (ref eq))
-                              (ref.eq (local.get $opt-props) (global.get $false))
-                              (then (array.new $Array (global.get $false) (i32.const 0)))
-                              (else (local.get $opt-props))))
-
-               ;; --- Delegate to checked version ---
-               (call $make-struct-type-descriptor/checked
-                     (ref.cast (ref $Symbol) (local.get $name))
-                     (local.get $super-type)
-                     (local.get $ifc)
-                     (local.get $afc)
-                     (local.get $auto-field-value)
-                     (local.get $props)
-                     (local.get $inspector)
-                     (local.get $proc-spec)
-                     (local.get $immutables)
-                     (local.get $opt-guard)
-                     (local.get $constructor-name)))
 
          (func $make-struct-type-descriptor/checked
                (param $name             (ref $Symbol))    ;; Struct name
@@ -26963,6 +26908,13 @@
                     (local.set $auto-values
                                (call $make-list/checked (local.get $afc) (local.get $auto-value)))))
 
+               ;; Structure type properties
+               (local.set $props
+                          (call $struct-type-properties-normalize
+                                (local.get $has-super)
+                                (local.get $super-typed)
+                                (local.get $props)))
+               
                ;; Compute total field count
                (local.set $total-fields
                           (i32.add (local.get $stfc)
@@ -27907,6 +27859,169 @@
                             (local.set $indices (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $indices))))
                             (local.set $values  (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $values))))
                             (br $loop))))
+
+         ;; -------------------------------------------------------------------
+         ;; Structure Type Properties
+         ;; -------------------------------------------------------------------
+
+         (func $make-struct-type-property-descriptor
+              (param $name               (ref eq))
+              (param $guard-info         (ref eq))
+              (param $supers             (ref eq))
+              (param $can-impersonate    (ref eq))
+              (param $accessor-name-info (ref eq))
+
+              (result (ref $StructTypeProperty))
+
+              (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                  (then (call $raise-argument-error (local.get $name))
+                        (unreachable)))
+
+              (call $make-struct-type-property-descriptor/checked
+                    (ref.cast (ref $Symbol) (local.get $name))
+                    (local.get $guard-info)
+                    (local.get $supers)
+                    (local.get $can-impersonate)
+                    (local.get $accessor-name-info)))
+
+        (func $make-struct-type-property-descriptor/checked
+              (param $name               (ref $Symbol))
+              (param $guard-info         (ref eq))
+              (param $supers             (ref eq))
+              (param $can-impersonate    (ref eq))
+              (param $accessor-name-info (ref eq))
+
+              (result (ref $StructTypeProperty))
+
+              (local $guard        (ref eq))
+              (local $supers-list  (ref eq))
+              (local $impersonate  (ref eq))
+              (local $accessor-tag (ref eq))
+
+              (local.set $guard (local.get $guard-info))
+              (if (ref.eq (local.get $guard) (global.get $missing))
+                  (then (local.set $guard (global.get $false))))
+
+              (local.set $supers-list (local.get $supers))
+              (if (ref.eq (local.get $supers-list) (global.get $missing))
+                  (then (local.set $supers-list (global.get $null)))
+                  (else (if (ref.eq (local.get $supers-list) (global.get $false))
+                            (then (local.set $supers-list (global.get $null))))))
+
+              (local.set $impersonate (local.get $can-impersonate))
+              (if (ref.eq (local.get $impersonate) (global.get $missing))
+                  (then (local.set $impersonate (global.get $false))))
+
+              (local.set $accessor-tag (local.get $accessor-name-info))
+              (if (ref.eq (local.get $accessor-tag) (global.get $missing))
+                  (then (local.set $accessor-tag (global.get $false))))
+
+              (struct.new $StructTypeProperty
+                          (i32.const 0)
+                          (local.get $name)
+                          (local.get $guard)
+                          (local.get $supers-list)
+                          (local.get $impersonate)
+                          (local.get $accessor-tag)
+                          (global.get $false)
+                          (global.get $false)))
+
+        (func $struct-type-property-table-empty
+              (result (ref $HashEqMutable))
+
+              (ref.cast (ref $HashEqMutable)
+                        (call $make-empty-hasheq)))
+
+        (func $struct-type-property-table-copy
+              (param $table (ref $HashEqMutable))
+              (result (ref $HashEqMutable))
+
+              (local $alist (ref eq))
+              (local $copy  (ref eq))
+
+              (local.set $alist (call $hasheq->list/plain/checked (local.get $table)))
+              (local.set $copy  (call $make-hasheq (local.get $alist)))
+              (ref.cast (ref $HashEqMutable) (local.get $copy)))
+
+        (func $struct-type-property-merge-list!
+              (param $table (ref $HashEqMutable))
+              (param $list  (ref eq))
+              (result (ref $HashEqMutable))
+
+              (local $cursor (ref eq))
+              (local $cell   (ref $Pair))
+              (local $entry  (ref $Pair))
+              (local $prop   (ref $StructTypeProperty))
+              (local $val    (ref eq))
+
+              (local.set $cursor (local.get $list))
+              (block $done
+                     (loop $walk
+                           (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
+
+                           (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
+                           (local.set $entry
+                                      (ref.cast (ref $Pair)
+                                                (struct.get $Pair $a (local.get $cell))))
+                           (local.set $prop
+                                      (ref.cast (ref $StructTypeProperty)
+                                                (struct.get $Pair $a (local.get $entry))))
+                           (local.set $val (struct.get $Pair $d (local.get $entry)))
+
+                           (call $hasheq-set!/mutable/checked
+                                 (local.get $table)
+                                 (ref.cast (ref eq) (local.get $prop))
+                                 (local.get $val))
+
+                           (local.set $cursor (struct.get $Pair $d (local.get $cell)))
+                           (br $walk)))
+              (local.get $table))
+
+        (func $struct-type-properties-normalize
+              (param $has-super i32)
+              (param $super     (ref null $StructType))
+              (param $raw       (ref eq))
+              (result (ref eq))
+
+              (local $table (ref $HashEqMutable))
+              (local $spec  (ref eq))
+              (local $alist (ref eq))
+
+              ;; Initialize non-defaultable locals
+              (local.set $table (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
+
+              
+              (if (local.get $has-super)
+                  (then
+                   (local.set $table
+                              (call $struct-type-property-table-copy
+                                    (ref.cast (ref $HashEqMutable)
+                                              (struct.get $StructType $properties
+                                                          (ref.as_non_null (local.get $super)))))))
+                  (else
+                   (local.set $table (call $struct-type-property-table-empty))))
+
+              (local.set $spec (local.get $raw))
+              (if (ref.eq (local.get $spec) (global.get $missing))
+                  (then (local.set $spec (global.get $null))))
+              (if (ref.eq (local.get $spec) (global.get $false))
+                  (then (local.set $spec (global.get $null))))
+
+              (if (ref.eq (local.get $spec) (global.get $null))
+                  (then (return (ref.cast (ref eq) (local.get $table)))))
+
+              (if (ref.test (ref $HashEqMutable) (local.get $spec))
+                  (then
+                   (local.set $alist
+                              (call $hasheq->list/plain/checked
+                                    (ref.cast (ref $HashEqMutable) (local.get $spec))))
+                   (local.set $spec (local.get $alist))))
+
+              (call $struct-type-property-merge-list!
+                    (local.get $table)
+                    (local.get $spec))
+
+              (ref.cast (ref eq) (local.get $table)))
 
          
          ;;;
@@ -30920,7 +31035,7 @@
                                                  (local.get $indices)
                                                  (global.get $null)
                                                  (global.get $null)
-                                                 (global.get $false)
+                                                 (ref.cast (ref eq) (call $struct-type-property-table-empty))
                                                  (global.get $false)
                                                  (local.get $indices)
                                                  (global.get $false)
@@ -31236,7 +31351,7 @@
                      (call $string-append* (local.get $with-seps) (global.get $null)))
 
                ;;;
-               ;;; 12. Macors
+               ;;; 12. Macros
                ;;;
 
                ;;; 12.2 Syntax Object COntent
@@ -31261,7 +31376,7 @@
                                                  (local.get $indices)
                                                  (global.get $null)
                                                  (global.get $null)
-                                                 (global.get $false)
+                                                 (ref.cast (ref eq) (call $struct-type-property-table-empty))
                                                  (global.get $false)
                                                  (local.get $indices)
                                                  (global.get $false)
