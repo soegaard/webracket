@@ -27934,7 +27934,7 @@
                (local $argc     i32)
                (local $target   (ref eq))
                (local $fallback (ref eq))
-               (local $std      (ref $StructType))
+               (local $std      (ref null $StructType))
                (local $struct   (ref $Struct))
                (local $sentinel (ref eq))
                (local $val      (ref eq))
@@ -27959,6 +27959,8 @@
                               (then (array.get $Args (local.get $args) (i32.const 1)))
                               (else (global.get $missing))))
 
+               (local.set $std (ref.null $StructType))
+
                (if (ref.test (ref $StructType) (local.get $target))
                    (then (local.set $std (ref.cast (ref $StructType) (local.get $target))))
                    (else
@@ -27971,7 +27973,7 @@
                (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
                (local.set $val
                           (call $struct-type-property-lookup
-                                (local.get $std)
+                                (ref.as_non_null (local.get $std))
                                 (local.get $prop)
                                 (local.get $sentinel)))
 
