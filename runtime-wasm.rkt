@@ -27988,17 +27988,17 @@
                      (local.get $sentinel)))
 
          (func $struct-type-property-predicate (type $ClosureCode)
-               (param $clos     (ref $Closure))
-               (param $args     (ref $Args))
-               (result          (ref eq))
+               (param $clos           (ref $Closure))
+               (param $args           (ref $Args))
+               (result                (ref eq))
 
-               (local $free     (ref $Free))
-               (local $prop     (ref $StructTypeProperty))
-               (local $target   (ref eq))
-               (local $std      (ref null $StructType))
-               (local $struct   (ref $Struct))
-               (local $sentinel (ref eq))
-               (local $val      (ref eq))
+               (local $free           (ref $Free))
+               (local $prop           (ref $StructTypeProperty))
+               (local $target         (ref eq))
+               (local $std            (ref null $StructType))
+               (local $struct         (ref $Struct))
+               (local $sentinel       (ref eq))
+               (local $val            (ref eq))
 
                (local.set $free (struct.get $Closure $free (local.get $clos)))
                (local.set $prop
@@ -28048,6 +28048,10 @@
                (local $proc     (ref $Procedure))
                (local $inv      (ref $ProcedureInvoker))
                (local $noargs   (ref $Args))
+               (local $fallback-proc? i32)
+               (local $rest     (ref eq))
+               (local $rest-pair (ref $Pair))
+               (local $rest-tail (ref eq))
 
                (local.set $free (struct.get $Closure $free (local.get $clos)))
                (local.set $prop
@@ -28055,16 +28059,30 @@
                                     (array.get $Free (local.get $free) (i32.const 0))))
 
                (local.set $argc (array.len (local.get $args)))
-               (if (i32.gt_u (local.get $argc) (i32.const 2))
+               (if (i32.eqz (i32.ge_u (local.get $argc) (i32.const 1)))
                    (then (call $raise-arity-mismatch)
                          (unreachable)))
 
                (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
-               (local.set $fallback
+               (local.set $rest
                           (if (result (ref eq))
                               (i32.gt_u (local.get $argc) (i32.const 1))
                               (then (array.get $Args (local.get $args) (i32.const 1)))
-                              (else (global.get $missing))))
+                              (else (global.get $null))))
+
+               (local.set $fallback (global.get $missing))
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then)
+                   (else
+                    (if (i32.eqz (ref.test (ref $Pair) (local.get $rest)))
+                        (then (call $raise-argument-error (local.get $rest))
+                              (unreachable)))
+                    (local.set $rest-pair (ref.cast (ref $Pair) (local.get $rest)))
+                    (local.set $fallback (struct.get $Pair $a (local.get $rest-pair)))
+                    (local.set $rest-tail (struct.get $Pair $d (local.get $rest-pair)))
+                    (if (i32.eqz (ref.eq (local.get $rest-tail) (global.get $null)))
+                        (then (call $raise-arity-mismatch)
+                              (unreachable)))))
 
                (local.set $std (ref.null $StructType))
 
@@ -28090,7 +28108,10 @@
                         (then (call $raise-argument-error (local.get $target))
                               (unreachable))
                         (else
-                         (if (ref.test (ref $Procedure) (local.get $fallback))
+                         (local.set $fallback-proc?
+                                    (ref.eq (call $procedure? (local.get $fallback))
+                                            (global.get $true)))
+                         (if (local.get $fallback-proc?)
                              (then (local.set $proc (ref.cast (ref $Procedure) (local.get $fallback)))
                                    (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
                                    (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
