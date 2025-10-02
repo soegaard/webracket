@@ -3501,6 +3501,47 @@
                            (equal? (syntax->list (datum->syntax #f 'a))       #f))))
               ))
 
+ (list "14.9 Structure Inspectors"
+       (list
+        (list "object-name/procedure"
+              (let* ([anon      (lambda (x) x)]
+                     [renamed   (procedure-rename + 'plus)]
+                     [renamed-2 (procedure-rename renamed 'again)])
+                (and (equal? (object-name +) '+)
+                     (equal? (object-name renamed) 'plus)
+                     (equal? (object-name renamed-2) 'again)
+                     (equal? (object-name anon) #f))))
+
+        (list "object-name/structure-default"
+              (let ()
+                (struct plain (value))
+                (let ([instance (plain 42)])
+                  (and (equal? (object-name instance) 'plain)
+                       (equal? (object-name struct:plain) 'plain)))))
+
+        (list "object-name/structure-property-index"
+              (let ()
+                (struct labelled (name value)
+                  #:property prop:object-name 0)
+                (let ([item (labelled 'custom-name 17)])
+                  (equal? (object-name item) 'custom-name))))
+
+        (list "object-name/structure-property-proc"
+              (let ()
+                (struct computed (value)
+                  #:property prop:object-name (lambda (_self) 'via-prop))
+                (equal? (object-name (computed 'payload)) 'via-prop)))
+
+        (list "object-name/string-port"
+              (let* ([default-port (open-output-string)]
+                     [named-port   (open-output-string 'custom-port)])
+                (and (equal? (object-name default-port) 'string)
+                     (equal? (object-name named-port) 'custom-port))))
+
+        (list "object-name/fallback"
+              (equal? (object-name 42) #f))
+        ))
+
  
  #;(list "15. Operating System"
        (list "15. Paths"
