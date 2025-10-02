@@ -818,7 +818,8 @@
     (add-runtime-symbol-constant 'in-range)
     (add-runtime-symbol-constant 'in-naturals)
     (add-runtime-symbol-constant 'can-impersonate)
-    (add-runtime-symbol-constant 'prop:sealed)    
+    (add-runtime-symbol-constant 'prop:sealed)
+    (add-runtime-symbol-constant 'prop:object-name)
 
     (add-runtime-symbol-constant 'string)
     (add-runtime-symbol-constant 'unix)
@@ -27987,6 +27988,49 @@
                      (ref.cast (ref eq) (local.get $prop))
                      (local.get $sentinel)))
 
+         (func $struct-type-property-lookup-by-name
+               (param $std      (ref $StructType))
+               (param $name     (ref $Symbol))
+               (param $sentinel (ref eq))
+               (result (ref eq))
+
+               (local $table     (ref $HashEqMutable))
+               (local $alist     (ref eq))
+               (local $cursor    (ref eq))
+               (local $cell      (ref $Pair))
+               (local $entry-raw (ref eq))
+               (local $entry     (ref $Pair))
+               (local $prop      (ref $StructTypeProperty))
+
+               (local.set $table
+                          (ref.cast (ref $HashEqMutable)
+                                    (struct.get $StructType $properties (local.get $std))))
+               (local.set $alist (call $hasheq->list/plain/checked (local.get $table)))
+               (local.set $cursor (local.get $alist))
+               (block $done
+                      (loop $walk
+                            (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cursor)))
+                                (then (call $raise-argument-error (local.get $cursor))
+                                      (unreachable)))
+                            (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
+                            (local.set $entry-raw (struct.get $Pair $a (local.get $cell)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $entry-raw)))
+                                (then (call $raise-argument-error (local.get $entry-raw))
+                                      (unreachable)))
+                            (local.set $entry (ref.cast (ref $Pair) (local.get $entry-raw)))
+                            (local.set $prop
+                                       (ref.cast (ref $StructTypeProperty)
+                                                 (struct.get $Pair $a (local.get $entry))))
+                            (if (i32.eq (call $symbol=?/i32
+                                               (struct.get $StructTypeProperty $name (local.get $prop))
+                                               (local.get $name))
+                                         (i32.const 1))
+                                (then (return (struct.get $Pair $d (local.get $entry)))))
+                            (local.set $cursor (struct.get $Pair $d (local.get $cell)))
+                            (br $walk)))
+               (local.get $sentinel))
+         
          (func $struct-type-property-predicate (type $ClosureCode)
                (param $clos           (ref $Closure))
                (param $args           (ref $Args))
@@ -30229,17 +30273,69 @@
                (param $v (ref eq)) ;; any/c
                (result   (ref eq))
 
-               (local $proc   (ref $Procedure))
-               (local $struct (ref $Struct))
-               (local $type   (ref $StructType))
-               (local $name   (ref eq))
+               (local $proc        (ref $Procedure))
+               (local $struct      (ref $Struct))
+               (local $type        (ref $StructType))
+               (local $name        (ref eq))
+               (local $prop-val    (ref eq))
+               (local $sentinel    (ref eq))
+               (local $fields      (ref $Array))
+               (local $idx         i32)
+               (local $super       (ref eq))
+               (local $super-type  (ref null $StructType))
+               (local $super-count i32)
+               (local $abs-index   i32)
+               (local $prop-proc   (ref $Procedure))
+               (local $prop-inv    (ref $ProcedureInvoker))
+               (local $prop-args   (ref $Args))
+               (local $prop-name   (ref $Symbol))
 
                ;; Structure instances report the associated struct type name.
                (if (ref.test (ref $Struct) (local.get $v))
-                   (then
-                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
-                    (local.set $type   (struct.get $Struct $type (local.get $struct)))
-                    (return (struct.get $StructType $name (local.get $type)))))
+                   (then (local.set $struct    (ref.cast (ref $Struct) (local.get $v)))
+                         (local.set $type      (struct.get $Struct $type (local.get $struct)))
+                         (local.set $sentinel  (call $cons (global.get $false) (global.get $false)))
+                         (local.set $prop-name (ref.cast (ref $Symbol)
+                                                         (global.get $symbol:prop:object-name)))
+                         (local.set $prop-val  (call $struct-type-property-lookup-by-name
+                                                     (local.get $type)
+                                                     (local.get $prop-name)
+                                                     (local.get $sentinel)))
+                         (if (i32.eqz (ref.eq (local.get $prop-val) (local.get $sentinel)))
+                             (then (if (ref.test (ref i31) (local.get $prop-val))
+                                       (then (local.set $idx (i32.shr_u
+                                                              (i31.get_u (ref.cast (ref i31) (local.get $prop-val)))
+                                                              (i32.const 1)))
+                                             (local.set $super (struct.get $StructType $super (local.get $type)))
+                                             (local.set $super-type (ref.null $StructType))
+                                             (local.set $super-count (i32.const 0))
+                                             (if (i32.eqz (ref.eq (local.get $super) (global.get $false)))
+                                                 (then
+                                                  (local.set $super-type
+                                                             (ref.cast (ref $StructType) (local.get $super)))
+                                                  (local.set $super-count
+                                                             (struct.get $StructType $field-count
+                                                                         (local.get $super-type)))))
+                                             (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+                                             (local.set $abs-index (i32.add (local.get $super-count) (local.get $idx)))
+                                             (return (array.get $Array (local.get $fields) (local.get $abs-index))))
+                                       (else (if (ref.test (ref $Procedure) (local.get $prop-val))
+                                                 (then
+                                                  (local.set $prop-proc
+                                                             (ref.cast (ref $Procedure) (local.get $prop-val)))
+                                                  (local.set $prop-inv
+                                                             (struct.get $Procedure $invoke (local.get $prop-proc)))
+                                                  (local.set $prop-args
+                                                             (array.new $Args (global.get $null) (i32.const 1)))
+                                                  (array.set $Args (local.get $prop-args)
+                                                             (i32.const 0)
+                                                             (local.get $struct))
+                                                  (return_call_ref $ProcedureInvoker
+                                                                   (local.get $prop-proc)
+                                                                   (local.get $prop-args)
+                                                                   (local.get $prop-inv)))
+                                                 (else (return (local.get $prop-val)))))))
+                             (else (return (struct.get $StructType $name (local.get $type)))))))
 
                ;; Structure type descriptors return their recorded name symbol.
                (if (ref.test (ref $StructType) (local.get $v))
