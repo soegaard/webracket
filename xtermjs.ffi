@@ -1,0 +1,421 @@
+;;;
+;;; xterm.js
+;;;
+
+;; This file declares foreign bindings for the xterm.js Terminal API.
+;; Documentation: extras/xtermjs/docs/api/terminal/classes/terminal.md
+
+;;; Terminal construction
+
+;; Create a new Terminal instance.
+;; Pass (void) to use the built-in default options.
+; (xterm-terminal-new options:Value) -> Extern
+(define-foreign xterm-terminal-new
+  #:module "xterm-terminal"
+  #:name   "create"
+  (-> (value) (extern)))
+
+;;; Terminal properties
+
+;; Access to the normal and alt buffers.
+; (xterm-terminal-buffer term:Extern) -> Extern
+(define-foreign xterm-terminal-buffer
+  #:module "xterm-terminal"
+  #:name   "buffer"
+  (-> (extern) (extern)))
+
+;; Number of columns in the viewport.
+; (xterm-terminal-cols term:Extern) -> Unsigned-Integer
+(define-foreign xterm-terminal-cols
+  #:module "xterm-terminal"
+  #:name   "cols"
+  (-> (extern) (u32)))
+
+;; Number of rows in the viewport.
+; (xterm-terminal-rows term:Extern) -> Unsigned-Integer
+(define-foreign xterm-terminal-rows
+  #:module "xterm-terminal"
+  #:name   "rows"
+  (-> (extern) (u32)))
+
+;; Root element that hosts the terminal.
+;; Returns (void) until `open` has been called.
+; (xterm-terminal-element term:Extern) -> Value
+(define-foreign xterm-terminal-element
+  #:module "xterm-terminal"
+  #:name   "element"
+  (-> (extern) (value)))
+
+;; Textarea element that receives keyboard input.
+;; Returns (void) until `open` has been called.
+; (xterm-terminal-textarea term:Extern) -> Value
+(define-foreign xterm-terminal-textarea
+  #:module "xterm-terminal"
+  #:name   "textarea"
+  (-> (extern) (value)))
+
+;; Registered markers associated with the buffer.
+; (xterm-terminal-markers term:Extern) -> Extern
+(define-foreign xterm-terminal-markers
+  #:module "xterm-terminal"
+  #:name   "markers"
+  (-> (extern) (extern)))
+
+;; Terminal modes currently enabled.
+; (xterm-terminal-modes term:Extern) -> Extern
+(define-foreign xterm-terminal-modes
+  #:module "xterm-terminal"
+  #:name   "modes"
+  (-> (extern) (extern)))
+
+;; Terminal options getter.
+; (xterm-terminal-options term:Extern) -> Extern
+(define-foreign xterm-terminal-options
+  #:module "xterm-terminal"
+  #:name   "options"
+  (-> (extern) (extern)))
+
+;; Terminal options setter.
+;; Provide a JS object describing the new options.
+; (xterm-set-terminal-options! term:Extern options:Value) -> Void
+(define-foreign xterm-set-terminal-options!
+  #:module "xterm-terminal"
+  #:name   "set-options!"
+  (-> (extern value) ()))
+
+;; Parser interface for custom escape handlers.
+; (xterm-terminal-parser term:Extern) -> Extern
+(define-foreign xterm-terminal-parser
+  #:module "xterm-terminal"
+  #:name   "parser"
+  (-> (extern) (extern)))
+
+;; Unicode handling interface.
+; (xterm-terminal-unicode term:Extern) -> Extern
+(define-foreign xterm-terminal-unicode
+  #:module "xterm-terminal"
+  #:name   "unicode"
+  (-> (extern) (extern)))
+
+;;; Terminal events
+
+;; Event fired when the bell rings.
+; (xterm-terminal-on-bell term:Extern) -> Extern
+(define-foreign xterm-terminal-on-bell
+  #:module "xterm-terminal"
+  #:name   "on-bell"
+  (-> (extern) (extern)))
+
+;; Event fired for binary data.
+; (xterm-terminal-on-binary term:Extern) -> Extern
+(define-foreign xterm-terminal-on-binary
+  #:module "xterm-terminal"
+  #:name   "on-binary"
+  (-> (extern) (extern)))
+
+;; Event fired when the cursor moves.
+; (xterm-terminal-on-cursor-move term:Extern) -> Extern
+(define-foreign xterm-terminal-on-cursor-move
+  #:module "xterm-terminal"
+  #:name   "on-cursor-move"
+  (-> (extern) (extern)))
+
+;; Event fired when data is emitted by the terminal.
+; (xterm-terminal-on-data term:Extern) -> Extern
+(define-foreign xterm-terminal-on-data
+  #:module "xterm-terminal"
+  #:name   "on-data"
+  (-> (extern) (extern)))
+
+;; Event fired when a key is pressed.
+; (xterm-terminal-on-key term:Extern) -> Extern
+(define-foreign xterm-terminal-on-key
+  #:module "xterm-terminal"
+  #:name   "on-key"
+  (-> (extern) (extern)))
+
+;; Event fired when a line feed is added.
+; (xterm-terminal-on-line-feed term:Extern) -> Extern
+(define-foreign xterm-terminal-on-line-feed
+  #:module "xterm-terminal"
+  #:name   "on-line-feed"
+  (-> (extern) (extern)))
+
+;; Event fired when rows are rendered.
+; (xterm-terminal-on-render term:Extern) -> Extern
+(define-foreign xterm-terminal-on-render
+  #:module "xterm-terminal"
+  #:name   "on-render"
+  (-> (extern) (extern)))
+
+;; Event fired when the terminal is resized.
+; (xterm-terminal-on-resize term:Extern) -> Extern
+(define-foreign xterm-terminal-on-resize
+  #:module "xterm-terminal"
+  #:name   "on-resize"
+  (-> (extern) (extern)))
+
+;; Event fired when the viewport scrolls.
+; (xterm-terminal-on-scroll term:Extern) -> Extern
+(define-foreign xterm-terminal-on-scroll
+  #:module "xterm-terminal"
+  #:name   "on-scroll"
+  (-> (extern) (extern)))
+
+;; Event fired when the selection changes.
+; (xterm-terminal-on-selection-change term:Extern) -> Extern
+(define-foreign xterm-terminal-on-selection-change
+  #:module "xterm-terminal"
+  #:name   "on-selection-change"
+  (-> (extern) (extern)))
+
+;; Event fired when the terminal title changes.
+; (xterm-terminal-on-title-change term:Extern) -> Extern
+(define-foreign xterm-terminal-on-title-change
+  #:module "xterm-terminal"
+  #:name   "on-title-change"
+  (-> (extern) (extern)))
+
+;; Event fired after write data was parsed.
+; (xterm-terminal-on-write-parsed term:Extern) -> Extern
+(define-foreign xterm-terminal-on-write-parsed
+  #:module "xterm-terminal"
+  #:name   "on-write-parsed"
+  (-> (extern) (extern)))
+
+;;; Terminal methods
+
+;; Register a custom key event handler.
+; (xterm-terminal-attach-custom-key-event-handler term:Extern handler:Extern) -> Void
+(define-foreign xterm-terminal-attach-custom-key-event-handler
+  #:module "xterm-terminal"
+  #:name   "attach-custom-key-event-handler"
+  (-> (extern extern) ()))
+
+;; Register a custom wheel event handler.
+; (xterm-terminal-attach-custom-wheel-event-handler term:Extern handler:Extern) -> Void
+(define-foreign xterm-terminal-attach-custom-wheel-event-handler
+  #:module "xterm-terminal"
+  #:name   "attach-custom-wheel-event-handler"
+  (-> (extern extern) ()))
+
+;; Remove focus from the terminal.
+; (xterm-terminal-blur term:Extern) -> Void
+(define-foreign xterm-terminal-blur
+  #:module "xterm-terminal"
+  #:name   "blur"
+  (-> (extern) ()))
+
+;; Focus the terminal.
+; (xterm-terminal-focus term:Extern) -> Void
+(define-foreign xterm-terminal-focus
+  #:module "xterm-terminal"
+  #:name   "focus"
+  (-> (extern) ()))
+
+;; Dispose of the terminal instance.
+; (xterm-terminal-dispose term:Extern) -> Void
+(define-foreign xterm-terminal-dispose
+  #:module "xterm-terminal"
+  #:name   "dispose"
+  (-> (extern) ()))
+
+;; Clear the entire buffer.
+; (xterm-terminal-clear term:Extern) -> Void
+(define-foreign xterm-terminal-clear
+  #:module "xterm-terminal"
+  #:name   "clear"
+  (-> (extern) ()))
+
+;; Clear the active selection.
+; (xterm-terminal-clear-selection term:Extern) -> Void
+(define-foreign xterm-terminal-clear-selection
+  #:module "xterm-terminal"
+  #:name   "clear-selection"
+  (-> (extern) ()))
+
+;; Clear the texture atlas.
+; (xterm-terminal-clear-texture-atlas term:Extern) -> Void
+(define-foreign xterm-terminal-clear-texture-atlas
+  #:module "xterm-terminal"
+  #:name   "clear-texture-atlas"
+  (-> (extern) ()))
+
+;; Deregister a previously registered character joiner.
+; (xterm-terminal-deregister-character-joiner term:Extern joiner-id:Integer) -> Void
+(define-foreign xterm-terminal-deregister-character-joiner
+  #:module "xterm-terminal"
+  #:name   "deregister-character-joiner"
+  (-> (extern i32) ()))
+
+;; Retrieve the current selection as a string.
+; (xterm-terminal-get-selection term:Extern) -> String
+(define-foreign xterm-terminal-get-selection
+  #:module "xterm-terminal"
+  #:name   "get-selection"
+  (-> (extern) (string)))
+
+;; Retrieve the current selection range.
+; (xterm-terminal-get-selection-position term:Extern) -> Value
+(define-foreign xterm-terminal-get-selection-position
+  #:module "xterm-terminal"
+  #:name   "get-selection-position"
+  (-> (extern) (value)))
+
+;; Test whether a selection is active.
+; (xterm-terminal-has-selection term:Extern) -> Boolean
+(define-foreign xterm-terminal-has-selection
+  #:module "xterm-terminal"
+  #:name   "has-selection"
+  (-> (extern) (i32)))
+
+;; Forward input data to the application.
+;; Pass (void) for `was-user-input?` to use the default behaviour (true).
+; (xterm-terminal-input term:Extern data:String was-user-input?:Value) -> Void
+(define-foreign xterm-terminal-input
+  #:module "xterm-terminal"
+  #:name   "input"
+  (-> (extern string value) ()))
+
+;; Load an addon instance.
+; (xterm-terminal-load-addon term:Extern addon:Extern) -> Void
+(define-foreign xterm-terminal-load-addon
+  #:module "xterm-terminal"
+  #:name   "load-addon"
+  (-> (extern extern) ()))
+
+;; Open the terminal inside the provided parent element.
+; (xterm-terminal-open term:Extern parent:Extern) -> Void
+(define-foreign xterm-terminal-open
+  #:module "xterm-terminal"
+  #:name   "open"
+  (-> (extern extern) ()))
+
+;; Paste text into the terminal.
+; (xterm-terminal-paste term:Extern data:String) -> Void
+(define-foreign xterm-terminal-paste
+  #:module "xterm-terminal"
+  #:name   "paste"
+  (-> (extern string) ()))
+
+;; Refresh the viewport between the given rows.
+; (xterm-terminal-refresh term:Extern start:Integer end:Integer) -> Void
+(define-foreign xterm-terminal-refresh
+  #:module "xterm-terminal"
+  #:name   "refresh"
+  (-> (extern i32 i32) ()))
+
+;; Register a character joiner and receive its identifier.
+; (xterm-terminal-register-character-joiner term:Extern handler:Extern) -> Integer
+(define-foreign xterm-terminal-register-character-joiner
+  #:module "xterm-terminal"
+  #:name   "register-character-joiner"
+  (-> (extern extern) (i32)))
+
+;; Register a decoration on the terminal.
+; (xterm-terminal-register-decoration term:Extern options:Extern) -> Extern
+(define-foreign xterm-terminal-register-decoration
+  #:module "xterm-terminal"
+  #:name   "register-decoration"
+  (-> (extern extern) (extern)))
+
+;; Register a custom link provider.
+; (xterm-terminal-register-link-provider term:Extern provider:Extern) -> Extern
+(define-foreign xterm-terminal-register-link-provider
+  #:module "xterm-terminal"
+  #:name   "register-link-provider"
+  (-> (extern extern) (extern)))
+
+;; Register a marker relative to the cursor.
+;; Pass (void) for `cursor-y-offset` to use the default offset of 0.
+; (xterm-terminal-register-marker term:Extern cursor-y-offset:Value) -> Extern
+(define-foreign xterm-terminal-register-marker
+  #:module "xterm-terminal"
+  #:name   "register-marker"
+  (-> (extern value) (extern)))
+
+;; Perform a full terminal reset.
+; (xterm-terminal-reset term:Extern) -> Void
+(define-foreign xterm-terminal-reset
+  #:module "xterm-terminal"
+  #:name   "reset"
+  (-> (extern) ()))
+
+;; Resize the terminal viewport.
+; (xterm-terminal-resize term:Extern columns:Integer rows:Integer) -> Void
+(define-foreign xterm-terminal-resize
+  #:module "xterm-terminal"
+  #:name   "resize"
+  (-> (extern i32 i32) ()))
+
+;; Scroll by a number of lines.
+; (xterm-terminal-scroll-lines term:Extern amount:Integer) -> Void
+(define-foreign xterm-terminal-scroll-lines
+  #:module "xterm-terminal"
+  #:name   "scroll-lines"
+  (-> (extern i32) ()))
+
+;; Scroll by a number of pages.
+; (xterm-terminal-scroll-pages term:Extern page-count:Integer) -> Void
+(define-foreign xterm-terminal-scroll-pages
+  #:module "xterm-terminal"
+  #:name   "scroll-pages"
+  (-> (extern i32) ()))
+
+;; Scroll to the bottom of the buffer.
+; (xterm-terminal-scroll-to-bottom term:Extern) -> Void
+(define-foreign xterm-terminal-scroll-to-bottom
+  #:module "xterm-terminal"
+  #:name   "scroll-to-bottom"
+  (-> (extern) ()))
+
+;; Scroll to a specific line.
+; (xterm-terminal-scroll-to-line term:Extern line:Integer) -> Void
+(define-foreign xterm-terminal-scroll-to-line
+  #:module "xterm-terminal"
+  #:name   "scroll-to-line"
+  (-> (extern i32) ()))
+
+;; Scroll to the top of the buffer.
+; (xterm-terminal-scroll-to-top term:Extern) -> Void
+(define-foreign xterm-terminal-scroll-to-top
+  #:module "xterm-terminal"
+  #:name   "scroll-to-top"
+  (-> (extern) ()))
+
+;; Select text starting at a column and row for the given length.
+; (xterm-terminal-select term:Extern column:Integer row:Integer length:Integer) -> Void
+(define-foreign xterm-terminal-select
+  #:module "xterm-terminal"
+  #:name   "select"
+  (-> (extern i32 i32 i32) ()))
+
+;; Select all text in the buffer.
+; (xterm-terminal-select-all term:Extern) -> Void
+(define-foreign xterm-terminal-select-all
+  #:module "xterm-terminal"
+  #:name   "select-all"
+  (-> (extern) ()))
+
+;; Select text between two buffer lines.
+; (xterm-terminal-select-lines term:Extern start:Integer end:Integer) -> Void
+(define-foreign xterm-terminal-select-lines
+  #:module "xterm-terminal"
+  #:name   "select-lines"
+  (-> (extern i32 i32) ()))
+
+;; Write data to the terminal.
+;; Pass a string or Uint8Array via FASL; the callback defaults to (void) (no callback).
+; (xterm-terminal-write term:Extern data:Value callback:Value) -> Void
+(define-foreign xterm-terminal-write
+  #:module "xterm-terminal"
+  #:name   "write"
+  (-> (extern value value) ()))
+
+;; Write data followed by a newline.
+;; Pass a string or Uint8Array via FASL; the callback defaults to (void) (no callback).
+; (xterm-terminal-writeln term:Extern data:Value callback:Value) -> Void
+(define-foreign xterm-terminal-writeln
+  #:module "xterm-terminal"
+  #:name   "writeln"
+  (-> (extern value value) ()))
