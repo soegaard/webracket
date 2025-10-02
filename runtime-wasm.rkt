@@ -831,6 +831,8 @@
     (add-runtime-symbol-constant 'sealed)
     (add-runtime-symbol-constant 'prop:object-name)
     (add-runtime-symbol-constant 'object-name)
+    (add-runtime-symbol-constant 'prop:procedure)
+    (add-runtime-symbol-constant 'procedure)
 
     (add-runtime-symbol-constant 'string)
     (add-runtime-symbol-constant 'unix)
@@ -33564,6 +33566,7 @@
 
                ;; Struct-type properties provided by the runtime
                (global $prop:object-name (mut (ref eq)) (global.get $void))
+               (global $prop:procedure   (mut (ref eq)) (global.get $void))
                
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
@@ -33602,6 +33605,15 @@
                                            (call $make-struct-type-property-descriptor/checked
                                                  (ref.cast (ref $Symbol)
                                                            (global.get $symbol:object-name))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:procedure
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:procedure))
                                                  (global.get $false)
                                                  (global.get $null)
                                                  (global.get $false)

@@ -55,8 +55,7 @@
          )
 
 
-
-;; The primitives are 
+;; The primitives and constants are:
 
 (provide
  match
@@ -560,7 +559,8 @@
  procedure? apply procedure-rename procedure->external
  procedure-arity procedure-arity-mask procedure-arity-includes?
  primitive? primitive-closure? primitive-result-arity
-
+ prop:procedure
+ 
  ;; 4.21 Void
  void? make-void void
 
@@ -672,6 +672,7 @@
  ;; 14.9 Structure Inspectors
  object-name
  prop:object-name
+ 
  
  ;; 15.1 Paths
  path?

@@ -2813,6 +2813,9 @@
                            (equal? (p? c-instance) #t)
                            (equal? (p-ref struct:c) 3)
                            (equal? (p-ref c-instance) 3))))
+
+              (list "prop:procedure/builtin"
+                    (list (equal? (struct-type-property? prop:procedure) #t)))
               ))
 
        (list "5.6 Structure Utilities"

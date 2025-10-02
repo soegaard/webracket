@@ -361,7 +361,8 @@
      (error 'constant-value "got: ~a" c)]))
 
 (define non-literal-constants
-  '(prop:object-name))
+  '(prop:object-name
+    prop:procedure))
 
 (define (non-literal-constant? x)
   (and (memq x non-literal-constants)) #t)
@@ -2666,9 +2667,6 @@
                 [(primitive? sym)            (values AE empty-set)]         ; immediate constants
                 ; [(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
                 [else                        (values AE (make-id-set x))])] ; non-primitive
-    ;; [,x                   (if (primitive? (variable-id x))   ;  XXX her! add non-literal-constants here
-    ;;                           (values AE empty-set)         ; primitive
-    ;;                           (values AE (make-id-set x)))] ; non-primitive
     [,ab                  (Abstraction AE xs)]
     [,cab                 (CaseAbstraction AE xs)]
     [(quote ,s ,d)        (values AE empty-set)]
@@ -3253,7 +3251,9 @@
     (define (local-variable? v)  (set-in? v local-vars))
     (define (ffi-variable? v)    (set-in? (syntax-e (variable-id v))
                                           ffi-primitives))
-    (define (global-variable? v) (non-literal-constant? (variable-id v)))
+    (define (global-variable? v)
+      ; a global (wasm) varible is unboxed
+      (non-literal-constant? (variable-id v)))
     (define (classify v)
       (cond
         [(top-variable?    v) 'top]
@@ -3271,10 +3271,10 @@
       ; reference to non-free variable
       ;   global refers to a Web Assembly global variable
       (case (classify v)
+        [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(top)        `(global.get ,(TopVar v))]   ; unboxed
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
-        [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(ffi)        'TODO]
         [else (error 'Reference "got: ~a" v)]))
     ;; 3. Variables assignments according to type.
@@ -3514,6 +3514,7 @@
      ;       Note that if x is present in a top-level define-values
      ;       then (top x) will become x anyway.
      ; Note: What is missing here: is error handling for an undefined top-level-variable.
+     (displayln (list 'xxx (variable-id x)) (current-error-port))
      `(struct.get $Boxed $v (ref.cast (ref $Boxed) ,(Reference x)))
      #;`(app ,#'namespace-variable-value (app ,#'string->symbol ',(symbol->string (syntax-e (variable-id x)))))
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
@@ -4649,7 +4650,6 @@
   (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
   (displayln "-- primitives also declared as variables at top-level --")
   (displayln primitives-also-declared-as-variables-at-top-level)
-  
   
   (generate-runtime
    dls                              ; define-labels
