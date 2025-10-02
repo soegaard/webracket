@@ -2746,7 +2746,7 @@
                              [fallback          (lambda () sentinel)]
                              [p-from-q          (prop:p-get q-std)]
                              [p-from-q-instance (prop:p-get q-instance)])
-                        (list
+                        (and
                          (struct-type-property? prop:p)
                          (struct-type-property? prop:q)
                          (struct-type-property-predicate-procedure? prop:p?)
@@ -2788,7 +2788,7 @@
                       (define plain-instance (make-plain))
                       (define c-instance (make-c))
                       (define fallback-symbol 'no-prop)
-                      (list (equal? (struct-type-property? prop:p) #t)
+                      (and (equal? (struct-type-property? prop:p) #t)
                            (equal? (struct-type-property? prop:q) #t)
                            (equal? (struct-type-property? 'p) #f)
                            (equal? (struct-type-property-predicate-procedure? p?) #t)
@@ -2821,10 +2821,10 @@
                     (let ()
                       (struct callable (f) #:property prop:procedure 0)
                       (define wrapped (callable (lambda (x y) (+ x y))))
-                      (list (procedure? wrapped)
-                            (list (wrapped 2 3) 5))))
+                      (and (procedure? wrapped)
+                           (equal? (wrapped 2 3) 5))))
               
-              #;(list "prop:procedure/apply-proc"
+              (list "prop:procedure/apply-proc"
                     (let ()
                       (struct counter (n)
                         #:mutable

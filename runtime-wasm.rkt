@@ -2330,8 +2330,98 @@
          (func $invoke-struct (type $ProcedureInvoker)
                (param $proc (ref $Procedure)) ; type check: an $Struct is expected
                (param $args (ref $Args))      ; an array of (ref eq)
-               (result (ref eq))
-               ,(Imm #t))
+               (result      (ref eq))
+
+               (local $struct       (ref $Struct))
+               (local $type         (ref $StructType))
+               (local $prop-desc    (ref $StructTypeProperty))
+               (local $sentinel     (ref eq))
+               (local $prop-val     (ref eq))
+               (local $fields       (ref $Array))
+               (local $idx          i32)
+               (local $super        (ref eq))
+               (local $super-type   (ref null $StructType))
+               (local $super-count  i32)
+               (local $abs-index    i32)
+               (local $target       (ref eq))
+               (local $delegate     (ref $Procedure))
+               (local $delegate-inv (ref $ProcedureInvoker))
+               (local $argc         i32)
+               (local $packed-args  (ref $Args))
+               (local $i            i32)
+
+               ;; Validate and cast the incoming procedure reference.
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $proc)))
+                   (then (call $raise-arity-mismatch)
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $proc)))
+
+               ;; Look up the prop:procedure association for the structure type.
+               (local.set $type (struct.get $Struct $type (local.get $struct)))
+               (local.set $prop-desc
+                          (ref.cast (ref $StructTypeProperty)
+                                    (global.get $prop:procedure)))
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $prop-val
+                          (call $struct-type-property-lookup
+                                (local.get $type)
+                                (local.get $prop-desc)
+                                (local.get $sentinel)))
+
+               ;; Abort when the structure type is not applicable.
+               (if (ref.eq (local.get $prop-val) (local.get $sentinel))
+                   (then (call $raise-arity-mismatch)
+                         (unreachable)))
+
+               ;; Case 1: property designates a structure field containing a procedure.
+               (if (ref.test (ref i31) (local.get $prop-val))
+                   (then
+                    (local.set $idx (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $prop-val)))
+                                               (i32.const 1)))
+                    (local.set $super (struct.get $StructType $super (local.get $type)))
+                    (local.set $super-type (ref.null $StructType))
+                    (local.set $super-count (i32.const 0))
+                    (if (i32.eqz (ref.eq (local.get $super) (global.get $false)))
+                        (then (local.set $super-type (ref.cast (ref $StructType) (local.get $super)))
+                              (local.set $super-count
+                                         (struct.get $StructType $field-count (local.get $super-type)))))
+                    (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+                    (local.set $abs-index (i32.add (local.get $super-count) (local.get $idx)))
+                    (local.set $target (array.get $Array (local.get $fields) (local.get $abs-index)))
+                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $target)))
+                        (then (call $raise-arity-mismatch)
+                              (unreachable)))
+                    (local.set $delegate (ref.cast (ref $Procedure) (local.get $target)))
+                    (local.set $delegate-inv (struct.get $Procedure $invoke (local.get $delegate)))
+                    (return_call_ref $ProcedureInvoker
+                                     (local.get $delegate)
+                                     (local.get $args)
+                                     (local.get $delegate-inv))))
+
+               ;; Case 2: property supplies a procedure to receive the structure + arguments.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $prop-val)))
+                   (then (call $raise-arity-mismatch)
+                         (unreachable)))
+               (local.set $delegate (ref.cast (ref $Procedure) (local.get $prop-val)))
+               (local.set $delegate-inv (struct.get $Procedure $invoke (local.get $delegate)))
+               (local.set $argc (array.len (local.get $args)))
+               (local.set $packed-args
+                          (array.new $Args (global.get $null)
+                                     (i32.add (local.get $argc) (i32.const 1))))
+               (array.set $Args (local.get $packed-args) (i32.const 0) (local.get $struct))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $copy
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $argc)))
+                            (array.set $Args (local.get $packed-args)
+                                       (i32.add (local.get $i) (i32.const 1))
+                                       (array.get $Args (local.get $args) (local.get $i)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $copy)))
+               (return_call_ref $ProcedureInvoker
+                                (local.get $delegate)
+                                (local.get $packed-args)
+                                (local.get $delegate-inv)))
 
          (func $raise-arity-error:exactly  (unreachable))
          (func $raise-arity-error:at-least (unreachable))
