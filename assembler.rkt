@@ -450,6 +450,9 @@ function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
 // hasDOM gives us a way of determining whether the host is a browser or Node
 const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode === 'function';
 
+// hasXterm indicates whether XTermJS is available
+const hasXterm = typeof Terminal !== 'undefined';
+
 function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
@@ -1812,6 +1815,100 @@ var imports = {
         'set-pointer-capture!'()      { throw new Error('DOM not available in this environment'); },
         'toggle-attribute!'()         { throw new Error('DOM not available in this environment'); },
     },
+    'xterm-terminal': hasXterm ? {
+        'create': (options => {
+            const opts = from_fasl(options);
+            return opts === undefined ? new Terminal() : new Terminal(opts);
+        }),
+        'buffer': (term => term.buffer),
+        'cols': (term => term.cols),
+        'rows': (term => term.rows),
+        'element': (term => term.element),
+        'textarea': (term => term.textarea),
+        'markers':  (term => term.markers),
+        'modes':    (term => term.modes),
+        'options': (term => term.options),
+        'set-options!': ((term, options) => {
+            const opts = from_fasl(options);
+            if (opts !== undefined) {
+                term.options = opts;
+            }
+        }),
+        'parser': (term => term.parser),
+        'unicode': (term => term.unicode),
+        'on-bell': (term => term.onBell),
+        'on-binary': (term => term.onBinary),
+        'on-cursor-move': (term => term.onCursorMove),
+        'on-data': (term => term.onData),
+        'on-key': (term => term.onKey),
+        'on-line-feed': (term => term.onLineFeed),
+        'on-render': (term => term.onRender),
+        'on-resize': (term => term.onResize),
+        'on-scroll': (term => term.onScroll),
+        'on-selection-change': (term => term.onSelectionChange),
+        'on-title-change': (term => term.onTitleChange),
+        'on-write-parsed': (term => term.onWriteParsed),
+        'attach-custom-key-event-handler': ((term, handler) => { term.attachCustomKeyEventHandler(handler); }),
+        'attach-custom-wheel-event-handler': ((term, handler) => { term.attachCustomWheelEventHandler(handler); }),
+        'blur': (term => { term.blur(); }),
+        'focus': (term => { term.focus(); }),
+        'dispose': (term => { term.dispose(); }),
+        'clear': (term => { term.clear(); }),
+        'clear-selection': (term => { term.clearSelection(); }),
+        'clear-texture-atlas': (term => { term.clearTextureAtlas(); }),
+        'deregister-character-joiner': ((term, joinerId) => { term.deregisterCharacterJoiner(joinerId); }),
+        'get-selection': (term => term.getSelection()),
+        'get-selection-position': (term => term.getSelectionPosition()),
+        'has-selection': (term => term.hasSelection() ? 1 : 0),
+        'input': ((term, data, wasUserInput) => {
+            const d = from_fasl(data);
+            const w = from_fasl(wasUserInput);
+            if (w === undefined) {
+                term.input(d);
+            } else {
+                term.input(d, w);
+            }
+        }),
+        'load-addon': ((term, addon) => { term.loadAddon(addon); }),
+        'open': ((term, parent) => { term.open(parent); }),
+        'paste': ((term, data) => { term.paste(from_fasl(data)); }),
+        'refresh': ((term, start, end) => { term.refresh(start, end); }),
+        'register-character-joiner': ((term, handler) => term.registerCharacterJoiner(handler)),
+        'register-decoration': ((term, options) => term.registerDecoration(options)),
+        'register-link-provider': ((term, provider) => term.registerLinkProvider(provider)),
+        'register-marker': ((term, cursorYOffset) => {
+            const offset = from_fasl(cursorYOffset);
+            return offset === undefined ? term.registerMarker() : term.registerMarker(offset);
+        }),
+        'reset': (term => { term.reset(); }),
+        'resize': ((term, columns, rows) => { term.resize(columns, rows); }),
+        'scroll-lines': ((term, amount) => { term.scrollLines(amount); }),
+        'scroll-pages': ((term, pageCount) => { term.scrollPages(pageCount); }),
+        'scroll-to-bottom': (term => { term.scrollToBottom(); }),
+        'scroll-to-line': ((term, line) => { term.scrollToLine(line); }),
+        'scroll-to-top': (term => { term.scrollToTop(); }),
+        'select': ((term, column, row, length) => { term.select(column, row, length); }),
+        'select-all': (term => { term.selectAll(); }),
+        'select-lines': ((term, start, end) => { term.selectLines(start, end); }),
+        'write': ((term, data, callback) => {
+            const d = from_fasl(data);
+            const cb = from_fasl(callback);
+            if (cb === undefined) {
+                term.write(d);
+            } else {
+                term.write(d, cb);
+            }
+        }),
+        'writeln': ((term, data, callback) => {
+            const d = from_fasl(data);
+            const cb = from_fasl(callback);
+            if (cb === undefined) {
+                term.writeln(d);
+            } else {
+                term.writeln(d, cb);
+            }
+        })
+    } : new Proxy({}, { get() { throw new Error('xterm.js not available in this environment'); } }),
     // JSXGraph Point
     'jsx-point': hasDOM ? {
         'is-point':                    (v => boolean_to_i32(JXG.isPoint(v))),
