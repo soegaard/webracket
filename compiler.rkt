@@ -2622,7 +2622,10 @@
         (set-union bound newly-bound)))
     (define (primitives->id-set)
       (ids->id-set (map (λ (sym) (variable (datum->syntax #'dfv sym)))
-                        primitives))))
+                        primitives)))
+    (define (non-literal-constants->id-set)
+      (ids->id-set (map (λ (sym) (variable (datum->syntax #'dfv sym)))
+                        non-literal-constants))))
   
   (Formals : Formals (F) -> Formals ())
   (TopLevelForm : TopLevelForm (T xs) -> TopLevelForm (xs)
@@ -2630,7 +2633,8 @@
                                                (set-union* xs)
                                                (set-union (bound-at-top-level t)
                                                           ; todo: only import primitives that are declared
-                                                          (primitives->id-set))))]
+                                                          (set-union (primitives->id-set)
+                                                                     (non-literal-constants->id-set)))))]
     [(topmodule ,s ,mn ,mp ,mf ...) (for ([m mf]) ; todo: find all identifiers defined at the module level
                                       (ModuleLevelForm m '()))   ; mark abstractions in the module
                                     (values T '())]               ; no free variables in module
@@ -2660,7 +2664,7 @@
     [,x       (define sym (variable-id x))
               (cond
                 [(primitive? sym)            (values AE empty-set)]         ; immediate constants
-                [(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
+                ; [(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
                 [else                        (values AE (make-id-set x))])] ; non-primitive
     ;; [,x                   (if (primitive? (variable-id x))   ;  XXX her! add non-literal-constants here
     ;;                           (values AE empty-set)         ; primitive

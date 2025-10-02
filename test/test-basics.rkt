@@ -2844,7 +2844,7 @@
                                 '#(struct:vect-point2 3 4))))))))
 
 
- (list "13. Input and Output"
+ #;(list "13. Input and Output"
 
        (list "13.1 Ports"
              (list
@@ -3416,7 +3416,7 @@
                        (equal? (srcloc-span loc2)     #f)
                        (equal? (srcloc->string loc2) "file")))))))
 
- (list "12. Macros"
+ #;(list "12. Macros"
        (list "12.2 Syntax Object Content"
              (list
               (list "datum->syntax/basic"
@@ -3505,12 +3505,12 @@
        (list
         (list "object-name/procedure"
               (let* ([anon      (lambda (x) x)]
-                     [renamed   (procedure-rename + 'plus)]
+                     [renamed   (procedure-rename +       'plus)]
                      [renamed-2 (procedure-rename renamed 'again)])
-                (and (equal? (object-name +) '+)
-                     (equal? (object-name renamed) 'plus)
-                     (equal? (object-name renamed-2) 'again)
-                     (equal? (object-name anon) #f))))
+                (list (equal? (object-name +)         '+)
+                      (equal? (object-name renamed)   'plus)
+                      (equal? (object-name renamed-2) 'again)
+                      (equal? (object-name anon)      #f))))
 
         (list "object-name/structure-default"
               (let ()

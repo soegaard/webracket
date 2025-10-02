@@ -688,13 +688,14 @@
       (for/list ([pr (sort (remove* todo-handle-later primitives) symbol<?)]
                  #:do [(define desc (primitive->description pr))]
                  #:when desc)
-        (define ar (primitive-description-arity desc))
+        (define ar    (primitive-description-arity desc))
         (define shape (primitive->shape pr desc))
+        (define $name ($ (string->symbol (~a "symbol:" pr))))
         `(global.set ,($ (prim: pr))
                      (struct.new $PrimitiveProcedure
                       ; for $Procedure
                       (i32.const 0)                               ; hash
-                      ,(Imm #f)                                   ; name
+                      (global.get ,$name)                         ; name  (used by object-name)
                       ,(Imm (arity->internal-representation ar))  ; arity
                       (global.get $the-racket/primitive-realm)    ; realm
                       #;(ref.func $primitive-invoke)
@@ -759,7 +760,7 @@
                                            (i32.const 0) (i32.const ,n))))))
     
     ;; Symbol constants used in the runtime
-    ;;  `symbol-constants holds the constants passed by `generate-code`
+    ;;  `runtime-symbol-constants` holds the constants passed by `generate-code`
     ;; in `compiler.rkt`
     (define runtime-symbol-constants symbol-constants)
     (define runtime-symbols-ht (make-hasheq))
@@ -769,6 +770,7 @@
          => values]
         [else
          (define name symbol)
+         (hash-set! runtime-symbols-ht symbol #t) ; avoid duplicates
          (set! runtime-symbol-constants
                (cons (list name symbol) runtime-symbol-constants))]))
     (define (declare-runtime-symbol-constants)
@@ -796,6 +798,12 @@
                                                  (i32.const 0) (i32.const ,n)))))))
 
     ;; String and symbol constants used in the runtime
+    
+    ; Names of each primitive
+    (for ([pr (in-list (sort (remove* todo-handle-later primitives) symbol<?))])
+      (when (primitive->description pr)
+        (add-runtime-symbol-constant pr)))
+    
     (add-runtime-symbol-constant 'racket)
     (add-runtime-symbol-constant 'racket/primitive)
     (add-runtime-symbol-constant 'Other)
@@ -875,6 +883,7 @@
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
+
 
     (add-runtime-string-constant 'hash-variable-reference    "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                 "#&")
@@ -1029,11 +1038,11 @@
                        (field $name   (ref eq))   ;; $false or a $String    
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0)
                        ;                              +n means precisely n  
-                       ;                               0 means precisely 0
-                       ;                              -1 means at least  0   
-                       ;                              -2 means at least  1   
+                       ;                               0 means precisely 0  
+                       ;                              -1 means at least  0  
+                       ;                              -2 means at least  1  
                        ;                              -n means at least n-1 
-                       (field $realm  (ref eq))   ;; $false or $Symbol
+                       (field $realm  (ref eq))   ;; $false or $Symbol      
                        (field $invoke (ref $ProcedureInvoker)))))
 
           (type $ProcedureInvoker
