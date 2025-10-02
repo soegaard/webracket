@@ -2816,6 +2816,26 @@
 
               (list "prop:procedure/builtin"
                     (list (equal? (struct-type-property? prop:procedure) #t)))
+
+              (list "prop:procedure/apply-field"
+                    (let ()
+                      (struct callable (f) #:property prop:procedure 0)
+                      (define wrapped (callable (lambda (x y) (+ x y))))
+                      (list (procedure? wrapped)
+                            (list (wrapped 2 3) 5))))
+              
+              #;(list "prop:procedure/apply-proc"
+                    (let ()
+                      (struct counter (n)
+                        #:mutable
+                        #:property prop:procedure
+                        (lambda (self delta)
+                          (set-counter-n! self (+ (counter-n self) delta))
+                          (counter-n self)))
+                      (define c (counter 10))
+                      (and (equal? (c 5) 15)
+                           (equal? (c -2) 13))))
+              
               ))
 
        (list "5.6 Structure Utilities"

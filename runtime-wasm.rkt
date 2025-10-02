@@ -2327,8 +2327,7 @@
 
 
          
-         (func $invoke-struct
-               (type $ProcedureInvoker)
+         (func $invoke-struct (type $ProcedureInvoker)
                (param $proc (ref $Procedure)) ; type check: an $Struct is expected
                (param $args (ref $Args))      ; an array of (ref eq)
                (result (ref eq))
