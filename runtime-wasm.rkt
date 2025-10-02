@@ -818,8 +818,11 @@
     (add-runtime-symbol-constant 'in-range)
     (add-runtime-symbol-constant 'in-naturals)
     (add-runtime-symbol-constant 'can-impersonate)
+
     (add-runtime-symbol-constant 'prop:sealed)
+    (add-runtime-symbol-constant 'sealed)
     (add-runtime-symbol-constant 'prop:object-name)
+    (add-runtime-symbol-constant 'object-name)
 
     (add-runtime-symbol-constant 'string)
     (add-runtime-symbol-constant 'unix)
@@ -923,14 +926,15 @@
     (add-runtime-string-constant 'colon                      ":")
     (add-runtime-string-constant '->                         ">")
 
-    (add-runtime-string-constant 'syntax-open                  "#<syntax ")
-    (add-runtime-string-constant 'syntax-close                 ">")
-    (add-runtime-string-constant 'hash-less-boxed-colon        "#<boxed:")
-    (add-runtime-string-constant 'hash-less-procedure-colon    "#<procedure:")
-    (add-runtime-string-constant 'hash-less-primitive-colon    "#<primitive:")
-    (add-runtime-string-constant 'hash-less-path-colon         "#<path:")
-    (add-runtime-string-constant 'hash-less-unix-path-colon    "#<unix-path:")
-    (add-runtime-string-constant 'hash-less-windows-path-colon "#<windows-path:")
+    (add-runtime-string-constant 'syntax-open                          "#<syntax ")
+    (add-runtime-string-constant 'syntax-close                         ">")
+    (add-runtime-string-constant 'hash-less-boxed-colon                "#<boxed:")
+    (add-runtime-string-constant 'hash-less-procedure-colon            "#<procedure:")
+    (add-runtime-string-constant 'hash-less-primitive-colon            "#<primitive:")
+    (add-runtime-string-constant 'hash-less-path-colon                 "#<path:")
+    (add-runtime-string-constant 'hash-less-unix-path-colon            "#<unix-path:")
+    (add-runtime-string-constant 'hash-less-windows-path-colon         "#<windows-path:")
+    (add-runtime-string-constant 'hash-less-struct-type-property-colon "#<struct-type-property:")
 
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
@@ -30296,7 +30300,7 @@
                          (local.set $type      (struct.get $Struct $type (local.get $struct)))
                          (local.set $sentinel  (call $cons (global.get $false) (global.get $false)))
                          (local.set $prop-name (ref.cast (ref $Symbol)
-                                                         (global.get $symbol:prop:object-name)))
+                                                         (global.get $symbol:object-name)))
                          (local.set $prop-val  (call $struct-type-property-lookup-by-name
                                                      (local.get $type)
                                                      (local.get $prop-name)
@@ -30619,6 +30623,10 @@
                (if (ref.test (ref $VariableReference) (local.get $v))
                    (then (return (call $format/display:variable-reference
                                        (ref.cast (ref $VariableReference) (local.get $v))))))
+               ;; --- Case: struct-type-property ---
+               (if (ref.test (ref $StructTypeProperty) (local.get $v))
+                   (then (return (call $format/display:struct-type-property
+                                       (ref.cast (ref $StructTypeProperty) (local.get $v))))))
                ;; --- Internal data types ---
                ;; These shouldn't leak to the outside, but nice to know if it happens.
                ;; --- Case: boxed --- (shouldn't happen)
@@ -30640,40 +30648,60 @@
                (ref.cast (ref $String)
                          (global.get $string:hash-variable-reference)))
 
-        (func $format/display:namespace
-              (param $ns (ref $Namespace))
-              (result (ref $String))
+         (func $format/display:namespace
+               (param $ns (ref $Namespace))
+               (result (ref $String))
 
-              (local $name (ref eq))
-              (local $out  (ref $GrowableArray))
+               (local $name (ref eq))
+               (local $out  (ref $GrowableArray))
 
-              ;; Extract namespace name
-              (local.set $name (struct.get $Namespace $name (local.get $ns)))
-              ;; If no name, return constant
-              (if (result (ref $String))
-                  (ref.eq (local.get $name) (global.get $false))
-                  (then (ref.cast (ref $String)
-                                  (global.get $string:namespace)))
-                  (else ;; Build "#<namespace:NAME>"
-                        (local.set $out (call $make-growable-array (i32.const 3)))
-                        (call $growable-array-add! (local.get $out)
-                              (ref.cast (ref $String)
-                                        (global.get $string:hash-less-namespace-colon)))
-                        (call $growable-array-add! (local.get $out)
-                              (ref.cast (ref $String) (local.get $name)))
-                        (call $growable-array-add! (local.get $out)
-                              (ref.cast (ref $String)
-                                        (global.get $string:->)))
-                        (call $growable-array-of-strings->string (local.get $out)))))
+               ;; Extract namespace name
+               (local.set $name (struct.get $Namespace $name (local.get $ns)))
+               ;; If no name, return constant
+               (if (result (ref $String))
+                   (ref.eq (local.get $name) (global.get $false))
+                   (then (ref.cast (ref $String)
+                                   (global.get $string:namespace)))
+                   (else ;; Build "#<namespace:NAME>"
+                    (local.set $out (call $make-growable-array (i32.const 3)))
+                    (call $growable-array-add! (local.get $out)
+                          (ref.cast (ref $String)
+                                    (global.get $string:hash-less-namespace-colon)))
+                    (call $growable-array-add! (local.get $out)
+                          (ref.cast (ref $String) (local.get $name)))
+                    (call $growable-array-add! (local.get $out)
+                          (ref.cast (ref $String)
+                                    (global.get $string:->)))
+                    (call $growable-array-of-strings->string (local.get $out)))))
 
-        (func $format/display:external
-              (param $v (ref $External))
-              (result (ref $String))
-              (if (result (ref $String))
-                  (ref.is_null (struct.get $External $v (local.get $v)))
-                  (then (ref.cast (ref $String)
+         (func $format/display:struct-type-property
+               (param $prop (ref $StructTypeProperty))
+               (result      (ref $String))
+
+               (local $ga   (ref $GrowableArray))
+               (local $name (ref $Symbol))
+
+               (local.set $name (struct.get $StructTypeProperty $name (local.get $prop)))
+               (local.set $ga   (call $make-growable-array (i32.const 3)))
+               (call $growable-array-add! (local.get $ga)
+                     (ref.cast (ref $String)
+                               (global.get $string:hash-less-struct-type-property-colon)))
+               (call $growable-array-add! (local.get $ga)
+                     (ref.cast (ref $String)
+                               (call $symbol->string (local.get $name))))
+               (call $growable-array-add! (local.get $ga)
+                     (ref.cast (ref $String) (global.get $string:->)))
+               (call $array-of-strings->string
+                     (call $growable-array->array (local.get $ga))))
+         
+         (func $format/display:external
+               (param $v (ref $External))
+               (result (ref $String))
+               (if (result (ref $String))
+                   (ref.is_null (struct.get $External $v (local.get $v)))
+                   (then (ref.cast (ref $String)
                                    (global.get $string:external-null)))
-                  (else (ref.cast (ref $String)
+                   (else (ref.cast (ref $String)
                                    (global.get $string:external)))))
 
          (func $format/display:procedure
@@ -33525,6 +33553,9 @@
                (global $system-path-convention (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $result-bytes           (mut (ref eq)) (ref.i31 (i32.const 0)))
 
+               ;; Struct-type properties provided by the runtime
+               (global $prop:object-name (mut (ref eq)) (global.get $void))
+               
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
                      (ref.cast (ref $Bytes) (global.get $result-bytes)))
@@ -33556,6 +33587,17 @@
                      ;; Initialize symbol constants used in the runtime
                      ,@(initialize-runtime-symbol-constants)
 
+                     ;; Initialize struct-type properties provided by the runtime
+                     (global.set $prop:object-name
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:object-name))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     
                      ;; Default to the host platform's path convention (currently Unix)
                      (global.set $system-path-convention (global.get $symbol:unix))
 

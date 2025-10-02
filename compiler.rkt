@@ -346,19 +346,27 @@
                     true       ;     racket/bool (not racket/base)
                     false      ;     racket/bool (not racket/base)
                     pi         ;     racket/math
-                    eof        ;     racket/base
+                    eof        ;     racket/base                    
                     ))
 
 (define (constant-value c)
   (case c
-    [(null empty) '()]
-    [(true)       #t]
-    [(false)      #f]
-    [(undefined)  datum:undefined]
-    [(pi)         pi]
-    [(eof)        eof]
-    [else         (error 'constant-value "got: ~a" c)]))
-  
+    [(null empty)       '()]
+    [(true)             #t]
+    [(false)            #f]
+    [(undefined)        datum:undefined]
+    [(pi)               pi]
+    [(eof)              eof]
+    [else
+     (error 'constant-value "got: ~a" c)]))
+
+(define non-literal-constants
+  '(prop:object-name))
+
+(define (non-literal-constant? x)
+  (and (memq x non-literal-constants)) #t)
+
+
 
 ;;;
 ;;; PRIMITIVES
@@ -914,6 +922,7 @@
 
   ;; 14.9 Structure Inspectors
   object-name
+  ; prop:object-name
   
   ;; 15.1 Paths
   path?
@@ -1847,6 +1856,8 @@
                                                         (values `(quote ,(variable-id x)
                                                                         ,(datum (variable-id x) (constant-value s)))
                                                                 ρ)]
+                                                       [(non-literal-constant? s) ; like prop:object-name
+                                                        (values `,x ρ)]
                                                        [else
                                                         ; signal unbound variable at runtime
                                                         (displayln (list 'WARNING "unbound?" x))
@@ -2646,9 +2657,14 @@
                                (seen-abstraction! CAB)
                                (values CAB xs*)])
   (AExpr : AExpr (AE xs) -> AExpr (xs)
-    [,x                   (if (primitive? (variable-id x))
-                              (values AE empty-set)         ; primitive
-                              (values AE (make-id-set x)))] ; non-primitive
+    [,x       (define sym (variable-id x))
+              (cond
+                [(primitive? sym)            (values AE empty-set)]         ; immediate constants
+                [(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
+                [else                        (values AE (make-id-set x))])] ; non-primitive
+    ;; [,x                   (if (primitive? (variable-id x))   ;  XXX her! add non-literal-constants here
+    ;;                           (values AE empty-set)         ; primitive
+    ;;                           (values AE (make-id-set x)))] ; non-primitive
     [,ab                  (Abstraction AE xs)]
     [,cab                 (CaseAbstraction AE xs)]
     [(quote ,s ,d)        (values AE empty-set)]
@@ -3233,12 +3249,14 @@
     (define (local-variable? v)  (set-in? v local-vars))
     (define (ffi-variable? v)    (set-in? (syntax-e (variable-id v))
                                           ffi-primitives))
+    (define (global-variable? v) (non-literal-constant? (variable-id v)))
     (define (classify v)
       (cond
         [(top-variable?    v) 'top]
         [(module-variable? v) 'module]
         [(local-variable?  v) 'local]
-        [(ffi-variable? v)    'ffi]
+        [(ffi-variable?    v) 'ffi]
+        [(global-variable? v) 'global]
         [else
          ;; (displayln (list 'top (map unparse-variable top-vars)))
          ;; (displayln (list 'mod (map unparse-variable module-vars)))
@@ -3252,7 +3270,7 @@
         [(top)        `(global.get ,(TopVar v))]   ; unboxed
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
-        [(global)     `(global.get ,(syntax-e v))]
+        [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(ffi)        'TODO]
         [else (error 'Reference "got: ~a" v)]))
     ;; 3. Variables assignments according to type.

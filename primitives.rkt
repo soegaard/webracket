@@ -671,6 +671,7 @@
 
  ;; 14.9 Structure Inspectors
  object-name
+ prop:object-name
  
  ;; 15.1 Paths
  path?
