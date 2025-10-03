@@ -34,12 +34,13 @@
 ;;   Immediate: Lower 1 bits are 1. Upper 30 bits contain data and a subtag.
 
 ;; Immediate Values (non-fixnum)
-;;   Characters: Lower 8 bits are  cc...cc 0000 1111. The 21 bits marked c are a unicode scalar value.
-;;   Booleans:   Lower 7 bits are          b001 1111. Bit b is 1 for true and 0 for false.
-;;   Void:       Lower 8 bits are          0010 1111. Upper bits are zero.
-;;   Empty:      Lower 8 bits are          0011 1111. Upper bits are zero.
-;;   Undefined:  Lower 8 bits are          0100 1111. Upper bits are zero.
-;;   Eof:        Lower 8 bits are          0101 1111. Upper bits are zero.
+;;   Characters:        Lower 8 bits are  cc...cc 0000 1111. The 21 bits marked c are a unicode scalar value.
+;;   Booleans:          Lower 7 bits are          b001 1111. Bit b is 1 for true and 0 for false.
+;;   Void:              Lower 8 bits are          0010 1111. Upper bits are zero.
+;;   Empty:             Lower 8 bits are          0011 1111. Upper bits are zero.
+;;   Undefined:         Lower 8 bits are          0100 1111. Upper bits are zero.
+;;   Unsafe Undefined:  Lower 8 bits are       1  0100 1111. Upper bits are zero.
+;;   Eof:               Lower 8 bits are          0101 1111. Upper bits are zero.
 ;;   Missing [*] All bits are 1.   1 ...   1111 1111. 
 
 ;; Note: We do not have tags for pairs, vectors, etc. since they need to heap allocated.
@@ -52,10 +53,11 @@
 (define char-tag       #b00001111)
 (define boolean-tag    #b0011111)
 
-(define void-value      #b00101111)   ; 0010 1111
-(define empty-value     #b00111111)   ; 0011 1111
-(define undefined-value #b01001111)   ; 0100 1111
-(define eof-value       #b01011111)   ; 0101 1111
+(define void-value              #b00101111)   ;   0010 1111
+(define empty-value             #b00111111)   ;   0011 1111
+(define undefined-value         #b01001111)   ;   0100 1111
+(define unsafe-undefined-value #b101001111)   ; 1 0100 1111
+(define eof-value               #b01011111)   ;   0101 1111
 ; The `missing` and `tombstone` value are used internally.
 ; In particular in the implementation of hash tables.
 (define missing-value   #b1111111111111111111111111111111)
@@ -85,16 +87,22 @@
 (define (undefined)    the-undefined-value)
 (define (undefined? x) (eq? x the-undefined-value))
 
+(define the-unsafe-undefined-value (gensym 'unsafe-undefined))
+(define (unsafe-undefined)    the-unsafe-undefined-value)
+(define (unsafe-undefined? x) (eq? x the-unsafe-undefined-value))
+
 (define (immediate-rep x)
   (when (flonum? x)
     (displayln (list 'immediate-rep x)))
   (define (shift x m) (arithmetic-shift x m))
   (cond
-    [(fixnum?     x)              (shift x                 fixnum-shift)]  ; the tag is 0
-    [(boolean?    x) (bitwise-ior (shift (if x 1 0)        boolean-shift)   boolean-tag)]
-    [(char?       x) (bitwise-ior (shift (char->integer x) char-shift)      char-tag)]
-    [(null?       x) empty-value]
-    [(void?       x) void-value]
-    [(eof-object? x) eof-value]
-    [(undefined?  x) undefined-value]
-    [else           (error 'immediate-rep "expected immediate value, got: ~a" x)]))
+    [(fixnum?           x)              (shift x                 fixnum-shift)]  ; the tag is 0
+    [(boolean?          x) (bitwise-ior (shift (if x 1 0)        boolean-shift)   boolean-tag)]
+    [(char?             x) (bitwise-ior (shift (char->integer x) char-shift)      char-tag)]
+    [(null?             x) empty-value]
+    [(void?             x) void-value]
+    [(eof-object?       x) eof-value]
+    [(undefined?        x) undefined-value]
+    [(unsafe-undefined? x) unsafe-undefined-value]
+    [else
+     (error 'immediate-rep "expected immediate value, got: ~a" x)]))
