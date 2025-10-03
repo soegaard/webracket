@@ -862,6 +862,7 @@
     (add-runtime-symbol-constant 'syntax-scopes)
     (add-runtime-symbol-constant 'syntax-shifted-multi-scopes)
     (add-runtime-symbol-constant 'syntax-srcloc)
+    #;(add-runtime-symbol-constant 'syntax-srclocs)
     (add-runtime-symbol-constant 'syntax-props)
     (add-runtime-symbol-constant 'empty-props)
 
@@ -878,6 +879,7 @@
     (add-runtime-symbol-constant 'struct->list)
     (add-runtime-symbol-constant 'struct->vector)
     
+    (add-runtime-symbol-constant 'match)
     (add-runtime-symbol-constant 'error)
     (add-runtime-symbol-constant 'return-false)
     (add-runtime-symbol-constant 'skip)
@@ -956,6 +958,7 @@
     (add-runtime-string-constant 'srcloc?                    "srcloc?")
     (add-runtime-string-constant 'srcloc-positive-or-false   "(or/c exact-positive-integer? #f)")
     (add-runtime-string-constant 'srcloc-nonnegative-or-false "(or/c exact-nonnegative-integer? #f)")
+    (add-runtime-string-constant 'match-error:prefix         ": no matching clause for ")
 
     (add-runtime-string-constant 'syntax-or-false            "(or/c syntax? #f)")
     (add-runtime-string-constant 'datum->syntax-srcloc      "(or/c #f syntax? srcloc?)")
@@ -3418,7 +3421,47 @@
                (call $js-log (local.get  $v))
 
                (unreachable))
+
+         ;;;
+         ;;; RUNTIME SUPPORT FOR MATCH
+         ;;;
          
+         (func $match:error (type $Prim3)
+               (param $val       (ref eq))
+               (param $srclocs   (ref eq))
+               (param $form-name (ref eq))
+               (result           (ref eq))
+
+               (local $name-str (ref eq))
+               (local $prefix   (ref eq))
+               (local $val-str  (ref eq))
+
+               (local.set $name-str
+                          (block $done (result (ref eq))
+                            (if (ref.eq (call $symbol? (local.get $form-name))
+                                         (global.get $true))
+                                (then (br $done (call $symbol->immutable-string
+                                                       (local.get $form-name)))))
+                            (if (ref.eq (local.get $form-name) (global.get $false))
+                                (then (br $done (call $symbol->immutable-string
+                                                       (global.get $symbol:match)))))
+                            (if (ref.eq (call $string? (local.get $form-name))
+                                         (global.get $true))
+                                (then (br $done (local.get $form-name))))
+                            (br $done (call $format/display (local.get $form-name)))))
+
+               (local.set $prefix
+                          (call $string-append/2
+                                (local.get $name-str)
+                                (global.get $string:match-error:prefix)))
+
+               (local.set $val-str (call $format/display (local.get $val)))
+
+               (call $raise
+                     (call $string-append/2 (local.get $prefix) (local.get $val-str))
+                     (global.get $missing))
+
+               (unreachable))
 
          ;;;
          ;;; Checkers
@@ -32719,6 +32762,21 @@
                                               (global.get $symbol:syntax-srcloc)
                                               (local.get $stx)))
                      (array.get $Array (local.get $fields) (i32.const 3)))
+
+               (func $syntax-srclocs (type $Prim1)
+                     (param $stx (ref eq)) 
+                     (result     (ref eq))
+
+                     (local $srcloc   (ref eq))                     
+                     (struct.new $Pair
+                                 (i32.const 0)
+                                 (call $srcloc
+                                       (call $syntax-source   (local.get $stx))
+                                       (call $syntax-line     (local.get $stx))
+                                       (call $syntax-column   (local.get $stx))
+                                       (call $syntax-position (local.get $stx))
+                                       (call $syntax-span     (local.get $stx)))
+                                 (global.get $null)))
 
                (func $syntax-props
                      (param $stx (ref eq))

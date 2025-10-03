@@ -921,6 +921,7 @@
 
   syntax-srcloc  ; in racket/syntax-srcloc
 
+
   ;; 14.9 Structure Inspectors
   object-name
   ; prop:object-name
@@ -969,6 +970,10 @@
   external-number->flonum
   external-string->string
   external?
+
+  ;;; match runtime support
+  syntax-srclocs ; in racket/match/runtime.rkt
+  match:error
   )
 
 ;;;
