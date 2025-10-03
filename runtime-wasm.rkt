@@ -803,87 +803,91 @@
     (for ([pr (in-list (sort (remove* todo-handle-later primitives) symbol<?))])
       (when (primitive->description pr)
         (add-runtime-symbol-constant pr)))
-    
-    (add-runtime-symbol-constant 'racket)
-    (add-runtime-symbol-constant 'racket/primitive)
-    (add-runtime-symbol-constant 'Other)
-    (add-runtime-symbol-constant 'CR)
-    (add-runtime-symbol-constant 'LF)
-    (add-runtime-symbol-constant 'Control)
-    (add-runtime-symbol-constant 'Extend)
-    (add-runtime-symbol-constant 'ZWJ)
-    (add-runtime-symbol-constant 'Regional_Indicator)
-    (add-runtime-symbol-constant 'Prepend)
-    (add-runtime-symbol-constant 'SpacingMark)
-    (add-runtime-symbol-constant 'L)
-    (add-runtime-symbol-constant 'V)
-    (add-runtime-symbol-constant 'T)
-    (add-runtime-symbol-constant 'LV)
-    (add-runtime-symbol-constant 'LVT)
 
-    (add-runtime-symbol-constant 'in-list)
-    (add-runtime-symbol-constant 'in-mlist)
-    (add-runtime-symbol-constant 'in-range)
-    (add-runtime-symbol-constant 'in-naturals)
-    (add-runtime-symbol-constant 'can-impersonate)
+    (let ()
+      ; TODO: remove primitives from this list
+      (define symbols
+        '(racket
+          racket/primitive
+          
+          Other
+          CR
+          LF          
+          Control
+          Extend
+          ZWJ
+          Regional_Indicator
+          Prepend
+          SpacingMark
+          L
+          V
+          T
+          LV
+          LVT
 
-    (add-runtime-symbol-constant 'prop:sealed)
-    (add-runtime-symbol-constant 'sealed)
-    (add-runtime-symbol-constant 'prop:object-name)
-    (add-runtime-symbol-constant 'object-name)
-    (add-runtime-symbol-constant 'prop:procedure)
-    (add-runtime-symbol-constant 'procedure)
+          in-list
+          in-mlist
+          in-range
+          in-naturals
+          can-impersonate
 
-    (add-runtime-symbol-constant 'string)
-    (add-runtime-symbol-constant 'unix)
-    (add-runtime-symbol-constant 'windows)
+          prop:sealed
+          sealed
+          prop:object-name
+          object-name
+          prop:procedure
+          procedure
 
-    (add-runtime-symbol-constant 'linefeed)
-    (add-runtime-symbol-constant 'return)
-    (add-runtime-symbol-constant 'return-linefeed)
-    (add-runtime-symbol-constant 'any)
-    (add-runtime-symbol-constant 'any-one)
+          string
+          unix
+          windows
 
-    (add-runtime-symbol-constant 'srcloc)
-    (add-runtime-symbol-constant 'make-srcloc)
-    (add-runtime-symbol-constant 'srcloc?)
-    (add-runtime-symbol-constant 'srcloc-source)
-    (add-runtime-symbol-constant 'srcloc-line)
-    (add-runtime-symbol-constant 'srcloc-column)
-    (add-runtime-symbol-constant 'srcloc-position)
-    (add-runtime-symbol-constant 'srcloc-span)
+          linefeed
+          return
+          return-linefeed
+          any
+          any-one
 
-    (add-runtime-symbol-constant 'srcloc->string)
+          srcloc
+          make-srcloc
+          srcloc?
+          srcloc-source
+          srcloc-line
+          srcloc-column
+          srcloc-position
+          srcloc-span
 
-    (add-runtime-symbol-constant 'syntax)
-    (add-runtime-symbol-constant 'make-syntax)
-    (add-runtime-symbol-constant 'syntax?)
-    (add-runtime-symbol-constant 'syntax-e)    
-    (add-runtime-symbol-constant 'syntax-scopes)
-    (add-runtime-symbol-constant 'syntax-shifted-multi-scopes)
-    (add-runtime-symbol-constant 'syntax-srcloc)
-    #;(add-runtime-symbol-constant 'syntax-srclocs)
-    (add-runtime-symbol-constant 'syntax-props)
-    (add-runtime-symbol-constant 'empty-props)
+          srcloc->string
 
-    (add-runtime-symbol-constant 'syntax-source)
-    (add-runtime-symbol-constant 'syntax-line)
-    (add-runtime-symbol-constant 'syntax-column)
-    (add-runtime-symbol-constant 'syntax-position)
-    (add-runtime-symbol-constant 'syntax-span)
-    (add-runtime-symbol-constant 'datum->syntax)
-    (add-runtime-symbol-constant 'syntax->datum)
-    (add-runtime-symbol-constant 'syntax->list)
-    (add-runtime-symbol-constant 'identifier?)
+          syntax
+          make-syntax
+          syntax?
+          syntax-e    
+          syntax-scopes
+          syntax-shifted-multi-scopes
+          syntax-srcloc
+          syntax-props
+          empty-props
 
-    (add-runtime-symbol-constant 'struct->list)
-    (add-runtime-symbol-constant 'struct->vector)
-    
-    (add-runtime-symbol-constant 'match)
-    (add-runtime-symbol-constant 'error)
-    (add-runtime-symbol-constant 'return-false)
-    (add-runtime-symbol-constant 'skip)
-    (add-runtime-symbol-constant '...)
+          syntax-source
+          syntax-line
+          syntax-column
+          syntax-position
+          syntax-span
+          datum->syntax
+          syntax->datum
+          syntax->list
+          identifier?
+
+          struct->list
+          struct->vector
+          
+          match
+          error
+          return-false
+          skip
+          ...))    
+      (for-each add-runtime-symbol-constant symbols))
     
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
