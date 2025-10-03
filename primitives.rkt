@@ -621,7 +621,8 @@
  port?
  input-port?
  output-port?
- 
+
+ call-with-output-string
 
  ;; 13.2 Byte and String Input
  read-byte

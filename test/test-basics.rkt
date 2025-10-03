@@ -1,4 +1,8 @@
 ;; The numbering follows the sections in "The Reference".
+
+;; These basic tests needs to work without the standard library.
+;; So avoid use --stdlib when compiling this test.
+
 (list
  #;(list "3. Syntactic Forms"       
        (list "3.8 Procedure Expressions: lambda and case-lambda"
@@ -2867,7 +2871,7 @@
                                 '#(struct:vect-point2 3 4))))))))
 
 
- #;(list "13. Input and Output"
+ (list "13. Input and Output"
 
        (list "13.1 Ports"
              (list
@@ -3392,6 +3396,20 @@
                       (for-each (lambda (b) (write-byte b port)) (bytes->list data))
                       (equal? (get-output-string port) "Hello λ")))
 
+              (list "call-with-output-string/basic"
+                    (equal? (call-with-output-string
+                             (lambda (p)
+                               (write-char #\A p)
+                               (write-string "BC" p)))
+                            "ABC"))
+
+              (list "call-with-output-string/ignore-result"
+                    (let ([result (call-with-output-string
+                                   (lambda (p)
+                                     (write-string "hi" p)
+                                     'done))])
+                      (equal? result "hi")))
+              
               (list "port-count-lines!"
                     (let ([port (open-input-string "abc")])
                       (void? (port-count-lines! port))))

@@ -792,6 +792,8 @@
   get-output-bytes
   get-output-string
 
+  call-with-output-string
+
   read-byte
   read-char
   read-bytes!
@@ -3757,6 +3759,7 @@
          [(get-output-bytes
            get-output-string)          (inline-prim/fixed sym ae1 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
+         [(call-with-output-string)    (inline-prim/fixed sym ae1 1)]
 
          [(byte-ready?)                (inline-prim/optional sym ae1 0 1)]
          [(char-ready?)                (inline-prim/optional sym ae1 0 1)]

@@ -24431,6 +24431,39 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         (func $call-with-output-string (type $Prim1)
+               (param $proc (ref eq)) ;; procedure?
+               (result      (ref eq))
+
+               (local $f    (ref $Procedure))
+               (local $finv (ref $ProcedureInvoker))
+               (local $port (ref $StringPort))
+               (local $args (ref $Args))
+
+               ;; 1. Ensure the argument is a procedure
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+
+               ;; 2. Open a fresh output string port
+               (local.set $port
+                          (ref.cast (ref $StringPort)
+                                    (call $open-output-string (global.get $missing))))
+
+               ;; 3. Prepare the procedure invocation with the port argument
+               (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+               (local.set $args (array.new_fixed $Args 1 (local.get $port)))
+
+               ;; 4. Invoke the procedure and ignore its result
+               (drop (call_ref $ProcedureInvoker
+                               (local.get $f)
+                               (local.get $args)
+                               (local.get $finv)))
+
+               ;; 5. Return the accumulated output as a string
+               (call $get-output-string (local.get $port)))
+
          ;;;
          ;;;  13.2  Byte and String Input
          ;;;
