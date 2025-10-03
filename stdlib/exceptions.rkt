@@ -1,10 +1,6 @@
 #lang webracket
 
 ;;;
-;;; EXCEPTIONS
-;;;
-
-;;;
 ;;; Exceptions
 ;;;
 
@@ -17,6 +13,8 @@
 (struct exn:fail exn ()
   #:extra-constructor-name make-exn:fail
   #:transparent)
+
+
 
 (define error
   (case-lambda
@@ -60,4 +58,6 @@
                       (raise (make-exn:fail message #f))]
                      [else
                       (error 'error "expected: (or/c symbol? string?)")])]))
+
+
 
