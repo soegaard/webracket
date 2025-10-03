@@ -53,7 +53,8 @@
          #:browser?      browser?
          #:node?         node?
          #:run-after?    run-after?
-         #:ffi-files     ffi-files) ; list of file paths for .ffi files
+         #:ffi-files     ffi-files    ; list of file paths for .ffi files
+         #:stdlib?       stdlib?)     ; include standard library 
   
   ; 0. Handle ffi-files
   (define resolved-ffi-files

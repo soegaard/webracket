@@ -27,6 +27,8 @@
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
+(define stdlib?         (make-parameter #f))   ; include standard library?
+
 (define file-to-compile
   (command-line
    #:program "webracket"
@@ -42,6 +44,9 @@
                              (wasm-filename filename)]
    [("--host-file") filename "Filename for the host file"
                              (host-filename filename)]
+   [("--stdlib")             "Include the standard library"
+                             (stdlib? #t)]
+   
 
    #:once-any ; only one flag from this group
    [("-b" "--browser") "Generate code for browser."
@@ -74,4 +79,5 @@
                    #:browser?      (browser)
                    #:node?         (nodejs)
                    #:run-after?    (run-after)
-                   #:ffi-files     (ffi-files))
+                   #:ffi-files     (ffi-files)
+                   #:stdlib?       (stdlib?))
