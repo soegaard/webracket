@@ -34,12 +34,13 @@
 ;; Constants
 
 
-(provide null undefined empty true false pi eof)
-(require (only-in racket/base       null eof)
-         (only-in racket/undefined  undefined)
-         (only-in racket/bool       true false)
-         (only-in racket/list       empty)
-         (only-in racket/math       pi))
+(provide null empty true false pi eof undefined unsafe-undefined)
+(require (only-in racket/base              null eof)
+         (only-in racket/bool              true false)
+         (only-in racket/list              empty)
+         (only-in racket/math              pi)
+         (only-in racket/undefined         undefined)
+         (only-in racket/unsafe/undefined  unsafe-undefined))
 
 
 ;; Note: When bootstrapping we need implementations

@@ -55,8 +55,8 @@
 
 (define void-value              #b00101111)   ;   0010 1111
 (define empty-value             #b00111111)   ;   0011 1111
-(define undefined-value         #b01001111)   ;   0100 1111
-(define unsafe-undefined-value #b101001111)   ; 1 0100 1111
+(define undefined-value         #b01001111)   ;   0100 1111  =  79 
+(define unsafe-undefined-value #b101001111)   ; 1 0100 1111  = 335
 (define eof-value               #b01011111)   ;   0101 1111
 ; The `missing` and `tombstone` value are used internally.
 ; In particular in the implementation of hash tables.

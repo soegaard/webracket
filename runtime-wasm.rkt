@@ -905,6 +905,7 @@
     (add-runtime-string-constant 'eof                        "#<eof>")
     (add-runtime-string-constant 'void                       "#<void>")
     (add-runtime-string-constant 'undefined                  "#<undefined>")
+    (add-runtime-string-constant 'unsafe-undefined           "#<unsafe-undefined>")
     (add-runtime-string-constant 'unspecified                "#<unspecified>")
     (add-runtime-string-constant 'missing                    "#<missing>")
     (add-runtime-string-constant 'closure                    "#<closure>")
@@ -1718,15 +1719,16 @@
                (unreachable))
          
          ;; Singletons
-         (global $null       (ref eq) ,(Imm '()))
-         (global $undefined  (ref eq) ,(Imm (undefined)))
-         (global $void       (ref eq) ,(Imm (void)))
-         (global $false      (ref eq) ,(Imm #f))  ; (ref.i31 (i32.const ?))
-         (global $true       (ref eq) ,(Imm #t))
-         (global $eof        (ref eq) ,(Imm eof))
-         (global $error      (ref eq) ,(R 77))
-         (global $missing    (ref eq) ,(R missing-value))   ; #x7fffffff
-         (global $tombstone  (ref eq) ,(R tombstone-value)) ; #x3fffffff"
+         (global $null              (ref eq) ,(Imm '()))
+         (global $undefined         (ref eq) ,(Imm (undefined)))         ;  79
+         (global $unsafe-undefined  (ref eq) ,(Imm (unsafe-undefined)))  ; 335
+         (global $void              (ref eq) ,(Imm (void)))
+         (global $false             (ref eq) ,(Imm #f))  ; (ref.i31 (i32.const ?))
+         (global $true              (ref eq) ,(Imm #t))
+         (global $eof               (ref eq) ,(Imm eof))
+         (global $error             (ref eq) ,(R 77))
+         (global $missing           (ref eq) ,(R missing-value))   ; #x7fffffff
+         (global $tombstone         (ref eq) ,(R tombstone-value)) ; #x3fffffff"
 
          ;; Commonly used fixnums
          (global $zero  (ref eq) ,(Imm 0))
@@ -30693,6 +30695,9 @@
                ;; --- Case: undefined ---
                (if (ref.eq (local.get $v) (global.get $undefined))
                    (then (return (ref.cast (ref $String) (global.get $string:undefined)))))
+               ;; --- Case: unsafe-undefined ---
+               (if (ref.eq (local.get $v) (global.get $unsafe-undefined))
+                   (then (return (ref.cast (ref $String) (global.get $string:unsafe-undefined)))))
                 ;; --- Case: syntax ---
                (if (ref.eq (call $syntax? (local.get $v)) (global.get $true))
                    (then (return (call $format/display:syntax (local.get $v)))))

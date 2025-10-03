@@ -329,8 +329,8 @@
       (boolean? v)
       (symbol? v)))
 
-(define datum:undefined        (datum #f #f)) ; TODO: make the undefined value a datum
-(define datum:unsafe-undefined (datum #f #f))
+(define datum:undefined        the-undefined-value) 
+(define datum:unsafe-undefined the-unsafe-undefined-value)
 
 ;;;
 ;;; CONSTANTS
@@ -3506,6 +3506,7 @@
                          `(nop)]
                         [else
                          (let ([v (datum-value d)])
+                           (displayln (list 'datum: v (undefined? v)) (current-error-port))
                            (cond
                              ; We keep these for now, to get a more readable output.
                              ; In all likelyhood (Imm '()), (Imm (void)), etc. are better.
@@ -3521,7 +3522,7 @@
                              [(eof-object? v) '(global.get $eof)]
                              [(fixnum? v)     (Imm v)]
                              [(char? v)       (Imm v)]
-                             [(undefined? v)  (Imm v)]
+                             [(undefined? v)  (displayln (list 'undefined: v) (current-error-port)) (Imm v)]
                              [(unsafe-undefined? v) (Imm v)]
                              [(string? v)     (define name         (add-quoted-string v))
                                               (define $string:name (string->symbol (~a "$string:" name)))
@@ -3532,13 +3533,13 @@
                              [(symbol? v)     (define name         (add-quoted-symbol v))
                                               (define $symbol:name (string->symbol (~a "$symbol:" name)))
                                               `(global.get ,$symbol:name)]
-                             [else            `',v]))])]
+                             [else            (displayln (list 'sigh: v) (current-error-port)) `',v]))])]
     [(top ,s ,x)
      ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
      ;       Note that if x is present in a top-level define-values
      ;       then (top x) will become x anyway.
      ; Note: What is missing here: is error handling for an undefined top-level-variable.
-     (displayln (list 'xxx (variable-id x)) (current-error-port))
+     (displayln (list 'top (variable-id x)) (current-error-port))
      `(struct.get $Boxed $v (ref.cast (ref $Boxed) ,(Reference x)))
      #;`(app ,#'namespace-variable-value (app ,#'string->symbol ',(symbol->string (syntax-e (variable-id x)))))
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
@@ -4306,6 +4307,7 @@
                          ['<return> `(return ,dest)]
                          ['<effect> `(block)]
                          [_                   dest])])
+       (error 'wcm "todo")
        `(block
          (var [binding ,#'old_tc ,_tc])
          ; (app ,#'console.log ,_tc)
@@ -4467,7 +4469,8 @@
                                   `(local.set ,(if (symbol? v) v (Var v)) ,(Undefined))
                                   '(nop))]
              [(list v t #f)   `(local.set ,(if (symbol? v) v (Var v)))] ; #f = no init
-             [(list v t init) `(local.set ,(if (symbol? v) v (Var v)) ,init)]))
+             [(list v t init) #;(when (eq? init #f) (error 'here "here!"))
+                              `(local.set ,(if (symbol? v) v (Var v)) ,init)]))
          (define (Init* xs) (map Init xs))
          (define (InitArgs* xs)
            (for/list ([x xs] [i (in-naturals)])
