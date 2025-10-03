@@ -37,6 +37,7 @@
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat)
          racket/runtime-path
+         racket/syntax
          "compiler.rkt"
          "define-foreign.rkt")
 
@@ -94,25 +95,40 @@
                                         (~a "read failed: " (exn-message e))))])
       (read-top-level-from-from-file filename)))
 
-  ; 3. Compile the syntax object.
+  ; 3. Prepend standard library (if enabled)
+
+  (define stx-with-stdlib
+    (cond
+      [stdlib? (syntax-case stx (begin)
+                 [(begin forms ...)
+                  #`(begin
+                      (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
+                      forms ...)]
+                 [other
+                  #`(begin
+                      (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
+                      other)])]
+      [else stx]))
+
+  ; 4. Compile the syntax object.
   (define wat
     (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "compile failed: " (exn-message e))))])
-      (comp stx)))
+      (comp stx-with-stdlib)))
 
-  ; 4. Save the resulting WAT module.
+  ; 5. Save the resulting WAT module.
   (define out-wat (or wat-filename (path-replace-extension filename ".wat")))
   (write-wat-to-file out-wat wat)
 
-  ; 5. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
+  ; 6. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
   (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
   (with-handlers ([exn:fail? (λ (e)
                                (error 'drive-compilation
                                       (~a "wat->wasm failed: " (exn-message e))))])
     (wat->wasm wat #:wat out-wat #:wasm out-wasm))
 
-  ; 6. Write the host file (default: "runtime.js")
+  ; 7. Write the host file (default: "runtime.js")
   (define out-host (or host-filename
                        (if node?
                            (path-replace-extension filename ".js")
@@ -122,7 +138,7 @@
            (runtime #:out out-wasm #:host (if node? 'node 'browser))))
     #:exists 'replace)
 
-  ; 7. Optionally run the program via Node.js.
+  ; 8. Optionally run the program via Node.js.
   (when (and node? run-after?)
     (define runtime-js out-host)
     (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))

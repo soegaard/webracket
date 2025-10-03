@@ -15,7 +15,6 @@
   #:transparent)
 
 
-
 (define error
   (case-lambda
     [(message-sym) (define message

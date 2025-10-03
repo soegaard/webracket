@@ -3506,7 +3506,6 @@
                          `(nop)]
                         [else
                          (let ([v (datum-value d)])
-                           (displayln (list 'datum: v (undefined? v)) (current-error-port))
                            (cond
                              ; We keep these for now, to get a more readable output.
                              ; In all likelyhood (Imm '()), (Imm (void)), etc. are better.

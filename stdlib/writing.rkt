@@ -132,7 +132,6 @@
 ;;; WRITE
 ;;;
 
-
 (define (write datum [out (current-output-port)])
   (define (emit str)
     (write-string str out)
@@ -706,8 +705,16 @@
        (set! value handler)
        value])))
 
+;;; NOTE
+;; Making `fprintf` call `fprint*` is part of a workaround in
+;; `format` below. Without an `fprint*` we need to use `apply`
+;; to call `fprintf` and that currently provokes an error.
+;; TODO: fix this
 
 (define (fprintf out form . vs)
+  (fprintf* out form vs))
+  
+(define (fprintf* out form vs)
   (unless (output-port? out)
     (error 'fprintf "expected output port, got ~a" out))
   (unless (string? form)
@@ -879,18 +886,23 @@
   (void))
 
 
-(define (printf form v . vs)
+#;(define (printf form v . vs)
   (apply fprintf (current-output-port) form vs))
 
-(define (eprintf form v . vs)
+#;(define (eprintf form v . vs)
   (apply fprintf (current-error-port) form vs))
+
+(define (printf form v . vs)
+  (fprintf* (current-output-port) form vs))
+
+(define (eprintf form v . vs)
+  (fprintf* (current-error-port) form vs))
 
 
 (define (format form . vs)
   (let ([o (open-output-string)])
-    (apply fprintf o form vs)
+    (fprintf* o form vs)
     (get-output-string o)))
-
 
 ;;;
 ;;; TEST
