@@ -37,7 +37,7 @@
          include/reader
          (for-syntax read-syntax/skip-first-line))
 
-;; The functions are implemented in `stdlib` as webracket functions
+;; These functions are implemented in `stdlib` as webracket functions
 (provide error ; [twice to force indentation]
          ;; stdlib/exceptions.rkt
          error
@@ -52,7 +52,10 @@
          write
          display
          print
-         format         
+         format
+
+         fprintf
+         
          )
 
 

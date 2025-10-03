@@ -3268,8 +3268,12 @@
     ;; 1. Classify variables
     (define-values (top-vars module-vars local-vars provides)
       (classify-variables T))
-    (displayln "-- Provides --" (current-error-port))
-    (displayln provides         (current-error-port))
+    (displayln "-- Provides --"           (current-error-port))
+    (displayln provides                   (current-error-port))
+    (displayln "-- Top-vars --"           (current-error-port))
+    (displayln (map syntax->datum (map variable-id top-vars)) (current-error-port))
+    
+
     (define (top-variable? v)    (set-in? v top-vars))    ; boxed
     (define (module-variable? v) (set-in? v module-vars))
     (define (local-variable? v)  (set-in? v local-vars))
@@ -4836,7 +4840,8 @@
              (flatten-topbegin
               (parse
                (let ([t (topexpand stx)])
-                 ; (displayln (pretty-print (syntax->datum t)))
+                 #;(displayln (pretty-print (syntax->datum t))
+                            (current-error-port))
                  t)))))))))))))))
 
 (define (comp- stx)
