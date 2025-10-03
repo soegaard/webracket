@@ -36,6 +36,7 @@
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat)
+         racket/runtime-path
          "compiler.rkt"
          "define-foreign.rkt")
 
@@ -55,14 +56,18 @@
          #:ffi-files     ffi-files) ; list of file paths for .ffi files
   
   ; 0. Handle ffi-files
-  (for ([ffi-filename ffi-files])
-    (unless (file-exists? ffi-filename)
-      (error 'drive-compilation (~a "ffi file not found: " ffi-filename))))
-
+  (define resolved-ffi-files
+    (for/list ([ffi-filename ffi-files])
+      (define resolved (resolve-ffi-filename ffi-filename))
+      (unless resolved
+        (error 'drive-compilation
+               (~a "ffi file not found: " ffi-filename)))
+      resolved))
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
   (define ffi-funcs     '()) ; list of wat
-  (for ([ffi-filename ffi-files])
+
+  (for ([ffi-filename resolved-ffi-files])
     (define fs (ffi-file->foreigns ffi-filename))
     (define ims   (map foreign->import fs))
     (define prims (map foreign->primitive fs))
@@ -222,6 +227,25 @@
   (with-handlers ([exn:fail:filesystem? void])
     (delete-file temp-filename)))
 
+;;;
+;;; RESOLUTION OF FFI-PATHS
+;;;
+
+(define-runtime-path here ".")
+
+(define system-ffi-directory
+  (let ([candidate (build-path here "ffi")])
+    (and (directory-exists? candidate) candidate)))
+
+(define (resolve-ffi-filename ffi-filename)
+  (define candidates
+    (append (list ffi-filename
+                  (build-path "ffi" ffi-filename))
+            (if system-ffi-directory
+                (list (build-path system-ffi-directory ffi-filename))
+                '())))
+  (for/or ([candidate (in-list candidates)])
+    (and candidate (file-exists? candidate) candidate)))
 
 
 
