@@ -329,7 +329,8 @@
       (boolean? v)
       (symbol? v)))
 
-(define datum:undefined (datum #f #f)) ; TODO: make the undefined value a datum
+(define datum:undefined        (datum #f #f)) ; TODO: make the undefined value a datum
+(define datum:unsafe-undefined (datum #f #f))
 
 ;;;
 ;;; CONSTANTS
@@ -340,13 +341,14 @@
 
 (require (only-in racket/math pi))
 
-(define constants '(null       ; '() racket/base
-                    undefined  ;     racket/undefined
-                    empty      ; '() racket/list
-                    true       ;     racket/bool (not racket/base)
-                    false      ;     racket/bool (not racket/base)
-                    pi         ;     racket/math
-                    eof        ;     racket/base                    
+(define constants '(null             ; '() racket/base
+                    undefined        ;     racket/undefined
+                    unsafe-undefined ;     racket/unsafe/undefined
+                    empty            ; '() racket/list
+                    true             ;     racket/bool (not racket/base)
+                    false            ;     racket/bool (not racket/base)
+                    pi               ;     racket/math
+                    eof              ;     racket/base                    
                     ))
 
 (define (constant-value c)
@@ -355,6 +357,7 @@
     [(true)             #t]
     [(false)            #f]
     [(undefined)        datum:undefined]
+    [(unsafe-undefined) datum:unsafe-undefined]
     [(pi)               pi]
     [(eof)              eof]
     [else
@@ -1482,6 +1485,19 @@
           [(? box? b)       `(app ,h ,(var:box-immutable) ,(loop (unbox b)))]
           [(? keyword? kw) (let ([s (loop (keyword->string kw))])
                              `(app ,h ,(var:string->keyword) ,s))]
+          [(? hash? ht)    (cond
+                             [(hash-eq? ht)
+                              `(app ,h ,(var:make-hasheq)
+                                    ,(loop (hash->list ht)))]
+                             [(hash-eqv? ht)
+                              `(app ,h ,(var:make-hasheqv)
+                                    ,(loop (hash->list ht)))]
+                             [(hash-equal? ht)
+                              `(app ,h ,(var:make-hash)
+                                    ,(loop (hash->list ht)))]
+                             [else
+                              (error 'datum->construction-expr
+                                     "unsupported hash table: ~a" ht)])]
           [else            (error 'datum->construction-expr "got: ~a" v)]))))
   (Expr : Expr (e) -> Expr ()
     [(quote ,s ,d)
@@ -3162,6 +3178,7 @@
 ;;   Void:       Lower 8 bits are          0010 1111. Upper bits are zero.
 ;;   Empty:      Lower 8 bits are          0011 1111. Upper bits are zero.
 ;;   Undefined:  Lower 8 bits are          0100 1111. Upper bits are zero.
+;;   Unsafe und: Lower 8 bits are        1 0100 1111. Upper bits are zero.
 ;;   Eof:        Lower 8 bits are          0101 1111. Upper bits are zero.
 ;;   Missing [*] All bits are 1.   1 ...   1111 1111. 
 
@@ -3504,6 +3521,8 @@
                              [(eof-object? v) '(global.get $eof)]
                              [(fixnum? v)     (Imm v)]
                              [(char? v)       (Imm v)]
+                             [(undefined? v)  (Imm v)]
+                             [(unsafe-undefined? v) (Imm v)]
                              [(string? v)     (define name         (add-quoted-string v))
                                               (define $string:name (string->symbol (~a "$string:" name)))
                                               `(global.get ,$string:name)]
