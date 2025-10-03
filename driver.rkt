@@ -258,7 +258,7 @@
   (define filename
     (if (path-get-extension ffi-filename)
         ffi-filename
-        (path-add-extension ffi-filename "ffi")))
+        (path-add-extension ffi-filename ".ffi")))
   
   (define candidates
     (append (list filename
