@@ -4,13 +4,13 @@
 ;;;        
 
 ;; The functions in this module "drive" the compiler so to speak.
-;; The settings given by the user via the command line is set
-;; in parameters in "webracket.rkt".
+;; The settings given by the user via the command line is
+;; pass as arguments to `drive-compilation`.
 ;; 
 ;; Here we handle the neccessary file operations and call the
 ;; appropriate compilation function from "compiler.rkt".
 ;;
-;; Any external book keeping in files are done here.
+;; Any external book keeping with respect to files are done here.
 
 
 ;;;
