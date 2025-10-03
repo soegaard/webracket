@@ -6,7 +6,7 @@
 (define (make-webracket-namespace)
   (define ns (make-base-empty-namespace))
   (parameterize ([current-namespace ns])
-    (namespace-require 'webracket))  
+    (namespace-require 'webracket))
   ns)
 
 ; Notes:
