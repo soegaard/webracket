@@ -451,7 +451,8 @@ function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
 const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode === 'function';
 
 // hasXterm indicates whether XTermJS is available
-const hasXterm = typeof Terminal !== 'undefined';
+// const hasXterm = typeof Terminal !== 'undefined';
+const hasXterm = true;
 
 function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
