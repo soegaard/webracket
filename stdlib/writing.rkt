@@ -1,6 +1,13 @@
 #lang webracket
 
 ;;;
+;;; Notice
+;;;
+
+;; All definitions in this file become top-level function/variables.
+;; Use local scope for helper functions.
+
+;;;
 ;;; 13.5 Writing
 ;;;
 
@@ -660,13 +667,6 @@
 ;;;
 
 
-(define (truncate-to-width str width)
-  (cond
-    [(or (not (exact-integer? width)) (< width 0)) str]
-    [(>= width (string-length str))   str]
-    [(<= width 3)                     (substring str 0 width)]
-    [else
-     (string-append (substring str 0 (- width 3)) "...")]))
 
 (define error-print-width
   (let ([value 1024])
@@ -681,6 +681,14 @@
        value])))
 
 (define (default-error-value->string-handler value width)
+  (define (truncate-to-width str width)
+    (cond
+      [(or (not (exact-integer? width)) (< width 0)) str]
+      [(>= width (string-length str))   str]
+      [(<= width 3)                     (substring str 0 width)]
+      [else
+       (string-append (substring str 0 (- width 3)) "...")]))
+
   (define port (open-output-string))
   (print value port)
   (truncate-to-width (get-output-string port) width))
@@ -715,6 +723,8 @@
           v)
         (error 'fprintf "missing argument for ~a" who)))
 
+
+
   (define (emit-string str)
     (write-string str out)
     (void))
@@ -731,6 +741,14 @@
       (error 'fprintf "~a expects an exact integer, got ~a" who value))
     (define str (number->string value base))
     (emit-string (if uppercase? (string-upcase str) str)))
+
+  (define (truncate-to-width str width)
+    (cond
+      [(or (not (exact-integer? width)) (< width 0)) str]
+      [(>= width (string-length str))   str]
+      [(<= width 3)                     (substring str 0 width)]
+      [else
+       (string-append (substring str 0 (- width 3)) "...")]))
 
   (define (emit-truncated writer value)
     (define port (open-output-string))
