@@ -26,7 +26,7 @@
 ;;;
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
-         (only-in racket/path       path-only)
+         (only-in racket/path       path-only path-get-extension)
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/pretty     pretty-write)
          (only-in racket/format     ~a)
@@ -255,11 +255,16 @@
     (and (directory-exists? candidate) candidate)))
 
 (define (resolve-ffi-filename ffi-filename)
+  (define filename
+    (if (path-get-extension ffi-filename)
+        ffi-filename
+        (path-add-extension ffi-filename "ffi")))
+  
   (define candidates
-    (append (list ffi-filename
-                  (build-path "ffi" ffi-filename))
+    (append (list filename
+                  (build-path "ffi" filename))
             (if system-ffi-directory
-                (list (build-path system-ffi-directory ffi-filename))
+                (list (build-path system-ffi-directory filename))
                 '())))
   (for/or ([candidate (in-list candidates)])
     (and candidate (file-exists? candidate) candidate)))
