@@ -90,7 +90,8 @@
 
 (provide
  match match:error
- ; in-list
+ ; in-list   ; see "core.rkt"
+ ; in-string ; see "core.rkt"
  
  ;; Test functions
  always-throw ; todo - remove
@@ -101,6 +102,7 @@
  check-range
  check-range-generic
  check-naturals
+ check-string
  
  
  ;; 4.1 Equality
@@ -724,7 +726,7 @@
  unsafe-flrandom 
  unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector-length unsafe-vector-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
-
+ unsafe-string-length
  
  ;; FFI
  
@@ -941,6 +943,10 @@
   (unless (list? l)
     (raise-argument-error 'in-list "list?" l)))
 
+(define (check-string l)
+  (unless (string? l)
+    (raise-argument-error 'in-string "string?" l)))
+
 (define (check-mlist l)
   (unless (or (mpair? l) (null? l))
     (raise-argument-error 'in-mlist "(or/c mpair? null?)" l)))
@@ -1154,7 +1160,8 @@
      (bitwise-and shifted mask)]))
 
 
-(define (in-list xs) 'in-list)
+(define (in-list xs)   'in-list)
+(define (in-string xs) 'in-string)
 
 
 ; Redefine to avoid `srcloc` being bound as syntax

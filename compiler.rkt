@@ -459,6 +459,7 @@
   check-range
   check-range-generic
   check-naturals
+  check-string
   
   ; structures
   make-struct-type
@@ -959,6 +960,8 @@
   unsafe-vector*-length
   unsafe-vector*-set!
   unsafe-struct-set!
+
+  unsafe-string-length
 
   namespace?
   make-empty-namespace

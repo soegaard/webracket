@@ -829,6 +829,8 @@
           in-mlist
           in-range
           in-naturals
+          in-string
+          
           can-impersonate
 
           prop:sealed
@@ -954,6 +956,7 @@
     (add-runtime-string-constant 'hash-less-windows-path-colon         "#<windows-path:")
     (add-runtime-string-constant 'hash-less-struct-type-property-colon "#<struct-type-property:")
 
+    (add-runtime-string-constant 'string?                    "string?")
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
     (add-runtime-string-constant 'real?                      "real?")
@@ -3483,6 +3486,18 @@
                                (global.get $symbol:in-list)
                                (global.get $string:list?)
                                (local.get $l))
+                         (unreachable))))
+
+         (func $check-string (type $Prim1)
+               (param $s (ref eq)) ;; string
+               (result   (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $string? (local.get $s)) (global.get $true))
+                   (then (global.get $void))
+                   (else (call $raise-argument-error1
+                               (global.get $symbol:in-string)
+                               (global.get $string:string?)
+                               (local.get $s))
                          (unreachable))))
 
          ;; Racket's check-mlist accepts only mutable pairs; mpairs are
@@ -30690,6 +30705,18 @@
                                     (i32.const 1))
                          (local.get $val))
               (global.get $void))
+
+        (func $unsafe-string-length (type $Prim1)
+              (param $s   (ref eq))
+              (result     (ref eq))
+              
+              (local $str (ref $String))
+              
+              (local.set $str (ref.cast (ref $String) (local.get $s)))
+              (ref.i31 (i32.shl
+                        (array.len
+                         (struct.get $String $codepoints (local.get $str)))
+                        (i32.const 1))))
 
         ;; 17.4 Unsafe Extflonum Operations
         ;; 17.5 Unsafe Impersonators and Chaperones
