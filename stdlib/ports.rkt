@@ -24,7 +24,7 @@
        value])))
 
 (define (reset-current-error-port!)
-  (current-output-port (open-output-string)))
+  (current-error-port (open-output-string)))
 
 (define current-input-port
   (let ([value (open-input-string "")])

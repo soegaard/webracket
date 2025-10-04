@@ -38,9 +38,13 @@
          (for-syntax read-syntax/skip-first-line))
 
 ;; These functions are implemented in `stdlib` as webracket functions
-(provide error ; [twice to force indentation]
+(provide error ; [twice to force indentation]         
          ;; stdlib/exceptions.rkt
          error
+         exn
+         exn:fail
+         make-exn
+         make-exn:fail
          ;; stdlib/ports.rkt
          current-input-port
          current-output-port
@@ -49,13 +53,36 @@
          reset-current-output-port!
          reset-current-error-port!
          ;; stdlib/writing.rkt
+         print-pair-curly-braces
+         print-mpair-curly-braces
+         print-unreadable
+         print-graph
+         print-struct
+         print-box
+         print-vector-length
+         print-hash-table
+         print-boolean-long-form
+         print-reader-abbreviations
+         print-as-expression
+         print-syntax-width
+         print-value-columns
+         current-write-relative-directory         
          write
          display
          print
-         format
-
-         fprintf
+         writeln
+         displayln
+         println
          
+         error-print-width
+         ; default-error-value->string-handler
+         error-value->string-handler
+         
+         format
+         fprintf
+         ; fprintf*  ; todo: remove
+         printf
+         eprintf
          )
 
 
@@ -1169,14 +1196,15 @@
 
 ;;; ports.rkt
 
+(define (reset-current-input-port!)
+  (current-input-port (open-input-string "")))
+
 (define (reset-current-output-port!)
   (current-output-port (open-output-string)))
 
 (define (reset-current-error-port!)
-  (current-output-port (open-output-string)))
+  (current-error-port (open-output-string)))
 
-(define (reset-current-input-port!)
-  (current-input-port (open-input-string "")))
 
 
 ;;;
