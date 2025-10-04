@@ -317,6 +317,7 @@
  fxmax
  fx->fl
  fl->fx
+ fixnum-for-every-system?
  ;; 4.3.4.2 Fixnum Vectors
  ;; 4.3.4.3 Fixnum Range
  most-positive-fixnum

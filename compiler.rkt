@@ -707,7 +707,7 @@
 
   fx->fl
   fl->fx
-  ; fixnum-for-every-system?
+  fixnum-for-every-system?
 
   flonum?
   double-flonum?

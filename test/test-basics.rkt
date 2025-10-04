@@ -47,7 +47,7 @@
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1))))))
 
- #;(list "4. Datatypes"
+ (list "4. Datatypes"
        (list "4.1 Equality"
              (list "eqv?"
                    (and (equal? (eqv? 'a 'a) #t)
@@ -845,6 +845,13 @@
                           (equal? (fl->fx -0.1) 0))
                     (list "fl->exact-integer"
                           (equal? (fl->exact-integer 3.0) 3))
+
+                    (list "fixnum-for-every-system?"
+                          (and (equal? (fixnum-for-every-system? 0)          #t)
+                               (equal? (fixnum-for-every-system? -536870912) #t)
+                               (equal? (fixnum-for-every-system? 536870911)  #t)
+                               ; (equal? (fixnum-for-every-system? 536870912)  #f)  ; no bignums yet
+                               (equal? (fixnum-for-every-system? 1.0)        #f)))
                     )))
 
        (list "4.4 Strings"
