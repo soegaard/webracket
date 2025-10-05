@@ -99,7 +99,10 @@
 
   (define stx-with-stdlib
     (cond
-      [stdlib? (syntax-case stx (begin)
+      [stdlib? #`(begin
+                   (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
+                   #,stx)] ; stx is a begin form      
+      #;[stdlib? (syntax-case stx (begin)
                  [(begin forms ...)
                   #`(begin
                       (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
