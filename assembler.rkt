@@ -31,7 +31,7 @@
 ;;;
 
 ; Some of the comments below refer to the external tool `wabt` but
-; as it turns out, it doesn't support the GC proposal.
+; as it turns out, it doese not support the GC proposal.
 
 
 ;;;
@@ -336,6 +336,32 @@ function js_value_to_fasl(v) {
   return Uint8Array.from(out);
 }
 
+function is_pair(v) {
+    return v && typeof v === 'object' && v.tag === 'pair'
+}
+
+function is_alist(v) {
+    let list = v
+    while (list !== null) {
+        if (!is_pair(list)) return false
+        if (!is_pair(list.car)) return false
+        list = list.cdr
+    }
+    return true
+}
+
+function alist_to_vector_pairs(alist) {
+    const result = []
+    let   list   = alist
+    while (list !== null) {
+        const entry = list.car
+        result.push([entry.car, entry.cdr])
+        list = list.cdr
+    }
+    return result
+}
+
+      
 function testsuite(js_value_to_fasl, fasl_to_js_value, { log = true } = {}) {
   // --- helpers -------------------------------------------------------------
   function charToString(v) {
@@ -671,7 +697,10 @@ var imports = {
       'null':                      (() => null),
       'this':                      (function () { return this; }),
       'object':                    (fields => {
-                                     const entries = from_fasl(fields) || [];
+                                     const decoded = from_fasl(fields);
+                                     const entries = is_alist(decoded)
+                                       ? alist_to_vector_pairs(decoded)
+                                       : (decoded || []);
                                      const o = {};
                                      for (const [k, v] of entries) {
                                        o[k] = v;
