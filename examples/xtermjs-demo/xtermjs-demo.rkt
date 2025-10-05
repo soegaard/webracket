@@ -28,26 +28,31 @@
 
 ;; From a WebRacket perspective, we 
 
-
 ;;;
-;;; String utilities
+;;; Utitilies
 ;;;
 
-(define (trim-left s)
-  (let ([len (string-length s)])
-    (let loop ([i 0])
-      (if (or (>= i len) (not (char=? (string-ref s i) #\space)))
-          (substring s i len)
-          (loop (add1 i))))))
+(define (exact x)
+  (if (and (inexact? x) (integer? x))
+      (inexact->exact x)
+      x))
 
-(define (trim-right s)
-  (let loop ([i (sub1 (string-length s))])
-    (cond [(< i 0) ""]
-          [(char=? (string-ref s i) #\space) (loop (sub1 i))]
-          [else (substring s 0 (add1 i))])))
+(define (format-fixed value digits)
+  ; Formats a floating points number with `digits` digits after the decimal point.
+  (define factor       (expt 10 digits))
+  (define scaled       (round (* value factor)))
+  (define scaled-abs   (abs scaled))
+  (define integer-part (exact (quotient  scaled-abs factor)))
+  (define fraction     (exact (remainder scaled-abs factor)))
+  (define fraction-str (let ([s (number->string fraction)])
+                         (if (>= (string-length s) digits)
+                             s
+                             (string-append (make-string (- digits (string-length s)) #\0) s))))
+  (string-append (if (< scaled 0) "-" "")
+                 (number->string integer-part)
+                 "."
+                 fraction-str))
 
-(define (trim-both s)
-  (trim-right (trim-left s)))
 
 (define (pad-left text width)
   (define len (string-length text))
@@ -61,10 +66,25 @@
       text
       (string-append text (make-string (- width len) #\space))))
 
-(define (join-lines lines separator)
-  (string-join lines separator))
+  (define (printable-string? s)
+    (for/and ([ch (in-string s)])
+      (let ([code (char->integer ch)])
+        (or (and (>= code #x20) (<= code #x7E))
+            (>= code #x00A0)))))
+
+  (define (first-space-index s)
+    (let loop ([i 0])
+      (if (>= i (string-length s))
+          (string-length s)
+          (if (char=? (string-ref s i) #\space)
+              i
+              (loop (add1 i))))))
 
 
+
+;;;
+;;; The Xtermjs Demo
+;;;
 
 (define (start-demo . _)
   (define head (js-document-head))
@@ -138,12 +158,12 @@
   (js-append-child! root inner)
   (js-append-child! body root)
 
-  (define (alist->js-object entries)
-    (js-object (list->vector (map (λ (entry) (vector (car entry) (cadr entry)))
-                                  entries))))
+  ;;;
+  ;;; Themes (Color Schemes)
+  ;;;
 
   (define base-theme
-    (alist->js-object
+    (js-object
      '(("foreground"    "#F8F8F8")
        ("background"    "#2D2E2C")
        ("selection"     "#5DA5D533")
@@ -165,7 +185,7 @@
        ("brightWhite"   "#FFFFFF"))))
 
   (define other-theme
-    (alist->js-object
+    (js-object
      '(("foreground"    "#eff0eb")
        ("background"    "#282a36")
        ("selection"     "#97979b33")
@@ -185,7 +205,14 @@
        ("brightCyan"    "#9aedfe")
        ("white"         "#f1f1f0")
        ("brightWhite"   "#eff0eb"))))
+    
+  ;;;
+  ;;; Terminal Creation
+  ;;;
 
+  ;; Create terminal given the options below.
+  ;; After creation attach it to the `terminal-host` div node.
+  
   (define terminal-options
     (js-object
      (vector (vector "fontFamily"       "\"Cascadia Code\", Menlo, monospace")
@@ -203,45 +230,22 @@
   (define webgl             (js-new webgl-constructor (vector)))
   (xterm-terminal-load-addon term webgl)
 
+
+  ;;;
+  ;;; COMMANDS
+  ;;;
+  
   (define command        "")
   (define is-base-theme? #t)
 
 
-  (define (format-fixed value digits)
-    (define factor (expt 10 digits))
-    (define scaled (round (* value factor)))
-    (define scaled-abs (abs scaled))
-    (define integer-part (quotient scaled-abs factor))
-    (define fraction (remainder scaled-abs factor))
-    (define fraction-str (let ([s (number->string fraction)])
-                           (if (>= (string-length s) digits)
-                               s
-                               (string-append (make-string (- digits (string-length s)) #\0) s))))
-    (string-append (if (< scaled 0) "-" "")
-                   (number->string integer-part)
-                   "."
-                   fraction-str))
-
-  (define (printable-string? s)
-    (for/and ([ch (in-string s)])
-      (let ([code (char->integer ch)])
-        (or (and (>= code #x20) (<= code #x7E))
-            (>= code #x00A0)))))
-
-  (define (first-space-index s)
-    (let loop ([i 0])
-      (if (>= i (string-length s))
-          (string-length s)
-          (if (char=? (string-ref s i) #\space)
-              i
-              (loop (add1 i))))))
-
   (define (wrap-text text max-length)
-    (let loop ([remaining text] [acc '()])
-      (define trimmed (trim-left remaining))
-      (define len (string-length trimmed))
+    (let loop ([remaining text]
+               [acc       '()])
+      (define trimmed (string-trim-left remaining #\space))
+      (define len     (string-length trimmed))
       (cond
-        [(zero? len) (reverse acc)]
+        [(zero? len)         (reverse acc)]
         [(<= len max-length) (reverse (cons trimmed acc))]
         [else
          (define candidate
@@ -250,9 +254,9 @@
                  max-length
                  (let search ([i limit])
                    (cond
-                     [(< i 0) max-length]
+                     [(< i 0)                                 max-length]
                      [(char=? (string-ref trimmed i) #\space) (if (zero? i) max-length i)]
-                     [else (search (sub1 i))])))))
+                     [else                                    (search (sub1 i))])))))
          (define part (substring trimmed 0 candidate))
          (define rest (substring trimmed candidate len))
          (loop rest (cons part acc))])))
@@ -282,7 +286,7 @@
      " └────────────────────────────────────────────────────────────────────────────┘"
      ""))
 
-  (xterm-terminal-writeln term (join-lines initial-lines "\n\r") (void))
+  (xterm-terminal-writeln term (string-join initial-lines "\n\r") (void))
   (xterm-terminal-writeln term "Below is a simple emulated backend, try running `help`." (void))
 
   (define (apply-theme!)
@@ -392,7 +396,7 @@
     (js-add-event-listener! xterm-element "wheel" (procedure->external wheel-handler)))
 
   (define (ls-command)
-    (xterm-terminal-writeln term (join-lines '("a" "bunch" "of" "fake" "files") "\r\n") (void))
+    (xterm-terminal-writeln term (string-join '("a" "bunch" "of" "fake" "files") "\r\n") (void))
     (prompt))
 
   (define (loadtest-command)
@@ -437,11 +441,12 @@
 
   (define (range-list start end)
     (for/list ([i (in-range start (add1 end))]) i))
+  
   (define (chars-command)
-    (define one-to-eight (range-list 1 8))
+    (define one-to-eight       (range-list 1 8))
     (define zero-to-thirtyfive (range-list 0 35))
-    (define one-to-twentyfour (range-list 1 24))
-    (define one-to-sixtyfour (range-list 1 64))
+    (define one-to-twentyfour  (range-list 1 24))
+    (define one-to-sixtyfour   (range-list 1 64))
     (define lines
       (list
        (list "Ascii ─" "abc123")
@@ -541,7 +546,7 @@
     (xterm-terminal-write term "\r\n" (void))
     (xterm-terminal-writeln
      term
-     (join-lines
+     (string-join
       (for/list ([entry (in-list lines)])
         (string-append (pad-left (car entry) max-length) "  " (cadr entry) "\u001b[0m"))
       "\r\n")
@@ -562,7 +567,7 @@
                 (string-append "\r\n  " (make-string padding #\space) " " line)))))
     (xterm-terminal-writeln
      term
-     (join-lines
+     (string-join
       (append
        (list "Welcome to xterm.js! Try some of the commands below." "")
        (for/list ([entry (in-list commands)])
@@ -576,18 +581,16 @@
   (struct command-info (handler description))
 
   (define commands
-    (list (cons "help" (command-info help-command "Prints this help message"))
-          (cons "ls" (command-info ls-command "Prints a fake directory structure"))
-          (cons "loadtest"
-                (command-info loadtest-command "Simulate a lot of data coming from a process"))
-          (cons "chars"
-                (command-info chars-command
-                              "Prints a wide range of characters and styles that xterm.js can handle"))))
+    (list (cons "help"     (command-info help-command     "Prints this help message"))
+          (cons "ls"       (command-info ls-command       "Prints a fake directory structure"))
+          (cons "loadtest" (command-info loadtest-command "Simulate a lot of data coming from a process"))
+          (cons "chars"    (command-info chars-command    "Prints a wide range of characters and styles that xterm.js can handle"))))
 
   (define (lookup-command name)
     (assoc name commands))
+  
   (define (run-command text)
-    (define trimmed (trim-both text))
+    (define trimmed (string-trim text))
     (define name
       (if (zero? (string-length trimmed))
           ""
