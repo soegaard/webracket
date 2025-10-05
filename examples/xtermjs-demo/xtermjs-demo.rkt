@@ -26,7 +26,17 @@
 ;; The good news is that the webgl renderer for Xtermjs renders the characters
 ;; without special fonts.
 
-;; From a WebRacket perspective, we 
+
+;; Compile this demo with:
+;;
+;;     racket ../../webracket.rkt --ffi xtermjs --ffi dom.ffi --ffi standard.ffi --stdlib -b xtermjs-demo.rkt
+;;
+;; Use a local web-server to serve the files in this folder.
+;;
+;;     raco static-web
+;;
+;; Open "http://localhost:8000" and click on `xtermjs-demo.html`.
+
 
 ;;;
 ;;; Utitilies
