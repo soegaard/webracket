@@ -1,19 +1,84 @@
-(define head (js-document-head))
+;;;
+;;; Xterm.js
+;;;
+
+;; The terminal emulator Xterm.js is a fast, full-featured JavaScript library
+;; that runs in the browser. Use it to provide a native-like terminal experience
+;; in web applications.
+
+;; This example is a port of the demo on the xtermjs frontpage.
+;;
+;;     https://xtermjs.org/
+;;
+
+;; From an Xtermjs perspective, this demo illustrates how to:
+;;
+;;   - Terminal initialization and attachment to a DOM element
+;;   - Cursor control, ANSI escape sequence handling
+;;   - Theme / styling options (e.g. foreground / background)
+;;   - Handling user input (onData / key events) and forwarding it to backend
+;;   - Add-on usage
+
+;; In the demo the command `chars` shows the so-called "powerline" characters.
+;; These characters are commonly used to make spiffy status lines.
+;; There is a snafu though - the powerline special characters are not in the Unicode spec.
+;; Without special font support, these characters doesn't show up.
+;; The good news is that the webgl renderer for Xtermjs renders the characters
+;; without special fonts.
+
+;; From a WebRacket perspective, we 
+
+
+;;;
+;;; String utilities
+;;;
+
+(define (trim-left s)
+  (let ([len (string-length s)])
+    (let loop ([i 0])
+      (if (or (>= i len) (not (char=? (string-ref s i) #\space)))
+          (substring s i len)
+          (loop (add1 i))))))
+
+(define (trim-right s)
+  (let loop ([i (sub1 (string-length s))])
+    (cond [(< i 0) ""]
+          [(char=? (string-ref s i) #\space) (loop (sub1 i))]
+          [else (substring s 0 (add1 i))])))
+
+(define (trim-both s)
+  (trim-right (trim-left s)))
+
+(define (pad-left text width)
+  (define len (string-length text))
+  (if (>= len width)
+      text
+      (string-append (make-string (- width len) #\space) text)))
+
+(define (pad-right text width)
+  (define len (string-length text))
+  (if (>= len width)
+      text
+      (string-append text (make-string (- width len) #\space))))
+
+(define (join-lines lines separator)
+  (string-join lines separator))
+
+
 
 (define (start-demo . _)
+  (define head (js-document-head))
   (define body (js-document-body))
-  (js-set-attribute! body "style"
-                     (string-append
-                      "margin: 0; min-height: 100vh;"
-                      "background: radial-gradient(circle at top, #3c3d39 0%, #1e1f1d 55%, #161715 100%);"
-                      "font-family: 'Cascadia Code', Menlo, monospace;"
-                      #;"display: flex; align-items: center; justify-content: center;"
-                      ))
 
-  (define a-link (js-create-element "link"))
-  (js-set-attribute! a-link "rel" "stylesheet")
-  (js-set-attribute! a-link "href" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css")
-  (js-append-child! head a-link)
+  (js-set-attribute!
+   body "style"
+   (string-append
+    "margin: 0; min-height: 100vh;"
+    "background: radial-gradient(circle at top, #3c3d39 0%, #1e1f1d 55%, #161715 100%);"
+    "font-family:  'Cascadia Code', Menlo, , monospace;"
+    #;"display: flex; align-items: center; justify-content: center;"
+    ))
+
 
   (define style (js-create-element "style"))
   (js-set! style "textContent"
@@ -27,8 +92,7 @@
             ".demo .inner.other-theme { "
             "   background: rgba(32, 32, 45, 0.92);"
             "   box-shadow: 0 32px 72px rgba(8, 12, 32, 0.55); }\n"
-            ".demo .terminal-container { "
-            "   height: 480px; }\n"
+            ".demo .terminal-container { height: 480px; }\n"
             ".demo .title { "
             "   color: #f8f8f8; font-size: 20px; margin: 0 0 16px;"
             "   text-transform: uppercase; letter-spacing: 0.24em; text-align: center; }\n"
@@ -61,7 +125,8 @@
   (js-set! subtitle "textContent" "Type `help` inside the terminal to explore available commands.")
   (define hint (js-create-element "p"))
   (js-set-attribute! hint "class" "hint")
-  (js-set! hint "textContent" "Scroll the output, click the italic text, and toggle themes via the links command.")
+  (js-set! hint "textContent"
+           "Scroll the output, click the italic text, and toggle themes via the links command.")
   (define terminal-host (js-create-element "div"))
   (js-set-attribute! terminal-host "class" "terminal-container")
   (js-append-child! inner title)
@@ -72,7 +137,8 @@
   (js-append-child! body root)
 
   (define (alist->js-object entries)
-    (js-object (list->vector (map (λ (entry) (vector (car entry) (cadr entry))) entries))))
+    (js-object (list->vector (map (λ (entry) (vector (car entry) (cadr entry)))
+                                  entries))))
 
   (define base-theme
     (alist->js-object
@@ -120,53 +186,24 @@
 
   (define terminal-options
     (js-object
-     (vector (vector "fontFamily" "\"Cascadia Code\", Menlo, monospace")
-             (vector "theme" base-theme)
-             (vector "cursorBlink" #t)
+     (vector (vector "fontFamily"       "\"Cascadia Code\", Menlo, monospace")
+             (vector "theme"            base-theme)
+             (vector "cursorBlink"      #t)
              (vector "allowProposedApi" #t))))
 
   (define term (xterm-terminal-new terminal-options))
   (xterm-terminal-open term terminal-host)
   (xterm-terminal-focus term)
 
-  (define command "")
+  ; Use webgl addon (needed for the powerline glyps to render correctly)
+  (define win               (js-window-window))
+  (define webgl-constructor (js-ref/extern (js-ref/extern win "WebglAddon") "WebglAddon"))
+  (define webgl             (js-new webgl-constructor (vector)))
+  (xterm-terminal-load-addon term webgl)
+
+  (define command        "")
   (define is-base-theme? #t)
 
-  (define (trim-left s)
-    (let ([len (string-length s)])
-      (let loop ([i 0])
-        (if (or (>= i len) (not (char=? (string-ref s i) #\space)))
-            (substring s i len)
-            (loop (add1 i))))))
-
-  (define (trim-right s)
-    (let loop ([i (sub1 (string-length s))])
-      (cond [(< i 0) ""]
-            [(char=? (string-ref s i) #\space) (loop (sub1 i))]
-            [else (substring s 0 (add1 i))])))
-
-  (define (trim-both s)
-    (trim-right (trim-left s)))
-
-  (define (pad-left text width)
-    (define len (string-length text))
-    (if (>= len width)
-        text
-        (string-append (make-string (- width len) #\space) text)))
-
-  (define (pad-right text width)
-    (define len (string-length text))
-    (if (>= len width)
-        text
-        (string-append text (make-string (- width len) #\space))))
-
-  (define (join-lines lines separator)
-    (if (null? lines)
-        ""
-        (let loop ([acc (car lines)] [rest (cdr lines)])
-          (if (null? rest)
-              acc
-              (loop (string-append acc separator (car rest)) (cdr rest))))))
 
   (define (format-fixed value digits)
     (define factor (expt 10 digits))
@@ -245,6 +282,7 @@
 
   (xterm-terminal-writeln term (join-lines initial-lines "\n\r") (void))
   (xterm-terminal-writeln term "Below is a simple emulated backend, try running `help`." (void))
+
   (define (apply-theme!)
     (define options (xterm-terminal-options term))
     (js-set! options "theme" (if is-base-theme? base-theme other-theme))
@@ -290,7 +328,9 @@
         (js-send callback "call"
                  (vector (js-undefined)
                          (js-array/extern (list->vector links))))
-        (js-send callback "call" (vector (js-undefined) (js-undefined)))))
+        (js-send callback "call"
+                 (vector (js-undefined)
+                         (js-undefined)))))
 
   (define (provide-links buffer-line callback . _)
     (define (open url)
@@ -325,7 +365,9 @@
                       (open "https://github.com/xtermjs/xterm.js/blob/master/typings/xterm.d.ts")))
               (link 56 15 66 15 "decorations"
                     (λ ()
-                      (open "https://github.com/xtermjs/xterm.js/blob/a351f5758a5126308b90d60b604b528462f6f051/typings/xterm.d.ts#L372"))))]
+                      (open (string-append
+                             "https://github.com/xtermjs/xterm.js/blob/"
+                             "a351f5758a5126308b90d60b604b528462f6f051/typings/xterm.d.ts#L372")))))]
             [else #f]))
     (call-callback callback case-value))
 
@@ -402,7 +444,8 @@
       (list
        (list "Ascii ─" "abc123")
        (list "CJK ─" "汉语, 漢語, 日本語, 한국어")
-       (list "Powerline ─" "\ue0b2\ue0b0\ue0b3\ue0b1\ue0b6\ue0b4\ue0b7\ue0b5\ue0ba\ue0b8\ue0bd\ue0b9\ue0be\ue0bc")
+       (list "Powerline ─" "\ue0b2\ue0b0\ue0b3\ue0b1\ue0b6\ue0b4\ue0b7\ue0b5\ue0ba\ue0b8\ue0bd\ue0b9\ue0be\ue0bc")           
+ 
        (list "Box drawing ┬" "┌─┬─┐ ┏━┳━┓ ╔═╦═╗ ┌─┲━┓ ╲   ╱")
        (list "            │" "│ │ │ ┃ ┃ ┃ ║ ║ ║ │ ┃ ┃  ╲ ╱")
        (list "            │" "├─┼─┤ ┣━╋━┫ ╠═╬═╣ ├─╄━┩   ╳")
@@ -582,7 +625,60 @@
   (prompt)
   (void))
 
-(define script (js-create-element "script"))
-(js-set-attribute! script "src" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js")
-(js-add-event-listener! script "load" (procedure->external start-demo))
-(js-append-child! head script)
+;;;
+;;; Load Xterm.js and the webgl addon.
+;;;
+
+;; When all scripts are loaded, the function `start-demo`
+;; is called. 
+
+
+(define xtermjs-url
+  "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js")
+(define webgl-addon-url
+  "https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.min.js")
+(define xtermjs-css-url
+  "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css")
+
+(define scripts         (list xtermjs-url webgl-addon-url))
+(define scripts-to-load (length scripts))
+(define scripts-loaded  0)
+
+(define (script-ready . _)
+  (set! scripts-loaded (add1 scripts-loaded))
+  (when (= scripts-loaded scripts-to-load)
+    (start-demo)))
+
+(define (script-error . _)
+  (js-log "ERROR"))
+
+(define (register-script-events! element)
+  (define callback (procedure->external script-ready))
+  (define error    (procedure->external script-error))
+  (js-add-event-listener! element "load"  callback)
+  (js-add-event-listener! element "error" error))
+
+(define (load-script script-url)
+  (define head   (js-document-head))
+  (define script (js-create-element "script"))
+  (js-set-attribute! script "src" script-url)
+  (register-script-events! script)
+  (js-append-child! head script))
+
+(define (load-scripts)
+  (for-each load-script scripts))
+
+(define (load-css-files)
+  (define head (js-document-head))  
+  (define link (js-create-element "link"))
+  (js-set-attribute! link "rel" "stylesheet")
+  (js-set-attribute! link "href" xtermjs-css-url)
+  (js-append-child! head link))
+
+
+;; NOTE
+;;   Remember to set the variable `scripts-to-load`
+;;   to the number of scripts to load.
+
+(load-scripts)
+(load-css-files)
