@@ -364,8 +364,14 @@
      (error 'constant-value "got: ~a" c)]))
 
 (define non-literal-constants
-  '(prop:object-name
-    prop:procedure))
+  '(prop:arity-string
+    prop:checked-procedure  
+    prop:impersonator-of
+    prop:incomplete-arity
+    prop:method-arity-error
+    prop:object-name
+    prop:procedure
+    ))
 
 (define (non-literal-constant? x)
   (and (memq x non-literal-constants)) #t)
@@ -2723,9 +2729,9 @@
 
   (letv ((T xs) (TopLevelForm T (make-id-set)))    
     (unless (set-empty? xs)
-      (displayln "\n---\n")
-      (pretty-print (unparse-LANF T)) (newline)
-      (displayln "\n---\n") (displayln xs) (newline)
+      ;; (displayln "\n---\n")
+      ;; (pretty-print (unparse-LANF T)) (newline)
+      ;; (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))
     (values T ht abs)))
 
@@ -5459,20 +5465,13 @@
      ;; eof object
      #;(equal? (run '(fasl->s-exp (s-exp->fasl (eof)))) (eof))
      (equal? (run '(fasl->s-exp (s-exp->fasl (list 11 (vector 22 #\x) 'foo "bar" (list 55)))))
-             (list 11 (vector 22 #\x) 'foo "bar" (list 55)))     
-     ;; explicit output port
-     ; todo: implement `call-with-output-bytes`
-     #;(equal? (run '(let ([bs (call-with-output-bytes
-                              (lambda (out)
-                                (s-exp->fasl '(1 2) out)))])
-                     (fasl->s-exp bs)))
-             '(1 2))))
+             (list 11 (vector 22 #\x) 'foo "bar" (list 55)))))
 
   (list "-- Core Constructs --"
-        ;; (list "Immediate Values"              (test-immediates))
-        ;; (list "Call unary primitive"          (test-call-unary-primitive))
-        ;; (list "Some characters "            (test-some-characters)) ; slow
-        ;; #;(list "All characters"              (test-all-characters))  ; very slow
+        ;; (list "Immediate Values"           (test-immediates))
+        ;; (list "Call unary primitive"       (test-call-unary-primitive))
+        ;; (list "Some characters "           (test-some-characters)) ; slow
+        ;; #;(list "All characters"           (test-all-characters))  ; very slow
         (list "Call binary primitive"         (test-call-binary-primitive))
         (list "Local variables (let)"         (test-let))
         (list "Conditional (if)"              (test-if))
@@ -5494,7 +5493,8 @@
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
         #; (list "Letrec"                        (test-letrec))  ;; TODO!
-        #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) ; assignment to letrec bound variable
+        ; assignment to letrec bound variable
+        #; (letrec ((f (lambda (g) (set! f g) (f)))) (f (lambda () 12))) 
         (list "Named let"                     (test-named-let))  ; <-
         (list "And/Or"                        (test-and/or))
         (list "Cond"                          (test-cond))

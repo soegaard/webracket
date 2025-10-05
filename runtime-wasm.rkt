@@ -839,6 +839,16 @@
           object-name
           prop:procedure
           procedure
+          prop:checked-procedure
+          checked-procedure
+          prop:impersonator-of
+          impersonator-of
+          prop:method-arity-error
+          method-arity-error
+          prop:arity-string
+          arity-string
+          prop:incomplete-arity
+          incomplete-arity
 
           string
           unix
@@ -33797,12 +33807,17 @@
                ;;  - the host calls $get-bytes which copies the result-bytes
                ;;    into the linear memory, where the host can read it.
 
-               (global $system-path-convention (mut (ref eq)) (ref.i31 (i32.const 0)))
-               (global $result-bytes           (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $system-path-convention   (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $result-bytes             (mut (ref eq)) (ref.i31 (i32.const 0)))
 
                ;; Struct-type properties provided by the runtime
-               (global $prop:object-name (mut (ref eq)) (global.get $void))
-               (global $prop:procedure   (mut (ref eq)) (global.get $void))
+               (global $prop:object-name         (mut (ref eq)) (global.get $void))
+               (global $prop:procedure           (mut (ref eq)) (global.get $void))
+               (global $prop:checked-procedure   (mut (ref eq)) (global.get $void))
+               (global $prop:impersonator-of     (mut (ref eq)) (global.get $void))
+               (global $prop:method-arity-error  (mut (ref eq)) (global.get $void))
+               (global $prop:arity-string        (mut (ref eq)) (global.get $void))
+               (global $prop:incomplete-arity    (mut (ref eq)) (global.get $void))
                
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
@@ -33850,6 +33865,51 @@
                                            (call $make-struct-type-property-descriptor/checked
                                                  (ref.cast (ref $Symbol)
                                                            (global.get $symbol:procedure))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:checked-procedure
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:checked-procedure))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:impersonator-of
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:impersonator-of))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:method-arity-error
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:method-arity-error))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:arity-string
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:arity-string))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:incomplete-arity
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:incomplete-arity))
                                                  (global.get $false)
                                                  (global.get $null)
                                                  (global.get $false)
