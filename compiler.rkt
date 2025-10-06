@@ -784,6 +784,7 @@
   string->symbol symbol->string
   string->uninterned-symbol symbol-interned?
   symbol->immutable-string
+  gensym
   
   eof-object?
 
@@ -3763,6 +3764,8 @@
 
         [(raise)                       (inline-prim/optional/default sym ae1 1 2 (Imm #t))]
 
+        [(gensym)                     (inline-prim/optional sym ae1 0 1)]
+        
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(bytes-copy!)                (inline-prim/optional sym ae1 3 5)]

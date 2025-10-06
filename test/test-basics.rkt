@@ -1455,7 +1455,20 @@
                          ;(equal? (symbol<? 'a 'c 'b) #f)
                          (equal? (symbol<? 'a 'aa)   #t)
                          (equal? (symbol<? 'aa 'a)   #f)
-                         #;(equal? (procedure-arity symbol<?) 1)))))
+                         #;(equal? (procedure-arity symbol<?) 1)))
+
+              (list "gensym"
+                    (let* ([s0 (gensym)]
+                           [s1 (gensym 'apple)]
+                           [s2 (gensym "apple")]
+                           [s3 (gensym 'apple)])
+                      (and (equal? (symbol? s0)                                  #t)
+                           (equal? (symbol-interned? s0)                         #f)
+                           (equal? (string-prefix? (symbol->string s0) "g" )     #t)
+                           (equal? (string-prefix? (symbol->string s1) "apple" ) #t)
+                           (equal? (symbol-interned? s1)                         #f)
+                           (equal? (string-prefix? (symbol->string s2) "apple" ) #t)
+                           (equal? (eq? s1 s3)                                   #f))))))
 
        (list "4.9 Keywords"
              (list

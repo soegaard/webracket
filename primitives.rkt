@@ -420,7 +420,7 @@
  string->uninterned-symbol
  symbol-interned?
  ; symbol-unreadable?
- ; gensym
+ gensym
 
  ;; 4.7.1
  symbol->immutable-string

@@ -13187,13 +13187,26 @@
                (local.set $n (global.get $gensym-counter))
                ;; Increment counter
                (global.set $gensym-counter (i32.add (local.get $n) (i32.const 1)))
-               ;; Convert number to fixnum
+               ;; Convert counter to string
                (local.set $n-str
                           (ref.cast (ref $String)
-                            (call $number->string (ref.i31 (local.get $n)) ,(Imm 10))))
+                                    (call $number->string
+                                          ; convert $n from an i32 to a fixnum
+                                          (ref.i31 (i32.shl (local.get $n) (i32.const 1)))
+                                          ,(Imm 10))))
                ;; Append prefix and number string
                (ref.cast (ref $String)
                          (call $string-append/2 (local.get $prefix) (local.get $n-str))))
+
+         (func $gensym (type $Prim01)
+               (param $base (ref eq)) ;; optional base (string or symbol), default = "g"
+               (result      (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $base) (global.get $missing))
+                   (then (call $gensym:0))
+                   (else (call $gensym:1 (local.get $base)))))
+
 
          (func $gensym:0 (result (ref $Symbol))
                ;; Use "g" as default prefix
