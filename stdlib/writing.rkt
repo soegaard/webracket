@@ -4,7 +4,7 @@
 ;;; Notice
 ;;;
 
-;; All definitions in this file become top-level function/variables.
+;; All definitions in this file become top-level function or variables.
 ;; Use local scope for helper functions.
 
 ;;;
@@ -15,7 +15,7 @@
 ;; section "13.5 Writing" of "The Reference".
 
 ;; Since parameters are not supported by webracket yet, we define
-;; each parameter as function locally.
+;; each parameter as a function locally.
 
 (define print-pair-curly-braces
   (let ([value #f]) ; default is #f

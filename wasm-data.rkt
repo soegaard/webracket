@@ -7,9 +7,9 @@
 
 ;; The driver uses `pretty-write` to output the generated
 ;; code to a text file. The way Racket writes a byte string
-;; doesn't match the grammar used by Web Assembly.
+;; doesn't match the grammar used by WebAssembly.
 
-;; Wrapping a byte string in the `wasm-data` struct,
+;; Wrapping a byte string in the `wasm-data` struct
 ;; creates a value that prints correctly.
 
 ;; Grammar:

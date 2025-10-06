@@ -80,7 +80,7 @@
          "define-foreign.rkt")
 
 (define ffi-primitives
-  ; cache informations
+  ; cache 
   (let ([syms   '()]
         [old-fs #f])
     (λ ()

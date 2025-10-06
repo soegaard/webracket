@@ -6,7 +6,7 @@
 ;; geometry, plotting, and data visualization in the browser.
 
 ;; Here we use it to make a simple geometric construction.
-;; The primary goals is to demonstrate how the FFI works in WebRacket.
+;; The primary goal is to demonstrate how the FFI works in WebRacket.
 
 ;; In JSXGraph there is a board (think "black board") on which
 ;; one can draw points, lines, circles, graphs etc.

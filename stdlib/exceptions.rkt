@@ -23,7 +23,7 @@
     [(arg0 . args) (cond
                      [(string? arg0)
                       ; Included for compatibility.
-                      ; Use `raise-arguments-error` instead`. 
+                      ; Use `raise-arguments-error` instead. 
                       (define message-str arg0)
                       (define vs          args)
                       (define v-strs
@@ -42,7 +42,7 @@
                       (raise (make-exn:fail message #f))]
                      [(symbol? arg0)
                       ; Included for compatibility.
-                      ; Use `raise-argument-error` instead`. 
+                      ; Use `raise-argument-error` instead. 
                       (define who-sym arg0)
                       (unless (pair? args)
                         (error 'error "format string expected after who-symbol"))

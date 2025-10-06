@@ -9,7 +9,7 @@
 
 ;; The actual declarations of foreign functions are placed
 ;; in external files, such as "dom.ffi" (for the functions
-;; that manipulate the dom).
+;; that manipulate the DOM).
 ;;
 ;; An .ffi file contains declarations of the form:
 
@@ -112,7 +112,7 @@
     [f64     #t]
     [void    #t]  ; synonym for ()
     [_
-     (raise-syntax-error who "expected an result type, got: "
+     (raise-syntax-error who "expected a result type, got: "
                          form type)]))
 
 (define (validate-argument-types who form types)
@@ -172,7 +172,7 @@
                          form)]
     [_
      (raise-syntax-error who
-                         "expected an `define-foreign` form\n")]))
+                         "expected a `define-foreign` form\n")]))
 
 ;; Note: After validation we can assume the form has the correct form.
 
@@ -191,7 +191,7 @@
            out))]))
 
 ;;;
-;;; Generate Code for the Web Assembly runtime
+;;; Generate Code for the WebAssembly runtime
 ;;;
 
 (require racket/match

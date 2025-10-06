@@ -4281,7 +4281,7 @@
                    `(return_call ,(Label l) (global.get $undefined) ,tc-flag ,@ae2)   ; undefined due to no closure
                    `(call        ,(Label l) (global.get $undefined) ,tc-flag ,@ae2))]
 
-              ; TODO: Only the no-free-variables case have been updated
+              ; TODO: Only the no-free-variables case has been updated
               [_ (match dd
                    [(or '<effect> '<value>)
                     (let ([f (Var (new-var 'f))])

@@ -6,14 +6,14 @@
 ;;;
 
 ;; Racket being a dynamic language, we will use a uniform representation for all
-;; values. On platforms like x86 and arm64 most often tagged pointers are used 
+;; values. On platforms like x86 and arm64, tagged pointers are most often used 
 ;; for a uniform representation. On Web Assembly we do not have pointers.
 ;; Instead we have references. Heap allocated objects (arrays, structs) are
 ;; referred to by reference. In order to use references to represent other
 ;; immediates such as fixnums, booleans, null, etc. we will use `i31` which
 ;; denotes unboxed scalars.
 ;;
-;; The specifications says:
+;; The specification says:
 ;;   > The abstract type `i31` denotes unboxed scalars, that is, integers
 ;;   > injected into references. Their observable value range is limited to 31 bits.
 ;;
@@ -43,10 +43,10 @@
 ;;   Eof:               Lower 8 bits are          0101 1111. Upper bits are zero.
 ;;   Missing [*] All bits are 1.   1 ...   1111 1111. 
 
-;; Note: We do not have tags for pairs, vectors, etc. since they need to heap allocated.
+;; Note: We do not have tags for pairs, vectors, etc. since they need to be heap allocated.
 ;; The missing value is not a Racket value. It is an immediate used to indicate
-;; "not found" in hash tables. It needs to distinct from all valid Racket values.
-;; [The missing immediates was introduced to avoid the null type in WebAssembly.]
+;; "not found" in hash tables. It needs to be distinct from all valid Racket values.
+;; [The missing immediates were introduced to avoid the null type in WebAssembly.]
 
 (define fixnum-tag           #b0)
 (define immediate-tag     #b1111)
