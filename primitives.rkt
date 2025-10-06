@@ -57,6 +57,9 @@
          reset-current-input-port!
          reset-current-output-port!
          reset-current-error-port!
+         ;; stdlib/reading.rkt
+         read
+         read-syntax
          ;; stdlib/writing.rkt
          print-pair-curly-braces
          print-mpair-curly-braces
