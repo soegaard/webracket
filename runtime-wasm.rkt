@@ -21,7 +21,7 @@
            bytes-constants  ; (list (list name bytes)  ...)
            symbol-constants ; (list (list name symbol) ....)
            )
-  (let* () ; an wasm identifier
+  (let* () 
     (let* ()
     
     ;; Variable definitions on the top-level ought to go in a namespace,
@@ -119,7 +119,7 @@
         [(? (λ (a) (arity-range? a 3 5)))  24]
         [_ #f]))
 
-    ; These functions are variadic function that can handle the
+    ; These functions are variadic functions that can handle the
     ; rest arguments both as an $Args array and as a list.
     ; The $Args convention is used by inlining.
     ; The list  convention by `apply`, `map` and others.
@@ -681,7 +681,7 @@
         [_                  (error 'min-arity "got: ~a" a)]))
 
     ; If a primitive is handled in the inliner, but hasn't been
-    ; implemented her in `runtime-wasm.rkt` then put the symbol here.
+    ; implemented here in `runtime-wasm.rkt` then put the symbol here.
     (define todo-handle-later '())
 
     (define (initialize-primitives-as-globals)
@@ -33997,7 +33997,7 @@
 
                      ,entry-body
 
-                     ;; Experiment: how to use exceptions in webassembly
+                     ;; Experiment: how to use exceptions in WebAssembly
                      ;; (block $join #;(result (ref eq))
                      ;;        (block $on_exn
                      ;;               (try_table (catch $exn $on_exn)                                                               

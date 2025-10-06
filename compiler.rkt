@@ -80,7 +80,7 @@
 ;     For `map`, `apply` and others, lists are the natural representation.
 ;     Support both?
 ;     All variadic functions must accept the rest arguments as a list.
-;     Some also accepts them as an $Args - this is used in inlining.
+;     Some also accept them as an $Args - this is used in inlining.
 
 ; [/] Consider adding extra shapes to `primitive-invoke`.
 ;     The possible shapes:
@@ -134,13 +134,13 @@
 ;      To test, use a low initial capacity.
 ;      Solution: insert was using $false instead of $missing as sentinel.
 
-; [ ] Make a pass that rewrites primapps with primitives that takes an
+; [ ] Make a pass that rewrites primapps with primitives that take an
 ;     optional number of arguments. Fill in the remaining slots with ... missing?
 ;     Or pass optional arguments in a global variable (caller/callee save)?
 
-; [/] A reference to an undefined, top-level variable must lookup the variable
+; [/] A reference to an undefined, top-level variable must look up the variable
 ;     in the current namespace.
-;     Currently the compiler just reports that classify-variable can't
+;     Currently the compiler just reports that classify-variable
 ;     can't find the identifier.
 ;     For now, top-level variables are defined as global variables that contain a $Boxed.
 
@@ -158,7 +158,7 @@
 ; [ ] References to primitives. Make a new heap type.
 ;     [x] New heap type: $PrimitiveProcedure
 ;     [x] Store a $PrimitiveProcedure in the globals prim:fx+, prim:fx-, ...
-;         (each primitive `pr` get a global `$prim:pr`.
+;         (each primitive `pr` gets a global `$prim:pr`.
 ;     [x] A reference to `pr` evaluates to `(global.get $prim:pr)`.
 ;     [ ] Apply can call $invoke-primitive -- but how should $PrimitiveCode
 ;         look like? We could wrap e.g. `fx+` as (λ (x y) (fx+ x y))
@@ -222,7 +222,7 @@
 
 (define (map2* f xs ρ)
   ; f : α β -> (values α β)
-  ; map f over xs while threading the seconding value  
+  ; map f over xs while threading the second value  
   (define (f* xs ρ)
     (match xs
       ['()         (values '() ρ)]
@@ -382,7 +382,7 @@
 ;;; PRIMITIVES
 ;;;
 
-;; For some primitives we have need an easy way to construct a
+;; For some primitives we need an easy way to construct a
 ;; variable reference to the primitive.
 
 (define primitives '())  ; includes the ffi-primitives
@@ -409,7 +409,7 @@
 
 
 ;; Most primitives are either primitives or procedures in standard Racket.
-;; We can therefore use reflection to lookup information about arities,
+;; We can therefore use reflection to look up information about arities,
 ;; names, realms etc.
 
 (define-syntax (define-primitive stx)
@@ -427,7 +427,7 @@
 
 (define-syntax (define-primitives stx)
   (syntax-parse stx
-    [(_define-primtives name ...)
+    [(_define-primitives name ...)
      (syntax/loc stx
        (begin
          (define-primitive name)
@@ -936,7 +936,7 @@
 
   ;; 14.9 Structure Inspectors
   object-name
-  ; prop:object-name
+  ; prop:object-name  (see non-literal-constants)
   
   ;; 15.1 Paths
   path?
@@ -1676,7 +1676,7 @@
 ; == α-rename ==> (let ([x 1]) (let ([x.2 2]) x.2))
 ;
 ; The code below uses an environment ρ that maps original identifiers
-; into ones used in the output. Identifiers refering to primitives are
+; into ones used in the output. Identifiers referring to primitives are
 ; mapped to themselves in order not to rename primitives in the output.
 
 ; FACT: α-renaming will not rename identifiers bound to primitives.
@@ -1873,7 +1873,7 @@
                                                     (letv ((e ρ) (Expr e ρ))
                                                       (values `(λ ,s ,f ,e) ρ-orig))))])
   (Expr : Expr (E ρ) -> Expr (ρ)
-    [,x                                         (let ([ρx (ρ x)])
+    [,x                                         (let ([ρx (ρ x)])                                                  
                                                   (cond
                                                     [(and (not ρx) (inside-module?))
                                                      (raise-syntax-error
@@ -2697,7 +2697,7 @@
     [,x       (define sym (variable-id x))
               (cond
                 [(primitive? sym)            (values AE empty-set)]         ; immediate constants
-                ; [(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
+                #;[(non-literal-constant? sym) (values AE empty-set)]         ; value stored in a global
                 [else                        (values AE (make-id-set x))])] ; non-primitive
     [,ab                  (Abstraction AE xs)]
     [,cab                 (CaseAbstraction AE xs)]
@@ -2729,9 +2729,9 @@
 
   (letv ((T xs) (TopLevelForm T (make-id-set)))    
     (unless (set-empty? xs)
-      ;; (displayln "\n---\n")
-      ;; (pretty-print (unparse-LANF T)) (newline)
-      ;; (displayln "\n---\n") (displayln xs) (newline)
+      ;(displayln "\n---\n")
+      ;(pretty-print (unparse-LANF T)) (newline)
+      (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))
     (values T ht abs)))
 
@@ -4281,7 +4281,7 @@
                    `(return_call ,(Label l) (global.get $undefined) ,tc-flag ,@ae2)   ; undefined due to no closure
                    `(call        ,(Label l) (global.get $undefined) ,tc-flag ,@ae2))]
 
-              ; TODO: Only the no free variables case have been updated
+              ; TODO: Only the no-free-variables case have been updated
               [_ (match dd
                    [(or '<effect> '<value>)
                     (let ([f (Var (new-var 'f))])
