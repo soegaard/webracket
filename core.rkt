@@ -119,13 +119,13 @@
 
 ;; 3.18 Iterations and comprehensions
 (require (only-in racket/base
-                  for  for/list  for/vector  for/sum  for/or  for/and
-                  for* for*/list for*/vector for*/sum for*/or for*/and
+                  for  for/list  for/vector  for/sum  for/fold  for/or  for/and
+                  for* for*/list for*/vector for*/sum for*/fold for*/or for*/and
                   in-list in-vector in-range in-naturals in-string
                   ))
-(provide for  for/list  for/vector  for/sum  for/fold for/or for/and
-         for* for*/list for*/vector for*/sum for/fold for*/or for*/and
-         in-list in-vector in-range in-naturals in-string)
+(provide          for  for/list  for/vector  for/sum  for/fold  for/or  for/and
+                  for* for*/list for*/vector for*/sum for*/fold for*/or for*/and
+                  in-list in-vector in-range in-naturals in-string)
 
 ;; 3.19 Continuations marks
 ;; (require (only-in racket/base with-continuation-mark))
