@@ -1059,10 +1059,10 @@
 ;;   (console.log result)
 ;;   (unparse result))
 
-(struct env       (table parent))
-(struct closure   (params body env))
-(struct primitive (name proc))
-(struct store     (table next) #:mutable)
+(struct env     (table parent))
+(struct closure (params body env))
+(struct prim    (name proc))
+(struct store   (table next) #:mutable)
 
 ;;;
 (struct k-apply   (args env))
@@ -1119,9 +1119,6 @@
       (char? expr)
       (null? expr)))
 
-(define (false? v)
-  (eq? v #f))
-
 (define (ensure-identifier sym)
   (unless (symbol? sym)
     (error 'minischeme "expected identifier, got ~a" sym)))
@@ -1155,7 +1152,7 @@
   (define base-env   (make-env #f))
   (define base-store (make-store))
   (define (install name proc)
-    (define addr (store-alloc! base-store (primitive name proc)))
+    (define addr (store-alloc! base-store (prim name proc)))
     (env-define! base-env name addr))
   (define (numeric name f)
     (install name (λ (args)
@@ -1242,17 +1239,18 @@
 (define (parse-program s)
   (define in (open-input-string s))
   (let loop ([acc '()])
-    (define next (read in))
+    ; (define next (read in))            ; todo - make this work here
+    (define next ((λ (x) (read x)) in))
     (if (eof-object? next)
         (reverse acc)
         (loop (cons next acc)))))
 
 (define (value->string v)
   (cond
-    [(closure? v)   "#<closure>"]
-    [(primitive? v) (format "#<primitive ~a>" (primitive-name v))]
-    [(void? v)      "#<void>"]
-    [else           (with-output-to-string (λ () (write v)))]))
+    [(closure? v)  "#<closure>"]
+    [(prim? v)     (format "#<primitive ~a>" (prim-name v))]
+    [(void? v)     "#<void>"]
+    [else          (with-output-to-string (λ () (write v)))]))
 
 (define (apply-procedure value args env store kont loop)
   (cond
@@ -1274,8 +1272,8 @@
          (loop 'eval (car body) new-env store
                (cons (k-begin (cdr body) new-env)
                      (cons (k-restore env) kont))))]
-    [(primitive? value)
-     (define result ((primitive-proc value) args))
+    [(prim? value)
+     (define result ((prim-proc value) args))
      (loop 'value result env store kont)]
     [else
      (error 'minischeme "application of non-procedure: ~a" value)]))
