@@ -3427,7 +3427,7 @@
          (func $always-throw (type $Prim0)
                (throw $exn ,(Imm 42)))
 
-         (func $catching (type $Prim2)
+         #;(func $catching (type $Prim2)
                (param $handler (ref eq))
                (param $thunk   (ref eq))
                ; Here $handler is a function of one argument (a fixnum).
@@ -3437,6 +3437,58 @@
                     (do <invoke-thunk-here>)
                     (catch $exn
                       <invoke-handler-here>)))
+
+         (func $catching (type $Prim2)
+               (param $handler (ref eq))
+               (param $thunk   (ref eq))
+               (result         (ref eq))
+
+               (local $handler-proc (ref $Procedure))
+               (local $handler-inv  (ref $ProcedureInvoker))
+               (local $handler-args (ref $Args))
+               (local $thunk-proc   (ref $Procedure))
+               (local $thunk-inv    (ref $ProcedureInvoker))
+               (local $thunk-args   (ref $Args))
+               (local $exn-val      (ref eq))
+
+               ; Here $handler is a function of one argument (a fixnum).
+               ; The catch clause invokes $handler using the
+               ; tag carried by $exn.
+
+               ;; Validate handler and thunk.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $handler))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $thunk))
+                         (unreachable)))
+               
+               ;; Extract procedures and their invokers.
+               (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler)))
+               (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
+               (local.set $thunk-proc   (ref.cast (ref $Procedure) (local.get $thunk)))
+               (local.set $thunk-inv    (struct.get $Procedure $invoke (local.get $thunk-proc)))
+
+               ;; Preallocate argument arrays.
+               (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
+
+               (try_table (result (ref eq))
+                          ; exception handlers
+                          (catch $exn
+                            (local.set $exn-val <something-is-missing-here>)
+                            (array.set $Args (local.get $handler-args) (i32.const 0)
+                                       (local.get $exn-val))
+                            (call_ref $ProcedureInvoker
+                                      (local.get $handler-proc)
+                                      (local.get $handler-args)
+                                      (local.get $handler-inv)))
+                          ; body => invoke thunk
+                          (call_ref $ProcedureInvoker
+                                    (local.get $thunk-proc)
+                                    (local.get $thunk-args)
+                                    (local.get $thunk-inv))
+                          ))
          
 
        ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
