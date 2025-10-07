@@ -3410,12 +3410,13 @@
                            (i32.const 0)      ;; immutable = false
                            (local.get $arr))) ;; the backing I8Array
 
-         (func $i8array->immutable-bytes (param $arr (ref $I8Array)) (result (ref $Bytes))
-               ;; Constructs an immutable $Bytes object (immutable = 1, hash = 0).
-               (struct.new $Bytes
-                           (i32.const 0)      ;; hash = 0
-                           (i32.const 1)      ;; immutable = true
-                           (local.get $arr))) ;; the backing I8Array
+         (func $i8array->immutable-bytes (param $arr (ref $I8Array))
+             (result (ref $Bytes))
+             ;; Constructs an immutable $Bytes object (immutable = 1, hash = 0).
+             (struct.new $Bytes
+                         (i32.const 0)      ;; hash = 0
+                         (i32.const 1)      ;; immutable = true
+                         (local.get $arr))) ;; the backing I8Array
 
          ;;;
          ;;; Exceptions
@@ -3426,20 +3427,32 @@
          (func $always-throw (type $Prim0)
                (throw $exn ,(Imm 42)))
 
-         ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
-         (func $raise (type $Prim12)
-               (param $v        (ref eq)) ; any/c
-               (param $barrier? (ref eq)) ; any/c, optional with default #t
-               (result (ref eq))
+         (func $catching (type $Prim2)
+               (param $handler (ref eq))
+               (param $thunk   (ref eq))
+               ; Here $handler is a function of one argument (a fixnum).
+               ; The catch clause invokes $handler using the
+               ; tag carried by $exn.               
+               (try (result (ref eq))
+                    (do <invoke-thunk-here>)
+                    (catch $exn
+                      <invoke-handler-here>)))
+         
 
-               ; Handle optional barrier? with default $t
-               (if (ref.eq (local.get $barrier?) (global.get $missing))
-                   (then (local.set $barrier? (global.get $true))))
-
-               (call $js-log (global.get $string:uncaught-exception))
-               (call $js-log (local.get  $v))
-
-               (unreachable))
+       ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
+       (func $raise (type $Prim12)
+             (param $v        (ref eq)) ; any/c
+             (param $barrier? (ref eq)) ; any/c, optional with default #t
+             (result          (ref eq))
+             
+             ; Handle optional barrier? with default $t
+             (if (ref.eq (local.get $barrier?) (global.get $missing))
+                 (then (local.set $barrier? (global.get $true))))
+             
+             (call $js-log (global.get $string:uncaught-exception))
+             (call $js-log (local.get  $v))
+             
+             (unreachable))
 
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
