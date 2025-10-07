@@ -2120,6 +2120,9 @@ const wasmModule
 (define (wat->wasm x #:wat [out.wat "out.wat"] #:wasm [out.wasm "out.wasm"])
   ; The argument x is an s-expresssion.
   ; It represents a WebAssembly module in textual format.
+  ; Note: `wasm-tools parse` enables all proposals automatically,
+  ;       so in contrast to the validator, we do not need to
+  ;       enable any features such as exception handling.
 
   ; 1. Write the module x to a wat file
   (with-output-to-file out.wat
@@ -2133,7 +2136,7 @@ const wasmModule
       (λ ()
         (set! success?
               (system
-               (format (~a assembler-path "/" "wasm-tools parse ~a -o ~a ")
+               (format (~a assembler-path "/" "wasm-tools  parse ~a -o ~a")
                        out.wat out.wasm))))))
   ; 3. If there were any errors, display the error messages
   (unless success?

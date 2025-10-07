@@ -454,6 +454,7 @@
   ; in-list
   
   always-throw  ; test function: throws an exception
+  catching
 
   raise
   raise-unbound-variable-reference
@@ -3281,18 +3282,28 @@
     (displayln "-- Provides --"           (current-error-port))
     (displayln provides                   (current-error-port))
     (displayln "-- Top-vars --"           (current-error-port))
-    (displayln (map syntax->datum (map variable-id top-vars)) (current-error-port))
+    #;(displayln (sort (map syntax->datum (map variable-id top-vars))
+                     symbol<?)
+               (current-error-port))
     
 
     (define (top-variable? v)    (set-in? v top-vars))    ; boxed
     (define (module-variable? v) (set-in? v module-vars))
     (define (local-variable? v)  (set-in? v local-vars))
-    (define (ffi-variable? v)    (set-in? (syntax-e (variable-id v))
-                                          ffi-primitives))
+    (define (ffi-variable? v)    (memq (if (symbol? v) v (syntax-e (variable-id v)))
+                                       ffi-primitives))
     (define (global-variable? v)
       ; a global (wasm) varible is unboxed
       (non-literal-constant? (variable-id v)))
     (define (classify v)
+      #;(displayln (list 'clas v))
+      #;(when (symbol? v)
+          (error 'classify "got: ~a" v))
+      ;; (displayln (list 'top (top-variable?    v)))
+      ;; (displayln (list 'mod (module-variable? v)))
+      ;; (displayln (list 'loc (and (local-variable?  v) #t)))
+      ;; (displayln (list 'ffi (ffi-variable?    v)))
+      ;; (displayln (list 'glo (global-variable? v)))
       (cond
         [(top-variable?    v) 'top]
         [(module-variable? v) 'module]
@@ -3306,6 +3317,9 @@
          (error 'classify "got: ~a" v)]))
     ;; 2. References to variable according to their type
     (define (Reference v)
+      #;(displayln (list 'ref v))
+      #;(when (symbol? v)
+          (error 'Reference "got: ~a" v))
       ; reference to non-free variable
       ;   global refers to a Web Assembly global variable
       (case (classify v)

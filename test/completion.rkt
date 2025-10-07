@@ -1501,6 +1501,7 @@
             cadddr
             caddr
             cadr
+            call-with-output-string
             call-with-values
             car
             cartesian-product
@@ -1557,6 +1558,7 @@
             check-naturals
             check-range
             check-range-generic
+            check-string
             cons
             cons?
             cos
@@ -1606,6 +1608,7 @@
             filter-not
             findf
             first
+            fixnum-for-every-system?
             fixnum?
             fl*
             fl+
@@ -1768,6 +1771,7 @@
             make-vector
             make-void
             map
+            match:error
             max
             mcar
             mcdr
@@ -1842,6 +1846,13 @@
             procedure-arity-mask
             procedure-rename
             procedure?
+            prop:arity-string
+            prop:checked-procedure
+            prop:impersonator-of
+            prop:incomplete-arity
+            prop:method-arity-error
+            prop:object-name
+            prop:procedure
             quotient
             quotient/remainder
             radians->degrees
@@ -1982,6 +1993,7 @@
             syntax-source
             syntax-span
             syntax-srcloc
+            syntax-srclocs
             syntax?
             system-big-endian?
             take
@@ -2024,6 +2036,7 @@
             unsafe-fx<
             unsafe-fx=
             unsafe-fxquotient
+            unsafe-string-length
             unsafe-struct-ref
             unsafe-struct-set!
             unsafe-vector*-length
@@ -2075,7 +2088,6 @@
             write-string
             xor
             zero?)
-
 
 
           ))

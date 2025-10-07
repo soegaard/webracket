@@ -103,6 +103,7 @@
  
  ;; Test functions
  always-throw ; todo - remove
+ catching     
 
  ;; checkers
  check-list
@@ -932,8 +933,6 @@
   (displayln x))
 
 
-(define (always-throw)
-  (raise 42))
 
 
 (define (inclusive-range-proc start end [step #f])
@@ -1245,4 +1244,18 @@
            [in          (current-input-port)])
     (read-line in) ; skip first line
     (read-syntax source-name in)))
+
+
+;;;
+;;; Exceptions
+;;;
+
+(struct exn/tag (value) #:transparent)
+
+(define (always-throw)
+  (raise (exn/tag 42)))
+
+(define (catching handler thunk)
+  (with-handlers ([exn/tag? (λ (e) (handler (exn/tag-value e)))])
+    (thunk)))
 

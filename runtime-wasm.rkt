@@ -3438,7 +3438,7 @@
                     (catch $exn
                       <invoke-handler-here>)))
 
-         (func $catching (type $Prim2)
+         #;(func $catching (type $Prim2)
                (param $handler (ref eq))
                (param $thunk   (ref eq))
                (result         (ref eq))
@@ -3476,7 +3476,20 @@
                (try_table (result (ref eq))
                           ; exception handlers
                           (catch $exn
-                            (local.set $exn-val <something-is-missing-here>)
+                            ; (local.set $exn-val <something-is-missing-here>)
+                            ;; Validate that the payload is a fixnum before invoking
+                            ;; the handler. The tag guarantees an i31 value, but we
+                            ;; still ensure the fixnum tag is present.
+                            (local.set $exn-val)
+                            (if (i32.eqz (ref.test (ref i31) (local.get $exn-val)))
+                                (then (call $raise-check-fixnum (local.get $exn-val))
+                                      (unreachable)))
+                            (if (i32.eqz (i32.and (i31.get_u (ref.cast (ref i31) (local.get $exn-val)))
+                                                  (i32.const 1)))
+                                (then (nop))
+                                (else (call $raise-check-fixnum (local.get $exn-val))
+                                      (unreachable)))
+                            
                             (array.set $Args (local.get $handler-args) (i32.const 0)
                                        (local.get $exn-val))
                             (call_ref $ProcedureInvoker
@@ -3489,6 +3502,76 @@
                                     (local.get $thunk-args)
                                     (local.get $thunk-inv))
                           ))
+
+         (func $catching (type $Prim2)
+               (param $handler (ref eq))
+               (param $thunk   (ref eq))
+               (result         (ref eq))
+
+               (local $handler-proc (ref $Procedure))
+               (local $handler-inv  (ref $ProcedureInvoker))
+               (local $handler-args (ref $Args))
+               (local $thunk-proc   (ref $Procedure))
+               (local $thunk-inv    (ref $ProcedureInvoker))
+               (local $thunk-args   (ref $Args))
+               (local $exn-val      (ref eq))
+
+               ;; Validate handler and thunk.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler)))
+                   (then (call $raise-argument-error:procedure-expected
+                               (local.get $handler))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
+                   (then (call $raise-argument-error:procedure-expected
+                               (local.get $thunk))
+                         (unreachable)))
+
+               ;; Extract procedures and their invokers.
+               (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler)))
+               (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
+               (local.set $thunk-proc   (ref.cast (ref $Procedure) (local.get $thunk)))
+               (local.set $thunk-inv    (struct.get $Procedure $invoke (local.get $thunk-proc)))
+
+               ;; Preallocate argument arrays.
+               (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
+
+               (block $done (result (ref eq))
+                      (block $handler (result (ref eq))
+                             (try_table (result (ref eq))
+                                        ;; Route $exn to the $handler label (no inline body here).
+                                        (catch $exn $handler)
+
+                                        ;; Body => invoke thunk
+                                        (call_ref $ProcedureInvoker
+                                                  (local.get $thunk-proc)
+                                                  (local.get $thunk-args)
+                                                  (local.get $thunk-inv))
+                                        (br $done))  ;; normal path skips handler
+
+                             ;; --- $handler: exception payloads are on the stack here ---
+                             (local.set $exn-val)
+
+                             (call $js-log ,(Imm 73))
+
+                             ;; Validate that the payload is a fixnum (i31 with tag 0).
+                             (if (i32.eqz (ref.test (ref i31) (local.get $exn-val)))
+                                 (then (call $raise-check-fixnum (local.get $exn-val))
+                                       (unreachable)))
+                             (if (i32.and (i31.get_u (ref.cast (ref i31) (local.get $exn-val)))
+                                          (i32.const 1))
+                                 (then (call $raise-check-fixnum (local.get $exn-val))
+                                       (unreachable)))
+
+                             ;; call the handler
+                             (array.set $Args (local.get $handler-args) (i32.const 0)
+                                        (local.get $exn-val))
+                             (call_ref $ProcedureInvoker
+                                       (local.get $handler-proc)
+                                       (local.get $handler-args)
+                                       (local.get $handler-inv))
+                             (br $done))))
+
          
 
        ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
