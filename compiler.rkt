@@ -546,6 +546,7 @@
   
   always-throw  ; test function: throws an exception
   catching
+  catch*
 
   raise
   raise-unbound-variable-reference
