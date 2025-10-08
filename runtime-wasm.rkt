@@ -3612,10 +3612,9 @@
                                                   (local.get $thunk-proc)
                                                   (local.get $thunk-args)
                                                   (local.get $thunk-inv))
-                                        (br $done))
-                             (unreachable))
-                      ;; Find predicate and handler to use
-
+                                        (br $done)))
+                      ;; handler block
+                      ;;   - find predicate and handler to use
                       (local.set $exn-val)     ; uses value on stack
                       (local.set $pred-node    (local.get $preds))
                       (local.set $handler-node (local.get $handlers))
@@ -3670,11 +3669,11 @@
                                  (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler-val)))
                                  (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
                                  (array.set $Args (local.get $handler-args) (i32.const 0) (local.get $exn-val))
-                                 (call_ref $ProcedureInvoker
-                                           (local.get $handler-proc)
-                                           (local.get $handler-args)
-                                           (local.get $handler-inv)))))
-                      ))
+                                 (return_call_ref $ProcedureInvoker
+                                                  (local.get $handler-proc)
+                                                  (local.get $handler-args)
+                                                  (local.get $handler-inv)))))
+                      (unreachable)))
 
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
