@@ -3391,7 +3391,8 @@
                                                            (local.get $v))
                                                 ;; Advance
                                                 (local.set $idx  (i32.add (local.get $idx) (i32.const 1)))
-                                                (local.set $node (struct.get $Pair $d (ref.cast (ref $Pair) (local.get $node))))
+                                                (local.set $node (struct.get $Pair $d
+                                                                     (ref.cast (ref $Pair) (local.get $node))))
                                                 (br $fill))
                                                (else (call $raise-bad-byte (local.get $x))
                                                      (unreachable))))
@@ -3428,7 +3429,8 @@
          (func $always-throw (type $Prim0)
                (throw $exn ,(Imm 42)))
 
-         ; Note: The WebRacket version of `raise` ignores the `barrier?` argument.
+         ; Note:
+         ;  The WebRacket version of `raise` ignores the `barrier?` argument.
          #;(func $raise (type $Prim12)
                (param $v        (ref eq)) ; any/c
                (param $barrier? (ref eq)) ; any/c, optional with default #t
@@ -3447,9 +3449,11 @@
                (param $v        (ref eq)) ; any/c
                (param $barrier? (ref eq)) ; any/c, optional with default #t
                (result          (ref eq))
+
+               (call $js-log ,(Imm 1111))
                
                ; Handle optional barrier? with default $t
-               (if (ref.eq (local.get $barrier?) (global.get $missing))
+               #;(if (ref.eq (local.get $barrier?) (global.get $missing))
                    (then (local.set $barrier? (global.get $true))))
                
                #;(call $js-log (global.get $string:uncaught-exception))
@@ -3493,19 +3497,25 @@
                          (unreachable)))
 
                ;; Extract procedures and their invokers.
-               (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler)))
-               (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
-               (local.set $thunk-proc   (ref.cast (ref $Procedure) (local.get $thunk)))
-               (local.set $thunk-inv    (struct.get $Procedure $invoke (local.get $thunk-proc)))
+               (local.set $handler-proc
+                          (ref.cast (ref $Procedure) (local.get $handler)))
+               (local.set $handler-inv
+                       (struct.get $Procedure $invoke (local.get $handler-proc)))
+               (local.set $thunk-proc
+                          (ref.cast (ref $Procedure) (local.get $thunk)))
+               (local.set $thunk-inv
+                        (struct.get $Procedure $invoke (local.get $thunk-proc)))
 
                ;; Preallocate argument arrays.
-               (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
-               (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $handler-args
+                          (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $thunk-args
+                          (array.new $Args (global.get $null) (i32.const 0)))
 
                (block $done (result (ref eq))
                       (block $handler (result (ref eq))
                              (try_table (result (ref eq))
-                                        ;; Route $exn to the $handler label (no inline body here).
+                     ;; Route $exn to the $handler label (no inline body here).
                                         (catch $exn $handler)
 
                                         ;; Body => invoke thunk
@@ -3540,156 +3550,169 @@
 
          
 
+         
+         (func $catch* (type $Prim3)
+               (param $preds    (ref eq))
+               (param $handlers (ref eq))
+               (param $thunk    (ref eq))
+               (result          (ref eq))
 
-       (func $catch* (type $Prim3)
-             (param $preds    (ref eq))
-             (param $handlers (ref eq))
-             (param $thunk    (ref eq))
-             (result          (ref eq))
+               (local $thunk-proc   (ref $Procedure))
+               (local $thunk-inv    (ref $ProcedureInvoker))
+               (local $thunk-args   (ref $Args))
+               (local $pred-args    (ref $Args))
+               (local $handler-args (ref $Args))
+               (local $pred-node    (ref eq))
+               (local $handler-node (ref eq))
+               (local $pred-pair    (ref $Pair))
+               (local $handler-pair (ref $Pair))
+               (local $pred-val     (ref eq))
+               (local $handler-val  (ref eq))
+               (local $pred-tail    (ref eq))
+               (local $handler-tail (ref eq))
+               (local $pred-proc    (ref $Procedure))
+               (local $handler-proc (ref $Procedure))
+               (local $pred-inv     (ref $ProcedureInvoker))
+               (local $handler-inv  (ref $ProcedureInvoker))
+               (local $pred-result  (ref eq))
+               (local $exn-val      (ref eq))
 
-             (local $thunk-proc   (ref $Procedure))
-             (local $thunk-inv    (ref $ProcedureInvoker))
-             (local $thunk-args   (ref $Args))
-             (local $pred-args    (ref $Args))
-             (local $handler-args (ref $Args))
-             (local $pred-node    (ref eq))
-             (local $handler-node (ref eq))
-             (local $pred-pair    (ref $Pair))
-             (local $handler-pair (ref $Pair))
-             (local $pred-val     (ref eq))
-             (local $handler-val  (ref eq))
-             (local $pred-tail    (ref eq))
-             (local $handler-tail (ref eq))
-             (local $pred-proc    (ref $Procedure))
-             (local $handler-proc (ref $Procedure))
-             (local $pred-inv     (ref $ProcedureInvoker))
-             (local $handler-inv  (ref $ProcedureInvoker))
-             (local $pred-result  (ref eq))
-             (local $exn-val      (ref eq))
+               (drop (call $js-log ,(Imm 111)))
+               
+               ;; Validate thunk argument.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $thunk))
+                         (unreachable)))
 
-             ;; Validate thunk argument.
-             (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
-                 (then (call $raise-argument-error:procedure-expected (local.get $thunk))
-                       (unreachable)))
+               ;; Validate predicate and handler lists.
+               (local.set $pred-node    (local.get $preds))
+               (local.set $handler-node (local.get $handlers))
+               (block $validated
+                      (loop $validate
+                            (if (ref.eq (local.get $pred-node) (global.get $null))
+                                (then (if (ref.eq (local.get $handler-node) (global.get $null))
+                                          (then (br $validated))
+                                          (else (call $raise-argument-error1
+                                                      (global.get $symbol:catch*)
+                                                      (global.get $string:catch*-matching-lengths)
+                                                      (local.get $handlers))
+                                                (unreachable)))))
+                            (if (ref.eq (local.get $handler-node) (global.get $null))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:catch*)
+                                            (global.get $string:catch*-matching-lengths)
+                                            (local.get $handlers))
+                                      (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $pred-node)))
+                                (then (call $raise-pair-expected (local.get $pred-node))
+                                      (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $handler-node)))
+                                (then (call $raise-pair-expected (local.get $handler-node))
+                                      (unreachable)))
+                            (local.set $pred-pair (ref.cast (ref $Pair) (local.get $pred-node)))
+                            (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
+                            (local.set $pred-val (struct.get $Pair $a (local.get $pred-pair)))
+                            (local.set $handler-val (struct.get $Pair $a (local.get $handler-pair)))
+                            
+                            (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
+                                (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
+                                      (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler-val)))
+                                (then (call $raise-argument-error:procedure-expected (local.get $handler-val))
+                                      (unreachable)))
+                            (local.set $pred-node (struct.get $Pair $d (local.get $pred-pair)))
+                            (local.set $handler-node (struct.get $Pair $d (local.get $handler-pair)))
+                            (br $validate)))
 
-             ;; Validate predicate and handler lists.
-             (local.set $pred-node    (local.get $preds))
-             (local.set $handler-node (local.get $handlers))
-             (block $validated
-                    (loop $validate
-                          (if (ref.eq (local.get $pred-node) (global.get $null))
-                              (then (if (ref.eq (local.get $handler-node) (global.get $null))
-                                        (then (br $validated))
-                                        (else (call $raise-argument-error1
-                                                    (global.get $symbol:catch*)
-                                                    (global.get $string:catch*-matching-lengths)
-                                                    (local.get $handlers))
-                                              (unreachable)))))
-                          (if (ref.eq (local.get $handler-node) (global.get $null))
-                              (then (call $raise-argument-error1
-                                          (global.get $symbol:catch*)
-                                          (global.get $string:catch*-matching-lengths)
-                                          (local.get $handlers))
-                                    (unreachable)))
-                          (if (i32.eqz (ref.test (ref $Pair) (local.get $pred-node)))
-                              (then (call $raise-pair-expected (local.get $pred-node))
-                                    (unreachable)))
-                          (if (i32.eqz (ref.test (ref $Pair) (local.get $handler-node)))
-                              (then (call $raise-pair-expected (local.get $handler-node))
-                                    (unreachable)))
-                          (local.set $pred-pair (ref.cast (ref $Pair) (local.get $pred-node)))
-                          (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
-                          (local.set $pred-val (struct.get $Pair $a (local.get $pred-pair)))
-                          (local.set $handler-val (struct.get $Pair $a (local.get $handler-pair)))
-                          
-                          (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
-                              (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
-                                    (unreachable)))
-                          (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler-val)))
-                              (then (call $raise-argument-error:procedure-expected (local.get $handler-val))
-                                    (unreachable)))
-                          (local.set $pred-node (struct.get $Pair $d (local.get $pred-pair)))
-                          (local.set $handler-node (struct.get $Pair $d (local.get $handler-pair)))
-                          (br $validate)))
+               (drop (call $js-log ,(Imm 222)))
 
-             ;; Prepare invokers and argument arrays.
-             (local.set $thunk-proc   (ref.cast (ref $Procedure) (local.get $thunk)))
-             (local.set $thunk-inv    (struct.get $Procedure $invoke (local.get $thunk-proc)))
-             (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
-             (local.set $pred-args    (array.new $Args (global.get $null) (i32.const 1)))
-             (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
+               ;; Prepare invokers and argument arrays.
+               (local.set $thunk-proc   (ref.cast (ref $Procedure) (local.get $thunk)))
+               (local.set $thunk-inv    (struct.get $Procedure $invoke (local.get $thunk-proc)))
+               (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $pred-args    (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
 
-             (block $done (result (ref eq))
-                    (block $handler (result (ref eq))
-                           (try_table (result (ref eq))
-                                      (catch $exn $handler)
+               (block $done (result (ref eq))
+                      (block $handler (result (ref eq))
+                             (drop (call $js-log ,(Imm 666)))
+                             (try_table (result (ref eq))
+                                        (catch $exn $handler)
 
-                                      (call_ref $ProcedureInvoker
-                                                (local.get $thunk-proc)
-                                                (local.get $thunk-args)
-                                                (local.get $thunk-inv))
-                                      (br $done))
+                                        (drop (call $js-log ,(Imm 333)))
+                                        (call_ref $ProcedureInvoker
+                                                  (local.get $thunk-proc)
+                                                  (local.get $thunk-args)
+                                                  (local.get $thunk-inv))
+                                        (drop (call $js-log ,(Imm 444)))
+                                        (br $done))
+                             (drop (call $js-log ,(Imm 555)))
+                             (unreachable))
+                      ;; Find predicate and handler to use
+                      (drop (call $js-log ,(Imm 888)))
 
-                           (local.set $exn-val)     ; uses value on stack
-                           (local.set $pred-node    (local.get $preds))
-                           (local.set $handler-node (local.get $handlers))
+                      (local.set $exn-val)     ; uses value on stack
+                      (local.set $pred-node    (local.get $preds))
+                      (local.set $handler-node (local.get $handlers))
 
-                           (loop $search
-                                 ; rethrow if no predicates return true
-                                 (if (ref.eq (local.get $pred-node) (global.get $null))
-                                     (then (throw $exn (local.get $exn-val))))
-                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $pred-node)))
-                                     (then (call $raise-pair-expected (local.get $pred-node))
-                                           (unreachable)))
-                                 (if (ref.eq (local.get $handler-node) (global.get $null))
-                                     (then (call $raise-argument-error1
-                                                 (global.get $symbol:catch*)
-                                                 (global.get $string:catch*-matching-lengths)
-                                                 (local.get $handlers))
-                                           (unreachable)))
-                                 (if (i32.eqz (ref.test (ref $Pair) (local.get $handler-node)))
-                                     (then (call $raise-pair-expected (local.get $handler-node))
-                                           (unreachable)))
+                      (loop $search
+                            ; rethrow if no predicates return true
+                            (if (ref.eq (local.get $pred-node) (global.get $null))
+                                (then (throw $exn (local.get $exn-val))))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $pred-node)))
+                                (then (call $raise-pair-expected (local.get $pred-node))
+                                      (unreachable)))
+                            (if (ref.eq (local.get $handler-node) (global.get $null))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:catch*)
+                                            (global.get $string:catch*-matching-lengths)
+                                            (local.get $handlers))
+                                      (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $handler-node)))
+                                (then (call $raise-pair-expected (local.get $handler-node))
+                                      (unreachable)))
 
-                                 (local.set $pred-pair    (ref.cast (ref $Pair) (local.get $pred-node)))
-                                 (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
-                                 (local.set $pred-val     (struct.get $Pair $a  (local.get $pred-pair)))
-                                 (local.set $handler-val  (struct.get $Pair $a  (local.get $handler-pair)))
-                                 (local.set $pred-tail    (struct.get $Pair $d  (local.get $pred-pair)))
-                                 (local.set $handler-tail (struct.get $Pair $d  (local.get $handler-pair)))
+                            (local.set $pred-pair    (ref.cast (ref $Pair) (local.get $pred-node)))
+                            (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
+                            (local.set $pred-val     (struct.get $Pair $a  (local.get $pred-pair)))
+                            (local.set $handler-val  (struct.get $Pair $a  (local.get $handler-pair)))
+                            (local.set $pred-tail    (struct.get $Pair $d  (local.get $pred-pair)))
+                            (local.set $handler-tail (struct.get $Pair $d  (local.get $handler-pair)))
 
-                                 (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
-                                     (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
-                                           (unreachable)))
-                                 (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler-val)))
-                                     (then (call $raise-argument-error:procedure-expected (local.get $handler-val))
-                                           (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
+                                (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
+                                      (unreachable)))
+                            (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler-val)))
+                                (then (call $raise-argument-error:procedure-expected (local.get $handler-val))
+                                      (unreachable)))
 
-                                 (local.set $pred-proc (ref.cast (ref $Procedure) (local.get $pred-val)))
-                                 (local.set $pred-inv  (struct.get $Procedure $invoke (local.get $pred-proc)))
-                                 (array.set $Args (local.get $pred-args) (i32.const 0) (local.get $exn-val))
-                                 (local.set $pred-result
-                                            (call_ref $ProcedureInvoker
-                                                      (local.get $pred-proc)
-                                                      (local.get $pred-args)
-                                                      (local.get $pred-inv)))
+                            (local.set $pred-proc (ref.cast (ref $Procedure) (local.get $pred-val)))
+                            (local.set $pred-inv  (struct.get $Procedure $invoke (local.get $pred-proc)))
+                            (array.set $Args (local.get $pred-args) (i32.const 0) (local.get $exn-val))
+                            (local.set $pred-result
+                                       (call_ref $ProcedureInvoker
+                                                 (local.get $pred-proc)
+                                                 (local.get $pred-args)
+                                                 (local.get $pred-inv)))
 
-                                 (if (ref.eq (local.get $pred-result) (global.get $false))
-                                     (then (local.set $pred-node    (local.get $pred-tail))
-                                           (local.set $handler-node (local.get $handler-tail))
-                                           (br $search))
-                                     (else
-                                      (local.set $pred-node    (local.get $pred-tail))
+                            (if (ref.eq (local.get $pred-result) (global.get $false))
+                                (then (local.set $pred-node    (local.get $pred-tail))
                                       (local.set $handler-node (local.get $handler-tail))
-                                      (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler-val)))
-                                      (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
-                                      (array.set $Args (local.get $handler-args) (i32.const 0) (local.get $exn-val))
-                                      (br $done (call_ref $ProcedureInvoker
-                                                          (local.get $handler-proc)
-                                                          (local.get $handler-args)
-                                                          (local.get $handler-inv))))))
-                           ; 
-                           (unreachable))))
+                                      (br $search))
+                                (else
+                                 (local.set $pred-node    (local.get $pred-tail))
+                                 (local.set $handler-node (local.get $handler-tail))
+                                 (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler-val)))
+                                 (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
+                                 (array.set $Args (local.get $handler-args) (i32.const 0) (local.get $exn-val))
+                                 (call_ref $ProcedureInvoker
+                                           (local.get $handler-proc)
+                                           (local.get $handler-args)
+                                           (local.get $handler-inv)))))
+                      )
+               
+               (drop (call $js-log ,(Imm 999)))
+               )
 
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
