@@ -103,7 +103,9 @@
  
  ;; Test functions
  always-throw ; todo - remove
- catching     
+ catching
+ catch
+ 
 
  ;; checkers
  check-list
@@ -1282,3 +1284,14 @@
         (let ([clause (car rest)])
           (with-handlers ([(car clause) (cdr clause)])
             (loop (cdr rest)))))))
+
+
+(define (catch predicate handler thunk)
+  (unless (procedure? predicate)
+    (raise-argument-error 'catch "procedure?" predicate))
+  (unless (procedure? handler)
+    (raise-argument-error 'catch "procedure?" handler))
+  (unless (procedure? thunk)
+    (raise-argument-error 'catch "procedure?" thunk))
+  (with-handlers ([(λ (value) (predicate value)) handler])
+    (thunk)))

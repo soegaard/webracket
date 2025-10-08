@@ -3548,10 +3548,88 @@
                                        (local.get $handler-inv))
                              (br $done))))
 
-         
 
+         (func $catch (type $Prim3)
+               (param $pred    (ref eq))
+               (param $handler (ref eq))
+               (param $thunk   (ref eq))
+               (result         (ref eq))
+
+               (local $pred-proc    (ref $Procedure))
+               (local $handler-proc (ref $Procedure))
+               (local $thunk-proc   (ref $Procedure))
+               (local $pred-inv     (ref $ProcedureInvoker))
+               (local $handler-inv  (ref $ProcedureInvoker))
+               (local $thunk-inv    (ref $ProcedureInvoker))
+               (local $pred-args    (ref $Args))
+               (local $handler-args (ref $Args))
+               (local $thunk-args   (ref $Args))
+               (local $pred-result  (ref eq))
+               (local $exn-val      (ref eq))
+
+               ;; Validate the predicate, handler, and thunk arguments.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred)))
+                   (then (call $raise-argument-error:procedure-expected
+                               (local.get $pred))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler)))
+                   (then (call $raise-argument-error:procedure-expected
+                               (local.get $handler))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
+                   (then (call $raise-argument-error:procedure-expected
+                               (local.get $thunk))
+                         (unreachable)))
+
+               ;; Extract procedures and their invokers.
+               (local.set $pred-proc
+                          (ref.cast (ref $Procedure) (local.get $pred)))
+               (local.set $pred-inv
+                       (struct.get $Procedure $invoke (local.get $pred-proc)))
+               (local.set $handler-proc
+                          (ref.cast (ref $Procedure) (local.get $handler)))
+               (local.set $handler-inv
+                       (struct.get $Procedure $invoke (local.get $handler-proc)))
+               (local.set $thunk-proc
+                          (ref.cast (ref $Procedure) (local.get $thunk)))
+               (local.set $thunk-inv
+                        (struct.get $Procedure $invoke (local.get $thunk-proc)))
+
+               ;; Preallocate argument arrays.
+               (local.set $pred-args    (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $handler-args (array.new $Args (global.get $null) (i32.const 1)))
+               (local.set $thunk-args   (array.new $Args (global.get $null) (i32.const 0)))
+
+               (block $done (result (ref eq))
+                      (block $handler-block (result (ref eq))
+                             (try_table (result (ref eq))
+                                        (catch $exn $handler-block)
+
+                                        (call_ref $ProcedureInvoker
+                                                  (local.get $thunk-proc)
+                                                  (local.get $thunk-args)
+                                                  (local.get $thunk-inv))
+                                        (br $done))
+
+                             (local.set $exn-val) ; gets value from stack
+                             (array.set $Args (local.get $pred-args) (i32.const 0)
+                                        (local.get $exn-val))
+                             (local.set $pred-result
+                                        (call_ref $ProcedureInvoker
+                                                  (local.get $pred-proc)
+                                                  (local.get $pred-args)
+                                                  (local.get $pred-inv)))
+                             (if (ref.eq (local.get $pred-result) (global.get $false))
+                                 (then (throw $exn (local.get $exn-val))))
+                             (array.set $Args (local.get $handler-args) (i32.const 0)
+                                        (local.get $exn-val))
+                             (br $done
+                                 (call_ref $ProcedureInvoker
+                                           (local.get $handler-proc)
+                                           (local.get $handler-args)
+                                           (local.get $handler-inv))))))
          
-         (func $catch* (type $Prim3)
+         #;(func $catch* (type $Prim3)
                (param $preds    (ref eq))
                (param $handlers (ref eq))
                (param $thunk    (ref eq))
