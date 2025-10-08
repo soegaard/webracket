@@ -544,10 +544,8 @@
 
   ; in-list
   
-  always-throw  ; test function: throws an exception
-  catching
-  ; catch*
-  catch
+  catch   ; single predicate and handler
+  catch*  ; multiple predicates and handlers
 
   raise
   raise-unbound-variable-reference

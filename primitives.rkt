@@ -102,9 +102,8 @@
  ; in-string ; see "core.rkt"
  
  ;; Test functions
- always-throw ; todo - remove
- catching
  catch
+ catch*
  
 
  ;; checkers
@@ -1256,10 +1255,6 @@
 
 (define (always-throw)
   (raise (exn/tag 42)))
-
-(define (catching handler thunk)
-  (with-handlers ([exn/tag? (λ (e) (handler (exn/tag-value e)))])
-    (thunk)))
 
 
 (define (catch* preds handlers thunk)
