@@ -3558,6 +3558,8 @@
              (local $handler-pair (ref $Pair))
              (local $pred-val     (ref eq))
              (local $handler-val  (ref eq))
+             (local $pred-tail    (ref eq))
+             (local $handler-tail (ref eq))
              (local $pred-proc    (ref $Procedure))
              (local $handler-proc (ref $Procedure))
              (local $pred-inv     (ref $ProcedureInvoker))
@@ -3599,6 +3601,7 @@
                           (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
                           (local.set $pred-val (struct.get $Pair $a (local.get $pred-pair)))
                           (local.set $handler-val (struct.get $Pair $a (local.get $handler-pair)))
+                          
                           (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
                               (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
                                     (unreachable)))
@@ -3627,11 +3630,12 @@
                                                 (local.get $thunk-inv))
                                       (br $done))
 
-                           (local.set $exn-val)
+                           (local.set $exn-val)     ; uses value on stack
                            (local.set $pred-node    (local.get $preds))
                            (local.set $handler-node (local.get $handlers))
 
                            (loop $search
+                                 ; rethrow if no predicates return true
                                  (if (ref.eq (local.get $pred-node) (global.get $null))
                                      (then (throw $exn (local.get $exn-val))))
                                  (if (i32.eqz (ref.test (ref $Pair) (local.get $pred-node)))
@@ -3649,10 +3653,10 @@
 
                                  (local.set $pred-pair    (ref.cast (ref $Pair) (local.get $pred-node)))
                                  (local.set $handler-pair (ref.cast (ref $Pair) (local.get $handler-node)))
-                                 (local.set $pred-val     (struct.get $Pair $a (local.get $pred-pair)))
-                                 (local.set $handler-val  (struct.get $Pair $a (local.get $handler-pair)))
-                                 (local.set $pred-node    (struct.get $Pair $d (local.get $pred-pair)))
-                                 (local.set $handler-node (struct.get $Pair $d (local.get $handler-pair)))
+                                 (local.set $pred-val     (struct.get $Pair $a  (local.get $pred-pair)))
+                                 (local.set $handler-val  (struct.get $Pair $a  (local.get $handler-pair)))
+                                 (local.set $pred-tail    (struct.get $Pair $d  (local.get $pred-pair)))
+                                 (local.set $handler-tail (struct.get $Pair $d  (local.get $handler-pair)))
 
                                  (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
                                      (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
@@ -3671,8 +3675,12 @@
                                                       (local.get $pred-inv)))
 
                                  (if (ref.eq (local.get $pred-result) (global.get $false))
-                                     (then (br $search))
+                                     (then (local.set $pred-node    (local.get $pred-tail))
+                                           (local.set $handler-node (local.get $handler-tail))
+                                           (br $search))
                                      (else
+                                      (local.set $pred-node    (local.get $pred-tail))
+                                      (local.set $handler-node (local.get $handler-tail))
                                       (local.set $handler-proc (ref.cast (ref $Procedure) (local.get $handler-val)))
                                       (local.set $handler-inv  (struct.get $Procedure $invoke (local.get $handler-proc)))
                                       (array.set $Args (local.get $handler-args) (i32.const 0) (local.get $exn-val))
