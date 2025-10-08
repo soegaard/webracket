@@ -32,94 +32,6 @@
   '#%paramz) ; contains the identifier parameterization-key
 
 
-(define (unexpand stx)
-  (define (with-handlers-prefix? id prefix)
-    (and (identifier? id)
-         (let ([name (symbol->string (syntax-e id))])
-           (string-prefix? name prefix))))
-
-  (define (with-handlers-predicate? id)
-    (string-prefix? (symbol->string (syntax-e id))
-                    "with-handlers-predicate"))
-  (define (with-handlers-handler? id)
-    (string-prefix? (symbol->string (syntax-e id))
-                    "with-handlers-handler"))
-  
-
-  (define (rewrite-with-handlers stx)
-    (syntax-parse stx
-      #:literals (let-values #%plain-app continuation-mark-set-first
-                             break-enabled-key quote)
-      [(let-values ([(pred/handler ...) pred/handler-expr] ...)
-         (let-values (((bpz)
-                       (#%plain-app continuation-mark-set-first
-                                    '#f break-enabled-key)))
-           (#%plain-app call-handled-body:id
-                        bpz1
-                        lambda0
-                        lambda1)))
-       ; Compare the pattern above to:
-       ;   (topexpand #'(with-handlers ([pred1 handler1]
-       ;                                [pred2 handler2])
-       ;                   body))
-       ; We are rewriting to:
-       ;    (catch* (list pred1    pred2)
-       ;            (list handler1 handler2)
-       ;            (lambda () body))
-       #:when (let ()
-                (define names (syntax->list #'(pred/handler ... ...)))
-                (and (null?
-                      (dropf (dropf names with-handlers-predicate?)
-                             with-handlers-handler?))
-                     (eq? (syntax-e #'call-handled-body) 'call-handled-body)))
-       (define pred/handler*      (syntax->list #'(pred/handler ... ...)))
-       (define pred-count         (length (takef pred/handler*
-                                                 with-handlers-predicate?)))
-       (define handlers-count     (- (length pred/handler*) pred-count))
-       (define pred/handler-expr* (syntax->list #'(pred/handler-expr ...)))
-       (define pred-exprs         (take pred/handler-expr* pred-count))
-       (define handler-exprs      (drop pred/handler-expr* pred-count))
-       
-       (define preds    (map walk pred-exprs))
-       (define handlers (map walk handler-exprs))
-       #;(define bodies   (map walk (syntax->list #'(body ...))))
-
-       (with-syntax ([(preds ...)    preds]
-                     [(handlers ...) handlers]
-                     #;[(body ...)     bodies]
-                     [catch*         (datum->syntax stx 'catch*)]
-                     [list-id        (datum->syntax stx 'list)]
-                     [lambda-id      (datum->syntax stx '#%plain-lambda)])
-         ; The expansion is:
-         ;    (catch* (list pred1    pred2)
-         ;            (list handler1 handler2)
-         ;            (lambda () body))
-         ; But we need to use the fully expanded form.
-         (syntax/loc stx
-           (#%plain-app
-            catch*
-            (#%plain-app list preds ...)
-            (#%plain-app list handlers ...)
-            lambda1)))]
-      [_ #f]))
-
-  (define (walk stx)
-    (define rewritten (rewrite-with-handlers stx))
-    (cond
-      [rewritten rewritten]
-      [else
-       (syntax-case stx ()
-         [() stx]
-         [(a . d)
-          (with-syntax ([a* (walk #'a)]
-                        [d* (walk #'d)])
-            #'(a* . d*))]
-         [#(ele ...)
-          (with-syntax ([(ele* ...) (map walk (syntax->list #'(ele ...)))])
-            #'#(ele* ...))]
-         [_ stx])]))
-
-  (walk stx))
 
 
 ;;; todo - just for testing FFI
@@ -1278,6 +1190,117 @@
      (non-top s x)                                => (non-top x)
      (anonymous s)                                => (anonymous)
      (top s x)                                    => (#%top . x)))
+
+
+;;;
+;;; Unexpand
+;;;
+
+;; The `unexpand` pass is from fully expanded syntax to fully expanded syntax.
+;; For now it rewrites the expansion of `with-handlers` into a
+;; a use of `catch*` instead.
+
+;; Real Racket uses continuation marks and more to implement exception
+;; handlers. We do not have continuation marks available, so we
+;; rewrite to an alternative form.
+
+;     (topexpand #'(with-handlers ([pred1 handler1] 
+;                                  [pred2 handler2])
+;                     body))                        
+; =>                                                
+;     (catch* (list pred1    pred2)                 
+;             (list handler1 handler2)              
+;             (lambda () body))                     
+
+(define (unexpand stx)
+  (define (with-handlers-prefix? id prefix)
+    (and (identifier? id)
+         (let ([name (symbol->string (syntax-e id))])
+           (string-prefix? name prefix))))
+
+  (define (with-handlers-predicate? id)
+    (string-prefix? (symbol->string (syntax-e id))
+                    "with-handlers-predicate"))
+  (define (with-handlers-handler? id)
+    (string-prefix? (symbol->string (syntax-e id))
+                    "with-handlers-handler"))
+  
+
+  (define (rewrite-with-handlers stx)
+    (syntax-parse stx
+      #:literals (let-values #%plain-app continuation-mark-set-first
+                             break-enabled-key quote)
+      [(let-values ([(pred/handler ...) pred/handler-expr] ...)
+         (let-values (((bpz)
+                       (#%plain-app continuation-mark-set-first
+                                    '#f break-enabled-key)))
+           (#%plain-app call-handled-body:id
+                        bpz1
+                        lambda0
+                        lambda1)))
+       ; Compare the pattern above to:
+       ;   (topexpand #'(with-handlers ([pred1 handler1]
+       ;                                [pred2 handler2])
+       ;                   body))
+       ; We are rewriting to:
+       ;    (catch* (list pred1    pred2)
+       ;            (list handler1 handler2)
+       ;            (lambda () body))
+       #:when (let ()
+                (define names (syntax->list #'(pred/handler ... ...)))
+                (and (null?
+                      (dropf (dropf names with-handlers-predicate?)
+                             with-handlers-handler?))
+                     (eq? (syntax-e #'call-handled-body) 'call-handled-body)))
+       (define pred/handler*      (syntax->list #'(pred/handler ... ...)))
+       (define pred-count         (length (takef pred/handler*
+                                                 with-handlers-predicate?)))
+       (define handlers-count     (- (length pred/handler*) pred-count))
+       (define pred/handler-expr* (syntax->list #'(pred/handler-expr ...)))
+       (define pred-exprs         (take pred/handler-expr* pred-count))
+       (define handler-exprs      (drop pred/handler-expr* pred-count))
+       
+       (define preds    (map walk pred-exprs))
+       (define handlers (map walk handler-exprs))
+       #;(define bodies   (map walk (syntax->list #'(body ...))))
+
+       (with-syntax ([(preds ...)    preds]
+                     [(handlers ...) handlers]
+                     #;[(body ...)     bodies]
+                     [catch*         (datum->syntax stx 'catch*)]
+                     [list-id        (datum->syntax stx 'list)]
+                     [lambda-id      (datum->syntax stx '#%plain-lambda)]
+                     [lambda1        (walk #'lambda1)])
+         ; The expansion is:
+         ;    (catch* (list pred1    pred2)
+         ;            (list handler1 handler2)
+         ;            (lambda () body))
+         ; But we need to use the fully expanded form.
+         (syntax/loc stx
+           (#%plain-app
+            catch*
+            (#%plain-app list preds ...)
+            (#%plain-app list handlers ...)
+            lambda1)))]
+      [_ #f]))
+
+  (define (walk stx)
+    (define rewritten (rewrite-with-handlers stx))
+    (cond
+      [rewritten rewritten]
+      [else
+       (syntax-case stx ()
+         [() stx]
+         [(a . d)
+          (with-syntax ([a* (walk #'a)]
+                        [d* (walk #'d)])
+            #'(a* . d*))]
+         [#(ele ...)
+          (with-syntax ([(ele* ...) (map walk (syntax->list #'(ele ...)))])
+            #'#(ele* ...))]
+         [_ stx])]))
+
+  (walk stx))
 
 
 ;;; 

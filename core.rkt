@@ -162,6 +162,10 @@
 
 (provide struct)
 
+
+;; 10.2.3 Handling Exceptions
+(provide with-handlers)
+
 ;; 13.10
 
 (require (prefix-in rkt: racket/fasl))

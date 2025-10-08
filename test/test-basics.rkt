@@ -3454,7 +3454,7 @@
                            (equal? (port-next-location 42) #f))))))
              )
 
- #;(list "10.2 Exceptions"
+ (list "10.2 Exceptions"
        (list
         (list "srcloc basics"
               (let () 
@@ -3475,7 +3475,28 @@
                        (equal? (srcloc-column loc2)   #f)
                        (equal? (srcloc-position loc2) #f)
                        (equal? (srcloc-span loc2)     #f)
-                       (equal? (srcloc->string loc2) "file")))))))
+                       (equal? (srcloc->string loc2) "file")))))
+
+        (list "with-handlers"
+                    (let* ([no-exn-result
+                            (with-handlers ([integer? (λ (_n) 'handled)])
+                              (+ 1 2))]
+                           [caught-result
+                            (with-handlers ([integer? (λ (n) (list 'caught n))])
+                              (raise 5))]
+                           [escalated-result
+                            (with-handlers ([list? (λ (lst) lst)])
+                              (with-handlers ([integer? (λ (n) (raise (list 'escalated n)))])
+                                (raise 9)))]
+                           [ordered-result
+                            (with-handlers ([symbol? (λ (_s) 'symbol)]
+                                            [integer? (λ (_n) 'integer)])
+                              (raise 10))])
+                      (and (equal? no-exn-result 3)
+                           (equal? caught-result '(caught 5))
+                           (equal? escalated-result '(escalated 9))
+                           (equal? ordered-result 'integer))))))
+ 
 
  #;(list "12. Macros"
        (list "12.2 Syntax Object Content"
