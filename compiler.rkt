@@ -13,7 +13,7 @@
          nanopass/base
          racket/match
          racket/port
-         (only-in racket/string string-prefix?)
+         (only-in racket/string string-prefix? string-replace)
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
                   index-where append-map make-list rest take drop
@@ -22,7 +22,8 @@
          (only-in racket/set  list->set))
 (require
   ; (prefix-in ur- urlang)
-  (for-syntax nanopass/base syntax/parse racket/syntax racket/base)
+ (for-syntax nanopass/base syntax/parse racket/syntax racket/base)
+ 
   syntax/kerncase ; for kernel-form-identifier-list
   syntax/stx
   racket/syntax
@@ -458,10 +459,22 @@
   
   catch   ; single predicate and handler
   catch*  ; multiple predicates and handlers
-
+  
   raise
   raise-unbound-variable-reference
   raise-argument-error
+
+  exn
+  exn?
+  exn-message
+  exn-continuation-marks
+  
+  exn:fail  ; no new fields (compared to `exn`)
+  exn:fail?
+
+  ;make-exn
+  ;make-exn:fail
+  
 
   ; checkers
   check-list
@@ -1197,6 +1210,9 @@
 ;;;
 
 ;; The `unexpand` pass is from fully expanded syntax to fully expanded syntax.
+
+;; Task 1
+;; ------
 ;; For now it rewrites the expansion of `with-handlers` into a
 ;; a use of `catch*` instead.
 
@@ -1212,6 +1228,15 @@
 ;             (list handler1 handler2)              
 ;             (lambda () body))                     
 
+;; Task 2
+;; ------
+;; Rewrite kernel:exn:... to exn:...
+
+; Note: The `exn` visible in `compiler.rkt` is different
+;       from the binding in `racket/kernel` so we
+;       need to import from `racket/kernel` here.
+(require (prefix-in kern- racket/kernel))
+
 (define (unexpand stx)
   (define (with-handlers-prefix? id prefix)
     (and (identifier? id)
@@ -1224,12 +1249,34 @@
   (define (with-handlers-handler? id)
     (string-prefix? (symbol->string (syntax-e id))
                     "with-handlers-handler"))
-  
 
+  (define (kernel:exn? id)
+    (string-prefix? (symbol->string (syntax-e id))
+                    "kernel:exn"))
+
+  (define (replace-identifier id from to)
+    (define s  (symbol->string (syntax-e id)))
+    (define s1 (string-replace s from to #:all? #f))
+    (datum->syntax id (string->symbol s1) ; id id
+                   ))
+  
+  
   (define (rewrite-with-handlers stx)
     (syntax-parse stx
-      #:literals (let-values #%plain-app continuation-mark-set-first
-                             break-enabled-key quote)
+      #:literal-sets (kernel-literals) ; #%plain-app quote let-values
+      #:literals (kern-exn kern-exn?
+                  kern-exn-message kern-exn-continuation-marks
+                  kern-exn:fail kern-exn:fail?
+                  continuation-mark-set-first break-enabled-key )
+      ;; Task 2
+      [kern-exn                    #'exn]
+      [kern-exn?                   #'exn?]
+      [kern-exn-message            #'exn-message]
+      [kern-exn-continuation-marks #'exn-continuation-marks]
+      [kern-exn:fail               #'exn:fail]  ; todo
+      [kern-exn:fail?              #'exn:fail?] ; todo
+
+      ;; Task 1
       [(let-values ([(pred/handler ...) pred/handler-expr] ...)
          (let-values (((bpz)
                        (#%plain-app continuation-mark-set-first

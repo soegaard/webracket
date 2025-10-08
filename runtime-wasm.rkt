@@ -893,6 +893,15 @@
 
           struct->list
           struct->vector
+
+          exn
+          exn?
+          exn-message
+          exn-continuation-marks
+          exn:fail
+          exn:fail?
+          make-exn
+          make-exn:fail
           
           match
           error
@@ -1771,6 +1780,10 @@
          ;; Commonly used realms
          (global $the-racket-realm           (mut (ref eq)) ,(Undefined)) ; the symbol 'racket
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
+
+         ;; Cached kernel exception struct type descriptors
+         (global $exn-type      (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail-type (mut (ref null $StructType)) (ref.null $StructType))
 
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
@@ -3675,6 +3688,279 @@
                                                   (local.get $handler-inv)))))
                       (unreachable)))
 
+         ;;;
+         ;;; Exception Structires
+         ;;;
+
+         ;; Exception base struct type descriptor cache
+         (func $ensure-exn-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $indices  (ref eq))
+
+               (local.set $existing (global.get $exn-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $indices (call $list-from-range/checked (i32.const 0) (i32.const 2)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn))
+                                     (global.get $false)
+                                     (i32.const 2)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $indices)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn))))
+                    (global.set $exn-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Kernel exception fail struct type descriptor cache
+         (func $ensure-exn:fail-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail))))
+                    (global.set $exn:fail-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Ensure message argument is a string
+         (func $exn-ensure-message
+               (param $who      (ref eq)) ; symbol
+               (param $message  (ref eq)) ; any/c
+               (result (ref eq))
+
+               (if (i32.eqz (ref.test (ref $String) (local.get $message)))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:string?)
+                               (local.get $message))
+                         (unreachable)))
+               (local.get $message))
+
+         ;; Validate that a value is a kernel exception
+         (func $exn-ensure
+               (param $who (ref eq)) ; symbol
+               (param $v   (ref eq)) ; any/c
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn-type))
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $ok (call $struct-type-is-a?/i32
+                                        (struct.get $Struct $type (local.get $struct))
+                                        (local.get $std)))
+               (if (i32.eqz (local.get $ok))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.get $struct))
+
+         ;; Construct a kernel exception instance
+         (func $exn/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; Construct a kernel exception:fail instance
+         (func $exn:fail/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; exn : string? continuation-mark-set? -> exn
+         (func $exn (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn/make
+                               (call $exn-ensure-message (global.get $symbol:exn) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn : string? continuation-mark-set? -> exn
+         (func $make-exn (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn? : any/c -> boolean?
+         (func $exn? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn-message : exn -> string?
+         (func $exn-message (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $fields (ref $Array))
+
+               (local.set $struct (call $exn-ensure (global.get $symbol:exn-message) (local.get $v)))
+               (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+               (array.get $Array (local.get $fields) (i32.const 0)))
+
+         ;; exn-continuation-marks : exn -> continuation-mark-set?
+         (func $exn-continuation-marks (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $fields (ref $Array))
+
+               (local.set $struct (call $exn-ensure
+                                            (global.get $symbol:exn-continuation-marks)
+                                            (local.get $v)))
+               (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+               (array.get $Array (local.get $fields) (i32.const 1)))
+
+         ;; ---
+         
+         ;; exn:fail : string? continuation-mark-set? -> exn:fail
+         (func $exn:fail (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail : string? continuation-mark-set? -> exn:fail
+         (func $make-exn:fail (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail? : any/c -> boolean?
+         (func $exn:fail? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+
+         
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
          ;;;
@@ -34243,15 +34529,6 @@
 
 
                      ,entry-body
-
-                     ;; Experiment: how to use exceptions in WebAssembly
-                     ;; (block $join #;(result (ref eq))
-                     ;;        (block $on_exn
-                     ;;               (try_table (catch $exn $on_exn)                                                               
-                     ;;                          (br $join))                 ;; send success value to the join
-                     ;;               (unreachable))                         ;; we must not fall through here
-                     ;;        ;; --- handler path (branched to end of $on_exn) ---
-                     ;;        (global.set ,result))                         ;; consumes exception (ref eq)
                      
                      ; Return the result
                      (global.set $result-bytes

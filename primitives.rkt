@@ -42,14 +42,21 @@
          include/reader
          (for-syntax read-syntax/skip-first-line))
 
+(require (prefix-in kernel: racket/kernel))
+
 ;; These functions are implemented in `stdlib` as webracket functions
 (provide error ; [twice to force indentation]         
          ;; stdlib/exceptions.rkt
          error
+         
          exn
-         exn:fail
-         make-exn
-         make-exn:fail
+         exn?
+         exn-message
+         exn-continuation-marks
+         
+         exn:fail   ; no new fields
+         exn:fail?
+         
          ;; stdlib/ports.rkt
          current-input-port
          current-output-port

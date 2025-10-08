@@ -32,6 +32,7 @@
   (namespace-require 'racket/keyword)            ; keyword->immutable-string
   (namespace-require 'rnrs/arithmetic/fixnums-6) ; fxzero?
   (namespace-require 'math/base)
+  #;(namespace-require 'racket/kernel)
   #;(namespace-require 'racket/base)
   #;(namespace-require 'racket/fixnum)
   #;(namespace-require 'racket/bool)       ; symbol=?
@@ -99,6 +100,13 @@
 
 (define (primitive->description sym-or-primitive)
   (cond
+    [(eq? sym-or-primitive 'exn)
+     (primitive-description
+      'exn 2 (arity-at-least 0) 2 2 #t #f 'racket/primitive)]
+    [(eq? sym-or-primitive 'exn:fail)
+     (primitive-description
+      'exn:fail 2 (arity-at-least 0) 2 2 #t #f 'racket/primitive)]
+    
     [(and (symbol? sym-or-primitive)
           (or (member sym-or-primitive not-primitives-in-racket)
               (member sym-or-primitive (ffi-primitives))))
