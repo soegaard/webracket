@@ -105,7 +105,7 @@
     (define (arity->shape a)
       (match a
         [(arity-at-least n) (+ 6 (min n 3))]
-        [(? number? n)      (min n 5)]
+        [(? number? n)      (if (= n 6) 26 (min n 5))]
         [(? (λ (a) (arity-range? a 0 1)))  16]
         [(? (λ (a) (arity-range? a 0 2)))  17]
         [(? (λ (a) (arity-range? a 1 2)))  18]
@@ -133,7 +133,7 @@
         void))
 
     (define primitive-shapes
-      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25))
+      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26))
 
     (define (primitive->shape pr [desc (primitive->description pr)])
       (and desc
@@ -173,6 +173,7 @@
         [23 'primitive-invoke:shape-23]
         [24 'primitive-invoke:shape-24]
         [25 'primitive-invoke:shape-25]
+        [26 'primitive-invoke:shape-26]
         [_  'primitive-invoke]))
 
     (define (primitive-invoker-tail shape)
@@ -637,6 +638,21 @@
                                       (local.get $a6)
                                       (ref.cast (ref $Prim67) (local.get $code))))
                (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
+           (unreachable))]
+        [26 ; exact 6
+         `((if (i32.eq (local.get $argc) (i32.const 6))
+               (then (if (ref.test (ref $Prim6) (local.get $code))
+                         (then (return_call_ref $Prim6
+                                                (local.get $a0)
+                                                (local.get $a1)
+                                                (local.get $a2)
+                                                (array.get $Args (local.get $args) (i32.const 3))
+                                                (array.get $Args (local.get $args) (i32.const 4))
+                                                (array.get $Args (local.get $args) (i32.const 5))
+                                                (ref.cast (ref $Prim6) (local.get $code))))
+                         (else (return (call $raise-code-type-mismatch (local.get $pproc))))))
+               (else (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
            (unreachable))]
         [_ (error 'primitive-invoker-tail "unknown shape: ~a" shape)]))
 
@@ -1194,6 +1210,9 @@
           (type $Prim67   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                  (param (ref eq)) (param (ref eq)) (param (ref eq))
                                  (result (ref eq))))
+          (type $Prim6    (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (param (ref eq))
+                                (result (ref eq))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
                                     (param $args (ref $Args))
@@ -2055,10 +2074,12 @@
               ;; Compute shape (and k for "at least k")
               (if (i32.ge_s (local.get $arity) (i32.const 0))
                   (then
-                   ;; exact: shape = min(arity, 5)
+                   ;; exact: shape = min(arity, 5), except for 6 -> 26
                    (local.set $shape (local.get $arity))
                    (if (i32.gt_u (local.get $shape) (i32.const 5))
-                       (then (local.set $shape (i32.const 5)))))
+                       (then (if (i32.eq (local.get $shape) (i32.const 6))
+                                 (then (local.set $shape (i32.const 26)))
+                                 (else (local.set $shape (i32.const 5)))))))
                   (else
                    ;; at least: k = -arity - 1; shape = 6 + min(k, 3)
                    (local.set $k
@@ -2319,6 +2340,22 @@
                       (return (call $primitive-invoke:raise-arity-error
                                     (local.get $pproc) (local.get $argc)))))
               )) ;; end $default
+              (if (i32.eq (local.get $shape) (i32.const 26))
+                  (then (if (i32.eq (local.get $argc) (i32.const 6))
+                            (then (if (ref.test (ref $Prim6) (local.get $code))
+                                      (then (return_call_ref $Prim6
+                                                             (local.get $a0)
+                                                             (local.get $a1)
+                                                             (local.get $a2)
+                                                             (array.get $Args (local.get $args) (i32.const 3))
+                                                             (array.get $Args (local.get $args) (i32.const 4))
+                                                             (array.get $Args (local.get $args) (i32.const 5))
+                                                             (ref.cast (ref $Prim6) (local.get $code))))
+                                      (else (return (call $raise-code-type-mismatch (local.get $pproc))))))
+                            (else (return (call $primitive-invoke:raise-arity-error
+                                                (local.get $pproc) (local.get $argc)))))
+                        (unreachable))
+                  (else (nop)))
               #;(drop (call $js-log (call $i32->string (i32.const 10))))
               (call $raise-primitive-invoke:unhandled-shape)
               (unreachable))
@@ -5027,12 +5064,13 @@
                (param $span     (ref eq)) ; (or/c exact-nonnegative-integer? #f)
                (result (ref eq))
 
-               (local $who             (ref eq))
-               (local $message-checked (ref eq))
-               (local $line-checked    (ref eq))
-               (local $column-checked  (ref eq))
+               (local $who              (ref eq))
+               (local $message-checked  (ref eq))
+               (local $line-checked     (ref eq))
+               (local $column-checked   (ref eq))
                (local $position-checked (ref eq))
-               (local $span-checked    (ref eq))
+               (local $span-checked     (ref eq))
+               (local $srclocs          (ref eq))
 
                (local.set $who (global.get $symbol:raise-read-eof-error))
                (local.set $message-checked

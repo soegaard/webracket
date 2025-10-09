@@ -3497,6 +3497,39 @@
                            (equal? escalated-result '(escalated 9))
                            (equal? ordered-result   'integer))))
 
+        (list "raise-read-error"
+              (let* ([basic
+                      (with-handlers ([exn:fail:read?
+                                       (λ (exn)
+                                         (list (exn-message exn)
+                                               (map srcloc->string
+                                                    (exn:fail:read-srclocs exn))))])
+                        (raise-read-error "message" 'src 3 4 5 6))]
+                     [with-extra
+                      (with-handlers ([exn:fail:read?
+                                       (λ (exn)
+                                         (map srcloc-source
+                                              (exn:fail:read-srclocs exn)))])
+                        (raise-read-error
+                         "extra"
+                         'src 1 2 3 4
+                         (list (make-srcloc 'extra 9 8 7 6))))])
+                (and (equal? basic (list "message" '("src:3:4")))
+                     (equal? with-extra '(src extra)))))
+
+        #;(list "raise-read-eof-error"
+              (let* ([captured
+                      (with-handlers ([exn:fail:read:eof?
+                                       (λ (exn)
+                                         (list (exn-message exn)
+                                               (map srcloc->string
+                                                    (exn:fail:read-srclocs exn))))])
+                        (raise-read-eof-error "EOF" 'src 5 6 7 8))]
+                     [msg  (car captured)]
+                     [locs (cadr captured)])
+                (and (equal? msg "EOF")
+                     (equal? locs '("src:5:6")))))
+        
         (list "exn constructors"
               (let* ([base (exn "message" #f)]
                      [made (make-exn "other" #f)]
