@@ -489,6 +489,19 @@
   make-exn:fail:contract:variable  
   exn:fail:contract:variable-id
 
+  exn:fail:read
+  exn:fail:read?
+  make-exn:fail:read
+  exn:fail:read-srclocs
+
+  exn:fail:read:eof
+  exn:fail:read:eof?
+  make-exn:fail:read:eof
+
+  exn:fail:read:non-char
+  exn:fail:read:non-char?
+  make-exn:fail:read:non-char
+  
   ;make-exn
   ;make-exn:fail
   
@@ -1250,15 +1263,6 @@
 ;             (list handler1 handler2)              
 ;             (lambda () body))                     
 
-;; Task 2
-;; ------
-;; Rewrite kernel:exn:... to exn:...
-
-; Note: The `exn` visible in `compiler.rkt` is different
-;       from the binding in `racket/kernel` so we
-;       need to import from `racket/kernel` here.
-(require (prefix-in kern- racket/kernel))
-
 (define (unexpand stx)
   (define (with-handlers-prefix? id prefix)
     (and (identifier? id)
@@ -1271,47 +1275,14 @@
   (define (with-handlers-handler? id)
     (string-prefix? (symbol->string (syntax-e id))
                     "with-handlers-handler"))
-
-  (define (kernel:exn? id)
-    (string-prefix? (symbol->string (syntax-e id))
-                    "kernel:exn"))
-
-  (define (replace-identifier id from to)
-    (define s  (symbol->string (syntax-e id)))
-    (define s1 (string-replace s from to #:all? #f))
-    (datum->syntax id (string->symbol s1) ; id id
-                   ))
   
   
   (define (rewrite-with-handlers stx)
     (syntax-parse stx
       #:literal-sets (kernel-literals) ; #%plain-app quote let-values
-      #:literals (kern-exn kern-exn?
-                  kern-exn-message kern-exn-continuation-marks
-                  kern-exn:fail kern-exn:fail?
-                  kern-exn:fail:contract kern-exn:fail:contract?
-                  kern-exn:fail:contract:arity kern-exn:fail:contract:arity?
-                  kern-exn:fail:contract:divide-by-zero kern-exn:fail:contract:divide-by-zero?
-                  kern-exn:fail:contract:variable kern-exn:fail:contract:variable?
-                  kern-exn:fail:contract:variable-id
-                  continuation-mark-set-first break-enabled-key )
-      ;; Task 2
-      [kern-exn                               #'exn]
-      [kern-exn?                              #'exn?]
-      [kern-exn-message                       #'exn-message]
-      [kern-exn-continuation-marks            #'exn-continuation-marks]
-      [kern-exn:fail                          #'exn:fail]  
-      [kern-exn:fail?                         #'exn:fail?] 
-      [kern-exn:fail:contract                 #'exn:fail:contract]
-      [kern-exn:fail:contract?                #'exn:fail:contract?]
-      [kern-exn:fail:contract:arity           #'exn:fail:contract:arity]
-      [kern-exn:fail:contract:arity?          #'exn:fail:contract:arity?]
-      [kern-exn:fail:contract:divide-by-zero  #'exn:fail:contract:divide-by-zero]
-      [kern-exn:fail:contract:divide-by-zero? #'exn:fail:contract:divide-by-zero?]
-      [kern-exn:fail:contract:variable        #'exn:fail:contract:variable]
-      [kern-exn:fail:contract:variable?       #'exn:fail:contract:variable?]
-      [kern-exn:fail:contract:variable-id     #'exn:fail:contract:variable-id]
-
+      #:literals (continuation-mark-set-first break-enabled-key)
+      ;; Task 2 
+      #;[x:id (rewrite-kernel-identifier #'x)]
       ;; Task 1
       [(let-values ([(pred/handler ...) pred/handler-expr] ...)
          (let-values (((bpz)
@@ -1384,6 +1355,64 @@
          [_ stx])]))
 
   (walk stx))
+
+;;;
+;;; Renaming of exception structures
+;;;
+
+;; The fully expanded syntax contains the names `kernel:exn`, `kernel:exn:fail`, etc.
+;; instead of `exn`, `exn:fail`, etc.
+;; We prefer to use the shorter names in the runtime, so when parsing the
+;; fully expanded syntax into the nanopass representation, we substitute these
+;; identifiers.
+
+; Note: The `exn` visible in `compiler.rkt` is different
+;       from the binding in `racket/kernel` so we
+;       need to import from `racket/kernel` here.
+(require (prefix-in kern- racket/kernel))
+
+(define (rewrite-kernel-identifier id)
+  (syntax-parse id
+    #:literal-sets (kernel-literals) ; #%plain-app quote let-values
+    #:literals (kern-exn kern-exn?
+                         kern-exn-message kern-exn-continuation-marks
+                         kern-exn:fail kern-exn:fail?
+                         kern-exn:fail:contract kern-exn:fail:contract?
+                         kern-exn:fail:contract:arity kern-exn:fail:contract:arity?
+                         kern-exn:fail:contract:divide-by-zero kern-exn:fail:contract:divide-by-zero?
+                         kern-exn:fail:contract:variable kern-exn:fail:contract:variable?
+                         kern-exn:fail:contract:variable-id
+                         kern-exn:fail:read kern-exn:fail:read?
+                         kern-exn:fail:read-srclocs
+                         kern-exn:fail:read:eof kern-exn:fail:read:eof?
+                         kern-exn:fail:read:non-char kern-exn:fail:read:non-char?
+                          )
+    [kern-exn                               #'exn]
+    [kern-exn?                              #'exn?]
+    [kern-exn-message                       #'exn-message]
+    [kern-exn-continuation-marks            #'exn-continuation-marks]
+    [kern-exn:fail                          #'exn:fail]  
+    [kern-exn:fail?                         #'exn:fail?] 
+
+    [kern-exn:fail:contract                 #'exn:fail:contract]
+    [kern-exn:fail:contract?                #'exn:fail:contract?]
+    [kern-exn:fail:contract:arity           #'exn:fail:contract:arity]
+    [kern-exn:fail:contract:arity?          #'exn:fail:contract:arity?]
+    [kern-exn:fail:contract:divide-by-zero  #'exn:fail:contract:divide-by-zero]
+    [kern-exn:fail:contract:divide-by-zero? #'exn:fail:contract:divide-by-zero?]
+    [kern-exn:fail:contract:variable        #'exn:fail:contract:variable]
+    [kern-exn:fail:contract:variable?       #'exn:fail:contract:variable?]
+    [kern-exn:fail:contract:variable-id     #'exn:fail:contract:variable-id]
+
+    [kern-exn:fail:read                     #'exn:fail:read]
+    [kern-exn:fail:read?                    #'exn:fail:read?]
+    [kern-exn:fail:read-srclocs             #'exn:fail:read-srclocs]
+    [kern-exn:fail:read:eof                 #'exn:fail:read:eof]
+    [kern-exn:fail:read:eof?                #'exn:fail:read:eof?]
+    [kern-exn:fail:read:non-char            #'exn:fail:read:non-char]
+    [kern-exn:fail:read:non-char?           #'exn:fail:read:non-char?]
+    
+    [_ id]))
 
 
 ;;; 
@@ -1500,7 +1529,7 @@
   (Expr : * (E) -> Expr ()
     (with-output-language (LFE Expr)
       (syntax-parse E #:literal-sets (kernel-literals)
-        [x:id                                      `,(variable #'x)]
+        [x:id                                      `,(variable (rewrite-kernel-identifier #'x))]
         [c #:when (constant? (syntax->datum #'c))  `(quote ,E ,(Datum E #'c))]
         [(if e0 e1 e2)                             `(if ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
         [(begin  e0 e1 ...)                        `(begin  ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]

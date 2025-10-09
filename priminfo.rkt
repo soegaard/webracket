@@ -106,7 +106,11 @@
     exn:fail:contract
     exn:fail:contract:arity
     exn:fail:contract:divide-by-zero
-    exn:fail:contract:variable))
+    exn:fail:contract:variable
+    exn:fail:read
+    exn:fail:read:eof
+    exn:fail:read:non-char
+    ))
 
 (define (exception-constructor? sym)  
   (and (member sym exception-constructors) #t))

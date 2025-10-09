@@ -3548,7 +3548,29 @@
                      (equal? (exn-message contract) "contract")
                      (equal? (exn-message arity) "arity")
                      (equal? (exn-message divide) "divide")
-                     (equal? (exn-message variable) "variable"))))))
+                     (equal? (exn-message variable) "variable"))))
+
+        (list "exn:fail:read structures"
+              (let* ([marks         '()]
+                     [loc           (srcloc 'src 1 2 3 4)]
+                     [locs          (list loc)]
+                     [read          (exn:fail:read "read" marks locs)]
+                     [read-make     (make-exn:fail:read "made-read" marks locs)]
+                     [eof           (exn:fail:read:eof "eof" marks locs)]
+                     [eof-make      (make-exn:fail:read:eof "made-eof" marks locs)]
+                     [non-char      (exn:fail:read:non-char "non" marks locs)]
+                     [non-char-make (make-exn:fail:read:non-char "made-non" marks locs)])
+                (and (equal? (exn:fail? read) #t)
+                     (equal? (exn:fail:read? read) #t)
+                     (equal? (exn:fail:read? read-make) #t)
+                     (equal? (exn:fail:read-srclocs read) locs)
+                     (equal? (exn:fail:read-srclocs read-make) locs)
+                     (equal? (exn:fail:read:eof? eof) #t)
+                     (equal? (exn:fail:read:eof? eof-make) #t)
+                     (equal? (exn:fail:read:non-char? non-char) #t)
+                     (equal? (exn:fail:read:non-char? non-char-make) #t)
+                     (equal? (exn-message non-char) "non")
+                     (equal? (exn-message eof) "eof"))))))
  
 
  #;(list "12. Macros"

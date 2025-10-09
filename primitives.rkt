@@ -64,11 +64,22 @@
          exn:fail:contract:variable
          exn:fail:contract:variable?
          exn:fail:contract:variable-id
+
+         exn:fail:read
+         exn:fail:read?
+         exn:fail:read-srclocs
+         exn:fail:read:eof
+         exn:fail:read:eof?
+         exn:fail:read:non-char
+         exn:fail:read:non-char?
          
          make-exn:fail:contract
          make-exn:fail:contract:arity
          make-exn:fail:contract:divide-by-zero
          make-exn:fail:contract:variable
+         make-exn:fail:read
+         make-exn:fail:read:eof
+         make-exn:fail:read:non-char
          
          
          ;; stdlib/ports.rkt
