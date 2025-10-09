@@ -52,9 +52,13 @@
          exn
          exn?
          exn-message
-         exn-continuation-marks         
+         exn-continuation-marks
+         make-exn
+         
          exn:fail   
          exn:fail?
+         make-exn:fail
+         
          exn:fail:contract
          exn:fail:contract?
          exn:fail:contract:arity

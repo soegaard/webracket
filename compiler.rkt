@@ -468,9 +468,11 @@
   exn?
   exn-message
   exn-continuation-marks
+  make-exn
   
   exn:fail  ; no new fields (compared to `exn`)
   exn:fail?
+  make-exn:fail
 
   exn:fail:contract
   exn:fail:contract?
@@ -502,8 +504,6 @@
   exn:fail:read:non-char?
   make-exn:fail:read:non-char
   
-  ;make-exn
-  ;make-exn:fail
   
 
   ; checkers

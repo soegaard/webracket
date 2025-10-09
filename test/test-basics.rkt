@@ -3499,23 +3499,23 @@
 
         (list "exn constructors"
               (let* ([base (exn "message" #f)]
-                     #;[made (make-exn "other" #f)]
+                     [made (make-exn "other" #f)]
                      [fail (exn:fail "boom" #f)]
-                     #;[made-fail (make-exn:fail "kaboom" #f)])
+                     [made-fail (make-exn:fail "kaboom" #f)])
                 (and (equal? (exn? base) #t)
                      (string=? (exn-message base) "message")
                      (eq? (exn-continuation-marks base) #f)
-                     #;(equal? (exn? made) #t)
-                     #;(string=? (exn-message made) "other")
-                     #;(eq? (exn-continuation-marks made) #f)
+                     (equal? (exn? made) #t)
+                     (string=? (exn-message made) "other")
+                     (eq? (exn-continuation-marks made) #f)
                      (equal? (exn:fail? fail) #t)
                      (equal? (exn? fail) #t)
                      (string=? (exn-message fail) "boom")
                      (eq? (exn-continuation-marks fail) #f)
-                     #;(equal? (exn:fail? made-fail) #t)
-                     #;(equal? (exn? made-fail) #t)
-                     #;(string=? (exn-message made-fail) "kaboom")
-                     #;(eq? (exn-continuation-marks made-fail) #f))))
+                     (equal? (exn:fail? made-fail) #t)
+                     (equal? (exn? made-fail) #t)
+                     (string=? (exn-message made-fail) "kaboom")
+                     (eq? (exn-continuation-marks made-fail) #f))))
 
         (list "exn:fail:contract structures"
               (let* ([marks         '()]
