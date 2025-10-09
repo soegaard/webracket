@@ -31094,12 +31094,18 @@
          
          ;; 10.2 Exceptions
 
-         ; 
-
-         
          ;; 10.3 Delayed Evaluation
          ;; 10.4 Continuations
          ;; 10.5 Continuation Marks
+
+         ;; current-continuation-marks : [continuation-prompt-tag?] -> #f
+         (func $current-continuation-marks (type $Prim01)
+               ;; prompt-tag : continuation-prompt-tag? (optional, default = (default-continuation-prompt-tag))
+               ;; NOTE: WebRacket currently lacks continuation marks, so this stub always returns #f.
+               (param $prompt-tag (ref eq))
+               (result            (ref eq))
+               (global.get $false))
+         
          ;; 10.6 Breaks
          ;; 10.7 Exiting
          ;; 10.8 Unreachable Expressions
@@ -35304,6 +35310,8 @@
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
                      (ref.cast (ref $Bytes) (global.get $result-bytes)))
+
+               (func $entry-uncaught-exception (unreachable))
                
                (func $entry (export "entry") (result i32)
                      ; Declare local variables (bound by let-values and letrec-values)
@@ -35486,6 +35494,7 @@
                                     
                                     (br $entry-body:done)))
                             ;; If any wasm exception reaches here, crash so the host prints a stack trace.
+                            (call $entry-uncaught-exception)
                             (unreachable))
                      
                      ; Return the result

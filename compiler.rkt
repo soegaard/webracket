@@ -462,7 +462,7 @@
   
   raise
   raise-unbound-variable-reference
-  raise-argument-error
+  ; raise-argument-error 
 
   exn
   exn?
@@ -955,6 +955,9 @@
   srcloc-span
 
   srcloc->string
+
+  ;; 10.5 Continuation Marks
+  current-continuation-marks  ; dummy, always returns #f
 
   ;; 12.2 Syntax Object Content
   syntax?
@@ -4003,6 +4006,7 @@
         [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
 
         [(raise)                       (inline-prim/optional/default sym ae1 1 2 (Imm #t))]
+        [(current-continuation-marks)  (inline-prim/optional sym ae1 0 1)]
 
         [(gensym)                     (inline-prim/optional sym ae1 0 1)]
         

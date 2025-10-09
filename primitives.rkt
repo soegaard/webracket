@@ -2,6 +2,7 @@
 (require ; version-case
          racket/bool
          racket/bytes
+         racket/control
          racket/fasl
          racket/fixnum
          racket/flonum
@@ -685,6 +686,9 @@
  syntax-srcloc  ; in racket/syntax-srcloc
  syntax-srclocs ; in racket/match/runtime.rkt
 
+ ;; 10.5 Continuation Marks
+ current-continuation-marks  ; dummy, always returns #f
+ 
  ;; 12.2 Syntac Object Content
  syntax?
  syntax-e
