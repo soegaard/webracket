@@ -10,7 +10,6 @@
 
 (define-values (read read-syntax)
   (let ()
-    (define (exn:fail:read . xs) (cons 'exn:fail:read xs))  ; todo
 
     ;; ----------------------------- Data --------------------------------------
     (struct token (type val lexeme loc) #:transparent)
@@ -45,8 +44,7 @@
        (exn:fail:read
         (string-append who-str ": " msg)
         #;(format "~a: ~a" who msg)
-        #f
-        #;(current-continuation-marks)
+        (current-continuation-marks)
         srclocs)))
 
     (define (hex-digit->val ch)
@@ -662,6 +660,11 @@
       (let loop ()
         (define tok (lexer-next L))
         (define ty  (token-type tok))
+        (displayln "-- token --")
+        (displayln tok)
+        (displayln "-- token type --")
+        (write ty) (newline)
+        
         (case ty
           [(datum-comment)
            (define-values (_1 _2 _3) (parse-datum L context))
@@ -702,8 +705,8 @@
 
     (define (read-syntax source [in (current-input-port)])
       (do-read in source #t))
-
-    (values read read-syntax)))
+    
+   (values read read-syntax)))
 
 
 #;(provide token
@@ -988,4 +991,5 @@
       (check-equal? (read-from-string "(#:foo #:|bar baz|)")
                     (list (string->keyword "foo")
                           (string->keyword "bar baz")))))
-)
+ )
+
