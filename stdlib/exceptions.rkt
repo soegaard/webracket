@@ -4,16 +4,20 @@
 ;;; Exceptions
 ;;;
 
-(struct exn (message continuation-marks)
-  ; message is a string
-  ; continuation-marks is a continuation-mark-set (not available yet)
-  #:extra-constructor-name make-exn
-  #:transparent)
+;; These exception structures are now implemented in `runtime-wasm.rkt`.
 
-(struct exn:fail exn ()
-  #:extra-constructor-name make-exn:fail
-  #:transparent)
+;; (struct exn (message continuation-marks)
+;;   ; message is a string
+;;   ; continuation-marks is a continuation-mark-set (not available yet)
+;;   #:extra-constructor-name make-exn
+;;   #:transparent)
 
+;; (struct exn:fail exn ()
+;;   #:extra-constructor-name make-exn:fail
+;;   #:transparent)
+
+(define make-exn      exn)
+(define make-exn:fail exn:fail)
 
 (define error
   (case-lambda

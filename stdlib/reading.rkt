@@ -10,7 +10,7 @@
 
 (define-values (read read-syntax)
   (let ()
-    (define (exn:fail:read . xs) (cons 'exn:fail:read xs))
+    (define (exn:fail:read . xs) (cons 'exn:fail:read xs))  ; todo
 
     ;; ----------------------------- Data --------------------------------------
     (struct token (type val lexeme loc) #:transparent)
