@@ -902,6 +902,19 @@
           exn:fail?
           make-exn
           make-exn:fail
+          exn:fail:contract
+          exn:fail:contract?
+          make-exn:fail:contract
+          exn:fail:contract:arity
+          exn:fail:contract:arity?
+          make-exn:fail:contract:arity
+          exn:fail:contract:divide-by-zero
+          exn:fail:contract:divide-by-zero?
+          make-exn:fail:contract:divide-by-zero
+          exn:fail:contract:variable
+          exn:fail:contract:variable?
+          make-exn:fail:contract:variable
+          exn:fail:contract:variable-id
           
           match
           error
@@ -976,6 +989,7 @@
     (add-runtime-string-constant 'hash-less-struct-type-property-colon "#<struct-type-property:")
 
     (add-runtime-string-constant 'string?                    "string?")
+    (add-runtime-string-constant 'symbol?                    "symbol?")
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
     (add-runtime-string-constant 'catch*-matching-lengths    "same number of handlers as predicates")
@@ -1782,8 +1796,12 @@
          (global $the-racket/primitive-realm (mut (ref eq)) ,(Undefined)) ; the symbol 'racket/primitive
 
          ;; Cached kernel exception struct type descriptors
-         (global $exn-type      (mut (ref null $StructType)) (ref.null $StructType))
-         (global $exn:fail-type (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn-type                              (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail-type                         (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail:contract-type                (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail:contract:arity-type          (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail:contract:divide-by-zero-type (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail:contract:variable-type       (mut (ref null $StructType)) (ref.null $StructType))
 
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
@@ -3770,7 +3788,7 @@
          (func $exn-ensure
                (param $who (ref eq)) ; symbol
                (param $v   (ref eq)) ; any/c
-               (result (ref $Struct))
+               (result     (ref $Struct))
 
                (local $std    (ref $StructType))
                (local $struct (ref $Struct))
@@ -3959,7 +3977,507 @@
                         (else (global.get $false))))
                    (else (global.get $false))))
 
+         ; Kernel exception fail:contract struct type descriptor cache
+         (func $ensure-exn:fail:contract-type
+               (result (ref $StructType))
 
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:contract-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract))))
+                    (global.set $exn:fail:contract-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Kernel exception fail:contract:arity struct type descriptor cache
+         (func $ensure-exn:fail:contract:arity-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:contract:arity-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail:contract-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:arity))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:arity))))
+                    (global.set $exn:fail:contract:arity-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Kernel exception fail:contract:divide-by-zero struct type descriptor cache
+         (func $ensure-exn:fail:contract:divide-by-zero-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:contract:divide-by-zero-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail:contract-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:divide-by-zero))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:divide-by-zero))))
+                    (global.set $exn:fail:contract:divide-by-zero-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Kernel exception fail:contract:variable struct type descriptor cache
+         (func $ensure-exn:fail:contract:variable-type
+               (result (ref $StructType))
+
+               (local $existing     (ref null $StructType))
+               (local $std          (ref $StructType))
+               (local $super        (ref $StructType))
+               (local $immut        (ref eq))
+               (local $super-count  i32)
+               (local $new-immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:contract:variable-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail:contract-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $super-count (struct.get $StructType $field-count (local.get $super)))
+                    (local.set $new-immut
+                               (call $append/2
+                                     (local.get $immut)
+                                     (call $list-from-range/checked
+                                           (local.get $super-count)
+                                           (i32.add (local.get $super-count) (i32.const 1)))))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:variable))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 1)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $new-immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:variable))))
+                    (global.set $exn:fail:contract:variable-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Validate that a value is a kernel exception:fail:contract
+         (func $exn:fail:contract-ensure
+               (param $who (ref eq)) ; symbol
+               (param $v   (ref eq)) ; any/c
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract-type))
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $ok (call $struct-type-is-a?/i32
+                                        (struct.get $Struct $type (local.get $struct))
+                                        (local.get $std)))
+               (if (i32.eqz (local.get $ok))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.get $struct))
+
+         ;; Validate that a value is a kernel exception:fail:contract:variable
+         (func $exn:fail:contract:variable-ensure
+               (param $who (ref eq)) ; symbol
+               (param $v   (ref eq)) ; any/c
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract:variable-type))
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $ok (call $struct-type-is-a?/i32
+                                        (struct.get $Struct $type (local.get $struct))
+                                        (local.get $std)))
+               (if (i32.eqz (local.get $ok))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:struct?)
+                               (local.get $v))
+                         (unreachable)))
+               (local.get $struct))
+
+         ;; Validate that the id argument is a symbol
+         (func $exn:fail:contract:variable-ensure-id
+               (param $who (ref eq)) ; symbol
+               (param $id  (ref eq)) ; any/c
+               (result (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $id)))
+                   (then (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:symbol?)
+                               (local.get $id))
+                         (unreachable)))
+               (local.get $id))
+
+         ;; Construct a kernel exception:fail:contract instance
+         (func $exn:fail:contract/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:contract-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; Construct a kernel exception:fail:contract:arity instance
+         (func $exn:fail:contract:arity/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:contract:arity-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; Construct a kernel exception:fail:contract:divide-by-zero instance
+         (func $exn:fail:contract:divide-by-zero/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:contract:divide-by-zero-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; Construct a kernel exception:fail:contract:variable instance
+         (func $exn:fail:contract:variable/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (param $id      (ref eq)) ; symbol
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:contract:variable-type))
+               (local.set $fields
+                          (array.new_fixed $Array 3
+                                           (local.get $message)
+                                           (local.get $marks)
+                                           (local.get $id)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; exn:fail:contract : string? continuation-mark-set? -> exn:fail:contract
+         (func $exn:fail:contract (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:contract) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail:contract : string? continuation-mark-set? -> exn:fail:contract
+         (func $make-exn:fail:contract (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:contract) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail:contract? : any/c -> boolean?
+         (func $exn:fail:contract? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn:fail:contract:arity : string? continuation-mark-set? -> exn:fail:contract:arity
+         (func $exn:fail:contract:arity (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:arity/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:contract:arity) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail:contract:arity : string? continuation-mark-set? -> exn:fail:contract:arity
+         (func $make-exn:fail:contract:arity (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:arity/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:contract:arity) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail:contract:arity? : any/c -> boolean?
+         (func $exn:fail:contract:arity? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract:arity-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn:fail:contract:divide-by-zero : string? continuation-mark-set? -> exn:fail:contract:divide-by-zero
+         (func $exn:fail:contract:divide-by-zero (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:divide-by-zero/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:contract:divide-by-zero) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail:contract:divide-by-zero : string? continuation-mark-set? -> exn:fail:contract:divide-by-zero
+         (func $make-exn:fail:contract:divide-by-zero (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:divide-by-zero/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:contract:divide-by-zero) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail:contract:divide-by-zero? : any/c -> boolean?
+         (func $exn:fail:contract:divide-by-zero? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract:divide-by-zero-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn:fail:contract:variable : string? continuation-mark-set? symbol? -> exn:fail:contract:variable
+         (func $exn:fail:contract:variable (type $Prim3)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (param $id      (ref eq)) ; any/c
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:variable/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:contract:variable) (local.get $message))
+                               (local.get $marks)
+                               (call $exn:fail:contract:variable-ensure-id
+                                     (global.get $symbol:exn:fail:contract:variable)
+                                     (local.get $id)))))
+
+         ;; make-exn:fail:contract:variable : string? continuation-mark-set? symbol? -> exn:fail:contract:variable
+         (func $make-exn:fail:contract:variable (type $Prim3)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (param $id      (ref eq)) ; any/c
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:variable/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:contract:variable) (local.get $message))
+                               (local.get $marks)
+                               (call $exn:fail:contract:variable-ensure-id
+                                     (global.get $symbol:make-exn:fail:contract:variable)
+                                     (local.get $id)))))
+
+         ;; exn:fail:contract:variable? : any/c -> boolean?
+         (func $exn:fail:contract:variable? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract:variable-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn:fail:contract:variable-id : exn:fail:contract:variable -> symbol?
+         (func $exn:fail:contract:variable-id (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $fields (ref $Array))
+
+               (local.set $struct
+                          (call $exn:fail:contract:variable-ensure
+                                (global.get $symbol:exn:fail:contract:variable-id)
+                                (local.get $v)))
+               (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+               (array.get $Array (local.get $fields) (i32.const 2)))
          
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
@@ -34528,7 +35046,16 @@
                          (Init* entry-locals))
 
 
-                     ,entry-body
+                     (block $entry-body:done
+                            (block $entry-body:handler
+                                   (try_table
+                                    (catch_all $entry-body:handler)
+                                    
+                                    ,entry-body    ; <<==  main body
+                                    
+                                    (br $entry-body:done)))
+                            ;; If any wasm exception reaches here, crash so the host prints a stack trace.
+                            (unreachable))
                      
                      ; Return the result
                      (global.set $result-bytes

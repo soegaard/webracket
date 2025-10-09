@@ -3489,13 +3489,66 @@
                               (with-handlers ([integer? (λ (n) (raise (list 'escalated n)))])
                                 (raise 9)))]
                            [ordered-result
-                            (with-handlers ([symbol? (λ (_s) 'symbol)]
+                            (with-handlers ([symbol?  (λ (_s) 'symbol)]
                                             [integer? (λ (_n) 'integer)])
                               (raise 10))])
-                      (and (equal? no-exn-result 3)
-                           (equal? caught-result '(caught 5))
+                      (and (equal? no-exn-result    3)
+                           (equal? caught-result    '(caught 5))
                            (equal? escalated-result '(escalated 9))
-                           (equal? ordered-result 'integer))))))
+                           (equal? ordered-result   'integer))))
+
+        (list "exn constructors"
+              (let* ([base (exn "message" #f)]
+                     #;[made (make-exn "other" #f)]
+                     [fail (exn:fail "boom" #f)]
+                     #;[made-fail (make-exn:fail "kaboom" #f)])
+                (and (equal? (exn? base) #t)
+                     (string=? (exn-message base) "message")
+                     (eq? (exn-continuation-marks base) #f)
+                     #;(equal? (exn? made) #t)
+                     #;(string=? (exn-message made) "other")
+                     #;(eq? (exn-continuation-marks made) #f)
+                     (equal? (exn:fail? fail) #t)
+                     (equal? (exn? fail) #t)
+                     (string=? (exn-message fail) "boom")
+                     (eq? (exn-continuation-marks fail) #f)
+                     #;(equal? (exn:fail? made-fail) #t)
+                     #;(equal? (exn? made-fail) #t)
+                     #;(string=? (exn-message made-fail) "kaboom")
+                     #;(eq? (exn-continuation-marks made-fail) #f))))
+
+        (list "exn:fail:contract structures"
+              (let* ([marks         '()]
+                     [contract      (exn:fail:contract "contract" marks)]
+                     [contract-make (make-exn:fail:contract "made" marks)]
+                     [arity         (exn:fail:contract:arity "arity" marks)]
+                     [arity-make    (make-exn:fail:contract:arity "made-arity" marks)]
+                     [divide        (exn:fail:contract:divide-by-zero "divide" marks)]
+                     [divide-make   (make-exn:fail:contract:divide-by-zero "made-divide" marks)]
+                     [variable      (exn:fail:contract:variable "variable" marks 'id)]
+                     [variable-make (make-exn:fail:contract:variable "made-variable" marks 'made-id)])
+                (and (equal? (exn:fail? contract) #t)
+                     (equal? (exn:fail:contract? contract) #t)
+                     (equal? (exn:fail:contract? arity) #t)
+                     (equal? (exn:fail:contract? divide) #t)
+                     (equal? (exn:fail:contract? variable) #t)
+                     (equal? (exn:fail:contract? contract-make) #t)
+                     (equal? (exn:fail:contract? arity-make) #t)
+                     (equal? (exn:fail:contract? divide-make) #t)
+                     (equal? (exn:fail:contract? variable-make) #t)
+                     (equal? (exn:fail:contract:arity? contract) #f)
+                     (equal? (exn:fail:contract:arity? arity) #t)
+                     (equal? (exn:fail:contract:arity? arity-make) #t)
+                     (equal? (exn:fail:contract:divide-by-zero? divide) #t)
+                     (equal? (exn:fail:contract:divide-by-zero? divide-make) #t)
+                     (equal? (exn:fail:contract:variable? variable) #t)
+                     (equal? (exn:fail:contract:variable? variable-make) #t)
+                     (equal? (exn:fail:contract:variable-id variable) 'id)
+                     (equal? (exn:fail:contract:variable-id variable-make) 'made-id)
+                     (equal? (exn-message contract) "contract")
+                     (equal? (exn-message arity) "arity")
+                     (equal? (exn-message divide) "divide")
+                     (equal? (exn-message variable) "variable"))))))
  
 
  #;(list "12. Macros"

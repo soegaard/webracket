@@ -97,16 +97,40 @@
 (define-runtime-path primitives.rkt "primitives.rkt")
 (define primitives-ns (module->namespace primitives.rkt))
 
+;; Struct constructors are bound to syntax, so we need to get the
+;; primitive first, before using reflection go the the description.
 
-(define (primitive->description sym-or-primitive)
+(define exception-constructors
+  '(exn
+    exn:fail
+    exn:fail:contract
+    exn:fail:contract:arity
+    exn:fail:contract:divide-by-zero
+    exn:fail:contract:variable))
+
+(define (exception-constructor? sym)  
+  (and (member sym exception-constructors) #t))
+
+
+(define (exception-constructor->primitive sym)
+  (eval sym ns))
+
+(define (primitive->description sym-or-primitive)      
   (cond
-    [(eq? sym-or-primitive 'exn)
-     (primitive-description
-      'exn 2 (arity-at-least 0) 2 2 #t #f 'racket/primitive)]
-    [(eq? sym-or-primitive 'exn:fail)
-     (primitive-description
-      'exn:fail 2 (arity-at-least 0) 2 2 #t #f 'racket/primitive)]
-    
+    [(exception-constructor? sym-or-primitive)
+     (define pr (exception-constructor->primitive sym-or-primitive))
+     (define x pr)
+     (define-values (required accepted) (procedure-keywords x))
+     (primitive-description (object-name x)
+                            (procedure-arity x)                         
+                            (if (primitive? x)
+                                (primitive-result-arity x)
+                                (procedure-result-arity x))
+                            required
+                            accepted
+                            (primitive? x)
+                            (primitive-closure? x)
+                            (procedure-realm x))]    
     [(and (symbol? sym-or-primitive)
           (or (member sym-or-primitive not-primitives-in-racket)
               (member sym-or-primitive (ffi-primitives))))

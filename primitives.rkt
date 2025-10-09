@@ -52,10 +52,24 @@
          exn
          exn?
          exn-message
-         exn-continuation-marks
-         
-         exn:fail   ; no new fields
+         exn-continuation-marks         
+         exn:fail   
          exn:fail?
+         exn:fail:contract
+         exn:fail:contract?
+         exn:fail:contract:arity
+         exn:fail:contract:arity?
+         exn:fail:contract:divide-by-zero
+         exn:fail:contract:divide-by-zero?
+         exn:fail:contract:variable
+         exn:fail:contract:variable?
+         exn:fail:contract:variable-id
+         
+         make-exn:fail:contract
+         make-exn:fail:contract:arity
+         make-exn:fail:contract:divide-by-zero
+         make-exn:fail:contract:variable
+         
          
          ;; stdlib/ports.rkt
          current-input-port

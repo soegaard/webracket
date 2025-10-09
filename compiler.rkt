@@ -472,6 +472,23 @@
   exn:fail  ; no new fields (compared to `exn`)
   exn:fail?
 
+  exn:fail:contract
+  exn:fail:contract?
+  make-exn:fail:contract
+  
+  exn:fail:contract:arity
+  exn:fail:contract:arity?
+  make-exn:fail:contract:arity
+  
+  exn:fail:contract:divide-by-zero
+  exn:fail:contract:divide-by-zero?
+  make-exn:fail:contract:divide-by-zero
+  
+  exn:fail:contract:variable
+  exn:fail:contract:variable?
+  make-exn:fail:contract:variable  
+  exn:fail:contract:variable-id
+
   ;make-exn
   ;make-exn:fail
   
@@ -1211,6 +1228,11 @@
 
 ;; The `unexpand` pass is from fully expanded syntax to fully expanded syntax.
 
+;; Tasks like Task 1 are in fragile. If full Racket changes the expansion
+;; of the `with-handlers` form, then `unexpand` needs to be rewritten.
+;; Therefore, if possible avoid to extend `unexpand` if possible.
+
+
 ;; Task 1
 ;; ------
 ;; For now it rewrites the expansion of `with-handlers` into a
@@ -1267,14 +1289,28 @@
       #:literals (kern-exn kern-exn?
                   kern-exn-message kern-exn-continuation-marks
                   kern-exn:fail kern-exn:fail?
+                  kern-exn:fail:contract kern-exn:fail:contract?
+                  kern-exn:fail:contract:arity kern-exn:fail:contract:arity?
+                  kern-exn:fail:contract:divide-by-zero kern-exn:fail:contract:divide-by-zero?
+                  kern-exn:fail:contract:variable kern-exn:fail:contract:variable?
+                  kern-exn:fail:contract:variable-id
                   continuation-mark-set-first break-enabled-key )
       ;; Task 2
-      [kern-exn                    #'exn]
-      [kern-exn?                   #'exn?]
-      [kern-exn-message            #'exn-message]
-      [kern-exn-continuation-marks #'exn-continuation-marks]
-      [kern-exn:fail               #'exn:fail]  ; todo
-      [kern-exn:fail?              #'exn:fail?] ; todo
+      [kern-exn                               #'exn]
+      [kern-exn?                              #'exn?]
+      [kern-exn-message                       #'exn-message]
+      [kern-exn-continuation-marks            #'exn-continuation-marks]
+      [kern-exn:fail                          #'exn:fail]  
+      [kern-exn:fail?                         #'exn:fail?] 
+      [kern-exn:fail:contract                 #'exn:fail:contract]
+      [kern-exn:fail:contract?                #'exn:fail:contract?]
+      [kern-exn:fail:contract:arity           #'exn:fail:contract:arity]
+      [kern-exn:fail:contract:arity?          #'exn:fail:contract:arity?]
+      [kern-exn:fail:contract:divide-by-zero  #'exn:fail:contract:divide-by-zero]
+      [kern-exn:fail:contract:divide-by-zero? #'exn:fail:contract:divide-by-zero?]
+      [kern-exn:fail:contract:variable        #'exn:fail:contract:variable]
+      [kern-exn:fail:contract:variable?       #'exn:fail:contract:variable?]
+      [kern-exn:fail:contract:variable-id     #'exn:fail:contract:variable-id]
 
       ;; Task 1
       [(let-values ([(pred/handler ...) pred/handler-expr] ...)
