@@ -22,6 +22,7 @@
          racket/vector
          racket/unsafe/ops
          ; racket/namespace
+         (prefix-in readerr: syntax/readerr)
          
          math/flonum
          (only-in math/base
@@ -85,7 +86,10 @@
          make-exn:fail:read
          make-exn:fail:read:eof
          make-exn:fail:read:non-char
-         
+
+          ;; syntax/readerr 
+         raise-read-error
+         raise-read-eof-error
          
          ;; stdlib/ports.rkt
          current-input-port
@@ -685,7 +689,7 @@
  
  syntax-srcloc  ; in racket/syntax-srcloc
  syntax-srclocs ; in racket/match/runtime.rkt
-
+ 
  ;; 10.5 Continuation Marks
  current-continuation-marks  ; dummy, always returns #f
  
@@ -787,6 +791,9 @@
  unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector-length unsafe-vector-ref unsafe-vector*-length unsafe-vector*-set! unsafe-struct-set!
  unsafe-string-length
+
+
+
  
  ;; FFI
  
@@ -1250,6 +1257,17 @@
 
 (define (struct->vector s [opaque-v '...])
   (racket:struct->vector s opaque-v))
+
+
+; To avoid keyword arguments
+(define (raise-read-error message source line column position span [extra-srclocs '()])
+  (readerr:raise-read-error message source line column position span
+                            #:extra-srclocs extra-srclocs))
+
+; To avoid keyword arguments
+(define (raise-read-eof-error message source line column position span [extra-srclocs '()])
+  (readerr:raise-read-eof-error message source line column position span
+                                #:extra-srclocs extra-srclocs))
 
 ;;;
 ;;; STANDARD LIBRARY

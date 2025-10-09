@@ -117,6 +117,7 @@
         [(? (λ (a) (arity-range? a 2 5)))  23]
         [(? (λ (a) (arity-range? a 3 4)))  15]
         [(? (λ (a) (arity-range? a 3 5)))  24]
+        [(? (λ (a) (arity-range? a 6 7)))  25]
         [_ #f]))
 
     ; These functions are variadic functions that can handle the
@@ -132,7 +133,7 @@
         void))
 
     (define primitive-shapes
-      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24))
+      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25))
 
     (define (primitive->shape pr [desc (primitive->description pr)])
       (and desc
@@ -171,6 +172,7 @@
         [22 'primitive-invoke:shape-22]
         [23 'primitive-invoke:shape-23]
         [24 'primitive-invoke:shape-24]
+        [25 'primitive-invoke:shape-25]
         [_  'primitive-invoke]))
 
     (define (primitive-invoker-tail shape)
@@ -607,6 +609,35 @@
                                       (ref.cast (ref $Prim35) (local.get $code))))
                (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
            (unreachable))]
+        [25 ; between 6 and 7 arguments
+         `((if (i32.lt_u (local.get $argc) (i32.const 6))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (i32.gt_u (local.get $argc) (i32.const 7))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (ref.test (ref $Prim67) (local.get $code))
+               (then (local.set $a0 (array.get $Args (local.get $args) (i32.const 0)))
+                     (local.set $a1 (array.get $Args (local.get $args) (i32.const 1)))
+                     (local.set $a2 (array.get $Args (local.get $args) (i32.const 2)))
+                     (local.set $a3 (array.get $Args (local.get $args) (i32.const 3)))
+                     (local.set $a4 (array.get $Args (local.get $args) (i32.const 4)))
+                     (local.set $a5 (array.get $Args (local.get $args) (i32.const 5)))
+                     (if (i32.eq (local.get $argc) (i32.const 6))
+                         (then (local.set $a6 (global.get $missing)))
+                         (else (local.set $a6
+                                          (array.get $Args (local.get $args) (i32.const 6)))))
+                     (return_call_ref $Prim67
+                                      (local.get $a0)
+                                      (local.get $a1)
+                                      (local.get $a2)
+                                      (local.get $a3)
+                                      (local.get $a4)
+                                      (local.get $a5)
+                                      (local.get $a6)
+                                      (ref.cast (ref $Prim67) (local.get $code))))
+               (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
+           (unreachable))]
         [_ (error 'primitive-invoker-tail "unknown shape: ~a" shape)]))
 
     (define (primitive-invoker shape)
@@ -625,15 +656,19 @@
              (local $a0 (ref eq))
              (local $a1 (ref eq))
              (local $a2 (ref eq))
-             (local $a3 (ref eq)) ; ? needed
+             (local $a3 (ref eq)) ; ? needed - see primitive-invoker-tail above
              (local $a4 (ref eq)) ; ? needed
-             (local $rest (ref eq))
+             (local $a5 (ref eq)) ; ? needed 
+             (local $a6 (ref eq)) ; ? needed
+             (local $rest (ref eq)) ; todo: we should limit this to fewer locals
              
              (local.set $a0   (global.get $null))
              (local.set $a1   (global.get $null))
              (local.set $a2   (global.get $null))
              (local.set $a3   (global.get $null))
-             (local.set $a4   (global.get $null))
+             (local.set $a4   (global.get $null)) ; todo remove these 
+             (local.set $a5   (global.get $null)) ; todo remove these
+             (local.set $a6   (global.get $null)) ; todo remove these
              (local.set $rest (global.get $null))
              
              (local.set $pproc
@@ -1156,6 +1191,9 @@
                                 (result (ref eq))))
           (type $Prim35   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
+          (type $Prim67   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                 (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                 (result (ref eq))))
           
           (type $ClosureCode  (func (param $clos (ref $Closure))
                                     (param $args (ref $Args))
@@ -1959,6 +1997,10 @@
         ;;  22: between 2 and 4 arguments
         ;;  23: between 2 and 5 arguments
         ;;  24: between 3 and 5 arguments
+        ;;  25: between 6 and 7 arguments
+
+        (func $raise-primitive-invoke:unhandled-shape (unreachable))
+        
         (func $primitive-invoke (type $ProcedureInvoker)
               (param $proc (ref $Procedure))
               (param $args (ref $Args))
@@ -2278,6 +2320,7 @@
                                     (local.get $pproc) (local.get $argc)))))
               )) ;; end $default
               #;(drop (call $js-log (call $i32->string (i32.const 10))))
+              (call $raise-primitive-invoke:unhandled-shape)
               (unreachable))
 
         ,@(for/list ([shape (in-list primitive-shapes)])
@@ -4909,6 +4952,117 @@
                         (else (global.get $false))))
                    (else (global.get $false))))
 
+         
+         ;; raise-read-error : string? any/c (or/c exact-positive-integer? #f)
+         ;;                    (or/c exact-nonnegative-integer? #f)
+         ;;                    (or/c exact-positive-integer? #f)
+         ;;                    (or/c exact-nonnegative-integer? #f)
+         ;;                    [#:extra-srclocs (listof srcloc?)] -> none
+         (func $raise-read-error (type $Prim67)
+               (param $message  (ref eq)) ; string
+               (param $source   (ref eq)) ; (or/c path-string? symbol? #f)
+               (param $line     (ref eq)) ; (or/c exact-positive-integer? #f)
+               (param $column   (ref eq)) ; (or/c exact-nonnegative-integer? #f)
+               (param $position (ref eq)) ; (or/c exact-positive-integer? #f)
+               (param $span     (ref eq)) ; (or/c exact-nonnegative-integer? #f)
+               (param $extra    (ref eq)) ; optional (listof srcloc?), default = '()
+               (result (ref eq))
+
+               (local $who             (ref eq))
+               (local $message-checked (ref eq))
+               (local $line-checked    (ref eq))
+               (local $column-checked  (ref eq))
+               (local $position-checked (ref eq))
+               (local $span-checked    (ref eq))
+               (local $extra-checked   (ref eq))
+               (local $srcloc          (ref eq))
+               (local $srclocs         (ref eq))
+
+               (local.set $who (global.get $symbol:raise-read-error))
+               (local.set $message-checked
+                          (call $exn-ensure-message (local.get $who) (local.get $message)))
+               (local.set $line-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $line)))
+               (local.set $column-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $column)))
+               (local.set $position-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $position)))
+               (local.set $span-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $span)))
+               (local.set $extra-checked
+                          (if (result (ref eq))
+                              (ref.eq (local.get $extra) (global.get $missing))
+                              (then (global.get $null))
+                              (else (call $exn:fail:read-ensure-srclocs
+                                          (local.get $who)
+                                          (local.get $extra)))))
+               (local.set $srcloc
+                          (call $make-srcloc
+                                (local.get $source)
+                                (local.get $line-checked)
+                                (local.get $column-checked)
+                                (local.get $position-checked)
+                                (local.get $span-checked)))
+               (local.set $srclocs
+                          (call $cons (local.get $srcloc) (local.get $extra-checked)))
+               (call $raise
+                     (call $exn:fail:read
+                           (local.get $message-checked)
+                           (global.get $false)
+                           (local.get $srclocs))
+                     (global.get $true))
+               (unreachable))
+
+         ;; raise-read-eof-error : string? any/c (or/c exact-positive-integer? #f)
+         ;;                         (or/c exact-nonnegative-integer? #f)
+         ;;                         (or/c exact-positive-integer? #f)
+         ;;                         (or/c exact-nonnegative-integer? #f)
+         ;;                         -> none
+         (func $raise-read-eof-error (type $Prim6)
+               (param $message  (ref eq)) ; string
+               (param $source   (ref eq)) ; (or/c path-string? symbol? #f)
+               (param $line     (ref eq)) ; (or/c exact-positive-integer? #f)
+               (param $column   (ref eq)) ; (or/c exact-nonnegative-integer? #f)
+               (param $position (ref eq)) ; (or/c exact-positive-integer? #f)
+               (param $span     (ref eq)) ; (or/c exact-nonnegative-integer? #f)
+               (result (ref eq))
+
+               (local $who             (ref eq))
+               (local $message-checked (ref eq))
+               (local $line-checked    (ref eq))
+               (local $column-checked  (ref eq))
+               (local $position-checked (ref eq))
+               (local $span-checked    (ref eq))
+
+               (local.set $who (global.get $symbol:raise-read-eof-error))
+               (local.set $message-checked
+                          (call $exn-ensure-message (local.get $who) (local.get $message)))
+               (local.set $line-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $line)))
+               (local.set $column-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $column)))
+               (local.set $position-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $position)))
+               (local.set $span-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $span)))
+               
+               (local.set $srclocs
+                          (call $cons 
+                                (call $srcloc
+                                      (local.get $source)
+                                      (local.get $line)
+                                      (local.get $column)
+                                      (local.get $position)
+                                      (local.get $span))
+                                (global.get $null)))
+               (call $raise
+                     (call $exn:fail:read:eof
+                           (local.get $message-checked)
+                           (global.get $false)
+                           (local.get $srclocs))
+                     (global.get $true))
+               (unreachable))
+         
          
          ;;;
          ;;; RUNTIME SUPPORT FOR MATCH
