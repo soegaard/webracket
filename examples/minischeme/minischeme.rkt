@@ -207,7 +207,8 @@
 
 (struct mark   (row col)      #:mutable)
 (struct line   (raw rendered) #:mutable)
-(struct buffer (name lines point start prompts active-prompt locked? first-screen-row screen-col)
+(struct buffer (name lines point start prompts active-prompt locked?
+                     first-screen-row screen-col)
   #:mutable)
 
 (define (make-line raw [rendered #f])
@@ -799,12 +800,6 @@
   (define base (if idx idx 0))
   (+ base (if (prompt-line? b prev-row) the-prompt-length 0)))
 
-;;;
-;;; Evaluation helper (simple echo)
-;;;
-
-(define (process-input s)
-  (string-append "=> " s))
 
 ;;;
 ;;; Key and data handling
@@ -916,11 +911,12 @@
        ;;           (:= latest-error error)
        ;;           (:= result (+ "error: " error.message))))
           
-       ;; (define result (with-handlers ([exn:fail?
-       ;;                                   (lambda (e)
-       ;;                                     (set! latest-error e)
-       ;;                                     (string-append "error: " (exn-message e)))])
-       ;;                    (process-input input)))
+       #;(define result (with-handlers
+                        ([(λ (x) #t) ; catch all
+                          (lambda (e)
+                            (set! latest-error e)
+                            (string-append "error: " (exn-message e)))])
+                        (process-input input)))
 
        ; currently no support for `with-handlers`
        (define result (process-input input))
@@ -984,6 +980,8 @@
 ;;;
 
 (define (start-minischeme . _)
+  (reset-minischeme-state!)
+  
   (define intro-lines
     '("Welcome to MiniScheme."
       "Type a line and press Enter to see it echoed back."
@@ -1049,16 +1047,6 @@
 ;;; INTERPRETER API
 ;;;
 
-;; (def env (create-initial-env))
-
-;; (define (evaluate-and-format s)
-;;   (def input-exprs (parse s))
-;;   (console.log "<evaluate-and-format>")
-;;   (console.log (ref input-exprs 0))
-;;   (def result (evaluate (ref input-exprs 0) env))
-;;   (console.log result)
-;;   (unparse result))
-
 (struct env     (table parent))
 (struct closure (params body env))
 (struct prim    (name proc))
@@ -1113,39 +1101,40 @@
   (hash-set! (store-table st) addr value))
 
 (define (literal? expr)
-  (or (boolean? expr)
+  (or (null? expr)
+      (boolean? expr)
       (number? expr)
       (string? expr)
-      (char? expr)
-      (null? expr)))
+      (bytes? expr)
+      (char? expr)))
 
 (define (ensure-identifier sym)
   (unless (symbol? sym)
-    (error 'minischeme "expected identifier, got ~a" sym)))
+    (error 'minischeme "expected identifier, got `~a`" sym)))
 
 (define (ensure-parameters params)
   (unless (list? params)
-    (error 'minischeme "invalid parameter list ~a" params))
+    (error 'minischeme "invalid parameter list `~a`" params))
   (let loop ([ps params])
     (cond
       [(null? ps) params]
       [(symbol? (car ps)) (loop (cdr ps))]
-      [else (error 'minischeme "invalid parameter list ~a" params)])))
+      [else (error 'minischeme "invalid parameter list `~a`" params)])))
 
 (define (check-numbers name args)
   (for-each (λ (v)
               (unless (number? v)
-                (error 'minischeme "~a expects numbers, got ~a" name v)))
+                (error 'minischeme "`~a` expects numbers, got `~a`" name v)))
             args))
 
 (define (check-arg-count name args expected)
   (unless (= (length args) expected)
-    (error 'minischeme "~a expects ~a argument~a"
+    (error 'minischeme "`~a` expects ~a argument~a"
            name expected (if (= expected 1) "" "s"))))
 
 (define (check-at-least name args expected)
   (unless (>= (length args) expected)
-    (error 'minischeme "~a expects at least ~a argument~a"
+    (error 'minischeme "`~a` expects at least ~a argument~a"
            name expected (if (= expected 1) "" "s"))))
 
 (define (create-initial-state)
@@ -1233,14 +1222,19 @@
                      (equal? (car args) (cadr args))))
   (values base-env base-store))
 
-(define-values (minischeme-global-env minischeme-global-store)
-  (create-initial-state))
+(define minischeme-global-env   #f)
+(define minischeme-global-store #f)
+
+(define (reset-minischeme-state!)
+  (define-values (env store) (create-initial-state))
+  (set! minischeme-global-env   env)
+  (set! minischeme-global-store store))
 
 (define (parse-program s)
   (define in (open-input-string s))
   (let loop ([acc '()])
     ; (define next (read in))            ; todo - make this work here
-    (define next ((λ (x) (read x)) in))
+    (define next (read in))
     (if (eof-object? next)
         (reverse acc)
         (loop (cons next acc)))))
@@ -1250,7 +1244,7 @@
     [(closure? v)  "#<closure>"]
     [(prim? v)     (format "#<primitive ~a>" (prim-name v))]
     [(void? v)     "#<void>"]
-    [else          (with-output-to-string (λ () (write v)))]))
+    [else          (format "~s" v)]))
 
 (define (apply-procedure value args env store kont loop)
   (cond
@@ -1459,15 +1453,24 @@
     (if (null? forms)
         last-value
         (call-with-values
-         (λ () (cesk-evaluate (car forms)
-                               minischeme-global-env
-                               minischeme-global-store))
+         (λ ()
+           (cesk-evaluate (car forms)
+                          minischeme-global-env
+                          minischeme-global-store))
          (λ (value _env _store)
            (loop (cdr forms) value))))))
 
 (define (process-input s)
-  (define exprs (parse-program s))
-  (if (null? exprs)
-      "=> ; no input"
-      (let ([value (evaluate-program exprs)])
-        (string-append "=> " (value->string value)))))
+  (unless (and minischeme-global-env minischeme-global-store)
+    (reset-minischeme-state!))
+
+  (define exprs
+    (with-handlers (#;[exn:fail:read? (λ _ "fail")]
+                    [(λ _ #t)       (λ _ "grande failo")])
+      (parse-program s)))
+
+  (with-handlers ([(λ _ #t) (λ _ "evaluation error")])
+    (if (null? exprs)
+        "=> ; no input"
+        (let ([value (evaluate-program exprs)])
+          (string-append "=> " (value->string value))))))
