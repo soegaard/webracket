@@ -7853,9 +7853,8 @@
                       (param $xs0 (ref eq))
                       (result     (ref eq))
 
-                      (local $args    (ref $Args))
-                      (local $len     i32)
-                      (local $i       i32)
+                      (local $xs      (ref eq))
+                      (local $node    (ref $Pair))
                       (local $prev    (ref eq))
                       (local $curr    (ref eq))
                       (local $res     (ref eq))
@@ -7863,14 +7862,16 @@
                       (local $x/is-fl i32)
                       (local $x-fx    i32)
 
-                      #;(drop (call $js-log (local.get $x0)))
-                      #;(drop (call $js-log (local.get $xs0)))
-
-                      (local.set $args (ref.cast (ref $Args) (local.get $xs0)))
-                      (local.set $len  (array.len (local.get $args)))
+                      (local.set $xs
+                                 (if (result (ref eq))
+                                     (ref.test (ref $Args) (local.get $xs0))
+                                     (then (call $rest-arguments->list
+                                                 (ref.cast (ref $Args) (local.get $xs0))
+                                                 (i32.const 0)))
+                                     (else (local.get $xs0))))
 
                       ;; Single argument: ensure it is a number and return #t.
-                      (if (i32.eqz (local.get $len))
+                      (if (ref.eq (local.get $xs) (global.get $null))
                           (then (local.set $x/is-fx (ref.test (ref i31) (local.get $x0)))
                                 (if (local.get $x/is-fx)
                                     (then (local.set $x-fx (i31.get_u (ref.cast (ref i31) (local.get $x0))))
@@ -7883,16 +7884,19 @@
 
                       (local.set $res  ,(Imm #t))
                       (local.set $prev (local.get $x0))
-                      (local.set $i    (i32.const 0))
                       (block $done
                              (loop $loop
-                                   (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                                   (local.set $curr (array.get $Args (local.get $args) (local.get $i)))
+                                   (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                   (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                                       (then (call $raise-pair-expected (local.get $xs))
+                                             (unreachable)))
+                                   (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                   (local.set $curr (struct.get $Pair $a (local.get $node)))
                                    (local.set $res  (call ,cmp/2 (local.get $prev) (local.get $curr)))
                                    (if (ref.eq (local.get $res) ,(Imm #f))
                                        (then (return ,(Imm #f))))
                                    (local.set $prev (local.get $curr))
-                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                   (local.set $xs   (struct.get $Pair $d (local.get $node)))
                                    (br $loop)))
                       (local.get $res)))
              (list (gen-variadic-cmp '$=  '$=/2)
@@ -29623,14 +29627,10 @@
                (local.set $ok   (if (result i32)
                                     (ref.test (ref $Struct) (local.get $v))
                                     (then ;; Is $struct a subtype of $std
-                                     (if (result i32)
-                                         (i32.eqz (call $struct-type-is-a?/i32
-                                                        (struct.get $Struct $type 
-                                                                    (ref.cast (ref $Struct) (local.get $v)))
-                                                        (local.get $std)))
-                                         (then (call $raise-argument-error (local.get $v))
-                                               (unreachable))
-                                         (else (i32.const 1))))
+                                     (call $struct-type-is-a?/i32
+                                               (struct.get $Struct $type 
+                                                           (ref.cast (ref $Struct) (local.get $v)))
+                                               (local.get $std)))
                                     (else (i32.const 0))))
                (if (result (ref eq))
                    (local.get $ok)
