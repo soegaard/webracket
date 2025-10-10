@@ -127,7 +127,7 @@
           [(#\{) 'lbrace]
           [(#\}) 'rbrace]
           [(#\.) 'dot]
-          [else (error 'scan-delim-or-dot (format "unexpected char ~a" ch))]))
+          [else (error 'scan-delim-or-dot (format "unexpected char `~a`" ch))]))
       (define loc (make-srcloc-from-port in (lx-source L) sl sc sp))
       (token type #f (string ch) loc))
 
@@ -149,7 +149,7 @@
                       (make-srcloc-from-port in (lx-source L) sl sc sp)))
              (token 'unquote #f ","
                     (make-srcloc-from-port in (lx-source L) sl sc sp)))]
-        [else (error 'scan-quote-like (format "unexpected char ~a" ch))]))
+        [else (error 'scan-quote-like (format "unexpected char `~a`" ch))]))
 
     ;; --------------------------- Strings & Bytes -----------------------------
     (define (scan-string* L [bytes? #f])
@@ -158,7 +158,7 @@
       (when bytes? (read-char in))     ; consumed '#'
       (define ch0 (read-char in))      ; opening '"'
       (unless (char=? ch0 #\")
-        (error 'scan-string* "internal: expected opening \""))
+        (error 'scan-string* "internal: expected opening `\"`"))
       (define out-str (open-output-string))
       (define out-bytes (if bytes? (open-output-bytes) #f))
       (define (emit c)
@@ -248,12 +248,12 @@
       (define-values (sl sc sp) (port-next-location in))
       (define s2 (peek-string 2 0 in))
       (unless (and (string? s2) (string=? s2 "#\\"))
-        (error 'scan-char "internal: expected #\\"))
+        (error 'scan-char "internal: expected a `#\\`"))
       (read-char in) (read-char in)
       (define ch (peek-char in))
       (cond
         [(eof-object? ch)
-         (raise-read-error 'scan-char "unexpected EOF after #\\"
+         (raise-read-error 'scan-char "unexpected EOF after `#\\`"
                            (make-srcloc (lx-source L) sl sc sp 1))]
         [else
          (define (read-name)
@@ -360,12 +360,12 @@
       (define-values (sl sc sp) (port-next-location in))
       (define s2 (peek-string 2 0 in))
       (unless (and (string? s2) (string=? s2 "#:"))
-        (error 'scan-keyword "internal: expected #:"))
+        (error 'scan-keyword "internal: expected `#:`"))
       (read-char in) ; '#'
       (read-char in) ; ':'
       (define name (accum-bareword in))
       (when (zero? (string-length name))
-        (raise-read-error 'scan-keyword "expected keyword name after #:"
+        (raise-read-error 'scan-keyword "expected keyword name after `#:`"
                           (make-srcloc (lx-source L) sl sc sp 2)))
       (token 'keyword (string->keyword name)
              (string-append "#:" name)
@@ -511,7 +511,7 @@
         [(lparen)   'rparen]
         [(lbracket) 'rbracket]
         [(lbrace)   'rbrace]
-        [else (error 'closer-for (format "unexpected opener ~a" opener-type))]))
+        [else (error 'closer-for (format "unexpected opener `~a`" opener-type))]))
 
     (define (delimiter->string type)
       (case type
@@ -530,16 +530,16 @@
         [(unquote)          'unquote]
         [(unquote-splicing) 'unquote-splicing]
         [else
-         (error 'quote-token->sym (format "unexpected token ~a" ty))]))
+         (error 'quote-token->sym (format "unexpected token `~a`" ty))]))
 
     (define (raise-unexpected-closing closer)
       (raise-read-error 'read
-                        (format "unexpected ~a" (token-lexeme closer))
+                        (format "unexpected `~a`" (token-lexeme closer))
                         (token-loc closer)))
 
     (define (raise-mismatched closer expected opener)
       (raise-read-error 'read
-                        (format "expected ~a to close ~a, found ~a"
+                        (format "expected `~a` to close `~a`, found `~a`"
                                 (delimiter->string expected)
                                 (token-lexeme opener)
                                 (token-lexeme closer))
@@ -552,7 +552,7 @@
       (define-values (datum _start end) (parse-datum L 'datum))
       (when (eof-object? datum)
         (raise-read-error 'read
-                          (format "unexpected EOF after ~a" (token-lexeme tok))
+                          (format "unexpected EOF after `~a`" (token-lexeme tok))
                           (token-loc tok)))
       (values (list sym datum) (token-loc tok) end))
 
@@ -572,21 +572,21 @@
            (loop)]
           [(eof)
            (raise-read-error 'read
-                             (format "unexpected EOF: expected ~a to close ~a"
+                             (format "unexpected EOF: expected `~a` to close `~a`"
                                      (delimiter->string expected)
                                      (token-lexeme opener))
                              (token-loc opener))]
           [(dot)
            (cond
              [seen-dot?
-              (raise-read-error 'read "multiple '.' in list" (token-loc t))]
+              (raise-read-error 'read "multiple `.` in list" (token-loc t))]
              [(null? elems)
-              (raise-read-error 'read "'.' cannot appear at start of list"
+              (raise-read-error 'read "`.` cannot appear at start of list"
                                 (token-loc t))]
              [else
               (define-values (tail _ts _te) (parse-datum L 'list))
               (when (eof-object? tail)
-                (raise-read-error 'read "unexpected EOF after '.'"
+                (raise-read-error 'read "unexpected EOF after `.`"
                                   (token-loc t)))
               (set! seen-dot? #t)
               (set! dot-tail tail)
@@ -603,7 +603,7 @@
           [else
            (lexer-unread L t)
            (when seen-dot?
-             (raise-read-error 'read "unexpected datum after '.'" (token-loc t)))
+             (raise-read-error 'read "unexpected datum after `.`" (token-loc t)))
            (define-values (datum _ds _de) (parse-datum L 'list))
            (set! elems (cons datum elems))
            (loop)])))
@@ -630,10 +630,11 @@
            (loop)]
           [(eof)
            (raise-read-error 'read
-                             (string-append "unexpected EOF: expected "
+                             (string-append "unexpected EOF: expected `"
                                             expected-char
-                                            " to cloce "
-                                            start-lexeme)
+                                            "` to cloce `"
+                                            start-lexeme
+                                            "`")
                              (token-loc start-token))]
           [(rparen rbracket rbrace)
            (if (eq? ty expected-type)
@@ -641,13 +642,14 @@
                        (token-loc start-token)
                        (token-loc t))
                (raise-read-error 'read
-                                 (string-append "expected " expected-char
-                                                "to close " start-lexeme
-                                                ", found "  (token-lexeme t))
+                                 (string-append "expected a `" expected-char
+                                                "` to close " start-lexeme
+                                                ", found `"  (token-lexeme t)
+                                                "`")
                                  (token-loc t)))]
           [(rbracket rbrace)
            (raise-read-error 'read
-                             (format "expected ) to close #(, found ~a"
+                             (format "expected a `)` to close a `#(`, found ~a"
                                      (token-lexeme t))
                              (token-loc t))]
           [else
@@ -676,7 +678,7 @@
           [(rparen rbracket rbrace)
            (raise-unexpected-closing tok)]
           [(dot)
-           (raise-read-error 'read "unexpected '.'" (token-loc tok))]
+           (raise-read-error 'read "unexpected `.`" (token-loc tok))]
           [(vector-start)
            (parse-vector L tok)]
           [(box-start)
@@ -688,7 +690,7 @@
            (values (token-val tok) (token-loc tok) (token-loc tok))]
           [else
            (raise-read-error 'read
-                             (format "unexpected token type ~a" ty)
+                             (format "unexpected token type `~a`" (list ty (eq? ty 'number) (token-val tok) (token-loc tok) (token-loc tok)))
                              (token-loc tok))])))
 
     (define (do-read in source syntax?)
