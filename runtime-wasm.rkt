@@ -21,6 +21,9 @@
            bytes-constants  ; (list (list name bytes)  ...)
            symbol-constants ; (list (list name symbol) ....)
            )
+
+  #;(pretty-print entry-body (current-error-port))
+  
   (let* () 
     (let* ()
     
@@ -22940,7 +22943,7 @@
                     (local $first-tombstone i32)
 
                     ;; Maybe resize
-                    (local.set $table    (call ,maybe-resize (local.get $table)))
+                    (call ,maybe-resize (local.get $table))
                     ;; Get entries and capacity
                     (local.set $entries  (struct.get ,type $entries (local.get $table)))
                     (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
@@ -23624,33 +23627,27 @@
                                           $hash-set!/mutable/checked
                                           $hashalw-set!/mutable/checked)])
              `(func ,resize
-                    (param $old (ref ,type))
-                    (result (ref ,type))
+                    (param $table (ref ,type))
 
                     (local $old-entries (ref $Array))
                     (local $old-cap     i32)
                     (local $new-cap     i32)
-                    (local $new-array   (ref $Array))
-                    (local $new-table   (ref ,type))
+                    (local $new-array   (ref $Array))                    
                     (local $i           i32)
                     (local $len         i32)
                     (local $key         (ref eq))
                     (local $val         (ref eq))
 
                     ;; Get old table size and entries
-                    (local.set $old-entries (struct.get ,type $entries (local.get $old)))
+                    (local.set $old-entries (struct.get ,type $entries (local.get $table)))
                     (local.set $old-cap     (i32.div_u (array.len (local.get $old-entries)) (i32.const 2)))
-                    (local.set $new-cap     (i32.mul (local.get $old-cap) (i32.const 2)))               
+                    (local.set $new-cap     (i32.mul (local.get $old-cap) (i32.const 2)))
                     ;; Allocate new entries array (2 * new-capacity), all set to $missing
                     (local.set $new-array (array.new $Array (global.get $missing)
                                                      (i32.mul (local.get $new-cap) (i32.const 2))))
-                    ;; Create new empty table (copy mutability from old table)
-                    (local.set $new-table
-                               (struct.new ,type
-                                           (i32.const 0)
-                                           (struct.get ,type $mutable? (local.get $old))
-                                           (local.get $new-array)
-                                           (i32.const 0)))
+                    ;; Replace storage in-place and reset metadata
+                    (struct.set ,type $entries (local.get $table) (local.get $new-array))
+                    (struct.set ,type $count   (local.get $table) (i32.const 0))
                     ;; Reinsert valid key-value pairs
                     (local.set $i   (i32.const 0))
                     (local.set $len (array.len (local.get $old-entries)))
@@ -23666,18 +23663,17 @@
                                      (then (if (i32.eqz (ref.eq (local.get $key) (global.get $tombstone)))
                                                (then
                                                 (call ,set!/checked
-                                                      (local.get $new-table)
+                                                      (local.get $table)
                                                       (local.get $key)
                                                       (local.get $val))))))
                                  ;; Next pair
                                  (local.set $i (i32.add (local.get $i) (i32.const 2)))
-                                 (br $loop)))
-                    (local.get $new-table)))
+                                 (br $loop)))))
 
          ,@(for/list ([type             '($HashEqMutable
                                           $HashEqvMutable
                                           $HashEqualMutable
-                                          $HashEqualAlwaysMutable)]                      
+                                          $HashEqualAlwaysMutable)]
                       [resize           '($hasheq-resize
                                           $hasheqv-resize
                                           $hashequal-resize
@@ -23688,7 +23684,6 @@
                                           $maybe-resize-hashalw)])
              `(func ,maybe-resize
                     (param $table (ref ,type))
-                    (result (ref ,type))
 
                     (local $entries  (ref $Array))
                     (local $capacity i32)
@@ -23700,8 +23695,7 @@
                     ;; Resize if count ≥ capacity / 2
                     (if (i32.ge_u (local.get $count)
                                   (i32.shr_u (local.get $capacity) (i32.const 1)))
-                        (then (return (call ,resize (local.get $table)))))
-                    (local.get $table)))
+                        (then (call ,resize (local.get $table))))))
 
 
          ; General hash-has-key?

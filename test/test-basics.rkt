@@ -3606,7 +3606,7 @@
                      (equal? (exn-message eof) "eof"))))))
  
 
- #;(list "12. Macros"
+ (list "12. Macros"
        (list "12.2 Syntax Object Content"
              (list
               (list "datum->syntax/basic"
@@ -3733,7 +3733,7 @@
         ))
 
  
- #;(list "15. Operating System"
+ (list "15. Operating System"
        (list "15. Paths"
              (list
               (list "bytes->path"
