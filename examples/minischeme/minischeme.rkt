@@ -95,7 +95,7 @@
   (js-set! style "textContent"
            (string-append
             ".minischeme-container {\n"
-            "  width: min(90vw, 720px);\n"
+            "  width: min(90vw, 1024px);\n"
             "  padding: 24px;\n"
             "  border-radius: 16px;\n"
             "  background: rgba(15, 18, 26, 0.85);\n"
@@ -179,6 +179,7 @@
 ;       Key                 ; Emacs binding
 (define ESC     "\u001b")
 (define CTRL-A  "\u0001")   ; beginning-of-line
+(define CTRL-D  "\u0004")   ; delete-char
 (define CTRL-E  "\u0005")   ; end-of-line
 (define CTRL-K  "\v")       ; kill-line
 (define CTRL-L  "\f")       ; recenter-top-bottom
@@ -584,16 +585,16 @@
 
 (define (render-buffer->string b)
   (render-buffer-lines! b)
-  (let loop ([i 0]
-             [len (buffer-lines-count b)]
-             [acc ""])
-    (if (= i len)
-        acc
-        (let* ([line (line-rendered (buffer-line-at b i))]
-               [piece (if (= i (sub1 len))
-                          line
-                          (string-append line "\r\n"))])
-          (loop (add1 i) len (string-append acc piece))))))
+  (define len    (buffer-lines-count b))
+  (define pieces (let loop ([i 0]
+                            [acc '()])
+                   (if (= i len)
+                       (reverse acc)
+                       (loop (add1 i)
+                             (cons (line-rendered (buffer-line-at b i)) acc)))))
+  (if (zero? len)
+      ""
+      (string-join pieces "\r\n")))
 
 (define (prompt-offset b row)
   (if (prompt-line? b row) the-prompt-length 0))
@@ -849,7 +850,8 @@
 (define (on-delete-right)
   (define b current-buffer)
   (when b
-    (when (buffer-can-edit-here? b)
+    (when (and (buffer-can-edit-here? b)
+               (not (point-at-end-of-buffer? b)))
       (point-forward! b 1)
       (buffer-delete! b))))
 
@@ -882,13 +884,13 @@
       (define rowcol (string-index-to-row-and-column input index))
       (define target-row (+ (buffer-active-prompt b) (car rowcol)))
       (define target-col (cdr rowcol))
-      (define p (buffer-point b))
-      (define new-row (mark-row p))
-      (define new-col (mark-col p))
       (js-window-set-timeout
        (procedure->external (lambda () (terminal-move-cursor target-row target-col))))
       (js-window-set-timeout/delay
-       (procedure->external (lambda () (terminal-move-cursor new-row new-col)))
+       (procedure->external
+        (lambda ()
+          (define latest-point (buffer-point b))
+          (terminal-move-cursor (mark-row latest-point) (mark-col latest-point))))
        500.0))))
 
 (define (insert-newline-with-indentation! b)
@@ -948,6 +950,7 @@
     [(equal? key ENTER)        (on-enter)]
     [(equal? key TAB)          (on-tab)]
     [(equal? key CTRL-A)       (on-move-to-beginning-of-line)]
+    [(equal? key CTRL-D)       (on-delete-right)]
     [(equal? key CTRL-E)       (on-move-to-end-of-line)]
     [(equal? key HOME)         (on-home)]
     [(equal? key END)          (on-end)]
