@@ -80,7 +80,7 @@
        )
 
  
- #;(list "Exceptions"
+ (list "Exceptions"
        (list "struct constructors"
              (let ([value (exn "message" #f)])
                (and (exn? value)
@@ -306,6 +306,81 @@
                  (current-error-port original)
                  (string=? text "problem"))))
        )
+
+ (list "Reading"
+       (let ([read-from-string
+              (lambda (text)
+                (let ([port (open-input-string text)])
+                  (with-handlers ([(λ _ #t)
+                                   (λ e e)])
+                    (read port))))])
+         (and (equal? (read-from-string "()")           '())
+              (equal? (read-from-string "(1 2)")        '(1 2))
+              (equal? (read-from-string "[1 2 (3)]")    '(1 2 (3)))
+              (equal? (read-from-string "{1 [2] (3)}")  '(1 (2) (3)))
+              (equal? (read-from-string "#(1 (2) [3])") '#(1 (2) (3)))
+              (equal? (read-from-string "#[1 (2) {3}]") '#(1 (2) (3)))
+              (equal? (read-from-string "#{1 (2) [3]}") '#(1 (2) (3)))))
+
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (and (equal? (read-from-string "(a . b)")   (cons 'a 'b))
+              (equal? (read-from-string "(1 2 . 3)") (cons 1 (cons 2 3)))))
+
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (and (equal? (read-from-string "'x")    '(quote x))
+              (equal? (read-from-string "`x")    '(quasiquote x))
+              (equal? (read-from-string ",x")    '(unquote x))
+              (equal? (read-from-string "(,@x)") '((unquote-splicing x)))))
+       
+       (let* ([port (open-input-string "#; (1 2) 3")]
+              [value (read port)]
+              [after (read port)])
+         (and (equal? value 3)
+              (eof-object? after)))
+
+       (let* ([port (open-input-string "#; 1")]
+              [first (read port)]
+              [second (read port)])
+         (and (eof-object? first)
+              (eof-object? second)))
+
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (and (equal? (read-from-string "#:foo")       '#:foo)
+              (equal? (read-from-string "#:|bar baz|") '#:|bar baz|)
+              (equal? (read-from-string "#%foo")       '#%foo)))
+
+       
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (define expected "read: unexpected EOF: expected `)` to close `(`")
+         (with-handlers ([exn:fail:read? (λ (e) (equal? (exn-message e) expected))]
+                         [(λ _ #t)       (λ (e) 'fail)])
+           (read-from-string "(")))
+
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (define expected "read: unexpected EOF: expected `]` to close `[`")
+         (with-handlers ([exn:fail:read? (λ (e) (equal? (exn-message e) expected))]
+                         [(λ _ #t)       (λ (e) 'fail)])
+           (read-from-string "[")))
+
+       (let ([read-from-string (lambda (text)
+                                 (let ([port (open-input-string text)])
+                                   (read port)))])
+         (define expected "read: unexpected EOF: expected `}` to close `{`")
+         (with-handlers ([exn:fail:read? (λ (e) (equal? (exn-message e) expected))]
+                         [(λ _ #t)       (λ (e) 'fail)])
+           (read-from-string "{"))))
+
+ 
  )
       
 
