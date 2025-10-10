@@ -352,16 +352,14 @@
 (define (buffer-get-prompt-input b)
   (let ([start (buffer-active-prompt b)]
         [len   (buffer-lines-count b)])
-    (let loop ([i start]
-               [first? #t]
-               [acc ""])
+    (let loop ([i      start]
+               [pieces '()])
       (if (= i len)
-          acc
-          (let* ([line (line-raw (buffer-line-at b i))]
-                 [piece (if first?
-                             line
-                             (string-append "\n" line))])
-            (loop (add1 i) #f (string-append acc piece)))))))
+          (if (null? pieces)
+              ""
+              (string-join (reverse pieces) "\n"))
+          (loop (add1 i)
+                (cons (line-raw (buffer-line-at b i)) pieces))))))
 
 (define (buffer-new-prompt! b)
   (define row (mark-row (buffer-point b)))
@@ -630,26 +628,34 @@
 (define (is-balanced? s)
   (let loop ([i          0]
              [stack      '()]
-             [in-string? #f])
+             [in-string? #f]
+             [escaped?   #f])
     (cond
-      [(>= i (string-length s)) (and (null? stack) (not in-string?))]
+      [(>= i (string-length s))
+       (and (null? stack) (not in-string?))]
       [else
        (define ch (string-ref s i))
        (cond
          [in-string?
-          (if (char=? ch #\")
-              (loop (add1 i) stack #f)
-              (loop (add1 i) stack #t))]
+          (cond
+            [escaped?
+             (loop (add1 i) stack #t #f)]
+            [(char=? ch #\\)
+             (loop (add1 i) stack #t #t)]
+            [(char=? ch #\")
+             (loop (add1 i) stack #f #f)]
+            [else
+             (loop (add1 i) stack #t #f)])]
          [(char=? ch #\")
-          (loop (add1 i) stack #t)]
+          (loop (add1 i) stack #t #f)]
          [(or (char=? ch #\() (char=? ch #\[) (char=? ch #\{))
-          (loop (add1 i) (cons ch stack) #f)]
+          (loop (add1 i) (cons ch stack) #f #f)]
          [(or (char=? ch #\)) (char=? ch #\]) (char=? ch #\}))
           (if (and (pair? stack) (matches? ch (car stack)))
-              (loop (add1 i) (cdr stack) #f)
+              (loop (add1 i) (cdr stack) #f #f)
               #f)]
          [else
-          (loop (add1 i) stack #f)])])))
+          (loop (add1 i) stack #f #f)])])))
 
 (define (last-opener input)
   (define len (string-length input))
@@ -1467,13 +1473,16 @@
   (unless (and minischeme-global-env minischeme-global-store)
     (reset-minischeme-state!))
 
-  (define exprs
-    (with-handlers (#;[exn:fail:read? (λ _ "fail")]
-                    [(λ _ #t)       (λ _ "grande failo")])
-      (parse-program s)))
+  (define-values (exprs read-error)
+    (with-handlers
+      ([exn:fail:read?
+        (λ (e) (values #f (string-append "=> read error: " (exn-message e))))])
+      (values (parse-program s) #f)))
 
-  (with-handlers ([(λ _ #t) (λ _ "evaluation error")])
-    (if (null? exprs)
-        "=> ; no input"
-        (let ([value (evaluate-program exprs)])
-          (string-append "=> " (value->string value))))))
+  (if read-error
+      read-error
+      (with-handlers ([(λ _ #t) (λ _ "evaluation error")])
+        (if (null? exprs)
+            "=> ; no input"
+            (let ([value (evaluate-program exprs)])
+              (string-append "=> " (value->string value)))))))
