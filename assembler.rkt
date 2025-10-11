@@ -1939,6 +1939,28 @@ var imports = {
             }
         })
     } : new Proxy({}, { get() { throw new Error('xterm.js not available in this environment'); } }),
+    // Fir AddOn for Xtermjs
+    'xterm-fit-addon': true // hasFitAddon 
+                       ? {
+        'create':   (()                => new FitAddon()),
+        'activate': ((addon, terminal) => { addon.activate(terminal); }),
+        'dispose':   (addon            => { addon.dispose(); }),
+        'fit':       (addon            => { addon.fit(); }),
+        'propose-dimensions': (addon => {
+            const dims = addon.proposeDimensions();
+            if (dims === undefined || dims === null) {
+                return to_fasl(undefined);
+            }
+            const colsPair = { tag: 'pair', car: Symbol.for('cols'), cdr: dims.cols };
+            const rowsPair = { tag: 'pair', car: Symbol.for('rows'), cdr: dims.rows };
+            const alist = {
+                tag: 'pair',
+                car: colsPair,
+                cdr: { tag: 'pair', car: rowsPair, cdr: null }
+            };
+            return to_fasl(alist);
+        })
+    } : new Proxy({}, { get() { throw new Error('xterm.js fit addon not available in this environment'); } }),
     // JSXGraph Point
     'jsx-point': hasDOM ? {
         'is-point':                    (v => boolean_to_i32(JXG.isPoint(v))),

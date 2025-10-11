@@ -161,15 +161,17 @@
 
   
   ; Use Fit addon (makes terminal dimensions fit the containing element)
+  (define fit-addon
+    (let* ([win               (js-window-window)]
+           [addon-namespace   (js-ref/extern win "FitAddon")]
+           [addon-constructor (js-ref/extern addon-namespace "FitAddon")])
+      (js-new addon-constructor (vector))))
+
   (set! term (xterm-terminal-new terminal-options))
-  (define fit-addon (xterm-fit-addon-new))
   (xterm-terminal-load-addon term fit-addon)
   (xterm-terminal-open term terminal-host)
   (xterm-fit-addon-fit fit-addon)
   (xterm-terminal-focus term))
-
-
-
 
   
 

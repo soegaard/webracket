@@ -419,3 +419,55 @@
   #:module "xterm-terminal"
   #:name   "writeln"
   (-> (extern value value) ()))
+
+
+;;;
+;;; Fit Addon
+;;;
+
+;; The Fit addon adjusts the terminal dimensions to a containing element.
+;; This file declares foreign bindings for the xterm.js fit addon.
+;; Documentation: https://github.com/xtermjs/xterm.js/tree/master/addons/addon-fit
+
+
+;;; FitAddon construction
+
+;; Create a new FitAddon instance.
+;; (xterm-fit-addon-new) -> Extern
+(define-foreign xterm-fit-addon-new
+  #:module "xterm-fit-addon"
+  #:name   "create"
+  (-> () (extern)))
+
+;;; FitAddon lifecycle
+
+;; Activate the addon for the provided terminal instance.
+;; (xterm-fit-addon-activate addon:Extern terminal:Extern) -> Void
+(define-foreign xterm-fit-addon-activate
+  #:module "xterm-fit-addon"
+  #:name   "activate"
+  (-> (extern extern) ()))
+
+;; Dispose of the addon and release any associated resources.
+;; (xterm-fit-addon-dispose addon:Extern) -> Void
+(define-foreign xterm-fit-addon-dispose
+  #:module "xterm-fit-addon"
+  #:name   "dispose"
+  (-> (extern) ()))
+
+;;; FitAddon behaviour
+
+;; Recalculate and apply the best fit for the terminal within its container.
+;; (xterm-fit-addon-fit addon:Extern) -> Void
+(define-foreign xterm-fit-addon-fit
+  #:module "xterm-fit-addon"
+  #:name   "fit"
+  (-> (extern) ()))
+
+;; Propose the optimal terminal dimensions for the current container size.
+;; Returns (void) when a fit cannot be determined.
+;; (xterm-fit-addon-propose-dimensions addon:Extern) -> Value
+(define-foreign xterm-fit-addon-propose-dimensions
+  #:module "xterm-fit-addon"
+  #:name   "propose-dimensions"
+  (-> (extern) (value)))
