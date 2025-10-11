@@ -4,8 +4,7 @@
 ;;;   Input and Output
 ;;;
 
-;; time racket -l errortrace -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
-;; racket -t ../webracket.rkt -- --ffi ../standard.ffi --ffi ../dom.ffi -b completion.rkt 
+;; racket -l errortrace -t ../webracket.rkt -- --stdlib --ffi standard.ffi --ffi dom.ffi -b completion.rkt
 
 ; This program displays a web-page with a section for each section in
 ; the Data Structure chapter in the reference.
@@ -13,17 +12,6 @@
 ; A drop down triangle reveals a list of functions in the chapter.
 ; Each function is linked to its documentation.
 
-; (define (cadr x) (car (cdr x)))
-
-(define (format fmt . args)
-  (let loop ([s fmt] [args args])
-    (cond
-      [(null? args) s]
-      [else (define a (car args))
-            (when (fixnum? a) (set! a (number->string a)))
-            (when (symbol? a) (set! a (symbol->string a)))
-            (loop (string-replace s "~a" a #f)
-                  (cdr args))])))
 
 (define (sort-symbols syms)
   (define (insert sym lst)
@@ -35,41 +23,6 @@
   (if (null? syms)
       '()
       (insert (car syms) (sort-symbols (cdr syms)))))
-
-(define (add-children elem children)
-  ; (js-log 'add-children)
-  (for ([child (in-list children)])
-    (js-append-child! elem (sxml->dom child))))
-
-(define (set-elem-attributes elem attrs)
-  ; (js-log 'set-elem-attributes)
-  (for ([attr (in-list attrs)])
-    (match attr
-      [(list name value)
-       (js-set-attribute! elem (symbol->string name) value)]
-      [_
-       (js-log "set-elem-attributes: attrs malformed, got:")
-       (js-log attrs)])))
-
-(define (sxml->dom exp)
-  ; (js-log 'sxml->dom)
-  (match exp
-    [(? string? s)
-     (js-create-text-node exp)]
-    [(list (? symbol? tag) (list '@ attrs ...) children ...)     
-     ;; Create a new element with the given tag.
-     (define elem (js-create-element (symbol->string tag)))
-     (set-elem-attributes elem attrs)
-     (add-children elem children)
-     elem]
-    [(list (? symbol? tag) children ...)
-     ;; Create a new element with the given tag.
-     (define elem (js-create-element (symbol->string tag)))
-     (add-children elem children)
-     elem]
-    [_
-     (js-log exp)
-     (js-log "huh!?!")]))
 
 
 (define datatypes-primitives
@@ -1433,7 +1386,6 @@
             add-between
             add1
             alt-reverse
-            always-throw
             andmap
             append
             append*
@@ -1505,6 +1457,8 @@
             call-with-values
             car
             cartesian-product
+            catch
+            catch*
             cdaaar
             cdaadr
             cdaar
@@ -1564,6 +1518,7 @@
             cos
             cosh
             count
+            current-continuation-marks
             current-inspector
             datum->syntax
             degrees->radians
@@ -1594,6 +1549,28 @@
             exact-round
             exact-truncate
             exact?
+            exn
+            exn-continuation-marks
+            exn-message
+            exn:fail
+            exn:fail:contract
+            exn:fail:contract:arity
+            exn:fail:contract:arity?
+            exn:fail:contract:divide-by-zero
+            exn:fail:contract:divide-by-zero?
+            exn:fail:contract:variable
+            exn:fail:contract:variable-id
+            exn:fail:contract:variable?
+            exn:fail:contract?
+            exn:fail:read
+            exn:fail:read-srclocs
+            exn:fail:read:eof
+            exn:fail:read:eof?
+            exn:fail:read:non-char
+            exn:fail:read:non-char?
+            exn:fail:read?
+            exn:fail?
+            exn?
             exp
             expt
             external-number->flonum
@@ -1681,6 +1658,7 @@
             fxxor
             fxzero?
             gcd
+            gensym
             get-output-bytes
             get-output-string
             group-by
@@ -1757,6 +1735,15 @@
             make-empty-hasheq
             make-empty-hasheqv
             make-empty-namespace
+            make-exn
+            make-exn:fail
+            make-exn:fail:contract
+            make-exn:fail:contract:arity
+            make-exn:fail:contract:divide-by-zero
+            make-exn:fail:contract:variable
+            make-exn:fail:read
+            make-exn:fail:read:eof
+            make-exn:fail:read:non-char
             make-hash
             make-hashalw
             make-hasheq
@@ -1846,18 +1833,12 @@
             procedure-arity-mask
             procedure-rename
             procedure?
-            prop:arity-string
-            prop:checked-procedure
-            prop:impersonator-of
-            prop:incomplete-arity
-            prop:method-arity-error
-            prop:object-name
-            prop:procedure
             quotient
             quotient/remainder
             radians->degrees
             raise
-            raise-argument-error
+            raise-read-eof-error
+            raise-read-error
             raise-unbound-variable-reference
             random
             range
@@ -2088,6 +2069,7 @@
             write-string
             xor
             zero?)
+
 
 
           ))
