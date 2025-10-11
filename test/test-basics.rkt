@@ -3497,6 +3497,28 @@
                            (equal? escalated-result '(escalated 9))
                            (equal? ordered-result   'integer))))
 
+        (list "call-with-exception-handler"
+              (let* ([normal-result
+                      (call-with-exception-handler
+                       (λ (_value) 'should-not-run)
+                       (λ () 'ok))]
+                     [handled-result
+                      (with-handlers ([list? (λ (v) v)])
+                        (call-with-exception-handler
+                         (λ (value) (list 'handled value))
+                         (λ () (raise 'boom))))]
+                     [nested-result
+                      (with-handlers ([list? (λ (v) v)])
+                        (call-with-exception-handler
+                         (λ (outer-value) (list 'outer outer-value))
+                         (λ ()
+                           (call-with-exception-handler
+                            (λ (inner-value) (list 'inner inner-value))
+                            (λ () (raise 'boom))))))])
+                (and (equal? normal-result  'ok)
+                     (equal? handled-result '(handled boom))
+                     (equal? nested-result  '(outer (inner boom))))))
+        
         (list "raise-read-error"
               (let* ([basic
                       (with-handlers ([exn:fail:read?
@@ -3603,7 +3625,33 @@
                      (equal? (exn:fail:read:non-char? non-char) #t)
                      (equal? (exn:fail:read:non-char? non-char-make) #t)
                      (equal? (exn-message non-char) "non")
-                     (equal? (exn-message eof) "eof"))))))
+                     (equal? (exn-message eof) "eof"))))
+
+        (list "exn:fail:syntax structures"
+              (let* ([marks          '()]
+                     [expr           (datum->syntax #f 'expr)]
+                     [exprs          (list expr)]
+                     [syntax-exn     (exn:fail:syntax "syntax" marks exprs)]
+                     [syntax-make    (make-exn:fail:syntax "made-syntax" marks exprs)]
+                     [missing        (exn:fail:syntax:missing-module "missing" marks exprs 'module)]
+                     [missing-make   (make-exn:fail:syntax:missing-module "made-missing" marks exprs 'module)]
+                     [unbound        (exn:fail:syntax:unbound "unbound" marks exprs)]
+                     [unbound-make   (make-exn:fail:syntax:unbound "made-unbound" marks exprs)])
+                (and (equal? (exn:fail? syntax-exn) #t)
+                     (equal? (exn:fail:syntax? syntax-exn) #t)
+                     (equal? (exn:fail:syntax? syntax-make) #t)
+                     (equal? (exn:fail:syntax-exprs syntax-exn) exprs)
+                     (equal? (exn:fail:syntax-exprs syntax-make) exprs)
+                     (equal? (exn:fail:syntax? missing) #t)
+                     (equal? (exn:fail:syntax:missing-module? missing) #t)
+                     (equal? (exn:fail:syntax:missing-module? missing-make) #t)
+                     (equal? (exn:fail:syntax:missing-module-path missing) 'module)
+                     (equal? (exn:fail:syntax:missing-module-path missing-make) 'module)
+                     (equal? (exn:fail:syntax:unbound? unbound) #t)
+                     (equal? (exn:fail:syntax:unbound? unbound-make) #t)
+                     (equal? (exn-message syntax-exn) "syntax")
+                     (equal? (exn-message missing) "missing")
+                     (equal? (exn-message unbound) "unbound"))))))
  
 
  (list "12. Macros"

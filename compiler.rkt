@@ -459,6 +459,7 @@
   
   catch   ; single predicate and handler
   catch*  ; multiple predicates and handlers
+  call-with-exception-handler
   
   raise
   raise-unbound-variable-reference
@@ -505,6 +506,20 @@
   exn:fail:read:non-char
   exn:fail:read:non-char?
   make-exn:fail:read:non-char
+
+  exn:fail:syntax
+  exn:fail:syntax?
+  make-exn:fail:syntax
+  exn:fail:syntax-exprs
+
+  exn:fail:syntax:missing-module
+  exn:fail:syntax:missing-module?
+  make-exn:fail:syntax:missing-module
+  exn:fail:syntax:missing-module-path
+
+  exn:fail:syntax:unbound
+  exn:fail:syntax:unbound?
+  make-exn:fail:syntax:unbound
   
   
 
@@ -1391,6 +1406,11 @@
                          kern-exn:fail:read-srclocs
                          kern-exn:fail:read:eof kern-exn:fail:read:eof?
                          kern-exn:fail:read:non-char kern-exn:fail:read:non-char?
+                         kern-exn:fail:syntax kern-exn:fail:syntax?
+                         kern-exn:fail:syntax-exprs
+                         kern-exn:fail:syntax:missing-module kern-exn:fail:syntax:missing-module?
+                         kern-exn:fail:syntax:missing-module-path
+                         kern-exn:fail:syntax:unbound kern-exn:fail:syntax:unbound?
                           )
     [kern-exn                               #'exn]
     [kern-exn?                              #'exn?]
@@ -1398,7 +1418,6 @@
     [kern-exn-continuation-marks            #'exn-continuation-marks]
     [kern-exn:fail                          #'exn:fail]  
     [kern-exn:fail?                         #'exn:fail?] 
-
     [kern-exn:fail:contract                 #'exn:fail:contract]
     [kern-exn:fail:contract?                #'exn:fail:contract?]
     [kern-exn:fail:contract:arity           #'exn:fail:contract:arity]
@@ -1408,7 +1427,6 @@
     [kern-exn:fail:contract:variable        #'exn:fail:contract:variable]
     [kern-exn:fail:contract:variable?       #'exn:fail:contract:variable?]
     [kern-exn:fail:contract:variable-id     #'exn:fail:contract:variable-id]
-
     [kern-exn:fail:read                     #'exn:fail:read]
     [kern-exn:fail:read?                    #'exn:fail:read?]
     [kern-exn:fail:read-srclocs             #'exn:fail:read-srclocs]
@@ -1416,6 +1434,14 @@
     [kern-exn:fail:read:eof?                #'exn:fail:read:eof?]
     [kern-exn:fail:read:non-char            #'exn:fail:read:non-char]
     [kern-exn:fail:read:non-char?           #'exn:fail:read:non-char?]
+    [kern-exn:fail:syntax                   #'exn:fail:syntax]
+    [kern-exn:fail:syntax?                  #'exn:fail:syntax?]
+    [kern-exn:fail:syntax-exprs             #'exn:fail:syntax-exprs]
+    [kern-exn:fail:syntax:missing-module    #'exn:fail:syntax:missing-module]
+    [kern-exn:fail:syntax:missing-module?   #'exn:fail:syntax:missing-module?]
+    [kern-exn:fail:syntax:missing-module-path #'exn:fail:syntax:missing-module-path]
+    [kern-exn:fail:syntax:unbound           #'exn:fail:syntax:unbound]
+    [kern-exn:fail:syntax:unbound?          #'exn:fail:syntax:unbound?]
     
     [_ id]))
 
@@ -4012,6 +4038,7 @@
           (inline-prim/optional sym ae1 1 2)]
         [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
 
+        [(call-with-exception-handler)      (inline-prim/fixed sym ae1 2)]
         [(raise)      (inline-prim/optional/default sym ae1 1 2 (Imm #t))]
         [(raise-read-error)            (inline-prim/optional sym ae1 6 7)]
         [(raise-read-eof-error)        (inline-prim/fixed    sym ae1 6)]

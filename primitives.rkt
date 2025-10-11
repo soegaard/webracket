@@ -55,11 +55,9 @@
          exn?
          exn-message
          exn-continuation-marks
-         make-exn
          
          exn:fail   
          exn:fail?
-         make-exn:fail
          
          exn:fail:contract
          exn:fail:contract?
@@ -78,7 +76,18 @@
          exn:fail:read:eof?
          exn:fail:read:non-char
          exn:fail:read:non-char?
+
+         exn:fail:syntax
+         exn:fail:syntax?
+         exn:fail:syntax-exprs
+         exn:fail:syntax:missing-module
+         exn:fail:syntax:missing-module?
+         exn:fail:syntax:missing-module-path
+         exn:fail:syntax:unbound
+         exn:fail:syntax:unbound?
          
+         make-exn
+         make-exn:fail
          make-exn:fail:contract
          make-exn:fail:contract:arity
          make-exn:fail:contract:divide-by-zero
@@ -86,6 +95,9 @@
          make-exn:fail:read
          make-exn:fail:read:eof
          make-exn:fail:read:non-char
+         make-exn:fail:syntax
+         make-exn:fail:syntax:missing-module
+         make-exn:fail:syntax:unbound
 
           ;; syntax/readerr 
          raise-read-error
@@ -142,7 +154,7 @@
  ; in-list   ; see "core.rkt"
  ; in-string ; see "core.rkt"
  
- ;; Test functions
+ ; exceptions
  catch
  catch*
  
@@ -676,6 +688,7 @@
  call-with-values
 
  ;; 10.2 Exceptions
+ call-with-exception-handler
  raise
  raise-argument-error
  ; raise-unbound-variable-reference

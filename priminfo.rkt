@@ -110,6 +110,9 @@
     exn:fail:read
     exn:fail:read:eof
     exn:fail:read:non-char
+    exn:fail:syntax
+    exn:fail:syntax:missing-module
+    exn:fail:syntax:unbound
     ))
 
 (define (exception-constructor? sym)  
