@@ -29,6 +29,7 @@
 (define css-files       (list xtermjs-css-url))
 
 (define (script-ready . _)
+  (js-log "Scripts ready")
   (set! scripts-loaded (add1 scripts-loaded))
   (when (= scripts-loaded scripts-to-load)
     (start-main)))
@@ -158,15 +159,16 @@
                         ("cursor"     "#6DF7C1")
                         ("selection"  "#26465366")))))))
 
-  ; Use fit-addon (makes terminal dimensions fit the containing element)
-  (define win             (js-window-window))
-  (define fit-constructor (js-ref/extern (js-ref/extern win "FitAddon") "FitlAddon"))
-  (define fit             (js-new fit-constructor (vector)))
-  (xterm-terminal-load-addon term fit)
   
+  ; Use Fit addon (makes terminal dimensions fit the containing element)
   (set! term (xterm-terminal-new terminal-options))
+  (define fit-addon (xterm-fit-addon-new))
+  (xterm-terminal-load-addon term fit-addon)
   (xterm-terminal-open term terminal-host)
+  (xterm-fit-addon-fit fit-addon)
   (xterm-terminal-focus term))
+
+
 
 
   
