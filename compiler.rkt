@@ -3363,7 +3363,7 @@
   ; Convert to set
   (define sets (map (λ (xs) (apply make-id-set xs))
                     (list top mod loc)))
-
+  
   (define (group-provides)
     (define grouped (group-by first (reverse provides)))
     (define (same-module-name? x y) (eq? (car x) (car y)))
@@ -3513,16 +3513,20 @@
     (displayln "-- Provides --"           (current-error-port))
     (displayln provides                   (current-error-port))
     (displayln "-- Top-vars --"           (current-error-port))
-    #;(displayln (sort (map syntax->datum (map variable-id top-vars))
+    (displayln (sort (map syntax->datum (map variable-id top-vars))
                      symbol<?)
                (current-error-port))
-    
 
-    (define (top-variable? v)    (set-in? v top-vars))    ; boxed
-    (define (module-variable? v) (set-in? v module-vars))
-    (define (local-variable? v)  (set-in? v local-vars))
+    (define (literal=? x y) (eq? (syntax->datum (variable-id x))
+                                 (syntax->datum (variable-id y))))
+
+    (define (top-variable? v)    (member v top-vars literal=?))   ; literal comparison
+    (define (module-variable? v) (set-in? v module-vars))         ; free-identifier=?
+    (define (local-variable? v)  (set-in? v local-vars))          ; free-identifier=?
     (define (ffi-variable? v)    (memq (if (symbol? v) v (syntax-e (variable-id v)))
                                        ffi-primitives))
+    (displayln (list 'top? (top-variable? (variable #'sxml->dom))) (current-error-port))
+    
     (define (global-variable? v)
       ; a global (wasm) varible is unboxed
       (non-literal-constant? (variable-id v)))
@@ -3548,14 +3552,14 @@
          (error 'classify "got: ~a" v)]))
     ;; 2. References to variable according to their type
     (define (Reference v)
-      #;(displayln (list 'ref v))
+      #;(displayln (list 'ref (list v (classify v))) (current-error-port))
       #;(when (symbol? v)
           (error 'Reference "got: ~a" v))
       ; reference to non-free variable
       ;   global refers to a Web Assembly global variable
       (case (classify v)
-        [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(top)        `(global.get ,(TopVar v))]   ; unboxed
+        [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
         [(ffi)        'TODO]

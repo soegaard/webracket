@@ -65,6 +65,7 @@
         (error 'drive-compilation
                (~a "ffi file not found: " ffi-filename)))
       resolved))
+
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
   (define ffi-funcs     '()) ; list of wat
@@ -96,21 +97,18 @@
       (read-top-level-from-file filename)))
 
   ; 3. Prepend standard library (if enabled)
-
+  ;     "stdlib-for-browser.rkt" includes "stdlib.rkt" and adds `sxml->dom`
   (define stx-with-stdlib
     (cond
-      [stdlib? #`(begin
-                   (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
-                   #,stx)] ; stx is a begin form      
-      #;[stdlib? (syntax-case stx (begin)
-                 [(begin forms ...)
-                  #`(begin
-                      (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
-                      forms ...)]
-                 [other
-                  #`(begin
-                      (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
-                      other)])]
+      [(and stdlib? browser?)
+       (displayln "Including `stdlib/stdlib-for-browser.rkt`" (current-error-port))
+       #`(begin
+           (include/reader "stdlib/stdlib-for-browser.rkt" read-syntax/skip-first-line)
+           #,stx)]
+      [stdlib?
+       #`(begin
+           (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
+           #,stx)] ; stx is a begin form      
       [else stx]))
 
   ; 4. Compile the syntax object.
