@@ -1357,6 +1357,157 @@
   )
 
 
+(define control-flow-primitives
+  '((exceptions
+      raise
+      error
+      raise-user-error
+      raise-argument-error
+      raise-argument-error*
+      raise-result-error
+      raise-result-error*
+      raise-arguments-error
+      raise-arguments-error*
+      raise-range-error
+      raise-range-error*
+      raise-type-error
+      raise-mismatch-error
+      raise-arity-error
+      raise-arity-error*
+      raise-arity-mask-error
+      raise-arity-mask-error*
+      raise-result-arity-error
+      raise-result-arity-error*
+      raise-syntax-error
+      unquoted-printing-string?
+      unquoted-printing-string
+      unquoted-printing-string-value
+      call-with-exception-handler
+      uncaught-exception-handler
+      ; with-handlers     syntax not a primitive
+      ; with-handlers*    syntax not a primitive
+      error-escape-handler
+      error-display-handler
+      error-print-width
+      error-print-context-length
+      error-print-source-location
+      error-value->string-handler
+      error-syntax->string-handler
+      error-syntax->name-handler
+      error-module-path->string-handler
+      exn
+      make-exn
+      exn?
+      exn-message
+      exn-continuation-marks
+      exn:fail
+      make-exn:fail
+      exn:fail?
+      exn:fail:contract
+      make-exn:fail:contract
+      exn:fail:contract?
+      exn:fail:contract:arity
+      make-exn:fail:contract:arity
+      exn:fail:contract:arity?
+      exn:fail:contract:divide-by-zero
+      make-exn:fail:contract:divide-by-zero
+      exn:fail:contract:divide-by-zero?
+      exn:fail:contract:non-fixnum-result
+      make-exn:fail:contract:non-fixnum-result
+      exn:fail:contract:non-fixnum-result?
+      exn:fail:contract:continuation
+      make-exn:fail:contract:continuation
+      exn:fail:contract:continuation?
+      exn:fail:contract:variable
+      make-exn:fail:contract:variable
+      exn:fail:contract:variable?
+      exn:fail:contract:variable-id
+      exn:fail:syntax
+      make-exn:fail:syntax
+      exn:fail:syntax?
+      exn:fail:syntax-exprs
+      exn:fail:syntax:unbound
+      make-exn:fail:syntax:unbound
+      exn:fail:syntax:unbound?
+      exn:fail:syntax:missing-module
+      make-exn:fail:syntax:missing-module
+      exn:fail:syntax:missing-module?
+      exn:fail:syntax:missing-module-path
+      exn:fail:read
+      make-exn:fail:read
+      exn:fail:read?
+      exn:fail:read-srclocs
+      exn:fail:read:eof
+      make-exn:fail:read:eof
+      exn:fail:read:eof?
+      exn:fail:read:non-char
+      make-exn:fail:read:non-char
+      exn:fail:read:non-char?
+      exn:fail:filesystem
+      make-exn:fail:filesystem
+      exn:fail:filesystem?
+      exn:fail:filesystem:exists
+      make-exn:fail:filesystem:exists
+      exn:fail:filesystem:exists?
+      exn:fail:filesystem:version
+      make-exn:fail:filesystem:version
+      exn:fail:filesystem:version?
+      exn:fail:filesystem:errno
+      make-exn:fail:filesystem:errno
+      exn:fail:filesystem:errno?
+      exn:fail:filesystem:errno-errno
+      exn:fail:filesystem:missing-module
+      make-exn:fail:filesystem:missing-module
+      exn:fail:filesystem:missing-module?
+      exn:fail:filesystem:missing-module-path
+      exn:fail:network
+      make-exn:fail:network
+      exn:fail:network?
+      exn:fail:network:errno
+      make-exn:fail:network:errno
+      exn:fail:network:errno?
+      exn:fail:network:errno-errno
+      exn:fail:out-of-memory
+      make-exn:fail:out-of-memory
+      exn:fail:out-of-memory?
+      exn:fail:unsupported
+      make-exn:fail:unsupported
+      exn:fail:unsupported?
+      exn:fail:user
+      make-exn:fail:user
+      exn:fail:user?
+      exn:break
+      make-exn:break
+      exn:break?
+      exn:break-continuation
+      exn:break:hang-up
+      make-exn:break:hang-up
+      exn:break:hang-up?
+      exn:break:terminate
+      make-exn:break:terminate
+      exn:break:terminate?
+      prop:exn:srclocs
+      exn:srclocs?
+      exn:srclocs-accessor
+      srcloc
+      make-srcloc
+      srcloc?
+      srcloc-source
+      srcloc-line
+      srcloc-column
+      srcloc-position
+      srcloc-span
+      srcloc->string
+      prop:exn:missing-module
+      exn:missing-module?
+      exn:missing-module-accessor
+      exn->string
+      error-message->adjusted-string
+      error-contract->adjusted-string
+      current-error-message-adjuster
+      error-message-adjuster-key)))
+
+
 #;(define (symbol->title s)
     ; todo : implement string-titlecase
     (string-titlecase (symbol->string s)))
@@ -1366,6 +1517,47 @@
 
 (define implemented-constants
   '(null undefined empty true false pi))
+
+(define standard-library-identifiers
+  '(current-error-port
+    current-input-port
+    current-output-port
+    current-write-relative-directory
+    default-error-value->string-handler
+    display
+    displayln
+    eprintf
+    error
+    error-print-width
+    error-value->string-handler
+    format
+    fprintf
+    fprintf*
+    print
+    print-as-expression
+    print-boolean-long-form
+    print-box
+    print-graph
+    print-hash-table
+    print-mpair-curly-braces
+    print-pair-curly-braces
+    print-reader-abbreviations
+    print-struct
+    print-syntax-width
+    print-unreadable
+    print-value-columns
+    print-vector-length
+    printf
+    println
+    raise-argument-error
+    read
+    read-syntax
+    reset-current-error-port!
+    reset-current-input-port!
+    reset-current-output-port!
+    write
+    writeln)
+  )
 
 
 (define implemented-primitives
@@ -1569,6 +1761,14 @@
             exn:fail:read:non-char
             exn:fail:read:non-char?
             exn:fail:read?
+            exn:fail:syntax
+            exn:fail:syntax-exprs
+            exn:fail:syntax:missing-module
+            exn:fail:syntax:missing-module-path
+            exn:fail:syntax:missing-module?
+            exn:fail:syntax:unbound
+            exn:fail:syntax:unbound?
+            exn:fail:syntax?
             exn:fail?
             exn?
             exp
@@ -1744,6 +1944,9 @@
             make-exn:fail:read
             make-exn:fail:read:eof
             make-exn:fail:read:non-char
+            make-exn:fail:syntax
+            make-exn:fail:syntax:missing-module
+            make-exn:fail:syntax:unbound
             make-hash
             make-hashalw
             make-hasheq
@@ -2071,22 +2274,31 @@
             zero?)
 
 
-
           ))
 
 (define chapter-datasets
   (list (list "Datatype Functions and Constants"        datatypes-primitives)
         (list "Input and Output"                               io-primitives)
         (list "Operating System"                 operating-system-primitives)
-        (list "Macros"                                     macros-primitives)))
+        (list "Macros"                                     macros-primitives)
+        (list "Control Flow"                         control-flow-primitives)))
 
 (define total-primitives-cnt
   (for/sum ([chapter (in-list chapter-datasets)])
     (for/sum ([entry (in-list (cadr chapter))])
       (length (cdr entry)))))
 
+(define total-standard-library-identifiers
+  (for/sum ([chapter (in-list chapter-datasets)])
+    (for/sum ([entry (in-list (cadr chapter))])
+      (for/sum ([id (in-list entry)]
+                #:when (member id standard-library-identifiers))
+        1))))
+
 (define missing-primitives
-  (- total-primitives-cnt (length implemented-primitives)))
+  (- total-primitives-cnt
+     (length implemented-primitives)
+     total-standard-library-identifiers))
 
 (define prepared-chapters
   (for/list ([chapter (in-list chapter-datasets)])
@@ -2139,9 +2351,12 @@
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
-(define (primitive-li sym)  
+(define (primitive-li sym)
+  (define stdlib?  (memq sym standard-library-identifiers))
   (define checked? (memq sym implemented-primitives))
-  (define box      (if checked? "☑" "☐"))
+  (define box      (cond [stdlib?  "☒"]
+                         [checked? "☑"]
+                         [else     "☐"]))
   (define str      (symbol->string sym))
   `(li
      (label
@@ -2230,10 +2445,15 @@
 (define page
   `(div (h1 (@ (style "font-size: 3.5rem; font-family: sans-serif;"))
             "WebRacket Implementation Progress")
-        (span "Implemented: "
+        (div "Primitives: "
               ,(number->string (length implemented-primitives)))
+        (div "Standard library: "
+              ,(number->string total-standard-library-identifiers))
         (div "Missing: "
              ,(number->string missing-primitives))
+        (div "Standard library (not in Racket): "
+             ,(number->string (- (length standard-library-identifiers)
+                                 total-standard-library-identifiers)))
         (button (@ (id "toggle-all")
                     (data-open "false")
                     (onclick ,toggle-all-script)
