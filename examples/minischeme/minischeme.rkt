@@ -18,7 +18,11 @@
 (define xtermjs-css-url
   "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css")
 
-(define scripts         (list xtermjs-url))
+(define xtermjs-addon-fit-url
+  ; fits the terminal dimension to a containing element
+  "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js")
+
+(define scripts         (list xtermjs-url xtermjs-addon-fit-url))
 (define scripts-to-load (length scripts))
 (define scripts-loaded  0)
 
@@ -154,9 +158,17 @@
                         ("cursor"     "#6DF7C1")
                         ("selection"  "#26465366")))))))
 
+  ; Use fit-addon (makes terminal dimensions fit the containing element)
+  (define win             (js-window-window))
+  (define fit-constructor (js-ref/extern (js-ref/extern win "FitAddon") "FitlAddon"))
+  (define fit             (js-new fit-constructor (vector)))
+  (xterm-terminal-load-addon term fit)
+  
   (set! term (xterm-terminal-new terminal-options))
   (xterm-terminal-open term terminal-host)
   (xterm-terminal-focus term))
+
+
   
 
 ;;;
@@ -181,6 +193,7 @@
 (define CTRL-A  "\u0001")   ; beginning-of-line
 (define CTRL-D  "\u0004")   ; delete-char
 (define CTRL-E  "\u0005")   ; end-of-line
+(define CTRL-J  "\n")       ; newline
 (define CTRL-K  "\v")       ; kill-line
 (define CTRL-L  "\f")       ; recenter-top-bottom
 (define DELETE  "\u007f")   ; backward-delete-char
@@ -829,6 +842,11 @@
   (define b current-buffer)
   (when b (point-home! b)))
 
+(define (on-newline)
+  (define b current-buffer)
+  (when (and b (buffer-can-edit-here? b))
+    (insert-newline-with-indentation! b)))
+
 (define (on-end)
   (define b current-buffer)
   (when b (point-end! b)))
@@ -958,6 +976,7 @@
     [(equal? key CTRL-A)       (on-move-to-beginning-of-line)]
     [(equal? key CTRL-D)       (on-delete-right)]
     [(equal? key CTRL-E)       (on-move-to-end-of-line)]
+    [(equal? key CTRL-J)       (on-newline)]
     [(equal? key HOME)         (on-home)]
     [(equal? key END)          (on-end)]
     [(equal? key DELETE)       (on-delete)]
