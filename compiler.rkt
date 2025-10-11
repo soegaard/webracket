@@ -4000,7 +4000,7 @@
        (case sym
          ;;; Special Inlining
          [(void)
-          (define (AE ae)   (AExpr3 ae <effect>))
+          (define (AE ae)   `(drop ,(AExpr3 ae <effect>)))
           (define (AE* aes) (map AE aes))
           `(block (result (ref eq))
                   ,@(AE* ae1)
