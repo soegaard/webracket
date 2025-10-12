@@ -597,7 +597,7 @@
       (render-line! (buffer-line-at b i) (prompt-line? b i))
       (loop (add1 i) len))))
 
-(define (render-buffer->string b)
+#;(define (render-buffer->string b)
   (render-buffer-lines! b)
   (define len    (buffer-lines-count b))
   (define pieces (let loop ([i 0]
@@ -631,6 +631,8 @@
         total
         (loop (add1 i) (+ total (line-visible-rows b i cols))))))
 
+(define (terminal-goto row col)
+  (string-append ESC "[" (number->string row) ";" (number->string col) "H"))
 
 (define (terminal-move-cursor row col)
   (when (and term current-buffer)
@@ -642,15 +644,42 @@
     (define wrapped-rows (quotient offset cols))
     (define display-row  (+ base-row wrapped-rows))
     (define display-col  (remainder offset cols))
-    (define row-str      (number->string (add1 display-row)))
-    (define col-str      (number->string (add1 display-col)))
-    (xterm-terminal-write term (string-append ESC "[" row-str ";" col-str "H") (void))))
+    (xterm-terminal-write term 
+                          (terminal-goto (add1 display-row) (add1 display-col))
+                          (void))))
 
 (define (render-buffer-in-terminal b)
   (when term
-    (define rendered (render-buffer->string b))
-    (xterm-terminal-write term (string-append (CSI "2J") (CSI "H")) (void))
-    (xterm-terminal-write term rendered (void))
+    (render-buffer-lines! b)
+    (define len   (buffer-lines-count b))
+    (define cols0 (inexact->exact (xterm-terminal-cols term)))
+    (define cols  (if (> cols0 0) cols0 1))
+    (define total-rows
+      (let loop ([i 0]
+                 [row-offset 0])
+        (if (= i len)
+            row-offset
+            (let* ([line      (buffer-line-at b i)]
+                   [rendered  (line-rendered line)]
+                   [line-rows (line-visible-rows b i cols)])
+              (let clear-loop ([offset 0])
+                (when (< offset line-rows)
+                  (define target-row (+ row-offset offset 1))
+                  (xterm-terminal-write term
+                                        (string-append (terminal-goto target-row 1)
+                                                       (CSI "2K"))
+                                        (void))
+                  (clear-loop (add1 offset))))
+              (when rendered
+                (xterm-terminal-write term
+                                      (string-append (terminal-goto (add1 row-offset) 1)
+                                                     rendered)
+                                      (void)))
+              (loop (add1 i) (+ row-offset line-rows))))))
+    (xterm-terminal-write term
+                          (string-append (terminal-goto (add1 total-rows) 1)
+                                         (CSI "J"))
+                          (void))
     (define p (buffer-point b))
     (terminal-move-cursor (mark-row p) (mark-col p))))
 
