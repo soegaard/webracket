@@ -765,19 +765,36 @@
           (loop (add1 i) stack #f #f)])])))
 
 (define (last-opener input)
-  (define len (string-length input))
+  (define len   (string-length input))
   (define stack '())
-  (let loop ([i 0])
+  (let loop ([i          0]
+             [in-string? #f]
+             [escaped?   #f])
     (when (< i len)
       (define ch (string-ref input i))
       (cond
+        [in-string?
+         (cond
+           [escaped?
+            (loop (add1 i) #t #f)]
+           [(char=? ch #\\)
+            (loop (add1 i) #t #t)]
+           [(char=? ch #\")
+            (loop (add1 i) #f #f)]
+           [else
+            (loop (add1 i) #t #f)])]
+        [(char=? ch #\")
+         (loop (add1 i) #t #f)]
         [(or (char=? ch #\() (char=? ch #\[) (char=? ch #\{))
-         (set! stack (cons (cons ch i) stack))]
+         (set! stack (cons (cons ch i) stack))
+         (loop (add1 i) #f #f)]
         [(or (char=? ch #\)) (char=? ch #\]) (char=? ch #\}))
          (when (and (pair? stack)
                     (matches? ch (caar stack)))
-           (set! stack (cdr stack)))])
-      (loop (add1 i))))
+           (set! stack (cdr stack)))
+         (loop (add1 i) #f #f)]
+        [else
+         (loop (add1 i) #f #f)])))
   (if (null? stack)
       #f
       (cdar stack)))
