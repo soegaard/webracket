@@ -200,6 +200,8 @@
 (define CTRL-J  "\n")       ; newline
 (define CTRL-K  "\v")       ; kill-line
 (define CTRL-L  "\f")       ; recenter-top-bottom
+(define CTRL-N  "\u000e")   ; next-line
+(define CTRL-P  "\u0010")   ; previous-line
 (define DELETE  "\u007f")   ; backward-delete-char
 (define ENTER   "\r")       ; newline
 (define TAB     "\t")       ; indent-for-tab-command
@@ -567,6 +569,32 @@
   (set-buffer-lines! b (vector-insert (buffer-lines b) (add1 r) (make-line after)))
   (mark-move-to! p (add1 r) 0)
   (shift-prompts! b (add1 r) 1))
+
+(define (buffer-replace-editor-with-string! b s)
+  (define start-row (buffer-active-prompt b))
+  (define current-lines (buffer-lines b))
+  (define before-count start-row)
+  (define editor-strings
+    (let ([pieces (string->lines s)])
+      (if (null? pieces)
+          '("")
+          pieces)))
+  (define editor-lines (map make-line editor-strings))
+  (define total (+ before-count (length editor-lines)))
+  (define new-vector (make-vector total))
+  (let loop ([i 0])
+    (when (< i before-count)
+      (vector-set! new-vector i (vector-ref current-lines i))
+      (loop (add1 i))))
+  (let loop ([i before-count]
+             [rest editor-lines])
+    (when (pair? rest)
+      (vector-set! new-vector i (car rest))
+      (loop (add1 i) (cdr rest))))
+  (set-buffer-lines! b new-vector)
+  (set-buffer-active-prompt! b start-row)
+  (mark-move-to! (buffer-start b) start-row 0)
+  (buffer-set-point! b start-row 0))
 
 ;;;
 ;;; Rendering
@@ -964,6 +992,61 @@
   (define base (if idx idx 0))
   (+ base (if (prompt-line? b prev-row) the-prompt-length 0)))
 
+;;;
+;;; History
+;;;
+
+(define input-history       '())
+(define input-history-count 0)
+(define history-position    0)
+(define history-draft       "")
+
+(define (history-reset!)
+  (set! input-history       '())
+  (set! input-history-count 0)
+  (set! history-position    0)
+  (set! history-draft       ""))
+
+(define (history-record-entry! entry)
+  (when entry
+    (set! input-history       (cons entry input-history))
+    (set! input-history-count (add1 input-history-count))))
+
+(define (history-update-draft! b)
+  (when b
+    (set! history-draft (buffer-get-prompt-input b))))
+
+(define (history-update-after-edit! b)
+  (when b
+    (set! history-position 0)
+    (history-update-draft! b)))
+
+(define (history-prepare-for-new-prompt! b)
+  (set! history-position 0)
+  (history-update-draft! b))
+
+(define (history-previous! b)
+  (when (and b (> input-history-count 0))
+    (when (= history-position 0)
+      (history-update-draft! b))
+    (when (< history-position input-history-count)
+      (set! history-position (add1 history-position))
+      (define entry (list-ref input-history (sub1 history-position)))
+      (buffer-replace-editor-with-string! b entry)
+      (point-end! b))))
+
+(define (history-next! b)
+  (when (and b (> history-position 0))
+    (set! history-position (sub1 history-position))
+    (if (= history-position 0)
+        (begin
+          (buffer-replace-editor-with-string! b history-draft)
+          (point-end! b)
+          (history-update-after-edit! b))
+        (let ([entry (list-ref input-history (sub1 history-position))])
+          (buffer-replace-editor-with-string! b entry)
+          (point-end! b)))))
+
 
 ;;;
 ;;; Key and data handling
@@ -977,10 +1060,33 @@
       (buffer-insert! b " ")
       (loop (add1 i)))))
 
+(define (editor-at-start? b)
+  (and (= (mark-row (buffer-point b)) (mark-row (buffer-start b)))
+       (= (mark-col (buffer-point b)) (mark-col (buffer-start b)))))
+
+(define (editor-at-end? b)
+  (point-at-end-of-buffer? b))
+
+(define (ee-previous-line)
+  (define b current-buffer)
+  (when b
+    (if (editor-at-start? b)
+        (history-previous! b)
+        (point-up! b 1))))
+
+(define (ee-next-line)
+  (define b current-buffer)
+  (when b
+    (if (editor-at-end? b)
+        (history-next! b)
+        (point-down! b 1))))
+
+
 (define (on-tab)
   (define b current-buffer)
   (when (and b (buffer-can-edit-here? b))
-    (indent-with-spaces! b 2)))
+    (indent-with-spaces! b 2)
+    (history-update-after-edit! b)))
 
 (define (on-home)
   (define b current-buffer)
@@ -996,12 +1102,14 @@
   (when b (point-end! b)))
 
 (define (on-cursor-up)
-  (define b current-buffer)
-  (when b (point-up! b 1)))
+  #;(define b current-buffer)
+  #;(when b (point-up! b 1))
+  (ee-previous-line))
 
 (define (on-cursor-down)
-  (define b current-buffer)
-  (when b (point-down! b 1)))
+  #;(define b current-buffer)
+  #;(when b (point-down! b 1))
+  (ee-next-line))
 
 (define (on-cursor-right)
   (define b current-buffer)
@@ -1013,7 +1121,9 @@
 
 (define (on-delete)
   (define b current-buffer)
-  (when b (buffer-delete! b)))
+  (when b
+    (buffer-delete! b)
+    (history-update-after-edit! b)))
 
 (define (on-delete-right)
   (define b current-buffer)
@@ -1021,12 +1131,14 @@
     (when (and (buffer-can-edit-here? b)
                (not (point-at-end-of-buffer? b)))
       (point-forward! b 1)
-      (buffer-delete! b))))
+      (buffer-delete! b)
+      (history-update-after-edit! b))))
 
 (define (on-printable-key key)
   (define b current-buffer)
   (when (and b (buffer-can-edit-here? b))
-    (buffer-insert! b key)))
+    (buffer-insert! b key)
+    (history-update-after-edit! b)))
 
 (define (on-move-to-beginning-of-line)
   (define b current-buffer)
@@ -1048,6 +1160,7 @@
     (define input (buffer-get-prompt-input b))
     (define index (last-opener input))
     (buffer-insert! b key)
+    (history-update-after-edit! b)
     (when index
       (define rowcol (string-index-to-row-and-column input index))
       (define target-row (+ (buffer-active-prompt b) (car rowcol)))
@@ -1065,7 +1178,8 @@
   (buffer-split-line! b)
   (define level (indentation-level b))
   (when (> level 0)
-    (indent-with-spaces! b level)))
+    (indent-with-spaces! b level))
+  (history-update-after-edit! b))
 
 (define (strip-trailing-return s)
   (define len (string-length s))
@@ -1121,16 +1235,17 @@
                             (string-append "error: " (exn-message e)))])
                         (process-input input)))
 
-       ; currently no support for `with-handlers`
        (define result (process-input input))
        (set! latest-error #f)
+       (history-record-entry! input)
 
        ; Insert result and make new prompt
        (point-end! b)
        (buffer-split-line! b)
        (buffer-insert-raw-lines! b (string->lines result))
        (point-end! b)
-       (buffer-new-prompt! b)]
+       (buffer-new-prompt! b)
+       (history-prepare-for-new-prompt! b)]
       [else
        (insert-newline-with-indentation! b)])))
 
@@ -1154,6 +1269,8 @@
     [(equal? key CTRL-D)       (on-delete-right)]
     [(equal? key CTRL-E)       (on-move-to-end-of-line)]
     [(equal? key CTRL-J)       (on-newline)]
+    [(equal? key CTRL-P)       (on-cursor-up)]
+    [(equal? key CTRL-N)       (on-cursor-down)]
     [(equal? key HOME)         (on-home)]
     [(equal? key END)          (on-end)]
     [(equal? key DELETE)       (on-delete)]
@@ -1185,6 +1302,7 @@
 ;;;
 
 (define (start-minischeme . _)
+  (history-reset!)
   (reset-minischeme-state!)
   
   (define intro-lines
@@ -1201,6 +1319,7 @@
   (mark-move-to! (buffer-start b) (length intro-lines) 0)
   (set! current-buffer b)
   (buffer-new-prompt! b)
+  (history-prepare-for-new-prompt! b)
   (register-terminal-handlers!)
   (enable-mouse-events!)
   (render-current-buffer)
