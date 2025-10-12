@@ -600,6 +600,39 @@
   (mark-move-to! (buffer-start b) start-row 0)
   (buffer-set-point! b start-row 0))
 
+(define (buffer-total-visible-rows b cols)
+  (let loop ([i     0]
+             [len   (buffer-lines-count b)]
+             [total 0])
+    (if (= i len)
+        total
+        (loop (add1 i)
+              len
+              (+ total (line-visible-rows b i cols))))))
+
+(define (buffer-display-position b row col cols)
+  (define offset       (+ (prompt-offset b row) col))
+  (define base-row     (visible-rows-before b row cols))
+  (define wrapped-rows (quotient offset cols))
+  (define display-row  (+ base-row wrapped-rows))
+  (define display-col  (remainder offset cols))
+  (values display-row display-col))
+
+(define (buffer-adjust-first-screen-row! b display-row rows total-rows)
+  (define max-first     (max 0 (- total-rows rows)))
+  (define current-first (min (buffer-first-screen-row b) max-first))
+  (define ensure-visible
+    (cond
+      [(< display-row current-first)
+       display-row]
+      [(>= display-row (+ current-first rows))
+       (max 0 (- (+ display-row 1) rows))]
+      [else
+       current-first]))
+  (define new-first (min max-first ensure-visible))
+  (set-buffer-first-screen-row! b new-first)
+  new-first)
+
 ;;;
 ;;; Rendering
 ;;;
@@ -662,6 +695,8 @@
         total
         (loop (add1 i) (+ total (line-visible-rows b i cols))))))
 
+
+
 (define (terminal-goto row col)
   (string-append ESC "[" (number->string row) ";" (number->string col) "H"))
 
@@ -670,13 +705,17 @@
     (define b            current-buffer)
     (define cols0        (inexact->exact (xterm-terminal-cols term)))
     (define cols         (if (> cols0 0) cols0 1))
-    (define offset       (+ (prompt-offset b row) col))
-    (define base-row     (visible-rows-before b row cols))
-    (define wrapped-rows (quotient offset cols))
-    (define display-row  (+ base-row wrapped-rows))
-    (define display-col  (remainder offset cols))
-    (xterm-terminal-write term 
-                          (terminal-goto (add1 display-row) (add1 display-col))
+    (define rows0        (inexact->exact (xterm-terminal-rows term)))
+    (define rows         (if (> rows0 0) rows0 1))
+    (define total-rows   (buffer-total-visible-rows b cols))
+    (define-values (display-row display-col)
+      (buffer-display-position b row col cols))
+    (define first-row (buffer-adjust-first-screen-row!
+                       b display-row rows total-rows))
+    (xterm-terminal-scroll-to-line term first-row)
+    (define viewport-row (- display-row first-row))
+    (xterm-terminal-write term
+                          (terminal-goto (add1 viewport-row) (add1 display-col))
                           (void))))
 
 (define (render-buffer-in-terminal b)
