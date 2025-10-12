@@ -287,6 +287,7 @@
 (define ansi-literal   ansi-bright-blue)
 (define ansi-error     ansi-bright-red)
 (define ansi-paren     ansi-bright-yellow)
+(define ansi-binding   ansi-bright-green)
 
 (define (vector-insert vec idx value)
   (let* ([len (vector-length vec)]
@@ -824,10 +825,23 @@
 (define (primitive-token? token)
   (and (member token all-primitives-names) #t))
 
+(define (identifier-token? token)
+  ; approximate (okay - we are just using it as a filter)
+  (and (> (string-length token) 0)
+       (let ([first (string-ref token 0)])
+         (not (char=? first #\#)))))
+
+(define (bound-token? token)
+  (and minischeme-global-env
+       (identifier-token? token)
+       (let ([sym (string->symbol token)])
+         (env-bound? minischeme-global-env sym))))
+
 (define (highlight-token token)
   (cond
     [(keyword-token? token)   (string-append ansi-keyword   token ansi-reset)]
     [(primitive-token? token) (string-append ansi-primitive token ansi-reset)]
+    [(bound-token? token)     (string-append ansi-binding   token ansi-reset)]
     [else token]))
 
 (define (pieces->string pieces)
@@ -1302,7 +1316,6 @@
   
   (define intro-lines
     '("Welcome to MiniScheme."
-      "Type a line and press Enter to see it echoed back."
       ""))
 
   (define b     (make-buffer "repl"))
@@ -1390,6 +1403,12 @@
 
 (define (env-bound-current? e name)
   (hash-has-key? (env-table e) name))
+
+(define (env-bound? e name)
+  (cond
+    [(not e)                     #f]
+    [(env-bound-current? e name) #t]
+    [else                        (env-bound? (env-parent e) name)]))
 
 (define (env-lookup e name)
   (cond
