@@ -583,8 +583,7 @@
             (let ([ch (string-ref raw i)])
               (loop (add1 i)
                     (cons (if (printable-char? ch) ch #\?) acc))))))
-    #;(define highlighted (highlight sanitized))
-    (define highlighted sanitized)
+    (define highlighted (highlight sanitized))
     (define prefix (if prompt-line?
                        (string-append ansi-white the-prompt ansi-reset)
                        ""))
@@ -650,6 +649,9 @@
 
 (define (render-buffer-in-terminal b)
   (when term
+    ; hide cursor
+    (xterm-terminal-write term (CSI "?25l") (void))
+    ; start renering
     (render-buffer-lines! b)
     (define len   (buffer-lines-count b))
     (define cols0 (inexact->exact (xterm-terminal-cols term)))
@@ -681,7 +683,9 @@
                                          (CSI "J"))
                           (void))
     (define p (buffer-point b))
-    (terminal-move-cursor (mark-row p) (mark-col p))))
+    (terminal-move-cursor (mark-row p) (mark-col p))
+    ; show cursor again
+    (xterm-terminal-write term (CSI "?25h") (void))))
 
 (define (render-current-buffer)
   (when current-buffer
