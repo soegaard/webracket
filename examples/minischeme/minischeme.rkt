@@ -809,12 +809,7 @@
   '("and" "begin" "cond" "define" "if" "lambda" "let"
     "or" "quote" "set!" "unless" "when"))
 
-(define all-primitives-names
-  '("+" "-" "*" "/"
-    "=" "<" ">" "<=" ">="
-    "null?" "cons" "car" "cdr"
-    "vector" "vector-ref" "vector-set!"
-    "boolean?" "number?" "symbol?" "string?" "void?" "procedure?"))
+(define all-primitives-names '())
 
 (define delimiter-chars
   '(#\( #\) #\[ #\] #\{ #\} #\" #\' #\` #\, #\; #\.))
@@ -1376,6 +1371,8 @@
 (struct prim    (name proc))
 (struct store   (table next) #:mutable)
 
+(struct exn:minischeme:undefined exn:fail (identifier) #:transparent)
+
 ;;;
 (struct k-apply   (args env))
 (struct k-args    (proc rest env values))
@@ -1402,7 +1399,10 @@
      (env-lookup (env-parent e) name)]
     [else
      (define who (if (symbol? name) name 'minischeme))
-     (error who "undefined;\n cannot reference an identifier before its definition")]))
+     (raise (exn:minischeme:undefined
+             (format "~a: undefined;\n cannot reference an identifier before its definition" who)
+             (current-continuation-marks)
+             who))]))
 
 (define (env-define! e name addr)
   (hash-set! (env-table e) name addr))
@@ -1465,9 +1465,14 @@
 (define (create-initial-state)
   (define base-env   (make-env #f))
   (define base-store (make-store))
+
+  (define all '())
+  
   (define (install name proc)
     (define addr (store-alloc! base-store (prim name proc)))
-    (env-define! base-env name addr))
+    (env-define! base-env name addr)
+    (set! all (cons name all)))
+
   (define (numeric name f)
     (install name (λ (args)
                     (check-numbers name args)
@@ -1548,6 +1553,13 @@
   (install 'equal?   (λ (args)
                        (check-arg-count 'equal? args 2)
                        (equal? (car args) (cadr args))))
+
+  ; The syntax highligther needs to know the names
+  ; of the primitives.
+  (set! all-primitives-names
+        (map symbol->string (sort all (λ (x y) (symbol<? x y)))))
+  
+  ; Return environment and store
   (values base-env base-store))
 
 (define minischeme-global-env   #f)
@@ -1561,7 +1573,6 @@
 (define (parse-program s)
   (define in (open-input-string s))
   (let loop ([acc '()])
-    ; (define next (read in))            ; todo - make this work here
     (define next (read in))
     (if (eof-object? next)
         (reverse acc)
@@ -1803,7 +1814,9 @@
 
   (if read-error
       read-error
-      (with-handlers ([(λ _ #t) (λ _ "evaluation error")])
+      (with-handlers
+        ([exn:minischeme:undefined? (λ (e) (string-append "=> " (exn-message e)))]
+         [(λ _ #t)                  (λ _ "evaluation error")])
         (if (null? exprs)
             "=> ; no input"
             (let ([value (evaluate-program exprs)])

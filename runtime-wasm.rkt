@@ -57,6 +57,24 @@
     (define (Double x) `(i32.shl   ,x (i32.const 1)))
 
     ;;;
+    ;;; Exception structures
+    ;;;
+
+    (define exception-struct-type-bindings
+      '((struct:exn                              ensure-exn-type)
+        (struct:exn:fail                         ensure-exn:fail-type)
+        (struct:exn:fail:contract                ensure-exn:fail:contract-type)
+        (struct:exn:fail:contract:arity          ensure-exn:fail:contract:arity-type)
+        (struct:exn:fail:contract:divide-by-zero ensure-exn:fail:contract:divide-by-zero-type)
+        (struct:exn:fail:contract:variable       ensure-exn:fail:contract:variable-type)
+        (struct:exn:fail:read                    ensure-exn:fail:read-type)
+        (struct:exn:fail:read:eof                ensure-exn:fail:read:eof-type)
+        (struct:exn:fail:read:non-char           ensure-exn:fail:read:non-char-type)
+        (struct:exn:fail:syntax                  ensure-exn:fail:syntax-type)
+        (struct:exn:fail:syntax:missing-module   ensure-exn:fail:syntax:missing-module-type)
+        (struct:exn:fail:syntax:unbound          ensure-exn:fail:syntax:unbound-type)))
+    
+    ;;;
     ;;; Primitives
     ;;;
     
@@ -1001,7 +1019,10 @@
     (for ([sym '(lu ll lt lm lo mn mc me nd nl no ps pe pi pf pd pc po sc sm sk so zs zp zl cc cf cs co cn)])
       (add-runtime-symbol-constant sym))
 
-
+    ; struct:exn, struct:exn:fail, etc.
+    (for-each (λ (binding) (add-runtime-symbol-constant (car binding)))
+              exception-struct-type-bindings)
+    
     (add-runtime-string-constant 'hash-variable-reference    "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                 "#&")
     (add-runtime-string-constant 'bytes-prefix               "#\"")
@@ -1894,7 +1915,7 @@
          (global $exn:fail:syntax-type                  (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:syntax:missing-module-type   (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:syntax:unbound-type          (mut (ref null $StructType)) (ref.null $StructType))
-
+         
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
 
@@ -2667,7 +2688,12 @@
          (global $closedapp-clos (mut (ref $Closure)) (global.get $dummy-closure))
 
          
-         
+         ;; Predefined exception struct type descriptors (as boxed top-level bindings)
+         ;;   struct:exn, struct:exn:fail, etc.
+         ,@(for/list ([binding exception-struct-type-bindings])
+             (define name  (car binding))
+             (define $name (string->symbol (~a "$" (symbol->string name))))
+             `(global ,$name (mut (ref eq)) (global.get $undefined)))
          
          ;; Return value (for a module)
          (global ,result (mut (ref eq)) (global.get $void))
@@ -3587,6 +3613,11 @@
                #;(call $js-log (local.get  $v))
                (throw $exn (local.get $v)))
 
+         (func $call-with-exception-handler:procedure-expected-as-handler
+               (unreachable))
+         (func $call-with-exception-handler:procedure-expected-as-thunk
+               (unreachable))
+         
          (func $call-with-exception-handler (type $Prim2)
                (param $handler (ref eq)) ;; procedure?
                (param $thunk   (ref eq)) ;; (-> any)
@@ -3603,13 +3634,13 @@
 
                ;; Validate handler argument.
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler)))
-                   (then (call $raise-argument-error:procedure-expected
+                   (then (call $call-with-exception-handler:procedure-expected-as-handler
                                (local.get $handler))
                          (unreachable)))
 
                ;; Validate thunk argument.
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
-                   (then (call $raise-argument-error:procedure-expected
+                   (then (call $call-with-exception-handler:procedure-expected-as-thunk
                                (local.get $thunk))
                          (unreachable)))
 
@@ -3648,6 +3679,10 @@
                       (throw $exn (local.get $handler-result))
                       (unreachable)))
 
+
+         (func $catch:procedure-expected-for-predicate (unreachable))
+         (func $catch:procedure-expected-for-handler   (unreachable))
+         (func $catch:procedure-expected-for-thunk     (unreachable))
          
          (func $catch (type $Prim3)
                (param $pred    (ref eq))
@@ -3669,15 +3704,15 @@
 
                ;; Validate the predicate, handler, and thunk arguments.
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred)))
-                   (then (call $raise-argument-error:procedure-expected
+                   (then (call $catch:procedure-expected-for-predicate
                                (local.get $pred))
                          (unreachable)))
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler)))
-                   (then (call $raise-argument-error:procedure-expected
+                   (then (call $catch:procedure-expected-for-handler
                                (local.get $handler))
                          (unreachable)))
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
-                   (then (call $raise-argument-error:procedure-expected
+                   (then (call $catch:procedure-expected-for-thunk
                                (local.get $thunk))
                          (unreachable)))
 
@@ -3731,7 +3766,11 @@
                ; done block
                ;   - fall through to return the value
                )
-         
+
+         (func $catch*:procedure-expected-for-predicate (unreachable))
+         (func $catch*:procedure-expected-for-handler   (unreachable))
+         (func $catch*:procedure-expected-for-thunk     (unreachable))
+
          (func $catch* (type $Prim3)
                (param $preds    (ref eq))
                (param $handlers (ref eq))
@@ -3760,7 +3799,7 @@
 
                ;; Validate thunk argument.
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $thunk)))
-                   (then (call $raise-argument-error:procedure-expected (local.get $thunk))
+                   (then (call $catch*:procedure-expected-for-thunk #;(local.get $thunk))
                          (unreachable)))
 
                ;; Validate predicate and handler lists.
@@ -3794,10 +3833,10 @@
                             (local.set $handler-val (struct.get $Pair $a (local.get $handler-pair)))
                             
                             (if (i32.eqz (ref.test (ref $Procedure) (local.get $pred-val)))
-                                (then (call $raise-argument-error:procedure-expected (local.get $pred-val))
+                                (then (call $catch*:procedure-expected-for-predicate #;(local.get $pred-val))
                                       (unreachable)))
                             (if (i32.eqz (ref.test (ref $Procedure) (local.get $handler-val)))
-                                (then (call $raise-argument-error:procedure-expected (local.get $handler-val))
+                                (then (call $catch*:procedure-expected-for-handler #;(local.get $handler-val))
                                       (unreachable)))
                             (local.set $pred-node (struct.get $Pair $d (local.get $pred-pair)))
                             (local.set $handler-node (struct.get $Pair $d (local.get $handler-pair)))
@@ -29556,7 +29595,7 @@
                ;; --- Type checks ---
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
                    (then (call $raise-argument-error (local.get $name))))
-
+               
                (if (i32.and
                     (i32.eqz (ref.eq (local.get $super) (global.get $false)))
                     (i32.eqz (ref.test (ref $StructType) (local.get $super))))
@@ -36140,7 +36179,9 @@
                                                  (global.get $null)
                                                  (global.get $false)
                                                  (global.get $false))))
+
                      
+
                      ;; Default to the host platform's path convention (currently Unix)
                      (global.set $system-path-convention (global.get $symbol:unix))
 
@@ -36201,6 +36242,15 @@
                                         (struct.new $Boxed
                                                     (global.get ,(TopVar v))))))
 
+                     ;; Populate exception struct type descriptor bindings.
+                     ;;   struct:exn, struct:exn:fail, etc
+                     ,@(for/list ([binding exception-struct-type-bindings])
+                         (define name    (car binding))
+                         (define ensure  (cadr binding))
+                         (define $name   (string->symbol (~a "$" (symbol->string name))))
+                         (define $ensure ($ ensure))
+                         `(global.set ,$name (call ,$ensure)))
+                     
                      ;; Initialize the top-level namespace
                      (global.set $top-level-namespace 
                                  (ref.cast (ref $Namespace) (call $make-empty-namespace)))

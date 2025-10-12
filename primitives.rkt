@@ -50,6 +50,19 @@
 (provide error ; [twice to force indentation]         
          ;; stdlib/exceptions.rkt
          error
+
+         struct:exn
+         struct:exn:fail
+         struct:exn:fail:contract
+         struct:exn:fail:contract:arity
+         struct:exn:fail:contract:divide-by-zero
+         struct:exn:fail:contract:variable
+         struct:exn:fail:read
+         struct:exn:fail:read:eof
+         struct:exn:fail:read:non-char
+         struct:exn:fail:syntax
+         struct:exn:fail:syntax:missing-module
+         struct:exn:fail:syntax:unbound
          
          exn
          exn?

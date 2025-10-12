@@ -352,9 +352,8 @@
                     true             ;     racket/bool (not racket/base)
                     false            ;     racket/bool (not racket/base)
                     pi               ;     racket/math
-                    eof              ;     racket/base                    
+                    eof              ;     racket/base
                     ))
-
 (define (constant-value c)
   (case c
     [(null empty)       '()]
@@ -375,6 +374,19 @@
     prop:method-arity-error
     prop:object-name
     prop:procedure
+
+    struct:exn
+    struct:exn:fail
+    struct:exn:fail:contract
+    struct:exn:fail:contract:arity
+    struct:exn:fail:contract:divide-by-zero
+    struct:exn:fail:contract:variable
+    struct:exn:fail:read
+    struct:exn:fail:read:eof
+    struct:exn:fail:read:non-char
+    struct:exn:fail:syntax
+    struct:exn:fail:syntax:missing-module
+    struct:exn:fail:syntax:unbound
     ))
 
 (define (non-literal-constant? x)
