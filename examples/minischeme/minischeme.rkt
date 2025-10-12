@@ -1079,7 +1079,8 @@
 (define (ee-previous-line)
   (define b current-buffer)
   (when b
-    (if (editor-at-start? b)
+    (if (or (editor-at-start? b)
+            (> history-position 0))
         (history-previous! b)
         (point-up! b 1))))
 
