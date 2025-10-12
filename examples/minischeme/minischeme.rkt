@@ -206,6 +206,9 @@
 (define ENTER   "\r")       ; newline
 (define TAB     "\t")       ; indent-for-tab-command
 
+(define CTRL-RBRACKET "\u001d") ; ctrl-]  (inserts literal `)`)
+
+
 (define DELETE-RIGHT (string-append ESC "[3~"))
 (define UP           (string-append ESC "[A"))
 (define DOWN         (string-append ESC "[B"))
@@ -779,6 +782,17 @@
       #f
       (cdar stack)))
 
+(define (matching-closer opener)
+  (case opener
+    [(#\() #\)]
+    [(#\[) #\]]
+    [(#\{) #\}]
+    [else  #\]]))
+
+(define (matching-closer-string opener)
+  (string (matching-closer opener)))
+
+
 (define (string-index-to-row-and-column input index)
   (define len (string-length input))
   (define row 0)
@@ -1164,25 +1178,37 @@
     (define n (string-length (line-raw l)))
     (point-forward! b (- n (mark-col p)))))
 
+(define (perform-close-paren! b key input index)
+  (buffer-insert! b key)
+  (history-update-after-edit! b)
+  (when index
+    (define rowcol     (string-index-to-row-and-column input index))
+    (define target-row (+ (buffer-active-prompt b) (car rowcol)))
+    (define target-col (cdr rowcol))
+    (js-window-set-timeout
+     (procedure->external (lambda () (terminal-move-cursor target-row target-col))))
+    (js-window-set-timeout/delay
+     (procedure->external
+      (lambda ()
+        (define latest-point (buffer-point b))
+        (terminal-move-cursor (mark-row latest-point) (mark-col latest-point))))
+     500.0)))
+
 (define (on-close-paren key)
   (define b current-buffer)
   (when (and b (buffer-can-edit-here? b))
     (define input (buffer-get-prompt-input b))
     (define index (last-opener input))
-    (buffer-insert! b key)
-    (history-update-after-edit! b)
-    (when index
-      (define rowcol (string-index-to-row-and-column input index))
-      (define target-row (+ (buffer-active-prompt b) (car rowcol)))
-      (define target-col (cdr rowcol))
-      (js-window-set-timeout
-       (procedure->external (lambda () (terminal-move-cursor target-row target-col))))
-      (js-window-set-timeout/delay
-       (procedure->external
-        (lambda ()
-          (define latest-point (buffer-point b))
-          (terminal-move-cursor (mark-row latest-point) (mark-col latest-point))))
-       500.0))))
+    (perform-close-paren! b key input index)))
+
+(define (on-auto-close-paren key)
+  (define b current-buffer)
+  (when (and b (buffer-can-edit-here? b))
+    (define input      (buffer-get-prompt-input b))
+    (define index      (last-opener input))
+    (define opener     (and index (string-ref input index)))
+    (define closer-key (matching-closer-string opener))
+    (perform-close-paren! b closer-key input index)))
 
 (define (insert-newline-with-indentation! b)
   (buffer-split-line! b)
@@ -1269,25 +1295,28 @@
   (define dom-event (js-ref event "domEvent"))
   (when dom-event (js-send dom-event "preventDefault" (vector)))
   (cond
-    [(equal? key UP)           (on-cursor-up)]
-    [(equal? key DOWN)         (on-cursor-down)]
-    [(equal? key LEFT)         (on-cursor-left)]
-    [(equal? key RIGHT)        (on-cursor-right)]
-    [(equal? key ENTER)        (on-enter)]
-    [(equal? key TAB)          (on-tab)]
-    [(equal? key CTRL-A)       (on-move-to-beginning-of-line)]
-    [(equal? key CTRL-D)       (on-delete-right)]
-    [(equal? key CTRL-E)       (on-move-to-end-of-line)]
-    [(equal? key CTRL-J)       (on-newline)]
-    [(equal? key CTRL-P)       (on-cursor-up)]
-    [(equal? key CTRL-N)       (on-cursor-down)]
-    [(equal? key HOME)         (on-home)]
-    [(equal? key END)          (on-end)]
-    [(equal? key DELETE)       (on-delete)]
-    [(equal? key DELETE-RIGHT) (on-delete-right)]
-    [(equal? key ")")          (on-close-paren key)]
-    [else                      (when (printable-key? key)
-                                 (on-printable-key key))])
+    [(equal? key UP)            (on-cursor-up)]
+    [(equal? key DOWN)          (on-cursor-down)]
+    [(equal? key LEFT)          (on-cursor-left)]
+    [(equal? key RIGHT)         (on-cursor-right)]
+    [(equal? key ENTER)         (on-enter)]
+    [(equal? key TAB)           (on-tab)]
+    [(equal? key CTRL-A)        (on-move-to-beginning-of-line)]
+    [(equal? key CTRL-D)        (on-delete-right)]
+    [(equal? key CTRL-E)        (on-move-to-end-of-line)]
+    [(equal? key CTRL-J)        (on-newline)]
+    [(equal? key CTRL-P)        (on-cursor-up)]
+    [(equal? key CTRL-N)        (on-cursor-down)]
+    [(equal? key CTRL-RBRACKET) (on-close-paren "]")]
+    [(equal? key HOME)          (on-home)]
+    [(equal? key END)           (on-end)]
+    [(equal? key DELETE)        (on-delete)]
+    [(equal? key DELETE-RIGHT)  (on-delete-right)]
+    [(equal? key "]")           (on-auto-close-paren key)]
+    [(equal? key ")")           (on-close-paren key)]
+    [(equal? key "}")           (on-close-paren key)]
+    [else                       (when (printable-key? key)
+                                  (on-printable-key key))])
   (render-current-buffer)
   (void))
 
@@ -1317,6 +1346,8 @@
   
   (define intro-lines
     '("Welcome to MiniScheme."
+      ""
+      "- What should we evaluate next?"
       ""))
 
   (define b     (make-buffer "repl"))
