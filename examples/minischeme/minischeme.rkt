@@ -583,8 +583,7 @@
             (let ([ch (string-ref raw i)])
               (loop (add1 i)
                     (cons (if (printable-char? ch) ch #\?) acc))))))
-    ; Syntax highlighting is disabled until support for regular expressions arrive.
-    ; (define highlighted (highlight sanitized))
+    #;(define highlighted (highlight sanitized))
     (define highlighted sanitized)
     (define prefix (if prompt-line?
                        (string-append ansi-white the-prompt ansi-reset)
@@ -713,6 +712,88 @@
              (set! col (add1 col)))
          (loop (add1 i))])))
   result)
+
+
+;;;
+;;; Syntax highlighting
+;;;
+
+(define all-keywords-names
+  '("and" "begin" "cond" "define" "if" "lambda" "let"
+    "or" "quote" "set!" "unless" "when"))
+
+(define all-primitives-names
+  '("+" "-" "*" "/"
+    "=" "<" ">" "<=" ">="
+    "null?" "cons" "car" "cdr"
+    "vector" "vector-ref" "vector-set!"
+    "boolean?" "number?" "symbol?" "string?" "void?" "procedure?"))
+
+(define delimiter-chars
+  '(#\( #\) #\[ #\] #\{ #\} #\" #\' #\` #\, #\; #\.))
+
+(define (identifier-delimiter? ch)
+  (or (char-whitespace? ch)
+      (memv ch delimiter-chars)))
+
+(define (keyword-token? token)
+  (and (member token all-keywords-names) #t))
+
+(define (primitive-token? token)
+  (and (member token all-primitives-names) #t))
+
+(define (highlight-token token)
+  (cond
+    [(keyword-token? token)   (string-append ansi-keyword   token ansi-reset)]
+    [(primitive-token? token) (string-append ansi-primitive token ansi-reset)]
+    [else token]))
+
+(define (pieces->string pieces)
+  (define ordered (reverse pieces))
+  (if (null? ordered)
+      ""
+      (apply string-append ordered)))
+
+(define (highlight input)
+  (define len (string-length input))  
+  (define (emit-token pieces token-chars)
+    (if (null? token-chars)
+        pieces
+        (cons (highlight-token (list->string (reverse token-chars))) pieces)))
+  (let loop ([i           0]
+             [token-chars '()]
+             [pieces      '()]
+             [in-string?  #f]
+             [escaped?    #f])
+    (cond
+      [(= i len)
+       (pieces->string (emit-token pieces token-chars))]
+      [in-string?
+       (define ch (string-ref input i))
+       (define new-pieces (cons (string ch) pieces))
+       (cond
+         [escaped?
+          (loop (add1 i) token-chars new-pieces #t #f)]
+         [(char=? ch #\\)
+          (loop (add1 i) token-chars new-pieces #t #t)]
+         [(char=? ch #\")
+          (loop (add1 i) token-chars new-pieces #f #f)]
+         [else
+          (loop (add1 i) token-chars new-pieces #t #f)])]
+      [else
+       (define ch (string-ref input i))
+       (cond
+         [(char=? ch #\")
+          (define flushed (emit-token pieces token-chars))
+          (loop (add1 i) '() (cons (string ch) flushed) #t #f)]
+         [(identifier-delimiter? ch)
+          (define flushed (emit-token pieces token-chars))
+          (loop (add1 i) '() (cons (string ch) flushed) #f #f)]
+         [else
+          (loop (add1 i) (cons ch token-chars) pieces #f #f)])])))
+
+(define (nohighlight input)
+  input)
 
 ;;;
 ;;; Syntax highlighting
