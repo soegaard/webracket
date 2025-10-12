@@ -1076,7 +1076,7 @@
 
 
 ;;;
-;;; INTERPRETER API
+;;; EVALUATOR
 ;;;
 
 (struct env     (table parent))
@@ -1109,7 +1109,8 @@
     [(env-parent e)
      (env-lookup (env-parent e) name)]
     [else
-     (error 'minischeme "unbound identifier ~a" name)]))
+     (define who (if (symbol? name) name 'minischeme))
+     (error who "undefined;\n cannot reference an identifier before its definition")]))
 
 (define (env-define! e name addr)
   (hash-set! (env-table e) name addr))
@@ -1499,7 +1500,10 @@
   (define-values (exprs read-error)
     (with-handlers
       ([exn:fail:read?
-        (λ (e) (values #f (string-append "=> read error: " (exn-message e))))])
+        (λ (e)    (values #f (string-append "=> read error: " (exn-message e))))]
+       [(λ _ #t)
+        (λ (e)    (values #f (string-append "=> read error: " (exn-message e))))])
+      
       (values (parse-program s) #f)))
 
   (if read-error
