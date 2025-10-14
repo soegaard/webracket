@@ -31448,16 +31448,16 @@
                (local $val          (ref eq))
 
                ;; Initialize non-defaultable locals.
-               (local.set $args        (call $make-array (i32.const 0) (global.get $null)))
-               (local.set $rest-array  (call $make-array (i32.const 0) (global.get $null)))
-               (local.set $final-array (call $make-array (i32.const 0) (global.get $null)))
-               (local.set $final-list  (global.get $null))
-               (local.set $rest-count  (i32.const 0))
+               (local.set $args         (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $rest-array   (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $final-array  (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $final-list   (global.get $null))
+               (local.set $rest-count   (i32.const 0))
                (local.set $direct-count (i32.const 0))
-               (local.set $final-count (i32.const 0))
-               (local.set $total-count (i32.const 0))
-               (local.set $i           (i32.const 0))
-               (local.set $val         (global.get $null))
+               (local.set $final-count  (i32.const 0))
+               (local.set $total-count  (i32.const 0))
+               (local.set $i            (i32.const 0))
+               (local.set $val          (global.get $null))
 
                ;; Step 1: ensure $proc is a procedure
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))

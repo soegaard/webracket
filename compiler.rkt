@@ -195,6 +195,16 @@
 ;      - log, exp, expt, sin, cos, ...
 ; [ ] Implement a proper flonum printing algorithm.
 
+
+;; [ ] Compiler warnings for call with wrong arity:
+;;     Example of a call with wrong arity:
+;;       (define text
+;;         (case-lambda
+;;           [(string)               (text string '() 12)]
+;;           [(string style)         (text string style 12)]
+;;           [(string style size)    (text string style size 0)]
+
+
 ;;;
 ;;; NOTES
 ;;;
@@ -4057,6 +4067,8 @@
         [(current-continuation-marks)  (inline-prim/optional sym ae1 0 1)]
 
         [(gensym)                     (inline-prim/optional sym ae1 0 1)]
+
+        [(apply)                      (inline-prim/variadic sym ae1 2)]
         
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
