@@ -31429,33 +31429,30 @@
          ; Notes: repacking of arguments are done in $invoke-closure,
          ;        so no repacking is needed in $apply.
 
-         (func $apply (type $Prim>=2)
-               (param $proc  (ref eq))    ;; procedure to apply
-               (param $first (ref eq))    ;; first non-procedure argument
-               (param $rest  (ref eq))    ;; remaining arguments as a list
-               (result       (ref eq))    ;; result of applying the procedure
+         (func $apply (type $Prim>=1)
+               (param $proc      (ref eq)) ;; procedure to apply
+               (param $args-list (ref eq)) ;; list of arguments (direct args + final list)
+               (result           (ref eq))
 
-               (local $p            (ref $Procedure))
-               (local $args         (ref $Array))
-               (local $rest-array   (ref $Array))
-               (local $final-array  (ref $Array))
-               (local $final-list   (ref eq))
-               (local $rest-count   i32)
-               (local $direct-count i32)
-               (local $final-count  i32)
-               (local $total-count  i32)
-               (local $i            i32)
-               (local $val          (ref eq))
+               (local $p             (ref $Procedure))
+               (local $args-array    (ref $Array))
+               (local $final-array   (ref $Array))
+               (local $result-array  (ref $Array))
+               (local $final-list    (ref eq))
+               (local $total-count   i32)
+               (local $direct-count  i32)
+               (local $final-count   i32)
+               (local $i             i32)
+               (local $val           (ref eq))
 
                ;; Initialize non-defaultable locals.
-               (local.set $args         (call $make-array (i32.const 0) (global.get $null)))
-               (local.set $rest-array   (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $args-array   (call $make-array (i32.const 0) (global.get $null)))
                (local.set $final-array  (call $make-array (i32.const 0) (global.get $null)))
+               (local.set $result-array (call $make-array (i32.const 0) (global.get $null)))
                (local.set $final-list   (global.get $null))
-               (local.set $rest-count   (i32.const 0))
+               (local.set $total-count  (i32.const 0))
                (local.set $direct-count (i32.const 0))
                (local.set $final-count  (i32.const 0))
-               (local.set $total-count  (i32.const 0))
                (local.set $i            (i32.const 0))
                (local.set $val          (global.get $null))
 
@@ -31465,68 +31462,62 @@
                          (unreachable)))
                (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
 
-               ;; Step 2: build an argument array for the target procedure
-               (if (ref.eq (local.get $rest) (global.get $null))
-                   ;; Only the procedure and a final list were provided.
-                   (then (local.set $args (call $list->array (local.get $first))))
-                   ;; There are additional direct arguments in $first and $rest.
-                   (else
-                    ;; Convert the rest arguments list into an array for indexed access.
-                    (local.set $rest-array (call $list->array (local.get $rest)))
-                    (local.set $rest-count (array.len (local.get $rest-array)))
-                    ;; The last element in $rest-array is the final argument list.
-                    (local.set $i (i32.sub (local.get $rest-count) (i32.const 1)))
-                    (local.set $final-list
-                               (array.get $Array (local.get $rest-array) (local.get $i)))
-                    (local.set $final-array (call $list->array (local.get $final-list)))
-                    (local.set $final-count (array.len (local.get $final-array)))
-                    ;; Number of direct arguments before appending the final list.
-                    (local.set $direct-count (local.get $rest-count))
-                    (local.set $total-count
-                               (i32.add (local.get $direct-count) (local.get $final-count)))
-                    (local.set $args (call $make-array (local.get $total-count)
-                                           (global.get $null)))
-                    ;; Seed the first direct argument.
-                    (call $array-set! (local.get $args) (i32.const 0) (local.get $first))
-                    ;; Fill in the remaining direct arguments from $rest-array.
-                    (local.set $i (i32.const 0))
-                    (block $direct-done
-                           (loop $direct
-                                 (if (i32.ge_u (local.get $i)
-                                               (i32.sub (local.get $rest-count)
-                                                        (i32.const 1)))
-                                     (then (br $direct-done)))
-                                 (local.set $val
-                                            (array.get $Array (local.get $rest-array)
-                                                       (local.get $i)))
-                                 (call $array-set!
-                                       (local.get $args)
-                                       (i32.add (local.get $i) (i32.const 1))
-                                       (local.get $val))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $direct)))
-                    ;; Append arguments from the final list.
-                    (local.set $i (i32.const 0))
-                    (block $append-done
-                           (loop $append
-                                 (if (i32.ge_u (local.get $i) (local.get $final-count))
-                                     (then (br $append-done)))
-                                 (local.set $val
-                                            (array.get $Array (local.get $final-array)
-                                                       (local.get $i)))
-                                 (call $array-set!
-                                       (local.get $args)
-                                       (i32.add (local.get $i) (local.get $direct-count))
-                                       (local.get $val))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $append)))))
+               ;; Step 2: convert arguments list into arrays for indexed access
+               (local.set $args-array  (call $list->array (local.get $args-list)))
+               (local.set $total-count (array.len (local.get $args-array)))
+               ;; The final element of $args-array is the list of trailing arguments.
+               (local.set $final-list
+                          (array.get $Array
+                                     (local.get $args-array)
+                                     (i32.sub (local.get $total-count) (i32.const 1))))
+               (local.set $final-array (call $list->array (local.get $final-list)))
+               (local.set $final-count (array.len (local.get $final-array)))
+               (local.set $direct-count (i32.sub (local.get $total-count) (i32.const 1)))
 
-               ;; Step 3: apply via the procedure's invoke field
+               ;; Step 3: allocate the combined argument array
+               (local.set $result-array
+                          (call $make-array
+                                (i32.add (local.get $direct-count) (local.get $final-count))
+                                (global.get $null)))
+
+
+               ;; Step 4: copy direct arguments
+               (local.set $i (i32.const 0))
+               (block $direct-done
+                      (loop $direct
+                            (if (i32.ge_u (local.get $i) (local.get $direct-count))
+                                (then (br $direct-done)))
+                            (local.set $val
+                                       (array.get $Array (local.get $args-array)
+                                                  (local.get $i)))
+                            (call $array-set!
+                                  (local.get $result-array)
+                                  (local.get $i)
+                                  (local.get $val))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $direct)))
+
+               ;; Step 5: append values from the final list
+               (local.set $i (i32.const 0))
+               (block $append-done
+                      (loop $append
+                            (if (i32.ge_u (local.get $i) (local.get $final-count))
+                                (then (br $append-done)))
+                            (local.set $val
+                                       (array.get $Array (local.get $final-array)
+                                                  (local.get $i)))
+                            (call $array-set!
+                                  (local.get $result-array)
+                                  (i32.add (local.get $i) (local.get $direct-count))
+                                  (local.get $val))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $append)))
+
+               ;; Step 6: apply via the procedure's invoke field
                (return_call_ref $ProcedureInvoker
                                 (local.get $p)
-                                (local.get $args)
+                                (local.get $result-array)
                                 (struct.get $Procedure $invoke (local.get $p))))
-         
 
          (func $procedure-rename
                (param $proc  (ref eq))   ;; any procedure

@@ -4068,7 +4068,7 @@
 
         [(gensym)                     (inline-prim/optional sym ae1 0 1)]
 
-        [(apply)                      (inline-prim/variadic sym ae1 2)]
+        [(apply)                      (inline-prim/variadic sym ae1 2 1)]
         
          [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
          [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
