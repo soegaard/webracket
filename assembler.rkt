@@ -1056,16 +1056,16 @@ var imports = {
         'clear-rect': ((ctx, x, y, w, h) => ctx.clearRect(x, y, w, h)),
         'clip': ((ctx, path, rule) => {
           // `(void)` is decoded as `undefined`
-          const p = (from_fasl(path) === undefined) ? undefined : path;
-          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          const p = (from_fasl(path);
+          const r = (from_fasl(rule);
           if (p === undefined && r === undefined) {
             ctx.clip();
           } else if (p === undefined) {
-            ctx.clip(from_fasl(r));
+            ctx.clip(r);
           } else if (r === undefined) {
             ctx.clip(p);
           } else {
-            ctx.clip(p, from_fasl(r));
+            ctx.clip(p, r);
           }
         }),
         'close-path': (ctx => ctx.closePath()),
@@ -1083,16 +1083,16 @@ var imports = {
         'ellipse': ((ctx, x, y, rx, ry, rot, sa, ea, ccw) => ctx.ellipse(x, y, rx, ry, rot, sa, ea, !!ccw)),
         'fill': ((ctx, path, rule) => {
           // `(void)` is decoded as `undefined`
-          const p = (from_fasl(path) === undefined) ? undefined : path;
-          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          const p = (from_fasl(path);
+          const r = (from_fasl(rule);
           if (p === undefined && r === undefined) {
             ctx.fill();
           } else if (p === undefined) {
-            ctx.fill(from_fasl(r));
+            ctx.fill(r);
           } else if (r === undefined) {
             ctx.fill(p);
           } else {
-            ctx.fill(p, from_fasl(r));
+            ctx.fill(p, r);
           }
         }),
         'fill-rect': ((ctx, x, y, w, h) => ctx.fillRect(x, y, w, h)),
@@ -1115,20 +1115,20 @@ var imports = {
         'get-line-dash': (ctx => ctx.getLineDash()),
         'get-transform': (ctx => ctx.getTransform()),
         'is-point-in-path': ((ctx, path, x, y, rule) => {
-          const p = (from_fasl(path) === undefined) ? undefined : path;
-          const r = (from_fasl(rule) === undefined) ? undefined : rule;
+          const p = (from_fasl(path);
+          const r = (from_fasl(rule);
           if (p === undefined && r === undefined) {
             return ctx.isPointInPath(x, y) ? 1 : 0;
           } else if (p === undefined) {
-            return ctx.isPointInPath(x, y, from_fasl(r)) ? 1 : 0;
+            return ctx.isPointInPath(x, y, r) ? 1 : 0;
           } else if (r === undefined) {
             return ctx.isPointInPath(p, x, y) ? 1 : 0;
           } else {
-            return ctx.isPointInPath(p, x, y, from_fasl(r)) ? 1 : 0;
+            return ctx.isPointInPath(p, x, y, r) ? 1 : 0;
           }
         }),
         'is-point-in-stroke': ((ctx, path, x, y) => {
-          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const p = (from_fasl(path);
           if (p === undefined) {
             return ctx.isPointInStroke(x, y) ? 1 : 0;
           } else {
@@ -1169,7 +1169,7 @@ var imports = {
         'set-transform!': ((ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f)),
         'set-transform-matrix!': ((ctx, m) => ctx.setTransform(m)),
         'stroke': ((ctx, path) => {
-          const p = (from_fasl(path) === undefined) ? undefined : path;
+          const p = (from_fasl(path);
           if (p === undefined) {
             ctx.stroke();
           } else {
@@ -1268,11 +1268,12 @@ var imports = {
             }
         }),
         'fetch': ((input, init) => {
-            const i = from_fasl(init);
+            const inp = from_fasl(input);
+            const i   = from_fasl(init);
             if (i === undefined) {
-                return fetch(input);
+                return fetch(inp);
             } else {
-                return fetch(input, i);
+                return fetch(inp, i);
             }
         }),
         'focus':                (() => window.focus()),
@@ -1357,7 +1358,7 @@ var imports = {
             }
         }),
         'queue-microtask':     (cb => window.queueMicrotask(cb)),
-        'report-error':        (err => window.reportError(err))
+        'report-error':        (err => window.reportError(from_fasl(err)))
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Performance
     'performance': hasDOM ? {
