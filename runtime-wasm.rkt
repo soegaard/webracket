@@ -22954,6 +22954,13 @@
                ; 3. Return `void`
                (global.get $void))
 
+
+         (func $boxed? (type $Prim1)
+               (param $v (ref eq)) (result (ref eq))
+               (if (result (ref eq)) (ref.test (ref $Boxed) (local.get $v))
+                    (then (global.get $true))
+                    (else (global.get $false))))
+
          ;;;
          ;;; 4.14 Boxes
          ;;;
@@ -36150,6 +36157,11 @@
                      (result (ref $Bytes))
                      (ref.cast (ref $Bytes) (global.get $result-bytes)))
 
+               (func $entry-uncaught-exception1
+                     (param $e (ref eq))
+                     (call $js-log (local.get $e))
+                     (unreachable))
+
                (func $entry-uncaught-exception (unreachable))
                
                (func $entry (export "entry") (result i32)
@@ -36344,6 +36356,7 @@
                                     
                                     (br $entry-body:done)))
                             ;; If any wasm exception reaches here, crash so the host prints a stack trace.
+                            #;(call $entry-uncaught-exception1 (local.get 0))
                             (call $entry-uncaught-exception)
                             (unreachable))
                      

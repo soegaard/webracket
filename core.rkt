@@ -2,8 +2,22 @@
 (require               "fully.rkt" "primitives.rkt")
 (provide (all-from-out "fully.rkt" "primitives.rkt"))
 
-(require (for-syntax (only-in racket/base define-syntax-rule)))
-(provide (for-syntax define-syntax-rule))
+#;(require (for-syntax
+          (only-in racket/base
+                   define-syntax-rule
+                   define-syntax
+                   syntax-case                   
+                   syntax/loc
+                   with-syntax
+                   generate-temporaries)))
+#;(provide (for-syntax define-syntax-rule
+                     define-syntax
+                     syntax-case
+                     syntax
+                     syntax/loc
+                     with-syntax
+                     generate-temporaries))
+(provide define-syntax)
 
 ; core
 (provide (rename-out [#%plain-module-begin #%module-begin]

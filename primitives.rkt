@@ -44,6 +44,26 @@
          include/reader
          (for-syntax read-syntax/skip-first-line))
 
+(provide define-syntax)
+(provide (for-syntax define-syntax syntax-case ... #%app #%datum))
+
+(require (for-syntax
+          (only-in racket/base
+                   define-syntax-rule
+                   define-syntax
+                   syntax-case                   
+                   syntax/loc
+                   with-syntax
+                   generate-temporaries)))
+(provide (for-syntax define-syntax-rule
+                     define-syntax
+                     syntax-case
+                     syntax
+                     syntax/loc
+                     with-syntax
+                     generate-temporaries))
+
+
 (require (prefix-in kernel: racket/kernel))
 
 ;; These functions are implemented in `stdlib` as webracket functions
@@ -152,7 +172,7 @@
          ; default-error-value->string-handler
          error-value->string-handler
          
-         format
+         ; format  ; define in stdlib - not a primitive
          fprintf
          ; fprintf*  ; todo: remove
          printf

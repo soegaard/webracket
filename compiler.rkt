@@ -580,6 +580,7 @@
   boxed      ; used by assignment elimination
   unboxed    ; used by assignment elimination
   set-boxed! ; used by assignment elimination
+  boxed?
 
   box? box box-immutable unbox set-box! 
 
