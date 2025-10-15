@@ -1028,7 +1028,7 @@ var imports = {
         'shadow-offset-y':        (ctx => ctx.shadowOffsetY),
         'set-shadow-offset-y!':   ((ctx, y) => { ctx.shadowOffsetY = y; }),
         'stroke-style':           (ctx => ctx.strokeStyle),
-        'set-stroke-style!':      ((ctx, style) => { ctx.strokeStyle = style; }),
+        'set-stroke-style!':      ((ctx, style) => { ctx.strokeStyle = from_fasl(style); }),
         'text-align':             (ctx => ctx.textAlign),
         'set-text-align!':        ((ctx, a) => { ctx.textAlign = from_fasl(a); }),
         'text-baseline':          (ctx => ctx.textBaseline),
