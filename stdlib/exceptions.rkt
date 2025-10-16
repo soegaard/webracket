@@ -43,10 +43,16 @@
                       (unless (string? format-str)
                         (error 'error "format string expected after who-symbol"))
                       (define vs (cdr args))
-                      
-                      (define message (apply format
+
+                      ; (js-log (equal? format undefined))
+                      ; (js-log (procedure? (#%top . format)))
+
+                      ; TODO - find out why `format` alone below doesn't work
+                      ;        [it ought to]
+                      (define message (apply #;format (#%top . format) ; todo <--
                                              (string-append "~s: " format-str)
-                                             who-sym vs))
+                                             who-sym
+                                             vs))
                       (raise (make-exn:fail message #f))]
                      [else
                       (error 'error "expected: (or/c symbol? string?)")])]))
