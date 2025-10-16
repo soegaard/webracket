@@ -307,6 +307,10 @@
       [(box? v)       (emit "#&")
                       (write-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
+      
+      [(eq? v undefined)        (emit "#<undefined>")]
+      [(eq? v unsafe-undefined) (emit "#<unsafe-undefined>")]
+
       [else           (emit "#<unknown>")])
     (void))
 
@@ -638,6 +642,8 @@
             [(box? v)       (emit "#&")
                              (print-value (unbox v) depth)]
             [(procedure? v) (emit "#<procedure>")]
+            [(eq? v undefined)        (emit "#<undefined>")]
+            [(eq? v unsafe-undefined) (emit "#<unsafe-undefined>")]
             [else           (emit "#<unknown>")])
           (void))
 
