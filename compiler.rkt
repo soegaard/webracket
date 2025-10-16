@@ -4198,7 +4198,7 @@
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
-         [(min max)                      (inline-prim/variadic sym ae1 2)]
+         [(min max)                      (inline-prim/variadic sym ae1 1)]
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0

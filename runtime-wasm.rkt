@@ -2032,6 +2032,7 @@
         (func $raise-code-type-mismatch
               (param $pproc (ref $PrimitiveProcedure))
               (result (ref eq))
+              (call $js-log (call $format/display (local.get $pproc)))              
               (unreachable))
 
         (func $primitive-invoke:raise-arity-error
@@ -2478,7 +2479,7 @@
                (local $out      (ref $Args))
                (local $code     (ref $ClosureCode))
 
-               ; Get arities and arms (closures)
+               ; Get arities and arms (closures)               
                (local.set $cclos   (ref.cast (ref $CaseClosure) (local.get $clos)))
                (local.set $arities (struct.get $CaseClosure $arities (local.get $cclos)))
                (local.set $arms    (struct.get $CaseClosure $arms    (local.get $cclos)))
@@ -8551,12 +8552,16 @@
                             (ref.as_non_null (local.get $x-fl))
                             (ref.as_non_null (local.get $y-fl))))
 
-                (func ,$name (type $Prim>=2)
-                      (param $x0 (ref eq)) (param $x1 (ref eq)) (param $xs0 (ref eq)) (result (ref eq))
+                (func ,$name (type $Prim>=1)
+                      (param $x0  (ref eq))
+                      (param $xs0 (ref eq))
+                      (result     (ref eq))
+                      
                       (local $xs   (ref eq))
                       (local $node (ref $Pair))
                       (local $v    (ref eq))
                       (local $r    (ref eq))
+
                       (local.set $xs
                                  (if (result (ref eq))
                                      (ref.test (ref $Args) (local.get $xs0))
@@ -8564,10 +8569,23 @@
                                                  (ref.cast (ref $Args) (local.get $xs0))
                                                  (i32.const 0)))
                                      (else (local.get $xs0))))
-                      (local.set $r (call ,$name/2 (local.get $x0) (local.get $x1)))
+
+                      (if (ref.eq (local.get $xs) (global.get $null))
+                          (then (return (call ,$name/2 (local.get $x0) (local.get $x0)))))
+                      (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                          (then (call $raise-pair-expected (local.get $xs))
+                                (unreachable)))
+                      (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                      (local.set $v    (struct.get $Pair $a (local.get $node)))
+                      (local.set $r    (call ,$name/2 (local.get $x0) (local.get $v)))
+                      (local.set $xs   (struct.get $Pair $d (local.get $node)))
+
                       (block $done
                              (loop $loop
                                    (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                   (if (i32.eqz (ref.test (ref $Pair) (local.get $xs)))
+                                       (then (call $raise-pair-expected (local.get $xs))
+                                             (unreachable)))
                                    (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
                                    (local.set $v    (struct.get $Pair $a (local.get $node)))
                                    (local.set $r    (call ,$name/2 (local.get $r) (local.get $v)))
