@@ -426,14 +426,13 @@
     color->string))
 
 
-
 ;;;
 ;;; Font
 ;;;
 
-(struct font (family size  style variant weight line-height)
-  #:transparent)
+(struct font (family size style variant weight line-height) #:transparent)
 
+(define the-default-font (font 'sans-serif 12 'normal 'normal 'normal #f))
   
 ; a <font family> is either a <family-name> (a string) or a <generic-name> (a symbol).
 
@@ -449,6 +448,10 @@
   '(serif sans-serif cursive fantasy monospace
           system-ui math ui-serif ui-sans-serif ui-monospace
           ui-rounded))
+
+; Original
+; (define families '(default decorative roman script swiss modern symbol system))
+(define families generic-font-families)
 
 (define (font-family? x)
   (or (string? x) (memq x generic-font-families)))
@@ -1864,10 +1867,10 @@
 
 (define text
   (case-lambda
-   [(string)               (text string '() 12)]
-   [(string style)         (text string style 12)]
-   [(string style size)    (text string style size 0)]
-   [(str style size angle) (not-caps-text str style size angle)
+   [(string)                  (text string '()   12)]
+   [(string style)            (text string style 12)]
+   [(string style size)       (text string style size 0)]
+   [(string style size angle) (not-caps-text string style size angle)
     ; todo: we need to measure the size of the text
     ;       also we need to a way to represent fonts.
 
@@ -1879,7 +1882,6 @@
         (not-caps-text str style size angle))]))
 
 
-(define families '(default decorative roman script swiss modern symbol system))
 
 (define (il-memq sym s)
   (and (pair? s)
@@ -1893,108 +1895,139 @@
           (cons (car s) (il-remq sym (cdr s))))
       s))
 
+(define the-dc-used-for-text-size #f)
+
+(define (dc-for-text-size)
+  (cond
+    [the-dc-used-for-text-size the-dc-used-for-text-size]
+    [else
+     (define canvas (js-create-element "canvas"))
+     (js-set-canvas-width!  canvas 1024)
+     (js-set-canvas-height! canvas 1024)
+     (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
+     (define dc (canvas-context->dc ctx))
+     dc]))
+
 (define (not-caps-text string orig-style size angle)
-  (let (#;[font
+  ; Notes:
+  ;   strokeText - draws text outline directly
+  ;   fillText   - draws test filled  directly
+  ; They accept a string to draw and an x,y.
+  ; Use ctx.measureText(text)
+  ; then the relevant properties are:
+  ;   - actualBoundingBoxLeft
+  ;   - actualBoundingBoxRight
+  ;   - actualBoundingBoxAscent
+  ;   - actualBoundingBoxDescent
+
+  ; Note: We need the font at pict creation time in order
+  ;       to measure the bounding box of the text.
+  ;       That is, we can't get the font from `ctx` since
+  ;       the drawing context isn't available until 
+  ;       render time.  
+  (let ([font
          ; Find font based on `orig-style`.
          (let loop ([style orig-style])
            (cond
-             [(null? style) 
-              (send the-font-list find-or-create-font
-                    size 'default 'normal 'normal #f 'default #t 'unaligned)]
-             [(is-a? style font%)
-              style]
+             [(null? style) ; null means default
+              the-default-font
+              #;(send the-font-list find-or-create-font
+                      ;    size family   style   weight  underline? smoothing size-in-pixels?  hinting
+                      #;"" size 'default 'normal 'normal #f         'default  #t               'unaligned)]
+             [(font? style)
+              font]
              [(memq style families)
-              (send the-font-list find-or-create-font
-                    size style 'normal 'normal #f 'default #t 'unaligned)]
+              (font style 12 'normal 'normal 'normal #f)]
              [(string? style)
-              (send the-font-list find-or-create-font
-                    size style 'default 'normal 'normal #f 'default #t 'unaligned)]
-             [(and (pair? style)
-                   (string? (car style))
-                   (memq (cdr style) families))
-              (send the-font-list find-or-create-font
-                    size (car style) (cdr style) 'normal 'normal #f 'default #t 'unaligned)]
-             [(and (pair? style)
-                   (or (memq (car style)
-                             '(superscript
-                               subscript
-                               large-script
-                               bold italic
-                               aligned unaligned))
-                       (and (pair? (car style))
-                            (eq? (caar style) 'weight))))
-              
-              (let ([font (loop (cdr style))]
-                    [style (car style)])
-                (cond
-                  [(eq? style 'bold)
-                   (extend-font font
-                                (send font get-point-size)
-                                (send font get-style)
-                                'bold
-                                (send font get-hinting))]
-                  [(and (pair? style)
-                        (eq? (car style) 'weight))
-                   (extend-font font
-                                (send font get-point-size)
-                                (send font get-style)
-                                (cdr style)
-                                (send font get-hinting))]
-                  [(eq? style 'italic)
-                   (extend-font font
-                                (send font get-point-size)
-                                'italic
-                                (send font get-weight)
-                                (send font get-hinting))]
-                  [(or (eq? style 'aligned)
-                       (eq? style 'unaligned))
-                   (extend-font font
-                                (send font get-point-size)
-                                (send font get-style)
-                                (send font get-weight)
-                                style)]
-                  [else font]))]
-             [(and (pair? style)
-                   (memq (car style) '(combine no-combine outline)))
-              (loop (cdr style))]
-             [(and (pair? style)
-                   (is-a? (car style) color%))
-              (loop (cdr style))]
-             [else (raise-type-error 'text
-                                     "style"
-                                     orig-style)]))]
+              style] ; assume it is a legal css font name
+             ; TODO
+             #;[(and (pair? style)
+                     (string? (car style))
+                     (memq (cdr style) families))              
+                (send the-font-list find-or-create-font
+                      size (car style) (cdr style) 'normal 'normal #f 'default #t 'unaligned)]
+             ; todo
+             #;[(and (pair? style)
+                     (or (memq (car style)
+                               '(superscript
+                                 subscript
+                                 large-script
+                                 bold italic
+                                 aligned unaligned))
+                         (and (pair? (car style))
+                              (eq? (caar style) 'weight))))
+                
+                (let ([font (loop (cdr style))]
+                      [style (car style)])
+                  (cond
+                    [(eq? style 'bold)
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  'bold
+                                  (send font get-hinting))]
+                    [(and (pair? style)
+                          (eq? (car style) 'weight))
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  (cdr style)
+                                  (send font get-hinting))]
+                    [(eq? style 'italic)
+                     (extend-font font
+                                  (send font get-point-size)
+                                  'italic
+                                  (send font get-weight)
+                                  (send font get-hinting))]
+                    [(or (eq? style 'aligned)
+                         (eq? style 'unaligned))
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  (send font get-weight)
+                                  style)]
+                    [else font]))]
+             #;[(and (pair? style)
+                     (memq (car style) '(combine no-combine outline)))
+                (loop (cdr style))]
+             #;[(and (pair? style)
+                     (is-a? (car style) color%))
+                (loop (cdr style))]
+             [else (raise-type-error 'text "style" orig-style)]))]
         ; combine? (i.e. use kerning or ligatures?)
         #;[combine?      (let loop ([style orig-style])
-                         (cond
-                           [(eq? style 'modern)           #f]
-                           [(not (pair? style))           #t]
-                           [(eq? (car style) 'combine)    #t]
-                           [(eq? (car style) 'no-combine) #f]
-                           [else
-                            (loop (cdr style))]))]
+                           (cond
+                             [(eq? style 'modern)           #f]
+                             [(not (pair? style))           #t]
+                             [(eq? (car style) 'combine)    #t]
+                             [(eq? (car style) 'no-combine) #f]
+                             [else
+                              (loop (cdr style))]))]
         #;[sub?          (memq* 'subscript    orig-style)]
         #;[sup?          (memq* 'superscript  orig-style)]
         #;[large-script? (memq* 'large-script orig-style)]
         #;[outline?      (memq* 'outline      orig-style)]
         #;[color         (let loop ([style orig-style])
-                         (cond
-                           [(not (pair? style)) #f]
-                           [(is-a? (car style) color%) 
-                            (resolve-color (car style))]
-                           [else (loop (cdr style))]))])
+                           (cond
+                             [(not (pair? style)) #f]
+                             [(is-a? (car style) color%) 
+                              (resolve-color (car style))]
+                             [else (loop (cdr style))]))])
     (let (#;[s-font (if (or sub? sup?)
-                      (extend-font font
-                                   (floor (* (if large-script?
-                                                 85/100
-                                                 6/10)
-                                             (send font get-point-size)))
-                                   (send font get-style)
-                                   (send font get-weight)
-                                   (send font get-hinting))
-                      font)]
+                        (extend-font font
+                                     (floor (* (if large-script?
+                                                   85/100
+                                                   6/10)
+                                               (send font get-point-size)))
+                                     (send font get-style)
+                                     (send font get-weight)
+                                     (send font get-hinting))
+                        font)]
           #;[dc (dc-for-text-size)])
       #;(unless dc
-        (error 'text "no dc<%> object installed for sizing"))
+          (error 'text "no dc<%> object installed for sizing"))
+      
+      
       (let-values ([(w h   ; width, height
                        d   ; distance from base line to bottom of descender
                        s)  ; extra vertical space (included in height, often zero)
@@ -2238,8 +2271,7 @@
                (if b&w?
                    (loop dx dy (caddr x))
                    (let ([c (second x)])
-                     ; (define c (if (string? c) c (color->string c)))
-                     (define c "blue")
+                     (define c (if (string? c) c (color->string c)))
                      (let ([old-stroke     (dc 'stroke-style)]
                            [old-fill       (dc 'fill-style)])                           
                        ; we set
@@ -2247,11 +2279,7 @@
                        ;  2) brush to solid color
                        ;  3) text color
                        (dc 'stroke-style c)
-                       (dc 'fill-style   c)
-
-                       (dc 'stroke-rect 130 190 40 60)  ; this doesn't ?!
-                       (dc 'fill-rect   130 490 40 60)  ; this becomes blue
-                       
+                       (dc 'fill-style   c)                       
                        (loop dx dy (caddr x))
                        ; reset colors
                        (dc 'stroke-style old-stroke)
