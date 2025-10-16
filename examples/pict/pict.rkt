@@ -432,7 +432,7 @@
 
 (struct font (family size style variant weight line-height) #:transparent)
 
-(define the-default-font (font 'sans-serif 12 'normal 'normal 'normal #f))
+(define the-default-font (font 'sans-serif 24 'normal 'normal 'normal #f))
   
 ; a <font family> is either a <family-name> (a string) or a <generic-name> (a symbol).
 
@@ -680,1652 +680,20 @@
             acc
             (loop (cdr rest) (string-append acc " " (car rest)))))))
 
-
 ;;;
-;;; Pict
-;;;
-
-
-(struct pict (draw       ; drawing instructions
-              width      ; total width
-              height     ; total height >= ascent + desecnt
-              ascent     ; portion of height above top baseline
-              descent    ; portion of height below bottom baseline
-              children   ; list of child records
-              panbox     ; panorama box, computed on demand
-              last)      ; a descendent for the bottom-right
-  #:mutable
-  #:extra-constructor-name make-pict
-  #:transparent)
-
-(struct child (pict dx dy sx sy sxy syx)
-  #:extra-constructor-name make-child
-  #:transparent)
-
-(struct bbox  (x1 y1 x2 y2 ay dy)
-  #:extra-constructor-name make-bbox
-  #:transparent)
-
-
-(struct converted-pict pict (parent))
-
-
-(define (pict-convertible? x)    #f)  ; TODO
-(define (pict-convertible-ref x) #f)  ; TODO
-
-(define (pict-convert v)
-  (pict-convert/who v 'pict-convert))
-
-(define (pict-convert/who v who)
-  (cond [(pict? v) v]
-        [(not (pict-convertible? v))
-         (raise-type-error who "pict-convertible" v)]
-        [else
-         (define converted ((pict-convertible-ref v) v))
-         (converted-pict
-          (pict-draw converted)
-          (pict-width converted)
-          (pict-height converted)
-          (pict-ascent converted)
-          (pict-descent converted)
-          (pict-children converted)
-          (pict-panbox converted)
-          (pict-last converted)
-          v)]))
-
-
-(define (pict-path-element=? a b)
-  (or (eq? a b)
-      (if (converted-pict? a)
-          (if (converted-pict? b)
-              (eq? (converted-pict-parent a) (converted-pict-parent b))
-              (eq? (converted-pict-parent a) b))
-          (if (converted-pict? b)
-              (eq? (converted-pict-parent b) a)
-              #f))))
-
-(define (pict-path? p)
-  (or (pict-convertible? p)
-      (and (pair? p)
-           (list? p)
-           (andmap pict-convertible? p))))
-
-
-;;;
-;;;
+;;; Canvas
 ;;;
 
-(define default-seg        5) ; default segment length for dashes
-(define recordseplinespace 4)
-
-
-(define blank 
-  (case-lambda
-   [()        (blank 0 0 0)]
-   [(s)       (blank s s)]
-   [(w h)     (blank w h 0)]
-   [(w a d)   (make-pict `(picture ,w ,(+ a d)) w (+ a d) a d null #f #f)]
-   [(w h a d) (make-pict `(picture ,w ,h)       w h       a d null #f #f)]))
-
-
-(define (extend-pict box dx dy dw da dd draw)
-  (let ([w (pict-width   box)]
-        [h (pict-height  box)]
-        [d (pict-descent box)]
-        [a (pict-ascent  box)])
-    (make-pict (if draw draw (pict-draw box))
-               (+ w dw) (+ h da dd) 
-               (max 0 (+ a da)) (max 0 (+ d dd))
-               (list (make-child box dx dy 1 1 0 0))
-               #f
-               (pict-last box))))
-
-(define (transform dx dy tdx tdy tsx tsy tsxy tsyx)
-  (values (+ (* tsx dx) (* tsxy dy) tdx)
-          (+ (* tsy dy) (* tsyx dx) tdy)))
-
-
-(define (single-pict-offset who pict subbox dx dy nth)
-  (let floop ([box pict]
-              [nth nth]
-              [found values]
-              [not-found (lambda (nth)
-                           (error who
-                                  "sub-pict not found\n  sub-pict: ~.v\n  in: ~.v"
-                                  subbox pict))])
-    (if (pict-path-element=? subbox box)
-        (if (or (not nth) (zero? nth))
-            (found dx dy)
-            (not-found (and nth (sub1 nth))))
-        (let loop ([c (pict-children box)] [nth nth] [fx #f] [fy #f])
-          (if (null? c)
-              (if fx
-                  (found fx fy)
-                  (not-found nth))
-              (let ([rst (cdr c)])
-                (floop (child-pict (car c))
-                       nth
-                       (lambda (dx dy)
-                         (let ([c (car c)])
-                           (let-values ([(dx dy)
-                                         (transform
-                                          dx dy
-                                          (child-dx c) (child-dy c)
-                                          (child-sx c) (child-sy c)
-                                          (child-sxy c) (child-syx c))])
-                             (cond
-                               [nth (found dx dy)]
-                               [(not fx) (loop rst #f dx dy)]
-                               [(and (= fx dx) (= fy dy)) (loop rst #f dx dy)]
-                               [else (error who
-                                            "sub-pict location is ambiguous\n  sub-pict: ~.v\n  in: ~.v"
-                                            subbox pict)]))))
-                       (lambda (nth)
-                         (loop rst nth fx fy)))))))))
-
-(define (find-lbx who pict subbox-path dx dy nth)
-  (if (pict-convertible? subbox-path)
-      (single-pict-offset who pict subbox-path dx dy nth)
-      (let loop ([l (cons pict subbox-path)])
-        (if (null? (cdr l))
-            (values dx dy)
-            (let-values ([(dx dy) (loop (cdr l))])
-              (single-pict-offset who (car l) (cadr l) dx dy
-                                  (if (null? (cddr l)) nth 0)))))))
-
-(define (raise-type-error . _) (error 'todo "implement in stdlib"))
-
-(define-values (find-lt
-                find-lc
-                find-lb
-                find-ltl
-                find-lbl
-                find-ct
-                find-cc
-                find-cb
-                find-ctl
-                find-cbl
-                find-rt
-                find-rc
-                find-rb
-                find-rtl
-                find-rbl
-
-                lt-find
-                lc-find
-                lb-find
-                ltl-find
-                lbl-find
-                ct-find
-                cc-find
-                cb-find
-                ctl-find
-                cbl-find
-                rt-find
-                rc-find
-                rb-find
-                rtl-find
-                rbl-find)
-  (let ([lb    (lambda (x sx w d a) x)]
-        [c     (lambda (x sx w d a) (+ x (* sx (/ w 2))))]
-        [rt    (lambda (x sx w d a) (+ x (* sx w)))]
-        [tline (lambda (x sx w d a) (+ x (* sx (- w a))))]
-        [bline (lambda (x sx w d a) (+ x (* sx d)))]
-        [find  (lambda (who get-x get-y flip?)
-                 (procedure-rename
-                  (lambda (pict pict-path [nth 0])
-                    (let ([p (let loop ([path pict-path])
-                               (cond
-                                 [(pict? path) path]
-                                 [(pict-convertible? path) (pict-convert path)]
-                                 [(null? (cdr path)) (loop (car path))]
-                                 [else (loop (cdr path))]))])
-                      (let ([w (pict-width p)]
-                            [h (pict-height p)]
-                            [d (pict-descent p)]
-                            [a (pict-ascent p)])
-                        (define-values (x y)
-                          (find-lbx who pict pict-path
-                                    (get-x 0 1 w 0 0)
-                                    (get-y 0 1 h d a)
-                                    (if (eq? nth 'unique)
-                                        #f
-                                        nth)))
-                        (if flip?
-                            (values x (- (pict-height pict) y))
-                            (values x y)))))
-                  who))])
-    (values (find 'find-lt  lb rt    #f)
-            (find 'find-lc  lb c     #f)
-            (find 'find-lb  lb lb    #f)
-            (find 'find-ltl lb tline #f)
-            (find 'find-lbl lb bline #f)
-            (find 'find-ct   c rt    #f)
-            (find 'find-cc   c c     #f)
-            (find 'find-cb   c lb    #f)
-            (find 'find-ctl  c tline #f)
-            (find 'find-cbl  c bline #f)
-            (find 'find-rt  rt rt    #f)
-            (find 'find-rc  rt c     #f)
-            (find 'find-rb  rt lb    #f)
-            (find 'find-rtl rt tline #f)
-            (find 'find-rbl rt bline #f)
-
-            (find 'lt-find  lb rt    #t)
-            (find 'lc-find  lb c     #t)
-            (find 'lb-find  lb lb    #t)
-            (find 'ltl-find lb tline #t)
-            (find 'lbl-find lb bline #t)
-            (find 'ct-find   c rt    #t)
-            (find 'cc-find   c c     #t)
-            (find 'cb-find   c lb    #t)
-            (find 'ctl-find  c tline #t)
-            (find 'cbl-find  c bline #t)
-            (find 'rt-find  rt rt    #t)
-            (find 'rc-find  rt c     #t)
-            (find 'rb-find  rt lb    #t)
-            (find 'rtl-find rt tline #t)
-            (find 'rbl-find rt bline #t))))
-
-
-(define (launder box*)
-  ;; we might be given a pict-convertable
-  ;; but set-pict-foo! isn't defined on those
-  (define box
-    (if (pict? box*)
-        box*
-        (pict-convert box*)))
-  (unless (pict-panbox box)
-    (panorama-box! box))
-  (let ([b (extend-pict box 0 0 0 0 0 #f)])
-    (set-pict-children! b null)
-    (set-pict-panbox! b (pict-panbox box))
-    ;; After laundering, we can't find the last-pos box.
-    ;; So create a new last-position box to preserve the
-    ;; original shape:
-    (let ([l (pict-last box)])
-      (set-pict-last! box #f) ; preserve invariants
-      (cond
-       [(not l) b]
-       [else
-        (let-values ([(x y) (lt-find box l)]
-                     [(l) (let loop ([l l])
-                            (if (pair? l)
-                                (if (null? (cdr l))
-                                    (car l)
-                                    (loop (cdr l)))
-                                l))])
-          (let ([b2 (blank (pict-width l) (pict-height l)
-                           (pict-ascent l) (pict-descent l))])
-            (use-last/unchecked
-             (pin-over b x y b2)
-             b2)))]))))
-
-(define (lift-above-baseline p n)
-  (let* ([dh (- (max 0 (- n (pict-descent p))))]
-         [do-a? (= (pict-height p)
-                   (+ (pict-ascent p) (pict-descent p)))]
-         [h2 (+ dh (pict-height p))]
-         [d2 (max 0 (- (pict-descent p) n))])
-    (make-pict (pict-draw p)
-               (pict-width p) h2
-               (if do-a?
-                   (- h2 d2)
-                   (pict-ascent p))
-               d2
-               (map (lambda (c)
-                      (make-child
-                       (child-pict c)
-                       (child-dx c)
-                       (+ dh (child-dy c))
-                       1 1
-                       0 0))
-                    (pict-children p))
-               #f
-               (pict-last p))))
-
-(define (drop-below-ascent p n)
-  (let* ([dh (- (max 0 (- n (pict-ascent p))))]
-         [do-d? (= (pict-height p)
-                   (+ (pict-ascent p) (pict-descent p)))]
-         [h2 (+ dh (pict-height p))]
-         [a2  (max 0 (- (pict-ascent p) n))])
-    (make-pict (pict-draw p)
-               (pict-width p) h2
-               a2
-               (if do-d?
-                   (- h2 a2)
-                   (pict-descent p))
-               (pict-children p)
-               #f
-               (pict-last p))))
-
-(define (baseless p)
-  (let ([p (lift-above-baseline p (pict-descent p))])
-    (drop-below-ascent p (- (pict-ascent p) (pict-height p)))))
-
-(define (refocus p c)
-  (let-values ([(x y) (find-lt p c)])
-    (let ([p (inset p
-                    (- x) (- y (pict-height p))
-                    (- (- (pict-width p) x (pict-width c)))
-                    (- (pict-height c) y))])
-      (make-pict (pict-draw p)
-                 (pict-width c) (pict-height c)
-                 (pict-ascent c) (pict-descent c)
-                 (pict-children p)
-                 #f
-                 (last* c)))))
-
-(define (panorama-box! p*)
-  (let* ([p (pict-convert p*)]
-         [bb (pict-panbox p)])
-    (if bb
-        (values (bbox-x1 bb) (bbox-y1 bb) (bbox-x2 bb) (bbox-y2 bb)
-                (bbox-ay bb) (bbox-dy bb))
-        (let loop ([x1 0][y1 0][x2 (pict-width p)][y2 (pict-height p)]
-                   [ay (- (pict-height p) (pict-ascent p))][dy (pict-descent p)]
-                   [l (pict-children p)])
-          (if (null? l)
-              (begin
-                (set-pict-panbox! p (make-bbox x1 y1 x2 y2 ay dy))
-                (values x1 y1 x2 y2 ay dy))
-              (let ([c (car l)])
-                (let-values ([(cx1 cy1 cx2 cy2 cay cdy) (panorama-box! (child-pict c))])
-                  (loop (min x1 (+ (* cx1 (child-sx c)) (child-dx c)))
-                        (min y1 (+ (* cy1 (child-sy c)) (child-dy c)))
-                        (max x2 (+ (* cx2 (child-sx c)) (child-dx c)))
-                        (max y2 (+ (* cy2 (child-sy c)) (child-dy c)))
-                        (max ay (+ (* cay (child-sy c)) (child-dy c)))
-                        (min dy (+ (* cdy (child-sy c)) (child-dy c)))
-                        (cdr l)))))))))
-
-(define (panorama p)
-  (let-values ([(x1 y1 x2 y2 ay dy) (panorama-box! p)])
-    (let ([h (- y2 y1)])
-      (place-over (blank (- x2 x1) h (- h ay) dy)
-                  (- x1) (- y2 (pict-height p))
-                  p))))
-
-(define (clip-descent b)
-  (let* ([w (pict-width b)]
-         [h (pict-height b)]
-         [d (pict-descent b)])
-    (extend-pict
-     b 0 (- d) 
-     0 0 (- d)
-     `(picture ,w ,(- h d)
-               (put 0 ,(- d) ,(pict-draw b))))))
-
-(define (clip-ascent b)
-  (let* ([w (pict-width b)]
-         [h (pict-height b)]
-         [a (pict-ascent b)])
-    (extend-pict
-     b 0 a
-     0 (- a) 0
-     `(picture ,w ,(- h a)
-               (put 0 0 ,(pict-draw b))))))
-
-(define (thickness mode b)
-  (let* ([w (pict-width b)]
-         [h (pict-height b)])
-    (extend-pict
-     b 0 0 0 0 0
-     `(picture ,w ,h
-               (thickness ,mode ,(pict-draw b))))))
-
-(define (thick b)            (thickness 'thicklines b))
-(define (thin  b)            (thickness 'thinlines  b))
-(define (line-thickness n b) (thickness n b))
-(define (line-style     n s) (thickness n s))
-
-(define inset
-  (case-lambda
-   [(box a) (inset box a a a a)]
-   [(box h v) (inset box h v h v)]
-   [(box l t r b)
-    (let ([w (+ l r (pict-width box))]
-          [h (+ t b (pict-height box))])
-      (extend-pict
-       box l b
-       (+ l r) t b
-       `(picture
-         ,w ,h
-         (put ,l ,b ,(pict-draw box)))))]))
-
-(define (use-last* p sub-p)
-  (use-last p (last* sub-p)))
-
-(define (last* sub-p)
-  ;; Either use `sub-p' for last or create a path though `sub-p'
-  ;; to the last of `sub-p' (in case the last of `sub-p' is also
-  ;; in other places within `p')
-  (let ([l (pict-last sub-p)])
-    (cond
-     [(not l) sub-p]
-     [(pair? l) (if (pict-path-element=? (car l) sub-p)
-                    l
-                    (cons sub-p l))]
-     [(pict-path-element=? l sub-p) sub-p]
-     [else (list sub-p l)])))
-
-(define (use-last p sub-p)
-  (if (let floop ([p p] [sub-p sub-p])
-        (or
-         (if (not (pair? sub-p))
-             (pict-path-element=? p sub-p)
-             (and (not (pair? (car sub-p)))
-                  (pict-path-element=? p (car sub-p))
-                  (or (null? (cdr sub-p))
-                      (floop p (cdr sub-p)))))
-            (ormap (lambda (c) (floop (child-pict c) sub-p))
-                   (pict-children p))))
-      (use-last/unchecked p sub-p)
-      (error 'use-last
-             "given new last-pict path: ~e not in the base pict: ~e"
-             sub-p
-             p)))
-
-(define (use-last/unchecked p sub-p)
-  (make-pict (pict-draw p)
-             (pict-width  p) (pict-height  p)
-             (pict-ascent p) (pict-descent p)
-             (list (make-child p 0 0 1 1 0 0))
-             #f
-             sub-p))
-
-
-(define dash-frame
-  (case-lambda
-   [(box) (dash-frame box default-seg)]
-   [(box seg)
-    (let* ([w (pict-width box)]
-           [h (pict-height box)])
-      (extend-pict
-       box 0 0 0 0 0
-       `(picture
-         ,w ,h
-         (put  0  0 ,(pict-draw box))
-         (put  0  0 ,(pict-draw (dash-hline w 0 seg)))
-         (put  0 ,h ,(pict-draw (dash-hline w 0 seg)))
-         (put  0  0 ,(pict-draw (dash-vline 0 h seg)))
-         (put ,w  0 ,(pict-draw (dash-vline 0 h seg))))))]))
-
-(define (frame box)
-  (let ([box (pict-convert box)])
-    (dash-frame box (max (pict-width box) (pict-height box)))))
-
-(define (dash-line width height rotate seg)
-  (let ([vpos (/ height 2)])
-    (make-pict
-     `(picture
-       ,@(rotate width height)
-       ,@(if (>= seg width)
-             `((put ,@(rotate 0 vpos) (line ,@(rotate 1 0) ,width)))
-             (let ()
-               (define seg*2 (* seg 2))
-               (define count (inexact->exact (truncate (/ width seg*2))))
-               (define remain/2 (/ (- width (* seg*2 count)) 2))
-               `((put ,@(rotate 0 vpos) (line ,@(rotate 1 0) ,remain/2))
-                 ,@(let loop ([count count] [pos remain/2])
-                     (if (zero? count)
-                         null
-                         (cons `(put ,@(rotate (+ pos seg) vpos) 
-                                     (line ,@(rotate 1 0) ,seg))
-                               (loop (sub1 count) (+ pos seg*2)))))
-                 (put ,@(rotate (- width remain/2) vpos)
-                      (line ,@(rotate 1 0) ,remain/2))))))
-     (car (rotate width height))
-     (cadr (rotate width height))
-     (cadr (rotate 0 height)) 0
-     null
-     #f
-     #f)))
-
-(define (rlist b a) (list a b))
-
-(define (hline width height)
-  (dash-line width height list width))
-
-(define (vline width height)
-  (dash-line height width rlist height))
-
-(define dash-hline
-  (case-lambda 
-    [(width height)     (dash-hline width height default-seg)]
-    [(width height seg) (dash-line  width height list seg)]))
-
-(define dash-vline
-  (case-lambda 
-    [(width height)     (dash-vline width  height default-seg)]
-    [(width height seg) (dash-line  height width  rlist seg)]))
-
-(define (oval box)
-  (let ([w (pict-width box)]
-        [h (pict-height box)])
-    (extend-pict
-     box 0 0 0 0 0
-     `(picture
-       ,w ,h
-       (put 0 0 ,(pict-draw box))
-       (put ,(/ w 2) ,(/ h 2) (oval "" ,w ,h))))))
-
-(define (oval/radius box r)
-  (let* ([w (pict-width box)]
-         [h (pict-height box)]
-         [rr (* 2 r)]
-         [lw (- w rr)]
-         [lh (- h rr)])
-    (extend-pict
-     box 0 0 0 0 0
-     `(picture
-       ,w ,h
-       (put 0 0 ,(pict-draw box))
-       (put ,r ,r (oval "[bl]" ,rr ,rr))
-       (put ,r 0 (line 1 0 ,lw))
-       (put ,(- w r) ,r (oval "[br]" ,rr ,rr))
-       (put ,w ,r (line 0 1 ,lh))
-       (put ,r ,(- h r) (oval "[tl]" ,rr ,rr))
-       (put ,r ,h (line 1 0 ,lw))
-       (put ,(- w r) ,(- h r) (oval "[tr]" ,rr ,rr))
-       (put ,0 ,r (line 0 1 ,lh))))))
-
-(define (big-circle d)
-  (let ([r (/ d 2)])
-    (picture
-     d d
-     `((curve 0 ,r ,r 0 0 0)
-       (curve ,r 0 ,d ,r ,d 0)
-       (curve ,d ,r ,r ,d ,d ,d)
-       (curve ,r ,d 0 ,r 0 ,d)))))
-
-(define (ghost box)
-  (let ([w (pict-width box)]
-        [h (pict-height box)])
-    (extend-pict
-     box 0 0 0 0 0
-     `(picture
-       ,w ,h))))
-
-(define-values (vl-append 
-                vc-append 
-                vr-append 
-                ht-append
-                hc-append
-                hb-append
-                htl-append
-                hbl-append)
-  (let ([make-append-boxes 
-         (lambda (wcomb hcomb fxoffset fyoffset rxoffset ryoffset 
-                        combine-ascent combine-descent)
-           (let ([do-append
-                  (lambda (sep args)
-                    (let append-boxes ([args args])
-                      (cond
-                       [(null? args) (blank)]
-                       [(null? (cdr args)) (pict-convert (car args))]
-                       [else
-                        (let* ([first (pict-convert (car args))]
-                               [rest (append-boxes (cdr args))]
-                               [w (wcomb (pict-width first) (pict-width rest) sep first rest)]
-                               [h (hcomb (pict-height first) (pict-height rest) sep first rest)]
-                               [fw (pict-width first)]
-                               [fh (pict-height first)]
-                               [rw (pict-width rest)]
-                               [rh (pict-height rest)]
-                               [fd1 (pict-ascent first)]
-                               [fd2 (pict-descent first)]
-                               [rd1 (pict-ascent rest)]
-                               [rd2 (pict-descent rest)]
-                               [dx1 (fxoffset fw fh rw rh sep fd1 fd2 rd1 rd2)]
-                               [dy1 (fyoffset fw fh rw rh sep fd1 fd2 rd1 rd2 h)]
-                               [dx2 (rxoffset fw fh rw rh sep fd1 fd2 rd1 rd2)]
-                               [dy2 (ryoffset fw fh rw rh sep fd1 fd2 rd1 rd2 h)])
-                          (make-pict
-                           `(picture 
-                             ,w ,h
-                             (put ,dx1
-                                  ,dy1
-                                  ,(pict-draw first))
-                             (put ,dx2
-                                  ,dy2
-                                  ,(pict-draw rest)))
-                           w h
-                           (combine-ascent fd1 rd1 fd2 rd2 fh rh h (+ dy1 fh) (+ dy2 rh))
-                           (combine-descent fd2 rd2 fd1 rd1 fh rh h (- h dy1) (- h dy2))
-                           (list (make-child first dx1 dy1 1 1 0 0)
-                                 (make-child rest dx2 dy2 1 1 0 0))
-                           #f
-                           (last* rest)))])))])
-             (let ([*-append (case-lambda
-                              [() (do-append 0 null)]
-                              [(sep . args)
-                               (if (number? sep)
-                                   (do-append sep args)
-                                   (do-append 0 (cons sep args)))])])
-               *-append)))]
-        [2max (lambda (a b c . rest) (max a b))]
-        [zero (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 . args) 0)]
-        [fv (lambda (a b . args) a)]
-        [sv (lambda (a b . args) b)]
-        [min2 (lambda (a b . args) (min a b))]
-        [max2 (lambda (a b . args) (max a b))]
-        [3+ (lambda (a b c . args) (+ a b c))]
-        [a-max (lambda (a b c first rest)
-                 (+ (max (pict-ascent first) (pict-ascent rest))
-                    (max (- (pict-height first) (pict-ascent first))
-                         (- (pict-height rest) (pict-ascent rest)))))]
-        [d-max (lambda (a b c first rest)
-                 (+ (max (pict-descent first) (pict-descent rest))
-                    (max (- (pict-height first) (pict-descent first))
-                         (- (pict-height rest) (pict-descent rest)))))]
-        [min-ad (lambda (a b oa ob ah bh h da db)
-                  (- h (max oa ob) (max (- ah oa a)
-                                        (- bh ob b))))]
-        [xmin-ad (lambda (a b oa ob ah bh h da db)
-                   (min (+ (- h da) a) (+ (- h db) b)))])
-    (values
-     (make-append-boxes 2max 3+ 
-                        zero (lambda (fw fh rw rh sep . a) (+ sep rh))
-                        zero zero 
-                        fv sv)
-     (make-append-boxes 2max 3+ 
-                        (lambda (fw fh rw rh sep . a) (/ (- (max fw rw) fw) 2))
-                        (lambda (fw fh rw rh sep . a) (+ sep rh))
-                        (lambda (fw fh rw rh sep . a) (/ (- (max fw rw) rw) 2))
-                        zero 
-                        fv sv)
-     (make-append-boxes 2max 3+ 
-                        (lambda (fw fh rw rh sep . a) (- (max fw rw) fw))
-                        (lambda (fw fh rw rh sep . a) (+ sep rh))
-                        (lambda (fw fh rw rh sep . a) (- (max fw rw) rw))
-                        zero 
-                        fv sv)
-     (make-append-boxes 3+ 2max
-                        zero
-                        (lambda (fw fh rw rh sep . a) (- (max fh rh) fh))
-                        (lambda (fw fh rw rh sep . a) (+ sep fw))
-                        (lambda (fw fh rw rh sep . a) (- (max fh rh) rh))
-                        xmin-ad xmin-ad)
-     (make-append-boxes 3+ 2max
-                        zero
-                        (lambda (fw fh rw rh sep . a) (/ (- (max fh rh) fh) 2))
-                        (lambda (fw fh rw rh sep . a) (+ sep fw))
-                        (lambda (fw fh rw rh sep . a) (/ (- (max fh rh) rh) 2))
-                        xmin-ad xmin-ad)
-     (make-append-boxes 3+ 2max 
-                        zero zero
-                        (lambda (fw fh rw rh sep . a) (+ sep fw)) zero
-                        xmin-ad xmin-ad)
-     (make-append-boxes 3+ a-max
-                        zero
-                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
-                          (- h fh (- (max fd1 rd1) fd1)))
-                        (lambda (fw fh rw rh sep . a) (+ sep fw))
-                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
-                          (- h rh (- (max fd1 rd1) rd1)))
-                        max2 min-ad)
-     (make-append-boxes 3+ d-max
-                        zero
-                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
-                          (- (max fd2 rd2) fd2))
-                        (lambda (fw fh rw rh sep . a) (+ sep fw))
-                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
-                          (- (max fd2 rd2) rd2))
-                        min-ad max2))))
-
-(define-values (lt-superimpose
-                lb-superimpose
-                lc-superimpose
-                ltl-superimpose
-                lbl-superimpose
-                rt-superimpose
-                rb-superimpose
-                rc-superimpose
-                rtl-superimpose
-                rbl-superimpose
-                ct-superimpose
-                cb-superimpose
-                cc-superimpose
-                ctl-superimpose
-                cbl-superimpose)
-  (let ([make-superimpose
-         (lambda (get-h get-v get-th name)
-           (lambda boxes*
-             (when (null? boxes*)
-               (error name "expected at least one argument, got none"))
-             (define boxes
-               (map
-                (lambda (p)
-                  (cond
-                    [(pict? p) p]
-                    [(pict-convertible? p)
-                     (pict-convert p)]
-                    [else
-                     (raise-argument-error
-                      name "all picts as arguments"
-                      (apply string-append (add-between (map (λ (x) (format "~e" x)) boxes*) " ")))]))
-                boxes*))
-             (let ([max-w (apply max (map pict-width boxes))]
-                   [max-h (apply max (map pict-height boxes))]
-                   [max-a (apply max (map pict-ascent boxes))]
-                   [max-a-complement (apply max (map (lambda (b) (- (pict-height b) (pict-ascent b)))
-                                                     boxes))]
-                   [max-d (apply max (map pict-descent boxes))]
-                   [max-d-complement (apply max (map (lambda (b) (- (pict-height b) (pict-descent b)))
-                                                     boxes))])
-               (let ([p (picture max-w (get-th max-h max-a max-d max-a-complement max-d-complement)
-                                 (map (lambda (box)
-                                        `(place ,(get-h max-w (pict-width box))
-                                                ,(get-v max-h (pict-height box)
-                                                        max-d (pict-descent box)
-                                                        max-a-complement (pict-ascent box))
-                                                ,box))
-                                      boxes))])
-                 ;; Figure out top and bottom baselines by finding the picts again, etc:
-                 (let ([ys (map (lambda (box)
-                                  (let-values ([(x y) (find-lt p box)])
-                                    y))
-                                boxes)])
-                   (let ([min-a (apply min (map (lambda (box y)
-                                                  (+ (- (pict-height p) y) (pict-ascent box)))
-                                                boxes ys))]
-                         [min-d (apply min (map (lambda (box y)
-                                                  (+ (- y (pict-height box)) (pict-descent box)))
-                                                boxes ys))])
-                     (make-pict (pict-draw p)
-                                (pict-width p) (pict-height p)
-                                min-a min-d
-                                (pict-children p)
-                                #f
-                                ;; Find bottomost, rightmost of old last picts to be the
-                                ;;  new last pict.
-                                (let ([subs (map (lambda (box)
-                                                   (let ([last (last* box)])
-                                                     (let-values ([(x y) (rb-find p last)])
-                                                       (list last x y))))
-                                                 boxes)])
-                                  (if (null? subs)
-                                      #f
-                                      (caar (sort subs
-                                                  (lambda (a b)
-                                                    (let ([ay (caddr a)]
-                                                          [by (caddr b)])
-                                                      (cond
-                                                       [(ay . > . by) #t]
-                                                       [(= ay by) ((cadr a) . > . (cadr b))]
-                                                       [else #f]))))))))))))))]
-        [norm (lambda (h a d ac dc) h)]
-        [tbase (lambda (h a d ac dc) (+ a ac))] 
-        [bbase (lambda (h a d ac dc) (+ d dc))] 
-        [lb (lambda (m v . rest) 0)]
-        [rt (lambda (m v . rest) (- m v))]
-        [tline (lambda (m v md d mac a) (- mac (- v a)))]
-        [bline (lambda (m v md d mac a) (- md d))]
-        [c (lambda (m v . rest) (/ (- m v) 2))])
-    (values
-     (make-superimpose lb rt norm 'lt-superimpose)
-     (make-superimpose lb lb norm 'lb-superimpose)
-     (make-superimpose lb c norm 'lc-superimpose)
-     (make-superimpose lb tline tbase 'ltl-superimpose)
-     (make-superimpose lb bline bbase 'lbl-superimpose)
-     (make-superimpose rt rt norm 'rt-superimpose)
-     (make-superimpose rt lb norm 'rb-superimpose)
-     (make-superimpose rt c norm 'rc-superimpose)
-     (make-superimpose rt tline tbase 'rtl-superimpose)
-     (make-superimpose rt bline bbase 'rbl-superimpose)
-     (make-superimpose c rt norm 'ct-superimpose)
-     (make-superimpose c lb norm 'cb-superimpose)
-     (make-superimpose c c norm 'cc-superimpose)
-     (make-superimpose c tline tbase 'ctl-superimpose)
-     (make-superimpose c bline bbase 'cbl-superimpose))))
-
-; TODO: element on stack fallthru error
-#;(define table
-  (case-lambda
-   [(ncol cells col-aligns row-aligns col-seps row-seps)
-    (let ([count (length cells)])
-      (unless (zero? (remainder count ncol))
-        (error 'table "cell count isn't divisble by the provided column count"))
-      (let* ([w ncol]
-             [h (/ count w)]
-             [cells (let rloop ([r h][cells cells][r-acc null])
-                      (if (zero? r)
-                          (list->vector (reverse r-acc))
-                          (let loop ([c w][cells cells][one-acc null])
-                            (if (zero? c)
-                                (rloop (sub1 r) cells (cons (list->vector (reverse one-acc)) r-acc))
-                                (loop (sub1 c) (cdr cells) (cons (pict-convert (car cells)) one-acc))))))]
-             [imp-list->vector (lambda (l n)
-                                 (let ([v (make-vector n)])
-                                   (let loop ([l l][p 0])
-                                     (unless (= n p)
-                                       (vector-set! v
-                                                    p
-                                                    (if (pair? l)
-                                                        (car l)
-                                                        l))
-                                       (loop (if (pair? l) (cdr l) l) (add1 p))))
-                                   v))]
-             [ralign (imp-list->vector row-aligns h)]
-             [calign (imp-list->vector col-aligns w)]
-             [rsep (imp-list->vector row-seps h)]
-             [csep (imp-list->vector col-seps w)]
-             [get-cell (lambda (c r) (vector-ref (vector-ref cells r) c))]
-             [nmap (lambda (f w)
-                     (let loop ([n w][acc null])
-                       (if (zero? n)
-                           acc
-                           (loop (sub1 n) (cons (f (sub1 n)) acc)))))]
-             [rowmap (lambda (f) (nmap f h))]
-             [colmap (lambda (f) (nmap f w))]
-             [superimposed-rows (list->vector
-                                 (rowmap (lambda (r)
-                                           (apply
-                                            (vector-ref ralign r)
-                                            (colmap (lambda (c) (get-cell c r)))))))]
-             [superimposed-cols (list->vector
-                                 (colmap (lambda (c)
-                                           (apply
-                                            (vector-ref calign c)
-                                            (rowmap (lambda (r) (get-cell c r)))))))])
-                                        ; No space after the last row/col
-        (vector-set! rsep (sub1 h) 0)
-        (vector-set! csep (sub1 w) 0)
-
-        (apply
-         vl-append
-         0
-         (rowmap
-          (lambda (r)
-            (vl-append
-             0
-             (apply
-              ht-append
-              0
-              (colmap (lambda (c)
-                        (ht-append
-                         0
-                         (let* ([cell (get-cell c r)]
-                                [sc (vector-ref superimposed-cols c)]
-                                [sr (vector-ref superimposed-rows r)]
-                                [w (pict-width sc)]
-                                [h (pict-height sr)])
-                           (let-values ([(x __) (find-lb sc cell)]
-                                        [(_  y) (find-lb sr cell)])
-                             (picture
-                              w h
-                              `((place ,x ,y ,cell)))))
-                         (blank (vector-ref csep c) 0)))))
-             (blank 0 (vector-ref rsep r))))))))]))
-
-(define (record title . fields)
-  (let* ([totalwidth (apply max (pict-width title) (map pict-width fields))]
-         [linespace (if (null? fields) 0 recordseplinespace)]
-         [totalheight (+ (pict-height title) (apply + (map pict-height fields))
-                         linespace)]
-         [title-y (- totalheight (pict-height title))]
-         [field-ys (let loop ([pos (- totalheight (pict-height title) linespace)]
-                              [fields fields])
-                     (if (null? fields)
-                         null
-                         (let* ([p (- pos (pict-height (car fields)))])
-                           (cons p
-                                 (loop p (cdr fields))))))])
-    (make-pict
-     `(picture
-       ,totalwidth ,totalheight
-       (put 0 0 (line 1 0 ,totalwidth))
-       (put 0 ,totalheight (line 1 0 ,totalwidth))
-       (put 0 0 (line 0 1 ,totalheight))
-       (put ,totalwidth 0 (line 0 1 ,totalheight))
-       (put 0 ,title-y ,(pict-draw title))
-       ,@(if (null? fields)
-             '()
-             `((put 0 ,(- totalheight (pict-height title) (/ linespace 2))
-                    (line 1 0 ,totalwidth))))
-       ,@(map (lambda (f p) `(put 0 ,p ,(pict-draw f)))
-              fields field-ys))
-     totalwidth totalheight
-     totalheight 0
-     (cons
-      (make-child title 0 title-y 1 1 0 0)
-      (map (lambda (child child-y) (make-child child 0 child-y 1 1 0 0)) fields field-ys))
-     #f
-     #f)))
-
-(define (picture* w h a d commands)
-  (error 'picture* "todo") ; TODO 
-  #;(let loop ([commands commands][translated null][children null])
-    (if (null? commands)
-        (make-pict
-         `(picture ,w ,h
-                   ,@(reverse translated))
-         w h a d
-         children
-         #f
-         #f)
-        (let ([c (car commands)]
-              [rest (cdr commands)])
-          (unless (and (pair? c) (symbol? (car c)))
-            (error 'picture "bad command: ~a" c))
-          (case (car c)
-            [(connect) (loop rest
-                             (append (apply connect (cdr c))
-                                     translated)
-                             children)]
-            [(dconnect) (loop rest
-                              (let ([x (cadr c)]
-                                    [y (caddr c)]
-                                    [dx (cadddr c)]
-                                    [dy (list-ref c 4)])
-                                (append (connect x y (+ x dx) (+ y dy)
-                                                 (if (null? (list-tail c 5))
-                                                     #t
-                                                     (list-ref c 5)))
-                                        translated))
-                              children)]
-            [(connect~y) (loop rest
-                               (append (apply ~connect 'x (cdr c))
-                                       translated)
-                               children)]
-            [(connect~x) (loop rest
-                               (append (apply ~connect 'y (cdr c))
-                                       translated)
-                               children)]
-            [(connect~xy) (loop rest
-                                (append (apply ~connect 'r (cdr c))
-                                        translated)
-                                children)]
-            [(curve) (loop rest
-                           (let ([x1 (cadr c)]
-                                 [y1 (caddr c)]
-                                 [x2 (cadddr c)]
-                                 [y2 (list-ref c 4)]
-                                 [xm (list-ref c 5)]
-                                 [ym (list-ref c 6)]
-                                 [d (if (null? (list-tail c 7))
-                                        1.0
-                                        (list-ref c 7))])
-                             (let ([p (if (and d (>= d 0))
-                                          (inexact->exact (floor (* d (sqrt (+ (expt (- x2 x1) 2) (expt (- y2 y1) 2))))))
-                                          #f)])
-                               (if (and (= x1 x2) (= y1 y2))
-                                   translated
-                                   (cons `(qbezier ,p ,x1 ,y1 ,xm ,ym ,x2 ,y2)
-                                         translated))))
-                           children)]
-            [(place) (let ([x (cadr c)]
-                           [y (caddr c)]
-                           [p (cadddr c)])
-                       (loop rest
-                             (cons
-                              `(put ,x ,y ,(pict-draw p))
-                              translated)
-                             (cons
-                              (make-child p x y 1 1 0 0)
-                              children)))]
-            [else (loop rest (cons c translated) children)])))))
-
-(define (picture w h commands)
-  (picture* w h h 0 commands))
-
-(define (cons-picture p commands)
-  (picture
-   (pict-width p) (pict-height p)
-   (cons
-    `(place 0 0 ,p)
-    commands)))
-
-(define (cons-picture* p commands)
-  (picture*
-   (pict-width p) (pict-height p)
-   (pict-ascent p) (pict-descent p)
-   (cons
-    `(place 0 0 ,p)
-    commands)))
-
-(define (place-it who flip? base dx dy target)
-  (let-values ([(dx dy)
-                (cond
-                 [(and (number? dx) (number? dy))
-                  (values dx (- (pict-height base) dy))]
-                 [(and (pict-path? dx)
-                       (procedure? dy)
-                       (procedure-arity-includes? dy 2))
-                  (if flip?
-                      (let-values ([(dx dy) (dy base dx)])
-                        (values dx (- (pict-height base) dy)))
-                      (dy base dx))]
-                 [else
-                  (error who
-                         "expects two numbers or a sub-pict and a find procedure")])])
-    (use-last/unchecked (cons-picture*
-                         base
-                         `((place ,dx ,(- dy (pict-height target)) ,target)))
-                        (last* base))))
-
-(define (place-over base dx dy target)
-  (place-it 'place-over #f base dx dy target))
-(define (place-under base dx dy target)
-  (cc-superimpose
-   (place-it 'place-under #f (ghost base) dx dy target)
-   base))
-
-(define (pin-over base dx dy target)
-  (place-it 'pin-over #t base dx dy target))
-(define (pin-under base dx dy target)
-  (cc-superimpose
-   (place-it 'pin-under #t (ghost base) dx dy target)
-   (launder base)))
-
-(define black-and-white
-  (make-parameter #f
-                  (lambda (x)
-                    (and x #t))))
-
-
-(define (colorize p color)
-  (unless (or (string? color)
-              (color?  color)
-              (and (list? color) (= 3 (length color)) (andmap byte? color)))
-    (error 'colorize "expected a color, given ~e" color))
-  (let ([color (if (list? color)
-                   (apply make-color color) 
-                   color)])
-    (if (black-and-white)
-        p
-        (extend-pict 
-         p 0 0 0 0 0
-         `(color ,color ,(pict-draw p))))))
-
-(define (optimize s)
-  (let o-loop ([s s][dx 0][dy 0])
-    (if (string? s)
-        s
-        (let ([tag (car s)])
-          (case tag
-            [(picture)
-             (list* 'picture (cadr s) (caddr s)
-                    (map optimize (cdddr s)))]
-            [(color)
-             (let ([next (caddr s)])
-               (if (and (pair? next) (eq? (car next) 'color))
-                   (optimize next)
-                   (list* 'color (cadr s) 
-                          (list 'put dx dy (optimize next)))))]
-            [(thickness)
-             (let ([t (cadr s)]
-                   [p (caddr s)])
-               (list 'put dx dy 
-                     (list 'thickness t 
-                           (optimize p))))]
-            [(put)
-             (let ([x (cadr s)]
-                   [y (caddr s)]
-                   [next (cadddr s)])
-               (if (and (pair? next) (eq? (car next) 'picture))
-                                        ; optmize put-picture to just contents ...
-                   (cons 'begin (map (lambda (s) (o-loop s (+ x dx) (+ y dy))) (cdddr next)))
-                                        ; normal
-                   (list 'put (+ x dx) (+ y dy) (optimize next))))]
-            [(qbezier)
-             (let ([x1 (list-ref s 2)]
-                   [y1 (list-ref s 3)]
-                   [xm (list-ref s 4)]
-                   [ym (list-ref s 5)]
-                   [x2 (list-ref s 6)]
-                   [y2 (list-ref s 7)]
-                   [p (list-ref s 1)])
-               (list 'qbezier p
-                     (+ x1 dx) (+ y1 dy)
-                     (+ xm dx) (+ ym dy)
-                     (+ x2 dx) (+ y2 dy)))]
-            [(frame)
-             (list 'frame (optimize (cadr s)))]
-            [(colorbox)
-             (list 'colorbox (cadr s) (optimize (caddr s)))]
-            [(line vector dirline dirvector circle circle* make-box oval prog) s]
-            [else (error 'optimize "bad tag: ~s" tag)])))))
-
-(define (fixup-top s)
-  (cond
-   [(and (pair? s) (eq? (car s) 'color))
-    ;; Drop initial put
-    (list* 'color (cadr s) (caddr (cdddr s)))]
-   [(and (pair? s) (eq? (car s) 'put))
-    ;; Wrap initial put (from thickness) in a pair of braces
-    `(local ,(cadddr s))]
-   [else
-    ;; Do nothing
-    s]))
-
-(define (prepare-for-output s)
-  (fixup-top (optimize (pict-draw s))))
-
-(define (pict->command-list s)
-  (let output ([s (prepare-for-output s)])
-    (if (string? s)
-        (list s)
-        (let ([tag (car s)])
-          (case tag
-            [(local)
-             (output (cadr s))]
-            [(begin)
-             (apply append (map output (cdr s)))]
-            [(picture)
-             (apply append (map output (cdddr s)))]
-            [(color)
-             `((with-color ,(cadr s) ,(output (cddr s))))]
-            [(thickness)
-             `((with-thickness ,(cadr s) ,(output (caddr s))))]
-            [(put)
-             `((offset ,(cadr s) ,(caddr s) ,(output (cadddr s))))]
-            [(qbezier)
-             `((bezier ,@(cddr s)))]
-            [(line vector)
-             `((,tag ,(cadr s) ,(caddr s) ,(cadddr s)))]
-            [(circle circle*)
-             `((,tag ,(cadr s)))]
-            [(frame)
-             `((frame ,(output (cadr s))))]
-            [(colorbox)
-             `((colorbox ,(cadr s) ,(output (caddr s))))]
-            [(oval)
-             `((oval ,(caddr s) ,(cadddr s) ,(cadr s)))]
-            [(make-box)
-             `((make-box ,(cadr s) ,(caddr s) ,(cadddr s) ,(car (cddddr s))))]
-            [(prog)
-             `((prog ,(cadr s) ,(caddr s)))]
-            [else (error 'pict->commands "bad tag: ~s" tag)])))))
-
-
-(define convert-bounds-padding
-  (make-parameter
-   (list 3 3 3 3)
-   (lambda (x)
-     (unless (and (list? x) (= 4 (length x)) (andmap real? x)
-                  (andmap (lambda (i) (not (negative? i))) x))
-       (raise-argument-error 'convert-bounds-padding
-                             "(list/c (>=/c 0) (>=/c 0) (>=/c 0) (>=/c 0))"
-                             x))
-     x)))
-
-(define (dc f w h [a h] [d 0])
-  (make-pict `(prog ,f ,h) w h a d null #f #f))
-
-(define prog-picture dc)
-
-
-(define (memq* a l)
-  (if (pair? l)
-      (or (eq? (car l) a)
-          (memq* a (cdr l)))
-      #f))
-
-
-(define text
-  (case-lambda
-   [(string)                  (text string '()   12)]
-   [(string style)            (text string style 12)]
-   [(string style size)       (text string style size 0)]
-   [(string style size angle) (not-caps-text string style size angle)
-    ; todo: we need to measure the size of the text
-    ;       also we need to a way to represent fonts.
-
-    #;(if (il-memq 'caps style)
-        (begin
-          (unless (zero? angle) 
-            (error 'text "the style cannot include 'caps with a non-zero angle"))
-          (caps-text str (il-remq 'caps style) size))
-        (not-caps-text str style size angle))]))
-
-
-
-(define (il-memq sym s)
-  (and (pair? s)
-       (or (eq? sym (car s))
-           (il-memq sym (cdr s)))))
-
-(define (il-remq sym s)
-  (if (pair? s)
-      (if (eq? sym (car s))
-          (cdr s)
-          (cons (car s) (il-remq sym (cdr s))))
-      s))
-
-(define the-dc-used-for-text-size #f)
-
-(define (dc-for-text-size)
-  (cond
-    [the-dc-used-for-text-size the-dc-used-for-text-size]
-    [else
-     (define canvas (js-create-element "canvas"))
-     (js-set-canvas-width!  canvas 1024)
-     (js-set-canvas-height! canvas 1024)
-     (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
-     (define dc (canvas-context->dc ctx))
-     dc]))
-
-(define (not-caps-text string orig-style size angle)
-  ; Notes:
-  ;   strokeText - draws text outline directly
-  ;   fillText   - draws test filled  directly
-  ; They accept a string to draw and an x,y.
-  ; Use ctx.measureText(text)
-  ; then the relevant properties are:
-  ;   - actualBoundingBoxLeft
-  ;   - actualBoundingBoxRight
-  ;   - actualBoundingBoxAscent
-  ;   - actualBoundingBoxDescent
-
-  ; Note: We need the font at pict creation time in order
-  ;       to measure the bounding box of the text.
-  ;       That is, we can't get the font from `ctx` since
-  ;       the drawing context isn't available until 
-  ;       render time.  
-  (let ([font
-         ; Find font based on `orig-style`.
-         (let loop ([style orig-style])
-           (cond
-             [(null? style) ; null means default
-              the-default-font
-              #;(send the-font-list find-or-create-font
-                      ;    size family   style   weight  underline? smoothing size-in-pixels?  hinting
-                      #;"" size 'default 'normal 'normal #f         'default  #t               'unaligned)]
-             [(font? style)
-              font]
-             [(memq style families)
-              (font style 12 'normal 'normal 'normal #f)]
-             [(string? style)
-              style] ; assume it is a legal css font name
-             ; TODO
-             #;[(and (pair? style)
-                     (string? (car style))
-                     (memq (cdr style) families))              
-                (send the-font-list find-or-create-font
-                      size (car style) (cdr style) 'normal 'normal #f 'default #t 'unaligned)]
-             ; todo
-             #;[(and (pair? style)
-                     (or (memq (car style)
-                               '(superscript
-                                 subscript
-                                 large-script
-                                 bold italic
-                                 aligned unaligned))
-                         (and (pair? (car style))
-                              (eq? (caar style) 'weight))))
-                
-                (let ([font (loop (cdr style))]
-                      [style (car style)])
-                  (cond
-                    [(eq? style 'bold)
-                     (extend-font font
-                                  (send font get-point-size)
-                                  (send font get-style)
-                                  'bold
-                                  (send font get-hinting))]
-                    [(and (pair? style)
-                          (eq? (car style) 'weight))
-                     (extend-font font
-                                  (send font get-point-size)
-                                  (send font get-style)
-                                  (cdr style)
-                                  (send font get-hinting))]
-                    [(eq? style 'italic)
-                     (extend-font font
-                                  (send font get-point-size)
-                                  'italic
-                                  (send font get-weight)
-                                  (send font get-hinting))]
-                    [(or (eq? style 'aligned)
-                         (eq? style 'unaligned))
-                     (extend-font font
-                                  (send font get-point-size)
-                                  (send font get-style)
-                                  (send font get-weight)
-                                  style)]
-                    [else font]))]
-             #;[(and (pair? style)
-                     (memq (car style) '(combine no-combine outline)))
-                (loop (cdr style))]
-             #;[(and (pair? style)
-                     (is-a? (car style) color%))
-                (loop (cdr style))]
-             [else (raise-type-error 'text "style" orig-style)]))]
-        ; combine? (i.e. use kerning or ligatures?)
-        #;[combine?      (let loop ([style orig-style])
-                           (cond
-                             [(eq? style 'modern)           #f]
-                             [(not (pair? style))           #t]
-                             [(eq? (car style) 'combine)    #t]
-                             [(eq? (car style) 'no-combine) #f]
-                             [else
-                              (loop (cdr style))]))]
-        #;[sub?          (memq* 'subscript    orig-style)]
-        #;[sup?          (memq* 'superscript  orig-style)]
-        #;[large-script? (memq* 'large-script orig-style)]
-        #;[outline?      (memq* 'outline      orig-style)]
-        #;[color         (let loop ([style orig-style])
-                           (cond
-                             [(not (pair? style)) #f]
-                             [(is-a? (car style) color%) 
-                              (resolve-color (car style))]
-                             [else (loop (cdr style))]))])
-    (let (#;[s-font (if (or sub? sup?)
-                        (extend-font font
-                                     (floor (* (if large-script?
-                                                   85/100
-                                                   6/10)
-                                               (send font get-point-size)))
-                                     (send font get-style)
-                                     (send font get-weight)
-                                     (send font get-hinting))
-                        font)]
-          #;[dc (dc-for-text-size)])
-      #;(unless dc
-          (error 'text "no dc<%> object installed for sizing"))
-      
-      
-      (let-values ([(w h   ; width, height
-                       d   ; distance from base line to bottom of descender
-                       s)  ; extra vertical space (included in height, often zero)
-                    (values 11 22 0 0) ; todo
-                    #;(with-text-scale
-                      dc
-                      (lambda ()
-                        (send dc get-text-extent string s-font combine?)))])
-        
-        (define (make-draw adj-x adj-y angle)          
-          ; todo get path from text
-          #;(define p 
-              (and outline?
-                   (let ([p (new dc-path%)])
-                     (send p text-outline
-                           s-font string 0 0 combine?)
-                     (unless (zero? angle)
-                       (send p rotate angle))
-                     p)))
-          (lambda (dc x y)
-            (displayln (list "draw-text: " string))
-            #;(let ([f (send dc get-font)])
-              (define dest-x (adj-x x))
-              (define dest-y (adj-y y))
-              (cond
-                [outline?
-                 (define pn (and color (send dc get-pen)))
-                 (when color (send dc set-pen color (send pn get-width) (send pn get-style)))
-                 (send dc draw-path p dest-x dest-y)
-                 (when color (send dc set-pen pn))]
-                [else
-                 (define fg (and color (send dc get-text-foreground)))
-                 (when color (send dc set-text-foreground color))
-                 (send dc set-font s-font)
-                 (send dc draw-text string
-                       dest-x dest-y
-                       combine? 0 angle)
-                 (when fg (send dc set-text-foreground fg))
-                 (send dc set-font f)]))))
-
-        ;; Normal case: no rotation
-        (prog-picture (make-draw (lambda (x) x)
-                                 (lambda (y) y)
-                                 0)
-                      w h (- h d) d)
-
-        #;(if (or sub? sup?)
-            (let-values ([(ww wh wd ws) (with-text-scale
-                                          dc
-                                          (lambda ()
-                                            (send dc get-text-extent "Wy" font)))])
-              ; note: prog-picture = (dc draw w h [a d])
-              (prog-picture (make-draw
-                             (lambda (x) x)
-                             (lambda (y) (if sub?
-                                             (+ y
-                                                (if large-script?
-                                                    (+ (* (- wh wd ws) 4/10)
-                                                       (- ws s))
-                                                    (- wh h)))
-                                             (+ y
-                                                (if large-script?
-                                                    (* (- wh wd ws) -3/10)
-                                                    0))))
-                             0)
-                            w wh (- wh wd) wd))
-            (if (zero? angle)
-                ;; Normal case: no rotation
-                (prog-picture (make-draw (lambda (x) x)
-                                         (lambda (y) y)
-                                         0)
-                              w h (- h d) d)
-                ;; Rotation case. Need to find the bounding box.
-                ;; Calculate the four corners, relative to top left as origin:
-                (let* ([tlx 0]
-                       [tly 0]
-                       [ca (cos angle)]
-                       [sa (sin angle)]
-                       [trx (* w ca)]
-                       [try (- (* w sa))]
-                       [brx (+ trx (* h sa))]
-                       [bry (- try (* h ca))]
-                       [blx (* h sa)]
-                       [bly (- (* h ca))]
-                       ;;min-x and min-y must be non-positive,
-                       ;; since tlx and tly are always 0
-                       [min-x (min tlx trx blx brx)]
-                       [min-y (min tly try bly bry)])
-                  (let ([pw (- (max tlx trx blx brx) min-x)]
-                        [ph (- (max tly try bly bry) min-y)]
-                        [dx (cond
-                              [(and (positive? ca) (positive? sa)) 0]
-                              [(positive? ca) (- (* h sa))]
-                              [(positive? sa) (- (* w ca))]
-                              [else (+ (- (* w ca)) (- (* h sa)))])]
-                        [dy (cond
-                              [(and (positive? ca) (negative? sa)) 0]
-                              [(positive? ca) (* w sa)]
-                              [(negative? sa) (- (* h ca))]
-                              [else (+ (- (* h ca)) (* w sa))])])
-                    (prog-picture (make-draw (lambda (x) (+ x dx))
-                                             (lambda (y) (+ y dy))
-                                             angle)
-                                  pw ph ph 0)))))))))
-
-
-(define (linewidth n p) (line-thickness n p))
-#;(define (linestyle n p) 
-  (unless (memq n '(transparent solid xor hilite 
-                                dot long-dash short-dash dot-dash 
-                                xor-dot xor-long-dash xor-short-dash 
-                                xor-dot-dash))
-    (raise-type-error 'linestyle "style symbol" n))
-  (line-style n p))
-
-#;(define connect
-  (case-lambda
-   [(x1 y1 x2 y2) (connect x1 y1 x2 y2 #f)]
-   [(x1 y1 x2 y2 arrow?) (~connect 'r +inf.0 x1 y1 x2 y2 arrow?)]))
-
-#;(define ~connect 
-  (case-lambda
-   [(exact close-enough x1 y1 x2 y2) (~connect exact close-enough x1 y1 x2 y2 #f)]
-   [(exact close-enough x1 y1 x2 y2 arrow?)
-    `((put ,x1 ,y1 (,(if arrow? 'vector 'line) ,(- x2 x1) ,(- y2 y1) #f)))]))
-
-
-(define (render dc h+top l dx dy)
-  (define b&w? #f)
-  
-  (let loop ([dx dx] [dy dy] [l l])   ; l is a list of commands
-    (unless (null? l)
-      ; first command
-      (let ([x (car l)]) ; x is the first command
-        (js-log (format "render: ~a" x))        
-        (if (string? x)
-            (error 'draw-pict "how did a string get here?: ~s" x)
-            (case (car x)
-              [(offset) (loop (+ dx (cadr x))
-                              (+ dy (caddr x))
-                              (cadddr x))]
-              ; The format of the old LaTeX line command is:
-              ;     (line x_run y_rise travel)
-              ; The pair (x_run, y_rise) gives the slope and travel is delta-x.
-              [(line vector)
-               (let ([xs  (cadr x)]
-                     [ys  (caddr x)]
-                     [len (cadddr x)])
-                 (let ([mx  (if len (abs (if (zero? xs) ys xs)) 1)]
-                       [len (or len 1)])
-                   (let ([x0 dx]
-                         [y0 (- h+top dy)]
-                         [x1 (+ dx (* (/ xs mx) len))]
-                         [y1 (- h+top (+ dy (* (/ ys mx) len)))])
-                     (case (car x)
-                       [(line)   (begin
-                                   (dc 'begin-path)
-                                   (dc 'move-to x0 y0)
-                                   (dc 'line-to x1 y1)
-                                   (dc 'stroke))]
-                       [(vector) (begin ; todo - add arrow
-                                   (dc 'begin-path)
-                                   (dc 'move-to x0 y0)
-                                   (dc 'line-to x1 y1)
-                                   (dc 'stroke))]))))]
-              
-              [(circle circle*)
-               (let ([size (cadr x)])
-                 (dc 'ellipse
-                     (- dx (/ size 2)) (- h+top dy (/ size 2))
-                     size size))]
-              [(oval) ; unfilled rounded rectangle
-               ; This a rectangle with rounded corners
-               ; roundRect(x, y, width, height, radii)
-               (let ([w (cadr  x)]
-                     [h (caddr x)])
-                 (let ([rx (-       dx (/ w 2))]
-                       [ry (- h+top dy (/ h 2))])
-                   (dc 'roundRect dx dy w h 5)))] ; todo - what should go here instead of 5?
-
-                 ;; (send cr set-rectangle
-                 ;;       (+ rx (* l (cadr x)))
-                 ;;       (+ ry (* t (caddr x)))
-                 ;;       (* (- r l) (cadr x))
-                 ;;       (* (- b t) (caddr x)))
-               
-                 ;; (let ([b  (get-brush)]
-                 ;;       [rx (- dx (/ (cadr x) 2))]
-                 ;;       [ry (- h+top dy (/ (caddr x) 2))])
-                 ;;   (set-brush (find-or-create-brush "BLACK" 'transparent))
-                 ;;   (let ([part (cadddr x)]
-                 ;;         [cr (send dc get-clipping-region)]
-                 ;;         [set-rect (lambda (l t r b)
-                 ;;                     (let ([cr (make-object region% dc)])
-                 ;;                       (send cr set-rectangle
-                 ;;                             (+ rx (* l (cadr x)))
-                 ;;                             (+ ry (* t (caddr x)))
-                 ;;                             (* (- r l) (cadr x))
-                 ;;                             (* (- b t) (caddr x)))
-                 ;;                       cr))])
-                 ;;     (send dc set-clipping-region
-                 ;;           (cond
-                 ;;             [(string=? part "[l]")
-                 ;;              (set-rect 0 0 0.5 1.0)]
-                 ;;             [(string=? part "[tl]")
-                 ;;              (set-rect 0 0 0.5 0.5)]
-                 ;;             [(string=? part "[tr]")
-                 ;;              (set-rect 0.5 0 1.0 0.5)]
-                 ;;             [(string=? part "[r]")
-                 ;;              (set-rect 0.5 0 1.0 1.0)]
-                 ;;             [(string=? part "[bl]")
-                 ;;              (set-rect 0 0.5 0.5 1.0)]
-                 ;;             [(string=? part "[br]")
-                 ;;              (set-rect 0.5 0.5 1.0 1.0)]
-                 ;;             [else cr]))
-                 ;;     (send dc draw-rounded-rectangle
-                 ;;           rx ry
-                 ;;           (cadr x) (caddr x)
-                 ;;           (if (string=? part "") -0.2 -0.5))
-                 ;;     (send dc set-clipping-region cr)
-                 ;;     (set-brush b)))]
-              [(bezier)
-               ; note:  [num] (x0,y0) (x1,y1) (x2,y2)
-               ;   num is the number of points to compute
-               ;   curve starts in (x0,y0) and ends in (x2,y2)
-               ;   qbezier = quadratic bezier
-               (let ([x1 (list-ref x 1)]
-                     [y1 (list-ref x 2)]
-                     [x2 (list-ref x 3)]
-                     [y2 (list-ref x 4)]
-                     [x3 (list-ref x 5)]
-                     [y3 (list-ref x 6)])
-                 (js-log (format "bezier: ~a" x))
-                 (dc 'begin-path)
-                 (dc 'move-to (+ dx x1) (- h+top (+ dy y1)))
-                 (dc 'quadratic-curve-to 
-                     (+ dx x2) (- h+top (+ dy y2))
-                     (+ dx x3) (- h+top (+ dy y3)))
-                 (dc 'stroke))]
-              [(with-color)
-               (if b&w?
-                   (loop dx dy (caddr x))
-                   (let ([c (second x)])
-                     (define c (if (string? c) c (color->string c)))
-                     (let ([old-stroke     (dc 'stroke-style)]
-                           [old-fill       (dc 'fill-style)])                           
-                       ; we set
-                       ;  1) stroke color
-                       ;  2) brush to solid color
-                       ;  3) text color
-                       (dc 'stroke-style c)
-                       (dc 'fill-style   c)                       
-                       (loop dx dy (caddr x))
-                       ; reset colors
-                       (dc 'stroke-style old-stroke)
-                       (dc 'fill-style   old-fill))))]               
-              [(with-thickness)
-               (let ([w (second x)])
-                 (let ([old-w (dc 'line-width)])
-                   (dc 'line-width w)
-                   (loop dx dy (caddr x))
-                   (dc 'line-width old-w)))]
-              [(prog)
-               ((cadr x) dc dx (- h+top dy (caddr x)))]
-              [else (error 'render "unknown command: ~a\n" x)])))
-      ; remaining commands
-      (loop dx dy (cdr l)))))
-  
-
-
-(define (make-pict-drawer p)
-  (let ([cmds (pict->command-list p)]
-        [h    (pict-height p)])
-    (js-log (format "cmds: ~a" cmds))
-    (lambda (dc dx dy)
-      (render dc (+ h dy)
-              cmds
-              dx 0))))
-
-(define (draw-pict p dc dx dy)
-  ((make-pict-drawer p) dc dx dy))
-
-(js-log "bar")
-; (js-log (format "~a" (blank 10)))
-; (js-log (format "~a" (text "foo")))
-
-; (js-log (format "~a" (hc-append (blank 10) (text "foo"))))
-
-
-; (js-log (format "~a" (dash-frame (blank 10))))
-
-; (js-log (format "~a" (make-font 'sans-serif)))
-
-
-; (make-font 'sans-serif)
-
-; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
-
+;; The function `canvas-context->dc` produces a function that
+;; receives drawing commands and executes then in the given context.
+
+;; Example:
+;;    (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))  
+;;    (define dc (canvas-context->dc ctx))
+;;    (dc 'move-to x y)
+
+;; The drawing commands are the same as the method names used in JavaScript.
+;; See "MDN Canvas" for documentation.
 
 (define (canvas-context->dc ctx)
   (define (to-string x)
@@ -2395,6 +763,8 @@
       [(list 'fill-style val)
        ; <color>, CanvasGradient, CanvasPattern
        (js-set-canvas2d-fill-style! ctx (to-string val))]
+      [(list 'font)
+       (js-canvas2d-font ctx)]
       [(list 'font val)
        (js-set-canvas2d-font! ctx (to-string val))]
       [(list 'font-kerning val)
@@ -2732,43 +1102,1964 @@
        (js-canvas2d-translate ctx (to-real x) (to-real y))]
       [else
        (error 'canvas-context->dc "unknown canvas command: ~a" args)])))
-      
 
-#;(define (make-command-drawer ctx)
-  (define dc (canvas-context->dc ctx))
-  (define (draw . args)
-    (unless (equal? (length args) 1)
-      (error 'draw "expected only one argument, got: ~a" args))
-    (define command (car args))
 
-    (js-log (format "draw: ~a" command))
-    
-    (match command 
-      [(list 'line x0 y0 x1 y1)
-       (dc 'begin-path)
-       (dc 'move-to x0 y0)
-       (dc 'line-to x1 y1)
-       (dc 'stroke)]
-      [(list 'with-thickness w cmds)
-       ; #f transparent
-       ; 0  as thin as possible   ; ignored by js linewidth
-       (js-log w)
-       #;(js-log (format "~a" command))
-       (dc 'line-width w)
-       #;(js-log cmds)
-       (for-each draw cmds)]
-      [(list 'with-color c cmds)
-       #;(js-log (format "~a" command))
-       (dc 'stroke-style (color->string c))
-       (for-each draw cmds)]
+;;;
+;;; Pict
+;;;
 
-      #;[(list 'offset x y cmds)
-       (dc 'move-to x y)
-       (for-each draw cmds)]
-      [_
-       (error 'command-drawer "unknown drawing command: ~a" command)]))    
-  draw)
-    
+(struct pict (draw       ; drawing instructions
+              width      ; total width
+              height     ; total height >= ascent + desecnt
+              ascent     ; portion of height above top baseline
+              descent    ; portion of height below bottom baseline
+              children   ; list of child records
+              panbox     ; panorama box, computed on demand
+              last)      ; a descendent for the bottom-right
+  #:extra-constructor-name make-pict
+  #:mutable #:transparent)
+
+
+(struct child (pict dx dy sx sy sxy syx)
+  #:extra-constructor-name make-child
+  #:transparent)
+
+(struct bbox  (x1 y1 x2 y2 ay dy)
+  #:extra-constructor-name make-bbox
+  #:transparent)
+
+
+;; The `draw` field of `pict` contains the drawing information in an internal format.
+;; To draw a `pict` the internal format is converted into a "pict drawer", which
+;; is a function that receives a drawing context `dc` and a point (dx,dy) which
+;; is the upper, left corner to place the pict.
+
+(define (draw-pict p dc dx dy)
+  ((make-pict-drawer p) dc dx dy))
+
+(define (make-pict-drawer p)
+  (let ([cmds (pict->command-list p)]
+        [h    (pict-height p)])
+    (js-log (format "cmds: ~a" cmds))
+    (lambda (dc dx dy)
+      (render dc (+ h dy)
+              cmds
+              dx 0))))
+
+;; The list of commands in the internal format originate
+;; from the LaTeX picture environment.
+
+;;     https://latexref.xyz/picture.html
+
+;;  (picture   width height command ...)                                    
+;;  (local     command ....)                                                
+;;  (begin     commands commands ...)                                       
+;;  (color     color command ...)         ; pen color                       
+;;  (thickness width command ...)         ;                                 
+;;  (put       x y command ...)           ; place contents at (x,y)         
+;;  (qbezier   num x1 y1 x2 y2 x3 y3)     ; quadratic Bezier curve          
+;;  (line      x_run y_rise travel)       ; line segment                    
+;;  (vector    x_run y_rise travel)       ; arrow                           
+;;  (circle    x y)                       ; circle                          
+;;  (circle*   x y)                       ; filled circle                   
+;;  (make-box  w h position text)         ;                                 
+;;  (frame     commdands)                 ; puts contents in a box          
+;;  (colorbox  box commands)              ; same, but background is colored 
+;;  (oval      w h commands)              ; rounded rectangle
+;;  (prog ??)
+;;                                                                          
+;; where
+;;   position is one of t, b, l, r
+
+
+;; The pict `blank` draws nothing when rendered, but takes up space
+;; when combined with other picts.
+
+(define blank 
+  (case-lambda
+   [()        (blank 0 0 0)]
+   [(s)       (blank s s)]
+   [(w h)     (blank w h 0)]
+   [(w a d)   (make-pict `(picture ,w ,(+ a d)) w (+ a d) a d null #f #f)]
+   [(w h a d) (make-pict `(picture ,w ,h)       w h       a d null #f #f)]))
+
+;; As we will see, most pict constructors use `extend-pict` (defined below),
+;; but `blank` isn't the only constructor, that uses `make-pict` directly.
+
+;; The functions `lift-above-baseline`, `drop-below-ascent` and `baseless`
+;; all 
+
+;; (drop-below-ascent p n)
+;;     For backwards compatibility.
+;;     Use drop-top-relative-to-ascent instead.
+;;
+;;     Drops pict relative to its ascent line, extending
+;;     the bounding box height if necessary.
+(define (drop-below-ascent p n)
+  (let* ([dh    (- (max 0 (- n (pict-ascent p))))]
+         [do-d? (= (pict-height p)
+                   (+ (pict-ascent p) (pict-descent p)))]
+         [h2    (+ dh (pict-height p))]
+         [a2    (max 0 (- (pict-ascent p) n))])
+    (make-pict (pict-draw p)         
+               (pict-width p) h2     
+               a2
+               (if do-d?
+                   (- h2 a2)
+                   (pict-descent p))
+               (pict-children p)
+               #f
+               (pict-last p))))
+
+;; (lift-above-baseline p n)
+;;   For backwards compatibility.
+;;   Use lift-bottom-relative-to-baseline instead.
+(define (lift-above-baseline p n)
+  (let* ([dh (- (max 0 (- n (pict-descent p))))]
+         [do-a? (= (pict-height p)
+                   (+ (pict-ascent p) (pict-descent p)))]
+         [h2 (+ dh (pict-height p))]
+         [d2 (max 0 (- (pict-descent p) n))])
+    (make-pict (pict-draw p)
+               (pict-width p) h2
+               (if do-a?
+                   (- h2 d2)
+                   (pict-ascent p))
+               d2
+               (map (lambda (c)
+                      (make-child
+                       (child-pict c)
+                       (child-dx c)
+                       (+ dh (child-dy c))
+                       1 1
+                       0 0))
+                    (pict-children p))
+               #f
+               (pict-last p))))
+
+
+;; (baseless p)
+;;   Makes the descent 0 and the ascent the same as the height.
+(define (baseless p)
+  (let ([p (lift-above-baseline p (pict-descent p))])
+    (drop-below-ascent p (- (pict-ascent p) (pict-height p)))))
+
+
+;; Draw a graphical representation of a record.
+;;   - i.e. this is unrelated to serialization
+
+(define recordseplinespace 4)
+
+(define (record title . fields)
+  (let* ([totalwidth  (apply max (pict-width title) (map pict-width fields))]
+         [linespace   (if (null? fields) 0 recordseplinespace)]
+         [totalheight (+ (pict-height title) (apply + (map pict-height fields))
+                         linespace)]
+         [title-y     (- totalheight (pict-height title))]
+         [field-ys    (let loop ([pos (- totalheight (pict-height title) linespace)]
+                                 [fields fields])
+                        (if (null? fields)
+                            null
+                            (let* ([p (- pos (pict-height (car fields)))])
+                              (cons p
+                                    (loop p (cdr fields))))))])
+    (make-pict
+     `(picture
+       ,totalwidth ,totalheight
+       (put 0 0            (line 1 0 ,totalwidth))  ; note: x_run, y_rize, travel (i.e. LaTeX convention)
+       (put 0 ,totalheight (line 1 0 ,totalwidth))  ; note: x_run, y_rize, travel (i.e. LaTeX convention)
+       (put 0 0            (line 0 1 ,totalheight)) ; note: x_run, y_rize, travel (i.e. LaTeX convention)
+       (put ,totalwidth 0  (line 0 1 ,totalheight)) ; note: x_run, y_rize, travel (i.e. LaTeX convention)
+       (put 0 ,title-y     ,(pict-draw title))
+       ,@(if (null? fields)
+             '()
+             `((put 0 ,(- totalheight (pict-height title) (/ linespace 2))
+                    (line 1 0 ,totalwidth))))
+       ,@(map (lambda (f p) `(put 0 ,p ,(pict-draw f)))
+              fields field-ys))
+     totalwidth totalheight
+     totalheight 0
+     (cons
+      (make-child title 0 title-y 1 1 0 0)
+      (map (lambda (child child-y) (make-child child 0 child-y 1 1 0 0)) fields field-ys))
+     #f
+     #f)))
+
+
+;; To extend an existing pict `box` and place into a larger pict,
+;; we can use extend.
+;; The dimension of the extend box adds `dw`, `da` and `dd`
+;; to the width, ascent and descent (and adjust the height as well
+;; based on ascent and descent.
+;; The old picture `box` is placed at the coordinate (dx,dy) relative
+;; to the upper, left corner of the extended box.
+
+;; Note: For pictures without children, panbox and last (child),
+;;       it can be more convenient to use `extend-pict` than
+;;       `make-pict` directly. You will see quite a few functions
+;;       that use all zeros for the size adjustments, but
+;;       still use `extend-pict`.
+
+(define (extend-pict box dx dy dw da dd draw)
+  (let ([w (pict-width   box)]
+        [h (pict-height  box)]
+        [d (pict-descent box)]
+        [a (pict-ascent  box)])
+    (make-pict (if draw draw (pict-draw box))        ; draw
+               (+ w dw) (+ h da dd)                  ; width, height
+               (max 0 (+ a da)) (max 0 (+ d dd))     ; descent, ascent
+               (list (make-child box dx dy 1 1 0 0)) ; children
+               #f                                    ; panbox
+               (pict-last box))))                    ; last
+
+; Creates a container picture that doesn’t draw the child picture,
+; but uses the child’s size.
+(define (ghost box)
+  (let ([w (pict-width box)]
+        [h (pict-height box)])
+    (extend-pict
+     box 0 0 0 0 0
+     `(picture
+       ,w ,h))))
+
+; Truncates pict’s bounding box by removing the descent part.
+(define (clip-descent b)
+  (let* ([w (pict-width   b)]
+         [h (pict-height  b)]
+         [d (pict-descent b)])
+    (extend-pict
+     b 0 (- d)
+     0 0 (- d)
+     `(picture ,w ,(- h d)
+               (put 0 ,(- d) ,(pict-draw b))))))
+
+; Truncates pict’s bounding box by removing the ascent part.
+(define (clip-ascent b)
+  (let* ([w (pict-width b)]
+         [h (pict-height b)]
+         [a (pict-ascent b)])
+    (extend-pict
+     b 0 a
+     0 (- a) 0
+     `(picture ,w ,(- h a)
+               (put 0 0 ,(pict-draw b))))))
+
+;; Extends pict’s bounding box by adding the given amounts to the
+;; corresponding sides; ascent and descent are extended, too.
+;; The actual contents is drawn in the same place as before.
+
+(define inset
+  (case-lambda
+   [(box a)       (inset box a a a a)]
+   [(box h v)     (inset box h v h v)]
+   [(box l t r b) (let ([w (+ l r (pict-width box))]
+                        [h (+ t b (pict-height box))])
+                    (extend-pict
+                     box l b
+                     (+ l r) t b
+                     `(picture
+                       ,w ,h
+                       (put ,l ,b ,(pict-draw box)))))]))
+
+;; In `thickness` we see `extend-pict` used to adjust the draw
+;; function. It was also possible to use `make-pict` directly.
+
+; (thickness mode sub-pict)
+(define (thickness mode b)
+  (let* ([w (pict-width  b)]
+         [h (pict-height b)])
+    (extend-pict
+     b 0 0 0 0 0
+     `(picture ,w ,h
+               (thickness ,mode ,(pict-draw b))))))
+
+;; The thinkness modes are inherited from LaTeX.
+;; Here b is a box (a pict) and n is a number.
+
+(define (thick b)            (thickness 'thicklines b))
+(define (thin  b)            (thickness 'thinlines  b))
+(define (line-thickness n b) (thickness n b))        
+(define (line-style     n s) (thickness n s))
+
+;;;
+;;; Lines (vertical and horizontal)
+;;;
+
+;; Lines are either solid or dashed.
+
+(define default-seg 5) ; default segment length for dashes
+
+; (dash-line width height rotate seg)
+;   For horizontal lines `rotate` is the identity.
+;   For veritical  lines `rotate` swap x and y / or swap width and height.
+;   The segment length of the dashes is given by `seg`.
+(define (dash-line width height rotate seg)
+  (let ([vpos (/ height 2)])
+    (make-pict     
+     `(picture
+       ,@(rotate width height)       
+       ,@(if (>= seg width)
+             `((put ,@(rotate 0 vpos) (line ,@(rotate 1 0) ,width)))
+             (let ()
+               (define seg*2 (* seg 2))
+               (define count (inexact->exact (truncate (/ width seg*2))))
+               (define remain/2 (/ (- width (* seg*2 count)) 2))
+               `((put ,@(rotate 0 vpos) (line ,@(rotate 1 0) ,remain/2))
+                 ,@(let loop ([count count] [pos remain/2])
+                     (if (zero? count)
+                         null
+                         (cons `(put ,@(rotate (+ pos seg) vpos) 
+                                     (line ,@(rotate 1 0) ,seg))
+                               (loop (sub1 count) (+ pos seg*2)))))
+                 (put ,@(rotate (- width remain/2) vpos)
+                      (line ,@(rotate 1 0) ,remain/2))))))
+     (car  (rotate width height)) ; width
+     (cadr (rotate width height)) ; height
+     (cadr (rotate 0 height)) 0   ; ascent, descent
+     null                         ; children
+     #f                           ; panbox
+     #f)))                        ; last
+
+(define (rlist b a) (list a b))
+
+(define (hline width height)
+  (dash-line width height list width))
+
+(define (vline width height)
+  (dash-line height width rlist height))
+
+(define dash-hline
+  (case-lambda 
+    [(width height)     (dash-hline width height default-seg)]
+    [(width height seg) (dash-line  width height list seg)]))
+
+(define dash-vline
+  (case-lambda 
+    [(width height)     (dash-vline width  height default-seg)]
+    [(width height seg) (dash-line  height width  rlist seg)]))
+
+;;;
+;;; Frames
+;;;
+
+;; A frame draws a border around an existing (child) pict.
+;; A the border can be drawn as a solid line or a dashed line.
+;; Actually, a solid border is the same as a dashed border --
+;; with wery long segments.
+
+(define dash-frame
+  (case-lambda
+    [(box) (dash-frame box default-seg)]
+    [(box seg)
+     (let* ([w (pict-width box)]
+            [h (pict-height box)])
+       (extend-pict
+        box 0 0 0 0 0
+        `(picture
+          ,w ,h
+          (put  0  0 ,(pict-draw box))
+          (put  0  0 ,(pict-draw (dash-hline w 0 seg)))
+          (put  0 ,h ,(pict-draw (dash-hline w 0 seg)))
+          (put  0  0 ,(pict-draw (dash-vline 0 h seg)))
+          (put ,w  0 ,(pict-draw (dash-vline 0 h seg))))))]))
+
+(define (frame box)
+  (let ([box (pict-convert box)])
+    (dash-frame box (max (pict-width box) (pict-height box)))))
+
+
+;;;
+;;; Pict Convertible
+;;; 
+
+;; In full Racket the `pict` library supports structures
+;; that are "pict convertible". They are structs, that
+;; contain a "methods" that renders them as a pict.
+
+;; Our functions that renders, combines, adjust picts
+;; must therefore be aware of such "picts".
+
+;; For now, pict convertible structs aren't supported
+;; in this WebRacket implentation, but we keep the
+;; basic definitions in order to add them later.
+
+;; For our dummy definition below, we must remember
+;; that picts also counts as "pict convertible".
+
+(struct converted-pict pict (parent))
+
+(define (pict-convertible? x)    (pict? x))  ; TODO
+(define (pict-convertible-ref x) x)          ; TODO
+
+(define (pict-convert v)
+  (pict-convert/who v 'pict-convert))
+
+(define (pict-convert/who v who)
+  (cond [(pict? v) v]
+        [(not (pict-convertible? v))
+         (raise-type-error who "pict-convertible" v)]
+        [else
+         (define converted ((pict-convertible-ref v) v))
+         (converted-pict
+          (pict-draw converted)
+          (pict-width converted)
+          (pict-height converted)
+          (pict-ascent converted)
+          (pict-descent converted)
+          (pict-children converted)
+          (pict-panbox converted)
+          (pict-last converted)
+          v)]))
+
+;;;
+;;; Picture Paths
+;;;
+
+;; A "picture path" is basically either a pict or a list of picts.
+;; Or more precisely: a pictue path is either a pict, a pict convertible struct
+;; or a list of picts and pict convertible structs.
+
+(define (pict-path? p)
+  (or (pict-convertible? p)  
+      (and (pair? p)
+           (list? p)
+           (andmap pict-convertible? p))))
+
+;; When pict convertible structs are to be compared we use
+;; their picts for the comparison.
+
+(define (pict-path-element=? a b)
+  (or (eq? a b)
+      (if (converted-pict? a)
+          (if (converted-pict? b)
+              (eq? (converted-pict-parent a) (converted-pict-parent b))
+              (eq? (converted-pict-parent a) b))
+          (if (converted-pict? b)
+              (eq? (converted-pict-parent b) a)
+              #f))))
+;;;
+;;; Picture Finders
+;;;
+
+;; With picture paths in place, we can now look at picture finders.
+
+;; (single-pict-offset who pict subbox dx dy nth)
+;;   A helper routine called by `who` (used for error messages).
+;;   Finds `subbox` inside `pict` and reports the location.
+
+;; What complicates matters is that the coordinate system of
+;; a child can be transformed relative to its parent.
+;; The transform between parent and child are the reason
+;; children picts are wrapped in a `child` struct:
+
+;;    (struct child (pict dx dy sx sy sxy syx))
+
+;; The gransform is an affine transform and can express
+;; compositions of rotation, scaling and translation.
+
+(define (transform dx dy                      ; point to tranform
+                   tdx tdy tsx tsy tsxy tsyx) ; affine transform
+  (values (+ (* tsx dx) (* tsxy dy) tdx)
+          (+ (* tsy dy) (* tsyx dx) tdy)))
+
+(define (single-pict-offset who pict subbox dx dy nth)
+  (let floop ([box pict]
+              [nth nth]
+              [found values]
+              [not-found (lambda (nth)
+                           (error who
+                                  "sub-pict not found\n  sub-pict: ~.v\n  in: ~.v"
+                                  subbox pict))])
+    (if (pict-path-element=? subbox box)
+        (if (or (not nth) (zero? nth))
+            (found dx dy)
+            (not-found (and nth (sub1 nth))))
+        (let loop ([c (pict-children box)] [nth nth] [fx #f] [fy #f])
+          (if (null? c)
+              (if fx
+                  (found fx fy)
+                  (not-found nth))
+              (let ([rst (cdr c)])
+                (floop (child-pict (car c))
+                       nth
+                       (lambda (dx dy)
+                         (let ([c (car c)])
+                           (let-values ([(dx dy)
+                                         (transform
+                                          dx dy
+                                          (child-dx  c) (child-dy  c)
+                                          (child-sx  c) (child-sy  c)
+                                          (child-sxy c) (child-syx c))])
+                             (cond
+                               [nth (found dx dy)]
+                               [(not fx) (loop rst #f dx dy)]
+                               [(and (= fx dx) (= fy dy)) (loop rst #f dx dy)]
+                               [else (error who
+                                            "sub-pict location is ambiguous\n  sub-pict: ~.v\n  in: ~.v"
+                                            subbox pict)]))))
+                       (lambda (nth)
+                         (loop rst nth fx fy)))))))))
+
+;; The functions below finds the location of a subbox-path
+;; (in most cases) a sub-pict and returns the location (x,y)
+;; of the sub-pict.
+
+(define (find-lbx who pict subbox-path dx dy nth)
+  (if (pict-convertible? subbox-path)
+      (single-pict-offset who pict subbox-path dx dy nth)
+      (let loop ([l (cons pict subbox-path)])
+        (if (null? (cdr l))
+            (values dx dy)
+            (let-values ([(dx dy) (loop (cdr l))])
+              (single-pict-offset who (car l) (cadr l) dx dy
+                                  (if (null? (cddr l)) nth 0)))))))
+
+(define (raise-type-error . _) (error 'todo "implement in stdlib"))
+
+(define-values (find-lt
+                find-lc
+                find-lb
+                find-ltl
+                find-lbl
+                find-ct
+                find-cc
+                find-cb
+                find-ctl
+                find-cbl
+                find-rt
+                find-rc
+                find-rb
+                find-rtl
+                find-rbl
+
+                lt-find
+                lc-find
+                lb-find
+                ltl-find
+                lbl-find
+                ct-find
+                cc-find
+                cb-find
+                ctl-find
+                cbl-find
+                rt-find
+                rc-find
+                rb-find
+                rtl-find
+                rbl-find)
+  (let ([lb    (lambda (x sx w d a) x)]
+        [c     (lambda (x sx w d a) (+ x (* sx (/ w 2))))]
+        [rt    (lambda (x sx w d a) (+ x (* sx w)))]
+        [tline (lambda (x sx w d a) (+ x (* sx (- w a))))]
+        [bline (lambda (x sx w d a) (+ x (* sx d)))]
+        [find  (lambda (who get-x get-y flip?)
+                 (procedure-rename
+                  (lambda (pict pict-path [nth 0])
+                    (let ([p (let loop ([path pict-path])
+                               (cond
+                                 [(pict? path) path]
+                                 [(pict-convertible? path) (pict-convert path)]
+                                 [(null? (cdr path)) (loop (car path))]
+                                 [else (loop (cdr path))]))])
+                      (let ([w (pict-width p)]
+                            [h (pict-height p)]
+                            [d (pict-descent p)]
+                            [a (pict-ascent p)])
+                        (define-values (x y)
+                          (find-lbx who pict pict-path
+                                    (get-x 0 1 w 0 0)
+                                    (get-y 0 1 h d a)
+                                    (if (eq? nth 'unique)
+                                        #f
+                                        nth)))
+                        (if flip?
+                            (values x (- (pict-height pict) y))
+                            (values x y)))))
+                  who))])
+    (values (find 'find-lt  lb rt    #f)
+            (find 'find-lc  lb c     #f)
+            (find 'find-lb  lb lb    #f)
+            (find 'find-ltl lb tline #f)
+            (find 'find-lbl lb bline #f)
+            (find 'find-ct   c rt    #f)
+            (find 'find-cc   c c     #f)
+            (find 'find-cb   c lb    #f)
+            (find 'find-ctl  c tline #f)
+            (find 'find-cbl  c bline #f)
+            (find 'find-rt  rt rt    #f)
+            (find 'find-rc  rt c     #f)
+            (find 'find-rb  rt lb    #f)
+            (find 'find-rtl rt tline #f)
+            (find 'find-rbl rt bline #f)
+
+            (find 'lt-find  lb rt    #t)
+            (find 'lc-find  lb c     #t)
+            (find 'lb-find  lb lb    #t)
+            (find 'ltl-find lb tline #t)
+            (find 'lbl-find lb bline #t)
+            (find 'ct-find   c rt    #t)
+            (find 'cc-find   c c     #t)
+            (find 'cb-find   c lb    #t)
+            (find 'ctl-find  c tline #t)
+            (find 'cbl-find  c bline #t)
+            (find 'rt-find  rt rt    #t)
+            (find 'rc-find  rt c     #t)
+            (find 'rb-find  rt lb    #t)
+            (find 'rtl-find rt tline #t)
+            (find 'rbl-find rt bline #t))))
+
+;;;
+;;; Parent / Child interaction
+;;;
+
+;; (refocus pict sub-pict)
+;;   Assuming that sub-pict can be found within pict, shifts the overall
+;;   bounding box to that of sub-pict (but preserving all the drawing of
+;;   pict). The last element, as reported by pict-last is also set to (or
+;;   (pict-last sub-pict) sub-pict).
+
+;; Note: After a refocus, the bounding box of a child might be larger
+;;       than its parent.
+
+(define (refocus p c)
+  (let-values ([(x y) (find-lt p c)])
+    (let ([p (inset p
+                    (- x) (- y (pict-height p))
+                    (- (- (pict-width p) x (pict-width c)))
+                    (- (pict-height c) y))])
+      (make-pict (pict-draw p)
+                 (pict-width c) (pict-height c)
+                 (pict-ascent c) (pict-descent c)
+                 (pict-children p)
+                 #f
+                 (last* c)))))
+
+; Shifts the given pict’s bounding box to enclose the bounding boxes
+; of all sub-picts (even laundered picts).
+
+(define (panorama p)
+  (let-values ([(x1 y1 x2 y2 ay dy) (panorama-box! p)])
+    (let ([h (- y2 y1)])
+      (place-over (blank (- x2 x1) h (- h ay) dy)
+                  (- x1) (- y2 (pict-height p))
+                  p))))
+
+(define (panorama-box! p*)
+  (let* ([p  (pict-convert p*)]
+         [bb (pict-panbox p)])
+    (if bb
+        (values (bbox-x1 bb) (bbox-y1 bb) (bbox-x2 bb) (bbox-y2 bb)
+                (bbox-ay bb) (bbox-dy bb))
+        (let loop ([x1 0][y1 0][x2 (pict-width p)][y2 (pict-height p)]
+                   [ay (- (pict-height p) (pict-ascent p))][dy (pict-descent p)]
+                   [l (pict-children p)])
+          (if (null? l)
+              (begin
+                (set-pict-panbox! p (make-bbox x1 y1 x2 y2 ay dy))
+                (values x1 y1 x2 y2 ay dy))
+              (let ([c (car l)])
+                (let-values ([(cx1 cy1 cx2 cy2 cay cdy) (panorama-box! (child-pict c))])
+                  (loop (min x1 (+ (* cx1 (child-sx c)) (child-dx c)))
+                        (min y1 (+ (* cy1 (child-sy c)) (child-dy c)))
+                        (max x2 (+ (* cx2 (child-sx c)) (child-dx c)))
+                        (max y2 (+ (* cy2 (child-sy c)) (child-dy c)))
+                        (max ay (+ (* cay (child-sy c)) (child-dy c)))
+                        (min dy (+ (* cdy (child-sy c)) (child-dy c)))
+                        (cdr l)))))))))
+
+;;;
+;;; Laundering
+;;;
+
+;; Using a pict finder, we can find a child.
+;; However, sometimes we may want to conceal children.
+;; The function `launder` hides child so they are not found by
+;; the pict finders.
+
+(define (launder box*)
+  ;; we might be given a pict-convertable
+  ;; but set-pict-foo! isn't defined on those
+  (define box
+    (if (pict? box*)
+        box*
+        (pict-convert box*)))
+  (unless (pict-panbox box)
+    (panorama-box! box))
+  (let ([b (extend-pict box 0 0 0 0 0 #f)])
+    (set-pict-children! b null)
+    (set-pict-panbox! b (pict-panbox box))
+    ;; After laundering, we can't find the last-pos box.
+    ;; So create a new last-position box to preserve the
+    ;; original shape:
+    (let ([l (pict-last box)])
+      (set-pict-last! box #f) ; preserve invariants
+      (cond
+       [(not l) b]
+       [else
+        (let-values ([(x y) (lt-find box l)]
+                     [(l) (let loop ([l l])
+                            (if (pair? l)
+                                (if (null? (cdr l))
+                                    (car l)
+                                    (loop (cdr l)))
+                                l))])
+          (let ([b2 (blank (pict-width l) (pict-height l)
+                           (pict-ascent l) (pict-descent l))])
+            (use-last/unchecked
+             (pin-over b x y b2)
+             b2)))]))))
+
+
+;;;
+;;; The last child 
+;;;
+
+;; The `last` field indicates a pict within the children list
+;; (transitively) that can be treated as the last element of the last
+;; line in the pict. A #f value means that the pict is its own last
+;; sub-pict.
+
+;; The last pict is useful when rendering multi line contents.
+;; In order to place text, the baseline must be know.
+
+
+(define (use-last* p sub-p)
+  (use-last p (last* sub-p)))
+
+(define (last* sub-p)
+  ;; Either use `sub-p' for last or create a path though `sub-p'
+  ;; to the last of `sub-p' (in case the last of `sub-p' is also
+  ;; in other places within `p')
+  (let ([l (pict-last sub-p)])
+    (cond
+     [(not l) sub-p]
+     [(pair? l) (if (pict-path-element=? (car l) sub-p)
+                    l
+                    (cons sub-p l))]
+     [(pict-path-element=? l sub-p) sub-p]
+     [else (list sub-p l)])))
+
+;; (use-last pict sub-pict)
+;;     Returns a pict like `pict`, but with the last element (as reported by pict-last)
+;;     set to `sub-pict`. The sub-pict must exist as a sub-pict
+;;     (or path of sub-picts) within pict.
+(define (use-last p sub-p)
+  (if (let floop ([p p] [sub-p sub-p])
+        (or
+         (if (not (pair? sub-p))
+             (pict-path-element=? p sub-p)
+             (and (not (pair? (car sub-p)))
+                  (pict-path-element=? p (car sub-p))
+                  (or (null? (cdr sub-p))
+                      (floop p (cdr sub-p)))))
+            (ormap (lambda (c) (floop (child-pict c) sub-p))
+                   (pict-children p))))
+      (use-last/unchecked p sub-p)
+      (error 'use-last
+             "given new last-pict path: ~e not in the base pict: ~e"
+             sub-p
+             p)))
+
+(define (use-last/unchecked p sub-p)
+  (make-pict (pict-draw p)
+             (pict-width  p) (pict-height  p)
+             (pict-ascent p) (pict-descent p)
+             (list (make-child p 0 0 1 1 0 0))
+             #f
+             sub-p))
+
+;;;
+;;; Oval (the old name for rounded rectangle)
+;;; 
+
+;; See https://latexref.xyz/_005coval.html
+;; for an explanation of the corner arguments.
+
+(define (oval box)
+  (let ([w (pict-width box)]
+        [h (pict-height box)])
+    (extend-pict
+     box 0 0 0 0 0
+     `(picture
+       ,w ,h
+       (put 0 0 ,(pict-draw box))
+       (put ,(/ w 2) ,(/ h 2) (oval "" ,w ,h))))))
+
+(define (oval/radius box r)
+  (let* ([w (pict-width box)]
+         [h (pict-height box)]
+         [rr (* 2 r)]
+         [lw (- w rr)]
+         [lh (- h rr)])
+    (extend-pict
+     box 0 0 0 0 0
+     `(picture
+       ,w ,h
+       (put  0 0 ,(pict-draw box))
+       (put ,r       ,r       (oval "[bl]" ,rr ,rr))  (put ,r  0 (line 1 0 ,lw))
+       (put ,(- w r) ,r       (oval "[br]" ,rr ,rr))  (put ,w ,r (line 0 1 ,lh))
+       (put ,r       ,(- h r) (oval "[tl]" ,rr ,rr))  (put ,r ,h (line 1 0 ,lw))
+       (put ,(- w r) ,(- h r) (oval "[tr]" ,rr ,rr))  (put ,0 ,r (line 0 1 ,lh))))))
+
+(define (big-circle d)
+  (let ([r (/ d 2)])
+    (picture
+     d d
+     `((curve  0 ,r  ,r  0   0  0)      ; upper left
+       (curve ,r  0  ,d ,r  ,d  0)      ; 
+       (curve ,d ,r  ,r ,d  ,d ,d)
+       (curve ,r ,d   0 ,r   0 ,d)))))
+
+;;;
+;;; Pict Combiners
+;;;
+
+;; The append-functions below place picts either on-top or besides each other.
+;; The v-functions (v for vertical)   place the picts in a column.
+;; The h-functions (h for horizontal) place the picts in a row.
+;; The l/c/r stands for left, center, right.
+;; The t/c/b stands for top, center, bottom.
+;; They indicate how to align the subpicts.
+
+;; The optional d argument specifies amount of space to insert between each
+;; pair of pictures in making the column or row.
+
+;; Different procedures align pictures in the orthogonal direction in
+;; different ways. For example, vl-append left-aligns all of the
+;; pictures.
+
+;; The descent of the result corresponds to baseline that is lowest in
+;; the result among all of the picts’ descent-specified baselines;
+;; similarly, the ascent of the result corresponds to the highest
+;; ascent-specified baseline. If at least one pict is supplied, then the
+;; last element (as reported by pict-last) for the result is (or
+;; (pict-last pict) pict) for the using last supplied pict.
+
+(define-values (vl-append 
+                vc-append 
+                vr-append
+                
+                ht-append
+                hc-append
+                hb-append
+                
+                htl-append
+                hbl-append)
+  (let ([make-append-boxes 
+         (lambda (wcomb hcomb fxoffset fyoffset rxoffset ryoffset 
+                        combine-ascent combine-descent)
+           (let ([do-append
+                  (lambda (sep args)
+                    (let append-boxes ([args args])
+                      (cond
+                       [(null? args) (blank)]
+                       [(null? (cdr args)) (pict-convert (car args))]
+                       [else
+                        (let* ([first (pict-convert (car args))]
+                               [rest (append-boxes (cdr args))]
+                               [w (wcomb (pict-width first) (pict-width rest) sep first rest)]
+                               [h (hcomb (pict-height first) (pict-height rest) sep first rest)]
+                               [fw (pict-width first)]
+                               [fh (pict-height first)]
+                               [rw (pict-width rest)]
+                               [rh (pict-height rest)]
+                               [fd1 (pict-ascent first)]
+                               [fd2 (pict-descent first)]
+                               [rd1 (pict-ascent rest)]
+                               [rd2 (pict-descent rest)]
+                               [dx1 (fxoffset fw fh rw rh sep fd1 fd2 rd1 rd2)]
+                               [dy1 (fyoffset fw fh rw rh sep fd1 fd2 rd1 rd2 h)]
+                               [dx2 (rxoffset fw fh rw rh sep fd1 fd2 rd1 rd2)]
+                               [dy2 (ryoffset fw fh rw rh sep fd1 fd2 rd1 rd2 h)])
+                          (make-pict
+                           `(picture 
+                             ,w ,h
+                             (put ,dx1
+                                  ,dy1
+                                  ,(pict-draw first))
+                             (put ,dx2
+                                  ,dy2
+                                  ,(pict-draw rest)))
+                           w h
+                           (combine-ascent fd1 rd1 fd2 rd2 fh rh h (+ dy1 fh) (+ dy2 rh))
+                           (combine-descent fd2 rd2 fd1 rd1 fh rh h (- h dy1) (- h dy2))
+                           (list (make-child first dx1 dy1 1 1 0 0)
+                                 (make-child rest dx2 dy2 1 1 0 0))
+                           #f
+                           (last* rest)))])))])
+             (let ([*-append (case-lambda
+                              [() (do-append 0 null)]
+                              [(sep . args)
+                               (if (number? sep)
+                                   (do-append sep args)
+                                   (do-append 0 (cons sep args)))])])
+               *-append)))]
+        [2max    (lambda (a b c . rest) (max a b))]
+        [zero    (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 . args) 0)]
+        [fv      (lambda (a b . args) a)]
+        [sv      (lambda (a b . args) b)]
+        [min2    (lambda (a b . args) (min a b))]
+        [max2    (lambda (a b . args) (max a b))]
+        [3+      (lambda (a b c . args) (+ a b c))]
+        [a-max   (lambda (a b c first rest)
+                   (+ (max (pict-ascent first) (pict-ascent rest))
+                      (max (- (pict-height first) (pict-ascent first))
+                           (- (pict-height rest) (pict-ascent rest)))))]
+        [d-max   (lambda (a b c first rest)
+                   (+ (max (pict-descent first) (pict-descent rest))
+                      (max (- (pict-height first) (pict-descent first))
+                           (- (pict-height rest) (pict-descent rest)))))]
+        [min-ad  (lambda (a b oa ob ah bh h da db)
+                   (- h (max oa ob) (max (- ah oa a)
+                                         (- bh ob b))))]
+        [xmin-ad (lambda (a b oa ob ah bh h da db)
+                   (min (+ (- h da) a) (+ (- h db) b)))])
+    (values
+     (make-append-boxes 2max 3+ 
+                        zero (lambda (fw fh rw rh sep . a) (+ sep rh))
+                        zero zero 
+                        fv sv)
+     (make-append-boxes 2max 3+ 
+                        (lambda (fw fh rw rh sep . a) (/ (- (max fw rw) fw) 2))
+                        (lambda (fw fh rw rh sep . a) (+ sep rh))
+                        (lambda (fw fh rw rh sep . a) (/ (- (max fw rw) rw) 2))
+                        zero 
+                        fv sv)
+     (make-append-boxes 2max 3+ 
+                        (lambda (fw fh rw rh sep . a) (- (max fw rw) fw))
+                        (lambda (fw fh rw rh sep . a) (+ sep rh))
+                        (lambda (fw fh rw rh sep . a) (- (max fw rw) rw))
+                        zero 
+                        fv sv)
+     (make-append-boxes 3+ 2max
+                        zero
+                        (lambda (fw fh rw rh sep . a) (- (max fh rh) fh))
+                        (lambda (fw fh rw rh sep . a) (+ sep fw))
+                        (lambda (fw fh rw rh sep . a) (- (max fh rh) rh))
+                        xmin-ad xmin-ad)
+     (make-append-boxes 3+ 2max
+                        zero
+                        (lambda (fw fh rw rh sep . a) (/ (- (max fh rh) fh) 2))
+                        (lambda (fw fh rw rh sep . a) (+ sep fw))
+                        (lambda (fw fh rw rh sep . a) (/ (- (max fh rh) rh) 2))
+                        xmin-ad xmin-ad)
+     (make-append-boxes 3+ 2max 
+                        zero zero
+                        (lambda (fw fh rw rh sep . a) (+ sep fw)) zero
+                        xmin-ad xmin-ad)
+     (make-append-boxes 3+ a-max
+                        zero
+                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
+                          (- h fh (- (max fd1 rd1) fd1)))
+                        (lambda (fw fh rw rh sep . a) (+ sep fw))
+                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
+                          (- h rh (- (max fd1 rd1) rd1)))
+                        max2 min-ad)
+     (make-append-boxes 3+ d-max
+                        zero
+                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
+                          (- (max fd2 rd2) fd2))
+                        (lambda (fw fh rw rh sep . a) (+ sep fw))
+                        (lambda (fw fh rw rh sep fd1 fd2 rd1 rd2 h) 
+                          (- (max fd2 rd2) rd2))
+                        min-ad max2))))
+
+;; The functions below creates a new picture by superimposing a set of pictures.
+;; The name prefixes are alignment indicators:
+;;   horizontal alignment then vertical alignment.
+
+;; The descent of the result corresponds to baseline that is lowest in
+;; the result among all of the picts’ descent-specified baselines;
+;; similarly, the ascent of the result corresponds to the highest
+;; ascent-specified baseline. The last element (as reported by pict-last)
+;; for the result is the lowest, right-most among the last-element picts
+;; of the pict arguments, as determined by comparing the last-element
+;; bottom-right corners.
+
+(define-values (lt-superimpose
+                lb-superimpose
+                lc-superimpose
+
+                ltl-superimpose
+                lbl-superimpose
+
+                rt-superimpose
+                rb-superimpose
+                rc-superimpose
+
+                rtl-superimpose
+                rbl-superimpose
+
+                ct-superimpose
+                cb-superimpose
+                cc-superimpose
+
+                ctl-superimpose
+                cbl-superimpose)
+  (let ([make-superimpose
+         (lambda (get-h get-v get-th name)
+           (js-log "a")
+           (lambda boxes*
+             (js-log "b")
+             (when (null? boxes*)
+               (error name "expected at least one argument, got none"))
+             (js-log "c")
+             (define boxes
+               (map
+                (lambda (p)
+                  (cond
+                    [(pict? p)             p]
+                    [(pict-convertible? p) (pict-convert p)]
+                    [else (raise-argument-error
+                           name "all picts as arguments"
+                           (apply string-append (add-between (map (λ (x) (format "~e" x)) boxes*) " ")))]))
+                boxes*))
+             (js-log "d")
+             (let ([max-w            (apply max (map pict-width boxes))]
+                   [max-h            (apply max (map pict-height boxes))]
+                   [max-a            (apply max (map pict-ascent boxes))]
+                   [max-a-complement (apply max (map (lambda (b) (- (pict-height b) (pict-ascent b)))
+                                                     boxes))]
+                   [max-d            (apply max (map pict-descent boxes))]
+                   [max-d-complement (apply max (map (lambda (b) (- (pict-height b) (pict-descent b)))
+                                                     boxes))])
+               (js-log "e")
+               (let ([p (picture max-w (get-th max-h max-a max-d max-a-complement max-d-complement)
+                                 (map (lambda (box)
+                                        `(place ,(get-h max-w (pict-width box))
+                                                ,(get-v max-h (pict-height box)
+                                                        max-d (pict-descent box)
+                                                        max-a-complement (pict-ascent box))
+                                                ,box))
+                                      boxes))])
+                 (js-log "f")
+                 ;; Figure out top and bottom baselines by finding the picts again, etc:
+                 (let ([ys (map (lambda (box)
+                                  (js-log "A")
+                                  (let-values ([(x y) (find-lt p box)])
+                                    (js-log "B")
+                                    y))
+                                boxes)])
+                   (js-log "g")
+                   (let ([min-a (apply min (map (lambda (box y)
+                                                  (+ (- (pict-height p) y) (pict-ascent box)))
+                                                boxes ys))]
+                         [min-d (apply min (map (lambda (box y)
+                                                  (+ (- y (pict-height box)) (pict-descent box)))
+                                                boxes ys))])
+                     (js-log "h")
+                     (make-pict (pict-draw p)
+                                (pict-width p) (pict-height p)
+                                min-a min-d
+                                (pict-children p)
+                                #f
+                                ;; Find bottomost, rightmost of old last picts to be the
+                                ;;  new last pict.
+                                (let ([subs (map (lambda (box)
+                                                   (let ([last (last* box)])
+                                                     (let-values ([(x y) (rb-find p last)])
+                                                       (list last x y))))
+                                                 boxes)])
+                                  (if (null? subs)
+                                      #f
+                                      (caar (sort subs
+                                                  (lambda (a b)
+                                                    (let ([ay (caddr a)]
+                                                          [by (caddr b)])
+                                                      (cond
+                                                       [(ay . > . by) #t]
+                                                       [(= ay by) ((cadr a) . > . (cadr b))]
+                                                       [else #f]))))))))))))))]
+        [norm  (lambda (h a d ac dc)    h)]
+        [tbase (lambda (h a d ac dc)    (+ a ac))] 
+        [bbase (lambda (h a d ac dc)    (+ d dc))] 
+        [lb    (lambda (m v . rest)     0)]
+        [rt    (lambda (m v . rest)     (- m v))]
+        [tline (lambda (m v md d mac a) (- mac (- v a)))]
+        [bline (lambda (m v md d mac a) (- md d))]
+        [c     (lambda (m v . rest)     (/ (- m v) 2))])
+    (values
+     (make-superimpose lb rt    norm  'lt-superimpose)
+     (make-superimpose lb lb    norm  'lb-superimpose)
+     (make-superimpose lb c     norm  'lc-superimpose)
+     (make-superimpose lb tline tbase 'ltl-superimpose)
+     (make-superimpose lb bline bbase 'lbl-superimpose)
+     (make-superimpose rt rt    norm  'rt-superimpose)
+     (make-superimpose rt lb    norm  'rb-superimpose)
+     (make-superimpose rt c     norm  'rc-superimpose)
+     (make-superimpose rt tline tbase 'rtl-superimpose)
+     (make-superimpose rt bline bbase 'rbl-superimpose)
+     (make-superimpose c  rt    norm  'ct-superimpose)
+     (make-superimpose c  lb    norm  'cb-superimpose)
+     (make-superimpose c  c     norm  'cc-superimpose)
+     (make-superimpose c  tline tbase 'ctl-superimpose)
+     (make-superimpose c  bline bbase 'cbl-superimpose))))
+
+(define table
+  (case-lambda
+    [(ncol cells col-aligns row-aligns col-seps row-seps)
+     (let ([count (length cells)])
+       (unless (zero? (remainder count ncol))
+         (error 'table "cell count isn't divisble by the provided column count"))
+       (let* ([w ncol]
+              [h (/ count w)]
+              [cells (let rloop ([r h][cells cells][r-acc null])
+                       (if (zero? r)
+                           (list->vector (reverse r-acc))
+                           (let loop ([c w][cells cells][one-acc null])
+                             (if (zero? c)
+                                 (rloop (sub1 r) cells (cons (list->vector (reverse one-acc)) r-acc))
+                                 (loop (sub1 c) (cdr cells) (cons (pict-convert (car cells)) one-acc))))))]
+              [imp-list->vector (lambda (l n)
+                                  (let ([v (make-vector n)])
+                                    (let loop ([l l][p 0])
+                                      (unless (= n p)
+                                        (vector-set! v
+                                                     p
+                                                     (if (pair? l)
+                                                         (car l)
+                                                         l))
+                                        (loop (if (pair? l) (cdr l) l) (add1 p))))
+                                    v))]
+              [ralign (imp-list->vector row-aligns h)]
+              [calign (imp-list->vector col-aligns w)]
+              [rsep (imp-list->vector row-seps h)]
+              [csep (imp-list->vector col-seps w)]
+              [get-cell (lambda (c r) (vector-ref (vector-ref cells r) c))]
+              [nmap (lambda (f w)
+                      (let loop ([n w][acc null])
+                        (if (zero? n)
+                            acc
+                            (loop (sub1 n) (cons (f (sub1 n)) acc)))))]
+              [rowmap (lambda (f) (nmap f h))]
+              [colmap (lambda (f) (nmap f w))]
+              [superimposed-rows (list->vector
+                                  (rowmap (lambda (r)
+                                            (apply
+                                             (vector-ref ralign r)
+                                             (colmap (lambda (c) (get-cell c r)))))))]
+              [superimposed-cols (list->vector
+                                  (colmap (lambda (c)
+                                            (apply
+                                             (vector-ref calign c)
+                                             (rowmap (lambda (r) (get-cell c r)))))))])
+         ; No space after the last row/col
+         (vector-set! rsep (sub1 h) 0)
+         (vector-set! csep (sub1 w) 0)
+
+         (apply
+          vl-append
+          0
+          (rowmap
+           (lambda (r)
+             (vl-append
+              0
+              (apply
+               ht-append
+               0
+               (colmap (lambda (c)
+                         (ht-append
+                          0
+                          (let* ([cell (get-cell c r)]
+                                 [sc (vector-ref superimposed-cols c)]
+                                 [sr (vector-ref superimposed-rows r)]
+                                 [w (pict-width sc)]
+                                 [h (pict-height sr)])
+                            (let-values ([(x __) (find-lb sc cell)]
+                                         [(_  y) (find-lb sr cell)])
+                              (picture
+                               w h
+                               `((place ,x ,y ,cell)))))
+                          (blank (vector-ref csep c) 0)))))
+              (blank 0 (vector-ref rsep r))))))))]))
+
+
+
+(define connect
+  (case-lambda
+    [(x1 y1 x2 y2)        (connect            x1 y1 x2 y2 #f)]
+    [(x1 y1 x2 y2 arrow?) (~connect 'r +inf.0 x1 y1 x2 y2 arrow?)]))
+
+(define ~connect 
+  (case-lambda
+    [(exact close-enough x1 y1 x2 y2) (~connect exact close-enough x1 y1 x2 y2 #f)]
+    [(exact close-enough x1 y1 x2 y2 arrow?)
+     `((put ,x1 ,y1 (,(if arrow? 'vector 'line) ,(- x2 x1) ,(- y2 y1) #f)))]))
+
+
+(define (picture* w h a d commands)
+  (let loop ([commands   commands]
+             [translated null]
+             [children   null])
+    (if (null? commands)
+        (make-pict
+         `(picture ,w ,h
+                   ,@(reverse translated))
+         w h a d
+         children
+         #f
+         #f)
+        (let ([c    (car commands)]
+              [rest (cdr commands)])
+          (unless (and (pair? c) (symbol? (car c)))
+            (error 'picture "bad command: ~a" c))
+          (case (car c)
+            [(connect) (loop rest
+                             (append (apply connect (cdr c))
+                                     translated)
+                             children)]
+            [(dconnect) (loop rest
+                              (let ([x (cadr c)]
+                                    [y (caddr c)]
+                                    [dx (cadddr c)]
+                                    [dy (list-ref c 4)])
+                                (append (connect x y (+ x dx) (+ y dy)
+                                                 (if (null? (list-tail c 5))
+                                                     #t
+                                                     (list-ref c 5)))
+                                        translated))
+                              children)]
+            [(connect~y) (loop rest
+                               (append (apply ~connect 'x (cdr c))
+                                       translated)
+                               children)]
+            [(connect~x) (loop rest
+                               (append (apply ~connect 'y (cdr c))
+                                       translated)
+                               children)]
+            [(connect~xy) (loop rest
+                                (append (apply ~connect 'r (cdr c))
+                                        translated)
+                                children)]
+            [(curve) (loop rest
+                           (let ([x1 (cadr c)]
+                                 [y1 (caddr c)]
+                                 [x2 (cadddr c)]
+                                 [y2 (list-ref c 4)]
+                                 [xm (list-ref c 5)]
+                                 [ym (list-ref c 6)]
+                                 [d (if (null? (list-tail c 7))
+                                        1.0
+                                        (list-ref c 7))])
+                             (let ([p (if (and d (>= d 0))
+                                          (inexact->exact (floor (* d (sqrt (+ (expt (- x2 x1) 2) (expt (- y2 y1) 2))))))
+                                          #f)])
+                               (if (and (= x1 x2) (= y1 y2))
+                                   translated
+                                   (cons `(qbezier ,p ,x1 ,y1 ,xm ,ym ,x2 ,y2)
+                                         translated))))
+                           children)]
+            [(place) (let ([x (cadr c)]
+                           [y (caddr c)]
+                           [p (cadddr c)])
+                       (loop rest
+                             (cons
+                              `(put ,x ,y ,(pict-draw p))
+                              translated)
+                             (cons
+                              (make-child p x y 1 1 0 0)
+                              children)))]
+            [else (loop rest (cons c translated) children)])))))
+
+(define (picture w h commands)
+  (picture* w h h 0 commands))
+
+(define (cons-picture p commands)
+  (picture
+   (pict-width p) (pict-height p)
+   (cons
+    `(place 0 0 ,p)
+    commands)))
+
+(define (cons-picture* p commands)
+  (picture*
+   (pict-width p) (pict-height p)
+   (pict-ascent p) (pict-descent p)
+   (cons
+    `(place 0 0 ,p)
+    commands)))
+
+(define (place-it who flip? base dx dy target)
+  (let-values ([(dx dy)
+                (cond
+                 [(and (number? dx) (number? dy))
+                  (values dx (- (pict-height base) dy))]
+                 [(and (pict-path? dx)
+                       (procedure? dy)
+                       (procedure-arity-includes? dy 2))
+                  (if flip?
+                      (let-values ([(dx dy) (dy base dx)])
+                        (values dx (- (pict-height base) dy)))
+                      (dy base dx))]
+                 [else
+                  (error who
+                         "expects two numbers or a sub-pict and a find procedure")])])
+    (use-last/unchecked (cons-picture*
+                         base
+                         `((place ,dx ,(- dy (pict-height target)) ,target)))
+                        (last* base))))
+
+(define (place-over base dx dy target)
+  (place-it 'place-over #f base dx dy target))
+
+(define (place-under base dx dy target)
+  (cc-superimpose
+   (place-it 'place-under #f (ghost base) dx dy target)
+   base))
+
+(define (pin-over base dx dy target)
+  (place-it 'pin-over #t base dx dy target))
+
+(define (pin-under base dx dy target)
+  (cc-superimpose
+   (place-it 'pin-under #t (ghost base) dx dy target)
+   (launder base)))
+
+
+
+(define black-and-white
+  (make-parameter #f
+                  (lambda (x)
+                    (and x #t))))
+
+
+(define (colorize p color)
+  (unless (or (string? color)
+              (color?  color)
+              (and (list? color) (= 3 (length color)) (andmap byte? color)))
+    (error 'colorize "expected a color, given ~e" color))
+  (let ([color (if (list? color)
+                   (apply make-color color) 
+                   color)])
+    (if (black-and-white)
+        p
+        (extend-pict 
+         p 0 0 0 0 0
+         `(color ,color ,(pict-draw p))))))
+
+(define (optimize s)
+  (let o-loop ([s s][dx 0][dy 0])
+    (if (string? s)
+        s
+        (let ([tag (car s)])
+          (case tag
+            [(picture)
+             (list* 'picture (cadr s) (caddr s)
+                    (map optimize (cdddr s)))]
+            [(color)
+             (let ([next (caddr s)])
+               (if (and (pair? next) (eq? (car next) 'color))
+                   (optimize next)
+                   (list* 'color (cadr s) 
+                          (list 'put dx dy (optimize next)))))]
+            [(thickness)
+             (let ([t (cadr s)]
+                   [p (caddr s)])
+               (list 'put dx dy 
+                     (list 'thickness t 
+                           (optimize p))))]
+            [(put)
+             (let ([x (cadr s)]
+                   [y (caddr s)]
+                   [next (cadddr s)])
+               (if (and (pair? next) (eq? (car next) 'picture))
+                                        ; optmize put-picture to just contents ...
+                   (cons 'begin (map (lambda (s) (o-loop s (+ x dx) (+ y dy))) (cdddr next)))
+                                        ; normal
+                   (list 'put (+ x dx) (+ y dy) (optimize next))))]
+            [(qbezier)
+             (let ([x1 (list-ref s 2)]
+                   [y1 (list-ref s 3)]
+                   [xm (list-ref s 4)]
+                   [ym (list-ref s 5)]
+                   [x2 (list-ref s 6)]
+                   [y2 (list-ref s 7)]
+                   [p (list-ref s 1)])
+               (list 'qbezier p
+                     (+ x1 dx) (+ y1 dy)
+                     (+ xm dx) (+ ym dy)
+                     (+ x2 dx) (+ y2 dy)))]
+            [(frame)
+             (list 'frame (optimize (cadr s)))]
+            [(colorbox)
+             (list 'colorbox (cadr s) (optimize (caddr s)))]
+            [(line vector dirline dirvector circle circle* make-box oval prog) s]
+            [else (error 'optimize "bad tag: ~s" tag)])))))
+
+(define (fixup-top s)
+  (cond
+   [(and (pair? s) (eq? (car s) 'color))
+    ;; Drop initial put
+    (list* 'color (cadr s) (caddr (cdddr s)))]
+   [(and (pair? s) (eq? (car s) 'put))
+    ;; Wrap initial put (from thickness) in a pair of braces
+    `(local ,(cadddr s))]
+   [else
+    ;; Do nothing
+    s]))
+
+(define (prepare-for-output s)
+  (fixup-top (optimize (pict-draw s))))
+
+(define (pict->command-list s)
+  (let output ([s (prepare-for-output s)])
+    (if (string? s)
+        (list s)
+        (let ([tag (car s)])
+          (case tag
+            [(local)
+             (output (cadr s))]
+            [(begin)
+             (apply append (map output (cdr s)))]
+            [(picture)
+             (apply append (map output (cdddr s)))]
+            [(color)
+             `((with-color ,(cadr s) ,(output (cddr s))))]
+            [(thickness)
+             `((with-thickness ,(cadr s) ,(output (caddr s))))]
+            [(put)
+             `((offset ,(cadr s) ,(caddr s) ,(output (cadddr s))))]
+            [(qbezier)
+             `((bezier ,@(cddr s)))]
+            [(line vector)
+             `((,tag ,(cadr s) ,(caddr s) ,(cadddr s)))]
+            [(circle circle*)
+             `((,tag ,(cadr s)))]
+            [(frame)
+             `((frame ,(output (cadr s))))]
+            [(colorbox)
+             `((colorbox ,(cadr s) ,(output (caddr s))))]
+            [(oval)
+             `((oval ,(caddr s) ,(cadddr s) ,(cadr s)))]
+            [(make-box)
+             `((make-box ,(cadr s) ,(caddr s) ,(cadddr s) ,(car (cddddr s))))]
+            [(prog)
+             `((prog ,(cadr s) ,(caddr s)))]
+            [else (error 'pict->commands "bad tag: ~s" tag)])))))
+
+
+(define convert-bounds-padding
+  (make-parameter
+   (list 3 3 3 3)
+   (lambda (x)
+     (unless (and (list? x) (= 4 (length x)) (andmap real? x)
+                  (andmap (lambda (i) (not (negative? i))) x))
+       (raise-argument-error 'convert-bounds-padding
+                             "(list/c (>=/c 0) (>=/c 0) (>=/c 0) (>=/c 0))"
+                             x))
+     x)))
+
+(define (dc f w h [a h] [d 0])
+  (make-pict `(prog ,f ,h) w h a d null #f #f))
+
+(define prog-picture dc)
+
+
+(define (memq* a l)
+  (if (pair? l)
+      (or (eq? (car l) a)
+          (memq* a (cdr l)))
+      #f))
+
+
+(define text
+  (case-lambda
+   [(string)                  (text string '()   24)]
+   [(string style)            (text string style 24)]
+   [(string style size)       (text string style size 0)]
+   [(string style size angle) (not-caps-text string style size angle)
+    ; todo: we need to measure the size of the text
+    ;       also we need to a way to represent fonts.
+
+    #;(if (il-memq 'caps style)
+        (begin
+          (unless (zero? angle) 
+            (error 'text "the style cannot include 'caps with a non-zero angle"))
+          (caps-text str (il-remq 'caps style) size))
+        (not-caps-text str style size angle))]))
+
+
+(define (il-memq sym s)
+  (and (pair? s)
+       (or (eq? sym (car s))
+           (il-memq sym (cdr s)))))
+
+(define (il-remq sym s)
+  (if (pair? s)
+      (if (eq? sym (car s))
+          (cdr s)
+          (cons (car s) (il-remq sym (cdr s))))
+      s))
+
+(define the-dc-used-for-text-size #f)
+
+(define (dc-for-text-size)
+  (cond
+    [the-dc-used-for-text-size the-dc-used-for-text-size]
+    [else
+     (define canvas (js-create-element "canvas"))
+     (js-set-canvas-width!  canvas 1024)
+     (js-set-canvas-height! canvas 1024)
+     (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
+     (define dc (canvas-context->dc ctx))
+     dc]))
+
+(define (not-caps-text string orig-style size angle)
+  ; Notes:
+  ;   strokeText - draws text outline directly
+  ;   fillText   - draws test filled  directly
+  ; They accept a string to draw and an x,y.
+  ; Use ctx.measureText(text)
+  ; then the relevant properties are:
+  ;   - actualBoundingBoxLeft
+  ;   - actualBoundingBoxRight
+  ;   - actualBoundingBoxAscent
+  ;   - actualBoundingBoxDescent
+
+  ; Note: We need the font at pict creation time in order
+  ;       to measure the bounding box of the text.
+  ;       That is, we can't get the font from `ctx` since
+  ;       the drawing context isn't available until 
+  ;       render time.  
+  (let ([font
+         ; Find font based on `orig-style`.
+         (let loop ([style orig-style])
+           (cond
+             [(null? style) ; null means default
+              the-default-font
+              #;(send the-font-list find-or-create-font
+                      ;    size family   style   weight  underline? smoothing size-in-pixels?  hinting
+                      #;"" size 'default 'normal 'normal #f         'default  #t               'unaligned)]
+             [(font? style)
+              font]
+             [(memq style families)
+              (font style 24 'normal 'normal 'normal #f)]
+             [(string? style)
+              style] ; assume it is a legal css font name
+             ; TODO
+             #;[(and (pair? style)
+                     (string? (car style))
+                     (memq (cdr style) families))              
+                (send the-font-list find-or-create-font
+                      size (car style) (cdr style) 'normal 'normal #f 'default #t 'unaligned)]
+             ; todo
+             #;[(and (pair? style)
+                     (or (memq (car style)
+                               '(superscript
+                                 subscript
+                                 large-script
+                                 bold italic
+                                 aligned unaligned))
+                         (and (pair? (car style))
+                              (eq? (caar style) 'weight))))
+                
+                (let ([font (loop (cdr style))]
+                      [style (car style)])
+                  (cond
+                    [(eq? style 'bold)
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  'bold
+                                  (send font get-hinting))]
+                    [(and (pair? style)
+                          (eq? (car style) 'weight))
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  (cdr style)
+                                  (send font get-hinting))]
+                    [(eq? style 'italic)
+                     (extend-font font
+                                  (send font get-point-size)
+                                  'italic
+                                  (send font get-weight)
+                                  (send font get-hinting))]
+                    [(or (eq? style 'aligned)
+                         (eq? style 'unaligned))
+                     (extend-font font
+                                  (send font get-point-size)
+                                  (send font get-style)
+                                  (send font get-weight)
+                                  style)]
+                    [else font]))]
+             #;[(and (pair? style)
+                     (memq (car style) '(combine no-combine outline)))
+                (loop (cdr style))]
+             #;[(and (pair? style)
+                     (is-a? (car style) color%))
+                (loop (cdr style))]
+             [else (raise-type-error 'text "style" orig-style)]))]
+        ; combine? (i.e. use kerning or ligatures?)
+        #;[combine?      (let loop ([style orig-style])
+                           (cond
+                             [(eq? style 'modern)           #f]
+                             [(not (pair? style))           #t]
+                             [(eq? (car style) 'combine)    #t]
+                             [(eq? (car style) 'no-combine) #f]
+                             [else
+                              (loop (cdr style))]))]
+        #;[sub?          (memq* 'subscript    orig-style)]
+        #;[sup?          (memq* 'superscript  orig-style)]
+        #;[large-script? (memq* 'large-script orig-style)]
+        #;[outline?      (memq* 'outline      orig-style)]
+        #;[color         (let loop ([style orig-style])
+                           (cond
+                             [(not (pair? style)) #f]
+                             [(is-a? (car style) color%) 
+                              (resolve-color (car style))]
+                             [else (loop (cdr style))]))])
+    (let (#;[s-font (if (or sub? sup?)
+                        (extend-font font
+                                     (floor (* (if large-script?
+                                                   85/100
+                                                   6/10)
+                                               (send font get-point-size)))
+                                     (send font get-style)
+                                     (send font get-weight)
+                                     (send font get-hinting))
+                        font)]
+          )      
+      (let ([dc (dc-for-text-size)])
+        (let-values
+            ([(w h   ; width, height
+                 d   ; distance from base line to bottom of descender
+                 s   ; extra vertical space (included in height, often zero)
+                 as  ; ascent
+                 de) ; descent
+              (let ()
+                ; 1. measure text
+                (define old-font (dc 'font))
+                (dc 'font (font->string font))
+                (define angle? (and angle (not (zero? angle))))
+                (define m #f)
+                (cond
+                  [angle?
+                   (dc 'rotate angle)              
+                   (set! m (dc 'measure-text string))
+                   (dc 'rotate (- angle))]
+                  [else
+                   (set! m (dc 'measure-text string))])
+                (dc 'font old-font)
+
+                ; get these values from m:
+                ;   - actualBoundingBoxLeft
+                ;   - actualBoundingBoxRight
+                ;   - actualBoundingBoxAscent
+                ;   - actualBoundingBoxDescent
+                (define (metric field [default 0.0])
+                  (let ([v (js-ref m field)])
+                    (cond
+                      [(real? v) (if (inexact? v) v (exact->inexact v))]
+                      [else      default])))
+                (define left    (metric "actualBoundingBoxLeft"))
+                (define right   (metric "actualBoundingBoxRight"))
+                (define ascent  (metric "actualBoundingBoxAscent"))
+                (define descent (metric "actualBoundingBoxDescent"))
+                (define width   (abs (- right left)))
+                #;(define width   (let ([w (metric "width")])
+                                    (if (positive? (+ left right))
+                                        (max w (+ left right))
+                                        w)))
+                (define height  (+ ascent descent))
+                (values width height descent 0.0 ascent descent))])
+
+          (define (make-draw adj-x adj-y angle)
+            ; Notes:
+            ;  The methods `strokeText` and `fillText` uses (x,y)
+            ;  to as the point where the baseline starts.
+            ;  The `pict` constructor `text` on the other hand uses (x,y)
+            ;  as the upper, left point of the text.            
+            
+            ; todo get path from text
+            #;(define p 
+                (and outline?
+                     (let ([p (new dc-path%)])
+                       (send p text-outline
+                             s-font string 0 0 combine?)
+                       (unless (zero? angle)
+                         (send p rotate angle))
+                       p)))
+            
+            (lambda (dc x y)
+              (let ([old-font (dc 'font)])
+                (define dest-x (adj-x x))
+                (define dest-y (+ (adj-y y) as))
+                ; TODO: check for outline? here
+                (dc 'font (font->string font))
+                (define angle? (and angle (not (zero? angle))))
+                (cond
+                  [angle?
+                   (dc 'translate dest-x dest-y)
+                   (dc 'rotate angle)              
+                   (dc 'fill-text string 0 0)
+                   (dc 'rotate (- angle))
+                   (dc 'translate (- dest-x) (- dest-y))]
+                  [else
+                   (dc 'fill-text string dest-x dest-y)])
+                (dc 'font old-font))))
+          
+          #;(let ([f (send dc get-font)])
+              (define dest-x (adj-x x))
+              (define dest-y (adj-y y))
+              (cond
+                [outline?
+                 (define pn (and color (send dc get-pen)))
+                 (when color (send dc set-pen color (send pn get-width) (send pn get-style)))
+                 (send dc draw-path p dest-x dest-y)
+                 (when color (send dc set-pen pn))]
+                [else
+                 (define fg (and color (send dc get-text-foreground)))
+                 (when color (send dc set-text-foreground color))
+                 (send dc set-font s-font)
+                 (send dc draw-text string
+                       dest-x dest-y
+                       combine? 0 angle)
+                 (when fg (send dc set-text-foreground fg))
+                 (send dc set-font f)]))
+          
+          ;; Normal case: no rotation
+          (prog-picture (make-draw (lambda (x) x)
+                                   (lambda (y) y)
+                                   angle)
+                        w h (- h d) d)
+
+          #;(if (or sub? sup?)
+                (let-values ([(ww wh wd ws) (with-text-scale
+                                              dc
+                                              (lambda ()
+                                                (send dc get-text-extent "Wy" font)))])
+                  ; note: prog-picture = (dc draw w h [a d])
+                  (prog-picture (make-draw
+                                 (lambda (x) x)
+                                 (lambda (y) (if sub?
+                                                 (+ y
+                                                    (if large-script?
+                                                        (+ (* (- wh wd ws) 4/10)
+                                                           (- ws s))
+                                                        (- wh h)))
+                                                 (+ y
+                                                    (if large-script?
+                                                        (* (- wh wd ws) -3/10)
+                                                        0))))
+                                 0)
+                                w wh (- wh wd) wd))
+                (if (zero? angle)
+                    ;; Normal case: no rotation
+                    (prog-picture (make-draw (lambda (x) x)
+                                             (lambda (y) y)
+                                             0)
+                                  w h (- h d) d)
+                    ;; Rotation case. Need to find the bounding box.
+                    ;; Calculate the four corners, relative to top left as origin:
+                    (let* ([tlx 0]
+                           [tly 0]
+                           [ca (cos angle)]
+                           [sa (sin angle)]
+                           [trx (* w ca)]
+                           [try (- (* w sa))]
+                           [brx (+ trx (* h sa))]
+                           [bry (- try (* h ca))]
+                           [blx (* h sa)]
+                           [bly (- (* h ca))]
+                           ;;min-x and min-y must be non-positive,
+                           ;; since tlx and tly are always 0
+                           [min-x (min tlx trx blx brx)]
+                           [min-y (min tly try bly bry)])
+                      (let ([pw (- (max tlx trx blx brx) min-x)]
+                            [ph (- (max tly try bly bry) min-y)]
+                            [dx (cond
+                                  [(and (positive? ca) (positive? sa)) 0]
+                                  [(positive? ca) (- (* h sa))]
+                                  [(positive? sa) (- (* w ca))]
+                                  [else (+ (- (* w ca)) (- (* h sa)))])]
+                            [dy (cond
+                                  [(and (positive? ca) (negative? sa)) 0]
+                                  [(positive? ca) (* w sa)]
+                                  [(negative? sa) (- (* h ca))]
+                                  [else (+ (- (* h ca)) (* w sa))])])
+                        (prog-picture (make-draw (lambda (x) (+ x dx))
+                                                 (lambda (y) (+ y dy))
+                                                 angle)
+                                      pw ph ph 0))))))))))
+
+
+(define (linewidth n p) (line-thickness n p))
+#;(define (linestyle n p) 
+  (unless (memq n '(transparent solid xor hilite 
+                                dot long-dash short-dash dot-dash 
+                                xor-dot xor-long-dash xor-short-dash 
+                                xor-dot-dash))
+    (raise-type-error 'linestyle "style symbol" n))
+  (line-style n p))
+
+
+
+(define (render dc h+top l dx dy)
+  (define b&w? #f)
+  
+  (let loop ([dx dx] [dy dy] [l l])   ; l is a list of commands
+    (unless (null? l)
+      ; first command
+      (let ([x (car l)]) ; x is the first command
+        (js-log (format "render: ~a" x))        
+        (if (string? x)
+            (error 'draw-pict "how did a string get here?: ~s" x)
+            (case (car x)
+              [(offset) (loop (+ dx (cadr x))
+                              (+ dy (caddr x))
+                              (cadddr x))]
+              ; The format of the old LaTeX line command is:
+              ;     (line x_run y_rise travel)
+              ; The pair (x_run, y_rise) gives the slope and travel is delta-x.
+              [(line vector)
+               (let ([xs  (cadr x)]
+                     [ys  (caddr x)]
+                     [len (cadddr x)])
+                 (let ([mx  (if len (abs (if (zero? xs) ys xs)) 1)]
+                       [len (or len 1)])
+                   (let ([x0 dx]
+                         [y0 (- h+top dy)]
+                         [x1 (+ dx (* (/ xs mx) len))]
+                         [y1 (- h+top (+ dy (* (/ ys mx) len)))])
+                     (case (car x)
+                       [(line)   (begin
+                                   (dc 'begin-path)
+                                   (dc 'move-to x0 y0)
+                                   (dc 'line-to x1 y1)
+                                   (dc 'stroke))]
+                       [(vector) (begin ; todo - add arrow
+                                   (dc 'begin-path)
+                                   (dc 'move-to x0 y0)
+                                   (dc 'line-to x1 y1)
+                                   (dc 'stroke))]))))]
+              
+              [(circle circle*)
+               (let ([size (cadr x)])
+                 (dc 'ellipse
+                     (- dx (/ size 2)) (- h+top dy (/ size 2))
+                     size size))]
+              [(oval) ; unfilled rounded rectangle
+               ; This a rectangle with rounded corners
+               ; roundRect(x, y, width, height, radii)
+               (let ([w (cadr  x)]
+                     [h (caddr x)])
+                 (let ([rx (-       dx (/ w 2))]
+                       [ry (- h+top dy (/ h 2))])
+                   (dc 'roundRect dx dy w h 5)))] ; todo - what should go here instead of 5?
+
+                 ;; (send cr set-rectangle
+                 ;;       (+ rx (* l (cadr x)))
+                 ;;       (+ ry (* t (caddr x)))
+                 ;;       (* (- r l) (cadr x))
+                 ;;       (* (- b t) (caddr x)))
+               
+                 ;; (let ([b  (get-brush)]
+                 ;;       [rx (- dx (/ (cadr x) 2))]
+                 ;;       [ry (- h+top dy (/ (caddr x) 2))])
+                 ;;   (set-brush (find-or-create-brush "BLACK" 'transparent))
+                 ;;   (let ([part (cadddr x)]
+                 ;;         [cr (send dc get-clipping-region)]
+                 ;;         [set-rect (lambda (l t r b)
+                 ;;                     (let ([cr (make-object region% dc)])
+                 ;;                       (send cr set-rectangle
+                 ;;                             (+ rx (* l (cadr x)))
+                 ;;                             (+ ry (* t (caddr x)))
+                 ;;                             (* (- r l) (cadr x))
+                 ;;                             (* (- b t) (caddr x)))
+                 ;;                       cr))])
+                 ;;     (send dc set-clipping-region
+                 ;;           (cond
+                 ;;             [(string=? part "[l]")
+                 ;;              (set-rect 0 0 0.5 1.0)]
+                 ;;             [(string=? part "[tl]")
+                 ;;              (set-rect 0 0 0.5 0.5)]
+                 ;;             [(string=? part "[tr]")
+                 ;;              (set-rect 0.5 0 1.0 0.5)]
+                 ;;             [(string=? part "[r]")
+                 ;;              (set-rect 0.5 0 1.0 1.0)]
+                 ;;             [(string=? part "[bl]")
+                 ;;              (set-rect 0 0.5 0.5 1.0)]
+                 ;;             [(string=? part "[br]")
+                 ;;              (set-rect 0.5 0.5 1.0 1.0)]
+                 ;;             [else cr]))
+                 ;;     (send dc draw-rounded-rectangle
+                 ;;           rx ry
+                 ;;           (cadr x) (caddr x)
+                 ;;           (if (string=? part "") -0.2 -0.5))
+                 ;;     (send dc set-clipping-region cr)
+                 ;;     (set-brush b)))]
+              [(bezier)
+               ; note:  [num] (x0,y0) (x1,y1) (x2,y2)
+               ;   num is the number of points to compute
+               ;   curve starts in (x0,y0) and ends in (x2,y2)
+               ;   qbezier = quadratic bezier
+               (let ([x1 (list-ref x 1)]
+                     [y1 (list-ref x 2)]
+                     [x2 (list-ref x 3)]
+                     [y2 (list-ref x 4)]
+                     [x3 (list-ref x 5)]
+                     [y3 (list-ref x 6)])
+                 (js-log (format "bezier: ~a" x))
+                 (dc 'begin-path)
+                 (dc 'move-to (+ dx x1) (- h+top (+ dy y1)))
+                 (dc 'quadratic-curve-to 
+                     (+ dx x2) (- h+top (+ dy y2))
+                     (+ dx x3) (- h+top (+ dy y3)))
+                 (dc 'stroke))]
+              [(with-color)
+               (if b&w?
+                   (loop dx dy (caddr x))
+                   (let ([c (second x)])
+                     (define c (if (string? c) c (color->string c)))
+                     (let ([old-stroke     (dc 'stroke-style)]
+                           [old-fill       (dc 'fill-style)])                           
+                       ; we set
+                       ;  1) stroke color
+                       ;  2) brush to solid color
+                       ;  3) text color
+                       (dc 'stroke-style c)
+                       (dc 'fill-style   c)                       
+                       (loop dx dy (caddr x))
+                       ; reset colors
+                       (dc 'stroke-style old-stroke)
+                       (dc 'fill-style   old-fill))))]               
+              [(with-thickness)
+               (let ([w (second x)])
+                 (let ([old-w (dc 'line-width)])
+                   (dc 'line-width w)
+                   (loop dx dy (caddr x))
+                   (dc 'line-width old-w)))]
+              [(prog)
+               ((cadr x) dc dx (- h+top dy (caddr x)))]
+              [else (error 'render "unknown command: ~a\n" x)])))
+      ; remaining commands
+      (loop dx dy (cdr l)))))
+
+
+
+  
+
+
+
+(js-log "bar")
+; (js-log (format "~a" (blank 10)))
+; (js-log (format "~a" (text "foo")))
+
+; (js-log (format "~a" (hc-append (blank 10) (text "foo"))))
+
+
+; (js-log (format "~a" (dash-frame (blank 10))))
+
+; (js-log (format "~a" (make-font 'sans-serif)))
+
+
+; (make-font 'sans-serif)
+
+; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
+
+
+
 
 (let ()
   (define canvas (js-create-element "canvas"))
@@ -2776,8 +3067,7 @@
   (js-set-canvas-height! canvas 800)
   (js-append-child! (js-document-body) canvas)
 
-  (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))
-  
+  (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))  
   (define dc (canvas-context->dc ctx))
 
   (let (#;[dc (λ x (displayln x))]
@@ -2793,9 +3083,35 @@
                             (make-color "blue"))
                     dc 200 200)
 
-       (draw-pict (colorize (linewidth 10 (dash-vline 5 40 5) ) "blue")
+       #;(draw-pict (colorize (linewidth 10 (dash-vline 5 40 5) ) "blue")
+                    dc 200 200)
+       #;(draw-pict (text "Hello World")
+                    dc 200 200)
+       #;(draw-pict (frame (text "Hello World"))
+                  dc 200 200)
+       (draw-pict (frame (text "Hello World" '() 24 (/ 3.14 4)))
                   dc 200 200)
 
+       (draw-pict (hc-append (frame (blank 30))  (frame (blank 60)))
+                  dc 300 300)
+
+       (draw-pict (cc-superimpose (frame (blank 30)) (frame (blank 60)))
+                  dc 400 400)
+
+       
+       (draw-pict (table 4
+                         (map (λ (x) (text (format "~a" x)))
+                              (list 1 2 3 4
+                                    5 6 7 8
+                                    9000 10 11 12))
+                         cc-superimpose
+                         cc-superimpose
+                         10
+                         10)
+                  dc 500 500)
+       
+       ; (text string style size angle)
+       
        ; in utils.rkt - later
        #;(draw-pict (rectangle 100 50))
 
