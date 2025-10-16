@@ -1056,8 +1056,8 @@ var imports = {
         'clear-rect': ((ctx, x, y, w, h) => ctx.clearRect(x, y, w, h)),
         'clip': ((ctx, path, rule) => {
           // `(void)` is decoded as `undefined`
-          const p = (from_fasl(path);
-          const r = (from_fasl(rule);
+          const p = from_fasl(path);
+          const r = from_fasl(rule);
           if (p === undefined && r === undefined) {
             ctx.clip();
           } else if (p === undefined) {
@@ -1083,8 +1083,8 @@ var imports = {
         'ellipse': ((ctx, x, y, rx, ry, rot, sa, ea, ccw) => ctx.ellipse(x, y, rx, ry, rot, sa, ea, !!ccw)),
         'fill': ((ctx, path, rule) => {
           // `(void)` is decoded as `undefined`
-          const p = (from_fasl(path);
-          const r = (from_fasl(rule);
+          const p = from_fasl(path);
+          const r = from_fasl(rule);
           if (p === undefined && r === undefined) {
             ctx.fill();
           } else if (p === undefined) {
@@ -1115,8 +1115,8 @@ var imports = {
         'get-line-dash': (ctx => ctx.getLineDash()),
         'get-transform': (ctx => ctx.getTransform()),
         'is-point-in-path': ((ctx, path, x, y, rule) => {
-          const p = (from_fasl(path);
-          const r = (from_fasl(rule);
+          const p = from_fasl(path);
+          const r = from_fasl(rule);
           if (p === undefined && r === undefined) {
             return ctx.isPointInPath(x, y) ? 1 : 0;
           } else if (p === undefined) {
@@ -1128,7 +1128,7 @@ var imports = {
           }
         }),
         'is-point-in-stroke': ((ctx, path, x, y) => {
-          const p = (from_fasl(path);
+          const p = from_fasl(path);
           if (p === undefined) {
             return ctx.isPointInStroke(x, y) ? 1 : 0;
           } else {
@@ -1169,7 +1169,7 @@ var imports = {
         'set-transform!': ((ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f)),
         'set-transform-matrix!': ((ctx, m) => ctx.setTransform(m)),
         'stroke': ((ctx, path) => {
-          const p = (from_fasl(path);
+          const p = from_fasl(path);
           if (p === undefined) {
             ctx.stroke();
           } else {
