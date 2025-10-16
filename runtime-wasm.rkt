@@ -31550,17 +31550,33 @@
                (param $realm (ref eq))   ;; symbol or $missing
                (result (ref eq))
 
-               (local $arity  (ref eq))
-               (local $invoke (ref $ProcedureInvoker))
-               (local $realm* (ref eq))
-
+               (local $arity      (ref eq))
+               (local $invoke     (ref $ProcedureInvoker))
+               (local $realm*     (ref eq))
+               (local $case-proc  (ref $CaseClosure))
+               
                ;; Step 1: If realm is #f, replace with 'racket
                (local.set $realm*
                           (if (result (ref eq))
                               (ref.eq (local.get $realm) (global.get $missing))
                               (then (global.get $symbol:racket))
                               (else (local.get $realm))))
-               ;; Step 2: If $proc is a Closure
+               ;; Step 2: If $proc is a CaseClosure, preserve its arms and arity table
+               (if (ref.test (ref $CaseClosure) (local.get $proc))
+                   (then
+                    (local.set $case-proc (ref.cast (ref $CaseClosure) (local.get $proc)))
+                    (return
+                     (struct.new $CaseClosure
+                                 (i32.const 0)                                 ;; hash
+                                 (local.get $name)
+                                 (struct.get $CaseClosure $arity   (local.get $case-proc))
+                                 (local.get $realm*)
+                                 (struct.get $CaseClosure $invoke  (local.get $case-proc))
+                                 (struct.get $CaseClosure $code    (local.get $case-proc))
+                                 (struct.get $CaseClosure $free    (local.get $case-proc))
+                                 (struct.get $CaseClosure $arities (local.get $case-proc))
+                                 (struct.get $CaseClosure $arms    (local.get $case-proc))))))
+               ;; Step 3: If $proc is a Closure
                (if (ref.test (ref $Closure) (local.get $proc))
                    (then
                     (return
@@ -31572,7 +31588,7 @@
                                 (struct.get $Closure $invoke (ref.cast (ref $Closure) (local.get $proc)))
                                 (struct.get $Closure $code   (ref.cast (ref $Closure) (local.get $proc)))
                                 (struct.get $Closure $free   (ref.cast (ref $Closure) (local.get $proc)))))))
-               ;; Step 3: If $proc is a PrimitiveClosure
+               ;; Step 4: If $proc is a PrimitiveClosure
                (if (ref.test (ref $PrimitiveClosure) (local.get $proc))
                    (then
                     (return
@@ -31585,7 +31601,7 @@
                                 (struct.get $PrimitiveClosure $code (ref.cast (ref $PrimitiveClosure) (local.get $proc)))
                                 (struct.get $PrimitiveClosure $result-arity
                                             (ref.cast (ref $PrimitiveClosure) (local.get $proc)))))))
-               ;; Step 4: If $proc is a PrimitiveProcedure
+               ;; Step 5: If $proc is a PrimitiveProcedure
                (if (ref.test (ref $PrimitiveProcedure) (local.get $proc))
                    (then
                     (return
@@ -31598,7 +31614,7 @@
                                 (struct.get $PrimitiveProcedure $code   (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))
                                 (struct.get $PrimitiveProcedure $result-arity
                                             (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))))))
-               ;; Step 5: Not a supported procedure type
+               ;; Step 6: Not a supported procedure type
                (call $raise-argument-error:procedure-expected)
                (unreachable))
          
