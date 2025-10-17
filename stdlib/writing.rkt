@@ -477,6 +477,11 @@
       [(number? v)    (emit (number->string v))]
       [(vector? v)    (display-vector v)]
       [(hash? v)      (display-hash-table v)]
+      [(path? v)      (display-path v)]
+      [(syntax? v)    (display-syntax v)]
+      [(namespace? v) (display-namespace v)]
+      [(port? v)      (display-port v)]
+
       [(struct? v)    (let ([vec (struct->vector v)])
                         (if (print-struct)
                             (display-vector vec)
