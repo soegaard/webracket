@@ -279,6 +279,61 @@
     (emit ")")
     (void))
 
+  (define (hash-literal-prefix ht)
+    (cond
+      [(hash-eq? ht)          "#hasheq"]
+      [(hash-eqv? ht)         "#hasheqv"]
+      [(hash-equal-always? ht) "#hashalw"]
+      [else                   "#hash"]))
+
+  (define (write-hash-table ht)
+    ; TODO - Note: We could print without allocating a new list.    
+    (if (print-hash-table)
+        (let ([entries (hash->list ht)])
+          (emit (hash-literal-prefix ht))
+          (write-proper-list entries "(" ")"))
+        (emit "#<hash>")))
+
+  (define (emit-name name)
+    (cond
+      [(string? name) (emit name)]
+      [(symbol? name) (emit (symbol->string name))]
+      [else (write-value name)]))
+
+  (define (write-path p)
+    (emit "#<path:")
+    (emit (path->string p))
+    (emit ">"))
+
+  (define (write-port port)
+    (define base
+      (cond
+        [(and (input-port? port) (output-port? port)) "#<port"]
+        [(input-port? port)  "#<input-port"]
+        [(output-port? port) "#<output-port"]
+        [else "#<port"]))
+    (emit base)
+    (define name (object-name port))
+    (when name
+      (emit ":")
+      (emit-name name))
+    (emit ">"))
+
+  (define (write-namespace ns)
+    (define name (object-name ns))
+    (if (or (not name) (eq? name #f))
+        (emit "#<namespace>")
+        (begin
+          (emit "#<namespace:")
+          (emit-name name)
+          (emit ">"))))
+
+  (define (write-syntax stx)
+    (emit "#<syntax ")
+    (write-value (syntax-e stx))
+    (emit ">"))
+  
+
   (define (write-value v)
     (cond
       [(boolean? v)    (emit (if v "#t" "#f"))]
@@ -297,6 +352,12 @@
       [(bytes? v)     (write-bytes-literal v)]
       [(number? v)    (emit (number->string v))]
       [(vector? v)    (write-vector v)]
+      [(hash? v)      (write-hash-table v)]
+      [(path? v)      (write-path v)]
+      [(syntax? v)    (write-syntax v)]
+      [(namespace? v) (write-namespace v)]
+      [(port? v)      (write-port v)]
+      #;[(variable-reference? v) (emit "#<variable-reference>")]
       [(struct? v)    (let ([vec (struct->vector v)])
                         (if (print-struct)
                             (write-vector vec)
@@ -382,6 +443,20 @@
     (emit ")")
     (void))
 
+  (define (hash-literal-prefix ht)
+    (cond
+      [(hash-eq? ht)          "#hasheq"]
+      [(hash-eqv? ht)         "#hasheqv"]
+      [(hash-equal-always? ht) "#hashalw"]
+      [else                   "#hash"]))
+  
+  (define (display-hash-table ht)
+    (if (print-hash-table)
+        (let ([entries (hash->list ht)])
+          (emit (hash-literal-prefix ht))
+          (display-proper-list entries "(" ")"))
+        (emit "#<hash>")))
+
   (define (display-value v)
     (cond
       [(boolean? v)    (emit (if v "#t" "#f"))]
@@ -401,6 +476,7 @@
       [(bytes? v)     (emit-bytes v)]
       [(number? v)    (emit (number->string v))]
       [(vector? v)    (display-vector v)]
+      [(hash? v)      (display-hash-table v)]
       [(struct? v)    (let ([vec (struct->vector v)])
                         (if (print-struct)
                             (display-vector vec)
