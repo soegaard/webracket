@@ -457,6 +457,44 @@
           (display-proper-list entries "(" ")"))
         (emit "#<hash>")))
 
+  (define (emit-name name)
+    (cond
+      [(string? name) (emit name)]
+      [(symbol? name) (emit (symbol->string name))]
+      [else (display-value name)]))
+
+  (define (display-path p)
+    (emit (path->string p)))
+
+  (define (display-port port)
+    (define base
+      (cond
+        [(and (input-port? port)
+              (output-port? port)) "#<port"]
+        [(input-port? port)        "#<input-port"]
+        [(output-port? port)       "#<output-port"]
+        [else                      "#<port"]))
+    (emit base)
+    (define name (object-name port))
+    (when name
+      (emit ":")
+      (emit-name name))
+    (emit ">"))
+
+  (define (display-namespace ns)
+    (define name (object-name ns))
+    (if (or (not name) (eq? name #f))
+        (emit "#<namespace>")
+        (begin
+          (emit "#<namespace:")
+          (emit-name name)
+          (emit ">"))))
+
+  (define (display-syntax stx)
+    (emit "#<syntax ")
+    (display-value (syntax-e stx))
+    (emit ">"))
+
   (define (display-value v)
     (cond
       [(boolean? v)    (emit (if v "#t" "#f"))]
@@ -492,6 +530,7 @@
       [(box? v)       (emit "#&")
                       (display-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
+      [(external? v)  (emit "#<external>")]
       [else           (emit "#<unknown>")])
     (void))
 
