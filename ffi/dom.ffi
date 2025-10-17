@@ -1366,7 +1366,7 @@
 (define-foreign js-canvas2d-stroke-style
   #:module "canvas-rendering-context-2d"
   #:name   "stroke-style"
-  (-> (value) (extern)))
+  (-> (extern) (extern)))
 
 (define-foreign js-set-canvas2d-stroke-style!
   #:module "canvas-rendering-context-2d"

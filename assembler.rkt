@@ -714,6 +714,7 @@ var imports = {
                                               return [...( as ? as : [])]
                                     }),
       'typeof':                    ((obj) => to_string(typeof obj)),
+      'value->string':             ((obj) => to_string(String(obj))),
       'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
       'operator':                  ((op, operands) => {
                                      const o = from_fasl(op);
