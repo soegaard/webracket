@@ -311,7 +311,9 @@
       [(eq? v undefined)        (emit "#<undefined>")]
       [(eq? v unsafe-undefined) (emit "#<unsafe-undefined>")]
 
-      [else           (emit "#<unknown>")])
+      [(external? v)  (emit "#<external>")]
+      
+      [else           (js-log v) (emit "#<unknown>")])
     (void))
 
   (write-value datum)
