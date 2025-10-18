@@ -69,26 +69,6 @@
 
 (define color->string
   (let ()
-    #;(define (string-trim-left s)
-      (let ([len (string-length s)])
-        (let loop ([i 0])
-          (if (or (= i len) (not (char-whitespace? (string-ref s i))))
-              (substring s i len)
-              (loop (add1 i))))))
-
-    #;(define (string-trim-right s)
-      (let ([len (string-length s)])
-        (let loop ([i len])
-          (if (zero? i)
-              ""
-              (let ([pos (sub1 i)])
-                (if (char-whitespace? (string-ref s pos))
-                    (loop pos)
-                    (substring s 0 i)))))))
-
-    #;(define (string-trim s)
-      (string-trim-right (string-trim-left s)))
-
     (define (string-prefix-ci? s prefix)
       (let ([len (string-length s)]
             [plen (string-length prefix)])
@@ -402,26 +382,29 @@
         [else (error who "expected alpha in range 0-255 or 0-1, got: ~a" a)]))
 
     (define (color->string c)
-      (let ([val (color-value c)])
-        (cond
-          [(string? val)
-           (let ([trimmed (string-trim val)])
-             (unless (css-color-string? trimmed)
-               (error 'color->string "expected a CSS color string, got: ~a" val))
-             trimmed)]
-          [(rgb-color? val)
-           (let* ([who 'color->string]
-                  [r     (ensure-byte     who (rgb-color-r val) "red")]
-                  [g     (ensure-byte     who (rgb-color-g val) "green")]
-                  [b     (ensure-byte     who (rgb-color-b val) "blue")]
-                  [alpha (normalize-alpha who (rgb-color-a val))])
-             (if alpha
-                 (string-append "rgba(" (number->string r) ", "
-                                (number->string g) ", " (number->string b)
-                                ", " (alpha-value->string alpha) ")")
-                 (string-append "rgb(" (number->string r) ", "
-                                (number->string g) ", " (number->string b) ")")))]
-          [else (error 'color->string "expected a color value, got: ~a" val)])))
+      (cond
+        [(or (string? c) (external? c)) c]
+        [else
+         (let ([val (color-value c)])
+           (cond
+             [(string? val)
+              (let ([trimmed (string-trim val)])
+                (unless (css-color-string? trimmed)
+                  (error 'color->string "expected a CSS color string, got: ~a" val))
+                trimmed)]
+             [(rgb-color? val)
+              (let* ([who 'color->string]
+                     [r     (ensure-byte     who (rgb-color-r val) "red")]
+                     [g     (ensure-byte     who (rgb-color-g val) "green")]
+                     [b     (ensure-byte     who (rgb-color-b val) "blue")]
+                     [alpha (normalize-alpha who (rgb-color-a val))])
+                (if alpha
+                    (string-append "rgba(" (number->string r) ", "
+                                   (number->string g) ", " (number->string b)
+                                   ", " (alpha-value->string alpha) ")")
+                    (string-append "rgb(" (number->string r) ", "
+                                   (number->string g) ", " (number->string b) ")")))]
+             [else (error 'color->string "expected a color value, got: ~a" val)]))]))
 
     color->string))
 
@@ -1140,7 +1123,7 @@
 (define (make-pict-drawer p)
   (let ([cmds (pict->command-list p)]
         [h    (pict-height p)])
-    (js-log (format "cmds: ~a" cmds))
+    ; (js-log (format "cmds: ~a" cmds))
     (lambda (dc dx dy)
       (render dc (+ h dy)
               cmds
@@ -1159,18 +1142,20 @@
 ;;  (put       x y command ...)           ; place contents at (x,y)         
 ;;  (qbezier   num x1 y1 x2 y2 x3 y3)     ; quadratic Bezier curve          
 ;;  (line      x_run y_rise travel)       ; line segment                    
+;;  (line      dx dy #f)                  ; line segment                    
 ;;  (vector    x_run y_rise travel)       ; arrow                           
+;;  (vector    dx dy)                     ; arrow                           
 ;;  (circle    x y)                       ; circle                          
 ;;  (circle*   x y)                       ; filled circle                   
 ;;  (make-box  w h position text)         ;                                 
 ;;  (frame     commdands)                 ; puts contents in a box          
 ;;  (colorbox  box commands)              ; same, but background is colored 
-;;  (oval      w h commands)              ; rounded rectangle
-;;  (prog ??)
+;;  (oval      w h commands)              ; rounded rectangle               
+;;  (prog      f commands)                                                  
 ;;                                                                          
-;; where
-;;   position is one of t, b, l, r
-
+;; where                                                                    
+;;   position is one of t, b, l, r                                          
+;;   f is a function: (-> (is-a?/c dc<%>) real? real? any)
 
 ;; The pict `blank` draws nothing when rendered, but takes up space
 ;; when combined with other picts.
@@ -1286,9 +1271,9 @@
      #f)))
 
 
-;; To extend an existing pict `box` and place into a larger pict,
-;; we can use extend.
-;; The dimension of the extend box adds `dw`, `da` and `dd`
+;; To extend an existing pict `box` and place it into a larger pict,
+;; we can use `extend-pict`.
+;; The dimension of the extended box add `dw`, `da` and `dd`
 ;; to the width, ascent and descent (and adjust the height as well
 ;; based on ascent and descent.
 ;; The old picture `box` is placed at the coordinate (dx,dy) relative
@@ -1360,6 +1345,27 @@
                      `(picture
                        ,w ,h
                        (put ,l ,b ,(pict-draw box)))))]))
+
+;; Unless in black-and-white mode, `colorize` will change
+;; the stroke and fill of a pict.
+
+(define black-and-white
+  (make-parameter #f
+                  (lambda (x)
+                    (and x #t))))
+
+(define (colorize p color)
+  (unless (or (string? color)
+              (color?  color)
+              (and (list? color) (= 3 (length color)) (andmap byte? color)))
+    (error 'colorize "expected a color, given ~e" color))
+  (let ([color (if (list? color) (apply make-color color) color)])
+    (if (black-and-white)
+        p
+        (extend-pict 
+         p 0 0 0 0 0
+         `(color ,color ,(pict-draw p))))))
+
 
 ;; In `thickness` we see `extend-pict` used to adjust the draw
 ;; function. It was also possible to use `make-pict` directly.
@@ -1901,15 +1907,6 @@
        (put ,r       ,(- h r) (oval "[tl]" ,rr ,rr))  (put ,r ,h (line 1 0 ,lw))
        (put ,(- w r) ,(- h r) (oval "[tr]" ,rr ,rr))  (put ,0 ,r (line 0 1 ,lh))))))
 
-(define (big-circle d)
-  (let ([r (/ d 2)])
-    (picture
-     d d
-     `((curve  0 ,r  ,r  0   0  0)      ; upper left
-       (curve ,r  0  ,d ,r  ,d  0)      ; 
-       (curve ,d ,r  ,r ,d  ,d ,d)
-       (curve ,r ,d   0 ,r   0 ,d)))))
-
 ;;;
 ;;; Pict Combiners
 ;;;
@@ -2098,12 +2095,9 @@
                 cbl-superimpose)
   (let ([make-superimpose
          (lambda (get-h get-v get-th name)
-           (js-log "a")
            (lambda boxes*
-             (js-log "b")
              (when (null? boxes*)
                (error name "expected at least one argument, got none"))
-             (js-log "c")
              (define boxes
                (map
                 (lambda (p)
@@ -2114,7 +2108,6 @@
                            name "all picts as arguments"
                            (apply string-append (add-between (map (λ (x) (format "~e" x)) boxes*) " ")))]))
                 boxes*))
-             (js-log "d")
              (let ([max-w            (apply max (map pict-width boxes))]
                    [max-h            (apply max (map pict-height boxes))]
                    [max-a            (apply max (map pict-ascent boxes))]
@@ -2123,7 +2116,6 @@
                    [max-d            (apply max (map pict-descent boxes))]
                    [max-d-complement (apply max (map (lambda (b) (- (pict-height b) (pict-descent b)))
                                                      boxes))])
-               (js-log "e")
                (let ([p (picture max-w (get-th max-h max-a max-d max-a-complement max-d-complement)
                                  (map (lambda (box)
                                         `(place ,(get-h max-w (pict-width box))
@@ -2132,22 +2124,17 @@
                                                         max-a-complement (pict-ascent box))
                                                 ,box))
                                       boxes))])
-                 (js-log "f")
                  ;; Figure out top and bottom baselines by finding the picts again, etc:
                  (let ([ys (map (lambda (box)
-                                  (js-log "A")
                                   (let-values ([(x y) (find-lt p box)])
-                                    (js-log "B")
                                     y))
                                 boxes)])
-                   (js-log "g")
                    (let ([min-a (apply min (map (lambda (box y)
                                                   (+ (- (pict-height p) y) (pict-ascent box)))
                                                 boxes ys))]
                          [min-d (apply min (map (lambda (box y)
                                                   (+ (- y (pict-height box)) (pict-descent box)))
                                                 boxes ys))])
-                     (js-log "h")
                      (make-pict (pict-draw p)
                                 (pict-width p) (pict-height p)
                                 min-a min-d
@@ -2194,6 +2181,12 @@
      (make-superimpose c  c     norm  'cc-superimpose)
      (make-superimpose c  tline tbase 'ctl-superimpose)
      (make-superimpose c  bline bbase 'cbl-superimpose))))
+
+;;;
+;;; Table
+;;;
+
+;; Given `superimpose` we can make a table.
 
 (define table
   (case-lambda
@@ -2273,8 +2266,29 @@
                           (blank (vector-ref csep c) 0)))))
               (blank 0 (vector-ref rsep r))))))))]))
 
+;;;
+;;; Connectors and Placement
+;;;
+
+;; For the following picture constructors, we want to add a few
+;; commands to our set of drawing commands.
+
+;; The function `picture*` below does just that.
+;; It adds various connect commands, the place command
+;; and the curve command.
+
+; (place x y p)
+;    Place sub-pict `p` at (x,y).
+;    Make p a child.
 
 
+;; Note:
+;;   In the code below `~connect` doesn't use the `exact` nor the `close-enough`
+;;   arguments. I think, `~connect` is a holdover from the previous LaTeX backend.
+;;   The code for `picture*` could be simplified by having a single, simple
+;;   `connect` function.
+
+; Connect two points with either a line segment or an arrow.
 (define connect
   (case-lambda
     [(x1 y1 x2 y2)        (connect            x1 y1 x2 y2 #f)]
@@ -2342,7 +2356,9 @@
                                         1.0
                                         (list-ref c 7))])
                              (let ([p (if (and d (>= d 0))
-                                          (inexact->exact (floor (* d (sqrt (+ (expt (- x2 x1) 2) (expt (- y2 y1) 2))))))
+                                          (inexact->exact
+                                           (floor (* d (sqrt (+ (expt (- x2 x1) 2)
+                                                                (expt (- y2 y1) 2))))))
                                           #f)])
                                (if (and (= x1 x2) (= y1 y2))
                                    translated
@@ -2378,6 +2394,7 @@
    (cons
     `(place 0 0 ,p)
     commands)))
+
 
 (define (place-it who flip? base dx dy target)
   (let-values ([(dx dy)
@@ -2417,25 +2434,7 @@
 
 
 
-(define black-and-white
-  (make-parameter #f
-                  (lambda (x)
-                    (and x #t))))
 
-
-(define (colorize p color)
-  (unless (or (string? color)
-              (color?  color)
-              (and (list? color) (= 3 (length color)) (andmap byte? color)))
-    (error 'colorize "expected a color, given ~e" color))
-  (let ([color (if (list? color)
-                   (apply make-color color) 
-                   color)])
-    (if (black-and-white)
-        p
-        (extend-pict 
-         p 0 0 0 0 0
-         `(color ,color ,(pict-draw p))))))
 
 (define (optimize s)
   (let o-loop ([s s][dx 0][dy 0])
@@ -2549,8 +2548,223 @@
                              x))
      x)))
 
+;;;
+;;; Basic Pict Constructors
+;;;
+
+;; Note: These are without keywords for now.
+
 (define (dc f w h [a h] [d 0])
   (make-pict `(prog ,f ,h) w h a d null #f #f))
+
+(define (circle diameter [border-color #f] [border-width #f])
+  (define d  diameter)
+  (define r  (/ d 2.))
+  (dc (lambda (dc x y)
+        (define cx (+ x r))
+        (define cy (+ y r))
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+       
+        (dc 'begin-path)
+        (dc 'arc cx cy r 0 (* 2. pi))
+        (dc 'stroke)
+        
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width)))
+      d d))
+
+(define (ellipse width height [border-color #f] [border-width #f])
+  (define dx width)
+  (define dy height)
+  (define rx (/ dx  2.))
+  (define ry (/ dy 2.))
+  (define rotation 0.)
+  (dc (lambda (dc x y)
+        (define cx (+ x rx))
+        (define cy (+ y ry))        
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+        (dc 'begin-path)
+        (dc 'ellipse cx cy rx ry rotation 0. (* 2. pi))
+        (dc 'stroke)
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width)))
+      dx dy))
+
+(define (filled-ellipse width height
+                        [draw-border? #t] 
+                        [border-color #f]
+                        [border-width #f])
+  (define dx width)
+  (define dy height)
+  (define rx (/ dx  2.))
+  (define ry (/ dy 2.))
+  (define rotation 0.)
+  (dc (lambda (dc x y)
+        (define cx (+ x rx))
+        (define cy (+ y ry))
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+
+        (dc 'begin-path)
+        (dc 'ellipse cx cy rx ry rotation 0. (* 2. pi))
+        (dc 'fill)
+        
+        (when draw-border?
+          (dc 'begin-path)
+          (dc 'ellipse cx cy rx ry rotation 0. (* 2. pi))
+          (dc 'stroke))
+        
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width)))
+      dx dy))
+
+(define (disk diameter
+              [draw-border? #t]
+              [border-color #f]
+              [border-width #f])
+  (filled-ellipse diameter diameter
+                  draw-border?
+                  border-color
+                  border-width))
+
+(define (rectangle width height [border-color #f] [border-width #f])
+  (define w width)
+  (define h height)
+  (dc (lambda (dc x y)
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+
+        (dc 'stroke-rect x y w h)
+
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width))
+        )      
+      w h))
+
+(define (filled-rectangle width height
+                          [draw-border? #t]
+                          [border-color #f]
+                          [border-width #f])
+  (define w width)
+  (define h height)
+  (dc (lambda (dc x y)
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+
+        (dc 'fill-rect x y w h)
+        (when draw-border?
+          (dc 'stroke-rect x y w h))
+
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width)))
+      w h))
+
+(define (rounded-rectangle width height
+                           [corner-radius -0.25]
+                           [border-color  #f]
+                           [border-width  #f])
+  (define w  width)
+  (define h  height)
+  (define cr corner-radius)
+  (define r  (cond
+               [(> cr 0)       cr]
+               [(< -0.5 cr 0.) (* (- cr) (min w h))]
+               [else
+                (error 'rounded-rectangle "expected radiues, got: ~a" cr)]))
+  (dc (lambda (dc x y)
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+
+        (dc 'begin-path)
+        (dc 'round-rect x y w h r)
+        (dc 'stroke)
+
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width))
+        )      
+      w h))
+
+(define (filled-rounded-rectangle width height
+                                  [corner-radius -0.25]
+                                  [draw-border? #t]
+                                  [border-color #f]
+                                  [border-width #f])
+  (define w  width)
+  (define h  height)
+  (define cr corner-radius)
+  (define r  (cond
+               [(> cr 0)       cr]
+               [(< -0.5 cr 0.) (* (- cr) (min w h))]
+               [else
+                (error 'rounded-rectangle "expected radiues, got: ~a" cr)]))
+  (dc (lambda (dc x y)
+        (define old-stroke (and border-color (dc 'stroke-style)))
+        (define old-width  (and border-width (dc 'line-width)))
+        (when border-color
+          (dc 'stroke-style (color->string border-color)))
+        (when border-width
+          (dc 'line-width border-width))
+
+        (dc 'begin-path)
+        (dc 'round-rect x y w h r)
+        (dc 'fill)
+
+        (when draw-border?
+          (dc 'begin-path)
+          (dc 'round-rect x y w h r)
+          (dc 'stroke))
+
+        (when border-color
+          (dc 'stroke-style old-stroke))
+        (when border-width
+          (dc 'line-width old-width))
+        )      
+      w h))
+
+
+;;;
+;;;
+;;;
+
+
 
 (define prog-picture dc)
 
@@ -2911,8 +3125,11 @@
                               (cadddr x))]
               ; The format of the old LaTeX line command is:
               ;     (line x_run y_rise travel)
+              ; or  (line dx dy #f)
+
               ; The pair (x_run, y_rise) gives the slope and travel is delta-x.
               [(line vector)
+               
                (let ([xs  (cadr x)]
                      [ys  (caddr x)]
                      [len (cadddr x)])
@@ -2936,8 +3153,7 @@
               
               [(circle circle*)
                (let ([size (cadr x)])
-                 (dc 'ellipse
-                     (- dx (/ size 2)) (- h+top dy (/ size 2))
+                 (dc 'ellipse (- dx (/ size 2)) (- h+top dy (/ size 2))
                      size size))]
               [(oval) ; unfilled rounded rectangle
                ; This a rectangle with rounded corners
@@ -3000,7 +3216,6 @@
                      [y2 (list-ref x 4)]
                      [x3 (list-ref x 5)]
                      [y3 (list-ref x 6)])
-                 (js-log (format "bezier: ~a" x))
                  (dc 'begin-path)
                  (dc 'move-to (+ dx x1) (- h+top (+ dy y1)))
                  (dc 'quadratic-curve-to 
@@ -3008,22 +3223,25 @@
                      (+ dx x3) (- h+top (+ dy y3)))
                  (dc 'stroke))]
               [(with-color)
+               (js-log "render: with-color")
                (if b&w?
                    (loop dx dy (caddr x))
-                   (let ([c (second x)])
-                     (define c (if (string? c) c (color->string c)))
+                   (let ([c1 (cadr x)]) ; todo rename back to c and have the define this leads to a problem
+                     (js-log (format "1.  ~a" c))        ; was 0
+                     (js-log (format "1.5 ~a" (cadr x))) ; was/should be "red"
+                     (define c (if (string? c1) c1 (color->string c1)))
                      (let ([old-stroke     (dc 'stroke-style)]
-                           [old-fill       (dc 'fill-style)])                           
+                           [old-fill       (dc 'fill-style)])
                        ; we set
                        ;  1) stroke color
                        ;  2) brush to solid color
                        ;  3) text color
                        (dc 'stroke-style c)
-                       (dc 'fill-style   c)                       
+                       (dc 'fill-style   c)
                        (loop dx dy (caddr x))
                        ; reset colors
                        (dc 'stroke-style old-stroke)
-                       (dc 'fill-style   old-fill))))]               
+                       (dc 'fill-style   old-fill))))]
               [(with-thickness)
                (let ([w (second x)])
                  (let ([old-w (dc 'line-width)])
@@ -3036,13 +3254,112 @@
       ; remaining commands
       (loop dx dy (cdr l)))))
 
+;;;
+;;; https://github.com/racket/pict/blob/master/pict-lib/pict/private/utils.rkt
+;;;
 
+; (re-pict 
 
+(define (re-pict box naya)
+  (let ([w (pict-width   box)]
+        [h (pict-height  box)]
+        [d (pict-descent box)]
+        [a (pict-ascent  box)])
+    (make-pict (pict-draw naya)
+               w h
+               a d
+               (list (make-child box 0 0 1 1 0 0))
+               #f
+               (pict-last box))))
+
+(define (re-pict box naya)
+    (let ([w (pict-width box)]
+	  [h (pict-height box)]
+	  [d (pict-descent box)]
+	  [a (pict-ascent box)])
+      (make-pict (pict-draw naya)
+		 w h
+		 a d
+		 (list (make-child box 0 0 1 1 0 0))
+		 #f
+                 (pict-last box))))
   
+(define cons-colorized-picture
+  (lambda (p color cmds)
+    (re-pict
+     p
+     (cc-superimpose
+      p
+      (colorize
+       (cons-picture
+        (ghost (launder p))
+        cmds)
+       color)))))
+
+(define (round-frame p radius)
+  (re-pict
+   p
+   (cc-superimpose
+    p
+    (let ([w (pict-width p)]
+          [h (pict-height p)])
+      (dc (lambda (dc2 x y)
+            (dc2 'begin-path)
+            (dc2 'round-rect x y w h radius)
+            (dc2 'stroke))
+          (pict-width p) (pict-height p))))))
 
 
 
-(js-log "bar")
+;; FIXME: abstract common part of color-frame, etc.
+
+(define color-frame
+  (case-lambda
+    [(p color w)
+     (re-pict
+      p
+      (cc-superimpose
+       p
+       (let ([p2 (colorize (frame (ghost (launder p))) color)])
+         (if w
+             (linewidth w p2)
+             p2))))]
+    [(p color) (color-frame p color #f)]))
+
+(define color-round-frame
+  (case-lambda
+    [(p radius color)   (color-round-frame p radius color #f)]
+    [(p radius color w)
+     (re-pict
+      p
+      (cc-superimpose
+       p
+       (let ([p2 (colorize (round-frame (ghost (launder p)) radius) color)])
+         (if w
+             (linewidth w p2)
+             p2))))]
+    ))  
+
+(define color-dash-frame
+  (case-lambda
+    [(p seg-length color w)
+     (re-pict
+      p
+      (cc-superimpose
+       p
+       (let ([p2 (colorize (dash-frame (ghost (launder p)) seg-length) color)])
+         (if w
+             (linewidth w p2)
+             p2))))]
+    [(p seg-length color) (color-dash-frame p seg-length color #f)]))  
+
+
+
+
+
+
+
+; (js-log "bar")
 ; (js-log (format "~a" (blank 10)))
 ; (js-log (format "~a" (text "foo")))
 
@@ -3058,17 +3375,21 @@
 
 ; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
 
+;;;
+;;; Example
+;;;
 
-
-
-(let ()
+(define (main)
   (define canvas (js-create-element "canvas"))
   (js-set-canvas-width!  canvas 1024)
-  (js-set-canvas-height! canvas 800)
+  (js-set-canvas-height! canvas 1024)
   (js-append-child! (js-document-body) canvas)
 
   (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))  
   (define dc (canvas-context->dc ctx))
+
+  (js-log "Tada!")
+  (js-log (js-canvas2d-stroke-style ctx))
 
   (let (#;[dc (λ x (displayln x))]
         #;[dc (make-command-drawer ctx)])
@@ -3096,7 +3417,7 @@
                   dc 300 300)
 
        (draw-pict (cc-superimpose (frame (blank 30)) (frame (blank 60)))
-                  dc 400 400)
+                  dc 400 200)
 
        
        (draw-pict (table 4
@@ -3108,6 +3429,98 @@
                          cc-superimpose
                          10
                          10)
+                  dc 500 500)
+       
+       (draw-pict  (round-frame (blank 80) 10)
+                  dc 300 500)
+
+       (draw-pict (colorize (round-frame (blank 80) 10) "red")
+                   dc 300 500)
+
+       (draw-pict (color-frame (blank 80) "blue" 1)
+                  dc 200 500)
+
+       (draw-pict (color-round-frame (blank 80) 10 "green" 1)
+                  dc 100 500)
+       
+       (draw-pict (color-dash-frame (blank 80) 5 "gold" 1)
+                  dc 400 500)
+
+       (draw-pict (circle 80)
+                  dc 400 600)
+
+       (draw-pict (ellipse 80 40)
+                  dc 300 600)
+
+       (draw-pict (filled-ellipse 80 40)
+                  dc 200 600)
+
+       (draw-pict (color-frame (blank 80) "red" 1)
+                  dc 100 600)
+
+       (draw-pict (color-round-frame (blank 80) 10 "purple")
+                  dc 100 700)
+
+       (js-log (color->string "purple"))
+
+       (draw-pict (circle 80 "darkblue")
+                  dc 200 700)
+
+       (draw-pict (circle 80 "darkblue" 2)
+                  dc 300 700)
+
+       (draw-pict (colorize (filled-ellipse 80 40 #t "darkblue" 5)
+                            "lightblue")
+                  dc 400 700)
+
+       (draw-pict (rectangle 80 80)
+                  dc 500 700)
+
+       (draw-pict (rectangle 80 80  "red")
+                  dc 600 700)
+
+       (draw-pict (rectangle 80 80 "gold" 5)
+                  dc 700 700)
+
+       (draw-pict (filled-rectangle 80 80)
+                  dc 100 800)
+
+       (draw-pict (colorize (filled-rectangle 80 80  #t "red") "gold")
+                  dc 200 800)
+
+       (draw-pict (colorize (filled-rectangle 80 80 #t "gold" 5) "red")
+                  dc 300 800)
+
+
+       (draw-pict (rounded-rectangle 80 80)
+                  dc 100 400)
+
+       (draw-pict (rounded-rectangle 80 80 10)
+                  dc 200 400)
+
+       (draw-pict (rounded-rectangle 80 80 10 "blue")
+                  dc 300 400)
+
+       (draw-pict (filled-rounded-rectangle 80 80)
+                  dc 400 400)
+
+       (draw-pict (colorize (filled-rounded-rectangle 80 80 10) "gold")
+                  dc 500 400)
+
+       (draw-pict (colorize (filled-rounded-rectangle 80 80 10 #t "blue" 5) "lightblue")
+                  dc 600 400)
+
+       
+       #;(draw-pict (round-frame
+                   (table 4
+                         (map (λ (x) (text (format "~a" x)))
+                              (list 1 2 3 4
+                                    5 6 7 8
+                                    9000 10 11 12))
+                         cc-superimpose
+                         cc-superimpose
+                         10
+                         10))
                   dc 500 500)
        
        ; (text string style size angle)
@@ -3146,18 +3559,21 @@
   (draw-star ctx 150. 150. 5 100. 40.))
 
 
-(displayln 
+(define (flush)
+  (js-log (get-output-string (current-output-port))))
+
+(define result
  (with-handlers ([(λ _ #t) (λ (e) e)])
    ; (error 'font-family->string "expected a font-family, got: ~a" 'normal)
    #; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
    #;(hline 40 5)
-   (js-log (color->string (make-color "blue")))
-   
-   ))
+   (main)
+   (displayln "Hello")))
 
-(js-log (get-output-string (current-output-port)))
+(begin
+  (unless (void? result)
+    (displayln result))
 
-(define (flush)
-  (js-log (get-output-string (current-output-port))))
+  (flush))
 
-(js-log (color->string (make-color "blue")))
+
