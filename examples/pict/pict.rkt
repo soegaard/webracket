@@ -3132,9 +3132,6 @@
     [else         #f]))
   
 (define (linestyle style p)
-  (js-log "linestyle")
-  (js-log style)
-  (js-log "a")
   ; For `style` we accept:
   ;   - a color
   ;   - a gradient (external)
@@ -3148,34 +3145,28 @@
   ; are converted to a style as above.
   
   (define drawer (make-pict-drawer p))
-  (js-log "b")
   (define new    (dc (lambda (dc x y)
-                       (js-log "c")
                        (cond
                          ; transparent
                          [(eq? style 'transparent)
-                          (js-log "d")
                           (define old-s (dc 'stroke-style))
                           (dc 'stroke-style "transparent")
                           (drawer dc x y)
                           (dc 'stroke-style old-s)]
                          
                          [(eq? style 'solid)
-                          (js-log "e")
                           (define old-s (dc 'stroke-style))
                           (dc 'stroke-style "") ; choose default
                           (drawer dc x y)
                           (dc 'stroke-style old-s)]
 
                          [(dash-style-symbol? style)
-                          (js-log "f")
                           (define segments (dash-style->segments style))
                           (dc 'set-line-dash segments)
                           (drawer dc x y)
                           (dc 'set-line-dash #())]
 
                          [(external? style)
-                          (js-log "g")
                           ; external color, gradient or pattern
                           (define old-s (dc 'stroke-style))                          
                           (dc 'stroke-style style)
@@ -3183,17 +3174,14 @@
                           (dc 'stroke-style old-s)]
                          
                          [else
-                          (js-log "h")
                           (define col (color->string style))
                           (cond
                             [col
-                             (js-log "i")
                              (define old-s (dc 'stroke-style))
                              (dc 'stroke-style col)
                              (drawer dc x y)
                              (dc 'stroke-style old-s)]
                             [else
-                             (js-log "j")
                              (error 'linestyle
                                     "expected a line style, got: ~a"
                                     style)])]))
@@ -3201,7 +3189,6 @@
                      (pict-height  p)
                      (pict-ascent  p)
                      (pict-descent p)))
-  (js-log "k")
   ; p needs to be a sub-pict, so `new` is transplanted
   (make-pict (pict-draw    new)
              (pict-width   new)
@@ -3216,38 +3203,58 @@
 ;    Insets and clips the pict’s drawing to its bounding box.
 ;    Usually, the inset amounts are negative.
 (define inset/clip
-  (case-lambda
-    [(p a)   (inset/clip p a a a a)]
-    [(p h v) (inset/clip p h v h v)]
-    [(p l t r b)
-     (let* ([p      (inset p l t r b)]
-            [drawer (make-pict-drawer p)]
-            [w      (pict-width  p)]
-            [h      (pict-height p)])
+  (let ()
+    (define (->real v)
+      (cond
+        [(flonum? v) v]
+        [(real? v)   (exact->inexact v)]
+        [else (error 'inset/clip "expected a real number, got: ~a" v)]))
+    (case-lambda
+      [(p a)   (inset/clip p a a a a)]
+      [(p h v) (inset/clip p h v h v)]
+      [(p l t r b)
+       (let* ([p      (inset p l t r b)]
+              [drawer (make-pict-drawer p)]
+              [w      (pict-width  p)]
+              [h      (pict-height p)])
 
-       (define new
-         (dc
-          (λ (dc x y)
-            (dc 'save) ; only way to store clipping region
-            (define rgn <make-new-path>) ; new Path2d()   
-            <set-reg-to-rectangle>       ; rgn.rectangle(x, y, w, h)
-            (dc 'clip rgn)
-            (drawer dc x y)
-            (dc 'restore))
-          w h
-          (pict-ascent p) (pict-descent p)))
-       
-       (make-pict (pict-draw    new)
-                  (pict-width   new)
-                  (pict-height  new)
-                  (pict-ascent  new)
-                  (pict-descent new)
-                  (list (make-child p 0 0 1 1 0 0))
-                  #f
-                  (pict-last p)))]))
+         (define new
+           (dc
+            (λ (dc x y)
+              (dc 'save) ; only way to store clipping region
+              ; (define rgn <make-new-path>) ; new Path2d()   
+              ; <set-reg-to-rectangle>       ; rgn.rectangle(x, y, w, h)
+              (define rgn (js-new (js-var "Path2D") (vector))) ; new Path2D()
+              (js-send rgn "rect"
+                       (vector (->real x)
+                               (->real y)
+                               (->real w)
+                               (->real h)))
+              (dc 'clip rgn)
+              (drawer dc x y)
+              (dc 'restore))
+            w h
+            (pict-ascent p) (pict-descent p)))
+         
+         (make-pict (pict-draw    new)
+                    (pict-width   new)
+                    (pict-height  new)
+                    (pict-ascent  new)
+                    (pict-descent new)
+                    (list (make-child p 0 0 1 1 0 0))
+                    #f
+                    (pict-last p)))])))
   
 (define (clip p)
   (inset/clip p 0))
+
+(define (hyperlinkize r)
+    (colorize (inset
+	       (place-over r
+			   0 (pict-height r)
+			   (linewidth 2 (hline (pict-width r) 1)))
+	       0 0 0 2)
+	      "blue"))
 
     
 ;;;
@@ -4068,6 +4075,24 @@
                            (linewidth 6 (hline 80 1)))
                 dc 500 600)
 
+     (draw-pict (inset/clip (colorize (filled-rectangle 40 40) "forestgreen") -10)
+                dc 500 300)
+
+     (draw-pict (inset/clip (colorize (filled-rectangle 40 40) "forestgreen") -10 -5)
+                dc 550 300)
+
+     (draw-pict (inset/clip (colorize (filled-rectangle 40 40) "forestgreen") -2 -4 -8 -16)
+                dc 600 300)
+
+     (draw-pict (inset (colorize (filled-rectangle 40 40) "thistle") -10)
+                dc 650 300)
+
+     (draw-pict (clip (inset (colorize (filled-rectangle 40 40) "thistle") -10))
+                dc 700 300)
+
+     (draw-pict (hyperlinkize (text "Hello"))
+                dc 750 300)
+     
      (define styles '(transparent solid dot long-dash short-dash dot-dash ))
      (define dash-pict (apply vl-append
                               5
