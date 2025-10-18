@@ -14,6 +14,7 @@
 ;; object system yet, we need to provide an alternative way of
 ;; working with fonts and colors (instead of font% and color%).
 
+
 ;;;
 ;;; Color
 ;;;
@@ -408,6 +409,70 @@
 
     color->string))
 
+;;;
+;;; Canvas alpha compositing
+;;;
+
+;; The drawing context in `racket/gui` has operations `begin-alpha` and `end-alpha`
+;; which doesn't exist in a JavaScript canvas. The implementation below
+;; uses an offscreen canvas to draw the new layer, and them composites it
+;; to the canvas.
+
+(struct alpha-prev  (opacity global-alpha transform image-smoothing?) #:transparent)
+(struct alpha-group (canvas ctx prev) #:transparent)
+
+(define (alpha-smoothing->flag smoothing?)
+  (if smoothing? 1 0))
+
+(define (alpha-bool v)
+  (not (zero? v)))
+
+(define (alpha-identity-transform ctx)
+  (js-canvas2d-set-transform! ctx 1.0 0.0 0.0 1.0 0.0 0.0))
+
+(define (alpha-offscreen-canvas width height)
+  (define offscreen-ctor (js-var "OffscreenCanvas"))
+  (if (string=? (js-typeof offscreen-ctor) "undefined")
+      (let ([canvas (js-create-element "canvas")])
+        (js-set-canvas-width! canvas width)
+        (js-set-canvas-height! canvas height)
+        canvas)
+      (js-new offscreen-ctor (vector width height))))
+
+(define (begin-alpha ctx opacity)
+  (define base-canvas       (js-canvas2d-canvas ctx))
+  (define width             (js-canvas-width  base-canvas))
+  (define height            (js-canvas-height base-canvas))
+  (define off               (alpha-offscreen-canvas width height))
+  (define options           (js-object (vector (vector "alpha" #t))))
+  (define octx              (js-canvas-get-context off "2d" options))
+  (define prev-global-alpha (js-canvas2d-global-alpha ctx))
+  (define prev-transform    (js-canvas2d-get-transform ctx))
+  (define prev-smoothing?   (alpha-bool (js-canvas2d-image-smoothing-enabled ctx)))
+  (js-canvas2d-set-transform-matrix! octx prev-transform)
+  (js-set-canvas2d-image-smoothing-enabled! octx (alpha-smoothing->flag prev-smoothing?))
+  (js-set-canvas2d-global-alpha! octx 1.0)
+  (alpha-group off
+               octx
+               (alpha-prev (exact->inexact opacity)
+                           prev-global-alpha
+                           prev-transform
+                           prev-smoothing?)))
+
+(define (end-alpha ctx group)
+  (match group
+    [(alpha-group off _ (alpha-prev prev-opacity prev-global-alpha _ _))
+     (js-canvas2d-save ctx)
+     (alpha-identity-transform ctx)
+     (define old-alpha (js-canvas2d-global-alpha ctx))
+     (js-set-canvas2d-global-alpha! ctx
+                                    (exact->inexact (* prev-global-alpha prev-opacity)))
+     (js-canvas2d-draw-image ctx off 0.0 0.0)
+     (js-set-canvas2d-global-alpha! ctx old-alpha)
+     (js-canvas2d-restore ctx)]
+    [_
+     (error 'end-alpha "expected an alpha-group, got: ~a" group)]))
+
 
 ;;;
 ;;; Font
@@ -739,6 +804,8 @@
   
   (λ args
     (match args
+      [(list 'context)
+       ctx]
       [(list 'direction dir)
        (js-set-canvas2d-direction! ctx (to-string dir))]
       [(list 'fill-style)
@@ -758,6 +825,8 @@
       ; missing in Safari:
       ;   [(list 'font-variant-caps val)
       ;    (js-set-canvas2d-font-variant-caps! ctx (to-string val))]      
+      [(list 'global-alpha)
+       (js-canvas2d-global-alpha ctx)]
       [(list 'global-alpha val)
        (js-set-canvas2d-global-alpha! ctx (to-real-01 val))]
       [(list 'global-composite-operation val)
@@ -1073,6 +1142,11 @@
        (js-canvas2d-stroke-text ctx (to-string text) (to-real x) (to-real y) (void))]
       [(list 'stroke-text text x y max-width)
        (js-canvas2d-stroke-text ctx (to-string text) (to-real x) (to-real y) (maybe-real max-width))]
+
+      [(list 'transform)
+       (js-canvas2d-get-transform ctx)]
+      [(list 'transform extern-matrix)
+       (js-canvas2d-set-transform-matrix! ctx extern-matrix)]      
       [(list 'transform a b c d e f)
        (js-canvas2d-transform ctx
                               (to-real a)
@@ -1187,7 +1261,8 @@
          [h2    (+ dh (pict-height p))]
          [a2    (max 0 (- (pict-ascent p) n))])
     (make-pict (pict-draw p)         
-               (pict-width p) h2     
+               (pict-width p)
+               h2     
                a2
                (if do-d?
                    (- h2 a2)
@@ -1206,7 +1281,8 @@
          [h2 (+ dh (pict-height p))]
          [d2 (max 0 (- (pict-descent p) n))])
     (make-pict (pict-draw p)
-               (pict-width p) h2
+               (pict-width p)
+               h2
                (if do-a?
                    (- h2 d2)
                    (pict-ascent p))
@@ -1382,10 +1458,10 @@
 ;; The thinkness modes are inherited from LaTeX.
 ;; Here b is a box (a pict) and n is a number.
 
-(define (thick b)            (thickness 'thicklines b))
-(define (thin  b)            (thickness 'thinlines  b))
-(define (line-thickness n b) (thickness n b))        
-(define (line-style     n s) (thickness n s))
+;; (define (thick b)            (thickness 'thicklines b))
+;; (define (thin  b)            (thickness 'thinlines  b))
+;; (define (line-thickness n b) (thickness n b))        
+;; (define (line-style     n s) (thickness n s))
 
 ;;;
 ;;; Lines (vertical and horizontal)
@@ -1734,7 +1810,7 @@
                     (- (- (pict-width p) x (pict-width c)))
                     (- (pict-height c) y))])
       (make-pict (pict-draw p)
-                 (pict-width c) (pict-height c)
+                 (pict-width  c) (pict-height  c)
                  (pict-ascent c) (pict-descent c)
                  (pict-children p)
                  #f
@@ -2759,7 +2835,421 @@
         )      
       w h))
 
+(define (bitmap image)
+  ; `image` is an external containing an ImageBitmap.  
+  (define w (js-ref image 'width))
+  (define h (js-ref image 'height))
+  (dc (lambda (dc x y)
+        (dc 'draw-image image x y))
+      w h))
 
+;;;
+;;; Pict Drawing Adjusters
+;;;
+
+
+;; Scales a pict drawing, as well as its bounding box, by multiplying it
+;; current size by factor (if two arguments are supplied) or by
+;; multiplying the current width by w-factor and current height by
+;; h-factor (if three arguments are supplied).
+
+(define scale
+  (case-lambda
+    [(p x-factor y-factor)
+     (define drawer (make-pict-drawer p))
+     (define new
+       (dc
+        (λ (dc x y)
+          (define t (dc 'transform))
+          (dc 'scale x-factor y-factor)
+          (drawer dc
+                  (/ x x-factor)
+                  (/ y y-factor))          
+          (dc 'transform t))
+        (* (pict-width   p) x-factor)
+        (* (pict-height  p) y-factor)
+        (* (pict-ascent  p) y-factor)
+        (* (pict-descent p) y-factor)))
+     (make-pict (pict-draw    new)
+                (pict-width   new)
+                (pict-height  new)
+                (pict-ascent  new)
+                (pict-descent new)
+                (list (make-child p 0 0 x-factor y-factor 0 0))
+                #f
+                (pict-last p))]
+    [(p factor) (scale p factor factor)]))
+
+;; ;; The adjusters flip-x and flip-y are easier to define,
+;; ;; if there are general transformations available.
+
+;; (define (compose-trans t1 t2)
+;;   (define-values (a d b e c f) (apply values t1))
+;;   (define-values (g j h k i l) (apply values t2))
+;;   (list (+ (* a g) (* b j))   (+ (* d g) (* e j))
+;;         (+ (* a h) (* b k))   (+ (* d h) (* e k))
+;;         (+ (* a i) (* b l) c) (+ (* d i) (* e l) f)))
+  
+;; (define (compose-trans* t0 . ts)
+;;   (foldl (λ (t acc) (compose-trans acc t)) t0 ts))
+
+;; (define (make-translate h k)
+;;   (list 1 0 0 1 h k))
+
+;; (define (make-flip-x) ; around y-axis
+;;   (list -1 0 0 1 0 0))
+
+(define (flip-x p)
+  (define w (pict-width  p))
+  (define h (pict-height p))
+  (dc (λ (dc x y)
+        ;; ( x, y) is the top-left corner
+        ;; (cx,cy) is the center of the pict
+        (define cx (+ x (/ w 2)))
+        (define cy (+ y (/ h 2)))
+        (define old-t (dc 'transform))
+        (dc 'translate cx cy)
+        (dc 'transform -1 0 0 1 0 0)
+        (dc 'translate (- cx) (- cy))
+        (draw-pict p dc x y)
+        (dc 'transform old-t))
+      w h))
+
+(define (flip-y p)
+  (define w (pict-width  p))
+  (define h (pict-height p))
+  (dc (λ (dc x y)
+        ;; ( x, y) is the top-left corner
+        ;; (cx,cy) is the center of the pict
+        (define cx (+ x (/ w 2)))
+        (define cy (+ y (/ h 2)))
+        (define old-t (dc 'transform))
+        (dc 'translate cx cy)
+        (dc 'transform 1 0 0 -1 0 0)
+        (dc 'translate (- cx) (- cy))
+        (draw-pict p dc x y)
+        (dc 'transform old-t))
+      w h))
+
+(define (translate p dx dy [extend-bb? #f])
+  (define bb? extend-bb?)
+  (define nw (if (not bb?) (pict-width p)  (+ (pict-width  p) (abs dx))))
+  (define nh (if (not bb?) (pict-height p) (+ (pict-height p) (abs dy))))
+  (define drawer
+    (dc
+     (lambda (dc dx1 dy1)
+       (draw-pict p dc
+                  (+ dx1
+                     (if bb?
+                         (max 0 dx)
+                         dx))
+                  (+ dy1
+                     (if bb?
+                         (max 0 dy)
+                         dy))))
+     nw nh))
+  (make-pict (pict-draw drawer)
+             nw nh
+             (if (and bb? (dy . < . 0))
+                 (- (pict-ascent p) dy)
+                 (pict-ascent p))
+             (if (and bb? (dy . > . 0))
+                 (+ (pict-descent p) dy)
+                 (pict-descent p))
+             (list
+              (make-child p
+                          dx (- dy) 
+                          1 1
+                          0 0))
+             #f
+             (pict-last p)))
+
+(define (shear p shear-x shear-y)
+  (define drawer  (make-pict-drawer p))
+  (define x-shift (* shear-x (pict-height p)))
+  (define y-shift (* shear-y (pict-width  p)))
+  (define new
+    (dc
+     (λ (dc dx dy)
+       (define t (dc 'transform))
+       (dc 'transform 1 shear-y shear-x 1 (- dx (min 0 x-shift)) (- dy (min 0 y-shift)))
+       (drawer dc 0 0)
+       (dc 'transform t))
+     (+ (pict-width  p) (abs x-shift))
+     (+ (pict-height p) (abs y-shift))
+     (pict-ascent  p)
+     (pict-descent p)))
+  (define rx-shift
+    (if (shear-x . < . 0)
+        (* -3/2 x-shift)
+        (* -1/2 x-shift)))
+  (make-pict (pict-draw    new)
+             (pict-width   new)
+             (pict-height  new)
+             (pict-ascent  new)
+             (pict-descent new)
+             (list (make-child p rx-shift 0 1 1 shear-x shear-y))
+             #f
+             (pict-last p)))
+
+
+(define (rotate p theta)
+    (let ([w      (pict-width  p)]
+          [h      (pict-height p)]
+          [drawer (make-pict-drawer p)])
+      (let ([dl (min 0 (* w    (cos theta)) (* h (sin theta)) (+ (* w    (cos theta)) (* h (sin theta))))]
+            [dr (max 0 (* w    (cos theta)) (* h (sin theta)) (+ (* w    (cos theta)) (* h (sin theta))))]
+            [dt (min 0 (* w -1 (sin theta)) (* h (cos theta)) (+ (* w -1 (sin theta)) (* h (cos theta))))]
+            [db (max 0 (* w -1 (sin theta)) (* h (cos theta)) (+ (* w -1 (sin theta)) (* h (cos theta))))]            
+            [da (- (*    (pict-ascent p)                    (cos theta))   (* (sin theta) w 1/2))]
+            [dd (- (* (- (pict-height p) (pict-descent p))  (cos theta))   (* (sin theta) w 1/2))])
+        (let ([new (dc
+                    (lambda (dc x y)
+                      (let ([t (dc 'transform)])
+                        (dc 'translate (- x dl) (- y dt))
+                        (dc 'rotate theta)
+                        (drawer dc 0 0)
+                        (dc 'transform t)))
+                    (- dr dl) (- db dt) 
+                    (min (- da dt) (- (- db dt) (- db dd)))
+                    (min (- db da) (- db dd)))])
+          (make-pict (pict-draw    new)
+		     (pict-width   new)
+		     (pict-height  new)
+		     (pict-ascent  new)
+		     (pict-descent new)
+		     (list (make-child p 
+                                       (- (* h (sin theta)) dl) 
+                                       (max 0 (- db (* h (cos theta))))
+                                       (cos theta) (cos theta) 
+                                       (- (sin theta)) (sin theta)))
+		     #f
+                     (pict-last p))))))
+
+(define (cellophane p alpha-factor [composite? #t]) 
+  (let ([p (pict-convert p)])
+    (cond
+      [(= 1.0 alpha-factor)
+       (inset p 0)]
+      [(zero? alpha-factor)
+       (ghost p)]
+      [else
+       (let ([drawer (make-pict-drawer p)])
+         (let ([new
+                (dc
+                 (if composite?
+                     (lambda (dc x y)
+                       (define ctx       (dc 'context))
+                       (define group     (begin-alpha ctx alpha-factor))
+                       (define group-ctx (alpha-group-ctx group))
+                       (define group-dc  (canvas-context->dc group-ctx))
+                       (drawer group-dc x y)
+                       (end-alpha ctx group))
+                     (lambda (dc x y)
+                       (let ([a (dc 'global-alpha)])
+                         (dc 'global-alpha (* a alpha-factor))
+                         (drawer dc x y)
+                         (dc 'global-alpha a))))
+                 (pict-width   p)
+                 (pict-height  p)
+                 (pict-ascent  p)
+                 (pict-descent p))])
+           (make-pict (pict-draw    new)
+                      (pict-width   new)
+                      (pict-height  new)
+                      (pict-ascent  new)
+                      (pict-descent new)
+                      (list (make-child p 0 0 1 1 0 0))
+                      #f
+                      (pict-last p))))])))
+
+;; Selects a specific pen width for drawing, which applies to pen drawing
+;; for pict that does not already use a specific pen width. A #f value
+;; for w makes the pen transparent (in contrast to a zero value, which
+;; means “as thin as possible for the target device”).
+
+(define (linewidth w p)
+  (unless (and (number? w) (real? w) (not (negative? w)))
+    (error 'linewidth "expected a non-negative width, got: ~a" w))
+  (define drawer (make-pict-drawer p))
+  (define new    (dc (lambda (dc x y)
+                       (cond
+                         ; zero width means transparent
+                         [(zero? w)
+                          (define old-s (dc 'stroke-style))
+                          (dc 'stroke-style "transparent")
+                          (drawer dc x y)
+                          (dc 'stroke-style old-s)]
+                         ; w is positive
+                         [else
+                          (js-log "linewidth: ")
+                          (js-log w)
+                          (define old-w (dc 'line-width))
+                          (dc 'line-width w)
+                          (drawer dc x y)
+                          (dc 'line-width old-w)]))
+                     (pict-width   p)
+                     (pict-height  p)
+                     (pict-ascent  p)
+                     (pict-descent p)))
+  ; p needs to be a sub-pict, so `new` is transplanted
+  (make-pict (pict-draw    new)
+             (pict-width   new)
+             (pict-height  new)
+             (pict-ascent  new)
+             (pict-descent new)
+             (list (make-child p 0 0 1 1 0 0))
+             #f
+             (pict-last p)))
+
+(define old-linestyle-symbols
+  '(transparent
+    solid
+    ; xor hilite
+    dot long-dash short-dash dot-dash
+    ; xor-dot xor-long-dash xor-short-dash xor-dot-dash
+                ))
+(define (old-linestyle? x)
+  (and (symbol? x)
+       (memq x old-linestyle-symbols)))
+
+(define dash-style-symbols
+  '(dot long-dash short-dash dot-dash))
+(define (dash-style-symbol? x)
+  (and (symbol? x)
+       (memq x dash-style-symbols)))
+
+(define (dash-style->segments linestyle)
+  ;; (define long-dash-pen-style  (make-pen-style '(5 4)))
+  ;; (define short-dash-pen-style (make-pen-style '(3 2)))
+  ;; (define dot-pen-style        (make-pen-style '(1 2)))
+  ;; (define dot-dash-pen-style   (make-pen-style '(1 3 4 3)))
+  (case linestyle
+    [(long-dash)  (vector 5 4)]
+    [(short-dash) (vector 3 2)]
+    [(dot)        (vector 1 2)]
+    [(dot-dash)   (vector 1 3 4 3)]
+    [else         #f]))
+  
+(define (linestyle style p)
+  (js-log "linestyle")
+  (js-log style)
+  (js-log "a")
+  ; For `style` we accept:
+  ;   - a color
+  ;   - a gradient (external)
+  ;   - a pattern  (external)
+  ; See
+  ;   https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
+
+  ; For backwards compatibility the symbols:
+  ;   transparent solid xor hilite dot long-dash short-dash
+  ;   dot-dash xor-dot xor-long-dash xor-short-dash xor-dot-dash
+  ; are converted to a style as above.
+  
+  (define drawer (make-pict-drawer p))
+  (js-log "b")
+  (define new    (dc (lambda (dc x y)
+                       (js-log "c")
+                       (cond
+                         ; transparent
+                         [(eq? style 'transparent)
+                          (js-log "d")
+                          (define old-s (dc 'stroke-style))
+                          (dc 'stroke-style "transparent")
+                          (drawer dc x y)
+                          (dc 'stroke-style old-s)]
+                         
+                         [(eq? style 'solid)
+                          (js-log "e")
+                          (define old-s (dc 'stroke-style))
+                          (dc 'stroke-style "") ; choose default
+                          (drawer dc x y)
+                          (dc 'stroke-style old-s)]
+
+                         [(dash-style-symbol? style)
+                          (js-log "f")
+                          (define segments (dash-style->segments style))
+                          (dc 'set-line-dash segments)
+                          (drawer dc x y)
+                          (dc 'set-line-dash #())]
+
+                         [(external? style)
+                          (js-log "g")
+                          ; external color, gradient or pattern
+                          (define old-s (dc 'stroke-style))                          
+                          (dc 'stroke-style style)
+                          (drawer dc x y)
+                          (dc 'stroke-style old-s)]
+                         
+                         [else
+                          (js-log "h")
+                          (define col (color->string style))
+                          (cond
+                            [col
+                             (js-log "i")
+                             (define old-s (dc 'stroke-style))
+                             (dc 'stroke-style col)
+                             (drawer dc x y)
+                             (dc 'stroke-style old-s)]
+                            [else
+                             (js-log "j")
+                             (error 'linestyle
+                                    "expected a line style, got: ~a"
+                                    style)])]))
+                     (pict-width   p)
+                     (pict-height  p)
+                     (pict-ascent  p)
+                     (pict-descent p)))
+  (js-log "k")
+  ; p needs to be a sub-pict, so `new` is transplanted
+  (make-pict (pict-draw    new)
+             (pict-width   new)
+             (pict-height  new)
+             (pict-ascent  new)
+             (pict-descent new)
+             (list (make-child p 0 0 1 1 0 0))
+             #f
+             (pict-last p)))
+
+; (inset/clip pict l-amt t-amt r-amt b-amt)
+;    Insets and clips the pict’s drawing to its bounding box.
+;    Usually, the inset amounts are negative.
+(define inset/clip
+  (case-lambda
+    [(p a)   (inset/clip p a a a a)]
+    [(p h v) (inset/clip p h v h v)]
+    [(p l t r b)
+     (let* ([p      (inset p l t r b)]
+            [drawer (make-pict-drawer p)]
+            [w      (pict-width  p)]
+            [h      (pict-height p)])
+
+       (define new
+         (dc
+          (λ (dc x y)
+            (dc 'save) ; only way to store clipping region
+            (define rgn <make-new-path>) ; new Path2d()   
+            <set-reg-to-rectangle>       ; rgn.rectangle(x, y, w, h)
+            (dc 'clip rgn)
+            (drawer dc x y)
+            (dc 'restore))
+          w h
+          (pict-ascent p) (pict-descent p)))
+       
+       (make-pict (pict-draw    new)
+                  (pict-width   new)
+                  (pict-height  new)
+                  (pict-ascent  new)
+                  (pict-descent new)
+                  (list (make-child p 0 0 1 1 0 0))
+                  #f
+                  (pict-last p)))]))
+  
+(define (clip p)
+  (inset/clip p 0))
+
+    
 ;;;
 ;;;
 ;;;
@@ -3098,14 +3588,6 @@
                                       pw ph ph 0))))))))))
 
 
-(define (linewidth n p) (line-thickness n p))
-#;(define (linestyle n p) 
-  (unless (memq n '(transparent solid xor hilite 
-                                dot long-dash short-dash dot-dash 
-                                xor-dot xor-long-dash xor-short-dash 
-                                xor-dot-dash))
-    (raise-type-error 'linestyle "style symbol" n))
-  (line-style n p))
 
 
 
@@ -3355,25 +3837,58 @@
 
 
 
+;;;
+;;; Bitmaps
+;;;
 
+(define bitmap-urls
+  (list "https://i.imgur.com/dI22MrB.png"  ; Nemo fish
+        "https://i.imgur.com/BRJ0UpN.png"  ; Tropical fish
+        ))
 
+(define loaded-bitmaps  (make-hash))
+(define bitmaps-to-load (length bitmap-urls))
+(define bitmaps-loaded  0)
+(define main-started?   #f)
 
+(define (bitmap-ref url [default #f])
+  (hash-ref loaded-bitmaps url (λ () default)))
 
-; (js-log "bar")
-; (js-log (format "~a" (blank 10)))
-; (js-log (format "~a" (text "foo")))
+(define (register-bitmap! url image)
+  (hash-set! loaded-bitmaps url image))
 
-; (js-log (format "~a" (hc-append (blank 10) (text "foo"))))
+(define (maybe-start-main)
+  (when (and (not main-started?) (= bitmaps-loaded bitmaps-to-load))
+    (set! main-started? #t)
+    (start-main)))
 
+(define ((bitmap-ready url image) . _)
+  (register-bitmap! url image)
+  (set! bitmaps-loaded (add1 bitmaps-loaded))
+  (maybe-start-main))
 
-; (js-log (format "~a" (dash-frame (blank 10))))
+(define ((bitmap-error url) . _)
+  (js-log (format "Failed to load bitmap: ~a" url))
+  (set! bitmaps-loaded (add1 bitmaps-loaded))
+  (maybe-start-main))
 
-; (js-log (format "~a" (make-font 'sans-serif)))
+(define (register-bitmap-events! image url)
+  (define ready-callback  (procedure->external (bitmap-ready url image)))
+  (define error-callback  (procedure->external (bitmap-error url)))
+  (js-add-event-listener! image "load"  ready-callback)
+  (js-add-event-listener! image "error" error-callback))
 
+(define (load-bitmap url)
+  (define image (js-create-element "img"))
+  (js-set-attribute! image "crossorigin" "anonymous")
+  (js-set-attribute! image "style" "display:none")
+  (register-bitmap-events! image url)
+  (js-set-attribute! image "src" url)
+  (js-append-child! (js-document-body) image))
 
-; (make-font 'sans-serif)
+(define (load-bitmaps)
+  (for-each load-bitmap bitmap-urls))
 
-; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
 
 ;;;
 ;;; Example
@@ -3386,157 +3901,188 @@
   (js-append-child! (js-document-body) canvas)
 
   (define ctx (js-canvas-get-context canvas "2d" (js-undefined)))  
-  (define dc (canvas-context->dc ctx))
+  (define dc  (canvas-context->dc ctx))
 
-  (js-log "Tada!")
-  (js-log (js-canvas2d-stroke-style ctx))
+  (define nemo-image     (bitmap-ref (first  bitmap-urls)))
+  (define tropical-image (bitmap-ref (second bitmap-urls)))
 
-  (let (#;[dc (λ x (displayln x))]
-        #;[dc (make-command-drawer ctx)])
-    (displayln 
-     (with-handlers ([(λ _ #t) (λ (e) e)])
-       #;(draw-pict (hline 40 30) dc 200 200)
-       #;(draw-pict (linewidth 10 (hline 40 30)) dc 200 200)
-       #;(draw-pict (colorize (hline 40 30) "blue")
+  (displayln 
+   (with-handlers ([(λ _ #t) (λ (e) e)])
+
+     (draw-pict (scale (bitmap tropical-image) 0.5)
+                dc 800 100)
+
+     (draw-pict (flip-x (scale (bitmap tropical-image) 0.5))
+                dc 800 475)
+
+     (draw-pict (flip-x (flip-x (scale (bitmap tropical-image) 0.5)))
+                dc 800 700)
+
+
+     (draw-pict (flip-y (scale (bitmap tropical-image) 0.2))
+                dc 100 900)
+
+     (draw-pict (flip-y (flip-y (scale (bitmap tropical-image) 0.2)))
+                dc 200 900)
+
+     (draw-pict (shear (scale (bitmap tropical-image) 0.2) -0.5 0.3)
+                dc 300 900)
+
+     (draw-pict (rotate (frame (scale (bitmap tropical-image) 0.2)) (/ 3.1415 4))                 
+                 dc 525 800)
+     
+     #;(draw-pict (hline 40 30) dc 200 200)
+     #;(draw-pict (linewidth 10 (hline 40 30)) dc 200 200)
+     #;(draw-pict (colorize (hline 40 30) "blue")
                   dc 200 200)
-       
-       #;(draw-pict (colorize (linewidth 10 (hline 40 30))
+     
+     #;(draw-pict (colorize (linewidth 10 (hline 40 30))
                             (make-color "blue"))
-                    dc 200 200)
-
-       #;(draw-pict (colorize (linewidth 10 (dash-vline 5 40 5) ) "blue")
-                    dc 200 200)
-       #;(draw-pict (text "Hello World")
-                    dc 200 200)
-       #;(draw-pict (frame (text "Hello World"))
-                  dc 200 200)
-       (draw-pict (frame (text "Hello World" '() 24 (/ 3.14 4)))
                   dc 200 200)
 
-       (draw-pict (hc-append (frame (blank 30))  (frame (blank 60)))
-                  dc 300 300)
+     #;(draw-pict (colorize (linewidth 10 (dash-vline 5 40 5) ) "blue")
+                  dc 200 200)
+     #;(draw-pict (text "Hello World")
+                  dc 200 200)
+     #;(draw-pict (frame (text "Hello World"))
+                  dc 200 200)
+     (draw-pict (frame (text "Hello World" '() 24 (/ 3.14 4)))
+                dc 200 200)
 
-       (draw-pict (cc-superimpose (frame (blank 30)) (frame (blank 60)))
-                  dc 400 200)
+     (draw-pict (hc-append (frame (blank 30))  (frame (blank 60)))
+                dc 300 300)
 
-       
-       (draw-pict (table 4
-                         (map (λ (x) (text (format "~a" x)))
-                              (list 1 2 3 4
-                                    5 6 7 8
-                                    9000 10 11 12))
-                         cc-superimpose
-                         cc-superimpose
-                         10
-                         10)
-                  dc 500 500)
-       
-       (draw-pict  (round-frame (blank 80) 10)
-                  dc 300 500)
+     (draw-pict (cc-superimpose (frame (blank 30)) (frame (blank 60)))
+                dc 400 200)
 
-       (draw-pict (colorize (round-frame (blank 80) 10) "red")
-                   dc 300 500)
+     
+     (draw-pict (table 4
+                       (map (λ (x) (text (format "~a" x)))
+                            (list 1 2 3 4
+                                  5 6 7 8
+                                  9000 10 11 12))
+                       cc-superimpose
+                       cc-superimpose
+                       10
+                       10)
+                dc 500 500)
+     
+     (draw-pict  (round-frame (blank 80) 10)
+                 dc 300 500)
 
-       (draw-pict (color-frame (blank 80) "blue" 1)
-                  dc 200 500)
+     (draw-pict (colorize (round-frame (blank 80) 10) "red")
+                dc 300 500)
 
-       (draw-pict (color-round-frame (blank 80) 10 "green" 1)
-                  dc 100 500)
-       
-       (draw-pict (color-dash-frame (blank 80) 5 "gold" 1)
-                  dc 400 500)
+     (draw-pict (color-frame (blank 80) "blue" 1)
+                dc 200 500)
 
-       (draw-pict (circle 80)
-                  dc 400 600)
+     (draw-pict (color-round-frame (blank 80) 10 "green" 1)
+                dc 100 500)
+     
+     (draw-pict (color-dash-frame (blank 80) 5 "gold" 1)
+                dc 400 500)
 
-       (draw-pict (ellipse 80 40)
-                  dc 300 600)
+     (draw-pict (circle 80)
+                dc 400 600)
 
-       (draw-pict (filled-ellipse 80 40)
-                  dc 200 600)
+     (draw-pict (ellipse 80 40)
+                dc 300 600)
 
-       (draw-pict (color-frame (blank 80) "red" 1)
-                  dc 100 600)
+     (draw-pict (filled-ellipse 80 40)
+                dc 200 600)
 
-       (draw-pict (color-round-frame (blank 80) 10 "purple")
-                  dc 100 700)
+     (draw-pict (color-frame (blank 80) "red" 1)
+                dc 100 600)
 
-       (js-log (color->string "purple"))
+     (draw-pict (color-round-frame (blank 80) 10 "purple")
+                dc 100 700)
 
-       (draw-pict (circle 80 "darkblue")
-                  dc 200 700)
+     (js-log (color->string "purple"))
 
-       (draw-pict (circle 80 "darkblue" 2)
-                  dc 300 700)
+     (draw-pict (circle 80 "darkblue")
+                dc 200 700)
 
-       (draw-pict (colorize (filled-ellipse 80 40 #t "darkblue" 5)
-                            "lightblue")
-                  dc 400 700)
+     (draw-pict (circle 80 "darkblue" 2)
+                dc 300 700)
 
-       (draw-pict (rectangle 80 80)
-                  dc 500 700)
+     (draw-pict (colorize (filled-ellipse 80 40 #t "darkblue" 5)
+                          "lightblue")
+                dc 400 700)
 
-       (draw-pict (rectangle 80 80  "red")
-                  dc 600 700)
+     (draw-pict (rectangle 80 80)
+                dc 500 700)
 
-       (draw-pict (rectangle 80 80 "gold" 5)
-                  dc 700 700)
+     (draw-pict (rectangle 80 80  "red")
+                dc 600 700)
 
-       (draw-pict (filled-rectangle 80 80)
-                  dc 100 800)
+     (draw-pict (rectangle 80 80 "gold" 5)
+                dc 700 700)
 
-       (draw-pict (colorize (filled-rectangle 80 80  #t "red") "gold")
-                  dc 200 800)
+     (draw-pict (filled-rectangle 80 80)
+                dc 100 800)
 
-       (draw-pict (colorize (filled-rectangle 80 80 #t "gold" 5) "red")
-                  dc 300 800)
+     (draw-pict (colorize (filled-rectangle 80 80  #t "red") "gold")
+                dc 200 800)
+
+     (draw-pict (colorize (filled-rectangle 80 80 #t "gold" 5) "red")
+                dc 300 800)
 
 
-       (draw-pict (rounded-rectangle 80 80)
-                  dc 100 400)
+     (draw-pict (rounded-rectangle 80 80)
+                dc 100 400)
 
-       (draw-pict (rounded-rectangle 80 80 10)
-                  dc 200 400)
+     (draw-pict (rounded-rectangle 80 80 10)
+                dc 200 400)
 
-       (draw-pict (rounded-rectangle 80 80 10 "blue")
-                  dc 300 400)
+     (draw-pict (rounded-rectangle 80 80 10 "blue")
+                dc 300 400)
 
-       (draw-pict (filled-rounded-rectangle 80 80)
-                  dc 400 400)
+     (draw-pict (filled-rounded-rectangle 80 80)
+                dc 400 400)
 
-       (draw-pict (colorize (filled-rounded-rectangle 80 80 10) "gold")
-                  dc 500 400)
+     (draw-pict (colorize (filled-rounded-rectangle 80 80 10) "gold")
+                dc 500 400)
 
-       (draw-pict (colorize (filled-rounded-rectangle 80 80 10 #t "blue" 5) "lightblue")
-                  dc 600 400)
+     (draw-pict (colorize (filled-rounded-rectangle 80 80 10 #t "blue" 5) "lightblue")
+                dc 600 400)
 
-       
-       #;(draw-pict (round-frame
-                   (table 4
-                         (map (λ (x) (text (format "~a" x)))
-                              (list 1 2 3 4
-                                    5 6 7 8
-                                    9000 10 11 12))
-                         cc-superimpose
-                         cc-superimpose
-                         10
-                         10))
-                  dc 500 500)
-       
-       ; (text string style size angle)
-       
-       ; in utils.rkt - later
-       #;(draw-pict (rectangle 100 50))
+     (draw-pict (cc-superimpose (colorize (filled-rectangle 70 45) "darkcyan")
+                                (cellophane (disk 40) 0.2 #f))
+                dc 700 400)
 
-       ))
-    (js-log (get-output-string (current-output-port))))
-  
-  #;(render dc h+top l dx dy)
+     (draw-pict (cc-superimpose (colorize (filled-rectangle 70 45) "darkcyan")
+                                (cellophane (disk 40) 0.8 #f))
+                dc 800 400)
 
-  (dc 'fill-style "red")
-  
+     (draw-pict (cc-superimpose (colorize (filled-rectangle 70 45) "darkcyan")
+                                (cellophane (disk 40) 0.2))
+                dc 700 500)
+
+     (draw-pict (cc-superimpose (colorize (filled-rectangle 70 45) "darkcyan")
+                                (cellophane (disk 40) 0.8))
+                dc 800 500)
+
+     (draw-pict (vc-append 5
+                           (linewidth 3 (hline 80 1))
+                           (linewidth 0 (hline 80 1))
+                           (linewidth 6 (hline 80 1)))
+                dc 500 600)
+
+     (define styles '(transparent solid dot long-dash short-dash dot-dash ))
+     (define dash-pict (apply vl-append
+                              5
+                              (for/list ([style (in-list styles)])
+                                (vl-append 5
+                                           (text (symbol->string style))
+                                           (linewidth 1 (linestyle style (hline 80 1)))))))
+     (draw-pict dash-pict dc 600 800)
+     
+     ))
+  (flush)
+   
+  (dc 'fill-style "red")   
   (dc 'font       "64px 'Arial'")
-  (dc 'fill-text  "Hello World" 400 200)
+  (dc 'fill-text  "webracket/pict" 300 100)
 
   (define (draw-star ctx cx cy spikes outerR innerR)
     (define step (/ pi spikes))
@@ -3562,18 +4108,18 @@
 (define (flush)
   (js-log (get-output-string (current-output-port))))
 
-(define result
- (with-handlers ([(λ _ #t) (λ (e) e)])
-   ; (error 'font-family->string "expected a font-family, got: ~a" 'normal)
-   #; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
-   #;(hline 40 5)
-   (main)
-   (displayln "Hello")))
-
-(begin
+(define (start-main)
+  (define result
+    (with-handlers ([(λ _ #t) (λ (e) e)])
+      ; (error 'font-family->string "expected a font-family, got: ~a" 'normal)
+      #; (make-font 'sans-serif 12  "normal" "normal" "normal" 'normal)
+      #;(hline 40 5)
+      (main)
+      (displayln "Hello")))
   (unless (void? result)
     (displayln result))
-
   (flush))
 
+(load-bitmaps)
+(maybe-start-main)
 
