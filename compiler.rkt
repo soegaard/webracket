@@ -1720,6 +1720,30 @@
             `(topbegin ,s ,ts ...)])))]))
 
 ;;;
+;;; Infer names for `#%plain-lambda` and `case-lambda` 
+;;;
+
+(define-pass infer-names : LFE (T) -> LFE ()
+  (definitions
+    (define (var->symbol-datum s x)
+      (datum s (syntax-e (variable-id x)))))
+
+  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
+  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
+  (Formals             : Formals             (F) -> Formals             ())
+  (Expr                : Expr                (E) -> Expr                ())
+
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ()
+    [(define-values  ,s (,x) (λ ,s1 ,f ,e ...))
+     `(define-values ,s (,x) (app ,s1 ,(variable #'procedure-rename)
+                                      (λ ,s1 ,f ,e ...)
+                                      (quote ,s ,(var->symbol-datum s x))))]
+    [(define-values  ,s (,x) (case-lambda ,s1 (,f ,e0 ,e ...) ...))
+     `(define-values ,s (,x) (app ,s1 ,(variable #'procedure-rename)
+                                  (case-lambda ,s1 (,f ,e0 ,e ...) ...)
+                                  (quote ,s ,(var->symbol-datum s x))))]))
+
+;;;
 ;;; QUOTATIONS
 ;;;
 
@@ -5154,13 +5178,14 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (flatten-topbegin
-              (parse
-               (unexpand
-                (let ([t (topexpand stx)])
-                  #;(displayln (pretty-print (syntax->datum t))
-                               (current-error-port))
-                  t))))))))))))))))
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (unexpand
+                 (let ([t (topexpand stx)])
+                   #;(displayln (pretty-print (syntax->datum t))
+                                (current-error-port))
+                   t)))))))))))))))))
 
 (define (comp- stx)
   (reset-counter!)
@@ -5175,11 +5200,12 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (flatten-topbegin
-              (parse
-               (unexpand
-                (topexpand stx))))))))))))))))
-
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (unexpand
+                 (topexpand stx)))))))))))))))))
+  
 (define (comp-- stx)
   (reset-counter!)
   (pretty-print
@@ -5191,10 +5217,11 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (flatten-topbegin
-              (parse
-               (unexpand
-                (topexpand stx))))))))))))))
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (unexpand
+                 (topexpand stx)))))))))))))))
 
 (define (comp--- stx)
   (reset-counter!)
@@ -5206,10 +5233,11 @@
        (explicit-case-lambda
         (explicit-begin
          (convert-quotations
-          (flatten-topbegin
-           (parse
-            (unexpand
-             (topexpand stx)))))))))))))
+          (infer-names
+           (flatten-topbegin
+            (parse
+             (unexpand
+              (topexpand stx))))))))))))))
 
 (define (test stx)
   (reset-counter!)
@@ -5223,10 +5251,11 @@
          (explicit-case-lambda
           (explicit-begin
            (convert-quotations
-            (flatten-topbegin
-             (parse
-              (unexpand
-               (topexpand stx)))))))))))))))
+            (infer-names
+             (flatten-topbegin
+              (parse
+               (unexpand
+                (topexpand stx))))))))))))))))
 
 
 
