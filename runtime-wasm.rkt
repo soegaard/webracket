@@ -1025,6 +1025,8 @@
     (for-each (λ (binding) (add-runtime-symbol-constant (car binding)))
               exception-struct-type-bindings)
     
+    (add-runtime-string-constant 'dash                       "-")
+    (add-runtime-string-constant 'bang                       "!")
     (add-runtime-string-constant 'hash-variable-reference    "#<variable-reference>")
     (add-runtime-string-constant 'box-prefix                 "#&")
     (add-runtime-string-constant 'bytes-prefix               "#\"")
@@ -30190,6 +30192,28 @@
 
                ;; --- Return #<void> ---
                (global.get $void))
+
+
+         (func $build-structure-field-mutator-name
+               ; Builds set-<struct-name>-<field-name>!
+               (param $struct-name (ref $String))
+               (param $field-name  (ref $String))
+               (result             (ref $Symbol))
+
+               (local $parts    (ref eq))
+
+               (local.set $parts (global.get $null))
+               (local.set $parts (call $cons (global.get $string:bang) (local.get $parts)))
+               (local.set $parts (call $cons (local.get  $field-name)  (local.get $parts)))
+               (local.set $parts (call $cons (global.get $string:dash) (local.get $parts)))
+               (local.set $parts (call $cons (local.get  $struct-name) (local.get $parts)))
+               (local.set $parts (call $cons (global.get $string:dash) (local.get $parts)))
+               (local.set $parts (call $cons (global.get $string:set)  (local.get $parts)))
+
+               (call $string->symbol/checked
+                     (ref.cast (ref $String)
+                               (call $string-append (local.get $parts)))))
+         
 
          (func $make-struct-field-mutator  ; Racket primitive
                ; Note: This functions uses the internal representation of
