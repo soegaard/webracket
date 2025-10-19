@@ -480,7 +480,9 @@
 
 (struct font (family size style variant weight line-height) #:transparent)
 
-(define the-default-font (font 'sans-serif 24 'normal 'normal 'normal #f))
+(define the-default-text-size 16)
+(define the-default-font
+  (font 'sans-serif the-default-text-size 'normal 'normal 'normal #f))
   
 ; a <font family> is either a <family-name> (a string) or a <generic-name> (a symbol).
 
@@ -1855,7 +1857,7 @@
 
 ;; Using a pict finder, we can find a child.
 ;; However, sometimes we may want to conceal children.
-;; The function `launder` hides child so they are not found by
+;; The function `launder` hides children so they are not found by
 ;; the pict finders.
 
 (define (launder box*)
@@ -2900,36 +2902,61 @@
 ;;   (list -1 0 0 1 0 0))
 
 (define (flip-x p)
-  (define w (pict-width  p))
-  (define h (pict-height p))
-  (dc (λ (dc x y)
-        ;; ( x, y) is the top-left corner
-        ;; (cx,cy) is the center of the pict
-        (define cx (+ x (/ w 2)))
-        (define cy (+ y (/ h 2)))
-        (define old-t (dc 'transform))
-        (dc 'translate cx cy)
-        (dc 'transform -1 0 0 1 0 0)
-        (dc 'translate (- cx) (- cy))
-        (draw-pict p dc x y)
-        (dc 'transform old-t))
-      w h))
+  (define w      (pict-width   p))
+  (define h      (pict-height  p))
+  (define a      (pict-ascent  p))
+  (define d      (pict-descent p))
+  (define drawer (make-pict-drawer p))
+  (define new    (dc (λ (dc x y)
+                       ;; ( x, y) is the top-left corner
+                       ;; (cx,cy) is the center of the pict
+                       (define cx    (+ x (/ w 2.)))
+                       (define cy    (+ y (/ h 2.)))
+                       (define old-t (dc 'transform))
+                       (dc 'translate cx cy)
+                       (dc 'transform -1 0 0 1 0 0)
+                       (dc 'translate (- cx) (- cy))
+                       (drawer dc x y)
+                       (dc 'transform old-t))
+                     w h a d))
+  ; Embed the child
+  (make-pict (pict-draw    new)
+             w h a d
+             (list (make-child p 1 0 0 1 0 0))
+             #f
+             (pict-last p)))
+  
 
 (define (flip-y p)
-  (define w (pict-width  p))
-  (define h (pict-height p))
-  (dc (λ (dc x y)
-        ;; ( x, y) is the top-left corner
-        ;; (cx,cy) is the center of the pict
-        (define cx (+ x (/ w 2)))
-        (define cy (+ y (/ h 2)))
-        (define old-t (dc 'transform))
-        (dc 'translate cx cy)
-        (dc 'transform 1 0 0 -1 0 0)
-        (dc 'translate (- cx) (- cy))
-        (draw-pict p dc x y)
-        (dc 'transform old-t))
-      w h))
+  (define w      (pict-width   p))
+  (define h      (pict-height  p))
+  (define a      (pict-ascent  p))
+  (define d      (pict-descent p))
+  (define drawer (make-pict-drawer p))
+  (define new    (dc (λ (dc x y)
+                       ;; ( x, y) is the top-left corner
+                       ;; (cx,cy) is the center of the pict
+                       (define cx (+ x (/ w 2.)))
+                       (define cy (+ y (/ h 2.)))
+                       (define old-t (dc 'transform))
+                       (dc 'translate cx cy)
+                       (dc 'transform 1 0 0 -1 0 0)
+                       (dc 'translate (- cx) (- cy))
+                       (drawer dc x y)
+                       (dc 'transform old-t))
+                     ; Note: The ascent and descent are swapped on purpose here.
+                     ;       The baseline also flips when the pict is flipped.
+                     w h d a))
+  ; `dc` doesn't embed the subpict, so we replant
+  (make-pict (pict-draw    new)
+             (pict-width   new)
+             (pict-height  new)
+             (pict-ascent  new)
+             (pict-descent new)
+             (list (make-child p 1 0 0 1 0 0))
+             #f
+             (pict-last p)))
+
 
 (define (translate p dx dy [extend-bb? #f])
   (define bb? extend-bb?)
@@ -3082,8 +3109,6 @@
                           (dc 'stroke-style old-s)]
                          ; w is positive
                          [else
-                          (js-log "linewidth: ")
-                          (js-log w)
                           (define old-w (dc 'line-width))
                           (dc 'line-width w)
                           (drawer dc x y)
@@ -3256,12 +3281,315 @@
 	       0 0 0 2)
 	      "blue"))
 
+
     
 ;;;
-;;;
+;;; Animation combinators
 ;;;
 
+(define single-pict (lambda (p) (if (list? p) (last p) p)))
 
+;; "Morph" from one pict to another. Use `combine' to align
+;; the picts relative to another. Only the bounding box is
+;; actually morphed; the drawing part transitions by fading
+;; the original `a' out and the new `b' in. The `n' argument
+;; ranges from 0.0 (= `a') to 1.0 (= `b').
+(define (fade-pict n a b ; a and b are picts
+                   [combine cc-superimpose]    ; todo #:combine?
+                   [composite? #t])            ; todo #:composite?
+  ;; Combine ghosts of scaled pictures:
+  (let ([orig (combine (cellophane a (- 1.0 n) composite?)
+                       (cellophane b n         composite?))])
+    (cond
+     [(zero? n) (refocus orig a)]
+     [(= n 1.0) (refocus orig b)]
+     [else
+      (let-values ([(atx aty) (ltl-find orig a)]
+                   [(abx aby) (rbl-find orig a)]
+                   [(btx bty) (ltl-find orig b)]
+                   [(bbx bby) (rbl-find orig b)])
+        (let ([da (+ aty (* (- bty aty) n))]
+              [dd (- (pict-height orig)
+                     (+ aby (* (- bby aby) n)))]
+              [orig 
+               ;; Generate intermediate last-pict
+               (let ([ap (or (pict-last a) a)]
+                     [bp (or (pict-last b) b)])
+                 (let-values ([(al at) (lt-find orig (if (pair? ap) (cons a ap) (list a ap)))]
+                              [(bl bt) (lt-find orig (if (pair? bp) (cons b bp) (list b bp)))]
+                              [(ae) (single-pict ap)]
+                              [(be) (single-pict bp)])
+                   (let ([ar (+ al (pict-width ae))]
+                         [ab (+ at (pict-height ae))]
+                         [br (+ bl (pict-width be))]
+                         [bb (+ bt (pict-height be))])
+                     (let ([atl (+ at (pict-ascent ae))]
+                           [abl (- ab (pict-descent ae))]
+                           [btl (+ bt (pict-ascent be))]
+                           [bbl (- bb (pict-descent be))]
+                           [btw (lambda (a b)
+                                  (+ a (* (- b a) n)))])
+                       (let ([t (btw at bt)]
+                             [l (btw al bl)])
+                         (let ([b (max t (btw ab bb))]
+                               [r (max l (btw ar br))])
+                           (let ([tl (max t (min (btw atl btl) b))]
+                                 [bl (max t (min (btw abl bbl) b))])
+                             (let ([p (blank (- r l) (- b t)
+                                             (- tl t) (- b bl))])
+                               (let ([orig+p (pin-over orig l t p)])
+                                 (use-last orig+p p))))))))))])
+          (let ([p (make-pict (pict-draw orig)
+                              (pict-width orig)
+                              (pict-height orig)
+                              da
+                              dd
+                              (list (make-child orig 0 0 1 1 0 0))
+                              #f
+                              (pict-last orig))])
+            (let ([left (+ atx (* (- btx atx) n))]
+                  [right (+ abx (* (- bbx abx) n))])
+              (let ([hp (inset p
+                               (- left)
+                               0
+                               (- right (pict-width p))
+                               0)])
+                (let-values ([(atx aty) (lt-find hp a)]
+                             [(abx aby) (lb-find hp a)]
+                             [(btx bty) (lt-find hp b)]
+                             [(bbx bby) (lb-find hp b)])
+                  (let ([top (+ aty (* (- bty aty) n))]
+                        [bottom (+ aby (* (- bby aby) n))])
+                    (inset hp
+                           0
+                           (- top)
+                           0
+                           (- bottom (pict-height hp))))))))))])))
+
+(define (fail-gracefully t)
+  (with-handlers ([exn:fail? (lambda (x) (values 0 0))])
+    (t)))
+
+;; Pin `p' into `base', sliding from `p-from' to `p-to'
+;;  (which are picts within `base') as `n' goes from 0.0 to 1.0.
+;; The `p-from' and `p-to' picts are typically ghosts of
+;;   `p' within `base', but they can be any picts within
+;;   `base'. The top-left locations of `p-from' and `p-to'
+;;   determine the placement of the top-left of `p'.
+(define (slide-pict base p p-from p-to n)
+  (let-values ([(x1 y1) (fail-gracefully (lambda () (lt-find base p-from)))]
+               [(x2 y2) (fail-gracefully (lambda () (lt-find base p-to)))])
+    (pin-over base
+              (+ x1 (* (- x2 x1) n))
+              (+ y1 (* (- y2 y1) n))
+              p)))
+
+(define (slide-pict/center base p p-from p-to n)
+  (let-values ([(x1 y1) (fail-gracefully (lambda () (cc-find base p-from)))]
+               [(x2 y2) (fail-gracefully (lambda () (cc-find base p-to)))])
+    (pin-over base
+              (- (+ x1 (* (- x2 x1) n)) (/ (pict-width p) 2))
+              (- (+ y1 (* (- y2 y1) n)) (/ (pict-height p) 2))
+              p)))
+
+(define (fade-around-pict n base evolved [composite? #t])
+  (define tg1 (launder (ghost base)))
+  (define tg2 (launder (ghost base)))
+  (slide-pict
+   (fade-pict n
+              tg1
+              (evolved tg2)
+              composite?)
+   base
+   tg1
+   tg2
+   n))
+
+;; Concatenate a sequence of animations
+(define (sequence-animations . l)
+  (let ([len (length l)])
+    (lambda (n)
+      (cond
+       [(zero? n)
+        ((car l) 0.0)]
+       [(= n 1.0)
+        ((list-ref l (sub1 len)) n)]
+       [else
+        (let ([pos (inexact->exact (floor (* n len)))])
+          ((list-ref l pos) (* len (- n (* pos (/ len))))))]))))
+
+;; Reverse a sequence of animations
+(define (reverse-animations . l)
+  (let ([s (apply sequence-animations l)])
+    (lambda (n)
+      (s (- 1 n)))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; [0,1] -> [0,1] functions
+
+(define (fast-start n)
+  (- 1 (* (- 1 n) (- 1 n))))
+
+(define (fast-end n)
+  (* n n))
+
+(define (fast-edges n)
+  (if (n . < . 0.5)
+      (- 0.5 (fast-middle (- 0.5 n)))
+      (+ 0.5 (fast-middle (- n 0.5)))))
+
+(define (fast-middle n)
+  (- 0.5 (/ (cos (* n pi)) 2)))
+
+(define (split-phase opt-n)
+  (values (* 2 (min opt-n 0.5))
+          (* 2 (- (max opt-n 0.5) 0.5))))
+
+;;;
+;;; Standard Fish
+;;;
+
+(define standard-fish 
+  (lambda (w h [direction 'left] [c "blue"] [ec #f] [mouth-open #f])
+    (define no-pen (send the-pen-list find-or-create-pen "black" 1 'transparent))
+    (define color (if (string? c) (make-object color% c) c))
+    (define dark-color (scale-color 0.8 color))
+    (define eye-color (and ec (if (string? ec) (make-object color% ec) ec)))
+    (define dark-eye-color color)
+    (define mouth-open? (and mouth-open
+                             (or (not (number? mouth-open))
+                                 (not (zero? mouth-open)))))
+    (define mouth-open-amt (if (number? mouth-open)
+                               mouth-open
+                               (if mouth-open 1.0 0.0)))
+    (dc (lambda (dc x y)
+          (let ([rgn (make-object region% dc)]
+                [old-rgn (send dc get-clipping-region)]
+                [old-pen (send dc get-pen)]
+                [old-brush (send dc get-brush)]
+                [flip-rel (lambda (x0) 
+                            (if (eq? direction 'left)
+                                x0
+                                (- w x0)))]
+                [flip (lambda (x0 w0) 
+                        (if (eq? direction 'left)
+                            x0
+                            (+ x (- w (- x0 x) w0))))]
+                [set-rgn (lambda (rgn flip? old-rgn)
+                           (let ([dy (if flip? (/ h 2) 0)]
+                                 [wf (λ (x) (* (if (eq? 'left direction) x (+ 1 (* x -1))) w))])
+                             (if mouth-open?
+                                 (send rgn set-polygon
+                                       (list (make-object point% (wf 0) dy)
+                                             (make-object point% (wf 1) dy)
+                                             (make-object point% (wf 1) (- (* 1/2 h) dy))
+                                             (make-object point% (wf 1/6) (- (* 1/2 h) dy))
+                                             (make-object point% (wf 0) (if flip?
+                                                                            (* 1/6 mouth-open-amt h)
+                                                                            (+ (* 1/3 h)
+                                                                               (* 1/6 (- 1 mouth-open-amt) h)))))
+                                       x (+ y dy))
+                                 (send rgn set-rectangle 
+                                       x (+ y dy)
+                                       w (/ h 2))))
+                           (when old-rgn
+                             (send rgn intersect old-rgn)))])
+            (send dc set-pen no-pen)
+            (color-series
+             dc 4 1
+             dark-color color
+             (lambda (ii)
+               (define i (* ii (min 1 (* w 1/100))))
+               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (* 1/10 h))
+                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (+ 0 i))
+                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (- (* 2/10 h) i)))
+                     x y)
+               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (* 9/10 h))
+                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (- h i))
+                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (+ (* 8/10 h) i)))
+                     x y)
+               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 3/4 w) i)) (/ h 2))
+                                           (make-object point% (flip-rel (- w i)) (+ (* 1/10 h) i))
+                                           (make-object point% (flip-rel (- w i)) (- (* 9/10 h) i)))
+                     x y))
+             #f #t)
+
+            (set-rgn rgn #f old-rgn)
+            (send dc set-clipping-region rgn)
+            (color-series
+             dc 4 1
+             dark-color color
+             (lambda (i)
+               (send dc draw-ellipse (+ (- x (* 1/4 w)) i) (+ y i)
+                     (- (* 6/4 w) (* 2 i)) (- (* 4 h) (* 2 i))))
+             #f #t)
+            (send dc set-clipping-region old-rgn)
+
+            (set-rgn rgn #t old-rgn)
+            (send dc set-clipping-region rgn)
+            (color-series
+             dc 4 1
+             dark-color color
+             (lambda (i)
+               (send dc draw-ellipse (+ (- x (* 1/4 w)) i) (+ (- y (* 3 h)) i)
+                     (- (* 6/4 w) (* 2 i)) (- (* 4 h) (* 2 i))))
+             #f #t)
+            (send dc set-clipping-region old-rgn)
+
+            (when mouth-open?
+              ;; Repaint border, just in case round-off does weird things
+              (send dc set-pen color 1 'solid)
+              (let ([y (+ y (/ h 2))])
+                (send dc draw-line 
+                      (+ x (if (eq? direction 'left) (* 1/6 w) 6)) y
+                      (+ x (if (eq? direction 'left) w (* 5/6 w)) -6) y))
+              (send dc set-pen no-pen))
+
+            (color-series
+             dc 4 1
+             dark-color color
+             (lambda (ii)
+               (define i (* ii (min 1 (* w 1/100))))
+               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (/ h 2))
+                                           (make-object point% (flip-rel (- (* 5/8 w) i)) (+ (* 1/4 h) i))
+                                           (make-object point% (flip-rel (- (* 5/8 w) i)) (- (* 3/4 h) i)))
+                     x y))
+             #f #t)
+            (when eye-color
+              (if (eq? eye-color 'x)
+                  (begin
+                    (send dc set-pen (send the-pen-list find-or-create-pen "black" 1 'solid))
+                    (let* ([ew (* 1/10 w)]
+                           [eh (* 1/10 h)]
+                           [x0 (flip (+ x (* 1/5 w)) ew)]
+                           [x1 (flip (+ x (* 1/5 w) ew) ew)]
+                           [y0 (+ y (* 2/3 h))]
+                           [y1 (- (+ y (* 2/3 h)) eh)])
+                      (send dc draw-line x0 y0 x1 y1)
+                      (send dc draw-line x0 y1 x1 y0))
+                    )
+                  (color-series
+                   dc
+                   1/20 1/80
+                   dark-eye-color eye-color
+                   (lambda (s)
+                     (let ([ew (* (- 1/10 s) w)])
+                       (send dc draw-ellipse 
+                             (flip (+ x (* 1/5 w) (* s 1/2 w)) ew)
+                             (+ y (* 1/3 h) (* (* s 4/2) 1/2 h))
+                             ew
+                             (* (- 1/10 s) 4/2 h))))
+                   #f #t)))
+            (send dc set-pen old-pen)
+            (send dc set-brush old-brush)))
+        w h)))
+
+
+
+;;;
+;;; Stop converting here
+;;;
 
 (define prog-picture dc)
 
@@ -3272,22 +3600,23 @@
           (memq* a (cdr l)))
       #f))
 
-
 (define text
   (case-lambda
-   [(string)                  (text string '()   24)]
-   [(string style)            (text string style 24)]
-   [(string style size)       (text string style size 0)]
-   [(string style size angle) (not-caps-text string style size angle)
-    ; todo: we need to measure the size of the text
-    ;       also we need to a way to represent fonts.
+    [(string)                  (text string '() the-default-text-size)]
+    [(string style/size)       (if (number? style/size)
+                                   (text string '()        style/size            0)
+                                   (text string style/size the-default-text-size 0))]
+    [(string style size)       (text string style size 0)]
+    [(string style size angle) (not-caps-text string style size angle)
+                               ; todo: we need to measure the size of the text
+                               ;       also we need to a way to represent fonts.
 
-    #;(if (il-memq 'caps style)
-        (begin
-          (unless (zero? angle) 
-            (error 'text "the style cannot include 'caps with a non-zero angle"))
-          (caps-text str (il-remq 'caps style) size))
-        (not-caps-text str style size angle))]))
+                               #;(if (il-memq 'caps style)
+                                     (begin
+                                       (unless (zero? angle) 
+                                         (error 'text "the style cannot include 'caps with a non-zero angle"))
+                                       (caps-text str (il-remq 'caps style) size))
+                                     (not-caps-text str style size angle))]))
 
 
 (define (il-memq sym s)
@@ -3344,7 +3673,7 @@
              [(font? style)
               font]
              [(memq style families)
-              (font style 24 'normal 'normal 'normal #f)]
+              (font style (or size 24) 'normal 'normal 'normal #f)]
              [(string? style)
               style] ; assume it is a legal css font name
              ; TODO
@@ -4092,6 +4421,10 @@
 
      (draw-pict (hyperlinkize (text "Hello"))
                 dc 750 300)
+
+     (draw-pict (frame (scale (inset (text (string #\U1F41F)) 0 -4) 4)) ; fish
+                dc 500 200)
+
      
      (define styles '(transparent solid dot long-dash short-dash dot-dash ))
      (define dash-pict (apply vl-append
@@ -4101,6 +4434,17 @@
                                            (text (symbol->string style))
                                            (linewidth 1 (linestyle style (hline 80 1)))))))
      (draw-pict dash-pict dc 600 800)
+
+     (draw-pict (let ()
+                  (define ss '("0" "0.2" "0.4" "0.6" "0.8" "1"))
+                  (define (do-fade n)
+                    (fade-pict n (rectangle 30 30) (disk 30)))
+                  (apply ht-append 10
+                         (for/list ([n (in-range 0 1.2 0.2)]
+                                    [s (in-list ss)])
+                           (vc-append (text s 12)
+                                      (do-fade n)))))
+                dc 600 600)
      
      ))
   (flush)
