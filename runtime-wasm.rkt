@@ -29628,6 +29628,7 @@
                (local $sti            (ref eq))
                (local $sentinel       (ref eq))
                (local $new-list       (ref eq))
+               (local $struct-name    (ref eq))
 
                ;; --- Type checks ---
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
@@ -29713,6 +29714,7 @@
                                 (local.get $immutables)
                                 (local.get $guard)
                                 (local.get $constructor-name)))
+               (local.set $struct-name (struct.get $StructType $name (local.get $std)))
 
                ;; --- Prepare struct-type-info for property guards ---
                (local.set $sti
@@ -29764,8 +29766,10 @@
                ;; --- Create constructor ---
                (local.set $ctor (call $make-struct-constructor/checked (local.get $std)))
                (local.set $pred (call $make-struct-predicate/checked   (local.get $std)))
-               (local.set $acc  (call $make-struct-accessor/checked    (local.get $std) (local.get $super-count-fx)))
-               (local.set $mut  (call $make-struct-mutator/checked     (local.get $std) (local.get $super-count-fx)))
+               (local.set $acc  (call $make-struct-accessor/checked
+                                      (local.get $std) (local.get $super-count-fx) (local.get $struct-name)))
+               (local.set $mut  (call $make-struct-mutator/checked
+                                      (local.get $std) (local.get $super-count-fx)))
 
                ;; --- Return values as a compound value ---
                (array.new_fixed $Values 5
@@ -29782,8 +29786,9 @@
                (param $super-count (ref eq))   ;; fixnum
                (result (ref eq))               ;; $StructAccessorProcedure
 
-               (local $i i32)
-               ; (local $s i32)
+               (local $i            i32)
+               (local $std-typed    (ref $StructType))
+               (local $struct-name  (ref eq))
 
                ;; Type checks
                (if (i32.eqz (ref.test (ref $StructType) (local.get $std)))
@@ -29794,15 +29799,19 @@
                    (then (call $raise-argument-error (local.get $super-count))))
                ;; Decode
                (local.set $i (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $field-index))) (i32.const 1)))
-               ; (local.set $s (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $super-count))) (i32.const 1)))
+               ;; Prepare typed std and accessor name
+               (local.set $std-typed   (ref.cast (ref $StructType) (local.get $std)))
+               (local.set $struct-name (struct.get $StructType $name (local.get $std-typed)))
                ;; Delegate
                (call $make-struct-accessor/checked
-                     (ref.cast (ref $StructType) (local.get $std))
-                     (local.get $super-count)))
+                     (local.get $std-typed)
+                     (local.get $super-count)
+                     (local.get $struct-name)))
          
          (func $make-struct-accessor/checked
                (param $std         (ref $StructType))
                (param $super-count (ref eq))
+               (param $struct-name (ref eq))
                (result             (ref eq)) ;; StructAccessorProcedure
 
                (local $free (ref $Free))
@@ -29815,7 +29824,7 @@
 
                (struct.new $StructAccessorProcedure
                            (i32.const 0)               ; hash
-                           (global.get $false)         ; name:  #f or $String
+                           (local.get $struct-name)    ; name:  #f or $String
                            (ref.i31 (i32.const 4))     ; arity: 2
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure) ; invoke (used by apply, map, etc.)
@@ -31155,7 +31164,8 @@
                (local.set $accessor
                           (call $make-struct-accessor/checked
                                 (local.get $std)
-                                (local.get $super-count-fx)))
+                                (local.get $super-count-fx)
+                                (local.get $name)))
                (local.set $mutator
                           (call $make-struct-mutator/checked
                                 (local.get $std)
