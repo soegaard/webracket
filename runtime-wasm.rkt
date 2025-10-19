@@ -1075,6 +1075,7 @@
     (add-runtime-string-constant 'unknown                    "unknown")
     (add-runtime-string-constant 'colon                      ":")
     (add-runtime-string-constant '->                         ">")
+    (add-runtime-string-constant 'set                        "set")
 
     (add-runtime-string-constant 'syntax-open                          "#<syntax ")
     (add-runtime-string-constant 'syntax-close                         ">")
@@ -30273,16 +30274,12 @@
                                    (local.set $dash (call $codepoint->string (i32.const 45)))
                                    (local.set $prefix
                                               (call $string-append/2
-                                                    (call $string-append/2
-                                                          (call $string-append/2
-                                                                (call $codepoint->string (i32.const 115))  ; "s"
-                                                                (call $codepoint->string (i32.const 101))) ; "e"
-                                                          (call $codepoint->string (i32.const 116)))       ; "t"
+                                                    (global.get $string:set)
                                                     (local.get $dash)))
                                    (local.set $name-str
                                               (call $string-append/2
                                                     (local.get $struct-name-str)
-                                                    (local.get $dash)))                                   
+                                                    (local.get $dash)))
                                    (local.set $name-str
                                               (call $string-append/2
                                                     (local.get $name-str)
@@ -30294,7 +30291,7 @@
                                    (local.set $name-str
                                               (call $string-append/2
                                                     (local.get $name-str)
-                                                    (call $codepoint->string (i32.const 33))))
+                                                    (call $codepoint->string (i32.const 33)))) ; !
                                    (local.set $name
                                               (call $string->symbol/checked
                                                     (local.get $name-str)))))
