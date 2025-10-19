@@ -4057,7 +4057,7 @@
                                            (local.get $marks)))
                (struct.new $Struct
                            (i32.const 0)
-                           (global.get $false)
+                           (global.get $false)     ; <-- a name symbol !?
                            (ref.i31 (i32.const 0))
                            (global.get $false)
                            (ref.func $invoke-struct)
@@ -30286,9 +30286,9 @@
                ;; Parameters
                (param $accessor-proc  (ref eq))   ;; closure produced by make-struct-accessor
                (param $field-index-fx (ref eq))   ;; fixnum
-               (param $name           (ref eq))   ;; symbol or #f (ignored)
+               (param $name           (ref eq))   ;; symbol or #f 
                (param $contract-str   (ref eq))   ;; string/symbol/#f (ignored)
-               (param $realm          (ref eq))   ;; symbol (ignored)
+               (param $realm          (ref eq))   ;; symbol
 
                (result (ref eq)) ;; closure: (λ (struct) field-value)
 
@@ -30304,7 +30304,11 @@
                            (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $field-index-fx)))
                                             (i32.const 1))
                                    (i32.const 0)))
-                   (then (call $raise-argument-error (local.get $field-index-fx))))               
+                   (then (call $raise-argument-error (local.get $field-index-fx))))
+               ;; Build the name of the struct accessor
+               <fetch-struct-name-from-accessor-proc>
+               <generate field-accessor-name from: (string-append (symbol->string struct-name) "-" (symbol->string name))>
+               
                ;; --- Build Free vector ---
                (local.set $free (array.new_fixed $Free 2
                                                  (local.get $accessor-proc)
@@ -30312,9 +30316,9 @@
                ;; --- Return closure ---
                (struct.new $Closure
                            (i32.const 0)               ; hash
-                           (global.get $false)         ; name:  #f or $String
+                           <field-accessor-name>       ; name:  #f or $Symbol
                            (ref.i31 (i32.const 2))     ; arity: 1
-                           (global.get $false)         ; realm: #f or $Symbol
+                           (local.get $realm)          ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-field-accessor/specialized)
                            (local.get $free)))
