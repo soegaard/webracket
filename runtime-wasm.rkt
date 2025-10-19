@@ -30034,7 +30034,7 @@
                (local.set $free (array.new_fixed $Free 2
                                                  (local.get $std)
                                                  (local.get $super-count-fx)))
-               (struct.new $Closure
+               (struct.new $StructMutatorProcedure
                            (i32.const 0)               ; hash
                            (global.get $false)         ; name:  #f or $String
                            (ref.i31 (i32.const 6))     ; arity: 3
@@ -30125,7 +30125,7 @@
                                                  (local.get $std)
                                                  (local.get $super-count-fx)
                                                  (local.get $index-fx)))
-               (struct.new $Closure
+               (struct.new $StructMutatorProcedure
                            (i32.const 0)               ; hash
                            (local.get $name)           ; name:  #f or $Symbol
                            (ref.i31 (i32.const 4))     ; arity: 2
@@ -30254,7 +30254,30 @@
                                     (if (result i32)
                                         (ref.eq (local.get $arg-contract) (global.get $false))
                                         (then (i32.const 1))
-                                        (else (i32.const 0))))
+                                        (else
+                                         (if (result i32)
+                                             (ref.test (ref $Symbol) (local.get $arg-contract))
+                                             (then
+                                              (if (result i32)
+                                                  (i32.eqz (ref.eq (ref.cast (ref $Symbol) (local.get $arg-contract))
+                                                                    (local.get $field-name-sym)))
+                                                  (then (i32.const 0))
+                                                  (else (i32.const 1))))
+                                             (else
+                                              (if (result i32)
+                                                  (ref.test (ref $String) (local.get $arg-contract))
+                                                  (then
+                                                   (local.set $field-name-str
+                                                              (ref.cast (ref $String)
+                                                                        (call $symbol->immutable-string
+                                                                              (local.get $field-name-sym))))
+                                                   (if (result i32)
+                                                       (call $string=?/i32
+                                                             (local.get $field-name-str)
+                                                             (ref.cast (ref $String) (local.get $arg-contract)))
+                                                       (then (i32.const 1))
+                                                       (else (i32.const 0))))
+                                                  (else (i32.const 0))))))))
                          (if (local.get $combine?)
                              (then
                               (if (i32.eqz (ref.test (ref $Symbol) (local.get $struct-name)))
