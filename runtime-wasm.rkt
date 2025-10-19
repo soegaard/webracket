@@ -1101,16 +1101,22 @@
     (add-runtime-string-constant 'match-error:prefix         ": no matching clause for ")
 
     (add-runtime-string-constant 'syntax-or-false            "(or/c syntax? #f)")
-    (add-runtime-string-constant 'datum->syntax-srcloc      "(or/c #f syntax? srcloc?)")
+    (add-runtime-string-constant 'datum->syntax-srcloc       "(or/c #f syntax? srcloc?)")
     
     (add-runtime-string-constant 'hash?                      "hash?")
 
     (add-runtime-string-constant 'syntax?                    "syntax?")
-    
+
+    (add-runtime-string-constant  'arity-error:start         "arity error: ")
+    (add-runtime-string-constant  'arity-error:received      "received: ")
+    (add-runtime-string-constant  'arity-error:expected      "expected: ")
+
+    ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
     (add-runtime-bytes-constant  'non-empty                 #"_")
 
-    
+
+
     `(module
          ;;;
          ;;; Internal Types
@@ -1180,7 +1186,7 @@
                 (sub $Heap
                      (struct
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String    
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0)
                        ;                              +n means precisely n  
                        ;                               0 means precisely 0  
@@ -1258,7 +1264,7 @@
                      (struct
                        ; from $Procedure
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1322,7 +1328,7 @@
                      (struct
                        ; from the procedure super-type
                        (field $hash   (mut i32))  ;; Computed lazily, starts at 0
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1351,7 +1357,7 @@
                 (sub $Closure
                      (struct
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1364,7 +1370,7 @@
                 (sub $Closure
                      (struct
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1376,7 +1382,7 @@
                 (sub $Closure
                      (struct
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1388,7 +1394,7 @@
                 (sub $Closure
                      (struct
                        (field $hash   (mut i32))
-                       (field $name   (ref eq))   ;; $false or a $String
+                       (field $name   (ref eq))   ;; $false or a $Symbol
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
@@ -1982,14 +1988,20 @@
                ;; Step 3: get argument count
                (local.set $arg-count (array.len (local.get $args)))
                ;; Debug: log argument count and expected arity
-               #;(drop (call $js-log (call $i32->string (local.get $arg-count))))
-               #;(drop (call $js-log (call $i32->string (local.get $arity-i32))))
+               ; (drop (call $js-log (local.get $proc)))
                ;; Step 4: check arity match
                (if (i32.eqz
                     (call $procedure-arity-includes?/checked/i32
                           (local.get $clos)
                           (local.get $arg-count)))
-                   (then (call $raise-arity-mismatch)))
+                   (then
+                    (drop (call $js-log (global.get $string:arity-error:start)))
+                    (drop (call $js-log (call $format/display (local.get $proc))))
+                    (drop (call $js-log (global.get $string:arity-error:received)))
+                    (drop (call $js-log (call $i32->string    (local.get $arg-count))))
+                    (drop (call $js-log (global.get $string:arity-error:expected)))
+                    (drop (call $js-log (call $i32->string    (local.get $arity-i32))))                    
+                    (call $raise-arity-mismatch)))
                ;; Step 5: repack arguments (if variadic)
                (local.set $args-repacked
                           (call $repack-arguments
@@ -29253,13 +29265,13 @@
                (param $v (ref eq))
                (result (ref $String))
 
-               (local $s (ref $Struct))
-               (local $type (ref $StructType))
-               (local $name (ref eq))
+               (local $s      (ref $Struct))
+               (local $type   (ref $StructType))
+               (local $name   (ref eq))
                (local $fields (ref $Array))
-               (local $n i32)
-               (local $i i32)
-               (local $out (ref $GrowableArray))
+               (local $n      i32)
+               (local $i      i32)
+               (local $out    (ref $GrowableArray))
 
                ;; Check struct type
                (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
@@ -29929,7 +29941,7 @@
                            ; $Heap
                            (i32.const 0)             ;; hash
                            ; $Procedure
-                           ,(Imm #f)                 ;; $false or a $String
+                           ,(Imm #f)                 ;; $false or a $Symbol
                            ,(Imm 0)                  ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                            ,(Imm #f)                 ;; $false or $Symbol
                            (ref.func $invoke-struct)
@@ -29982,7 +29994,7 @@
                ;; Construct closure
                (struct.new $Closure
                            (i32.const 0)               ; hash
-                           (global.get $false)         ; name:  #f or $String
+                           (global.get $false)         ; name:  #f or $Symbol
                            (ref.i31 (i32.shl (local.get $arity) (i32.const 1))) ; arity
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
@@ -33320,8 +33332,8 @@
                (result            (ref $String))
 
                (local $p          (ref $Procedure))
-               (local $name       (ref eq))         ;; $false or $String
-               #;(local $arity-fx   (ref eq))         ;; fixnum (i31)
+               (local $name       (ref eq))         ;; $false or $Symbol
+               #;(local $arity-fx   (ref eq))       ;; fixnum (i31)
                #;(local $arity-str  (ref $String))
                (local $mask       i32)
                (local $mask-str   (ref $String))
@@ -33349,7 +33361,8 @@
                          (ref.eq (local.get $name) (global.get $false))
                          (then (ref.cast (ref $String)
                                          (global.get $string:unknown)))
-                         (else (local.get $name))))
+                         (else (ref.cast (ref $String)
+                                         (call $symbol->string (local.get $name))))))
                #;(call $growable-array-add! (local.get $ga)
                      (ref.cast (ref $String)
                                (global.get $string:colon)))
@@ -33372,7 +33385,7 @@
                (result (ref $String))
 
                (local $p          (ref $PrimitiveProcedure))
-               (local $name       (ref eq))         ;; $false or $String
+               (local $name       (ref eq))         ;; $false or $Symbol
                (local $arity-fx   (ref eq))         ;; fixnum (i31)
                (local $arity-str  (ref $String))
                (local $mask       i32)
