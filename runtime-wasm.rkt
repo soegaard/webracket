@@ -30261,11 +30261,13 @@
                                    (local.set $struct-name-sym
                                               (ref.cast (ref $Symbol) (local.get $struct-name)))
                                    (local.set $struct-name-str
-                                              (call $symbol->immutable-string
-                                                    (local.get $struct-name-sym)))
+                                              (ref.cast (ref $String)
+                                                        (call $symbol->immutable-string
+                                                              (local.get $struct-name-sym))))
                                    (local.set $field-name-str
-                                              (call $symbol->immutable-string
-                                                    (local.get $field-name-sym)))
+                                              (ref.cast (ref $String)
+                                                        (call $symbol->immutable-string
+                                                              (local.get $field-name-sym))))
                                    (local.set $dash (call $codepoint->string (i32.const 45)))
                                    (local.set $name-str
                                               (call $string-append/2
