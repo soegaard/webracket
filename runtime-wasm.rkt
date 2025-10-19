@@ -30235,11 +30235,8 @@
                (local $struct-name-str  (ref $String))
                (local $field-name       (ref eq))
                (local $field-name-sym   (ref $Symbol))
-               (local $field-name-str   (ref $String))
-               (local $dash             (ref $String))
-               (local $prefix           (ref $String))
+               (local $field-name-str   (ref $String))               
                (local $name             (ref eq))
-               (local $name-str         (ref $String))
                (local $realm-checked    (ref eq))
                (local $arg-contract     (ref eq))
                (local $combine?         i32)
@@ -30317,32 +30314,12 @@
                                               (ref.cast (ref $String)
                                                         (call $symbol->immutable-string
                                                               (local.get $field-name-sym))))
-                                   ;; Build "set-<struct-name>-<field-name>!"
-                                   (local.set $dash (call $codepoint->string (i32.const 45)))
-                                   (local.set $prefix
-                                              (call $string-append/2
-                                                    (global.get $string:set)
-                                                    (local.get $dash)))
-                                   (local.set $name-str
-                                              (call $string-append/2
-                                                    (local.get $struct-name-str)
-                                                    (local.get $dash)))
-                                   (local.set $name-str
-                                              (call $string-append/2
-                                                    (local.get $name-str)
-                                                    (local.get $field-name-str)))
-                                   (local.set $name-str
-                                              (call $string-append/2
-                                                    (local.get $prefix)
-                                                    (local.get $name-str)))
-                                   (local.set $name-str
-                                              (call $string-append/2
-                                                    (local.get $name-str)
-                                                    (call $codepoint->string (i32.const 33)))) ; !
                                    (local.set $name
-                                              (call $string->symbol/checked
-                                                    (local.get $name-str)))))
-                             (else (local.set $name (local.get $field-name))))))
+                                              (call $build-structure-field-mutator-name
+                                                    (local.get $struct-name-str)
+                                                    (local.get $field-name-str))))))
+                             (else                              
+                              (local.set $name (local.get $field-name)))))
                         (else
                          (if (i32.eqz (ref.test (ref $String) (local.get $field-name)))
                              (then (call $raise-argument-error (local.get $field-name)))
