@@ -1008,6 +1008,8 @@
           exn:fail:syntax:unbound
           exn:fail:syntax:unbound?
           make-exn:fail:syntax:unbound
+
+          mutator
           
           match
           error
@@ -30113,6 +30115,8 @@
                (param $std            (ref $StructType))
                (param $super-count-fx (ref eq)) ;; fixnum
                (param $index-fx       (ref eq)) ;; fixnum
+               (param $name           (ref eq)) ;; symbol used for object-name
+               (param $realm          (ref eq)) ;; procedure realm symbol
                (result                (ref eq)) ;; returns closure
 
                (local $free (ref $Free))
@@ -30122,9 +30126,9 @@
                                                  (local.get $index-fx)))
                (struct.new $Closure
                            (i32.const 0)               ; hash
-                           (global.get $false)         ; name:  #f or $String
+                           (local.get $name)           ; name:  #f or $Symbol
                            (ref.i31 (i32.const 4))     ; arity: 2
-                           (global.get $false)         ; realm: #f or $Symbol
+                           (local.get $realm)          ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                            (ref.func $struct-mutator/specialized)
                            (local.get $free)))
@@ -30191,9 +30195,9 @@
                ;       a mutator procedure closure.
                (param $mutator-proc      (ref eq)) ;; closure
                (param $field-pos-fx      (ref eq)) ;; fixnum
-               (param $field/proc-name   (ref eq)) ;; ignored
-               (param $arg-contract-str  (ref eq)) ;; ignored
-               (param $realm             (ref eq)) ;; ignored
+               (param $field/proc-name   (ref eq)) ;; symbol, string, or #f
+               (param $arg-contract-str  (ref eq)) ;; string/symbol/#f
+               (param $realm             (ref eq)) ;; symbol or #f
                (result                   (ref eq)) ;; returns a specialized mutator
 
                (local $clos             (ref $Closure))
@@ -30201,6 +30205,18 @@
                (local $free             (ref $Free))
                (local $std              (ref $StructType))
                (local $super-count-fx   (ref eq))
+               (local $struct-name      (ref eq))
+               (local $struct-name-sym  (ref $Symbol))
+               (local $struct-name-str  (ref $String))
+               (local $field-name       (ref eq))
+               (local $field-name-sym   (ref $Symbol))
+               (local $field-name-str   (ref $String))
+               (local $dash             (ref $String))
+               (local $name             (ref eq))
+               (local $name-str         (ref $String))
+               (local $realm-checked    (ref eq))
+               (local $arg-contract     (ref eq))
+               (local $combine?         i32)
 
                ;; --- Check mutator-proc is a closure ---
                (if (i32.eqz (ref.test (ref $Closure) (local.get $mutator-proc)))
@@ -30214,13 +30230,71 @@
                                                                (local.get $free) (i32.const 0))))
                (local.set $super-count-fx (array.get $Free
                                                      (local.get $free) (i32.const 1)))
+               (local.set $struct-name    (struct.get $StructType $name (local.get $std)))
+               (local.set $field-name     (local.get $field/proc-name))
+               (local.set $arg-contract   (local.get $arg-contract-str))
+               (local.set $realm-checked  (local.get $realm))
+
+               ;; --- Validate realm ---
+               (if (i32.and (i32.eqz (ref.eq (local.get $realm-checked) (global.get $false)))
+                            (i32.eqz (ref.test (ref $Symbol) (local.get $realm-checked))))
+                   (then (call $raise-argument-error (local.get $realm-checked))))
+
+               ;; --- Determine procedure name ---
+               (local.set $name (global.get $symbol:mutator))
+               (if (ref.eq (local.get $field-name) (global.get $false))
+                   (then)
+                   (else
+                    (if (ref.test (ref $Symbol) (local.get $field-name))
+                        (then
+                         (local.set $field-name-sym (ref.cast (ref $Symbol) (local.get $field-name)))
+                         (local.set $combine?
+                                    (if (result i32)
+                                        (ref.eq (local.get $arg-contract) (global.get $false))
+                                        (then (i32.const 1))
+                                        (else (i32.const 0))))
+                         (if (local.get $combine?)
+                             (then
+                              (if (i32.eqz (ref.test (ref $Symbol) (local.get $struct-name)))
+                                  (then (local.set $name (local.get $field-name)))
+                                  (else
+                                   (local.set $struct-name-sym
+                                              (ref.cast (ref $Symbol) (local.get $struct-name)))
+                                   (local.set $struct-name-str
+                                              (call $symbol->immutable-string
+                                                    (local.get $struct-name-sym)))
+                                   (local.set $field-name-str
+                                              (call $symbol->immutable-string
+                                                    (local.get $field-name-sym)))
+                                   (local.set $dash (call $codepoint->string (i32.const 45)))
+                                   (local.set $name-str
+                                              (call $string-append/2
+                                                    (local.get $struct-name-str)
+                                                    (local.get $dash)))
+                                   (local.set $name-str
+                                              (call $string-append/2
+                                                    (local.get $name-str)
+                                                    (local.get $field-name-str)))
+                                   (local.set $name
+                                              (call $string->symbol/checked
+                                                    (local.get $name-str)))))
+                             (else (local.set $name (local.get $field-name))))))
+                        (else
+                         (if (i32.eqz (ref.test (ref $String) (local.get $field-name)))
+                             (then (call $raise-argument-error (local.get $field-name)))
+                             (else
+                              (local.set $name
+                                         (call $string->symbol/checked
+                                               (ref.cast (ref $String)
+                                                         (local.get $field-name))))))))))
 
                ;; --- Call specialized mutator constructor ---
                (call $make-struct-mutator/specialized/checked
                      (local.get $std)
                      (local.get $super-count-fx)
-                     (local.get $field-pos-fx)))
-
+                     (local.get $field-pos-fx)
+                     (local.get $name)
+                     (local.get $realm-checked)))
 
          
          (func $make-struct-predicate
@@ -30293,33 +30367,58 @@
                (result (ref eq)) ;; closure: (λ (struct) field-value)
 
                ;; Locals
-               (local $free  (ref $Free))
+               (local $accessor             (ref $Closure))
+               (local $free                 (ref $Free))
+               (local $std                  (ref $StructType))
+               (local $struct-name          (ref eq))
+               (local $field-accessor-name  (ref eq))
 
                ;; --- Type checks ---
-               ;; Check accessor-proc is a closure
-               (if (i32.eqz (ref.test (ref $Closure) (local.get $accessor-proc)))
+               ;; Check accessor-proc is a struct accessor procedure
+               (if (i32.eqz (ref.test (ref $StructAccessorProcedure) (local.get $accessor-proc)))
                    (then (call $raise-argument-error (local.get $accessor-proc))))
+               (local.set $accessor (ref.cast (ref $Closure) (local.get $accessor-proc)))
                ;; Check field-index is a fixnum (i31 with lsb = 0)
                (if (i32.or (i32.eqz (ref.test (ref i31) (local.get $field-index-fx)))
                            (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $field-index-fx)))
                                             (i32.const 1))
                                    (i32.const 0)))
                    (then (call $raise-argument-error (local.get $field-index-fx))))
+               ;; field name must be a symbol or #f
+               (if (i32.eqz (ref.eq (local.get $name) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                             (then (call $raise-argument-error (local.get $name))))))
                ;; Build the name of the struct accessor
-               <fetch-struct-name-from-accessor-proc>
-               <generate field-accessor-name from: (string-append (symbol->string struct-name) "-" (symbol->string name))>
-               
+               (local.set $free (struct.get $Closure $free (local.get $accessor)))
+               (local.set $std  (ref.cast (ref $StructType)
+                                          (array.get $Free (local.get $free) (i32.const 0))))
+               (local.set $struct-name (struct.get $StructType $name (local.get $std)))
+               (local.set $field-accessor-name
+                          (if (result (ref eq))
+                              (i32.or (ref.eq (local.get $struct-name) (global.get $false))
+                                      (ref.eq (local.get $name) (global.get $false)))
+                              (then (global.get $false))
+                              (else (call $string->symbol
+                                          (call $string-append/2
+                                                (call $string-append/2
+                                                      (call $symbol->string
+                                                            (ref.cast (ref $Symbol)
+                                                                      (local.get $struct-name)))
+                                                      (call $codepoint->string (i32.const 45)))
+                                                (call $symbol->string
+                                                      (ref.cast (ref $Symbol)
+                                                                (local.get $name))))))))               
                ;; --- Build Free vector ---
                (local.set $free (array.new_fixed $Free 2
                                                  (local.get $accessor-proc)
                                                  (local.get $field-index-fx)))
                ;; --- Return closure ---
                (struct.new $Closure
-                           (i32.const 0)               ; hash
-                           <field-accessor-name>       ; name:  #f or $Symbol
-                           (ref.i31 (i32.const 2))     ; arity: 1
-                           (local.get $realm)          ; realm: #f or $Symbol
-                           (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                           (i32.const 0)                     ; hash
+                           (local.get $field-accessor-name)  ; name:  #f or $Symbol
+                           (ref.i31 (i32.const 2))           ; arity: 1
+                           (local.get $realm)                ; realm: #f or $Symbol
+                           (ref.func $invoke-closure)        ; invoke (used by apply, map, etc.)
                            (ref.func $struct-field-accessor/specialized)
                            (local.get $free)))
 
