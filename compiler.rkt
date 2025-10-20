@@ -17,7 +17,7 @@
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
                   index-where append-map make-list rest take drop
-                  takef dropf
+                  takef dropf drop-right
                   group-by)         
          (only-in racket/set  list->set))
 (require
@@ -1723,25 +1723,161 @@
 ;;; Infer names for `#%plain-lambda` and `case-lambda` 
 ;;;
 
+;; This pass looks for lambda and case-lambda expressions and
+;; wrap these in `(procedure-rename lambda-expression inferrred-name)`.
+;; The inferred name is taken from surrounding bindings constructs:
+;;    - define-values
+;;    - let-values
+;;    - letrec-values
+;; We are going for an best-effort approach.
+
+;; Special care is needed to support optional arguments.
+;; A definition like 
+;;    (define (foo [a 10]) a)
+;; expands into
+;;    (define-values (foo) (let-values (((foo)
+;;                                       (lambda (a1)
+;;                                          (let-values (((a) (if '#f '10 a1))) (let-values () a)))))
+;;                           (case-lambda (() (#%app foo '10)) ((a1) (#%app foo a1)))))
+
+;; Inferring that `(lambda (a1) ...)` is named `foo` is obvious from the `let-values`.
+;; That the `foo` from `define-values` is the name for `case-lambda` requires a bit
+;; effort to detect.
+
+
 (define-pass infer-names : LFE (T) -> LFE ()
   (definitions
+    ; Environments that map a binding position to a name
+    (define ε (λ (i) #f))      ; empty environment
+    (define (make-ρ names)
+      (define ns (list->vector names))
+      (define n  (vector-length ns))
+      (λ (i) (and i (< i n) (vector-ref ns i))))
+
+    (define (enumerate xs) (for/list ([i (length xs)]) i))
+    
     (define (var->symbol-datum s x)
-      (datum s (syntax-e (variable-id x)))))
+      (datum s (syntax-e (variable-id x))))
+    
+    (define (Expr* es ρ i/is)
+      (cond
+        [(list? i/is)
+         (define is i/is)
+         (map (λ (e i) (Expr e ρ i)) es is)]
+        [else
+         (define i i/is)
+         (map (λ (e) (Expr e ρ i)) es)]))
 
-  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
-  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
+    (define (wrap e s ρ i)
+      ; If the binding position i is known,
+      ; wrap the expression e in an `procedure-rename`.
+      (define x (ρ i))
+      (cond
+        [x    (with-output-language (LFE Expr)
+                `(app ,s ,(variable #'procedure-rename)
+                      ,e
+                      (quote ,s ,(var->symbol-datum s x))))]
+        [else (with-output-language (LFE Expr)
+                `,e)]))
+
+
+    (define (Expr** ess ρ i)
+      (map (λ (es) (Expr* es ρ i)) ess))
+
+    (define (is-values? e)
+      (and (variable? e)
+           (eq? (syntax-e (variable-id e)) 'values)))
+    )
+
+  (TopLevelForm : TopLevelForm (T) -> TopLevelForm ()
+    [,g (GeneralTopLevelForm g ε)])
+
+  (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm ()
+    [,g (GeneralTopLevelForm g ε)])
+  
   (Formals             : Formals             (F) -> Formals             ())
-  (Expr                : Expr                (E) -> Expr                ())
 
-  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ()
-    [(define-values  ,s (,x) (λ ,s1 ,f ,e ...))
-     `(define-values ,s (,x) (app ,s1 ,(variable #'procedure-rename)
-                                      (λ ,s1 ,f ,e ...)
-                                      (quote ,s ,(var->symbol-datum s x))))]
-    [(define-values  ,s (,x) (case-lambda ,s1 (,f ,e0 ,e ...) ...))
-     `(define-values ,s (,x) (app ,s1 ,(variable #'procedure-rename)
-                                  (case-lambda ,s1 (,f ,e0 ,e ...) ...)
-                                  (quote ,s ,(var->symbol-datum s x))))]))
+  (GeneralTopLevelForm : GeneralTopLevelForm (G ρ) -> GeneralTopLevelForm ()
+    [(define-values ,s (,x ...) ,e)  (let ([e (Expr e (make-ρ x) 0)])
+                                       `(define-values ,s (,x ...) ,e))])
+
+  
+  (Expr : Expr (E ρ i) -> Expr ()
+    ; ρ : maps a bindings position to a name or #f
+    ; i : the binding position the expression will be bound in
+    [,x                                            `,x]
+    [(λ ,s ,f ,e ...)                              (let ([e (Expr* e ε #f)])
+                                                     (wrap `(λ ,s ,f ,e ...) 
+                                                           s ρ i))]
+    [(case-lambda ,s (,f ,e0 ,e ...) ...)          (let ([e0 (Expr*  e0 ε #f)]
+                                                         [e  (Expr** e  ε #f)])
+                                                     (wrap `(case-lambda ,s (,f ,e0 ,e ...) ...)
+                                                           s ρ i))]
+    [(if ,s ,e0 ,e1 ,e2)                           (let ([e0 (Expr e0 ε #f)]
+                                                         [e1 (Expr e1 ρ i)]
+                                                         [e2 (Expr e2 ρ i)])
+                                                     `(if ,s ,e0 ,e1 ,e2))]
+    [(begin  ,s ,e0 ,e ...)                        (let* ([es (cons e0 e)]
+                                                          [e  (Expr* (drop-right es 1) ε #f)]
+                                                          [en (Expr  (last es)         ρ i)])
+                                                     (let* ([es (append e (list en))]
+                                                            [e0 (car es)]
+                                                            [e  (cdr es)])
+                                                     `(begin ,s ,e0 ,e ...)))]
+    [(begin0 ,s ,e0 ,e1 ...)                       (let ([e0 (Expr  e0 ρ i)]
+                                                         [e1 (Expr* e1 ε #f)])
+                                                     `(begin0 ,s ,e0 ,e1 ...))]
+    [(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)  
+                                                     (let* ([e* (map (λ (x* e)
+                                                                     (Expr e (make-ρ x*) 0))
+                                                                     x** e*)]
+                                                            ; e0 e1 ... = e ... en
+                                                            [es (cons e0 e1)]
+                                                            [e  (drop-right es 1)]
+                                                            [en (last es)]
+                                                            ; transform e ... en
+                                                            [e  (Expr* e ε #f)]
+                                                            [en (Expr  en ρ i)]
+                                                            ; e0 e1 ... = e ... en
+                                                            [es (append e (list en))]
+                                                            [e0 (car es)]
+                                                            [e1 (cdr es)])
+                                                       `(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
+    [(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)  
+                                                     (let* ([e* (map (λ (x* e)
+                                                                     (Expr e (make-ρ x*) 0))
+                                                                     x** e*)]
+                                                            ; e0 e1 ... = e ... en
+                                                            [es (cons e0 e1)]
+                                                            [e  (drop-right es 1)]
+                                                            [en (last es)]
+                                                            ; transform e ... en
+                                                            [e  (Expr* e ε #f)]
+                                                            [en (Expr  en ρ i)]
+                                                            ; e0 e1 ... = e ... en
+                                                            [es (append e (list en))]
+                                                            [e0 (car es)]
+                                                            [e1 (cdr es)])
+                                                       `(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
+    [(set! ,s ,x ,e)                               (let ([e (Expr e ε #f)])
+                                                     `(set! ,s ,x ,e))]
+    [(wcm ,s ,e0 ,e1 ,e2)                          (let ([e0 (Expr e0 ε #f)]
+                                                         [e1 (Expr e1 ε #f)]
+                                                         [e2 (Expr e2 ρ i)])
+                                                     `(wcm ,s ,e0 ,e1 ,e2))]
+    [(quote ,s ,d)                                `(quote ,s ,d)]
+    [(quote-syntax ,s ,d)                         `(quote-syntax ,s ,d)]
+
+    [(app ,s ,e0 ,e ...)
+     (guard (is-values? e0))                      (let ([e (Expr* e ρ (enumerate e))])
+                                                    `(app ,s ,e0 ,e ...))]
+    
+    [(app ,s ,e0 ,e1 ...)                          (let ([e0 (Expr  e0 ε #f)]
+                                                         [e1 (Expr* e1 ε #f)])
+                                                     `(app ,s ,e0 ,e1 ...))]
+    [(top ,s ,x)                                   `(top ,s ,x)]
+    [(variable-reference ,s ,vrx)                  `(variable-reference ,s ,vrx)])
+  )
 
 ;;;
 ;;; QUOTATIONS
