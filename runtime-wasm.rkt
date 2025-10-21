@@ -834,8 +834,9 @@
     ;; Symbol constants used in the runtime
     ;;  `runtime-symbol-constants` holds the constants passed by `generate-code`
     ;; in `compiler.rkt`
-    (define runtime-symbol-constants
-      (remove-duplicates symbol-constants eq? #:key car))
+    (define runtime-symbol-constants symbol-constants)
+    (displayln "--- runtime-symbol-constants ---")
+    (displayln (sort (map car runtime-symbol-constants) symbol<?))
     (define runtime-symbols-ht (make-hasheq))
     (define (add-runtime-symbol-constant symbol)
       (cond
@@ -846,7 +847,11 @@
          (hash-set! runtime-symbols-ht symbol #t) ; avoid duplicates
          (set! runtime-symbol-constants
                (cons (list name symbol) runtime-symbol-constants))]))
-    (define (declare-runtime-symbol-constants)      
+    (define (declare-runtime-symbol-constants)
+      ; This file adds more symbols to `runtime-symbol-constants` so
+      ; we need to wait removing duplicates until here.
+      (set! runtime-symbol-constants
+            (remove-duplicates runtime-symbol-constants eq? #:key car))
       (append*
        (for/list ([ns (reverse runtime-symbol-constants)])
          (define name                (first ns))
@@ -858,6 +863,8 @@
                `(global ,$symbol:name (mut (ref eq))        ,(Imm #f))))))
     
     (define (initialize-runtime-symbol-constants)
+      #;(set! runtime-symbol-constants
+              (remove-duplicates runtime-symbol-constants eq? #:key car))
       (for/list ([ns (reverse runtime-symbol-constants)])
         (define name         (first ns))
         (define symbol       (second ns))
