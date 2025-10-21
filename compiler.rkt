@@ -13,6 +13,7 @@
          nanopass/base
          racket/match
          racket/port
+         racket/pretty
          (only-in racket/string string-prefix? string-replace)
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
@@ -31,8 +32,6 @@
   ; (rename-in racket/match [match Match])
   ; (only-in srfi/1 list-index)
   '#%paramz) ; contains the identifier parameterization-key
-
-
 
 
 ;;; todo - just for testing FFI
@@ -107,7 +106,7 @@
 ; [ ] Input / output port going to the host.
 
 ; [x] case-lambda
-; [/] Calling conventions for primitives?
+; [x] Calling conventions for primitives?
 ;       - optional and variadic primitives are now possible
 
 ; [x] procedure?, procedure-rename, procedure-arity, etc.
@@ -186,6 +185,8 @@
 ; [x] - mutable hasheq  (eq?)    tables
 ; [x] - mutable hasheqv (eqv?)   tables
 ; [x] - mutable hash    (equal?) tables
+; [ ] - immutable hash tables
+
 
 ; [ ] Sets
 
@@ -301,7 +302,12 @@
 ; Constants are literals ("selfquoting").
 ; Parse will introduce explicit quotes for constants.
 
-(struct datum (stx value) #:transparent)
+(struct datum (stx value)
+  #:transparent
+  #:methods gen:custom-write
+  [(define (write-proc d port mode)
+     ;; delegate to Racket's printer for the value field
+     (write (datum-value d) port))])
 (define (unparse-datum d) (datum-value d))
 
 (define u31-min 0)
@@ -1724,12 +1730,13 @@
 ;;;
 
 ;; This pass looks for lambda and case-lambda expressions and
-;; wrap these in `(procedure-rename lambda-expression inferrred-name)`.
+;; annotate their syntax-object `s` with an inferred name.
+
 ;; The inferred name is taken from surrounding bindings constructs:
 ;;    - define-values
 ;;    - let-values
 ;;    - letrec-values
-;; We are going for an best-effort approach.
+;;
 
 ;; Special care is needed to support optional arguments.
 ;; A definition like 
@@ -1744,6 +1751,7 @@
 ;; That the `foo` from `define-values` is the name for `case-lambda` requires a bit
 ;; effort to detect.
 
+#;(define (infer-names x) x)
 
 (define-pass infer-names : LFE (T) -> LFE ()
   (definitions
@@ -1753,7 +1761,7 @@
       (define ns (list->vector names))
       (define n  (vector-length ns))
       (λ (i) (and i (< i n) (vector-ref ns i))))
-
+    
     (define (enumerate xs) (for/list ([i (length xs)]) i))
     
     (define (var->symbol-datum s x)
@@ -1769,35 +1777,46 @@
          (map (λ (e) (Expr e ρ i)) es)]))
 
     (define (wrap e s ρ i)
-      ; If the binding position i is known,
-      ; wrap the expression e in an `procedure-rename`.
-      (define x (ρ i))
+      ; Rather than wrap `e` in a `procedure-rename`, we
+      ; annotate `s` to hold the inferred name.
+      ; The closure conversion pass will use the name,
+      ; when explicit closure allocation in the form
+      ; of `(closure ...)` is introduced.
+      (define x (and i (ρ i)))
       (cond
+        ; Put the inferred name in the syntax slot of the abstraction
         [x    (with-output-language (LFE Expr)
-                `(app ,s ,(variable #'procedure-rename)
-                      ,e
-                      (quote ,s ,(var->symbol-datum s x))))]
+                (nanopass-case (LFE Expr) e
+                  [(λ ,s ,f ,e ...) 
+                   `(λ ,#`(inferred-name #,x s)
+                      ,f ,e ...)]
+                  [(case-lambda ,s (,f ,e0 ,e ...) ...)
+                   `(case-lambda ,#`(inferred-name #,x s)
+                                 (,f ,e0 ,e ...) ...)]
+                  [else (error 'wrap "expected a λ or case-lambda, got: ~a" e)]))]
         [else (with-output-language (LFE Expr)
                 `,e)]))
-
 
     (define (Expr** ess ρ i)
       (map (λ (es) (Expr* es ρ i)) ess))
 
     (define (is-values? e)
       (and (variable? e)
-           (eq? (syntax-e (variable-id e)) 'values)))
+           (free-identifier=? (variable-id e) #'values)
+           #;(eq? (syntax-e (variable-id e)) 'values)))
     )
 
   (TopLevelForm : TopLevelForm (T) -> TopLevelForm ()
-    [,g (GeneralTopLevelForm g ε)])
+    [(#%expression ,s ,e)  `(#%expression ,s ,(Expr e ε 0))]
+    [,g                    (GeneralTopLevelForm g ε)])
 
   (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm ()
-    [,g (GeneralTopLevelForm g ε)])
+    [,g                    (GeneralTopLevelForm g ε)])
   
   (Formals             : Formals             (F) -> Formals             ())
 
   (GeneralTopLevelForm : GeneralTopLevelForm (G ρ) -> GeneralTopLevelForm ()
+    [,e                              (Expr e ε 0)]
     [(define-values ,s (,x ...) ,e)  (let ([e (Expr e (make-ρ x) 0)])
                                        `(define-values ,s (,x ...) ,e))])
 
@@ -1827,38 +1846,6 @@
     [(begin0 ,s ,e0 ,e1 ...)                       (let ([e0 (Expr  e0 ρ i)]
                                                          [e1 (Expr* e1 ε #f)])
                                                      `(begin0 ,s ,e0 ,e1 ...))]
-    [(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)  
-                                                     (let* ([e* (map (λ (x* e)
-                                                                     (Expr e (make-ρ x*) 0))
-                                                                     x** e*)]
-                                                            ; e0 e1 ... = e ... en
-                                                            [es (cons e0 e1)]
-                                                            [e  (drop-right es 1)]
-                                                            [en (last es)]
-                                                            ; transform e ... en
-                                                            [e  (Expr* e ε #f)]
-                                                            [en (Expr  en ρ i)]
-                                                            ; e0 e1 ... = e ... en
-                                                            [es (append e (list en))]
-                                                            [e0 (car es)]
-                                                            [e1 (cdr es)])
-                                                       `(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
-    [(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)  
-                                                     (let* ([e* (map (λ (x* e)
-                                                                     (Expr e (make-ρ x*) 0))
-                                                                     x** e*)]
-                                                            ; e0 e1 ... = e ... en
-                                                            [es (cons e0 e1)]
-                                                            [e  (drop-right es 1)]
-                                                            [en (last es)]
-                                                            ; transform e ... en
-                                                            [e  (Expr* e ε #f)]
-                                                            [en (Expr  en ρ i)]
-                                                            ; e0 e1 ... = e ... en
-                                                            [es (append e (list en))]
-                                                            [e0 (car es)]
-                                                            [e1 (cdr es)])
-                                                       `(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
     [(set! ,s ,x ,e)                               (let ([e (Expr e ε #f)])
                                                      `(set! ,s ,x ,e))]
     [(wcm ,s ,e0 ,e1 ,e2)                          (let ([e0 (Expr e0 ε #f)]
@@ -1867,17 +1854,48 @@
                                                      `(wcm ,s ,e0 ,e1 ,e2))]
     [(quote ,s ,d)                                `(quote ,s ,d)]
     [(quote-syntax ,s ,d)                         `(quote-syntax ,s ,d)]
-
     [(app ,s ,e0 ,e ...)
      (guard (is-values? e0))                      (let ([e (Expr* e ρ (enumerate e))])
-                                                    `(app ,s ,e0 ,e ...))]
-    
+                                                    `(app ,s ,e0 ,e ...))]    
     [(app ,s ,e0 ,e1 ...)                          (let ([e0 (Expr  e0 ε #f)]
                                                          [e1 (Expr* e1 ε #f)])
                                                      `(app ,s ,e0 ,e1 ...))]
     [(top ,s ,x)                                   `(top ,s ,x)]
-    [(variable-reference ,s ,vrx)                  `(variable-reference ,s ,vrx)])
-  )
+    [(variable-reference ,s ,vrx)                  `(variable-reference ,s ,vrx)]
+
+    [(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)
+     (let* ([e* (map (λ (x* e) (Expr e (make-ρ x*) 0))
+                     x** e*)]
+            ; e0 e1 ... = e ... en
+            [es (cons e0 e1)]
+            [e  (drop-right es 1)]
+            [en (last es)]
+            ; transform e ... en
+            [e  (Expr* e  ε #f)]
+            [en (Expr  en ρ i)]
+            ; e0 e1 ... = e ... en
+            [es (append e (list en))]
+            [e0 (car es)]
+            [e1 (cdr es)])
+       `(let-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
+
+    [(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...)  
+     (let* ([e* (map (λ (x* e)
+                       (Expr e (make-ρ x*) 0))
+                     x** e*)]
+            ; e0 e1 ... = e ... en
+            [es (cons e0 e1)]
+            [e  (drop-right es 1)]
+            [en (last es)]
+            ; transform e ... en
+            [e  (Expr* e ε #f)]
+            [en (Expr  en ρ i)]
+            ; e0 e1 ... = e ... en
+            [es (append e (list en))]
+            [e0 (car es)]
+            [e1 (cdr es)])
+       `(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
+    ))
 
 ;;;
 ;;; QUOTATIONS
@@ -2758,18 +2776,22 @@
 ;;; ANORMALIZATION
 ;;;
 
+; An atomic expression (AExpr) is:
+;   - guaranteed to terminate
+;   - causes no side effects
+;   - causes no control effects
+;   - never produces an error
+
+; Non-atomic expressions are called complex expressions (CExpr).
+
 ; All subexpression are given a name unless
-;  1) it is a RHS in a let-assignment (it already has a name)
-;  2) it is a tail expression         (avoid building context)
-;  3) it is an atomic expression
-;  4) the value will be ignored       (non-last expressions in a begin)
+;   1) it is a RHS in a let-assignment (it already has a name)
+;   2) it is a tail expression         (avoid building context)
+;   3) it is an atomic expression
+;   4) the value will be ignored       (non-last expressions in a begin)
 
 ; Introduce administrative normal form
 (define-language LANF (extends LFE3)
-  ;; Atomic Expressions
-  ;;  - always terminates
-  ;;  - cause no errors
-  ;;  - have no side effects
   ;; Note: Application of pure primitives could be added here
   (AExpr (ae)
     (+ x
@@ -2854,7 +2876,7 @@
         [,e                                (Expr e id)]
         [(define-values   ,s (,x ...) ,e)  `(define-values   ,s (,x ...) ,(RHS e id))]
         [(define-syntaxes ,s (,x ...) ,e)  `(define-syntaxes ,s (,x ...) ,(RHS e id))]
-        [(#%require       ,s ,rrs ...)   `(#%require ,s ,(map RawRequireSpec rrs) ...)]
+        [(#%require       ,s ,rrs ...)     `(#%require ,s ,(map RawRequireSpec rrs) ...)]
         [else (error 'anormalize-GeneralTopLevelForm
                      "expected general top-level form, got ~a"
                      G)])))
@@ -2923,7 +2945,7 @@
       [(null? es)  (k '())]
       [else        (RHS (first es)
                      (λ (e0) (RHS* (cdr es)
-                               (λ (es) (k (cons e0 es))))))]))    
+                               (λ (es) (k (cons e0 es))))))]))
   
   (define (Expr E k)
     ;(displayln (list 'anormalize-Expr E)) (newline)
@@ -2938,6 +2960,7 @@
          (RHS* e (λ (ce) (with-output-language (LANF Expr)
                            `(let-values    ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+         (for-each displayln (list (list 'x x) (list 'e e) (list 'e0 e0)))
          (RHS* e (λ (ce) (with-output-language (LANF Expr)
                            `(letrec-values ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(primapp   ,s ,pr ,e1 ...)
@@ -2988,6 +3011,7 @@
               (nanopass-case (LANF Expr) e
                 [,ae   (k ae)]               ; ad 3) don't name atomic expressions
                 [else  (let ([t (new-var)])
+                         (displayln (list 'naming 't t 'e e))
                          (with-output-language (LANF Expr)
                            `(let-values ,h ([(,t) ,e])
                               ,(k t))))]))))
@@ -3189,8 +3213,9 @@
 ;;;       (define-label label1  (λ (cl x ...) e))
 ;;;       where e has been closure converted
 ;;;   Rewrite each abstraction:
-;;;       (λ (x ...) e)    =>  (make-closure label1 f ...)
+;;;       (λ (x ...) e)    =>  (closure in label1 f ...)
 ;;;                            where f ... are the free variables of the abstraction
+;;;                            and   in are an inferred name (if present)
 ;;;   Rewrite references to free variables:
 ;;;       f                =>  (free-ref cl i)
 ;;;                            where i is the index of f in the list of free variables
@@ -3219,6 +3244,10 @@
 
 (define (natural? v) (and (integer? v) (not (negative? v))))
 
+(define (inferred-name? v)
+  ; either #f or a variable
+  (or (not v) (variable? v)))
+
 (define arity? integer?)
 
 (define-language LANF+closure (extends LANF)
@@ -3228,15 +3257,16 @@
    (+ (arity (ar)))
    (- (variable (x xd)))
    (+ (variable (x xd l)) => unparse-variable)  ; l for label
-   (+ (natural (i))))                           ; i for index 
+   (+ (natural (i)))                            ; i for index  
+   (+ (inferred-name (in))))
   (Abstraction (ab)
     (- (λ s f e)))
   (CaseAbstraction (cab)
     (- (case-lambda s ab ...)))
   (ClosureAllocation (ca)
-    (+ (closure s l ar ae1 ...)   => (closure l ae1 ...)))
+    (+ (closure s in l ar ae1 ...)    => (closure in l ae1 ...))) ; x is the inferred name
   (CaseClosureAllocation (cca)
-    (+ (case-closure s l [ar ca] ...) => (case-closure [ar ca] ...)))
+    (+ (case-closure s in l [ar ca] ...) => (case-closure in [ar ca] ...)))
   (AExpr (ae)
     (- ab
        cab)
@@ -3290,6 +3320,14 @@
     (define (abstraction-formals ab)
       (nanopass-case (LANF Abstraction) ab
         [(λ ,s ,f ,e) f]))
+    (define (inferred-name s)
+      ; The inferred name (if present) was added to the
+      ; syntax object in the pass `infer-names`.
+      (syntax-case s ()
+        [(inferred-name? x s)
+         (eq? (syntax-e #'inferred-name?) 'inferred-name)
+         (syntax-e #'x)]
+        [_ #f]))
     (define current-free (make-parameter empty-set)))
   (TopLevelForm    : TopLevelForm    (T) -> TopLevelForm      ())
   (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm   ())
@@ -3301,7 +3339,8 @@
            [e  (parameterize ([current-free (free-of AB)])
                  (Expr e))])
        (lift! s l f e)
-       `(closure ,h ,l ,(formals->arity f) ,xs ...))])
+       (define name (inferred-name s))
+       `(closure ,h ,name ,l ,(formals->arity f) ,xs ...))])
   (CaseAbstraction : CaseAbstraction (CAB) -> CaseClosureAllocation ()
     [(case-lambda ,s ,ab ...)
      (define (formals->arity f)
@@ -3323,7 +3362,8 @@
             [E    (with-output-language (LANF+closure AExpr)
                     `(quote ,#'h ,(datum #'42 42)))]) ; TODO TODO 
        #;(case-lift! l fs* E)  ; TODO <---- is uncommenting this correct?
-       `(case-closure ,h ,l [,ar ,ab] ...))])
+       (define name (inferred-name s))
+       `(case-closure ,h ,name ,l [,ar ,ab] ...))])
   (AExpr : AExpr (AE) -> AExpr ()
     [,x ; note: x is kept for debugging purposes
      (define xs (current-free))  ; set by the enclosing abstraction
@@ -3338,23 +3378,7 @@
                    `(define-label ,l ,cab)))
       `(topbegin ,h ,dl ... ,T)))))
 
-(require racket/pretty)
 
-#;(define (test stx)
-  (reset-counter!)
-  (pretty-print
-   (unparse-all
-    (unparse-LANF+closure
-     (closure-conversion
-      (anormalize
-       (categorize-applications
-        (assignment-conversion
-         (α-rename
-          (explicit-case-lambda
-           (explicit-begin
-            (convert-quotations
-             (parse
-              (topexpand stx))))))))))))))
 
 (define-pass flatten-begin : LANF+closure (T) ->  LANF+closure ()
   (definitions)
@@ -3551,10 +3575,10 @@
      [,ce (CExpr ce)])
 
   (ClosureAllocation : ClosureAllocation (CA) -> * ()
-    [(closure ,s ,l ,ar ,ae ...) (AExpr* ae)])
+    [(closure ,s ,in ,l ,ar ,ae ...) (AExpr* ae)])
 
   (CaseClosureAllocation : CaseClosureAllocation (CCA) -> * ()
-    [(case-closure ,s ,l [,ar ,ca] ...) (ClosureAllocation* ca)])
+    [(case-closure ,s ,in ,l [,ar ,ca] ...) (ClosureAllocation* ca)])
 
   (RawProvideSpec : RawProvideSpec (RPS) -> * ()
     [,ps (PhaselessSpec ps)])
@@ -3853,7 +3877,7 @@
     )
 
   (ClosureAllocation : ClosureAllocation (ca dd) -> * ()
-    [(closure ,s ,l ,ar ,ae1 ...)
+    [(closure ,s ,in ,l ,ar ,ae1 ...)
      ; Note: We need to allocate the closure and then fill the free slots
      ;       in order to handle recursive references to the closure.
      ; If one of the ae1 ... are equal to dd,
@@ -3868,6 +3892,16 @@
      ;;  (type $ClosureCode  (func (param $clos (ref $Closure))
      ;;                         (param $args (ref $Args))
      ;;                         (result (ref eq)))))
+
+     ; `in` holds the inferred name for the closure
+     (define get-name
+       (cond
+         [in (define name  (syntax-e (variable-id in)))
+             (define $name (string->symbol (~a "$symbol:" name)))
+             (add-symbol-constant name name) ; on purpose name twice
+             `(global.get ,$name)]
+         [else
+          `(global.get $false)]))
      
      ; If there is no self-reference then allocation is simple.
      ; If there is a self-reference we first need to allocate the closure,
@@ -3896,13 +3930,13 @@
                      (field $invoke (ref $ProcedureInvoker))
                      (field $code   (ref $ClosureCode))
                      (field $free   (ref $Free)))))
-          
+     
      (maybe-store-in-dest
       (match self-reference-indices
         ; no self-references
         ['() `(struct.new $Closure
                 (i32.const 0)                  ; hash
-                (global.get $false)            ; name:  #f or $String
+                ,get-name                      ; name:  #f or $Symbol
                 ,(Imm ar)                      ; arity: fixnum
                 (global.get $the-racket-realm) ; realm: #f or $Symbol
                 (ref.func $invoke-closure)     ; invoke (used by apply, map, etc.)
@@ -3918,7 +3952,7 @@
                  (local.set ,this
                             `(struct.new $Closure    
                                (i32.const 0)               ; hash
-                               (global.get $false)         ; name:  #f or $String
+                               ,get-name                   ; name:  #f or $Symbol
                                ,(Imm ar)                   ; arity: todo
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
@@ -3937,7 +3971,7 @@
         [_ (error 'internal-error "")]))])
   (CaseClosureAllocation : CaseClosureAllocation (cca dd) -> * ()
     ; dest = #f, means the cca is in value position
-    [(case-closure ,s ,l [,ar ,ca] ...)
+    [(case-closure ,s ,in ,l [,ar ,ca] ...)
      (let* ([n   (length ca)]
             ;; arrays
             [as-init  `(array.new $Array    (global.get $null) (i32.const ,n))]
@@ -3951,7 +3985,14 @@
                            (array.set $Array    ,(Reference $as)  (i32.const ,i) ,arm)
                            (array.set $I32Array ,(Reference $ars) (i32.const ,i) (i32.const ,m))))]
             ;; name (use #f unless you carry names)
-            [name-expr '(global.get $false)])
+            [name-expr (cond
+                         ; `in` holds the inferred name
+                         [in (define name  (syntax-e (variable-id in)))
+                             (define $name (string->symbol (~a "$symbol:" name)))
+                             (add-symbol-constant name name) ; on purpose name twice
+                             `(global.get ,$name)]
+                         [else
+                          `(global.get $false)])])
        `(block (result (ref $CaseClosure))
                ,@fills
                (struct.new $CaseClosure
@@ -4715,7 +4756,7 @@
      ;;                           (result (ref eq)))))
      (let (#;[ae2 (AExpr* ae2)]) ; for effect
        (nanopass-case (LANF+closure ClosureAllocation) ca
-         [(closure ,s ,l ,ar ,ae1 ...)
+         [(closure ,s ,in ,l ,ar ,ae1 ...)
           (define tc (eq? cd '<return>))
           (define tc-flag (if tc (Imm #t) (Imm #f)))
 
@@ -4879,11 +4920,20 @@
      (define (AllocateClosure ca dest) ; called by letrec-values
        ; Allocates a closure in which the $free array contains zeros only.
        (nanopass-case (LANF+closure ClosureAllocation) ca
-         [(closure ,s ,l ,ar ,ae1 ...)
+         [(closure ,s ,in ,l ,ar ,ae1 ...)
+          (displayln (list 'AllocateClosure))
           (let ([us (make-list (length ae1) (Undefined))])
+            (define get-name
+              (cond
+                [in (define name  (syntax-e (variable-id in)))
+                    (define $name (string->symbol (~a "$symbol:" name)))
+                    (add-symbol-constant name name) ; on purpose name twice
+                    `(global.get ,$name)]
+                [else
+                    `(global.get $false)]))
             (Store! dest `(struct.new $Closure
                                (i32.const 0)               ; hash
-                               (global.get $false)         ; name:  #f or $String
+                               ,get-name                   ; name:  #f or $Symbol
                                ,(Imm ar)                   ; arity: 
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
@@ -4894,7 +4944,7 @@
      (define (FillClosure ca dd)
        ; Fill in the $free array
        (nanopass-case (LANF+closure ClosureAllocation) ca
-         [(closure ,s ,l ,ar ,ae1 ...)
+         [(closure ,s ,in ,l ,ar ,ae1 ...)
           ; This will be sliced into a `block` so we don't need another one.
           (for/list ([ae (AExpr* ae1)]
                      [i  (in-naturals)])
@@ -5377,11 +5427,33 @@
 
 (define (test stx)
   (reset-counter!)
+  (pretty-print
+   (values ; strip
+    (values ; classify-variables
+     (flatten-begin
+      (closure-conversion
+       (anormalize
+        (categorize-applications
+         (assignment-conversion
+          (α-rename
+           (explicit-case-lambda
+            (explicit-begin
+             (convert-quotations
+              (infer-names
+               (flatten-topbegin
+                (parse
+                 (unexpand
+                  (topexpand stx))))))))))))))))))
+
+(define (test- stx)
+  (reset-counter!)
+  (pretty-print
+   (values ; strip
   (values ; classify-variables
    (values ; flatten-begin
-    (closure-conversion
-     (anormalize
-      (categorize-applications
+    (values ; closure-conversion
+     (values ; anormalize
+      (values ;categorize-applications
        (assignment-conversion
         (α-rename
          (explicit-case-lambda
@@ -5391,7 +5463,7 @@
              (flatten-topbegin
               (parse
                (unexpand
-                (topexpand stx))))))))))))))))
+                (topexpand stx))))))))))))))))))
 
 
 

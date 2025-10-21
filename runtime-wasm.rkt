@@ -834,7 +834,8 @@
     ;; Symbol constants used in the runtime
     ;;  `runtime-symbol-constants` holds the constants passed by `generate-code`
     ;; in `compiler.rkt`
-    (define runtime-symbol-constants symbol-constants)
+    (define runtime-symbol-constants
+      (remove-duplicates symbol-constants eq? #:key car))
     (define runtime-symbols-ht (make-hasheq))
     (define (add-runtime-symbol-constant symbol)
       (cond
@@ -845,7 +846,7 @@
          (hash-set! runtime-symbols-ht symbol #t) ; avoid duplicates
          (set! runtime-symbol-constants
                (cons (list name symbol) runtime-symbol-constants))]))
-    (define (declare-runtime-symbol-constants)
+    (define (declare-runtime-symbol-constants)      
       (append*
        (for/list ([ns (reverse runtime-symbol-constants)])
          (define name                (first ns))
@@ -2506,9 +2507,10 @@
 
                (loop $scan
                      (if (i32.ge_u (local.get $i) (array.len (local.get $arms)))
-                         (then (call $raise-arity-error/case-lambda/arities
+                         (then (drop (call $js-log (call $format/display (local.get $clos))))
+                               (call $raise-arity-error/case-lambda/arities
                                      (local.get $argc) (local.get $arities))
-                               (unreachable)))                     
+                               (unreachable)))
                      (local.set $m
                                 (array.get $I32Array (local.get $arities) (local.get $i)))
                      (if
