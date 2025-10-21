@@ -835,8 +835,6 @@
     ;;  `runtime-symbol-constants` holds the constants passed by `generate-code`
     ;; in `compiler.rkt`
     (define runtime-symbol-constants symbol-constants)
-    (displayln "--- runtime-symbol-constants ---")
-    (displayln (sort (map car runtime-symbol-constants) symbol<?))
     (define runtime-symbols-ht (make-hasheq))
     (define (add-runtime-symbol-constant symbol)
       (cond
