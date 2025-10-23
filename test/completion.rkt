@@ -2571,24 +2571,30 @@
           ))
 
 (define chapter-datasets
-  (list (list "Datatype Functions and Constants"        datatypes-primitives)
-        (list "Input and Output"                               io-primitives)
-        (list "Operating System"                 operating-system-primitives)
-        (list "Macros"                                     macros-primitives)
-        (list "Control Flow"                         control-flow-primitives)
-        (list "Pict"                                         pict-functions)))
+  ; #t = count as primitive, #f = do not
+  (list (list "Datatype Functions and Constants"        datatypes-primitives implemented-primitives #t)
+        (list "Input and Output"                               io-primitives implemented-primitives #t)
+        (list "Operating System"                 operating-system-primitives implemented-primitives #t)
+        (list "Macros"                                     macros-primitives implemented-primitives #t)
+        (list "Control Flow"                         control-flow-primitives implemented-primitives #t)
+        (list "Pict"                                         pict-functions  defined-in-pict.rkt    #f)))
 
 (define total-primitives-cnt
   (for/sum ([chapter (in-list chapter-datasets)])
-    (for/sum ([entry (in-list (cadr chapter))])
-      (length (cdr entry)))))
-
+    (match chapter
+      [(list _ sections _ #t)
+       (for/sum ([entry (in-list sections)])
+         (length (cdr entry)))]
+      [_ 0])))
 (define total-standard-library-identifiers
   (for/sum ([chapter (in-list chapter-datasets)])
-    (for/sum ([entry (in-list (cadr chapter))])
-      (for/sum ([id (in-list entry)]
-                #:when (member id standard-library-identifiers))
-        1))))
+    (match chapter
+      [(list _ sections _ #t)
+       (for/sum ([entry (in-list sections)])
+         (for/sum ([id (in-list entry)]
+                   #:when (member id standard-library-identifiers))
+           1))]
+      [_ 0])))
 
 (define missing-primitives
   (- total-primitives-cnt
@@ -2597,13 +2603,12 @@
 
 (define prepared-chapters
   (for/list ([chapter (in-list chapter-datasets)])
-    (let ()
-      (define title (car chapter))
-      (define raw-sections (cadr chapter))
-      (list title
-            (for/list ([entry (in-list raw-sections)])
-              (list (symbol->title (car entry)) (cdr entry)))))))
-
+    (match chapter
+      [(list title raw-sections implemented _)
+       (list title
+             (for/list ([entry (in-list raw-sections)])
+               (list (symbol->title (car entry)) (cdr entry)))
+             implemented)])))
 ; (js-log prepared-chapters)
 
 
@@ -2646,9 +2651,9 @@
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
-(define (primitive-li sym)
+(define (primitive-li sym implemented-set)
   (define stdlib?  (memq sym standard-library-identifiers))
-  (define checked? (memq sym implemented-primitives))
+  (define checked? (memq sym implemented-set))
   (define box      (cond [stdlib?  "☒"]
                          [checked? "☑"]
                          [else     "☐"]))
@@ -2659,7 +2664,7 @@
        (a (@ (href ,(primitive-url sym)))
           ,str))))
 
-(define (section->sxml section idx)
+(define (section->sxml section idx implemented-set)
   ; (js-log 'section->sxml)
   (match section
     [(list title primitives)
@@ -2667,7 +2672,7 @@
                                    primitives))
      (define implemented
        (for/list ([p (in-list primitives)]
-                  #:when (memq p implemented-primitives))
+                  #:when (memq p implemented-set))
          p))
 
      (define pct (if (null? primitives)
@@ -2697,7 +2702,8 @@
             (ul (@ (id    ,list-id)
                    (class "section-list")
                    (style "display:none;"))
-                ,@(map primitive-li (sort-symbols primitives)))
+                ,@(map (lambda (sym) (primitive-li sym implemented-set))
+                       (sort-symbols primitives)))
             (hr)))]))
 
 
@@ -2723,19 +2729,18 @@
 (define-values (chapters-sxml _)
   (for/fold ([nodes '()] [idx 0])
             ([chapter (in-list prepared-chapters)])
-    (let ()
-      (define title    (car chapter))
-      (define sections (cadr chapter))
-      (define rendered
-        (for/list ([section (in-list sections)]
-                   [i       (in-naturals idx)])
-          (section->sxml section i)))
-      (values (append nodes
-                      (list `(h2 (@ (style "color:red; font-size: 2.5rem; font-family: sans-serif;"))
-                                 ,title))
-                      rendered
-                      #;(add-between rendered '(div)))
-              (+ idx (length sections))))))
+    (match chapter
+      [(list title sections implemented-set)
+       (define rendered
+         (for/list ([section (in-list sections)]
+                    [i       (in-naturals idx)])
+           (section->sxml section i implemented-set)))
+       (values (append nodes
+                       (list `(h2 (@ (style "color:red; font-size: 2.5rem; font-family: sans-serif;"))
+                                  ,title))
+                       rendered
+                       #;(add-between rendered '(div)))
+               (+ idx (length sections)))])))
 
 (define page
   `(div (h1 (@ (style "font-size: 3.5rem; font-family: sans-serif;"))
@@ -2749,7 +2754,8 @@
         (div "Standard library (not in Racket): "
              ,(number->string (- (length standard-library-identifiers)
                                  total-standard-library-identifiers)))
-        (div "The functions in `pict` is not counted with respection to implemented and missing primitives.")
+        (div)
+        (div "The pict functions are tracked separately and are not included in the implemented or missing primitive counts.")
         
         (button (@ (id "toggle-all")
                     (data-open "false")
