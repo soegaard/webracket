@@ -1588,8 +1588,7 @@
       dc
       unsafe-dc
       blank
-      text)
-    (|Primitive Shapes & Bitmap|
+      text
       hline
       vline
       frame
@@ -1601,8 +1600,7 @@
       filled-rectangle
       rounded-rectangle
       filled-rounded-rectangle
-      bitmap)
-    (|Lines & Arrows|
+      bitmap
       arrow
       arrowhead
       pip-line
@@ -1610,8 +1608,7 @@
       pip-arrows-line
       pin-line
       pin-arrow-line
-      pin-arrows-line)
-    (|Pict Combiners|
+      pin-arrows-line
       vl-append
       vc-append
       vr-append
@@ -1636,10 +1633,8 @@
       rbl-superimpose
       rb-superimpose
       pin-over
-      pin-under)
-    (|Layout Utility|
-      table)
-    (|Geometric Transforms|
+      pin-under
+      table
       scale
       flip-x
       flip-y
@@ -1687,21 +1682,18 @@
       rb-find
       pict-path?
       launder)
-    (Miscellaneous
+    (|More Pict Constructors|
       hyperlinkize
       scale-color
-      color-series)
-    (Rendering
+      color-series
       draw-pict
       pict->bitmap
       pict->argb-pixels
       argb-pixels->pict
       make-pict-drawer
-      show-pict)
-    (|Conversion to Picts|
+      show-pict
       pict-convertible?
-      pict-convert)
-    (Dingbats
+      pict-convert
       cloud
       file-icon
       standard-fish
@@ -1709,8 +1701,7 @@
       angel-wing
       desktop-machine
       thermometer
-      standard-cat)
-    (|Balloon Annotations|
+      standard-cat
       wrap-balloon
       pip-wrap-balloon
       pin-balloon
@@ -1719,14 +1710,11 @@
       make-balloon
       balloon-pict
       balloon-point-x
-      balloon-point-y)
-    (Face
+      balloon-point-y
       face
-      face*)
-    (Flash
+      face*
       filled-flash
-      outline-flash)
-    (Codeblocks
+      outline-flash
       typeset-code
       code-align
       make-code-transformer
@@ -1734,15 +1722,13 @@
       code-pict-bottom-line-pict
       pict->code-pict
       codeblock-pict)
-    (|Pict Interpolations|
+    (|Animation Helpers|
       fade-pict
       fade-around-pict
       slide-pict
-      slide-pict/center)
-    (|Merging Animations|
+      slide-pict/center
       sequence-animations
-      reverse-animations)
-    (|Stretching and Squashing Time|
+      reverse-animations
       fast-start
       fast-end
       fast-edges
