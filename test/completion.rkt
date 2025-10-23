@@ -1516,7 +1516,28 @@
   (symbol->string s))
 
 (define implemented-constants
-  '(null undefined empty true false pi))
+  '(null undefined unsafe-undefined empty true false pi eof
+         prop:arity-string
+         prop:checked-procedure  
+         prop:impersonator-of
+         prop:incomplete-arity
+         prop:method-arity-error
+         prop:object-name
+         prop:procedure
+
+         struct:exn
+         struct:exn:fail
+         struct:exn:fail:contract
+         struct:exn:fail:contract:arity
+         struct:exn:fail:contract:divide-by-zero
+         struct:exn:fail:contract:variable
+         struct:exn:fail:read
+         struct:exn:fail:read:eof
+         struct:exn:fail:read:non-char
+         struct:exn:fail:syntax
+         struct:exn:fail:syntax:missing-module
+         struct:exn:fail:syntax:unbound
+         ))
 
 (define standard-library-identifiers
   '(current-error-port
@@ -1558,6 +1579,206 @@
     write
     writeln)
   )
+
+(define pict-functions
+  '((|Pict Datatype|
+      explain
+      explain-child)
+    (|Basic Pict Constructors|
+      dc
+      unsafe-dc
+      blank
+      text)
+    (|Primitive Shapes & Bitmap|
+      hline
+      vline
+      frame
+      ellipse
+      circle
+      filled-ellipse
+      disk
+      rectangle
+      filled-rectangle
+      rounded-rectangle
+      filled-rounded-rectangle
+      bitmap)
+    (|Lines & Arrows|
+      arrow
+      arrowhead
+      pip-line
+      pip-arrow-line
+      pip-arrows-line
+      pin-line
+      pin-arrow-line
+      pin-arrows-line)
+    (|Pict Combiners|
+      vl-append
+      vc-append
+      vr-append
+      ht-append
+      htl-append
+      hc-append
+      hbl-append
+      hb-append
+      lt-superimpose
+      ltl-superimpose
+      lc-superimpose
+      lbl-superimpose
+      lb-superimpose
+      ct-superimpose
+      ctl-superimpose
+      cc-superimpose
+      cbl-superimpose
+      cb-superimpose
+      rt-superimpose
+      rtl-superimpose
+      rc-superimpose
+      rbl-superimpose
+      rb-superimpose
+      pin-over
+      pin-under)
+    (|Layout Utility|
+      table)
+    (|Geometric Transforms|
+      scale
+      flip-x
+      flip-y
+      scale-to-fit
+      rotate
+      shear
+      translate
+      ghost)
+    (|Pict Drawing Adjusters|
+      linewidth
+      linestyle
+      colorize
+      cellophane
+      clip
+      inset/clip
+      freeze)
+    (|Bounding Box Adjusters|
+      inset
+      clip-descent
+      clip-ascent
+      lift-bottom-relative-to-baseline
+      drop-top-relative-to-ascent
+      lift-above-baseline
+      drop-below-ascent
+      baseless
+      refocus
+      panorama
+      use-last
+      use-last*)
+    (|Pict Finders|
+      lt-find
+      ltl-find
+      lc-find
+      lbl-find
+      lb-find
+      ct-find
+      ctl-find
+      cc-find
+      cbl-find
+      cb-find
+      rt-find
+      rtl-find
+      rc-find
+      rbl-find
+      rb-find
+      pict-path?
+      launder)
+    (Miscellaneous
+      hyperlinkize
+      scale-color
+      color-series)
+    (Rendering
+      draw-pict
+      pict->bitmap
+      pict->argb-pixels
+      argb-pixels->pict
+      make-pict-drawer
+      show-pict)
+    (|Conversion to Picts|
+      pict-convertible?
+      pict-convert)
+    (Dingbats
+      cloud
+      file-icon
+      standard-fish
+      jack-o-lantern
+      angel-wing
+      desktop-machine
+      thermometer
+      standard-cat)
+    (|Balloon Annotations|
+      wrap-balloon
+      pip-wrap-balloon
+      pin-balloon
+      balloon
+      balloon?
+      make-balloon
+      balloon-pict
+      balloon-point-x
+      balloon-point-y)
+    (Face
+      face
+      face*)
+    (Flash
+      filled-flash
+      outline-flash)
+    (Codeblocks
+      typeset-code
+      code-align
+      make-code-transformer
+      code-transformer?
+      code-pict-bottom-line-pict
+      pict->code-pict
+      codeblock-pict)
+    (|Pict Interpolations|
+      fade-pict
+      fade-around-pict
+      slide-pict
+      slide-pict/center)
+    (|Merging Animations|
+      sequence-animations
+      reverse-animations)
+    (|Stretching and Squashing Time|
+      fast-start
+      fast-end
+      fast-edges
+      fast-middle
+      split-phase)
+    (|Color Helpers|
+      red
+      orange
+      yellow
+      green
+      blue
+      purple
+      black
+      brown
+      gray
+      white
+      cyan
+      magenta
+      light
+      dark)
+    (Shadows
+      blur
+      shadow
+      shadow-frame)
+    (|Conditional Combinations|
+      show
+      hide)
+    (|Tree Layout|
+      tree-layout
+      tree-edge
+      tree-layout?
+      binary-tree-layout?
+      tree-edge?
+      naive-layered
+      binary-tidier
+      hv-alternating)))
 
 
 (define implemented-primitives
@@ -1645,6 +1866,7 @@
             cadddr
             caddr
             cadr
+            call-with-exception-handler
             call-with-output-string
             call-with-values
             car
@@ -2274,6 +2496,7 @@
             zero?)
 
 
+
           ))
 
 (define chapter-datasets
@@ -2281,7 +2504,8 @@
         (list "Input and Output"                               io-primitives)
         (list "Operating System"                 operating-system-primitives)
         (list "Macros"                                     macros-primitives)
-        (list "Control Flow"                         control-flow-primitives)))
+        (list "Control Flow"                         control-flow-primitives)
+        (list "Pict"                                         pict-functions)))
 
 (define total-primitives-cnt
   (for/sum ([chapter (in-list chapter-datasets)])
@@ -2454,6 +2678,8 @@
         (div "Standard library (not in Racket): "
              ,(number->string (- (length standard-library-identifiers)
                                  total-standard-library-identifiers)))
+        (div "The functions in `pict` is not counted with respection to implemented and missing primitives.")
+        
         (button (@ (id "toggle-all")
                     (data-open "false")
                     (onclick ,toggle-all-script)
