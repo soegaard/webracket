@@ -3282,6 +3282,21 @@
 	      "blue"))
 
 
+
+(define (freeze p
+                [_inset      0]  ; todo #:inset
+                [extra-scale 1]) ; todo #:scale
+  (define inset-list
+    (cond
+      [(real? _inset) (list _inset)]
+      [else           _inset]))
+  (define p*      (pict-convert p))
+  (define sized   (scale (apply inset p* inset-list) extra-scale))
+  (define frozen  (bitmap (pict->bitmap sized)))
+  (define unsized (apply inset (scale frozen (/ extra-scale)) (map - inset-list)))
+  (struct-copy pict p* [draw (pict-draw unsized)]))
+
+
     
 ;;;
 ;;; Animation combinators
@@ -3450,139 +3465,191 @@
 ;;; Standard Fish
 ;;;
 
-(define standard-fish 
+#;(define standard-fish 
   (lambda (w h [direction 'left] [c "blue"] [ec #f] [mouth-open #f])
-    (define no-pen (send the-pen-list find-or-create-pen "black" 1 'transparent))
-    (define color (if (string? c) (make-object color% c) c))
-    (define dark-color (scale-color 0.8 color))
-    (define eye-color (and ec (if (string? ec) (make-object color% ec) ec)))
-    (define dark-eye-color color)
-    (define mouth-open? (and mouth-open
-                             (or (not (number? mouth-open))
-                                 (not (zero? mouth-open)))))
-    (define mouth-open-amt (if (number? mouth-open)
-                               mouth-open
-                               (if mouth-open 1.0 0.0)))
+    (define (ensure-color who value)
+      (cond
+        [(color? value)      value]
+        [(rgb-color? value) (color value)]
+        [(string? value)    (make-color value)]
+        [(list? value)      (apply make-color value)]
+        [else
+         (error who "expected a color, got: ~a" value)]))
+
+    (define (scale-color factor col)
+      (define normalized (ensure-color 'standard-fish col))
+      (define raw        (color-value normalized))
+      (cond
+        [(rgb-color? raw)
+         (define (scale-channel v)
+           (define scaled  (* (exact->inexact v) factor))
+           (define clipped (max 0 (min 255 scaled)))
+           (inexact->exact (round clipped)))
+         (color (rgb-color (scale-channel (rgb-color-r raw))
+                           (scale-channel (rgb-color-g raw))
+                           (scale-channel (rgb-color-b raw))
+                           (rgb-color-a raw)))]
+        [else normalized]))
+
+    (unless (memq direction '(left right))
+      (error 'standard-fish "expected direction 'left or 'right, got: ~a" direction))
+
+    (define base-color        (ensure-color 'standard-fish c))
+    (define outline-color     (scale-color 0.7  base-color))
+    (define fin-color         (scale-color 1.1  base-color))
+    (define tail-color        (scale-color 0.85 base-color))
+    (define body-color-str    (color->string base-color))
+    (define outline-color-str (color->string outline-color))
+    (define fin-color-str     (color->string fin-color))
+    (define tail-color-str    (color->string tail-color))
+
+    (js-log (list body-color-str outline-color-str fin-color-str tail-color-str))
+
+    (define eye-spec
+      (cond
+        [(eq? ec 'x) 'x]
+        [(not ec)    #f]
+        [else        (ensure-color 'standard-fish ec)]))
+
+    (define (clamp-01 v)
+      (cond
+        [(<= v 0.0) 0.0]
+        [(>= v 1.0) 1.0]
+        [else v]))
+
+    (define mouth-open-amt
+      (cond
+        [(number? mouth-open) (clamp-01 (exact->inexact mouth-open))]
+        [mouth-open           1.0]
+        [else                 0.0]))
+
+    (define mouth-open? (> mouth-open-amt 0.0))
+    
     (dc (lambda (dc x y)
-          (let ([rgn (make-object region% dc)]
-                [old-rgn (send dc get-clipping-region)]
-                [old-pen (send dc get-pen)]
-                [old-brush (send dc get-brush)]
-                [flip-rel (lambda (x0) 
-                            (if (eq? direction 'left)
-                                x0
-                                (- w x0)))]
-                [flip (lambda (x0 w0) 
-                        (if (eq? direction 'left)
-                            x0
-                            (+ x (- w (- x0 x) w0))))]
-                [set-rgn (lambda (rgn flip? old-rgn)
-                           (let ([dy (if flip? (/ h 2) 0)]
-                                 [wf (λ (x) (* (if (eq? 'left direction) x (+ 1 (* x -1))) w))])
-                             (if mouth-open?
-                                 (send rgn set-polygon
-                                       (list (make-object point% (wf 0) dy)
-                                             (make-object point% (wf 1) dy)
-                                             (make-object point% (wf 1) (- (* 1/2 h) dy))
-                                             (make-object point% (wf 1/6) (- (* 1/2 h) dy))
-                                             (make-object point% (wf 0) (if flip?
-                                                                            (* 1/6 mouth-open-amt h)
-                                                                            (+ (* 1/3 h)
-                                                                               (* 1/6 (- 1 mouth-open-amt) h)))))
-                                       x (+ y dy))
-                                 (send rgn set-rectangle 
-                                       x (+ y dy)
-                                       w (/ h 2))))
-                           (when old-rgn
-                             (send rgn intersect old-rgn)))])
-            (send dc set-pen no-pen)
-            (color-series
-             dc 4 1
-             dark-color color
-             (lambda (ii)
-               (define i (* ii (min 1 (* w 1/100))))
-               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (* 1/10 h))
-                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (+ 0 i))
-                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (- (* 2/10 h) i)))
-                     x y)
-               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (* 9/10 h))
-                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (- h i))
-                                           (make-object point% (flip-rel (- (* 3/4 w) i)) (+ (* 8/10 h) i)))
-                     x y)
-               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 3/4 w) i)) (/ h 2))
-                                           (make-object point% (flip-rel (- w i)) (+ (* 1/10 h) i))
-                                           (make-object point% (flip-rel (- w i)) (- (* 9/10 h) i)))
-                     x y))
-             #f #t)
+          ; (define lw (max 1.0 (/ (max (exact->inexact w) (exact->inexact h)) 60.0)))
+          (define lw            3.0)
+          (define body-rx       (* w 0.45))
+          (define body-ry       (* h 0.42))
+          (define body-cx       body-rx)
+          (define body-cy       (* h 0.5))
+          (define tail-base-x   (* w 0.7))
+          (define tail-top-y    (* h 0.15))
+          (define tail-bottom-y (* h 0.85))
+          (define fin-top-y     (* h 0.18))
+          (define fin-bottom-y  (* h 0.82))
+          (define mouth-x       (* w 0.05))
+          (define mouth-length  (* w 0.18))
+          (define mouth-span    (* h 0.3 mouth-open-amt))
+          (define eye-radius    (* (min w h) 0.075))
+          (define eye-cx        (* w 0.27))
+          (define eye-cy        (* h 0.35))
+          
+          (dc 'save)
+          (dc 'translate x y)
+          (when (eq? direction 'right)
+            (dc 'translate w 0)
+            (dc 'scale -1 1))
 
-            (set-rgn rgn #f old-rgn)
-            (send dc set-clipping-region rgn)
-            (color-series
-             dc 4 1
-             dark-color color
-             (lambda (i)
-               (send dc draw-ellipse (+ (- x (* 1/4 w)) i) (+ y i)
-                     (- (* 6/4 w) (* 2 i)) (- (* 4 h) (* 2 i))))
-             #f #t)
-            (send dc set-clipping-region old-rgn)
+          ;; Tail
+          (dc 'begin-path)
+          (dc 'move-to tail-base-x tail-top-y)
+          (dc 'line-to w (* h 0.5))
+          (dc 'line-to tail-base-x tail-bottom-y)
+          (dc 'close-path)
+          (dc 'fill-style tail-color-str)
+          (dc 'fill)
+          (dc 'stroke-style outline-color-str)
+          (dc 'line-width lw)
+          (dc 'stroke)
 
-            (set-rgn rgn #t old-rgn)
-            (send dc set-clipping-region rgn)
-            (color-series
-             dc 4 1
-             dark-color color
-             (lambda (i)
-               (send dc draw-ellipse (+ (- x (* 1/4 w)) i) (+ (- y (* 3 h)) i)
-                     (- (* 6/4 w) (* 2 i)) (- (* 4 h) (* 2 i))))
-             #f #t)
-            (send dc set-clipping-region old-rgn)
+          ;; Fins (top and bottom)
+          (define fin-width  (* w 0.22))
+          (define fin-offset (* w 0.45))
+          (define (draw-fin top?)
+            (define base-y (if top? fin-top-y fin-bottom-y))
+            (define tip-y  (if top? 0 h))
+            (dc 'begin-path)
+            (dc 'move-to (- fin-offset (* fin-width 0.6)) base-y)
+            (dc 'line-to (+ fin-offset (* fin-width 0.4)) tip-y)
+            (dc 'line-to (+ fin-offset (* fin-width 0.8)) base-y)
+            (dc 'close-path)
+            (dc 'fill-style fin-color-str)
+            (dc 'fill)
+            (dc 'stroke-style outline-color-str)
+            (dc 'line-width lw)
+            (dc 'stroke))
+          (draw-fin #t)
+          (draw-fin #f)
 
-            (when mouth-open?
-              ;; Repaint border, just in case round-off does weird things
-              (send dc set-pen color 1 'solid)
-              (let ([y (+ y (/ h 2))])
-                (send dc draw-line 
-                      (+ x (if (eq? direction 'left) (* 1/6 w) 6)) y
-                      (+ x (if (eq? direction 'left) w (* 5/6 w)) -6) y))
-              (send dc set-pen no-pen))
+          ;; Body
+          (dc 'begin-path)
+          (dc 'ellipse body-cx body-cy body-rx body-ry 0 0 (* 2. pi))
+          (dc 'fill-style body-color-str)
+          (dc 'fill)
+          (dc 'stroke-style outline-color-str)
+          (dc 'line-width lw)
+          (dc 'stroke)
 
-            (color-series
-             dc 4 1
-             dark-color color
-             (lambda (ii)
-               (define i (* ii (min 1 (* w 1/100))))
-               (send dc draw-polygon (list (make-object point% (flip-rel (+ (* 1/2 w) i)) (/ h 2))
-                                           (make-object point% (flip-rel (- (* 5/8 w) i)) (+ (* 1/4 h) i))
-                                           (make-object point% (flip-rel (- (* 5/8 w) i)) (- (* 3/4 h) i)))
-                     x y))
-             #f #t)
-            (when eye-color
-              (if (eq? eye-color 'x)
-                  (begin
-                    (send dc set-pen (send the-pen-list find-or-create-pen "black" 1 'solid))
-                    (let* ([ew (* 1/10 w)]
-                           [eh (* 1/10 h)]
-                           [x0 (flip (+ x (* 1/5 w)) ew)]
-                           [x1 (flip (+ x (* 1/5 w) ew) ew)]
-                           [y0 (+ y (* 2/3 h))]
-                           [y1 (- (+ y (* 2/3 h)) eh)])
-                      (send dc draw-line x0 y0 x1 y1)
-                      (send dc draw-line x0 y1 x1 y0))
-                    )
-                  (color-series
-                   dc
-                   1/20 1/80
-                   dark-eye-color eye-color
-                   (lambda (s)
-                     (let ([ew (* (- 1/10 s) w)])
-                       (send dc draw-ellipse 
-                             (flip (+ x (* 1/5 w) (* s 1/2 w)) ew)
-                             (+ y (* 1/3 h) (* (* s 4/2) 1/2 h))
-                             ew
-                             (* (- 1/10 s) 4/2 h))))
-                   #f #t)))
-            (send dc set-pen old-pen)
-            (send dc set-brush old-brush)))
+          ;; Accent stripes
+          (for-each
+           (lambda (offset)
+             (dc 'begin-path)
+             (dc 'move-to (+ (* w 0.38) offset) (* h 0.25))
+             (dc 'line-to (+ (* w 0.32) offset) (* h 0.75))
+             (dc 'stroke-style outline-color-str)
+             (dc 'line-width (/ lw 1.4))
+             (dc 'stroke))
+           (list 0.0 (* w 0.07) (* w 0.14)))
+
+          ;; Mouth
+          (dc 'stroke-style outline-color-str)
+          (dc 'line-width (/ lw 1.2))
+          (if mouth-open?
+              (begin
+                (dc 'begin-path)
+                (dc 'move-to mouth-x (- (* h 0.5) mouth-span))
+                (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
+                (dc 'line-to mouth-x (+ (* h 0.5) mouth-span))
+                (dc 'close-path)
+                (dc 'fill-style "white")
+                (dc 'fill)
+                (dc 'stroke))
+              (begin
+                (dc 'begin-path)
+                (dc 'move-to mouth-x (* h 0.5))
+                (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
+                (dc 'stroke)))
+
+          ;; Eye
+          #;(when eye-spec
+            (if (eq? eye-spec 'x)
+                (let ([diag (* eye-radius 0.9)])
+                  (dc 'begin-path)
+                  (dc 'move-to (- eye-cx diag) (- eye-cy diag))
+                  (dc 'line-to (+ eye-cx diag) (+ eye-cy diag))
+                  (dc 'move-to (- eye-cx diag) (+ eye-cy diag))
+                  (dc 'line-to (+ eye-cx diag) (- eye-cy diag))
+                  (dc 'stroke-style outline-color-str)
+                  (dc 'line-width (/ lw 1.1))
+                  (dc 'stroke))
+                (begin
+                  (dc 'begin-path)
+                  (dc 'ellipse eye-cx eye-cy (* eye-radius 1.1) (* eye-radius 1.1) 0 0 (* 2. pi))
+                  (dc 'fill-style (color->string eye-spec))
+                  (dc 'fill)
+                  (dc 'stroke-style outline-color-str)
+                  (dc 'line-width (/ lw 1.3))
+                  (dc 'stroke)
+                  (dc 'begin-path)
+                  (dc 'ellipse (+ eye-cx (* eye-radius 0.25))
+                      (- eye-cy (* eye-radius 0.2))
+                      (* eye-radius 0.35)
+                      (* eye-radius 0.35)
+                      0 0 (* 2. pi))
+                  (dc 'fill-style outline-color-str)
+                  (dc 'fill))))
+
+          (dc 'restore))
         w h)))
 
 
@@ -3590,6 +3657,105 @@
 ;;;
 ;;; Stop converting here
 ;;;
+
+
+;;;
+;;; Explainers
+;;;
+
+(define (explain p         
+                 #;#:border     [border     "Firebrick"]
+                 #;#:ascent     [ascent     "MediumSeaGreen"]
+                 #;#:baseline   [baseline   "DodgerBlue"]
+                 #;#:scale      [scale      5]
+                 #;#:line-width [line-width 1])
+  (define b  border)
+  (define a  ascent)
+  (define d  baseline)
+  (define s  scale)
+  (define lw line-width)  
+  (explain-child* p p b a d s lw))
+
+(define (explain-child
+         p
+         ; #;#:border     [border     "Firebrick"]
+         ; #;#:ascent     [ascent     "MediumSeaGreen"]
+         ; #;#:baseline   [baseline   "DodgerBlue"]
+         ; #;#:scale      [scale      5]
+         ; #;#:line-width [line-width 1])
+         . child-path)
+  (define b "Firebrick")
+  (define a "MediumSeaGreen")
+  (define d "DodgerBlue")
+  (define s 5)
+  (define lw 1)
+  
+  (scale
+   (for/fold ([p p])
+             ([c (in-list child-path)])
+     (explain-child* p c b a d 1 lw))
+   s))
+
+(define (explain-child*
+         p
+         child-path
+         b a d s lw)
+  (define t     (get-child-transformation p child-path))
+  (define child (last (flatten child-path)))
+  (define cw    (pict-width child))
+  (define ch    (pict-height child))
+  (define nw    (+ (* 2 lw) (pict-width p)))
+  (define nh    (+ (* 2 lw) (pict-height p)))
+  (define ncw   (+ (* 2 lw) cw))
+  (define nch   (+ (* 2 lw) ch))
+  (define lw/2  (/ lw 2))
+
+  (define annotations
+    (dc
+     (lambda (dc dx dy)
+       (define oldt (send dc get-transformation))
+       (define p    (send dc get-pen))
+       (define br   (send dc get-brush))
+       (dc 'fill-style "rgb(255 255 255 / 0% )") ; white, fully transparent
+       (dc 'translate dx dy)
+       (dc 'transform t)
+       (when b
+         (define t2 (send dc get-transformation))
+         (send dc scale (/ ncw cw) (/ nch ch))
+         (define path (new dc-path%))
+         (send dc set-pen b lw 'solid)
+         (send path move-to lw/2 lw/2)
+         (send path line-to lw/2 (- ch lw/2))
+         (send path line-to (- cw lw/2) (- ch lw/2))
+         (send path line-to (- cw lw/2) lw/2)
+         (send path close)
+         (send dc draw-path path 0 0)
+         (send dc set-transformation t2))
+       (when a
+         (define line (pict-ascent child))
+         (send dc set-pen a lw 'solid)
+         (send dc draw-line lw/2 line
+               (+ lw lw/2 cw) line))
+       (when d
+         (define line (- (pict-height child) (pict-descent child)))
+         (send dc set-pen d lw 'solid)
+         (send dc draw-line lw/2 line
+               (+ lw lw/2 cw) line))
+       (send dc set-transformation oldt)
+       (send dc set-pen p)
+       (send dc set-brush br))
+     nw nh))
+  
+  (scale
+   (cc-superimpose
+    p
+    annotations)
+   s))
+
+;;;
+;;;
+;;;
+
 
 (define prog-picture dc)
 
@@ -3666,10 +3832,7 @@
          (let loop ([style orig-style])
            (cond
              [(null? style) ; null means default
-              the-default-font
-              #;(send the-font-list find-or-create-font
-                      ;    size family   style   weight  underline? smoothing size-in-pixels?  hinting
-                      #;"" size 'default 'normal 'normal #f         'default  #t               'unaligned)]
+              (font 'sans-serif (or size the-default-text-size) 'normal 'normal 'normal #f)]
              [(font? style)
               font]
              [(memq style families)
@@ -3775,9 +3938,9 @@
                 (define m #f)
                 (cond
                   [angle?
-                   (dc 'rotate angle)              
+                   (dc 'rotate (- angle))
                    (set! m (dc 'measure-text string))
-                   (dc 'rotate (- angle))]
+                   (dc 'rotate angle)]
                   [else
                    (set! m (dc 'measure-text string))])
                 (dc 'font old-font)
@@ -3792,11 +3955,19 @@
                     (cond
                       [(real? v) (if (inexact? v) v (exact->inexact v))]
                       [else      default])))
+
+                ;; (define left    (metric "actualBoundingBoxLeft"))
+                ;; (define right   (metric "actualBoundingBoxRight"))
+                ;; (define ascent  (metric "actualBoundingBoxAscent"))
+                ;; (define descent (metric "actualBoundingBoxDescent"))
+
                 (define left    (metric "actualBoundingBoxLeft"))
                 (define right   (metric "actualBoundingBoxRight"))
-                (define ascent  (metric "actualBoundingBoxAscent"))
-                (define descent (metric "actualBoundingBoxDescent"))
-                (define width   (abs (- right left)))
+                (define ascent  (metric "fontBoundingBoxAscent"))
+                (define descent (metric "fontBoundingBoxDescent"))
+                
+                ; (define width   (abs (- right left)))
+                (define width   (metric "width"))
                 #;(define width   (let ([w (metric "width")])
                                     (if (positive? (+ left right))
                                         (max w (+ left right))
@@ -3823,7 +3994,7 @@
             
             (lambda (dc x y)
               (let ([old-font (dc 'font)])
-                (define dest-x (adj-x x))
+                (define dest-x    (adj-x x))
                 (define dest-y (+ (adj-y y) as))
                 ; TODO: check for outline? here
                 (dc 'font (font->string font))
@@ -3831,9 +4002,9 @@
                 (cond
                   [angle?
                    (dc 'translate dest-x dest-y)
-                   (dc 'rotate angle)              
-                   (dc 'fill-text string 0 0)
                    (dc 'rotate (- angle))
+                   (dc 'fill-text string 0 0)
+                   (dc 'rotate angle)
                    (dc 'translate (- dest-x) (- dest-y))]
                   [else
                    (dc 'fill-text string dest-x dest-y)])
@@ -3858,11 +4029,48 @@
                  (when fg (send dc set-text-foreground fg))
                  (send dc set-font f)]))
           
-          ;; Normal case: no rotation
-          (prog-picture (make-draw (lambda (x) x)
-                                   (lambda (y) y)
-                                   angle)
-                        w h (- h d) d)
+          (cond
+            ;; Normal case: no rotation
+            [(zero? angle)
+             (prog-picture (make-draw (lambda (x) x)
+                                      (lambda (y) y)
+                                      angle)
+                           w h (- h d) d)]
+            [else
+             ;; Rotation case. Need to find the bounding box.
+             ;; Calculate the four corners, relative to top left as origin:
+             (let* ([tlx 0]
+                    [tly 0]
+                    [ca  (cos angle)]
+                    [sa  (sin angle)]
+                    [trx        (* w ca)]
+                    [try     (- (* w sa))]
+                    [brx (+ trx (* h sa))]
+                    [bry (- try (* h ca))]
+                    [blx        (* h sa)]
+                    [bly     (- (* h ca))]
+                    ;;min-x and min-y must be non-positive,
+                    ;; since tlx and tly are always 0
+                    [min-x (min tlx trx blx brx)]
+                    [min-y (min tly try bly bry)])
+               (let ([pw (- (max tlx trx blx brx) min-x)]
+                     [ph (- (max tly try bly bry) min-y)]
+                     [dx (cond
+                           [(and (positive? ca) (positive? sa)) 0]
+                           [(positive? ca)                         (- (* h sa))]
+                           [(positive? sa)                         (- (* w ca))]
+                           [else                                (+ (- (* w ca))
+                                                                   (- (* h sa)))])]
+                     [dy (cond
+                           [(and (positive? ca) (negative? sa)) 0]
+                           [(positive? ca)                            (* w sa)]
+                           [(negative? sa)                         (- (* h ca))]
+                           [else                                (+ (- (* h ca))
+                                                                   (* w sa))])])
+                 (prog-picture (make-draw (lambda (x) (+ x dx))
+                                          (lambda (y) (+ y dy))
+                                          angle)
+                               pw ph ph 0)))])
 
           #;(if (or sub? sup?)
                 (let-values ([(ww wh wd ws) (with-text-scale
@@ -4171,6 +4379,52 @@
              p2))))]
     [(p seg-length color) (color-dash-frame p seg-length color #f)]))  
 
+;;;
+;;; Rendering
+;;;
+
+#;(define (pict->bitmap p
+                      [smoothing   'aligned]
+                      [make-bitmap make-bitmap])
+  (define w  (pict-width p))
+  (define h  (pict-height p))
+  (define bm (make-bitmap (max 1 (inexact->exact (ceiling w)))
+                          (max 1 (inexact->exact (ceiling h)))))
+  (unless (send bm ok?)
+    (error 'pict->bitmap
+           (string-append "bitmap creation failed\n"
+                          "  possible reason: out of memory\n"
+                          "  pict width: ~a\n"
+                          "  pict height: ~a")
+           w h))
+  (define dc (make-object bitmap-dc% bm))
+  (send dc set-smoothing smoothing)
+  (draw-pict p dc 0 0)
+  bm)
+
+(define (make-bitmap w h)
+  (alpha-offscreen-canvas w h))
+
+(define (pict->bitmap p
+                      [smoothing   'aligned]
+                      [make-bitmap make-bitmap])
+  (define (normalize-smoothing style)
+    (cond
+      [(boolean? style)                   style]
+      [(memq style '(smoothed unaligned)) #t]
+      [(memq style '(aligned unsmoothed)) #f]
+      [else (error 'pict->bitmap "unknown smoothing option: ~a" style)]))
+  (define width  (max 1 (inexact->exact (ceiling (pict-width p)))))
+  (define height (max 1 (inexact->exact (ceiling (pict-height p)))))
+  (define bm     (make-bitmap width height))
+  (unless (external? bm)
+    (error 'pict->bitmap "expected make-bitmap to produce a canvas, got: ~a" bm))
+  (define ctx (js-canvas-get-context bm "2d" (js-undefined)))
+  (define dc  (canvas-context->dc ctx))
+  (dc 'image-smoothing-enabled (normalize-smoothing smoothing))
+  (dc 'clear-rect 0 0 width height)
+  (draw-pict p dc 0 0)
+  bm)
 
 
 ;;;
@@ -4284,6 +4538,12 @@
                   dc 200 200)
      (draw-pict (frame (text "Hello World" '() 24 (/ 3.14 4)))
                 dc 200 200)
+
+     (draw-pict (scale (frame (text "Hello" '() 16 (/ 3.14 8))) 2)
+                dc 600 200)
+
+     (draw-pict (scale (frame (text "Hello" '() 16)) 2)
+                dc 700 200)
 
      (draw-pict (hc-append (frame (blank 30))  (frame (blank 60)))
                 dc 300 300)
@@ -4445,6 +4705,17 @@
                            (vc-append (text s 12)
                                       (do-fade n)))))
                 dc 600 600)
+
+     #;(draw-pict (standard-fish 80 40)
+                  dc 100 300)
+
+     (draw-pict (let ()
+                  (define txt
+                    (colorize (text "Freeze!" null 25) "deepskyblue"))
+                  (vl-append ; 5
+                             (scale (frame         txt)  2.5)
+                             (scale (frame (freeze txt)) 2.5)))
+                dc 100 300)
      
      ))
   (flush)
