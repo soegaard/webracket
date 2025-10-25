@@ -15875,20 +15875,25 @@
                    (else (call $raise-pair-expected (local.get $xs))
                          (unreachable))))
 
-        ,@(for/list ([name '(first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth fourteenth fifteenth)]
+         ,@(for/list ([name '($first $second $third $fourth $fifth $sixth $seventh $eighth
+                              $ninth $tenth $eleventh $twelfth $thirteenth $fourteenth $fifteenth)]
                      [idx (in-naturals)])
-            `(func ,(string->symbol (~a "$" name)) (type $Prim1)
+            `(func ,name (type $Prim1)
                    (param $xs (ref eq))
                    (result (ref eq))
                    ;; Type check: non-empty proper list
                    (if (ref.eq (local.get $xs) (global.get $null))
-                       (then (call $raise-argument-error (local.get $xs)) (unreachable)))
-                   (if (ref.eq (call $list? (local.get $xs)) (global.get $false))
-                       (then (call $raise-argument-error (local.get $xs)) (unreachable)))
+                       (then (call $js-log (call $format/display (local.get $xs)))
+                             (call $raise-argument-error (local.get $xs))
+                             (unreachable)))
+                   (if (ref.eq (call $list? (local.get $xs)) (global.get $false))                       
+                       (then (call $js-log (call $format/display (local.get $xs)))
+                             (call $raise-argument-error (local.get $xs))
+                             (unreachable)))
                    ;; Retrieve element using list-ref
                    (call $list-ref
                          (local.get $xs)
-                        (ref.i31 (i32.shl (i32.const ,idx) (i32.const 1))))))
+                         (ref.i31 (i32.shl (i32.const ,idx) (i32.const 1))))))
 
         (func $rest (type $Prim1) (param $xs (ref eq)) (result (ref eq))
               ;; Type check: non-empty proper list
