@@ -3748,7 +3748,7 @@
                 (list (equal? (object-name +)         '+)
                       (equal? (object-name renamed)   'plus)
                       (equal? (object-name renamed-2) 'again)
-                      (equal? (object-name anon)      #f))))
+                      (equal? (object-name anon)      'anon))))
 
         (list "object-name/structure-default"
               (let ()
