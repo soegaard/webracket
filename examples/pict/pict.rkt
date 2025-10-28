@@ -1148,7 +1148,20 @@
       [(list 'transform)
        (js-canvas2d-get-transform ctx)]
       [(list 'transform extern-matrix)
-       (js-canvas2d-set-transform-matrix! ctx extern-matrix)]      
+       (cond
+         [(external? extern-matrix)
+          (js-canvas2d-set-transform-matrix! ctx extern-matrix)]
+         [(vector? extern-matrix)
+          (match extern-matrix
+            [(vector a b c d e f)
+             (js-canvas2d-transform ctx
+                              (to-real a)
+                              (to-real b)
+                              (to-real c)
+                              (to-real d)
+                              (to-real e)
+                              (to-real f))])]
+         [else (error 'tranform "expected an extern (matrix) or a vector")])]
       [(list 'transform a b c d e f)
        (js-canvas2d-transform ctx
                               (to-real a)
@@ -1572,6 +1585,7 @@
 
 (struct converted-pict pict (parent))
 
+; The function `pict-convertible?` return #t for picts.
 (define (pict-convertible? x)    (pict? x))  ; TODO
 (define (pict-convertible-ref x) x)          ; TODO
 
@@ -1604,7 +1618,7 @@
 ;; or a list of picts and pict convertible structs.
 
 (define (pict-path? p)
-  (or (pict-convertible? p)  
+  (or (pict-convertible? p)
       (and (pair? p)
            (list? p)
            (andmap pict-convertible? p))))
@@ -3654,9 +3668,124 @@
 
 
 
+;; End of standard fish
+
+
 ;;;
-;;; Stop converting here
+;;; Transform.rkt
 ;;;
+
+;; get a matrix suitable for the transform method of
+;; dc<%> which shifts one into the drawing coordinates
+;; of the pict given by the pict path pp.
+(define (get-child-transformation p pp)
+  (convert-affine-form
+   (uninvert-coordinartes
+    p (last (flatten pp))
+    (cond
+      [(pict-convertible? pp)
+       (if (pict-path-element=? p pp)
+           (let ()
+             (vector 1 0 0
+                     0 1 0
+                     0 0 1))
+           (get-child-transformation/search
+            p (list pp)))]
+      [else
+       (get-child-transformation/search
+        p pp)]))))
+
+;; Transformations here are represented by 3x3
+;; matricies to allow for easy composition. This
+;; converts back to the 2x3 form used by dc<%>
+(define (convert-affine-form v)
+  (match-define (vector a b e c d f _ _ _) v)
+  (vector
+   a b
+   c d
+   e f))
+
+(define (get-child-transformation/search pict listx)
+  (cond  [(empty? list)
+          (vector 1 0 0
+                  0 1 0
+                  0 0 1)]
+         [else
+          (define t
+            (find-next-target pict (first listx)))
+          (transformation-compose
+           (get-child-transformation/search (first listx) (rest listx))
+           t)]))
+
+
+(define (find-next-target p target)
+  (let loop ([p        p]
+             [children (pict-children p)]
+             [foundk   (lambda (t) t)]
+             [failk    (lambda () (error 'explain-child "could not find child pict"))])
+    (match children
+      [(list) (failk)]
+      [(cons r h)
+       #:when (pict-path-element=? (child-pict r) target)
+       (foundk (child->transformation p r))]
+      [(cons r h)
+       (loop
+        (child-pict r)
+        (pict-children (child-pict r))
+        (lambda (t) (foundk (transformation-compose (child->transformation p r) t)))
+        (lambda ()  (loop p h foundk failk)))])))
+      
+(define (transformation-compose1 t1 t2)
+  (define w 3)
+  (for*/vector #:length 9 #:fill 0
+    ([i (in-range w)]
+     [j (in-range w)])
+    (for/sum ([k (in-range w)])
+      (* (vector-ref t1 (+ (* i w) k))
+         (vector-ref t2 (+ (* w k) j))))))
+
+(define (transformation-compose t1 . t2)
+  (match t2
+    [(list) t1]
+    [(cons r h)
+     (apply
+      transformation-compose
+      (transformation-compose1 t1 r)
+      h)]))
+
+(define (transformation-apply t v)
+  (define w 3)
+  (for/vector #:length 3 #:fill 0
+    ([i (in-range w)])
+    (for/sum ([j (in-range w)])
+      (* (vector-ref v j) (vector-ref t (+ (* i w) j))))))
+
+;; switch from the inverted coordinates used by
+;; pict-child to normal drawing coordinates.
+(define (uninvert-coordinartes p c t)
+  (match-define (vector sx sxy dx syx sy dy _ _ _) t)
+  (match-define (vector _ _ ndx _ _ ndy _ _ _)
+    (let ()
+      (transformation-compose
+       (vector
+        1 0 0
+        0 -1 (pict-height p)
+        0 0 1)
+       t
+       (vector
+        1 0 0
+        0 -1 (pict-height c)
+        0 0 1))))  
+  (vector
+   sx sxy ndx
+   syx sy ndy
+   0 0 1))
+
+(define (child->transformation parent c)
+  (vector
+   (child-sx  c) (child-sxy c) (child-dx c)
+   (child-syx c) (child-sy  c) (child-dy c)
+   0 0 1))
 
 
 ;;;
@@ -3713,39 +3842,54 @@
   (define annotations
     (dc
      (lambda (dc dx dy)
-       (define oldt (send dc get-transformation))
-       (define p    (send dc get-pen))
-       (define br   (send dc get-brush))
+       (define old-transform  (dc 'transform))
+       (define old-fill       (dc 'fill-style))
+       (define old-stroke     (dc 'stroke-style))
+       (define old-line-width (dc 'line-width))
+       (define border-color   (and b (color->string b)))
+       (define ascent-color   (and a (color->string a)))
+       (define baseline-color (and d (color->string d)))
+       
        (dc 'fill-style "rgb(255 255 255 / 0% )") ; white, fully transparent
        (dc 'translate dx dy)
+       ; for example: t = #(1 0 0 1 0 0.0)
        (dc 'transform t)
-       (when b
-         (define t2 (send dc get-transformation))
-         (send dc scale (/ ncw cw) (/ nch ch))
-         (define path (new dc-path%))
-         (send dc set-pen b lw 'solid)
-         (send path move-to lw/2 lw/2)
-         (send path line-to lw/2 (- ch lw/2))
-         (send path line-to (- cw lw/2) (- ch lw/2))
-         (send path line-to (- cw lw/2) lw/2)
-         (send path close)
-         (send dc draw-path path 0 0)
-         (send dc set-transformation t2))
-       (when a
+       
+       (when border-color
+         (define t2 (dc 'transform))
+         (dc 'scale (/ ncw cw) (/ nch ch))
+         (dc 'stroke-style border-color)
+         (dc 'line-width lw)
+         (dc 'begin-path)
+         (dc 'move-to lw/2 lw/2)
+         (dc 'line-to lw/2 (- ch lw/2))
+         (dc 'line-to (- cw lw/2) (- ch lw/2))
+         (dc 'line-to (- cw lw/2) lw/2)
+         (dc 'close-path)
+         (dc 'stroke)
+         (dc 'transform t2))
+       (when ascent-color
          (define line (pict-ascent child))
-         (send dc set-pen a lw 'solid)
-         (send dc draw-line lw/2 line
-               (+ lw lw/2 cw) line))
-       (when d
+         (dc 'stroke-style ascent-color)
+         (dc 'line-width lw)
+         (dc 'begin-path)
+         (dc 'move-to lw/2 line)
+         (dc 'line-to (+ lw lw/2 cw) line)
+         (dc 'stroke))
+       (when baseline-color
          (define line (- (pict-height child) (pict-descent child)))
-         (send dc set-pen d lw 'solid)
-         (send dc draw-line lw/2 line
-               (+ lw lw/2 cw) line))
-       (send dc set-transformation oldt)
-       (send dc set-pen p)
-       (send dc set-brush br))
+         (dc 'stroke-style baseline-color)
+         (dc 'line-width lw)
+         (dc 'begin-path)
+         (dc 'move-to lw/2 line)
+         (dc 'line-to (+ lw lw/2 cw) line)
+         (dc 'stroke))
+       (dc 'transform    old-transform)
+       (dc 'fill-style   old-fill)
+       (dc 'stroke-style old-stroke)
+       (dc 'line-width   old-line-width))
      nw nh))
-  
+
   (scale
    (cc-superimpose
     p
@@ -4593,8 +4737,6 @@
      (draw-pict (color-round-frame (blank 80) 10 "purple")
                 dc 100 700)
 
-     (js-log (color->string "purple"))
-
      (draw-pict (circle 80 "darkblue")
                 dc 200 700)
 
@@ -4716,6 +4858,15 @@
                              (scale (frame         txt)  2.5)
                              (scale (frame (freeze txt)) 2.5)))
                 dc 100 300)
+
+     (draw-pict (let ()
+                  (define t  (text "ij"))
+                  (define tt (vl-append t t))
+                  #;(explain t)
+                  (explain tt)
+                  )
+                dc 100 100)
+                  
      
      ))
   (flush)
@@ -4742,7 +4893,8 @@
     (dc 'fill (void) "nonzero")
     (dc 'stroke))
 
-  (draw-star ctx 150. 150. 5 100. 40.))
+  #;(draw-star ctx 150. 150. 5 100. 40.)
+  (void))
 
 
 (define (flush)
