@@ -2312,8 +2312,8 @@
                                            ; top-level variables aren't renamed
                                            ; but in order to see that they are defined,
                                            ; they must map to themselves. 
-                                           (letv ((e _) (Expr e ρ))
-                                                 (let ((ρ (extend-map-to-self* ρ x)))
+                                           (let ((ρ (extend-map-to-self* ρ x)))
+                                             (letv ((e _) (Expr e ρ))
                                                    (values `(define-values ,s (,x ...) ,e) ρ)))])]
     [(define-syntaxes ,s (,x ...) ,e)   (error)])
   
@@ -2458,6 +2458,8 @@
 ;; The first pass returns an id-set of all variables that are (potentially) assigned to.
 ;; The second pass converts assignable variables into boxes and assignments into box mutations.
 
+(define assignment-convertsion-for-top-level-vars? #f)
+
 (define-pass collect-assignable-variables : LFE2+ (T) -> * ()
   ;; Assumption: α-conversion has been done
   (definitions
@@ -2476,7 +2478,9 @@
   (GeneralTopLevelForm : GeneralTopLevelForm (G xs) -> * (xs)
     [,e                                 (Expr e xs)]
     ; until we implement namespace, top-level variables are boxed
-    [(define-values   ,s (,x ...) ,e)   (Expr e (append x xs))]
+    [(define-values   ,s (,x ...) ,e)   (if assignment-convertsion-for-top-level-vars?
+                                            (Expr e (append x xs))
+                                            (Expr e xs))]
     [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
     [(#%require       ,s ,rrs ...)      empty-set])
 
@@ -2509,7 +2513,6 @@
   #;(Space (space)
       x ; identifier
       #f)
-
   
 
   (Abstraction : Abstraction (AB xs) -> * (xs)
@@ -2551,7 +2554,7 @@
   ;; Note that only clauses with mutable variables need this extra let-values expression.
   (definitions
     (define h #'ac)
-    (define (mutable? x)   (set-in? x ms))
+    (define (mutable?   x) (set-in? x ms))
     (define (immutable? x) (not (mutable? x)))    
     (define (formal-variables F)
       ; list of variables occuring as formal arguments
@@ -2559,7 +2562,7 @@
         [(formals (,x ...))            x]
         [(formals (,x0 ,x1 ... . ,xd)) (cons x0 (append x1 (list xd)))]
         [(formals ,x)                  (list x)]))
-    (define (Boxed e)   (with-output-language (LFE2+ Expr) `(app ,h ,(var:boxed) ,e)))
+    (define (Boxed e)   (with-output-language (LFE2+ Expr) `(app ,h ,(var:boxed)   ,e)))
     (define (Unboxed e) (with-output-language (LFE2+ Expr) `(app ,h ,(var:unboxed) ,e)))
     (define (Undefined) (with-output-language (LFE2+ Expr) `(quote ,h ,datum:undefined)))
     (define (LambdaBody s f fs e)
@@ -2583,7 +2586,8 @@
                    (let ([bt (for/list ([x xs] [t ts])
                                (if (mutable? x) (Boxed t) t))])
                      `(let-values ,h ([(,ts ...) ,e])
-                        (app ,h ,(var:values) ,bt ...)))))]))))
+                                  (app ,h ,(var:values) ,bt ...)))))]))))
+  
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (Formals             : Formals             (F) -> Formals             ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ()
@@ -2669,7 +2673,7 @@
 
 ;; Closed applications of the type ((λ (x ...) e) e) are rewritten to let-values.
 ;; Closed application where the abstraction have formals of the form (x ... . y) and x
-;; are kept (for now).
+;; are kept (for now) (todo).
 
 ;; The terminal pr is a variable bound to a primitive.
 
@@ -2960,7 +2964,6 @@
          (RHS* e (λ (ce) (with-output-language (LANF Expr)
                            `(let-values    ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
-         (for-each displayln (list (list 'x x) (list 'e e) (list 'e0 e0)))
          (RHS* e (λ (ce) (with-output-language (LANF Expr)
                            `(letrec-values ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(primapp   ,s ,pr ,e1 ...)
@@ -3011,7 +3014,6 @@
               (nanopass-case (LANF Expr) e
                 [,ae   (k ae)]               ; ad 3) don't name atomic expressions
                 [else  (let ([t (new-var)])
-                         (displayln (list 'naming 't t 'e e))
                          (with-output-language (LANF Expr)
                            `(let-values ,h ([(,t) ,e])
                               ,(k t))))]))))
@@ -3097,7 +3099,7 @@
     ; list of all abstractions
     (define abs '())
     (define (seen-abstraction! ab) (set! abs (cons ab abs)))
-    ; hash table from abstraction to its free variables
+    ; hash table from an abstraction to its free variables
     (define ht (make-hasheq))
     (define (add! ab xs) (hash-set! ht ab xs))
     (define (get ab)     (hash-ref  ht ab))
@@ -3107,7 +3109,7 @@
         [(formals (,x0 ,x1 ... . ,xd)) (set-union (make-id-set x0 xd) (ids->id-set x1))]
         [(formals ,x)                  (make-id-set x)]))
     (define (bound-at-top-level ts)
-      ; return set of all xs occuring in a 
+      ; return the set of all xs occuring in a 
       ;     (define-values   ,s (,x ...) ,[e xs])
       ; Note: The method of collecting below assumes that `topbegin`
       ;       has been flattened.
@@ -3719,7 +3721,7 @@
 (define (reset-string-constants)  ; called in parse
   (set! string-constants '()))
 
-; a symbol `name` turns into "$bytes:name"
+; a bytestring with the name `name` turns into "$bytes:name"
 (define bytes-constants '())  ; (list (list name bytes) ...)
 (define (add-bytes-constant name bytes)
   (set! bytes-constants (cons (list name bytes) bytes-constants)))
@@ -3758,15 +3760,14 @@
     (define (local-variable? v)  (set-in? v local-vars))          ; free-identifier=?
     (define (ffi-variable? v)    (memq (if (symbol? v) v (syntax-e (variable-id v)))
                                        ffi-primitives))
-    (displayln (list 'top? (top-variable? (variable #'sxml->dom))) (current-error-port))
+    #;(displayln (list 'top? (top-variable? (variable #'sxml->dom))) (current-error-port))
     
     (define (global-variable? v)
       ; a global (wasm) varible is unboxed
       (non-literal-constant? (variable-id v)))
     (define (classify v)
       #;(displayln (list 'clas v))
-      #;(when (symbol? v)
-          (error 'classify "got: ~a" v))
+      #;(when (symbol? v) (error 'classify "got: ~a" v))
       ;; (displayln (list 'top (top-variable?    v)))
       ;; (displayln (list 'mod (module-variable? v)))
       ;; (displayln (list 'loc (and (local-variable?  v) #t)))
@@ -3791,7 +3792,8 @@
       ; reference to non-free variable
       ;   global refers to a Web Assembly global variable
       (case (classify v)
-        [(top)        `(global.get ,(TopVar v))]   ; unboxed
+        ; [(top)        `(global.get ,(TopVar v))]   ; unboxed
+        [(top)        `(struct.get $Boxed $v (ref.cast (ref $Boxed) (global.get ,(TopVar v))))]
         [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
@@ -3802,7 +3804,8 @@
       (cond
         [(variable? v)
          (case (classify v)
-           [(top)    `(global.set ,(TopVar    v) ,e)]
+           ; [(top)    `(global.set ,(TopVar    v) ,e)]
+           [(top)    `(struct.set $Boxed $v (ref.cast (ref $Boxed) (global.get ,(TopVar v))) ,e)]
            [(local)  `(local.set  ,(LocalVar  v) ,e)]
            [(module) `(module.set ,(ModuleVar v) ,e)]
            [(ffi)        'TODO]
@@ -3893,43 +3896,35 @@
      ;;                         (param $args (ref $Args))
      ;;                         (result (ref eq)))))
 
-     ; `in` holds the inferred name for the closure
+     ;; Inferred name for the closure
      (define get-name
        (cond
-         [in (define name  (syntax-e (variable-id in)))
-             (define $name (string->symbol (~a "$symbol:" name)))
-             (add-symbol-constant name name) ; on purpose name twice
-             `(global.get ,$name)]
-         [else
-          `(global.get $false)]))
+         [in   (define name  (syntax-e (variable-id in)))
+               (define $name (string->symbol (~a "$symbol:" name)))
+               (add-symbol-constant name name) ; on purpose name twice
+               `(global.get ,$name)]
+         [else `(global.get $false)]))
      
      ; If there is no self-reference then allocation is simple.
-     ; If there is a self-reference we first need to allocate the closure,
+     ; If there is a  self-reference we first need to allocate the closure,
      ; and then mutate fields with self-references.
      (define (maybe-store-in-dest e)
        ; (displayln (list '-------------- dd))
        (match dd
          [(or '<effect> '<value> #f)                      e]
          [dest                               (Store! dest e)]))
-
+     
      ; (displayln (list dd))
      (define self-reference-indices
        (for/list ([ae ae1]
                   [i (in-naturals)]
+                  #:do   [(displayln (list 'ae ae)) (displayln (list 'dd dd))]
                   #:when (and (variable? ae) (syntax? dd)
                               (eq? (Var ae) (syntax-e dd))))
          i))
 
-     #; (type $Closure   
-              (sub $Procedure
-                   (struct
-                     (field $hash   (mut i32))
-                     (field $name   (ref eq))   ;; $false or a $String
-                     (field $arity  (ref eq))   ;;fixnum (i31 with lsb=0) or (arity-at-least n)
-                     (field $realm  (ref eq))   ;; $false or $Symbol
-                     (field $invoke (ref $ProcedureInvoker))
-                     (field $code   (ref $ClosureCode))
-                     (field $free   (ref $Free)))))
+     #;(displayln 'self-reference-indices)
+     #;(displayln self-reference-indices)
      
      (maybe-store-in-dest
       (match self-reference-indices
@@ -4053,8 +4048,8 @@
      ;       Note that if x is present in a top-level define-values
      ;       then (top x) will become x anyway.
      ; Note: What is missing here: is error handling for an undefined top-level-variable.
-     (displayln (list 'top (variable-id x)) (current-error-port))
-     `(struct.get $Boxed $v (ref.cast (ref $Boxed) ,(Reference x)))
+     #;(displayln (list 'top (variable-id x)) (current-error-port))
+     (Reference x)
      #;`(app ,#'namespace-variable-value (app ,#'string->symbol ',(symbol->string (syntax-e (variable-id x)))))
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
      ]
@@ -4921,7 +4916,6 @@
        ; Allocates a closure in which the $free array contains zeros only.
        (nanopass-case (LANF+closure ClosureAllocation) ca
          [(closure ,s ,in ,l ,ar ,ae1 ...)
-          (displayln (list 'AllocateClosure))
           (let ([us (make-list (length ae1) (Undefined))])
             (define get-name
               (cond
@@ -5080,21 +5074,32 @@
     [,e                           (Expr e dd <stat>)]
     [(#%require     ,s ,rrs ...)  `'"ignored #%require"]
     [(define-values ,s (,x ...)   ,e)
-     #;(displayln `(define-values ,s (,x ...)   ,e))
+     (displayln `(define-values ,s (,x ...)   ,e))
      (match x
-       ['()       (Expr e <effect> <stat>)]
+       ['()           (Expr e <effect> <stat>)]
        ; Until we implement namespaces, top-level variables are
        ; stored as boxed global variables.
-       [(list x0) (Expr e x0 <stat>)]                  
+       ;              (Expr e dd cd)
+       ;[(list x0)     (Expr e x0 <stat>)]
+       [(list x0)     `(block
+                          (global.set ,($$ (variable-id x0)) 
+                                    (ref.cast (ref eq) 
+                                              (struct.new $Boxed
+                                                          (global.get $false))))
+                        ,(Expr e x0 <stat>))]
        [(list x ...)  (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $false)))
                       `(block
+                        ,@(for/list ([x0 x])
+                            `(global.set ,($$ (variable-id x0)) 
+                                         (ref.cast (ref eq) 
+                                                   (struct.new $Boxed
+                                                               (global.get $false)))))
                         ,(Expr e vals <stat>)
                         ,@(for/list ([x0 x] [i (in-naturals)])
-                            `(global.set ,($$ (variable-id x0))
-                                         (array.get $Values
-                                                    (ref.cast (ref $Values)
-                                                              (local.get ,($$ (variable-id vals))))
-                                                    (i32.const ,i)))))])]
+                            (Store! x0 `(array.get $Values
+                                                   (ref.cast (ref $Values)
+                                                             (local.get ,($$ (variable-id vals))))
+                                                   (i32.const ,i)))))])]
     [(define-syntaxes ,s (,x ...) ,e)
      (error 'generate-code "TODO define-syntaxes")])
 
@@ -5206,10 +5211,10 @@
                           (list->set primitives)))
           symbol<?))
   
-  (displayln "-- variables declared at top-level --")
-  (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
-  (displayln "-- primitives also declared as variables at top-level --")
-  (displayln primitives-also-declared-as-variables-at-top-level)
+  ;; (displayln "-- variables declared at top-level --")
+  ;; (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
+  ;; (displayln "-- primitives also declared as variables at top-level --")
+  ;; (displayln primitives-also-declared-as-variables-at-top-level)
   
   (generate-runtime
    dls                              ; define-labels
@@ -5355,23 +5360,30 @@
   (reset-counter!)
   (strip
    (generate-code
-    (flatten-begin
-     (closure-conversion
-      (anormalize
-       (categorize-applications
-        (assignment-conversion
-         (α-rename
-          (explicit-case-lambda
-           (explicit-begin
-            (convert-quotations
-             (infer-names
-              (flatten-topbegin
-               (parse
-                (unexpand
-                 (let ([t (topexpand stx)])
-                   #;(displayln (pretty-print (syntax->datum t))
-                                (current-error-port))
-                   t)))))))))))))))))
+    (let ([s (flatten-begin
+              (closure-conversion
+               (anormalize
+                (categorize-applications
+                 (let ([a (assignment-conversion
+                           (α-rename
+                            (explicit-case-lambda
+                             (explicit-begin
+                              (convert-quotations
+                               (infer-names
+                                (flatten-topbegin
+                                 (parse
+                                  (unexpand
+                                   (let ([t (topexpand stx)])
+                                     #;(displayln "--- topexpand ---")
+                                     #;(displayln (pretty-print (syntax->datum t)) (current-error-port))
+                                     t))))))))))])
+                   #;(displayln "--- assignment conversion ---")
+                   #;(displayln (pretty-print a) (current-error-port))
+                   a)))))])                   
+      #;(displayln "--- compiled ---")
+      #;(displayln (pretty-print s) (current-error-port))
+      s))))
+
 
 (define (comp- stx)
   (reset-counter!)
