@@ -1208,7 +1208,7 @@
     (formals x)                  => x)
   (TopLevelForm (t)
     ; turns out it is best keep unique tags (Expr also has a begin)
-    (topbegin s t ...)           => (begin t ...)
+    (topbegin s t ...)           => (topbegin t ...)
     (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
     (#%expression s e)           => (#%expression e)
     g)
@@ -3108,6 +3108,7 @@
         [(formals (,x ...))            (ids->id-set x)]
         [(formals (,x0 ,x1 ... . ,xd)) (set-union (make-id-set x0 xd) (ids->id-set x1))]
         [(formals ,x)                  (make-id-set x)]))
+    (define bound-at-top #f)
     (define (bound-at-top-level ts)
       ; return the set of all xs occuring in a 
       ;     (define-values   ,s (,x ...) ,[e xs])
@@ -3132,7 +3133,7 @@
   (TopLevelForm : TopLevelForm (T xs) -> TopLevelForm (xs)
     [(topbegin ,s ,[t xs] ...)      (values T (set-difference
                                                (set-union* xs)
-                                               (set-union (bound-at-top-level t)
+                                               (set-union bound-at-top #;(bound-at-top-level t)
                                                           ; todo: only import primitives that are declared
                                                           (set-union (primitives->id-set)
                                                                      (non-literal-constants->id-set)))))]
@@ -3148,7 +3149,9 @@
     [(define-syntaxes ,s (,x ...) ,[e xs]) (values G (set-difference xs (ids->id-set x)))] ; todo
     [,e (Expr e xs)])
   (Abstraction : Abstraction (AB xs) -> Abstraction (xs)
-    [(λ ,s ,f ,[e xs])        (let ([xs (set-difference xs (formal-variables f))])
+    [(λ ,s ,f ,[e xs])        (let ([xs (set-difference xs 
+                                                        (set-union (formal-variables f)
+                                                                   bound-at-top))])
                                 (add! AB xs)
                                 (seen-abstraction! AB)
                                 (values AB xs))])
@@ -3195,10 +3198,38 @@
     [(letrec-values ,s (((,x ...) ,[ce rhs-xs]) ...) ,[e xs])
      (values E (set-difference (set-union* (cons xs rhs-xs)) (set-union* (map ids->id-set x))))])
 
+  ;; 1. Find all top-level variables
+  ;; TODO - problem: `bound-at-top-level` assumes top-begin has been flattened,
+  ;         but ... we are seeing nested top-begin in:
+  ;;   (comp+ #'(begin (define (visible-inside t1)
+  ;;                     (match t1 [_ visible-inside]))
+  ;;                   (visible-inside 11)))
+
+    ;; (TopLevelForm (t)
+    ;;   ; turns out it is best keep unique tags (Expr also has a begin)
+    ;;   (topbegin s t ...)           => (topbegin t ...)
+    ;;   (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
+    ;;   (#%expression s e)           => (#%expression e)
+    ;;   g)
+  
+  (set! bound-at-top
+        (let loop ([T T])
+          (nanopass-case (LANF TopLevelForm) T
+            [(topbegin ,s ,t ...)
+             (set-union* (map loop t))]
+            [,g
+             (bound-at-top-level (list g))]
+            [else
+             ; #%expresion and topmodule
+             empty-set])))
+  
+  ;; 2. Compute free variables
   (letv ((T xs) (TopLevelForm T (make-id-set)))    
     (unless (set-empty? xs)
-      ;(displayln "\n---\n")
-      ;(pretty-print (unparse-LANF T)) (newline)
+      (displayln "\n---\n")
+      (displayln bound-at-top)
+      (displayln "\n---\n")
+      (pretty-print (unparse-LANF T)) (newline)
       (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))
     (values T ht abs)))
@@ -3217,25 +3248,16 @@
 ;;;   Rewrite each abstraction:
 ;;;       (λ (x ...) e)    =>  (closure in label1 f ...)
 ;;;                            where f ... are the free variables of the abstraction
-;;;                            and   in are an inferred name (if present)
+;;;                            and `in` is an inferred name (if present)
 ;;;   Rewrite references to free variables:
 ;;;       f                =>  (free-ref cl i)
 ;;;                            where i is the index of f in the list of free variables
-;;; Runtime:
-;;;   The top-level-form becomes
-;;;      var label1 = function (cl, x, ...) { [[e]] }
-;;;   An application of a closure cl to arguments a ... becomes:
-;;;      cl.label(a,...)
-;;;   Make closure becomes:
-;;;      [the_unique_closure_tag, label1, v0, ...]
-;;;      where v0, ... are the values stored in the closure
-;;;   Local references (free-ref cl i) becomes:
-;;;      cl[i+2]
 
 (define (closure-conversion T)
   (define labels-ht (make-hasheq))
   (define (add-label! ab) (hash-set! labels-ht ab (new-var "label")))
   (letv ((T free-ht abs) (determine-free-variables T))
+    #;(pretty-print free-ht)
     (for ([ab abs])
       (add-label! ab))
     (finish-closure-conversion T free-ht labels-ht)))
@@ -3918,7 +3940,7 @@
      (define self-reference-indices
        (for/list ([ae ae1]
                   [i (in-naturals)]
-                  #:do   [(displayln (list 'ae ae)) (displayln (list 'dd dd))]
+                  ; #:do   [(displayln (list 'ae ae)) (displayln (list 'dd dd))]
                   #:when (and (variable? ae) (syntax? dd)
                               (eq? (Var ae) (syntax-e dd))))
          i))
@@ -4031,7 +4053,7 @@
                              [(eof-object? v) '(global.get $eof)]
                              [(fixnum? v)     (Imm v)]
                              [(char? v)       (Imm v)]
-                             [(undefined? v)  (displayln (list 'undefined: v) (current-error-port)) (Imm v)]
+                             [(undefined? v)  (Imm v)]
                              [(unsafe-undefined? v) (Imm v)]
                              [(string? v)     (define name         (add-quoted-string v))
                                               (define $string:name (string->symbol (~a "$string:" name)))
@@ -5074,26 +5096,33 @@
     [,e                           (Expr e dd <stat>)]
     [(#%require     ,s ,rrs ...)  `'"ignored #%require"]
     [(define-values ,s (,x ...)   ,e)
-     (displayln `(define-values ,s (,x ...)   ,e))
+     ; Note: Initializing the top-level variables x ... with ($Boxed undefined)
+     ;       here is too late. If the variables appear as free variables
+     ;       they can be referenced during closure creation for earlier
+     ;       `define-label` declarations.
+
+     ; The variables x ... are initialized to (Boxed undefined) in $entry.
+     ; That is, at this point the variables x ... are bound to a $Boxed instance.
+     
      (match x
        ['()           (Expr e <effect> <stat>)]
        ; Until we implement namespaces, top-level variables are
        ; stored as boxed global variables.
        ;              (Expr e dd cd)
-       ;[(list x0)     (Expr e x0 <stat>)]
-       [(list x0)     `(block
+       [(list x0)     (Expr e x0 <stat>)]
+       #;[(list x0)     `(block
                           (global.set ,($$ (variable-id x0)) 
                                     (ref.cast (ref eq) 
                                               (struct.new $Boxed
-                                                          (global.get $false))))
+                                                          (global.get $undefined))))
                         ,(Expr e x0 <stat>))]
-       [(list x ...)  (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $false)))
+       [(list x ...)  (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $undefined)))
                       `(block
-                        ,@(for/list ([x0 x])
-                            `(global.set ,($$ (variable-id x0)) 
-                                         (ref.cast (ref eq) 
-                                                   (struct.new $Boxed
-                                                               (global.get $false)))))
+                        #;,@(for/list ([x0 x])
+                              `(global.set ,($$ (variable-id x0)) 
+                                           (ref.cast (ref eq) 
+                                                     (struct.new $Boxed
+                                                                 (global.get $false)))))
                         ,(Expr e vals <stat>)
                         ,@(for/list ([x0 x] [i (in-naturals)])
                             (Store! x0 `(array.get $Values
@@ -5352,7 +5381,9 @@
        (with-input-from-string out
          (λ ()
            (read))))]))
-  
+
+(define debug:print-passes? #f)
+
 (define (comp+ stx)
   (run (comp stx)))
 
@@ -5374,14 +5405,17 @@
                                  (parse
                                   (unexpand
                                    (let ([t (topexpand stx)])
-                                     #;(displayln "--- topexpand ---")
-                                     #;(displayln (pretty-print (syntax->datum t)) (current-error-port))
+                                     (when debug:print-passes?
+                                       (displayln "--- topexpand ---")
+                                       (displayln (pretty-print (syntax->datum t)) (current-error-port)))
                                      t))))))))))])
-                   #;(displayln "--- assignment conversion ---")
-                   #;(displayln (pretty-print a) (current-error-port))
-                   a)))))])                   
-      #;(displayln "--- compiled ---")
-      #;(displayln (pretty-print s) (current-error-port))
+                   (when debug:print-passes?
+                     (displayln "--- assignment conversion ---")
+                     (displayln (pretty-print a) (current-error-port)))
+                   a)))))])
+      (when debug:print-passes?
+        (displayln "--- compiled ---")
+        (displayln (pretty-print s) (current-error-port)))
       s))))
 
 
