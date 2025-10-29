@@ -2896,6 +2896,45 @@
                 (pict-last p))]
     [(p factor) (scale p factor factor)]))
 
+
+;; arg spec is not great. started as a case-lambda, then grew a keyword arg
+(define (scale-to-fit main-pict w-or-size-pict [h-or-false #f]
+                      #;#:mode [mode 'preserve]) ; or: 'inset 'distort 'preserve/max 'inset/max
+  (cond [(not h-or-false) ; scale to the size of another pict
+         (define size-pict w-or-size-pict)
+         (unless (pict-convertible? size-pict)
+           (raise-type-error 'scale-to-fit "pict?" size-pict))
+         (scale-to-fit main-pict
+                       (pict-width size-pict)
+                       (pict-height size-pict)
+                       #;#:mode mode)]
+        [else
+         (define w w-or-size-pict)
+         (define h h-or-false)
+         (define w0 (pict-width main-pict))
+         (define h0 (pict-height main-pict))
+         (define wfactor0 (if (zero? w0) 1 (/ w w0)))
+         (define hfactor0 (if (zero? h0) 1 (/ h h0)))
+         (define-values (wfactor hfactor)
+           (case mode
+             ((preserve inset)
+              (let ([factor (min wfactor0 hfactor0)])
+                (values factor factor)))
+             [(preserve/max inset/max)
+              (define factor (max wfactor0 hfactor0))
+              (values factor factor)]
+             ((distort)
+              (values wfactor0 hfactor0))))
+         (define scaled-pict (scale main-pict wfactor hfactor))
+         (case mode
+           [(inset inset/max)
+            (define b (blank w h))
+            (refocus (cc-superimpose b scaled-pict) b)]
+           (else
+            scaled-pict))]))
+
+
+
 ;; ;; The adjusters flip-x and flip-y are easier to define,
 ;; ;; if there are general transformations available.
 
@@ -4680,7 +4719,7 @@
                   dc 200 200)
      #;(draw-pict (frame (text "Hello World"))
                   dc 200 200)
-     (draw-pict (frame (text "Hello World" '() 24 (/ 3.14 4)))
+     (draw-pict (frame (text "Hello World" '() 16 (/ 3.14 4)))
                 dc 200 200)
 
      (draw-pict (scale (frame (text "Hello" '() 16 (/ 3.14 8))) 2)
@@ -4853,7 +4892,7 @@
 
      (draw-pict (let ()
                   (define txt
-                    (colorize (text "Freeze!" null 25) "deepskyblue"))
+                    (colorize (text "Freeze!" null 15) "deepskyblue"))
                   (vl-append ; 5
                              (scale (frame         txt)  2.5)
                              (scale (frame (freeze txt)) 2.5)))
@@ -4866,14 +4905,18 @@
                   (explain tt)
                   )
                 dc 100 100)
-                  
+
+     (draw-pict (let ()
+                  (define rect (colorize (filled-rectangle 40 40) "olive"))
+                  (hc-append rect (blank 10) (scale-to-fit rect (disk 60))))
+                dc 200 100)
      
      ))
   (flush)
    
   (dc 'fill-style "red")   
   (dc 'font       "64px 'Arial'")
-  (dc 'fill-text  "webracket/pict" 300 100)
+  (dc 'fill-text  "webracket/pict" 300 50)
 
   (define (draw-star ctx cx cy spikes outerR innerR)
     (define step (/ pi spikes))
