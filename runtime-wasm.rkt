@@ -15566,7 +15566,8 @@
                                 (then (return (global.get $false))))
                             (local.set $prev-str (local.get $curr-str))
                             (local.set $rest-list (struct.get $Pair $d (local.get $pair)))
-                            (br $loop))))
+                            (br $loop)))
+               (unreachable))
          
          (global $gensym-counter (mut i32) (i32.const 0))
 
