@@ -1129,8 +1129,22 @@
     
     (add-runtime-string-constant 'hash?                      "hash?")
 
-    (add-runtime-string-constant 'correlated?                "correlated?")
     (add-runtime-string-constant 'syntax?                    "syntax?")
+    (add-runtime-string-constant 'correlated?                "correlated?")
+    (add-runtime-string-constant 'correlated-or-false        "(or/c correlated? #f)")
+    (add-runtime-symbol-constant 'correlated->datum)
+    (add-runtime-symbol-constant 'datum->correlated)
+    (add-runtime-symbol-constant 'correlated-property)
+    (add-runtime-symbol-constant 'correlated-property-symbol-keys)
+    
+    (add-runtime-string-constant 'datum->correlated-srcloc
+                                 (string-append "(or/c correlated? #f (list/c any/c (or/c exact-positive-integer? #f) "
+                                                "(or/c exact-nonnegative-integer? #f) (or/c exact-positive-integer? #f) "
+                                                "(or/c exact-nonnegative-integer? #f)) "
+                                                "(vector/c any/c (or/c exact-positive-integer? #f) "
+                                                "(or/c exact-nonnegative-integer? #f) "
+                                                "(or/c exact-positive-integer? #f) "
+                                                "(or/c exact-nonnegative-integer? #f)))"))
 
     (add-runtime-string-constant  'arity-error:start         "arity error: ")
     (add-runtime-string-constant  'arity-error:received      "received: ")
@@ -33468,6 +33482,331 @@
                                         (global.get $symbol:correlated-props)
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 6)))
+
+         (func $correlated->datum/convert
+               (param $who (ref eq))
+               (param $v   (ref eq))
+               (result (ref eq))
+
+               (local $fields     (ref $Array))
+               (local $e          (ref eq))
+               (local $pair       (ref $Pair))
+               (local $car-raw    (ref eq))
+               (local $cdr-raw    (ref eq))
+               (local $car-datum  (ref eq))
+               (local $cdr-datum  (ref eq))
+               (local $vec        (ref $Vector))
+               (local $arr        (ref $Array))
+               (local $new-arr    (ref $Array))
+               (local $len        i32)
+               (local $i          i32)
+               (local $elem       (ref eq))
+               (local $elem-datum (ref eq))
+               (local $hash       i32)
+               (local $immutable  i32)
+               (local $box        (ref $Box))
+               (local $box-val    (ref eq))
+
+               (if (ref.eq (call $correlated? (local.get $v)) (global.get $true))
+                   (then
+                    (local.set $fields (call $correlated-unwrap (local.get $who) (local.get $v)))
+                    (local.set $e (array.get $Array (local.get $fields) (i32.const 5)))
+                    (return (call $correlated->datum/convert (local.get $who) (local.get $e)))))
+
+               (if (ref.test (ref $Pair) (local.get $v))
+                   (then
+                    (local.set $pair (ref.cast (ref $Pair) (local.get $v)))
+                    (local.set $car-raw (struct.get $Pair $a (local.get $pair)))
+                    (local.set $cdr-raw (struct.get $Pair $d (local.get $pair)))
+                    (local.set $car-datum (call $correlated->datum/convert (local.get $who) (local.get $car-raw)))
+                    (local.set $cdr-datum (call $correlated->datum/convert (local.get $who) (local.get $cdr-raw)))
+                    (return (call $cons (local.get $car-datum) (local.get $cdr-datum)))))
+
+               (if (ref.test (ref $Vector) (local.get $v))
+                   (then
+                    (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
+                    (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                    (local.set $len (array.len (local.get $arr)))
+                    (local.set $new-arr (call $make-array (local.get $len) (global.get $false)))
+                    (local.set $i (i32.const 0))
+                    (block $done
+                           (loop $loop
+                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                 (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
+                                 (local.set $elem-datum (call $correlated->datum/convert (local.get $who) (local.get $elem)))
+                                 (array.set $Array (local.get $new-arr) (local.get $i) (local.get $elem-datum))
+                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                 (br $loop)))
+                    (local.set $hash (struct.get $Vector $hash (local.get $vec)))
+                    (local.set $immutable (struct.get $Vector $immutable (local.get $vec)))
+                    (return (struct.new $Vector
+                                        (local.get $hash)
+                                        (local.get $immutable)
+                                        (local.get $new-arr)))))
+
+               (if (ref.test (ref $Box) (local.get $v))
+                   (then
+                    (local.set $box (ref.cast (ref $Box) (local.get $v)))
+                    (local.set $box-val (struct.get $Box $v (local.get $box)))
+                    (local.set $box-val (call $correlated->datum/convert (local.get $who) (local.get $box-val)))
+                    (local.set $hash (struct.get $Box $hash (local.get $box)))
+                    (local.set $immutable (struct.get $Box $immutable (local.get $box)))
+                    (return (struct.new $Box
+                                        (local.get $hash)
+                                        (local.get $immutable)
+                                        (local.get $box-val)))))
+
+               (local.get $v))
+
+         (func $correlated->datum (type $Prim1)
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (call $correlated->datum/convert
+                     (global.get $symbol:correlated->datum)
+                     (local.get $v)))
+
+         (func $datum->correlated
+               (param $v       (ref eq))
+               (param $srcloc  (ref eq))
+               (param $prop    (ref eq))
+               (result (ref eq))
+
+               (local $who         (ref eq))
+               (local $source      (ref eq))
+               (local $line        (ref eq))
+               (local $column      (ref eq))
+               (local $position    (ref eq))
+               (local $span        (ref eq))
+               (local $srcloc-val  (ref eq))
+               (local $tmp         (ref eq))
+               (local $vec         (ref $Vector))
+               (local $arr         (ref $Array))
+               (local $len         i32)
+               (local $props       (ref eq))
+               (local $prop-val    (ref eq))
+
+               (local.set $who    (global.get $symbol:datum->correlated))
+               (local.set $source (global.get $false))
+               (local.set $line   (global.get $false))
+               (local.set $column (global.get $false))
+               (local.set $position (global.get $false))
+               (local.set $span   (global.get $false))
+               (local.set $props  (global.get $missing))
+
+               (local.set $srcloc-val (local.get $srcloc))
+               (if (ref.eq (local.get $srcloc-val) (global.get $missing))
+                   (then (local.set $srcloc-val (global.get $false))))
+
+               (block $srcloc-done
+                      (if (ref.eq (local.get $srcloc-val) (global.get $false))
+                          (then (br $srcloc-done)))
+                      (if (ref.eq (call $correlated? (local.get $srcloc-val)) (global.get $true))
+                          (then
+                           (local.set $source (call $correlated-source (local.get $srcloc-val)))
+                           (local.set $tmp (call $correlated-line (local.get $srcloc-val)))
+                           (local.set $line (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (call $correlated-column (local.get $srcloc-val)))
+                           (local.set $column (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (call $correlated-position (local.get $srcloc-val)))
+                           (local.set $position (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (call $correlated-span (local.get $srcloc-val)))
+                           (local.set $span (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (br $srcloc-done)))
+                      (if (ref.test (ref $Vector) (local.get $srcloc-val))
+                          (then
+                           (local.set $vec (ref.cast (ref $Vector) (local.get $srcloc-val)))
+                           (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                           (local.set $len (array.len (local.get $arr)))
+                           (if (i32.ne (local.get $len) (i32.const 5))
+                               (then (call $raise-argument-error1
+                                           (local.get $who)
+                                           (global.get $string:datum->correlated-srcloc)
+                                           (local.get $srcloc-val))
+                                     (unreachable)))
+                           (local.set $source (array.get $Array (local.get $arr) (i32.const 0)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 1)))
+                           (local.set $line (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 2)))
+                           (local.set $column (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 3)))
+                           (local.set $position (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 4)))
+                           (local.set $span (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (br $srcloc-done)))
+                      (if (ref.eq (call $list? (local.get $srcloc-val)) (global.get $true))
+                          (then
+                           (local.set $srcloc-val (call $list->vector (local.get $srcloc-val)))
+                           (if (i32.eqz (ref.test (ref $Vector) (local.get $srcloc-val)))
+                               (then (call $raise-argument-error1
+                                           (local.get $who)
+                                           (global.get $string:datum->correlated-srcloc)
+                                           (local.get $srcloc-val))
+                                     (unreachable)))
+                           (local.set $vec (ref.cast (ref $Vector) (local.get $srcloc-val)))
+                           (local.set $arr (struct.get $Vector $arr (local.get $vec)))
+                           (local.set $len (array.len (local.get $arr)))
+                           (if (i32.ne (local.get $len) (i32.const 5))
+                               (then (call $raise-argument-error1
+                                           (local.get $who)
+                                           (global.get $string:datum->correlated-srcloc)
+                                           (local.get $srcloc-val))
+                                     (unreachable)))
+                           (local.set $source (array.get $Array (local.get $arr) (i32.const 0)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 1)))
+                           (local.set $line (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 2)))
+                           (local.set $column (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 3)))
+                           (local.set $position (call $srcloc-check-positive (local.get $who) (local.get $tmp)))
+                           (local.set $tmp (array.get $Array (local.get $arr) (i32.const 4)))
+                           (local.set $span (call $srcloc-check-nonnegative (local.get $who) (local.get $tmp)))
+                           (br $srcloc-done)))
+                      (call $raise-argument-error1
+                            (local.get $who)
+                            (global.get $string:datum->correlated-srcloc)
+                            (local.get $srcloc-val))
+                      (unreachable))
+
+               (local.set $prop-val (local.get $prop))
+               (if (ref.eq (local.get $prop-val) (global.get $missing))
+                   (then (local.set $prop-val (global.get $false))))
+               (if (ref.eq (local.get $prop-val) (global.get $false))
+                   (then (local.set $props (global.get $missing)))
+                   (else
+                    (if (ref.eq (call $correlated? (local.get $prop-val)) (global.get $true))
+                        (then (local.set $props (call $correlated-props (local.get $prop-val))))
+                        (else
+                         (call $raise-argument-error1
+                               (local.get $who)
+                               (global.get $string:correlated-or-false)
+                               (local.get $prop-val))
+                         (unreachable)))))
+
+               (call $correlated-build
+                     (local.get $who)
+                     (local.get $source)
+                     (local.get $line)
+                     (local.get $column)
+                     (local.get $position)
+                     (local.get $span)
+                     (local.get $v)
+                     (local.get $props)))
+
+         (func $correlated-property
+               (param $crlt (ref eq))
+               (param $key  (ref eq))
+               (param $val  (ref eq))
+               (result (ref eq))
+
+               (local $fields     (ref $Array))
+               (local $props      (ref eq))
+               (local $source     (ref eq))
+               (local $line       (ref eq))
+               (local $column     (ref eq))
+               (local $position   (ref eq))
+               (local $span       (ref eq))
+               (local $e          (ref eq))
+               (local $val-arg    (ref eq))
+               (local $new-props  (ref eq))
+               (local $pairs      (ref eq))
+               (local $list       (ref eq))
+               (local $pair       (ref $Pair))
+               (local $entry      (ref $Pair))
+               (local $entry-key  (ref eq))
+               (local $entry-val  (ref eq))
+
+               (local.set $fields (call $correlated-unwrap
+                                            (global.get $symbol:correlated-property)
+                                            (local.get $crlt)))
+               (local.set $source (array.get $Array (local.get $fields) (i32.const 0)))
+               (local.set $line   (array.get $Array (local.get $fields) (i32.const 1)))
+               (local.set $column (array.get $Array (local.get $fields) (i32.const 2)))
+               (local.set $position (array.get $Array (local.get $fields) (i32.const 3)))
+               (local.set $span   (array.get $Array (local.get $fields) (i32.const 4)))
+               (local.set $e      (array.get $Array (local.get $fields) (i32.const 5)))
+               (local.set $props  (array.get $Array (local.get $fields) (i32.const 6)))
+
+               (if (ref.eq (local.get $val) (global.get $missing))
+                   (then (return (call $hash-ref (local.get $props)
+                                               (local.get $key)
+                                               (global.get $false)))))
+
+               (local.set $val-arg (local.get $val))
+               (local.set $new-props (call $make-hash (global.get $missing)))
+               (local.set $pairs (call $hash->list (local.get $props) (global.get $false)))
+               (local.set $list (local.get $pairs))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $list) (global.get $null)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $list)))
+                            (local.set $entry (ref.cast (ref $Pair)
+                                                        (struct.get $Pair $a (local.get $pair))))
+                            (local.set $list (struct.get $Pair $d (local.get $pair)))
+                            (local.set $entry-key (struct.get $Pair $a (local.get $entry)))
+                            (local.set $entry-val (struct.get $Pair $d (local.get $entry)))
+                            (if (ref.eq (call $equal? (local.get $entry-key) (local.get $key))
+                                        (global.get $true))
+                                (then (br $loop)))
+                            (call $hash-set (local.get $new-props)
+                                            (local.get $entry-key)
+                                            (local.get $entry-val))
+                            (br $loop)))
+
+               (if (ref.eq (local.get $val-arg) (global.get $false))
+                   (then (nop))
+                   (else (call $hash-set (local.get $new-props)
+                                         (local.get $key)
+                                         (local.get $val-arg))))
+
+               (call $correlated/make
+                     (local.get $source)
+                     (local.get $line)
+                     (local.get $column)
+                     (local.get $position)
+                     (local.get $span)
+                     (local.get $e)
+                     (local.get $new-props)))
+
+         (func $correlated-property-symbol-keys
+               (param $crlt (ref eq))
+               (result      (ref eq))
+
+               (local $fields (ref $Array))
+               (local $props  (ref eq))
+               (local $pairs  (ref eq))
+               (local $list   (ref eq))
+               (local $pair   (ref $Pair))
+               (local $entry  (ref $Pair))
+               (local $key    (ref eq))
+               (local $acc    (ref eq))
+
+               (local.set $fields (call $correlated-unwrap
+                                            (global.get $symbol:correlated-property-symbol-keys)
+                                            (local.get $crlt)))
+               (local.set $props (array.get $Array (local.get $fields) (i32.const 6)))
+               (local.set $pairs (call $hash->list (local.get $props) (global.get $false)))
+               (local.set $list (local.get $pairs))
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $list) (global.get $null)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $list)))
+                            (local.set $entry (ref.cast (ref $Pair)
+                                                        (struct.get $Pair $a (local.get $pair))))
+                            (local.set $list (struct.get $Pair $d (local.get $pair)))
+                            (local.set $key (struct.get $Pair $a (local.get $entry)))
+                            (if (ref.eq (call $symbol? (local.get $key)) (global.get $true))
+                                (then
+                                 (if (ref.eq (call $symbol-interned? (local.get $key)) (global.get $true))
+                                     (then
+                                      (local.set $acc
+                                                 (struct.new $Pair
+                                                             (i32.const 0)
+                                                             (local.get $key)
+                                                             (local.get $acc)))))))
+                            (br $loop)))
+               (local.get $acc))
          
          ;;;
          ;;; 17. UNSAFE OPERATIONS
