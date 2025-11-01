@@ -1356,6 +1356,48 @@
       syntax-debug-info))
   )
 
+(define reflection-and-security-primitives
+  '((|Linklets and the Core Compiler|
+      linklet?
+      compile-linklet
+      recompile-linklet
+      eval-linklet
+      instantiate-linklet
+      linklet-import-variables
+      linklet-export-variables
+      linklet-add-target-machine-info
+      linklet-summarize-target-machine-info
+      linklet-directory?
+      hash->linklet-directory
+      linklet-directory->hash
+      linklet-bundle?
+      hash->linklet-bundle
+      linklet-bundle->hash
+      linklet-body-reserved-symbol?
+      instance?
+      make-instance
+      instance-name
+      instance-data
+      instance-variable-names
+      instance-variable-value
+      instance-set-variable-value!
+      instance-unset-variable!
+      instance-describe-variable!
+      variable-reference->instance
+      correlated?
+      correlated-source
+      correlated-line
+      correlated-column
+      correlated-position
+      correlated-span
+      correlated-e
+      correlated->datum
+      datum->correlated
+      correlated-property
+      correlated-property
+      correlated-property-symbol-keys)))
+
+
 
 (define control-flow-primitives
   '((exceptions
@@ -2596,6 +2638,7 @@
         (list "Operating System"                 operating-system-primitives implemented-primitives #t)
         (list "Macros"                                     macros-primitives implemented-primitives #t)
         (list "Control Flow"                         control-flow-primitives implemented-primitives #t)
+        (list "Reflection and Security"   reflection-and-security-primitives implemented-primitives #t)
         (list "Pict"                                         pict-functions  defined-in-pict.rkt    #f)))
 
 (define total-primitives-cnt
