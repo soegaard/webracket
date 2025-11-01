@@ -1767,7 +1767,10 @@
       hv-alternating)))
 
 (define defined-in-pict.rkt
-  '(blank
+  '(scale-to-fit 
+    explain
+    explain-child
+    blank
     hline
     vline
     frame
@@ -1849,7 +1852,23 @@
     fast-end
     fast-edges
     fast-middle
-    split-phase))
+    split-phase
+    cb-find
+    cbl-find
+    cc-find
+    ct-find
+    ctl-find
+    lb-find
+    lbl-find
+    lc-find
+    lt-find
+    ltl-find
+    rb-find
+    rbl-find
+    rc-find
+    rt-find
+    rtl-find
+    ))
 
 
 (define implemented-primitives
