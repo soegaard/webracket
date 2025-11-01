@@ -3780,6 +3780,59 @@
               (equal? (object-name 42) #f))
         ))
 
+ (list "14.4 Linklets and the Core Compiler"
+       (list
+        (list "correlated basics"
+              (let* ([payload '(a b)]
+                     [srcloc  #(source 10 2 100 5)]
+                     [crlt    (datum->correlated payload srcloc)]
+                     [bare    (datum->correlated 'plain)])
+                (list (equal? (correlated? crlt)         #t)
+                      (equal? (correlated? payload)      #f)
+                      (equal? (correlated-source crlt)   'source)
+                      (equal? (correlated-line crlt)     10)
+                      (equal? (correlated-column crlt)   2)
+                      (equal? (correlated-position crlt) 100)
+                      (equal? (correlated-span crlt)     5)
+                      (equal? (correlated-e crlt)        payload)
+                      (equal? (correlated-source bare)   #f)
+                      (equal? (correlated-line bare)     #f)
+                      (equal? (correlated-column bare)   #f)
+                      (equal? (correlated-position bare) #f)
+                      (equal? (correlated-span bare)     #f))))
+
+        (list "correlated->datum"
+              (let* ([inner     (datum->correlated 'x #(src 1 0 1 1))]
+                     [vec       (vector inner 'y)]
+                     [lst       (list inner vec)]
+                     [converted (correlated->datum lst)])
+                (list (pair? converted)
+                      (equal? (car converted) 'x)
+                      (let ([vec-result (cadr converted)])
+                        (and (equal? (vector? vec-result) #t)
+                             ; Full Racket doesn't recur through vectors
+                             #;(equal? (vector-ref vec-result 0) 'x)
+                             (equal? (correlated? (vector-ref vec-result 0)) #t)
+                             (equal? (vector-ref vec-result 1) 'y))))))
+
+        (list "correlated properties"
+              (let* ([base        (datum->correlated 'seed)]
+                     [with-tag    (correlated-property base     'tag 'value)]
+                     [with-number (correlated-property with-tag 123  'number)]
+                     [updated     (correlated-property with-tag 'tag 'new)]
+                     [removed     (correlated-property updated  'tag #f)]
+                     [prop-source (datum->correlated 'copy #f with-tag)]
+                     [keys        (correlated-property-symbol-keys with-number)])
+                (list (equal? (correlated-property base        'tag) #f)
+                      (equal? (correlated-property with-tag    'tag) 'value)
+                      (equal? (correlated-property updated     'tag) 'new)
+                      (equal? (correlated-property removed     'tag) #f)
+                      (equal? (correlated-property with-number 123)  'number)
+                      (equal? (correlated-property prop-source 'tag) 'value)
+                      (not (equal? (member 'tag keys) #f))
+                      (and (member 123 keys) #t))))))
+
+
  
  (list "15. Operating System"
        (list "15. Paths"
