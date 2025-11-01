@@ -946,13 +946,26 @@
           srcloc-column
           srcloc-position
           srcloc-span
-
           srcloc->string
 
+          correlated
+          make-correlated
+          correlated?
+          correlated-source
+          correlated-line
+          correlated-column
+          correlated-position
+          correlated-span
+          correlated-e
+          correlated-props         ; remove?
+          datum->correlated
+          correlated-property
+          correlated-property-symbol-keys
+          
           syntax
           make-syntax
           syntax?
-          syntax-e    
+          syntax-e
           syntax-scopes
           syntax-shifted-multi-scopes
           syntax-srcloc
@@ -1116,6 +1129,7 @@
     
     (add-runtime-string-constant 'hash?                      "hash?")
 
+    (add-runtime-string-constant 'correlated?                "correlated?")
     (add-runtime-string-constant 'syntax?                    "syntax?")
 
     (add-runtime-string-constant  'arity-error:start         "arity error: ")
@@ -1936,6 +1950,11 @@
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
 
+         ;; Cached correlated struct type descriptor
+         (global $correlated-type (mut (ref null $StructType)) (ref.null $StructType))
+         ;; Shared empty correlated properties table
+         (global $correlated-empty-props (mut (ref eq)) ,(Undefined))
+         
          ;; Cached syntax struct type descriptor
          (global $syntax-type (mut (ref null $StructType)) (ref.null $StructType))
          ;; Shared empty syntax properties table
@@ -33152,7 +33171,303 @@
          ;; 14.11 Plumbers
          ;; 14.12 Sandboxed Evaluation
          ;; 14.13 The racket/repl library
-         ;; 14.14 Linklets and the compiler
+         
+         ;;;
+         ;;; 14.14 Linklets and the compiler
+         ;;;
+
+         (func $ensure-correlated-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $indices  (ref eq))
+
+               (local.set $existing (global.get $correlated-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $indices (call $list-from-range/checked (i32.const 0) (i32.const 7)))
+                    (local.set $std
+                               (struct.new $StructType
+                                           (i32.const 0)
+                                           (ref.cast (ref $Symbol) (global.get $symbol:correlated))
+                                           (global.get $false)
+                                           (i32.const 7)
+                                           (local.get $indices)
+                                           (global.get $null)
+                                           (global.get $null)
+                                           (ref.cast (ref eq) (call $struct-type-property-table-empty))
+                                           (global.get $false)
+                                           (local.get $indices)
+                                           (global.get $false)
+                                           (ref.cast (ref $Symbol) (global.get $symbol:correlated))))
+                    (global.set $correlated-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         (func $ensure-correlated-empty-props
+               (result (ref eq))
+
+               (local $props (ref eq))
+               
+               (local.set $props (global.get $correlated-empty-props))
+               (if (ref.eq (local.get $props) (global.get $undefined))
+                   (then
+                    (local.set  $props (call $make-hash (global.get $missing)))
+                    (global.set $correlated-empty-props (local.get $props))))
+                (local.get $props))
+         
+         (func $correlated/make
+               (param $source   (ref eq))
+               (param $line     (ref eq))
+               (param $column   (ref eq))
+               (param $position (ref eq))
+               (param $span     (ref eq))
+               (param $e        (ref eq))
+               (param $props    (ref eq))
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-correlated-type))
+               (local.set $fields
+                          (array.new_fixed $Array 7
+                                           (local.get $source)
+                                           (local.get $line)
+                                           (local.get $column)
+                                           (local.get $position)
+                                           (local.get $span)
+                                           (local.get $e)
+                                           (local.get $props)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         (func $raise-argument-error:correlated-expected
+               (param $who (ref eq))
+               (param $got (ref eq))
+
+               (call $raise-argument-error1
+                     (local.get $who)
+                     (global.get $string:correlated?)
+                     (local.get $got)))
+
+         (func $correlated-build
+               (param $who      (ref eq))
+               (param $source   (ref eq))
+               (param $line     (ref eq))
+               (param $column   (ref eq))
+               (param $position (ref eq))
+               (param $span     (ref eq))
+               (param $e        (ref eq))
+               (param $props    (ref eq))
+               (result (ref eq))
+
+               (local $line-checked     (ref eq))
+               (local $column-checked   (ref eq))
+               (local $position-checked (ref eq))
+               (local $span-checked     (ref eq))
+               (local $props-checked    (ref eq))
+
+               ;; Initialize non-defaultable locals
+               (local.set $props-checked (global.get $false))
+
+               ;; Check arguments
+               (local.set $line-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $line)))
+               (local.set $column-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $column)))
+               (local.set $position-checked
+                          (call $srcloc-check-positive (local.get $who) (local.get $position)))
+               (local.set $span-checked
+                          (call $srcloc-check-nonnegative (local.get $who) (local.get $span)))
+
+               (if (ref.eq (local.get $props) (global.get $missing))
+                   (then (local.set $props-checked (call $ensure-syntax-empty-props)))
+                   (else
+                    (if (ref.eq (call $hash? (local.get $props)) (global.get $true))
+                        (then (local.set $props-checked (local.get $props)))
+                        (else (call $raise-argument-error1 (local.get $who)
+                                    (global.get $string:hash?)
+                                    (local.get $props))
+                              (unreachable)))))
+
+               ;; Construct correlated syntax
+               (call $correlated/make
+                     (local.get $source)
+                     (local.get $line-checked)
+                     (local.get $column-checked)
+                     (local.get $position-checked)
+                     (local.get $span-checked)
+                     (local.get $e)
+                     (local.get $props-checked)))
+
+         (func $correlated
+               (param $source   (ref eq))
+               (param $line     (ref eq))
+               (param $column   (ref eq))
+               (param $position (ref eq))
+               (param $span     (ref eq))
+               (param $e        (ref eq))
+               (param $props    (ref eq))
+               (result (ref eq))
+
+               (call $correlated-build
+                     (global.get $symbol:correlated)
+                     (local.get $source)
+                     (local.get $line)
+                     (local.get $column)
+                     (local.get $position)
+                     (local.get $span)
+                     (local.get $e)
+                     (local.get $props)))
+
+         (func $make-correlated
+               (param $source   (ref eq))
+               (param $line     (ref eq))
+               (param $column   (ref eq))
+               (param $position (ref eq))
+               (param $span     (ref eq))
+               (param $e        (ref eq))
+               (param $props    (ref eq))
+               (result (ref eq))
+
+               (call $correlated-build
+                     (global.get $symbol:make-correlated)
+                     (local.get $source)
+                     (local.get $line)
+                     (local.get $column)
+                     (local.get $position)
+                     (local.get $span)
+                     (local.get $e)
+                     (local.get $props)))
+
+         (func $correlated?
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $type   (ref eq))
+               (local $std    (ref $StructType))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-correlated-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                    (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         (func $correlated-unwrap
+               (param $who (ref eq))
+               (param $v   (ref eq))
+               (result     (ref $Array))
+
+               (local $struct (ref $Struct))
+               (local $type   (ref eq))
+               (local $std    (ref $StructType))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-correlated-type))
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error:correlated-expected (local.get $who) (local.get $v))
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $type   (struct.get $Struct $type (local.get $struct)))
+               (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+               (if (i32.eqz (local.get $ok))
+                   (then (call $raise-argument-error:correlated-expected (local.get $who) (local.get $v))
+                         (unreachable)))
+               (struct.get $Struct $fields (local.get $struct)))
+
+         (func $correlated-source
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-source)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 0)))
+
+         (func $correlated-line
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-line)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 1)))
+
+         (func $correlated-column
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-column)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 2)))
+
+         (func $correlated-position
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-position)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 3)))
+
+         (func $correlated-span
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-span)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 4)))
+
+         (func $correlated-e
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-e)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 5)))
+
+         (func $correlated-props
+               (param $crlt (ref eq))
+               (result (ref eq))
+
+               (local $fields (ref $Array))
+
+               (local.set $fields (call $correlated-unwrap
+                                        (global.get $symbol:correlated-props)
+                                        (local.get $crlt)))
+               (array.get $Array (local.get $fields) (i32.const 6)))
          
          ;;;
          ;;; 17. UNSAFE OPERATIONS
