@@ -1047,6 +1047,12 @@
   datum->correlated
   correlated-property
   correlated-property-symbol-keys
+
+  make-instance
+  instance-variable-names
+  instance-set-variable-value!
+  instance-unset-variable!
+  instance-variable-value
   
   ;; 15.1 Paths
   path?
@@ -4429,12 +4435,14 @@
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
-         [(min max)                      (inline-prim/variadic sym ae1 1)]
+         [(min max)                               (inline-prim/variadic sym ae1 1)]
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
          [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0
 
-         [(datum->syntax)              (inline-prim/optional sym ae1 2 5)]
+         [(datum->syntax)       (inline-prim/optional sym ae1 2 5)]
+         [(datum->correlated)   (inline-prim/optional/default sym ae1 1 3 '(global.get $missing))]
+         [(correlated-property) (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
          
          
         [(fx= fx< fx> fx<= fx>=)

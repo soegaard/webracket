@@ -848,6 +848,12 @@
  correlated-property
  correlated-property-symbol-keys
 
+ make-instance
+ instance-variable-names
+ ; instance-variable-box
+ instance-set-variable-value!
+ instance-unset-variable!
+ instance-variable-value
  
  ;; 15.1 Paths
  path?

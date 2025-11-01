@@ -961,6 +961,15 @@
           datum->correlated
           correlated-property
           correlated-property-symbol-keys
+
+          instance
+          instance-variable-box
+          instance-variable-names
+          instance-variable-value
+          instance-set-variable-value!
+          instance-unset-variable!
+          make-instance
+          link
           
           syntax
           make-syntax
@@ -1136,6 +1145,12 @@
     (add-runtime-symbol-constant 'datum->correlated)
     (add-runtime-symbol-constant 'correlated-property)
     (add-runtime-symbol-constant 'correlated-property-symbol-keys)
+
+    (add-runtime-string-constant 'instance?                     "instance?")
+    (add-runtime-string-constant 'missing-variable-value        "missing variable value")
+    (add-runtime-string-constant 'missing-binding               "missing binding:")
+    (add-runtime-string-constant 'instance-variable-not-found   "instance variable not found:")
+    (add-runtime-string-constant 'at-most-one-optional-argument "expected at most one optional argument")
     
     (add-runtime-string-constant 'datum->correlated-srcloc
                                  (string-append "(or/c correlated? #f (list/c any/c (or/c exact-positive-integer? #f) "
@@ -1660,8 +1675,15 @@
                        (field $hash     (mut i32))               ;; lazy, start at 0
                        (field $strings  (ref $GrowableArray))    ;; growable of (ref $String)
                        (field $values   (ref $GrowableArray))))) ;; growable of (ref eq)
-          
-          
+
+          ;; Linklet instance structure
+          (type $Instance
+                (sub $Heap
+                     (struct
+                       (field $hash      (mut i32))
+                       (field $name      (ref eq))                      ;; any value for debugging
+                       (field $data      (ref eq))                      ;; any value (e.g., namespace)
+                       (field $variables (mut (ref $HashEqMutable)))))) ;; hasheq: Symbol → Box
           
           ) ; rec
        
@@ -33190,6 +33212,360 @@
          ;;; 14.14 Linklets and the compiler
          ;;;
 
+         (func $raise-argument-error:instance-expected
+               (param $got (ref eq))   ;; value that was not an instance
+
+               (call $raise-argument-error1
+                     (global.get $symbol:instance)
+                     (global.get $string:instance?)
+                     (local.get $got))
+               (unreachable))
+
+         (func $raise-make-instance-missing-value
+               (param $sym (ref eq))   ;; offending variable name
+
+               (call $raise-argument-error1
+                     (global.get $symbol:make-instance)
+                     (global.get $string:missing-variable-value)
+                     (local.get $sym))
+               (unreachable))
+
+         (func $raise-link-missing-binding
+               (param $sym (ref eq))   ;; missing symbol
+
+               (call $js-log (global.get $symbol:link))
+               (call $js-log (global.get $string:missing-binding))
+               (call $js-log (local.get $sym))
+               (unreachable))
+
+         (func $raise-instance-variable-not-found
+               (param $sym (ref eq))   ;; missing symbol
+
+               (call $js-log (global.get $symbol:instance-variable-value))
+               (call $js-log (global.get $string:instance-variable-not-found))
+               (call $js-log (local.get $sym))
+               (unreachable))
+
+         (func $raise-instance-optional-argument
+               (param $who  (ref eq))  ;; symbol naming the primitive
+               (param $rest (ref eq))  ;; unexpected arguments
+
+               (call $raise-argument-error1
+                     (local.get $who)
+                     (global.get $string:at-most-one-optional-argument)
+                     (local.get $rest))
+               (unreachable))
+
+         (func $make-instance (type $Prim>=1)
+               (param $name (ref eq))  ;; instance name
+               (param $rest (ref eq))  ;; [data #f] [mode #f] variable bindings
+               (result (ref eq))
+
+               (local $data     (ref eq))
+               (local $mode     (ref eq))
+               (local $content  (ref eq))
+               (local $node     (ref eq))
+               (local $pair     (ref $Pair))
+               (local $sym      (ref eq))
+               (local $sym-val  (ref $Symbol))
+               (local $value    (ref eq))
+               (local $inst     (ref $Instance))
+               (local $vars     (ref $HashEqMutable))
+               (local $box      (ref $Box))
+
+               (local.set $data (global.get $false))    ;; optional data defaults to #f
+               (local.set $mode (global.get $false))    ;; optional mode defaults to #f
+               (local.set $content (local.get $rest))
+
+               ;; Extract optional data argument when present.
+               (if (ref.eq (local.get $content) (global.get $null))
+                   (then (nop))
+                   (else
+                    (local.set $pair
+                               (block $ok (result (ref $Pair))
+                                     (br_on_cast $ok (ref eq) (ref $Pair) (local.get $content))
+                                     (call $raise-pair-expected (local.get $content))
+                                     (unreachable)))
+                    (local.set $data (struct.get $Pair $a (local.get $pair)))
+                    (local.set $content (struct.get $Pair $d (local.get $pair)))
+                    ;; Extract optional mode argument when present.
+                    (if (ref.eq (local.get $content) (global.get $null))
+                        (then (nop))
+                        (else
+                         (local.set $pair
+                                    (block $ok (result (ref $Pair))
+                                          (br_on_cast $ok (ref eq) (ref $Pair) (local.get $content))
+                                          (call $raise-pair-expected (local.get $content))
+                                          (unreachable)))
+                         (local.set $mode (struct.get $Pair $a (local.get $pair)))
+                         (local.set $content (struct.get $Pair $d (local.get $pair)))))))
+
+               ;; Allocate the instance and its variable table.
+               (local.set $vars (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
+               (local.set $inst (struct.new $Instance
+                                            (i32.const 0)
+                                            (local.get $name)
+                                            (local.get $data)
+                                            (local.get $vars)))
+
+               ;; Populate variables from the remaining content list.
+               (local.set $node (local.get $content))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            (local.set $pair
+                                       (block $ok (result (ref $Pair))
+                                             (br_on_cast $ok (ref eq) (ref $Pair) (local.get $node))
+                                             (call $raise-pair-expected (local.get $node))
+                                             (unreachable)))
+                            (local.set $sym (struct.get $Pair $a (local.get $pair)))
+                            (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:make-instance)
+                                            (global.get $string:symbol?)
+                                            (local.get $sym))
+                                      (unreachable)))
+                            (local.set $sym-val (ref.cast (ref $Symbol) (local.get $sym)))
+                            (local.set $node (struct.get $Pair $d (local.get $pair)))
+                            (if (ref.eq (local.get $node) (global.get $null))
+                                (then (call $raise-make-instance-missing-value (local.get $sym))
+                                      (unreachable)))
+                            (local.set $pair
+                                       (block $ok (result (ref $Pair))
+                                             (br_on_cast $ok (ref eq) (ref $Pair) (local.get $node))
+                                             (call $raise-pair-expected (local.get $node))
+                                             (unreachable)))
+                            (local.set $value (struct.get $Pair $a (local.get $pair)))
+                            (local.set $node (struct.get $Pair $d (local.get $pair)))
+                            (local.set $box
+                                       (ref.cast (ref $Box)
+                                                 (call $instance-variable-box
+                                                       (ref.cast (ref eq) (local.get $inst))
+                                                       (local.get $sym-val)
+                                                       (global.get $true))))
+                            (call $set-box!
+                                  (ref.cast (ref eq) (local.get $box))
+                                  (local.get $value))
+                            (br $loop)))
+               (ref.cast (ref eq) (local.get $inst)))
+
+         (func $instance-variable-names (type $Prim1)
+               (param $inst (ref eq))  ;; instance
+               (result (ref eq))
+
+               (local $instance (ref $Instance))
+               (local $vars     (ref $HashEqMutable))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (local.set $vars (struct.get $Instance $variables (local.get $instance)))
+               (call $hasheq-keys
+                     (ref.cast (ref eq) (local.get $vars))
+                     (global.get $false)))
+
+         (func $instance-variable-box
+               (param $inst        (ref eq)) ;; instance
+               (param $sym         (ref eq)) ;; symbol
+               (param $can-create? (ref eq)) ;; boolean, #f => do not create
+               (result (ref eq))
+
+               (local $instance (ref $Instance))
+               (local $symbol   (ref $Symbol))
+               (local $vars     (ref $HashEqMutable))
+               (local $got      (ref eq))
+               (local $box      (ref $Box))
+               (local $create?  i32)
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instance-variable-box)
+                               (global.get $string:symbol?)
+                               (local.get $sym))
+                         (unreachable)))
+
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (local.set $symbol   (ref.cast (ref $Symbol) (local.get $sym)))
+               (local.set $vars     (struct.get $Instance $variables (local.get $instance)))
+               (local.set $got
+                          (call $hasheq-ref
+                                (ref.cast (ref eq) (local.get $vars))
+                                (local.get $symbol)
+                                (global.get $false)))
+               (if (ref.test (ref $Box) (local.get $got))
+                   (then (return (local.get $got))))
+               (local.set $create?
+                          (i32.eqz (ref.eq (local.get $can-create?) (global.get $false))))
+               (if (i32.eqz (local.get $create?))
+                   (then (call $raise-link-missing-binding (local.get $sym))
+                         (unreachable)))
+               (local.set $box (ref.cast (ref $Box) (call $box (global.get $undefined))))
+               (call $hasheq-set!/mutable/checked
+                     (local.get $vars)
+                     (local.get $symbol)
+                     (ref.cast (ref eq) (local.get $box)))
+               (ref.cast (ref eq) (local.get $box)))
+
+         (func $instance-set-variable-value! (type $Prim>=3)
+               (param $inst (ref eq))  ;; instance
+               (param $sym  (ref eq))  ;; symbol
+               (param $val  (ref eq))  ;; value
+               (param $rest (ref eq))  ;; optional mode (#f by default)
+               (result (ref eq))
+
+               (local $mode     (ref eq))
+               (local $pair     (ref $Pair))
+               (local $extra    (ref eq))
+               (local $box      (ref $Box))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instance-set-variable-value!)
+                               (global.get $string:symbol?)
+                               (local.get $sym))
+                         (unreachable)))
+
+               (local.set $mode (global.get $false)) ;; optional mode defaults to #f
+               (local.set $extra (local.get $rest))
+               (if (ref.eq (local.get $extra) (global.get $null))
+                   (then (nop))
+                   (else
+                    (local.set $pair
+                               (block $ok (result (ref $Pair))
+                                     (br_on_cast $ok (ref eq) (ref $Pair) (local.get $extra))
+                                     (call $raise-pair-expected (local.get $extra))
+                                     (unreachable)))
+                    (local.set $mode (struct.get $Pair $a (local.get $pair)))
+                    (local.set $extra (struct.get $Pair $d (local.get $pair)))
+                    (if (ref.eq (local.get $extra) (global.get $null))
+                        (then (nop))
+                        (else (call $raise-instance-optional-argument
+                                    (global.get $symbol:instance-set-variable-value!)
+                                    (local.get $extra))
+                              (unreachable)))))
+
+               (local.set $box
+                          (ref.cast (ref $Box)
+                                    (call $instance-variable-box
+                                          (local.get $inst)
+                                          (local.get $sym)
+                                          (global.get $true))))
+               (call $set-box!
+                     (ref.cast (ref eq) (local.get $box))
+                     (local.get $val))
+               (global.get $void))
+
+         (func $instance-unset-variable! (type $Prim2)
+               (param $inst (ref eq)) ;; instance
+               (param $sym  (ref eq)) ;; symbol
+               (result (ref eq))
+
+               (local $box (ref $Box))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instance-unset-variable!)
+                               (global.get $string:symbol?)
+                               (local.get $sym))
+                         (unreachable)))
+
+               (local.set $box
+                          (ref.cast (ref $Box)
+                                    (call $instance-variable-box
+                                          (local.get $inst)
+                                          (local.get $sym)
+                                          (global.get $true))))
+               (call $set-box!
+                     (ref.cast (ref eq) (local.get $box))
+                     (global.get $undefined))
+               (global.get $void))
+
+         (func $instance-variable-value (type $Prim>=2)
+               (param $inst (ref eq)) ;; instance
+               (param $sym  (ref eq)) ;; symbol
+               (param $rest (ref eq)) ;; optional failure result/procedure
+               (result      (ref eq))
+
+               (local $instance (ref $Instance))
+               (local $symbol   (ref $Symbol))
+               (local $vars     (ref $HashEqMutable))
+               (local $got      (ref eq))
+               (local $box      (ref $Box))
+               (local $val      (ref eq))
+               (local $fail     (ref eq))
+               (local $pair     (ref $Pair))
+               (local $proc     (ref $Procedure))
+               (local $inv      (ref $ProcedureInvoker))
+               (local $noargs   (ref $Args))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instance-variable-value)
+                               (global.get $string:symbol?)
+                               (local.get $sym))
+                         (unreachable)))
+
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (local.set $symbol   (ref.cast (ref $Symbol) (local.get $sym)))
+               (local.set $vars     (struct.get $Instance $variables (local.get $instance)))
+
+               (local.set $fail (global.get $missing)) ;; sentinel meaning raise error
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then (nop))
+                   (else
+                    (local.set $pair
+                               (block $ok (result (ref $Pair))
+                                     (br_on_cast $ok (ref eq) (ref $Pair) (local.get $rest))
+                                     (call $raise-pair-expected (local.get $rest))
+                                     (unreachable)))
+                    (local.set $fail (struct.get $Pair $a (local.get $pair)))
+                    (local.set $rest (struct.get $Pair $d (local.get $pair)))
+                    (if (ref.eq (local.get $rest) (global.get $null))
+                        (then (nop))
+                        (else (call $raise-instance-optional-argument
+                                    (global.get $symbol:instance-variable-value)
+                                    (local.get $rest))
+                              (unreachable)))))
+
+               (local.set $got
+                          (call $hasheq-ref
+                                (ref.cast (ref eq) (local.get $vars))
+                                (local.get $symbol)
+                                (global.get $false)))
+               (if (ref.test (ref $Box) (local.get $got))
+                   (then
+                    (local.set $box (ref.cast (ref $Box) (local.get $got)))
+                    (local.set $val (struct.get $Box $v (local.get $box)))
+                    (if (i32.eqz (ref.eq (local.get $val) (global.get $undefined)))
+                        (then (return (local.get $val))))))
+
+               (if (ref.eq (local.get $fail) (global.get $missing))
+                   (then (call $raise-instance-variable-not-found (local.get $sym))
+                         (unreachable))
+                   (else (if (ref.test (ref $Procedure) (local.get $fail))
+                            (then
+                             (local.set $proc (ref.cast (ref $Procedure) (local.get $fail)))
+                             (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+                             (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                             (return_call_ref $ProcedureInvoker
+                                              (local.get $proc)
+                                              (local.get $noargs)
+                                              (local.get $inv)))
+                            (else (local.get $fail))))))
+
          (func $ensure-correlated-type
                (result (ref $StructType))
 
@@ -33789,8 +34165,8 @@
                                             (local.get $crlt)))
                (local.set $props (array.get $Array (local.get $fields) (i32.const 6)))
                (local.set $pairs (call $hash->list (local.get $props) (global.get $false)))
-               (local.set $list (local.get $pairs))
-               (local.set $acc (global.get $null))
+               (local.set $list  (local.get $pairs))
+               (local.set $acc   (global.get $null))
                (block $done
                       (loop $loop
                             (br_if $done (ref.eq (local.get $list) (global.get $null)))
