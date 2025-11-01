@@ -519,7 +519,7 @@
       [(syntax? v)    (display-syntax v)]
       [(namespace? v) (display-namespace v)]
       [(port? v)      (display-port v)]
-
+      
       [(struct? v)    (let ([vec (struct->vector v)])
                         (if (print-struct)
                             (display-vector vec)
@@ -531,6 +531,10 @@
                       (display-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
       [(external? v)  (emit "#<external>")]
+      ; If you see `(boxed ...)` something went wrong...
+      [(boxed? v)     (emit "(boxed ")
+                      (display-value (unboxed v))
+                      (emit ")")]
       [else           (emit "#<unknown>")])
     (void))
 
