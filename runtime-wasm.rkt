@@ -33519,7 +33519,7 @@
                          (unreachable)))
 
                (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
-               (local.set $symbol   (ref.cast (ref $Symbol) (local.get $sym)))
+               (local.set $symbol   (ref.cast (ref $Symbol)   (local.get $sym)))
                (local.set $vars     (struct.get $Instance $variables (local.get $instance)))
 
                (local.set $fail (global.get $missing)) ;; sentinel meaning raise error
@@ -33540,11 +33540,10 @@
                                     (local.get $rest))
                               (unreachable)))))
 
-               (local.set $got
-                          (call $hasheq-ref
-                                (ref.cast (ref eq) (local.get $vars))
-                                (local.get $symbol)
-                                (global.get $false)))
+               (local.set $got (call $hasheq-ref
+                                     (ref.cast (ref eq) (local.get $vars))
+                                     (local.get $symbol)
+                                     (global.get $false)))
                (if (ref.test (ref $Box) (local.get $got))
                    (then
                     (local.set $box (ref.cast (ref $Box) (local.get $got)))
@@ -33552,19 +33551,21 @@
                     (if (i32.eqz (ref.eq (local.get $val) (global.get $undefined)))
                         (then (return (local.get $val))))))
 
-               (if (ref.eq (local.get $fail) (global.get $missing))
+               (if (result (ref eq))
+                   (ref.eq (local.get $fail) (global.get $missing))
                    (then (call $raise-instance-variable-not-found (local.get $sym))
                          (unreachable))
-                   (else (if (ref.test (ref $Procedure) (local.get $fail))
-                            (then
-                             (local.set $proc (ref.cast (ref $Procedure) (local.get $fail)))
-                             (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
-                             (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
-                             (return_call_ref $ProcedureInvoker
-                                              (local.get $proc)
-                                              (local.get $noargs)
-                                              (local.get $inv)))
-                            (else (local.get $fail))))))
+                   (else (if (result (ref eq))
+                             (ref.test (ref $Procedure) (local.get $fail))
+                             (then
+                              (local.set $proc (ref.cast (ref $Procedure) (local.get $fail)))
+                              (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+                              (local.set $noargs (array.new $Args (global.get $null) (i32.const 0)))
+                              (return_call_ref $ProcedureInvoker
+                                               (local.get $proc)
+                                               (local.get $noargs)
+                                               (local.get $inv)))
+                             (else (local.get $fail))))))
 
          (func $ensure-correlated-type
                (result (ref $StructType))
