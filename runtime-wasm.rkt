@@ -33362,7 +33362,7 @@
                      (local.get $e)
                      (local.get $props)))
 
-         (func $correlated?
+         (func $correlated? (type $Prim1)
                (param $v (ref eq))
                (result   (ref eq))
 
@@ -33406,7 +33406,7 @@
                          (unreachable)))
                (struct.get $Struct $fields (local.get $struct)))
 
-         (func $correlated-source
+         (func $correlated-source (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33417,7 +33417,7 @@
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 0)))
 
-         (func $correlated-line
+         (func $correlated-line (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33428,7 +33428,7 @@
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 1)))
 
-         (func $correlated-column
+         (func $correlated-column (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33439,7 +33439,7 @@
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 2)))
 
-         (func $correlated-position
+         (func $correlated-position (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33450,7 +33450,7 @@
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 3)))
 
-         (func $correlated-span
+         (func $correlated-span (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33461,7 +33461,7 @@
                                         (local.get $crlt)))
                (array.get $Array (local.get $fields) (i32.const 4)))
 
-         (func $correlated-e
+         (func $correlated-e (type $Prim1)
                (param $crlt (ref eq))
                (result (ref eq))
 
@@ -33566,7 +33566,7 @@
                      (global.get $symbol:correlated->datum)
                      (local.get $v)))
 
-         (func $datum->correlated
+         (func $datum->correlated (type $Prim13)
                (param $v       (ref eq))
                (param $srcloc  (ref eq))
                (param $prop    (ref eq))
@@ -33693,7 +33693,7 @@
                      (local.get $v)
                      (local.get $props)))
 
-         (func $correlated-property
+         (func $correlated-property (type $Prim23)
                (param $crlt (ref eq))
                (param $key  (ref eq))
                (param $val  (ref eq))
@@ -33768,7 +33768,7 @@
                      (local.get $e)
                      (local.get $new-props)))
 
-         (func $correlated-property-symbol-keys
+         (func $correlated-property-symbol-keys (type $Prim1)
                (param $crlt (ref eq))
                (result      (ref eq))
 

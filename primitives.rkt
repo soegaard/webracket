@@ -9,6 +9,7 @@
          racket/hash
          racket/include
          racket/keyword
+         racket/linklet
          racket/list
          racket/math
          racket/mpair         
@@ -833,7 +834,20 @@
  ;; 14.9 Structure Inspectors
  object-name
  prop:object-name
- 
+
+ ;; 14.14 Linklets and the Core Compiler
+ correlated?
+ correlated-source
+ correlated-line
+ correlated-column
+ correlated-position
+ correlated-span
+ correlated-e
+ correlated->datum
+ datum->correlated
+ correlated-property
+ correlated-property-symbol-keys
+
  
  ;; 15.1 Paths
  path?
