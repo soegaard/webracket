@@ -33567,33 +33567,34 @@
                      (local.get $v)))
 
          (func $datum->correlated (type $Prim13)
-               (param $v       (ref eq))
-               (param $srcloc  (ref eq))
-               (param $prop    (ref eq))
-               (result (ref eq))
+               (param $v            (ref eq))
+               (param $srcloc       (ref eq)) ; optional, default = #f
+               (param $prop         (ref eq)) ; optional, default = #f
+               (result              (ref eq))
+               
+               (local $who          (ref eq))
+               (local $source       (ref eq))
+               (local $line         (ref eq))
+               (local $column       (ref eq))
+               (local $position     (ref eq))
+               (local $span         (ref eq))
+               (local $srcloc-val   (ref eq))
+               (local $tmp          (ref eq))
+               (local $vec          (ref $Vector))
+               (local $arr          (ref $Array))
+               (local $len          i32)
+               (local $props        (ref eq))
+               (local $prop-val     (ref eq))
 
-               (local $who         (ref eq))
-               (local $source      (ref eq))
-               (local $line        (ref eq))
-               (local $column      (ref eq))
-               (local $position    (ref eq))
-               (local $span        (ref eq))
-               (local $srcloc-val  (ref eq))
-               (local $tmp         (ref eq))
-               (local $vec         (ref $Vector))
-               (local $arr         (ref $Array))
-               (local $len         i32)
-               (local $props       (ref eq))
-               (local $prop-val    (ref eq))
-
-               (local.set $who    (global.get $symbol:datum->correlated))
-               (local.set $source (global.get $false))
-               (local.set $line   (global.get $false))
-               (local.set $column (global.get $false))
+               (local.set $who      (global.get $symbol:datum->correlated))
+               (local.set $source   (global.get $false))
+               (local.set $line     (global.get $false))
+               (local.set $column   (global.get $false))
                (local.set $position (global.get $false))
-               (local.set $span   (global.get $false))
-               (local.set $props  (global.get $missing))
+               (local.set $span     (global.get $false))
+               (local.set $props    (global.get $missing))
 
+               ; $srcloc-val is optional with default value #f
                (local.set $srcloc-val (local.get $srcloc))
                (if (ref.eq (local.get $srcloc-val) (global.get $missing))
                    (then (local.set $srcloc-val (global.get $false))))
@@ -33668,9 +33669,11 @@
                             (local.get $srcloc-val))
                       (unreachable))
 
+               ; $prop-val is optional with default value #f
                (local.set $prop-val (local.get $prop))
                (if (ref.eq (local.get $prop-val) (global.get $missing))
                    (then (local.set $prop-val (global.get $false))))
+               
                (if (ref.eq (local.get $prop-val) (global.get $false))
                    (then (local.set $props (global.get $missing)))
                    (else
