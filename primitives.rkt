@@ -848,9 +848,9 @@
  correlated-property
  correlated-property-symbol-keys
 
+ instance?
  make-instance
  instance-variable-names
- ; instance-variable-box
  instance-set-variable-value!
  instance-unset-variable!
  instance-variable-value
