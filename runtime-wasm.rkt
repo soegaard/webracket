@@ -33697,7 +33697,7 @@
                (param $crlt (ref eq))
                (param $key  (ref eq))
                (param $val  (ref eq))
-               (result (ref eq))
+               (result      (ref eq))
 
                (local $fields     (ref $Array))
                (local $props      (ref eq))
@@ -33748,16 +33748,16 @@
                             (if (ref.eq (call $equal? (local.get $entry-key) (local.get $key))
                                         (global.get $true))
                                 (then (br $loop)))
-                            (call $hash-set (local.get $new-props)
-                                            (local.get $entry-key)
-                                            (local.get $entry-val))
+                            (drop (call $hash-set! (local.get $new-props)
+                                        (local.get $entry-key)
+                                        (local.get $entry-val)))
                             (br $loop)))
 
                (if (ref.eq (local.get $val-arg) (global.get $false))
                    (then (nop))
-                   (else (call $hash-set (local.get $new-props)
-                                         (local.get $key)
-                                         (local.get $val-arg))))
+                   (else (drop (call $hash-set! (local.get $new-props)
+                                     (local.get $key)
+                                     (local.get $val-arg)))))
 
                (call $correlated/make
                      (local.get $source)
