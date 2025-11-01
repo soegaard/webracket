@@ -22970,9 +22970,9 @@
         ;;; Boxed (for assignable variables)
         ;;;
 
-         ;; We used `boxed`, `set-boxed!` and `unboxed` for assignable variables.
-         ;; These "boxes" are not the same as the Racket datatype `box`.
-         ;; See next section.
+        ;; We use `boxed`, `set-boxed!` and `unboxed` for assignable variables.
+        ;; These "boxes" are not the same as the Racket datatype `box`.
+        ;; See next section.
          
          (func $boxed (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
                (struct.new $Boxed (local.get $v)))
@@ -36536,7 +36536,10 @@
                      ;; These are all "boxed".
                      ,@(let ()
                          (for/list ([v top-vars])
-                           `(global.set ,(TopVar v)
+                           `(global.set ,(TopVar v) 
+                                        (struct.new $Boxed
+                                                    (global.get $undefined)))                           
+                           #;`(global.set ,(TopVar v)
                                         (struct.new $Boxed
                                                     (global.get ,(TopVar v))))))
 
