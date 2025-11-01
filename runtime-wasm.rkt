@@ -963,6 +963,8 @@
           correlated-property-symbol-keys
 
           instance
+          instance-name
+          instance-data
           instance-variable-box
           instance-variable-names
           instance-variable-value
@@ -15514,21 +15516,58 @@
 
          (func $raise-check-symbol (param $x (ref eq)) (unreachable))
          
-         (func $symbol<? (type $Prim2) (param $a (ref eq)) (param $b (ref eq)) (result (ref eq))
-               (local $s1 (ref $String))
-               (local $s2 (ref $String))
+         (func $symbol<? (type $Prim>=2)
+               (param $a    (ref eq))
+               (param $b    (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))
 
-               ;; Type check: both must be symbols
+               (local $prev-str (ref $String))
+               (local $curr-str (ref $String))
+               (local $rest-list (ref eq))
+               (local $pair     (ref $Pair))
+               (local $next     (ref eq))
+
+               ;; Type check: the first two arguments must be symbols
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $a)))
                    (then (call $raise-check-symbol (local.get $a))))
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $b)))
                    (then (call $raise-check-symbol (local.get $b))))
-               ;; Extract names
-               (local.set $s1 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $a))))
-               (local.set $s2 (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $b))))
-               ;; Compare using string<?
-               (call $string<? (local.get $s1) (local.get $s2)))
+               
+               ;; Extract names for the initial comparison
+               (local.set $prev-str (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $a))))
+               (local.set $curr-str (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $b))))
+               ;; If the first pair is not strictly increasing, return #f immediately
+               (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
+                           (global.get $false))
+                   (then (return (global.get $false))))
 
+               ;; Iterate over remaining arguments (if any)
+               (local.set $prev-str (local.get $curr-str))
+               (local.set $rest-list (local.get $rest))
+
+               (block $done (result (ref eq))
+                      (loop $loop
+                            (if (ref.eq (local.get $rest-list) (global.get $null))
+                                (then (br $done (global.get $true))))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $rest-list)))
+                                (then (call $raise-pair-expected (local.get $rest-list))
+                                      (unreachable)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $rest-list)))
+                            (local.set $next (struct.get $Pair $a (local.get $pair)))
+                            ;; Ensure each remaining argument is a symbol
+                            (if (i32.eqz (ref.test (ref $Symbol) (local.get $next)))
+                                (then (call $raise-check-symbol (local.get $next))))
+                            (local.set $curr-str
+                                       (struct.get $Symbol $name
+                                                   (ref.cast (ref $Symbol) (local.get $next))))
+                            (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
+                                        (global.get $false))
+                                (then (return (global.get $false))))
+                            (local.set $prev-str (local.get $curr-str))
+                            (local.set $rest-list (struct.get $Pair $d (local.get $pair)))
+                            (br $loop))))
+         
          (global $gensym-counter (mut i32) (i32.const 0))
 
          (func $make-gensym-name
@@ -33255,6 +33294,39 @@
                      (global.get $string:at-most-one-optional-argument)
                      (local.get $rest))
                (unreachable))
+
+         (func $instance? (type $Prim1)
+               (param $v (ref eq))  ;; value to check
+               (result   (ref eq))
+
+               (if (result (ref eq))
+                   (ref.test (ref $Instance) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $instance-name (type $Prim1)
+               (param $inst (ref eq))  ;; instance
+               (result (ref eq))
+
+               (local $instance (ref $Instance))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (struct.get $Instance $name (local.get $instance)))
+
+         (func $instance-data (type $Prim1)
+               (param $inst (ref eq))  ;; instance
+               (result (ref eq))
+
+               (local $instance (ref $Instance))
+
+               (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
+                   (then (call $raise-argument-error:instance-expected (local.get $inst))
+                         (unreachable)))
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (struct.get $Instance $data (local.get $instance)))
 
          (func $make-instance (type $Prim>=1)
                (param $name (ref eq))  ;; instance name
