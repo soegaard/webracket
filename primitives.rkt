@@ -42,9 +42,10 @@
 
 (provide include
          include/reader
+         struct-copy
          (for-syntax read-syntax/skip-first-line))
 
-(provide define-syntax)
+(provide define-syntax define-for-syntax begin-for-syntax define-syntaxes)
 (provide (for-syntax define-syntax syntax-case ... #%app #%datum))
 
 (require (for-syntax
@@ -54,14 +55,28 @@
                    syntax-case                   
                    syntax/loc
                    with-syntax
-                   generate-temporaries)))
+                   generate-temporaries
+                   syntax-property
+                   datum->syntax
+                   syntax-e
+                   quote
+                   void
+                   define-syntaxes
+                   )))
 (provide (for-syntax define-syntax-rule
                      define-syntax
                      syntax-case
                      syntax
                      syntax/loc
                      with-syntax
-                     generate-temporaries))
+                     generate-temporaries
+                     syntax-property
+                     datum->syntax
+                     syntax-e
+                     quote
+                     void
+                     define-syntaxes
+                     ))
 
 
 (require (prefix-in kernel: racket/kernel))
@@ -184,6 +199,7 @@
 
 (provide
  match match:error
+ match-define
  ; in-list   ; see "core.rkt"
  ; in-string ; see "core.rkt"
  
