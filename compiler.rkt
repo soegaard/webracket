@@ -1048,8 +1048,10 @@
   correlated-property
   correlated-property-symbol-keys
 
-  instance?
   make-instance
+  instance?
+  instance-name
+  instance-data
   instance-variable-names
   instance-set-variable-value!
   instance-unset-variable!
@@ -4288,6 +4290,9 @@
           (case n
             [(2) `(call ,$cmp/2 ,@aes)]
             [else (inline-prim/variadic-args sym ae1 1)])]
+
+         [(symbol<?) ; variadic, at least two arguments
+          (inline-prim/variadic sym ae1 2)]
          
         ;;; Standard Inlining
         [(+)                         (inline-prim/variadic sym ae1 0)]
@@ -4446,6 +4451,7 @@
          [(correlated-property) (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
 
          [(make-instance)                 (inline-prim/variadic sym ae1 1)]
+         [(instance-name instance-data)   (inline-prim/fixed    sym ae1 1)]
          [(instance-variable-names)       (inline-prim/fixed    sym ae1 1)]
          [(instance-set-variable-value!)  (inline-prim/variadic sym ae1 3)]
          [(instance-unset-variable!)      (inline-prim/fixed    sym ae1 2)]
