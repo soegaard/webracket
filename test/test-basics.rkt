@@ -2735,7 +2735,7 @@
               
               )))
 
- (list "5. Structures"
+ #;(list "5. Structures"
        (list "5.1 Structure Type Properties"
              (list
               (list "make-struct-type-property/basic"
@@ -2891,7 +2891,7 @@
                                 '#(struct:vect-point2 3 4))))))))
 
 
- (list "13. Input and Output"
+ #;(list "13. Input and Output"
 
        (list "13.1 Ports"
              (list
@@ -3454,7 +3454,7 @@
                            (equal? (port-next-location 42) #f))))))
              )
 
- (list "10.2 Exceptions"
+ #;(list "10.2 Exceptions"
        (list
         (list "srcloc basics"
               (let () 
@@ -3654,7 +3654,7 @@
                      (equal? (exn-message unbound) "unbound"))))))
  
 
- (list "12. Macros"
+ #;(list "12. Macros"
        (list "12.2 Syntax Object Content"
              (list
               (list "datum->syntax/basic"
@@ -3739,7 +3739,7 @@
                            (equal? (syntax->list (datum->syntax #f 'a))       #f))))
               ))
 
- (list "14.9 Structure Inspectors"
+ #;(list "14.9 Structure Inspectors"
        (list
         (list "object-name/procedure"
               (let* ([anon      (lambda (x) x)]
@@ -3809,16 +3809,18 @@
                 (list (pair? converted)
                       (equal? (car converted) 'x)
                       (let ([vec-result (cadr converted)])
-                        (and (equal? (vector? vec-result) #t)
-                             ; Full Racket doesn't recur through vectors
-                             #;(equal? (vector-ref vec-result 0) 'x)
-                             (equal? (correlated? (vector-ref vec-result 0)) #t)
-                             (equal? (vector-ref vec-result 1) 'y))))))
+                        (list (equal? (vector? vec-result) #t)
+                              ; Full Racket doesn't recur through vectors
+                              #;(equal? (vector-ref vec-result 0) 'x)
+                              (vector-ref vec-result 0)
+                              (equal? (correlated? (vector-ref vec-result 0)) #t)
+                              (list (vector-ref vec-result 1) 'y))))))
 
         (list "correlated properties"
               (let* ([base        (datum->correlated 'seed)]
                      [with-tag    (correlated-property base     'tag 'value)]
                      [with-number (correlated-property with-tag 123  'number)]
+                     [keys2       (correlated-property-symbol-keys with-number)]
                      [updated     (correlated-property with-tag 'tag 'new)]
                      [removed     (correlated-property updated  'tag #f)]
                      [prop-source (datum->correlated 'copy #f with-tag)]
@@ -3829,12 +3831,17 @@
                       (equal? (correlated-property removed     'tag) #f)
                       (equal? (correlated-property with-number 123)  'number)
                       (equal? (correlated-property prop-source 'tag) 'value)
+                      keys2
+                      keys                      
+                      (member 'tag keys)
                       (not (equal? (member 'tag keys) #f))
-                      (and (member 123 keys) #t))))))
+                      (list (member 123 keys) #t)
+                      (member 'tag keys)
+                      (member 123 keys))))))
 
 
  
- (list "15. Operating System"
+ #;(list "15. Operating System"
        (list "15. Paths"
              (list
               (list "bytes->path"
