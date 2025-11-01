@@ -33457,9 +33457,9 @@
                                           (local.get $inst)
                                           (local.get $sym)
                                           (global.get $true))))
-               (call $set-box!
-                     (ref.cast (ref eq) (local.get $box))
-                     (local.get $val))
+               (drop (call $set-box!
+                           (ref.cast (ref eq) (local.get $box))
+                           (local.get $val)))
                (global.get $void))
 
          (func $instance-unset-variable! (type $Prim2)
@@ -33485,9 +33485,9 @@
                                           (local.get $inst)
                                           (local.get $sym)
                                           (global.get $true))))
-               (call $set-box!
-                     (ref.cast (ref eq) (local.get $box))
-                     (global.get $undefined))
+               (drop (call $set-box!
+                           (ref.cast (ref eq) (local.get $box))
+                           (global.get $undefined)))
                (global.get $void))
 
          (func $instance-variable-value (type $Prim>=2)
