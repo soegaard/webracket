@@ -15546,27 +15546,26 @@
                (local.set $prev-str (local.get $curr-str))
                (local.set $rest-list (local.get $rest))
 
-               (block $done (result (ref eq))
-                      (loop $loop
-                            (if (ref.eq (local.get $rest-list) (global.get $null))
-                                (then (br $done (global.get $true))))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $rest-list)))
-                                (then (call $raise-pair-expected (local.get $rest-list))
-                                      (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $rest-list)))
-                            (local.set $next (struct.get $Pair $a (local.get $pair)))
-                            ;; Ensure each remaining argument is a symbol
-                            (if (i32.eqz (ref.test (ref $Symbol) (local.get $next)))
-                                (then (call $raise-check-symbol (local.get $next))))
-                            (local.set $curr-str
-                                       (struct.get $Symbol $name
-                                                   (ref.cast (ref $Symbol) (local.get $next))))
-                            (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
-                                        (global.get $false))
-                                (then (return (global.get $false))))
-                            (local.set $prev-str (local.get $curr-str))
-                            (local.set $rest-list (struct.get $Pair $d (local.get $pair)))
-                            (br $loop)))
+               (loop $loop
+                     (if (ref.eq (local.get $rest-list) (global.get $null))
+                         (then (return (global.get $true))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $rest-list)))
+                         (then (call $raise-pair-expected (local.get $rest-list))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $rest-list)))
+                     (local.set $next (struct.get $Pair $a (local.get $pair)))
+                     ;; Ensure each remaining argument is a symbol
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $next)))
+                         (then (call $raise-check-symbol (local.get $next))))
+                     (local.set $curr-str
+                                (struct.get $Symbol $name
+                                            (ref.cast (ref $Symbol) (local.get $next))))
+                     (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
+                                 (global.get $false))
+                         (then (return (global.get $false))))
+                     (local.set $prev-str (local.get $curr-str))
+                     (local.set $rest-list (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
                (unreachable))
          
          (global $gensym-counter (mut i32) (i32.const 0))
