@@ -4443,6 +4443,13 @@
          [(datum->syntax)       (inline-prim/optional sym ae1 2 5)]
          [(datum->correlated)   (inline-prim/optional/default sym ae1 1 3 '(global.get $missing))]
          [(correlated-property) (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
+
+         [(make-instance)                 (inline-prim/variadic sym ae1 1)]
+         [(instance-variable-names)       (inline-prim/fixed    sym ae1 1)]
+         [(instance-set-variable-value!)  (inline-prim/variadic sym ae1 3)]
+         [(instance-unset-variable!)      (inline-prim/fixed    sym ae1 2)]
+         [(instance-variable-value)       (inline-prim/variadic sym ae1 2)]
+
          
          
         [(fx= fx< fx> fx<= fx>=)
