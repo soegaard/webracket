@@ -33420,16 +33420,56 @@
 
                (local $instance (ref $Instance))
                (local $vars     (ref $HashEqMutable))
+               (local $keys     (ref eq))
+               (local $acc      (ref eq))
+               (local $pair     (ref $Pair))
+               (local $key      (ref eq))
+               (local $got      (ref eq))
+               (local $box      (ref $Box))
+               (local $val      (ref eq))
 
+               ;; Type check arguments
                (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
                    (then (call $raise-argument-error:instance-expected (local.get $inst))
                          (unreachable)))
-               
+
+               ;; Get all variables in the hash table
                (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
                (local.set $vars     (struct.get $Instance $variables (local.get $instance)))
-               (call $hasheq-keys
-                     (ref.cast (ref eq) (local.get $vars))
-                     (global.get $false)))
+               (local.set $keys
+                          (call $hasheq-keys
+                                (ref.cast (ref eq) (local.get $vars))
+                                (global.get $false)))
+
+               ;; Discard unset variables
+               (local.set $acc (global.get $null))
+               (block $done
+                      (loop $loop
+                            ; done?
+                            (br_if $done (ref.eq (local.get $keys) (global.get $null)))                            
+                            ; get next variable 
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $keys)))
+                            (local.set $key  (struct.get $Pair $a (local.get $pair)))
+                            (local.set $keys (struct.get $Pair $d (local.get $pair)))
+                            
+                            (local.set $got (call $hasheq-ref
+                                                  (ref.cast (ref eq) (local.get $vars))
+                                                  (local.get $key)
+                                                  (global.get $false)))
+                            ; is it unset or not?
+                            (if (ref.test (ref $Box) (local.get $got))
+                                (then
+                                 (local.set $box (ref.cast (ref $Box) (local.get $got)))
+                                 (local.set $val (struct.get $Box $v (local.get $box)))
+                                 (if (i32.eqz (ref.eq (local.get $val) (global.get $undefined)))
+                                     (then
+                                      (local.set $acc
+                                                 (call $cons
+                                                       (local.get $key)
+                                                       (local.get $acc)))))))
+                            (br $loop)))               
+               (local.get $acc))
+               
 
          (func $instance-variable-box
                (param $inst        (ref eq)) ;; instance
