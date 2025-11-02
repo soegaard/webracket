@@ -4291,8 +4291,8 @@
             [(2) `(call ,$cmp/2 ,@aes)]
             [else (inline-prim/variadic-args sym ae1 1)])]
 
-         [(symbol<?) ; variadic, at least two arguments
-          (inline-prim/variadic sym ae1 2)]
+         [(symbol<?) ; variadic, at least one argument
+          (inline-prim/variadic sym ae1 1)]
          
         ;;; Standard Inlining
         [(+)                         (inline-prim/variadic sym ae1 0)]

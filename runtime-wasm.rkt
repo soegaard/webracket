@@ -15516,35 +15516,28 @@
 
          (func $raise-check-symbol (param $x (ref eq)) (unreachable))
          
-         (func $symbol<? (type $Prim>=2)
+         (func $symbol<? (type $Prim>=1)
                (param $a    (ref eq))
-               (param $b    (ref eq))
                (param $rest (ref eq))
                (result      (ref eq))
 
-               (local $prev-str (ref $String))
-               (local $curr-str (ref $String))
+               (local $prev-str  (ref $String))
+               (local $curr-str  (ref $String))
                (local $rest-list (ref eq))
-               (local $pair     (ref $Pair))
-               (local $next     (ref eq))
+               (local $pair      (ref $Pair))
+               (local $next      (ref eq))
 
-               ;; Type check: the first two arguments must be symbols
+               ;; Type check: the first argument must be a symbol
                (if (i32.eqz (ref.test (ref $Symbol) (local.get $a)))
-                   (then (call $raise-check-symbol (local.get $a))))
-               (if (i32.eqz (ref.test (ref $Symbol) (local.get $b)))
-                   (then (call $raise-check-symbol (local.get $b))))
+                   (then (call $raise-check-symbol (local.get $a))))               
                
-               ;; Extract names for the initial comparison
+               ;; Extract the name of the first symbol and prepare to iterate over the rest
                (local.set $prev-str (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $a))))
-               (local.set $curr-str (struct.get $Symbol $name (ref.cast (ref $Symbol) (local.get $b))))
-               ;; If the first pair is not strictly increasing, return #f immediately
-               (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
-                           (global.get $false))
-                   (then (return (global.get $false))))
-
-               ;; Iterate over remaining arguments (if any)
-               (local.set $prev-str (local.get $curr-str))
                (local.set $rest-list (local.get $rest))
+
+               ;; With a single argument, the result is #t
+               (if (ref.eq (local.get $rest-list) (global.get $null))
+                   (then (return (global.get $true))))
 
                (loop $loop
                      (if (ref.eq (local.get $rest-list) (global.get $null))
@@ -33423,7 +33416,7 @@
 
          (func $instance-variable-names (type $Prim1)
                (param $inst (ref eq))  ;; instance
-               (result (ref eq))
+               (result      (ref eq))
 
                (local $instance (ref $Instance))
                (local $vars     (ref $HashEqMutable))
@@ -33431,8 +33424,9 @@
                (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
                    (then (call $raise-argument-error:instance-expected (local.get $inst))
                          (unreachable)))
+               
                (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
-               (local.set $vars (struct.get $Instance $variables (local.get $instance)))
+               (local.set $vars     (struct.get $Instance $variables (local.get $instance)))
                (call $hasheq-keys
                      (ref.cast (ref eq) (local.get $vars))
                      (global.get $false)))
