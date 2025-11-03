@@ -848,8 +848,10 @@
  correlated-property
  correlated-property-symbol-keys
 
- instance?
  make-instance
+ instance?
+ instance-name
+ instance-data
  instance-variable-names
  instance-set-variable-value!
  instance-unset-variable!
