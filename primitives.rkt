@@ -862,6 +862,7 @@
  linklet-name              ; not in Full Racket
  linklet-import-variables
  linklet-export-variables
+ instantiate-linklet
  
  ;; 15.1 Paths
  path?

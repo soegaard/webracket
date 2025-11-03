@@ -1155,9 +1155,14 @@
     (add-runtime-string-constant 'at-most-one-optional-argument "expected at most one optional argument")
 
     (add-runtime-string-constant 'linklet?                      "linklet?")
+    (add-runtime-string-constant 'compiled-linklet?             "compiled-linklet?")
     (add-runtime-string-constant 'listof-symbol?                "(listof symbol?)")
     (add-runtime-string-constant 'listof-listof-symbol?         "(listof (listof symbol?))")
+    (add-runtime-string-constant 'listof-instance?              "(listof instance?)")
     (add-runtime-string-constant 'symbol-or-false               "(or/c symbol? #f)")
+    (add-runtime-string-constant 'instance-or-false             "(or/c instance? #f)")
+    (add-runtime-string-constant 'instantiate-linklet:import-count
+                                 "the number of import instances does not match the expected number of imports")
     
     (add-runtime-string-constant 'datum->correlated-srcloc
                                  (string-append "(or/c correlated? #f (list/c any/c (or/c exact-positive-integer? #f) "
@@ -33880,6 +33885,318 @@
 
                (local.set $plain (ref.cast (ref $Linklet) (local.get $linklet)))
                (struct.get $Linklet $exports (local.get $plain)))
+
+         ; version 1
+         #;(func $instantiate-linklet (type $Prim24)
+               ;; WebRacket currently ignores use-prompt?.
+               (param $linklet          (ref eq)) ;; compiled linklet
+               (param $import-instances (ref eq)) ;; (listof instance?)
+               (param $target-instance  (ref eq)) ;; optional instance, defaults to #f
+               (param $use-prompt?      (ref eq)) ;; optional any/c, defaults to #f (ignored)
+               (result                  (ref eq))
+
+               (local $compiled         (ref $CompiledLinklet))
+               (local $imports-node     (ref eq))
+               (local $imports-node2    (ref eq))
+               (local $pair             (ref $Pair))
+               (local $value            (ref eq))
+               (local $imports-expected (ref eq))
+               (local $target           (ref $Instance))
+               (local $proc             (ref $Procedure))
+               (local $invoke           (ref $ProcedureInvoker))
+               (local $args             (ref $Args))
+               (local $result           (ref eq))
+               (local $name             (ref eq))
+               (local $import-count     i32)
+               (local $expected-count   i32)
+               (local $i                i32)
+               (local $new?             i32)
+
+               ;; Optional parameters default to #f.
+               (if (ref.eq (local.get $target-instance) (global.get $missing))
+                   (then (local.set $target-instance (global.get $false))))
+               (if (ref.eq (local.get $use-prompt?) (global.get $missing))
+                   (then (local.set $use-prompt? (global.get $false))))
+
+               ;; Validate linklet argument.
+               (if (i32.eqz (ref.test (ref $Linklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+               
+               (if (i32.eqz (ref.test (ref $CompiledLinklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:compiled-linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+               
+               (local.set $compiled (ref.cast (ref $CompiledLinklet) (local.get $linklet)))
+
+               ;; Validate import-instances list and count elements.
+               (local.set $import-count (i32.const 0))
+               (local.set $imports-node (local.get $import-instances))
+               (block $imports-done
+                      (loop $imports-loop
+                            (br_if $imports-done
+                                   (ref.eq (local.get $imports-node) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $imports-node)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:instantiate-linklet)
+                                            (global.get $string:listof-instance?)
+                                            (local.get $import-instances))
+                                      (unreachable)))
+                            (local.set $pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (local.set $value (struct.get $Pair $a (local.get $pair)))
+                            (if (i32.eqz (ref.test (ref $Instance) (local.get $value)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:instantiate-linklet)
+                                            (global.get $string:listof-instance?)
+                                            (local.get $import-instances))
+                                      (unreachable)))
+                            (local.set $imports-node (struct.get $Pair $d (local.get $pair)))
+                            (local.set $import-count
+                                       (i32.add (local.get $import-count) (i32.const 1)))
+                            (br $imports-loop)))
+
+               ;; Determine expected number of import instances from the compiled linklet.
+               (local.set $expected-count   (i32.const 0))
+               (local.set $imports-expected (struct.get $CompiledLinklet $importss (local.get $compiled)))
+               (local.set $imports-node2    (local.get $imports-expected))
+               (block $expected-done
+                      (loop $expected-loop
+                            (br_if $expected-done
+                                   (ref.eq (local.get $imports-node2) (global.get $null)))
+                            (local.set $pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node2)))
+                            (local.set $imports-node2 (struct.get $Pair $d (local.get $pair)))
+                            (local.set $expected-count
+                                       (i32.add (local.get $expected-count) (i32.const 1)))
+                            (br $expected-loop)))
+
+               (if (i32.ne (local.get $expected-count) (local.get $import-count))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:instantiate-linklet:import-count)
+                               (local.get $import-instances))
+                         (unreachable)))
+
+               ;; Determine or create the target instance.
+               #;(local.set $target (ref.null $Instance))
+               (local.set $new?   (i32.const 0))
+               (if (i32.eqz (ref.eq (local.get $target-instance) (global.get $false)))
+                   (then
+                    (if (i32.eqz (ref.test (ref $Instance) (local.get $target-instance)))
+                        (then (call $raise-argument-error1
+                                    (global.get $symbol:instantiate-linklet)
+                                    (global.get $string:instance-or-false)
+                                    (local.get $target-instance))
+                              (unreachable)))
+                    (local.set $target
+                               (ref.cast (ref $Instance) (local.get $target-instance))))
+                   (else
+                    (local.set $name   (struct.get $CompiledLinklet $name (local.get $compiled)))
+                    (local.set $target (ref.cast (ref $Instance)
+                                                 (call $make-instance (local.get $name) (global.get $null))))
+                    (local.set $new? (i32.const 1))))
+
+               ;; Prepare arguments for the compiled linklet procedure.
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (struct.get $CompiledLinklet $proc (local.get $compiled))))
+               (local.set $invoke (struct.get $Procedure $invoke (local.get $proc)))
+               (local.set $args
+                          (array.new $Args
+                                     (global.get $null)
+                                     (i32.add (local.get $import-count) (i32.const 1))))
+               (array.set $Args
+                          (local.get $args)
+                          (i32.const 0)
+                          (ref.cast (ref eq) (local.get $target)))
+
+               (local.set $imports-node (local.get $import-instances))
+               (local.set $i (i32.const 0))
+               (block $fill-done
+                      (loop $fill
+                            (br_if $fill-done
+                                   (ref.eq (local.get $imports-node) (global.get $null)))
+                            (local.set $pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (local.set $value (struct.get $Pair $a (local.get $pair)))
+                            (array.set $Args
+                                       (local.get $args)
+                                       (i32.add (local.get $i) (i32.const 1))
+                                       (local.get $value))
+                            (local.set $imports-node (struct.get $Pair $d (local.get $pair)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $fill)))
+
+               (local.set $result
+                          (call_ref $ProcedureInvoker
+                                    (local.get $proc)
+                                    (local.get $args)
+                                    (local.get $invoke)))
+
+               (if (i32.eqz (local.get $new?))
+                   (then (return (local.get $result)))
+                   (else (drop (local.get $result))
+                         (return (ref.cast (ref eq) (local.get $target))))))
+
+         ; version 2
+         (func $instantiate-linklet (type $Prim24)
+               (param $linklet          (ref eq))  ;; linklet
+               (param $import-instances (ref eq))  ;; (listof instance)
+               (param $target           (ref eq))  ;; optional instance, defaults to #f
+               (param $use-prompt       (ref eq))  ;; optional any/c, defaults to #f (ignored)
+               (result                  (ref eq))
+
+               (local $compiled          (ref $CompiledLinklet))
+               (local $imports-node      (ref eq))
+               (local $imports-pair      (ref $Pair))
+               (local $import-value      (ref eq))
+               (local $expected-node     (ref eq))
+               (local $proc              (ref $Procedure))
+               (local $inv               (ref $ProcedureInvoker))
+               (local $args              (ref $Args))
+               (local $result            (ref eq))
+               (local $target-instance   (ref eq))
+               (local $name              (ref eq))
+               (local $actual-count      i32)
+               (local $expected-count    i32)
+               (local $index             i32)
+               (local $return-instance   i32)
+
+               (local.set $actual-count    (i32.const 0))
+               (local.set $expected-count  (i32.const 0))
+               (local.set $target-instance (global.get $false))
+               (local.set $return-instance (i32.const 0))
+
+               (if (i32.eqz (ref.test (ref $Linklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $CompiledLinklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:compiled-linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+
+               (local.set $compiled (ref.cast (ref $CompiledLinklet) (local.get $linklet)))
+
+               (local.set $imports-node (local.get $import-instances))
+               (block $imports-done
+                      (loop $imports-loop
+                            (br_if $imports-done
+                                   (ref.eq (local.get $imports-node) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $imports-node)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:instantiate-linklet)
+                                            (global.get $string:listof-instance?)
+                                            (local.get $import-instances))
+                                      (unreachable)))
+                            (local.set $imports-pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (local.set $import-value
+                                       (struct.get $Pair $a (local.get $imports-pair)))
+                            (if (i32.eqz (ref.test (ref $Instance) (local.get $import-value)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:instantiate-linklet)
+                                            (global.get $string:listof-instance?)
+                                            (local.get $import-instances))
+                                      (unreachable)))
+                            (local.set $actual-count
+                                       (i32.add (local.get $actual-count) (i32.const 1)))
+                            (local.set $imports-node
+                                       (struct.get $Pair $d (local.get $imports-pair)))
+                            (br $imports-loop)))
+
+               (if (ref.eq (local.get $target) (global.get $missing))
+                   (then (nop))
+                   (else (local.set $target-instance (local.get $target))))
+
+               (if (i32.eqz (ref.eq (local.get $target-instance) (global.get $false)))
+                   (then (if (i32.eqz (ref.test (ref $Instance) (local.get $target-instance)))
+                             (then (call $raise-argument-error1
+                                         (global.get $symbol:instantiate-linklet)
+                                         (global.get $string:instance-or-false)
+                                         (local.get $target-instance))
+                                   (unreachable))))
+                   (else (local.set $return-instance (i32.const 1))))
+
+               (local.set $expected-node
+                          (struct.get $Linklet $importss (local.get $compiled)))
+               (block $expected-done
+                      (loop $expected-loop
+                            (br_if $expected-done
+                                   (ref.eq (local.get $expected-node) (global.get $null)))
+                            (local.set $imports-pair
+                                       (ref.cast (ref $Pair) (local.get $expected-node)))
+                            (local.set $expected-count
+                                       (i32.add (local.get $expected-count) (i32.const 1)))
+                            (local.set $expected-node
+                                       (struct.get $Pair $d (local.get $imports-pair)))
+                            (br $expected-loop)))
+
+               (if (i32.ne (local.get $expected-count) (local.get $actual-count))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instantiate-linklet)
+                               (global.get $string:instantiate-linklet:import-count)
+                               (local.get $import-instances))
+                         (unreachable)))
+
+               (if (i32.eq (local.get $return-instance) (i32.const 1))
+                   (then
+                    (local.set $name (struct.get $Linklet $name (local.get $compiled)))
+                    (local.set $target-instance
+                               (call $make-instance
+                                     (local.get $name)
+                                     (global.get $null)))))
+
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (struct.get $CompiledLinklet $proc (local.get $compiled))))
+               (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+
+               (local.set $args
+                          (array.new $Args
+                                     (global.get $null)
+                                     (i32.add (local.get $actual-count) (i32.const 1))))
+               (array.set $Args (local.get $args) (i32.const 0) (local.get $target-instance))
+               (local.set $index (i32.const 1))
+               (local.set $imports-node (local.get $import-instances))
+               (block $fill-done
+                      (loop $fill-loop
+                            (br_if $fill-done
+                                   (ref.eq (local.get $imports-node) (global.get $null)))
+                            (local.set $imports-pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (array.set $Args
+                                       (local.get $args)
+                                       (local.get $index)
+                                       (struct.get $Pair $a (local.get $imports-pair)))
+                            (local.set $index
+                                       (i32.add (local.get $index) (i32.const 1)))
+                            (local.set $imports-node
+                                       (struct.get $Pair $d (local.get $imports-pair)))
+                            (br $fill-loop)))
+
+               (local.set $result
+                          (call_ref $ProcedureInvoker
+                                    (local.get $proc)
+                                    (local.get $args)
+                                    (local.get $inv)))
+
+               (if (result (ref eq))
+                   (i32.eq (local.get $return-instance) (i32.const 1))
+                   (then (drop (local.get $result))
+                         (local.get $target-instance))
+                   (else (local.get $result))))
          
          ;; Correlated Syntax
 

@@ -1064,6 +1064,7 @@
   linklet-name
   linklet-import-variables
   linklet-export-variables
+  instantiate-linklet
   
   ;; 15.1 Paths
   path?
@@ -4464,6 +4465,7 @@
          [(instance-set-variable-value!)  (inline-prim/variadic sym ae1 3)]
          [(instance-unset-variable!)      (inline-prim/fixed    sym ae1 2)]
          [(instance-variable-value)       (inline-prim/variadic sym ae1 2)]
+         [(instantiate-linklet)           (inline-prim/optional/default sym ae1 2 4 (Imm #f))]
 
          
          
