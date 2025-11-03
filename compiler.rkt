@@ -1056,6 +1056,8 @@
   instance-set-variable-value!
   instance-unset-variable!
   instance-variable-value
+
+  linklet?
   
   ;; 15.1 Paths
   path?

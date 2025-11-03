@@ -33263,6 +33263,9 @@
          ;;; 14.14 Linklets and the compiler
          ;;;
 
+
+         ;; Instances
+         
          (func $raise-argument-error:instance-expected
                (param $got (ref eq))   ;; value that was not an instance
 
@@ -33691,6 +33694,19 @@
                                                (local.get $noargs)
                                                (local.get $inv)))
                              (else (local.get $fail))))))
+
+         ;; Linklets
+         
+         (func $linklet? (type $Prim1)
+               (param $v (ref eq))  ;; value to check
+               (result   (ref eq))
+
+               (if (result (ref eq))
+                   (ref.test (ref $Linklet) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         ;; Correlated Syntax
 
          (func $ensure-correlated-type
                (result (ref $StructType))
