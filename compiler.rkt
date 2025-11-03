@@ -1058,6 +1058,7 @@
   instance-set-variable-value!
   instance-unset-variable!
   instance-variable-value
+  instance-variable-box      ; no in full Racket
 
   linklet?
   make-compiled-linklet
@@ -4466,7 +4467,6 @@
          [(instance-unset-variable!)      (inline-prim/fixed    sym ae1 2)]
          [(instance-variable-value)       (inline-prim/variadic sym ae1 2)]
          [(instantiate-linklet)           (inline-prim/optional/default sym ae1 2 4 (Imm #f))]
-
          
          
         [(fx= fx< fx> fx<= fx>=)

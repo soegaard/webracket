@@ -33307,6 +33307,14 @@
                (call $js-log (local.get $sym))
                (unreachable))
 
+         (func $raise-instance-variable-box-missing-binding
+               (param $sym (ref eq))   ;; missing symbol
+
+               (call $js-log (global.get $symbol:instance-variable-box))
+               (call $js-log (global.get $string:missing-binding))
+               (call $js-log (local.get $sym))
+               (unreachable))
+         
          (func $raise-instance-variable-not-found
                (param $sym (ref eq))   ;; missing symbol
 
@@ -33508,11 +33516,11 @@
                (local.get $acc))
                
 
-         (func $instance-variable-box
+         (func $instance-variable-box (type $Prim3)
                (param $inst        (ref eq)) ;; instance
                (param $sym         (ref eq)) ;; symbol
                (param $can-create? (ref eq)) ;; boolean, #f => do not create
-               (result (ref eq))
+               (result             (ref eq))
 
                (local $instance (ref $Instance))
                (local $symbol   (ref $Symbol))
@@ -33544,7 +33552,7 @@
                (local.set $create?
                           (i32.eqz (ref.eq (local.get $can-create?) (global.get $false))))
                (if (i32.eqz (local.get $create?))
-                   (then (call $raise-link-missing-binding (local.get $sym))
+                   (then (call $raise-instance-variable-box-missing-binding  (local.get $sym))
                          (unreachable)))
                (local.set $box (ref.cast (ref $Box) (call $box (global.get $undefined))))
                (call $hasheq-set!/mutable/checked

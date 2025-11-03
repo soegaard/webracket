@@ -863,6 +863,7 @@
  linklet-import-variables
  linklet-export-variables
  instantiate-linklet
+ instance-variable-box     ; not in Full Racket
  
  ;; 15.1 Paths
  path?
@@ -1444,4 +1445,7 @@
   (error 'make-compiled-linklet "not in full Racket"))
 
 (define (linklet-name linklet)
+  (error 'linklet-name "not in full Racket"))
+
+(define (instance-variable-box instance symbol can-create?)
   (error 'linklet-name "not in full Racket"))
