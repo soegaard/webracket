@@ -74,6 +74,8 @@
 ;;; TODO
 ;;;
 
+; [ ] Support $Linket, $CompiledLinklet and $Instance in format/display
+
 ; [/] Redefining a primitive on top-level, like `(define (cadr x) (car (cdr x)))`
 ;     leads to problems. The error is strange (runtime error). Find the underlying problem.
 ;     For now we simply report an error, that this is not allowed in webracket.

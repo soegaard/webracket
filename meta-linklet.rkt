@@ -855,7 +855,7 @@
           (raise-argument-error 'instantiate-linklet "(listof instance?)" import-instances))))
 
   ; Type check the target instance
-  (unless (and target-instance (instance? target-instance))
+  (unless (or (not target-instance) (instance? target-instance))
     (raise-argument-error 'instantiate-linklet "(or/c instance? #f)" target-instance))
 
   ;; From now on, we can assume the linklet is a compiled-linklet.
@@ -884,3 +884,65 @@
      (let ([i (make-instance (linklet-name linklet))])
        (instantiate-linklet linklet import-instances i use-prompt?)
        i)]))
+
+(module+ test
+  (require rackunit)
+
+  (define (make-test-compiled-linklet name proc import-count [exports '()])
+    (compiled-linklet name proc (build-list import-count (lambda (_) '())) exports))
+
+  (define simple-linklet
+    (make-test-compiled-linklet
+     'simple
+     (lambda (self)
+       (instance-set-variable-value! self 'v 'fresh)
+       'simple-result)
+     0
+     '(v)))
+
+  (define target-linklet
+    (make-test-compiled-linklet
+     'target
+     (lambda (self)
+       (instance-set-variable-value! self 'v 'target)
+       'target-result)
+     0
+     '(v)))
+
+  (define one-import-linklet
+    (make-test-compiled-linklet
+     'needs-import
+     (lambda (self imported)
+       (values self imported))
+     1))
+
+  (test-case "raises when linklet argument is not a linklet"
+    (check-exn exn:fail:contract?
+               (lambda () (instantiate-linklet 42 '()))))
+
+  (test-case "raises when linklet is not compiled"
+    (check-exn exn:fail:contract?
+               (lambda () (instantiate-linklet (linklet 'plain) '()))))
+
+  (test-case "raises when import list contains non-instances"
+    (check-exn exn:fail:contract?
+               (lambda () (instantiate-linklet one-import-linklet (list 'not-an-instance)))))
+
+  (test-case "raises when target-instance is not an instance"
+    (check-exn exn:fail:contract?
+               (lambda () (instantiate-linklet simple-linklet '() 'not-an-instance))))
+
+  (test-case "raises when import count does not match compiled linklet"
+    (check-exn exn:fail:contract?
+               (lambda () (instantiate-linklet one-import-linklet '()))))
+
+  (test-case "creates a fresh instance when no target is provided"
+    (define result (instantiate-linklet simple-linklet '()))
+    (check-true (instance? result))
+    (check-equal? (instance-name result) 'simple)
+    (check-equal? (instance-variable-value result 'v) 'fresh))
+
+  (test-case "uses the provided target instance and returns body result"
+    (define target (make-instance 'target-instance))
+    (check-equal? (instantiate-linklet target-linklet '() target) 'target-result)
+    (check-equal? (instance-variable-value target 'v) 'target)))
