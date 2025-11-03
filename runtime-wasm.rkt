@@ -1690,7 +1690,11 @@
           (type $Linklet
                 (sub $Heap
                      (struct
-                       (field $hash        (mut i32)))))
+                       (field $hash        (mut i32))
+                       (field $name        (ref eq))    ; #f or a symbol
+                       (field $importss    (ref eq))    ; (listof (listof symbol?))
+                       (field $exports     (ref eq))    ; (listof symbol?)
+                       )))
 
           ; A compiled linklet is a procedure `proc` that as arguments
           ; take an self-instance and the import instances.
@@ -1702,13 +1706,14 @@
                 (sub $Heap
                      (struct
                        (field $hash        (mut i32))
+                       (field $name        (ref eq))    ; #f or a symbol
+                       (field $importss    (ref eq))    ; (listof (listof symbol?))
+                       (field $exports     (ref eq))    ; (listof symbol?)
                        (field $proc        (ref eq))    ; takes self instance plus instance arguments
-                       (field $importss    (ref eq))    ; list of list of symbols
-                       (field $exports     (ref eq))))) ; list of symbols
+                       )))
           
           ) ; rec
        
-
 
          ;;;
          ;;; MEMORY
