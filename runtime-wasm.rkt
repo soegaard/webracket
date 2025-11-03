@@ -1153,6 +1153,11 @@
     (add-runtime-string-constant 'missing-binding               "missing binding:")
     (add-runtime-string-constant 'instance-variable-not-found   "instance variable not found:")
     (add-runtime-string-constant 'at-most-one-optional-argument "expected at most one optional argument")
+
+    (add-runtime-string-constant 'linklet?                      "linklet?")
+    (add-runtime-string-constant 'listof-symbol?                "(listof symbol?)")
+    (add-runtime-string-constant 'listof-listof-symbol?         "(listof (listof symbol?))")
+    (add-runtime-string-constant 'symbol-or-false               "(or/c symbol? #f)")
     
     (add-runtime-string-constant 'datum->correlated-srcloc
                                  (string-append "(or/c correlated? #f (list/c any/c (or/c exact-positive-integer? #f) "
@@ -1703,7 +1708,7 @@
           ; The field `exports` is a list of symbols to be exported.
           ; Calling `proc` will run the body of the linklet.
           (type $CompiledLinklet
-                (sub $Heap
+                (sub $Linklet
                      (struct
                        (field $hash        (mut i32))
                        (field $name        (ref eq))    ; #f or a symbol
@@ -33711,6 +33716,171 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         (func $make-compiled-linklet (type $Prim4)
+               (param $name     (ref eq)) ;; #f or symbol
+               (param $importss (ref eq)) ;; (listof (listof symbol?))
+               (param $exports  (ref eq)) ;; (listof symbol?)
+               (param $proc     (ref eq)) ;; procedure
+               (result (ref eq))
+
+               (local $imports-node       (ref eq))
+               (local $imports-pair       (ref $Pair))
+               (local $single-imports     (ref eq))
+               (local $inner-node         (ref eq))
+               (local $inner-pair         (ref $Pair))
+               (local $sym                (ref eq))
+               (local $exports-node       (ref eq))
+               (local $exports-pair       (ref $Pair))
+               (local $compiled-linklet   (ref $CompiledLinklet))
+
+               ;; Validate name (allow #f for anonymous linklets).
+               (if (i32.eqz (ref.eq (local.get $name) (global.get $false)))
+                   (then
+                    (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                        (then (call $raise-argument-error1
+                                    (global.get $symbol:make-compiled-linklet)
+                                    (global.get $string:symbol-or-false)
+                                    (local.get $name))
+                              (unreachable)))))
+
+               ;; Validate imports: listof listof symbol?
+               (local.set $imports-node (local.get $importss))
+               (block $imports-done
+                      (loop $imports-loop
+                            (br_if $imports-done
+                                   (ref.eq (local.get $imports-node)
+                                           (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $imports-node)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:make-compiled-linklet)
+                                            (global.get $string:listof-listof-symbol?)
+                                            (local.get $importss))
+                                      (unreachable)))
+                            (local.set $imports-pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (local.set $single-imports
+                                       (struct.get $Pair $a (local.get $imports-pair)))
+                            (local.set $inner-node (local.get $single-imports))
+                            (block $inner-done
+                                   (loop $inner-loop
+                                         (br_if $inner-done
+                                                (ref.eq (local.get $inner-node)
+                                                        (global.get $null)))
+                                         (if (i32.eqz (ref.test (ref $Pair) (local.get $inner-node)))
+                                             (then (call $raise-argument-error1
+                                                         (global.get $symbol:make-compiled-linklet)
+                                                         (global.get $string:listof-symbol?)
+                                                         (local.get $single-imports))
+                                                   (unreachable)))
+                                         (local.set $inner-pair
+                                                    (ref.cast (ref $Pair) (local.get $inner-node)))
+                                         (local.set $sym
+                                                    (struct.get $Pair $a (local.get $inner-pair)))
+                                         (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                                             (then (call $raise-argument-error1
+                                                         (global.get $symbol:make-compiled-linklet)
+                                                         (global.get $string:symbol?)
+                                                         (local.get $sym))
+                                                   (unreachable)))
+                                         (local.set $inner-node
+                                                    (struct.get $Pair $d (local.get $inner-pair)))
+                                         (br $inner-loop)))
+                            (local.set $imports-node
+                                       (struct.get $Pair $d (local.get $imports-pair)))
+                            (br $imports-loop)))
+
+               ;; Validate exports: listof symbol?
+               (local.set $exports-node (local.get $exports))
+               (block $exports-done
+                      (loop $exports-loop
+                            (br_if $exports-done
+                                   (ref.eq (local.get $exports-node)
+                                           (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $exports-node)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:make-compiled-linklet)
+                                            (global.get $string:listof-symbol?)
+                                            (local.get $exports))
+                                      (unreachable)))
+                            (local.set $exports-pair
+                                       (ref.cast (ref $Pair) (local.get $exports-node)))
+                            (local.set $sym
+                                       (struct.get $Pair $a (local.get $exports-pair)))
+                            (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:make-compiled-linklet)
+                                            (global.get $string:symbol?)
+                                            (local.get $sym))
+                                      (unreachable)))
+                            (local.set $exports-node
+                                       (struct.get $Pair $d (local.get $exports-pair)))
+                            (br $exports-loop)))
+
+               ;; Validate procedure argument.
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+
+               (local.set $compiled-linklet
+                          (struct.new $CompiledLinklet
+                                      (i32.const 0)
+                                      (local.get $name)
+                                      (local.get $importss)
+                                      (local.get $exports)
+                                      (local.get $proc)))
+               (ref.cast (ref eq) (local.get $compiled-linklet)))
+
+         (func $linklet-name (type $Prim1)
+               (param $linklet (ref eq))
+               (result         (ref eq))
+
+               (local $plain     (ref $Linklet))
+
+               (if (i32.eqz (ref.test (ref $Linklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-name)
+                               (global.get $string:linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+               
+               (local.set $plain (ref.cast (ref $Linklet) (local.get $linklet)))
+               (struct.get $Linklet $name (local.get $plain)))
+
+
+         (func $linklet-import-variables (type $Prim1)
+               (param $linklet (ref eq))
+               (result (ref eq))
+
+               (local $plain    (ref $Linklet))
+               (local $compiled (ref $CompiledLinklet))
+
+               (if (i32.eqz (ref.test (ref $Linklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-import-variables)
+                               (global.get $string:linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+
+               (local.set $plain (ref.cast (ref $Linklet) (local.get $linklet)))
+               (struct.get $Linklet $importss (local.get $plain)))
+
+         (func $linklet-export-variables (type $Prim1)
+               (param $linklet (ref eq))
+               (result (ref eq))
+
+               (local $plain    (ref $Linklet))
+               (local $compiled (ref $CompiledLinklet))
+
+               (if (i32.eqz (ref.test (ref $Linklet) (local.get $linklet)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-export-variables)
+                               (global.get $string:linklet?)
+                               (local.get $linklet))
+                         (unreachable)))
+
+               (local.set $plain (ref.cast (ref $Linklet) (local.get $linklet)))
+               (struct.get $Linklet $exports (local.get $plain)))
+         
          ;; Correlated Syntax
 
          (func $ensure-correlated-type

@@ -858,6 +858,10 @@
  instance-variable-value
 
  linklet?
+ make-compiled-linklet     ; not in Full Racket
+ linklet-name              ; not in Full Racket
+ linklet-import-variables
+ linklet-export-variables
  
  ;; 15.1 Paths
  path?
@@ -1434,3 +1438,9 @@
     (raise-argument-error 'catch "procedure?" thunk))
   (with-handlers ([(λ (value) (predicate value)) handler])
     (thunk)))
+
+(define (make-compiled-linklet name importss exports proc)
+  (error 'make-compiled-linklet "not in full Racket"))
+
+(define (linklet-name linklet)
+  (error 'linklet-name "not in full Racket"))

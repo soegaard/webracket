@@ -1058,6 +1058,10 @@
   instance-variable-value
 
   linklet?
+  make-compiled-linklet
+  linklet-name
+  linklet-import-variables
+  linklet-export-variables
   
   ;; 15.1 Paths
   path?
