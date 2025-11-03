@@ -1686,6 +1686,25 @@
                        (field $name      (ref eq))                      ;; any value for debugging
                        (field $data      (ref eq))                      ;; any value (e.g., namespace)
                        (field $variables (mut (ref $HashEqMutable)))))) ;; hasheq: Symbol → Box
+
+          (type $Linklet
+                (sub $Heap
+                     (struct
+                       (field $hash        (mut i32)))))
+
+          ; A compiled linklet is a procedure `proc` that as arguments
+          ; take an self-instance and the import instances.
+          ; The arity is the same as the length of `importss` plus one (due to the self-instance).
+          ; Each sublist of `importss` is a list of symbols imported from that instance.
+          ; The field `exports` is a list of symbols to be exported.
+          ; Calling `proc` will run the body of the linklet.
+          (type $CompiledLinklet
+                (sub $Heap
+                     (struct
+                       (field $hash        (mut i32))
+                       (field $proc        (ref eq))    ; takes self instance plus instance arguments
+                       (field $importss    (ref eq))    ; list of list of symbols
+                       (field $exports     (ref eq))))) ; list of symbols
           
           ) ; rec
        
