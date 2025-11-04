@@ -1058,7 +1058,7 @@
   instance-set-variable-value!
   instance-unset-variable!
   instance-variable-value
-  instance-variable-box      ; no in full Racket
+  instance-variable-box      ; not in full Racket
 
   linklet?
   make-compiled-linklet
