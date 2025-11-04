@@ -1075,6 +1075,8 @@
     (add-runtime-string-constant 'closure                    "#<closure>")
     (add-runtime-string-constant 'external                   "#<external>")
     (add-runtime-string-constant 'external-null              "#<external-null>")
+    (add-runtime-string-constant 'linklet                    "#<linklet>")
+    (add-runtime-string-constant 'instance                   "#<instance>")
     (add-runtime-string-constant 'namespace                  "#<namespace>")
     (add-runtime-string-constant 'hash-less-namespace-colon  "#<namespace:")
     (add-runtime-string-constant 'empty                      "")
@@ -35099,6 +35101,14 @@
                (if (ref.test (ref $StructTypeProperty) (local.get $v))
                    (then (return (call $format/display:struct-type-property
                                        (ref.cast (ref $StructTypeProperty) (local.get $v))))))
+               ;; --- Case: linklet ---
+               (if (ref.test (ref $Linklet) (local.get $v))
+                   (then (return (ref.cast (ref $String)
+                                           (global.get $string:linklet)))))
+               ;; --- Case: instance ---
+               (if (ref.test (ref $Instance) (local.get $v))
+                   (then (return (ref.cast (ref $String)
+                                           (global.get $string:instance)))))
                ;; --- Internal data types ---
                ;; These shouldn't leak to the outside, but nice to know if it happens.
                ;; --- Case: boxed --- (shouldn't happen)
