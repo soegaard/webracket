@@ -21583,7 +21583,7 @@
                          (unreachable))))
 
 
-        (func $vector-set!/checked
+         (func $vector-set!/checked
                (param $vec (ref $Vector)) (param $i i32) (param $val (ref eq))
                (local $len i32)
 
@@ -21599,9 +21599,12 @@
                                (local.get $vec) (local.get $i) (local.get $len))
                          (unreachable))))
 
-         (func $vector-set!
-               (param $v (ref eq)) (param $i (ref eq)) (param $val (ref eq))
-               (result (ref eq))
+         (func $vector-set! (type $Prim3)
+               (param $v   (ref eq))
+               (param $i   (ref eq))
+               (param $val (ref eq))
+               (result     (ref eq))
+
                (local $vec (ref $Vector))
                (local $idx i32)
                (local $len i32)
