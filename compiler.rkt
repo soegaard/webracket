@@ -1093,6 +1093,7 @@
   unsafe-vector-length
   unsafe-vector-ref
   unsafe-vector*-length
+  unsafe-vector-set!
   unsafe-vector*-set!
   unsafe-struct-set!
 
