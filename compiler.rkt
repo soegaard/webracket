@@ -799,7 +799,7 @@
   fx= fx> fx< fx<= fx>=
   fxmin fxmax
 
-  fxquotient unsafe-fxquotient
+  fxquotient 
   fxremainder fxmodulo fxabs
   fxand fxior fxxor fxnot fxlshift fxrshift
   fxpopcount fxpopcount16 fxpopcount32
@@ -1076,8 +1076,10 @@
   bytes->path
   
   ;; 17. Unsafe Operations
-  unsafe-fx+
-  unsafe-fl/
+  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
+  unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
+  unsafe-fxabs
+  
   unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
   unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
   unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
@@ -4310,6 +4312,9 @@
         [(*)                         (inline-prim/variadic sym ae1 0)]
         [(-)                         (inline-prim/variadic sym ae1 1)]
         [(/)                         (inline-prim/variadic sym ae1 1)]
+        [(unsafe-fx+)                (inline-prim/variadic sym ae1 0)]
+        [(unsafe-fx*)                (inline-prim/variadic sym ae1 0)]
+        [(unsafe-fx-)                (inline-prim/variadic sym ae1 1)]
         [(s-exp->fasl) ; 1 to 2 arguments
          ;               (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
@@ -4451,6 +4456,10 @@
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
+
+         [(unsafe-fxquotient
+           unsafe-fxremainder
+           unsafe-fxmodulo)            (inline-prim/fixed sym ae1 2)]
 
          [(min max)                               (inline-prim/variadic sym ae1 1)]
          [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1

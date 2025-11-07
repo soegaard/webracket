@@ -9095,12 +9095,17 @@
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
-         (func $unsafe-fxquotient (type $Prim2)
-               (param $x (ref eq)) (param $y (ref eq)) (result   (ref eq))               
-               (ref.i31 ,(Double `(i32.div_s ,(Half `(i31.get_s (ref.cast i31ref (local.get $x))))
-                                             ,(Half `(i31.get_s (ref.cast i31ref (local.get $y))))))))
+         
 
          (func $raise-division-by-zero (unreachable))
+
+         (func $unsafe-fxquotient (type $Prim2)
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))               
+
+               (ref.i31 ,(Double `(i32.div_s ,(Half `(i31.get_s (ref.cast i31ref (local.get $x))))
+                                             ,(Half `(i31.get_s (ref.cast i31ref (local.get $y))))))))
          
          (func $fxquotient (type $Prim2)
                (param $x (ref eq))
@@ -9139,10 +9144,39 @@
                ;; --- re-tag as fixnum ---
                (ref.i31 (i32.shl (local.get $q) (i32.const 1))))
 
+         (func $unsafe-fxremainder (type $Prim2)
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
+
+               (ref.i31 (i32.rem_s (i31.get_s (ref.cast i31ref (local.get $x)))
+                                   (i31.get_s (ref.cast i31ref (local.get $y))))))
+
          (func $fxremainder (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.rem_s (i31.get_s (ref.cast i31ref (local.get $x)))
-                                    (i31.get_s (ref.cast i31ref (local.get $y))))))
+                                   (i31.get_s (ref.cast i31ref (local.get $y))))))
+
+         (func $unsafe-fxmodulo (type $Prim2)
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
+
+               (local $xv i32)
+               (local $yv i32)
+               (local $r  i32)
+
+               (local.set $xv (i31.get_s (ref.cast i31ref (local.get $x))))
+               (local.set $yv (i31.get_s (ref.cast i31ref (local.get $y))))
+               (local.set $r  (i32.rem_s (local.get $xv) (local.get $yv)))
+               (if (result (ref eq))
+                   (i32.eqz (local.get $r))
+                   (then (ref.i31 (local.get $r)))
+                   (else (if (result (ref eq))
+                              (i32.eq (i32.lt_s (local.get $r) (i32.const 0))
+                                      (i32.lt_s (local.get $yv) (i32.const 0)))
+                              (then (ref.i31 (local.get $r)))
+                              (else (ref.i31 (i32.add (local.get $r) (local.get $yv))))))))
 
          (func $fxmodulo (type $Prim2)
                (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
@@ -9158,6 +9192,18 @@
                                       (i32.lt_s (local.get $yv) (i32.const 0)))
                               (then (ref.i31 (local.get $r)))
                               (else (ref.i31 (i32.add (local.get $r) (local.get $yv))))))))
+
+         (func $unsafe-fxabs (type $Prim1)
+               (param $x (ref eq))
+               (result   (ref eq))
+
+               (local $xi i32)
+
+               (local.set $xi (i31.get_s (ref.cast i31ref (local.get $x))))
+               (ref.i31 (if (result i32)
+                            (i32.lt_s (local.get $xi) (i32.const 0))
+                            (then (i32.sub (i32.const 0) (local.get $xi)))
+                            (else (local.get $xi)))))
 
          (func $fxabs (type $Prim1)
                (param $x (ref eq)) (result (ref eq))
@@ -34840,15 +34886,101 @@
 
          ;; 17.1 Unsafe Numeric Operations
 
-         (func $unsafe-fx+ (type $Prim2)
+         (func $unsafe-fx+/2 
                (param $x (ref eq))   ;; x must be a fixnum (i31 with lsb = 0)
                (param $y (ref eq))   ;; y must be a fixnum (i31 with lsb = 0)
                (result   (ref eq))   ;; result is a fixnum (i31)
-
                ; the tag was chosen, so we could do this:
                (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
                                  (i31.get_s (ref.cast (ref i31) (local.get $y))))))
 
+         (func $unsafe-fx+ (type $Prim>=0)
+               (param $xs0 (ref eq))
+               (result     (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $sum  i32)
+
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $sum (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $sum  (i32.add (local.get $sum)
+                                                      (i31.get_s (ref.cast (ref i31)
+                                                                            (local.get $v)))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (ref.i31 (local.get $sum)))
+
+         (func $unsafe-fx- (type $Prim>=1)
+               (param $a1   (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $acc  i32)
+
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (i31.get_s (ref.cast (ref i31) (local.get $a1))))
+               (if (result (ref eq))
+                   (ref.eq (local.get $xs) (global.get $null))
+                   (then (ref.i31 (i32.sub (i32.const 0) (local.get $acc))))
+                   (else (block $done
+                                (loop $loop
+                                      (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                                      (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                                      (local.set $v    (struct.get $Pair $a (local.get $node)))
+                                      (local.set $acc  (i32.sub (local.get $acc)
+                                                                (i31.get_s (ref.cast (ref i31)
+                                                                                      (local.get $v)))))
+                                      (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                                      (br $loop)))
+                         (ref.i31 (local.get $acc)))))
+
+         (func $unsafe-fx* (type $Prim>=0)
+               (param $xs0 (ref eq))
+               (result     (ref eq))
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $prod i32)
+
+               (local.set $xs
+                          (if (result (ref eq))
+                              (ref.test (ref $Args) (local.get $xs0))
+                              (then (call $rest-arguments->list
+                                          (ref.cast (ref $Args) (local.get $xs0))
+                                          (i32.const 0)))
+                              (else (local.get $xs0))))
+               (local.set $prod (i32.const 2))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $prod (i32.mul (local.get $prod)
+                                                      (i32.shr_s
+                                                       (i31.get_s (ref.cast (ref i31)
+                                                                             (local.get $v)))
+                                                       (i32.const 1))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (ref.i31 (local.get $prod)))
+         
          (func $unsafe-fx= (type $Prim2)
                (param $x (ref eq))
                (param $y (ref eq))

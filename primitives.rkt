@@ -874,13 +874,17 @@
  bytes->path
 
  ;; 17. Unsafe Operations
- unsafe-fx+ unsafe-fl/
+ unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
+ unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
+ unsafe-fxabs
+ unsafe-fx= unsafe-fx<
+
  unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
  unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
  unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
  unsafe-flmin unsafe-flmax unsafe-flexpt
  unsafe-flrandom 
- unsafe-fx= unsafe-fx< unsafe-car unsafe-cdr
+ unsafe-car unsafe-cdr
  unsafe-struct-ref unsafe-vector-length unsafe-vector-ref
  unsafe-vector*-length unsafe-vector*-set!
  unsafe-vector-length unsafe-vector-set!
