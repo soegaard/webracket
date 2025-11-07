@@ -877,9 +877,12 @@
  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
  unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
  unsafe-fxabs
- unsafe-fxand unsafe-fxior unsafe-fxxor
- unsafe-fxnot unsafe-fxlshift unsafe-fxrshift unsafe-fxrshift/logical
+ unsafe-fxand unsafe-fxior unsafe-fxxor unsafe-fxnot
+ unsafe-fxpopcount unsafe-fxpopcount16 unsafe-fxpopcount32
+ unsafe-fxlshift unsafe-fxrshift unsafe-fxrshift/logical
 
+ unsafe-fx+/wraparound unsafe-fx-/wraparound unsafe-fx*/wraparound
+ unsafe-fxlshift/wraparound
  unsafe-fx= unsafe-fx< unsafe-fx> unsafe-fx<= unsafe-fx>=
  unsafe-fxmin unsafe-fxmax
 

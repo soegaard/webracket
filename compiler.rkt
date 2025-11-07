@@ -1079,8 +1079,12 @@
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
   unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
   unsafe-fxabs
-  unsafe-fxand unsafe-fxior unsafe-fxxor
-  unsafe-fxnot unsafe-fxlshift unsafe-fxrshift unsafe-fxrshift/logical
+  unsafe-fxand unsafe-fxior unsafe-fxxor unsafe-fxnot
+  unsafe-fxpopcount unsafe-fxpopcount16 unsafe-fxpopcount32
+  unsafe-fxlshift unsafe-fxrshift unsafe-fxrshift/logical
+
+  unsafe-fx+/wraparound unsafe-fx-/wraparound unsafe-fx*/wraparound
+  unsafe-fxlshift/wraparound
 
   unsafe-fx= unsafe-fx< unsafe-fx> unsafe-fx<= unsafe-fx>=
   unsafe-fxmin unsafe-fxmax
@@ -4326,6 +4330,9 @@
           unsafe-fxior
           unsafe-fxxor)              (inline-prim/variadic sym ae1 1)]
         [(unsafe-fxnot)              (inline-prim/fixed sym ae1 1)]
+        [(unsafe-fxpopcount
+          unsafe-fxpopcount16
+          unsafe-fxpopcount32)       (inline-prim/fixed sym ae1 1)]
         [(unsafe-fxlshift
           unsafe-fxrshift
           unsafe-fxrshift/logical)   (inline-prim/fixed sym ae1 2)]
@@ -4471,6 +4478,10 @@
          [(random)                     (inline-prim/optional sym ae1 0 2)]
          [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
          [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
+         [(unsafe-fx+/wraparound
+           unsafe-fx*/wraparound
+           unsafe-fxlshift/wraparound) (inline-prim/fixed sym ae1 2)]
+         [(unsafe-fx-/wraparound)      (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
 
          [(unsafe-fxquotient
            unsafe-fxremainder

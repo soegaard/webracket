@@ -35168,7 +35168,74 @@
                                             (i32.const -1))
                                  (i32.const 1))))
 
+         (func $unsafe-fxpopcount (type $Prim1)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i32.popcnt (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                                 (i32.const 1))))
+
+         (func $unsafe-fxpopcount32 (type $Prim1)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i32.popcnt (i31.get_u (ref.cast (ref i31) (local.get $x))))
+                                 (i32.const 1))))
+
+         (func $unsafe-fxpopcount16 (type $Prim1)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i32.popcnt (i32.and (i31.get_u (ref.cast (ref i31) (local.get $x)))
+                                                      (i32.const 65535)))
+                                 (i32.const 1))))
+
          (func $unsafe-fxlshift (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $k (ref eq)) ;; k must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                 (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $k)))
+                                            (i32.const 1)))))
+
+         (func $unsafe-fx+/wraparound (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                 (i31.get_s (ref.cast (ref i31) (local.get $y))))))
+
+         (func $unsafe-fx-/wraparound (type $Prim>=1)
+               (param $a1   (ref eq)) ;; first argument (fixnum)
+               (param $rest (ref eq)) ;; optional second argument; defaults to 0 when absent
+               (result      (ref eq)) ;; result is a fixnum (i31)
+
+               (local $a    (ref eq))
+               (local $b    (ref eq))
+               (local $node (ref $Pair))
+
+               ;; Eager init so locals are definitely assigned before any possible get.
+               (local.set $a (ref.i31 (i32.const 0)))
+               (local.set $b (local.get $a1))
+               (if (ref.eq (local.get $rest) (global.get $null))
+                   (then
+                    (local.set $a (ref.i31 (i32.const 0)))
+                    (local.set $b (local.get $a1)))
+                   (else
+                    (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                    (local.set $a    (local.get $a1))
+                    (local.set $b    (struct.get $Pair $a (local.get $node)))))
+               (ref.i31
+                (i32.sub
+                 (i31.get_s (ref.cast (ref i31) (local.get $a)))
+                 (i31.get_s (ref.cast (ref i31) (local.get $b))))))
+
+         (func $unsafe-fx*/wraparound (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.mul (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                 (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $y)))
+                                            (i32.const 1)))))
+
+         (func $unsafe-fxlshift/wraparound (type $Prim2)
                (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
                (param $k (ref eq)) ;; k must be a fixnum (i31 with lsb = 0)
                (result   (ref eq)) ;; result is a fixnum (i31)
