@@ -35088,6 +35088,114 @@
                             (br $loop)))
                (local.get $best))
 
+         (func $unsafe-fxand (type $Prim>=1)
+               (param $a1   (ref eq)) ;; first fixnum argument (i31 with lsb = 0)
+               (param $rest (ref eq)) ;; list of remaining fixnum arguments
+               (result      (ref eq)) ;; result is a fixnum (i31)
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $acc  i32)
+
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (i31.get_s (ref.cast (ref i31) (local.get $a1))))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $acc  (i32.and (local.get $acc)
+                                                      (i31.get_s (ref.cast (ref i31)
+                                                                           (local.get $v)))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (ref.i31 (local.get $acc)))
+
+         (func $unsafe-fxior (type $Prim>=1)
+               (param $a1   (ref eq)) ;; first fixnum argument (i31 with lsb = 0)
+               (param $rest (ref eq)) ;; list of remaining fixnum arguments
+               (result      (ref eq)) ;; result is a fixnum (i31)
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $acc  i32)
+
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (i31.get_s (ref.cast (ref i31) (local.get $a1))))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $acc  (i32.or (local.get $acc)
+                                                     (i31.get_s (ref.cast (ref i31)
+                                                                          (local.get $v)))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (ref.i31 (local.get $acc)))
+
+         (func $unsafe-fxxor (type $Prim>=1)
+               (param $a1   (ref eq)) ;; first fixnum argument (i31 with lsb = 0)
+               (param $rest (ref eq)) ;; list of remaining fixnum arguments
+               (result      (ref eq)) ;; result is a fixnum (i31)
+
+               (local $xs   (ref eq))
+               (local $node (ref $Pair))
+               (local $v    (ref eq))
+               (local $acc  i32)
+
+               (local.set $xs  (local.get $rest))
+               (local.set $acc (i31.get_s (ref.cast (ref i31) (local.get $a1))))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $v    (struct.get $Pair $a (local.get $node)))
+                            (local.set $acc  (i32.xor (local.get $acc)
+                                                      (i31.get_s (ref.cast (ref i31)
+                                                                           (local.get $v)))))
+                            (local.set $xs   (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (ref.i31 (local.get $acc)))
+
+         (func $unsafe-fxnot (type $Prim1)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i32.xor (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                                (i32.const 1))
+                                            (i32.const -1))
+                                 (i32.const 1))))
+
+         (func $unsafe-fxlshift (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $k (ref eq)) ;; k must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shl (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                 (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $k)))
+                                            (i32.const 1)))))
+
+         (func $unsafe-fxrshift (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $k (ref eq)) ;; k must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31 (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                                   (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $k)))
+                                              (i32.const 1)))))
+
+         (func $unsafe-fxrshift/logical (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $k (ref eq)) ;; k must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a fixnum (i31)
+               (ref.i31
+                (i32.shl
+                 (i32.shr_u (i32.shr_s (i31.get_u (ref.cast (ref i31) (local.get $x)))
+                                      (i32.const 1))
+                            (i32.shr_s (i31.get_u (ref.cast (ref i31) (local.get $k)))
+                                       (i32.const 1)))
+                 (i32.const 1))))
+
          
          ;; 17.2 Unsafe Character Operations
          ;; 17.3 Unsafe Compound-Data Operations

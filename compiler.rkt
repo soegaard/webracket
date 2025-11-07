@@ -1079,6 +1079,8 @@
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
   unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
   unsafe-fxabs
+  unsafe-fxand unsafe-fxior unsafe-fxxor
+  unsafe-fxnot unsafe-fxlshift unsafe-fxrshift unsafe-fxrshift/logical
 
   unsafe-fx= unsafe-fx< unsafe-fx> unsafe-fx<= unsafe-fx>=
   unsafe-fxmin unsafe-fxmax
@@ -4320,6 +4322,13 @@
           unsafe-fx>
           unsafe-fx<=
           unsafe-fx>=)               (inline-prim/fixed sym ae1 2)]
+        [(unsafe-fxand
+          unsafe-fxior
+          unsafe-fxxor)              (inline-prim/variadic sym ae1 1)]
+        [(unsafe-fxnot)              (inline-prim/fixed sym ae1 1)]
+        [(unsafe-fxlshift
+          unsafe-fxrshift
+          unsafe-fxrshift/logical)   (inline-prim/fixed sym ae1 2)]
         
         [(s-exp->fasl) ; 1 to 2 arguments
          ;               (in the keyword-less version in "core.rkt"
