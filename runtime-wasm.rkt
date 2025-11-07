@@ -34945,7 +34945,7 @@
                                       (local.set $v    (struct.get $Pair $a (local.get $node)))
                                       (local.set $acc  (i32.sub (local.get $acc)
                                                                 (i31.get_s (ref.cast (ref i31)
-                                                                                      (local.get $v)))))
+                                                                                     (local.get $v)))))
                                       (local.set $xs   (struct.get $Pair $d (local.get $node)))
                                       (br $loop)))
                          (ref.i31 (local.get $acc)))))
@@ -34975,7 +34975,7 @@
                             (local.set $prod (i32.mul (local.get $prod)
                                                       (i32.shr_s
                                                        (i31.get_s (ref.cast (ref i31)
-                                                                             (local.get $v)))
+                                                                            (local.get $v)))
                                                        (i32.const 1))))
                             (local.set $xs   (struct.get $Pair $d (local.get $node)))
                             (br $loop)))
@@ -35002,6 +35002,91 @@
                              (i31.get_s (ref.cast (ref i31) (local.get $y))))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         (func $unsafe-fx> (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a boolean
+
+               (if (result (ref eq))
+                   (i32.gt_s (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                             (i31.get_s (ref.cast (ref i31) (local.get $y))))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $unsafe-fx<= (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a boolean
+
+               (if (result (ref eq))
+                   (i32.le_s (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                             (i31.get_s (ref.cast (ref i31) (local.get $y))))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $unsafe-fx>= (type $Prim2)
+               (param $x (ref eq)) ;; x must be a fixnum (i31 with lsb = 0)
+               (param $y (ref eq)) ;; y must be a fixnum (i31 with lsb = 0)
+               (result   (ref eq)) ;; result is a boolean
+
+               (if (result (ref eq))
+                   (i32.ge_s (i31.get_s (ref.cast (ref i31) (local.get $x)))
+                             (i31.get_s (ref.cast (ref i31) (local.get $y))))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $unsafe-fxmin (type $Prim>=1)
+               (param $x0 (ref eq)) ;; first fixnum argument (i31 with lsb = 0)
+               (param $xs (ref eq)) ;; xs is a list of remaining fixnum arguments
+               (result   (ref eq))  ;; result is a fixnum (i31)
+
+               (local $node    (ref $Pair))
+               (local $fx      (ref eq))
+               (local $best    (ref eq))
+               (local $best-i32 i32)
+               (local $fx-i32   i32)
+
+               (local.set $best     (local.get $x0))
+               (local.set $best-i32 (i31.get_s (ref.cast (ref i31) (local.get $best))))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $fx   (struct.get $Pair $a (local.get $node)))
+                            (local.set $fx-i32 (i31.get_s (ref.cast (ref i31) (local.get $fx))))
+                            (if (i32.lt_s (local.get $fx-i32) (local.get $best-i32))
+                                (then (local.set $best     (local.get $fx))
+                                      (local.set $best-i32 (local.get $fx-i32))))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $best))
+
+         (func $unsafe-fxmax (type $Prim>=1)
+               (param $x0 (ref eq)) ;; first fixnum argument (i31 with lsb = 0)
+               (param $xs (ref eq)) ;; xs is a list of remaining fixnum arguments
+               (result   (ref eq))  ;; result is a fixnum (i31)
+
+               (local $node    (ref $Pair))
+               (local $fx      (ref eq))
+               (local $best    (ref eq))
+               (local $best-i32 i32)
+               (local $fx-i32   i32)
+
+               (local.set $best     (local.get $x0))
+               (local.set $best-i32 (i31.get_s (ref.cast (ref i31) (local.get $best))))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $xs) (global.get $null)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $xs)))
+                            (local.set $fx   (struct.get $Pair $a (local.get $node)))
+                            (local.set $fx-i32 (i31.get_s (ref.cast (ref i31) (local.get $fx))))
+                            (if (i32.gt_s (local.get $fx-i32) (local.get $best-i32))
+                                (then (local.set $best     (local.get $fx))
+                                      (local.set $best-i32 (local.get $fx-i32))))
+                            (local.set $xs (struct.get $Pair $d (local.get $node)))
+                            (br $loop)))
+               (local.get $best))
 
          
          ;; 17.2 Unsafe Character Operations

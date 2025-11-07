@@ -877,7 +877,9 @@
  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
  unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
  unsafe-fxabs
- unsafe-fx= unsafe-fx<
+
+ unsafe-fx= unsafe-fx< unsafe-fx> unsafe-fx<= unsafe-fx>=
+ unsafe-fxmin unsafe-fxmax
 
  unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
  unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin

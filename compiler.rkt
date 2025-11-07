@@ -1079,15 +1079,15 @@
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
   unsafe-fxquotient unsafe-fxremainder unsafe-fxmodulo
   unsafe-fxabs
+
+  unsafe-fx= unsafe-fx< unsafe-fx> unsafe-fx<= unsafe-fx>=
+  unsafe-fxmin unsafe-fxmax
   
   unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
   unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
   unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
   unsafe-flmin unsafe-flmax unsafe-flexpt
   unsafe-flrandom
-
-  unsafe-fx=
-  unsafe-fx<
 
   unsafe-car
   unsafe-cdr
@@ -4315,6 +4315,12 @@
         [(unsafe-fx+)                (inline-prim/variadic sym ae1 0)]
         [(unsafe-fx*)                (inline-prim/variadic sym ae1 0)]
         [(unsafe-fx-)                (inline-prim/variadic sym ae1 1)]
+        [(unsafe-fx=
+          unsafe-fx<
+          unsafe-fx>
+          unsafe-fx<=
+          unsafe-fx>=)               (inline-prim/fixed sym ae1 2)]
+        
         [(s-exp->fasl) ; 1 to 2 arguments
          ;               (in the keyword-less version in "core.rkt"
           (inline-prim/optional sym ae1 1 2)]
