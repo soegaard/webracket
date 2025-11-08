@@ -539,6 +539,7 @@
  bytes>?
  bytes->string/utf-8
  bytes-utf-8-length
+ bytes-utf-8-length
 
  ;; 4.6 Characters
  char? char->integer integer->char char-utf-8-length

@@ -6,6 +6,10 @@
 ;;; The following primitives are needed for regular expressions.
 ;;; When they are implemented, reneable "regexp.rkt" in "stdlib.rkt".
 
+;; Done
+;   [x] bytes-utf-8-length
+
+;; Todo
 '(abort-current-continuation
   call-with-continuation-prompt
   make-continuation-prompt-tag
@@ -14,7 +18,6 @@
   arity-at-least?
   
   bytes->string/latin-1
-  bytes-utf-8-length
   char-grapheme-step
   
   hash-iterate-first
@@ -885,6 +888,7 @@
   bytes-append bytes-append* bytes-join
   bytes->immutable-bytes
   bytes->string/utf-8
+  bytes->string/latin-1
   bytes-utf-8-length
   bytes->list list->bytes 
   bytes=? bytes<? bytes>?
@@ -4432,6 +4436,7 @@
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
          [(bytes->string/utf-8)        (inline-prim/optional sym ae1 1 4)]
+         [(bytes->string/latin-1)      (inline-prim/optional sym ae1 1 4)]
          [(bytes-utf-8-length)         (inline-prim/optional sym ae1 1 4)]
 
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"

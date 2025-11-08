@@ -12173,6 +12173,87 @@
 
                (ref.i31 (i32.shl (local.get $count) (i32.const 1))))
 
+         (func $raise-bytes->string/latin-1                  (unreachable))
+         (func $raise-bytes->string/latin-1:invalid-err-char (unreachable))
+
+         (func $bytes->string/latin-1 (type $Prim14)
+               (param $bstr      (ref eq)) ; bytes?
+               (param $err-char  (ref eq)) ; optional char?, defaults to #f
+               (param $start-raw (ref eq)) ; optional exact-nonnegative-integer?, defaults to 0
+               (param $end-raw   (ref eq)) ; optional exact-nonnegative-integer?, defaults to (bytes-length bstr)
+               (result           (ref eq))
+
+               (local $bs          (ref null $Bytes))
+               (local $arr         (ref $I8Array))
+               (local $len         i32)
+               (local $start       i32)
+               (local $end         i32)
+               (local $count       i32)
+               (local $codepoints  (ref $I32Array))
+               (local $i           i32)
+               (local $idx         i32)
+               (local $byte        i32)
+
+               ;; --- Validate byte string argument ---
+               (if (ref.test (ref $Bytes) (local.get $bstr))
+                   (then (local.set $bs (ref.cast (ref $Bytes) (local.get $bstr))))
+                   (else (call $raise-bytes->string/latin-1)))
+               (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+               (local.set $len (array.len (local.get $arr)))
+
+               ;; --- Decode optional start ---
+               (if (ref.eq (local.get $start-raw) (global.get $missing))
+                   (then (local.set $start (i32.const 0)))
+                   (else (if (ref.test (ref i31) (local.get $start-raw))
+                             (then (local.set $start
+                                              (i32.shr_u
+                                               (i31.get_u (ref.cast (ref i31) (local.get $start-raw)))
+                                               (i32.const 1))))
+                             (else (call $raise-bytes->string/latin-1)))))
+
+               ;; --- Decode optional end ---
+               (if (ref.eq (local.get $end-raw) (global.get $missing))
+                   (then (local.set $end (local.get $len)))
+                   (else (if (ref.test (ref i31) (local.get $end-raw))
+                             (then (local.set $end
+                                              (i32.shr_u
+                                               (i31.get_u (ref.cast (ref i31) (local.get $end-raw)))
+                                               (i32.const 1))))
+                             (else (call $raise-bytes->string/latin-1)))))
+
+               ;; --- Validate optional err-char (ignored value) ---
+               (if (ref.eq (local.get $err-char) (global.get $missing))
+                   (then (nop))
+                   (else (if (ref.eq (local.get $err-char) (global.get $false))
+                             (then (nop))
+                             (else (if (ref.test (ref i31) (local.get $err-char))
+                                       (then (nop))
+                                       (else (call $raise-bytes->string/latin-1:invalid-err-char)))))))
+
+               ;; --- Range checks ---
+               (if (i32.gt_u (local.get $start) (local.get $end))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $start) (local.get $end))
+                         (unreachable)))
+               (if (i32.gt_u (local.get $end) (local.get $len))
+                   (then (call $raise-bad-bytes-range (local.get $bstr) (local.get $start) (local.get $end))
+                         (unreachable)))
+
+               ;; --- Allocate codepoint array and copy bytes ---
+               (local.set $count (i32.sub (local.get $end) (local.get $start)))
+               (local.set $codepoints (call $i32array-make (local.get $count) (i32.const 0)))
+               (local.set $i    (i32.const 0))
+               (local.set $idx  (local.get $start))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $count)))
+                            (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+                            (array.set $I32Array (local.get $codepoints) (local.get $i) (local.get $byte))
+                            (local.set $i   (i32.add (local.get $i) (i32.const 1)))
+                            (local.set $idx (i32.add (local.get $idx) (i32.const 1)))
+                            (br $loop)))
+
+               (call $i32array->immutable-string (local.get $codepoints)))
+
          
          (func $raise-bytes->string/utf-8                  (unreachable))
          (func $raise-bytes->string/utf-8:invalid-err-char (unreachable))
