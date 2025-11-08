@@ -1177,6 +1177,18 @@
                            (equal? (string-utf-8-length "hello") 5)
                            (equal? (string-utf-8-length s2 1 4) 4))))
 
+              (list "bytes-utf-8-length"
+                    (let* ([b1 (bytes #xc3 #xa7 #xc3 #xb0 #xc3 #xb6 #xc2 #xa3)]
+                           [b2 (make-bytes 5 65)]
+                           [b3 (bytes 65 195 169 108 108 111)]
+                           [invalid (bytes 65 255 66)])
+                      (and (equal? (bytes-utf-8-length b1) 4)
+                           (equal? (bytes-utf-8-length b2) 5)
+                           (equal? (bytes-utf-8-length b3 #f 1 3) 1)
+                           (equal? (bytes-utf-8-length invalid) #f)
+                           (equal? (bytes-utf-8-length invalid #\uFFFD) 3))))
+
+
               (list "bytes=?"
                     (and (equal? (bytes=? #"a" #"a" #"a") #t)
                          (equal? (bytes=? #"a" #"a") #t)
@@ -3739,105 +3751,203 @@
                            (equal? (syntax->list (datum->syntax #f 'a))       #f))))
               ))
 
- #;(list "14.9 Structure Inspectors"
-       (list
-        (list "object-name/procedure"
-              (let* ([anon      (lambda (x) x)]
-                     [renamed   (procedure-rename +       'plus)]
-                     [renamed-2 (procedure-rename renamed 'again)])
-                (list (equal? (object-name +)         '+)
-                      (equal? (object-name renamed)   'plus)
-                      (equal? (object-name renamed-2) 'again)
-                      (equal? (object-name anon)      'anon))))
+ (list "14. Reflection and Security"
+       
+       #;(list "14.9 Structure Inspectors"
+               (list
+                (list "object-name/procedure"
+                      (let* ([anon      (lambda (x) x)]
+                             [renamed   (procedure-rename +       'plus)]
+                             [renamed-2 (procedure-rename renamed 'again)])
+                        (list (equal? (object-name +)         '+)
+                              (equal? (object-name renamed)   'plus)
+                              (equal? (object-name renamed-2) 'again)
+                              (equal? (object-name anon)      'anon))))
 
-        (list "object-name/structure-default"
-              (let ()
-                (struct plain (value))
-                (let ([instance (plain 42)])
-                  (and (equal? (object-name instance) 'plain)
-                       (equal? (object-name struct:plain) 'plain)))))
+                (list "object-name/structure-default"
+                      (let ()
+                        (struct plain (value))
+                        (let ([instance (plain 42)])
+                          (and (equal? (object-name instance) 'plain)
+                               (equal? (object-name struct:plain) 'plain)))))
 
-        (list "object-name/structure-property-index"
-              (let ()
-                (struct labelled (name value)
-                  #:property prop:object-name 0)
-                (let ([item (labelled 'custom-name 17)])
-                  (equal? (object-name item) 'custom-name))))
+                (list "object-name/structure-property-index"
+                      (let ()
+                        (struct labelled (name value)
+                          #:property prop:object-name 0)
+                        (let ([item (labelled 'custom-name 17)])
+                          (equal? (object-name item) 'custom-name))))
 
-        (list "object-name/structure-property-proc"
-              (let ()
-                (struct computed (value)
-                  #:property prop:object-name (lambda (_self) 'via-prop))
-                (equal? (object-name (computed 'payload)) 'via-prop)))
+                (list "object-name/structure-property-proc"
+                      (let ()
+                        (struct computed (value)
+                          #:property prop:object-name (lambda (_self) 'via-prop))
+                        (equal? (object-name (computed 'payload)) 'via-prop)))
 
-        (list "object-name/string-port"
-              (let* ([default-port (open-output-string)]
-                     [named-port   (open-output-string 'custom-port)])
-                (and (equal? (object-name default-port) 'string)
-                     (equal? (object-name named-port) 'custom-port))))
+                (list "object-name/string-port"
+                      (let* ([default-port (open-output-string)]
+                             [named-port   (open-output-string 'custom-port)])
+                        (and (equal? (object-name default-port) 'string)
+                             (equal? (object-name named-port) 'custom-port))))
 
-        (list "object-name/fallback"
-              (equal? (object-name 42) #f))
-        ))
+                (list "object-name/fallback"
+                      (equal? (object-name 42) #f))
+                ))
 
- (list "14.4 Linklets and the Core Compiler"
-       (list
-        (list "correlated basics"
-              (let* ([payload '(a b)]
-                     [srcloc  #(source 10 2 100 5)]
-                     [crlt    (datum->correlated payload srcloc)]
-                     [bare    (datum->correlated 'plain)])
-                (list (equal? (correlated? crlt)         #t)
-                      (equal? (correlated? payload)      #f)
-                      (equal? (correlated-source crlt)   'source)
-                      (equal? (correlated-line crlt)     10)
-                      (equal? (correlated-column crlt)   2)
-                      (equal? (correlated-position crlt) 100)
-                      (equal? (correlated-span crlt)     5)
-                      (equal? (correlated-e crlt)        payload)
-                      (equal? (correlated-source bare)   #f)
-                      (equal? (correlated-line bare)     #f)
-                      (equal? (correlated-column bare)   #f)
-                      (equal? (correlated-position bare) #f)
-                      (equal? (correlated-span bare)     #f))))
+       (list "14.4 Linklets and the Core Compiler"
+             (list
+              (list "correlated basics"
+                    (let* ([payload '(a b)]
+                           [srcloc  #(source 10 2 100 5)]
+                           [crlt    (datum->correlated payload srcloc)]
+                           [bare    (datum->correlated 'plain)])
+                      (list (equal? (correlated? crlt)         #t)
+                            (equal? (correlated? payload)      #f)
+                            (equal? (correlated-source crlt)   'source)
+                            (equal? (correlated-line crlt)     10)
+                            (equal? (correlated-column crlt)   2)
+                            (equal? (correlated-position crlt) 100)
+                            (equal? (correlated-span crlt)     5)
+                            (equal? (correlated-e crlt)        payload)
+                            (equal? (correlated-source bare)   #f)
+                            (equal? (correlated-line bare)     #f)
+                            (equal? (correlated-column bare)   #f)
+                            (equal? (correlated-position bare) #f)
+                            (equal? (correlated-span bare)     #f))))
 
-        (list "correlated->datum"
-              (let* ([inner     (datum->correlated 'x #(src 1 0 1 1))]
-                     [vec       (vector inner 'y)]
-                     [lst       (list inner vec)]
-                     [converted (correlated->datum lst)])
-                (list (pair? converted)
-                      (equal? (car converted) 'x)
-                      (let ([vec-result (cadr converted)])
-                        (list (equal? (vector? vec-result) #t)
-                              ; Full Racket doesn't recur through vectors
-                              #;(equal? (vector-ref vec-result 0) 'x)
-                              (vector-ref vec-result 0)
-                              (equal? (correlated? (vector-ref vec-result 0)) #t)
-                              (list (vector-ref vec-result 1) 'y))))))
+              (list "correlated->datum"
+                    (let* ([inner     (datum->correlated 'x #(src 1 0 1 1))]
+                           [vec       (vector inner 'y)]
+                           [lst       (list inner vec)]
+                           [converted (correlated->datum lst)])
+                      (list (pair? converted)
+                            (equal? (car converted) 'x)
+                            (let ([vec-result (cadr converted)])
+                              (list (equal? (vector? vec-result) #t)
+                                    ; Full Racket doesn't recur through vectors
+                                    #;(equal? (vector-ref vec-result 0) 'x)
+                                    (vector-ref vec-result 0)
+                                    (equal? (correlated? (vector-ref vec-result 0)) #t)
+                                    (list (vector-ref vec-result 1) 'y))))))
 
-        (list "correlated properties"
-              (let* ([base        (datum->correlated 'seed)]
-                     [with-tag    (correlated-property base     'tag 'value)]
-                     [with-number (correlated-property with-tag 123  'number)]
-                     [keys2       (correlated-property-symbol-keys with-number)]
-                     [updated     (correlated-property with-tag 'tag 'new)]
-                     [removed     (correlated-property updated  'tag #f)]
-                     [prop-source (datum->correlated 'copy #f with-tag)]
-                     [keys        (correlated-property-symbol-keys with-number)])
-                (list (equal? (correlated-property base        'tag) #f)
-                      (equal? (correlated-property with-tag    'tag) 'value)
-                      (equal? (correlated-property updated     'tag) 'new)
-                      (equal? (correlated-property removed     'tag) #f)
-                      (equal? (correlated-property with-number 123)  'number)
-                      (equal? (correlated-property prop-source 'tag) 'value)
-                      keys2
-                      keys                      
-                      (member 'tag keys)
-                      (not (equal? (member 'tag keys) #f))
-                      (list (member 123 keys) #t)
-                      (member 'tag keys)
-                      (member 123 keys))))))
+              (list "correlated properties"
+                    (let* ([base        (datum->correlated 'seed)]
+                           [with-tag    (correlated-property base     'tag 'value)]
+                           [with-number (correlated-property with-tag 123  'number)]
+                           [keys2       (correlated-property-symbol-keys with-number)]
+                           [updated     (correlated-property with-tag 'tag 'new)]
+                           [removed     (correlated-property updated  'tag #f)]
+                           [prop-source (datum->correlated 'copy #f with-tag)]
+                           [keys        (correlated-property-symbol-keys with-number)])
+                      (list (equal? (correlated-property base        'tag) #f)
+                            (equal? (correlated-property with-tag    'tag) 'value)
+                            (equal? (correlated-property updated     'tag) 'new)
+                            (equal? (correlated-property removed     'tag) #f)
+                            (equal? (correlated-property with-number 123)  'number)
+                            (equal? (correlated-property prop-source 'tag) 'value)
+                            keys2
+                            keys
+                            (member 'tag keys)
+                            (not (equal? (member 'tag keys) #f))
+                            (list (member 123 keys) #t)
+                            (member 'tag keys)
+                            (member 123 keys))))
+
+              (list "correlated properties"
+                    (let* ([base        (datum->correlated 'seed)]
+                           [with-tag    (correlated-property base     'tag 'value)]
+                           [with-number (correlated-property with-tag 123  'number)]
+                           [updated     (correlated-property with-tag 'tag 'new)]
+                           [removed     (correlated-property updated  'tag #f)]
+                           [prop-source (datum->correlated 'copy #f with-tag)]
+                           [keys        (correlated-property-symbol-keys with-number)])
+                      (and (equal? (correlated-property base        'tag) #f)
+                           (equal? (correlated-property with-tag    'tag) 'value)
+                           (equal? (correlated-property updated     'tag) 'new)
+                           (equal? (correlated-property removed     'tag) #f)
+                           (equal? (correlated-property with-number 123)  'number)
+                           (equal? (correlated-property prop-source 'tag) 'value)
+                           (equal? (and (member 'tag keys) #t)            #t)
+                           (equal? (not (member 123  keys)) #t)           #t)))
+
+              (list "make-instance/basic"
+                    (let* ([inst   (make-instance 'custom-name 'payload #f 'first 1 'second 'two)]
+                           [names  (instance-variable-names inst)]
+                           [sorted (sort names symbol<?)])
+                      (and (instance? inst)
+                           (equal? (instance-name inst) 'custom-name)
+                           (equal? (instance-data inst) 'payload)
+                           (equal? sorted '(first second))
+                           (equal? (instance-variable-value inst 'first) 1)
+                           (equal? (instance-variable-value inst 'second) 'two)
+                           (equal? (instance-variable-value inst 'missing (lambda () 'fallback))
+                                   'fallback))))
+
+              (list "instance variable mutation"
+                    (let ([inst (make-instance 'mutable)])
+                      (instance-set-variable-value! inst 'x 10)
+                      (instance-set-variable-value! inst 'y 20)
+                      (instance-set-variable-value! inst 'x 15)
+                      (instance-unset-variable! inst 'y)
+                      (let ([names (instance-variable-names inst)])
+                        (and (equal? (instance-variable-value inst 'x) 15)
+                             (equal? (instance-variable-value inst 'y (lambda () 'missing))
+                                     'missing)
+                             (equal? (sort names symbol<?) '(x))))))
+
+              (list "compiled linklet shares linklet accessors"
+                    (let* ([proc (lambda args (void))]
+                           [cl   (make-compiled-linklet 'demo '() '() proc)])
+                      (and (equal? (linklet? cl)                 #t)
+                           (equal? (linklet-name cl)             'demo)
+                           (equal? (linklet-import-variables cl) '())
+                           (equal? (linklet-export-variables cl) '()))))
+
+              (list "instantiate-linklet/fresh-instance"
+                    (let* ([compiled (make-compiled-linklet
+                                      'fresh-linklet
+                                      '()
+                                      '(v)
+                                      (lambda (self)
+                                        (instance-set-variable-value! self 'v 'fresh)
+                                        'ignored))]
+                           [result   (instantiate-linklet compiled '())])
+                      (and (instance? result)
+                           (equal? (instance-name result)              'fresh-linklet)
+                           (equal? (instance-variable-value result 'v) 'fresh))))
+
+              (list "instantiate-linklet/target-instance"
+                    (let* ([compiled (make-compiled-linklet
+                                      'targeted-linklet
+                                      '()
+                                      '(v)
+                                      (lambda (self)
+                                        (instance-set-variable-value! self 'v 'target-value)
+                                        'body-result))]
+                           [target   (make-instance 'target-instance)]
+                           [result   (instantiate-linklet compiled '() target)])
+                      (and (equal? result 'body-result)
+                           (equal? (instance-variable-value target 'v) 'target-value))))
+
+              (list "instantiate-linklet/imports"
+                    (let* ([import-inst (make-instance 'provider)]
+                           [_           (instance-set-variable-value! import-inst 'shared 42)]
+                           [compiled    (make-compiled-linklet
+                                         'uses-import
+                                         '((shared))
+                                         '(result)
+                                         (lambda (self imported)
+                                           (define shared-value (instance-variable-value imported 'shared))
+                                           (instance-set-variable-value! self 'result shared-value)
+                                           shared-value))]
+                           [target      (make-instance 'target)]
+                           [result      (instantiate-linklet compiled (list import-inst) target)])
+                      (and (equal? result 42)
+                           (equal? (instance-variable-value target 'result) 42))))
+
+              
+              
+             )))
 
 
  
