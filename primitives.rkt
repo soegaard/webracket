@@ -193,6 +193,36 @@
          ; fprintf*  ; todo: remove
          printf
          eprintf
+
+
+         ;;;
+         ;;; REGULAR EXPRESSIONS
+         ;;;
+
+         byte-pregexp
+         byte-pregexp?
+         byte-regexp
+         byte-regexp?
+         pregexp
+         pregexp?
+         regexp
+         ; regexp-capture-group-count  ; added in 8.15
+         regexp-match
+         regexp-match-peek
+         regexp-match-peek-immediate
+         regexp-match-peek-positions
+         regexp-match-peek-positions-immediate
+         regexp-match-peek-positions-immediate/end
+         regexp-match-peek-positions/end
+         regexp-match-positions
+         regexp-match-positions/end
+         regexp-match/end
+         regexp-match?
+         regexp-max-lookbehind
+         ; regexp-place-init!
+         regexp-replace
+         regexp-replace*
+         regexp?         
          )
 
 
@@ -508,6 +538,7 @@
  bytes<?
  bytes>?
  bytes->string/utf-8
+ bytes-utf-8-length
 
  ;; 4.6 Characters
  char? char->integer integer->char char-utf-8-length

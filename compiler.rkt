@@ -3,6 +3,44 @@
 (provide (all-defined-out))
   (require racket/set)
 
+;;; The following primitives are needed for regular expressions.
+;;; When they are implemented, reneable "regexp.rkt" in "stdlib.rkt".
+
+'(abort-current-continuation
+  call-with-continuation-prompt
+  make-continuation-prompt-tag
+
+  arity-at-least-value
+  arity-at-least?
+  
+  bytes->string/latin-1
+  bytes-utf-8-length
+  char-grapheme-step
+  
+  hash-iterate-first
+  hash-iterate-key
+  hash-iterate-next
+  hash-set
+  
+  make-input-port
+  make-weak-hash
+  peek-bytes-avail!
+  peek-bytes-avail!*
+  progress-evt?
+  prop:authentic
+  prop:custom-write
+  prop:equal+hash
+
+  raise-arguments-error
+  raise-arguments-error*
+  raise-range-error*
+  raise-result-error
+  
+  unquoted-printing-string)
+
+
+
+
 (require "expander.rkt"       ; provides topexpand
          "assembler.rkt"
          "priminfo.rkt"       ; information on Racket primitives
@@ -598,6 +636,7 @@
   bytes             ; used in datum construction
   string            ; used in datum construction
 
+  
   ; 4.10.1 Pair constructors and selectors
   pair?
   null?
@@ -846,6 +885,7 @@
   bytes-append bytes-append* bytes-join
   bytes->immutable-bytes
   bytes->string/utf-8
+  bytes-utf-8-length
   bytes->list list->bytes 
   bytes=? bytes<? bytes>?
 
@@ -3270,7 +3310,7 @@
       (displayln "\n---\n")
       (displayln bound-at-top)
       (displayln "\n---\n")
-      (pretty-print (unparse-LANF T)) (newline)
+      ; (pretty-print (unparse-LANF T)) (newline)
       (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))
     (values T ht abs)))
@@ -4392,6 +4432,7 @@
          [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
          [(bytes->string/utf-8)        (inline-prim/optional sym ae1 1 4)]
+         [(bytes-utf-8-length)         (inline-prim/optional sym ae1 1 4)]
 
          [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
          [(vector->values)             (inline-prim/optional sym ae1 1 3)]
