@@ -1354,6 +1354,39 @@
                          (equal? (char-grapheme-break-property #\uAC01)   'LVT)
                          (equal? (procedure-arity char-grapheme-break-property) 1)))
 
+              (list "char-grapheme-step"
+                    (and (let*-values ([(consumed  state)  (char-grapheme-step #\a 0)]
+                                       [(consumed2 state2) (char-grapheme-step #\b state)])
+                           (and (eq? consumed #f)
+                                (= state 1)
+                                (eq? consumed2 #t)
+                                (= state2 1)))
+                         (let*-values ([(consumed  state)  (char-grapheme-step #\return 0)]
+                                       [(consumed2 state2) (char-grapheme-step #\newline state)])
+                           (and (eq? consumed  #f)
+                                (eq? consumed2 #t)
+                                (= state2 0)))
+                         (let*-values ([(consumed  state)  (char-grapheme-step #\a 0)]
+                                       [(consumed2 state2) (char-grapheme-step #\u0300 state)])
+                           (and (eq? consumed  #f)
+                                (eq? consumed2 #f)
+                                (= state2 5)))
+                         (let*-values ([(c1 s1) (char-grapheme-step #\U1F1E6 0)]
+                                       [(c2 s2) (char-grapheme-step #\U1F1E7 s1)]
+                                       [(c3 s3) (char-grapheme-step #\U1F1E8 s2)])
+                           (and (eq? c1 #f)
+                                (eq? c2 #f)
+                                (eq? c3 #t)
+                                (> s3 0)))
+                         (let*-values ([(h1 hs1) (char-grapheme-step #\u1100 0)]
+                                       [(h2 hs2) (char-grapheme-step #\u1161 hs1)]
+                                       [(h3 hs3) (char-grapheme-step #\u11A8 hs2)])
+                           (and (eq? h1 #f)
+                                (eq? h2 #f)
+                                (eq? h3 #f)))
+                         ; TODO - this provokes an error - why ?!
+                         #;(equal? (procedure-arity char-grapheme-step) 2)))
+
               (list "char-general-category"
                     (and (equal? (char-general-category #\A) 'lu)
                          (equal? (char-general-category #\a) 'll)

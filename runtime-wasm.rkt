@@ -15637,7 +15637,219 @@
 
         ;; 4.6.5 Character Grapheme-Cluster Streaming
 
-        ;; todo  char-grapheme-step
+        (func $char-grapheme-step (type $Prim2)
+              (param $c     (ref eq))
+              (param $state (ref eq))
+              (result       (ref eq))
+
+              (local $c/i31         (ref i31))
+              (local $c/tag         i32)
+              (local $cp            i32)
+              (local $state/i31     (ref i31))
+              (local $state/raw     i32)
+              (local $state-val     i32)
+              (local $prev-last     i32)
+              (local $prev-base-field i32)
+              (local $prev-base     i32)
+              (local $prev-ri       i32)
+              (local $prev-ext      i32)
+              (local $prev-zwj      i32)
+              (local $curr-prop     i32)
+              (local $curr-ext      i32)
+              (local $boundary      i32)
+              (local $consumed      i32)
+              (local $prev-base/eff i32)
+              (local $prev-ri/eff   i32)
+              (local $prev-ext/eff  i32)
+              (local $prev-zwj/eff  i32)
+              (local $new-base      i32)
+              (local $new-ri        i32)
+              (local $new-zwj       i32)
+              (local $new-ext       i32)
+              (local $new-state     i32)
+              (local $base-field    i32)
+              (local $last-field    i32)
+
+              ;; Validate character argument
+              (if (i32.eqz (ref.test (ref i31) (local.get $c)))
+                  (then (call $raise-check-char (local.get $c)) (unreachable)))
+              (local.set $c/i31 (ref.cast (ref i31) (local.get $c)))
+              (local.set $c/tag (i31.get_u (local.get $c/i31)))
+              (if (i32.ne (i32.and (local.get $c/tag) (i32.const ,char-mask))
+                          (i32.const ,char-tag))
+                  (then (call $raise-check-char (local.get $c)) (unreachable)))
+              (local.set $cp (i32.shr_u (local.get $c/tag) (i32.const ,char-shift)))
+
+              ;; Validate fixnum state
+              (if (i32.eqz (ref.test (ref i31) (local.get $state)))
+                  (then (call $raise-check-fixnum (local.get $state)) (unreachable)))
+              (local.set $state/i31 (ref.cast (ref i31) (local.get $state)))
+              (local.set $state/raw (i31.get_s (local.get $state/i31)))
+              (if (i32.ne (i32.and (local.get $state/raw) (i32.const 1)) (i32.const 0))
+                  (then (call $raise-check-fixnum (local.get $state)) (unreachable)))
+              (local.set $state-val (i32.shr_s (local.get $state/raw) (i32.const 1)))
+
+              ;; Decode previous-state fields
+              (local.set $prev-last
+                         (i32.sub (i32.and (local.get $state-val) (i32.const 15))
+                                  (i32.const 1)))
+              (local.set $prev-base-field
+                         (i32.and (i32.shr_u (local.get $state-val) (i32.const 4))
+                                  (i32.const 15)))
+              (local.set $prev-base (local.get $prev-base-field))
+              (if (i32.eqz (local.get $prev-base-field))
+                  (then (if (i32.eqz (local.get $state-val))
+                            (then (local.set $prev-base (i32.const -1)))
+                            (else (local.set $prev-base (i32.const 0)))))
+                  (else (local.set $prev-base
+                                   (i32.sub (local.get $prev-base-field) (i32.const 1)))))
+              (local.set $prev-ri
+                         (i32.and (i32.shr_u (local.get $state-val) (i32.const 8))
+                                  (i32.const 1)))
+              (local.set $prev-ext
+                         (i32.and (i32.shr_u (local.get $state-val) (i32.const 9))
+                                  (i32.const 1)))
+              (local.set $prev-zwj
+                         (i32.and (i32.shr_u (local.get $state-val) (i32.const 10))
+                                  (i32.const 1)))
+
+              ;; Classify current character
+              (local.set $curr-prop
+                         (call $char-grapheme-break-property/ucs (local.get $cp)))
+              (local.set $curr-ext
+                         (i32.and (call $char-extended-pictographic?/ucs (local.get $cp))
+                                  (i32.const 1)))
+
+              ;; Determine whether a boundary has been crossed before this char
+              (if (i32.ge_s (local.get $prev-last) (i32.const 0))
+                  (then (local.set $boundary (i32.const 1)))
+                  (else (local.set $boundary (i32.const 0))))
+              (if (i32.ge_s (local.get $prev-last) (i32.const 0))
+                  (then
+                   ;; Handle CR × LF specially
+                   (if (i32.and (i32.eq (local.get $prev-last) (i32.const 1))
+                                (i32.eq (local.get $curr-prop) (i32.const 2)))
+                       (then (local.set $boundary (i32.const 0)))
+                       (else
+                        ;; Forced breaks around controls
+                        (if (i32.or (i32.eq (local.get $prev-last) (i32.const 1))
+                                    (i32.or (i32.eq (local.get $prev-last) (i32.const 2))
+                                            (i32.eq (local.get $prev-last) (i32.const 3))))
+                            (then (local.set $boundary (i32.const 1)))
+                            (else
+                             (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 1))
+                                         (i32.or (i32.eq (local.get $curr-prop) (i32.const 2))
+                                                 (i32.eq (local.get $curr-prop) (i32.const 3))))
+                                 (then (local.set $boundary (i32.const 1)))
+                                 (else
+                                  ;; Suppress breaks for specific combinations
+                                  (if (i32.eq (local.get $prev-last) (i32.const 7))
+                                      (then (local.set $boundary (i32.const 0))))
+                                  (if (i32.eq (local.get $curr-prop) (i32.const 8))
+                                      (then (local.set $boundary (i32.const 0))))
+                                  (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 4))
+                                              (i32.eq (local.get $curr-prop) (i32.const 5)))
+                                      (then (local.set $boundary (i32.const 0))))
+                                  (if (i32.eq (local.get $prev-base) (i32.const 9))
+                                      (then (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 9))
+                                                        (i32.or (i32.eq (local.get $curr-prop) (i32.const 10))
+                                                                (i32.or (i32.eq (local.get $curr-prop) (i32.const 12))
+                                                                        (i32.eq (local.get $curr-prop) (i32.const 13)))))
+                                                (then (local.set $boundary (i32.const 0))))))
+                                  (if (i32.or (i32.eq (local.get $prev-base) (i32.const 12))
+                                              (i32.eq (local.get $prev-base) (i32.const 10)))
+                                      (then (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 10))
+                                                        (i32.eq (local.get $curr-prop) (i32.const 11)))
+                                                (then (local.set $boundary (i32.const 0))))))
+                                  (if (i32.or (i32.eq (local.get $prev-base) (i32.const 13))
+                                              (i32.eq (local.get $prev-base) (i32.const 11)))
+                                      (then (if (i32.eq (local.get $curr-prop) (i32.const 11))
+                                                (then (local.set $boundary (i32.const 0))))))
+                                  (if (i32.and (i32.eq (local.get $prev-last) (i32.const 6))
+                                               (i32.eq (local.get $curr-prop) (i32.const 6)))
+                                      (then (if (i32.eq (local.get $prev-ri) (i32.const 1))
+                                                (then (local.set $boundary (i32.const 0))))))
+                                  (if (i32.and (local.get $prev-zwj) (local.get $curr-ext))
+                                      (then (local.set $boundary (i32.const 0))))))))))))
+
+              ;; Determine whether a cluster has completed
+              (local.set $consumed (local.get $boundary))
+              (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 2))
+                          (i32.eq (local.get $curr-prop) (i32.const 3)))
+                  (then (local.set $consumed (i32.const 1))))
+
+              ;; Reset effective context when a cluster completed
+              (local.set $prev-base/eff (local.get $prev-base))
+              (local.set $prev-ri/eff   (local.get $prev-ri))
+              (local.set $prev-ext/eff  (local.get $prev-ext))
+              (local.set $prev-zwj/eff  (local.get $prev-zwj))
+              (if (i32.eqz (local.get $consumed))
+                  (then)
+                  (else (local.set $prev-base/eff (i32.const -1))
+                        (local.set $prev-ri/eff   (i32.const 0))
+                        (local.set $prev-ext/eff  (i32.const 0))
+                        (local.set $prev-zwj/eff  (i32.const 0))))
+
+              ;; Update contextual fields with the current character
+              (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 4))
+                          (i32.or (i32.eq (local.get $curr-prop) (i32.const 5))
+                                  (i32.eq (local.get $curr-prop) (i32.const 8))))
+                  (then (local.set $new-base (local.get $prev-base/eff))
+                        (local.set $new-ext  (local.get $prev-ext/eff)))
+                  (else (local.set $new-base (local.get $curr-prop))
+                        (local.set $new-ext  (local.get $curr-ext))))
+
+              (if (i32.eq (local.get $curr-prop) (i32.const 6))
+                  (then (if (i32.eq (local.get $prev-base/eff) (i32.const 6))
+                            (then (local.set $new-ri (i32.xor (local.get $prev-ri/eff)
+                                                             (i32.const 1))))
+                            (else (local.set $new-ri (i32.const 1)))))
+                  (else (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 4))
+                                    (i32.or (i32.eq (local.get $curr-prop) (i32.const 5))
+                                            (i32.eq (local.get $curr-prop) (i32.const 8))))
+                            (then (local.set $new-ri (local.get $prev-ri/eff)))
+                            (else (local.set $new-ri (i32.const 0))))))
+
+              (if (i32.eq (local.get $curr-prop) (i32.const 5))
+                  (then (if (i32.eq (local.get $prev-ext/eff) (i32.const 1))
+                            (then (local.set $new-zwj (i32.const 1)))
+                            (else (local.set $new-zwj (i32.const 0)))))
+                  (else (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 4))
+                                    (i32.eq (local.get $curr-prop) (i32.const 8)))
+                            (then (local.set $new-zwj (local.get $prev-zwj/eff)))
+                            (else (local.set $new-zwj (i32.const 0))))))
+
+              ;; Assemble new state (0 for LF or Control)
+              (if (i32.or (i32.eq (local.get $curr-prop) (i32.const 2))
+                          (i32.eq (local.get $curr-prop) (i32.const 3)))
+                  (then (local.set $new-state (i32.const 0)))
+                  (else
+                   (local.set $base-field (i32.const 0))
+                   (if (i32.lt_s (local.get $new-base) (i32.const 0))
+                       (then (local.set $base-field (i32.const 0)))
+                       (else (if (i32.eqz (local.get $new-base))
+                                 (then (local.set $base-field (i32.const 0)))
+                                 (else (local.set $base-field
+                                                  (i32.add (local.get $new-base) (i32.const 1)))))))
+                   (local.set $last-field (i32.add (local.get $curr-prop) (i32.const 1)))
+                   (local.set $new-state
+                              (i32.or (local.get $last-field)
+                                      (i32.or (i32.shl (local.get $base-field) (i32.const 4))
+                                              (i32.or
+                                               (i32.shl (i32.and (local.get $new-ri) (i32.const 1))
+                                                        (i32.const 8))
+                                               (i32.or
+                                                (i32.shl (i32.and (local.get $new-ext) (i32.const 1))
+                                                         (i32.const 9))
+                                                (i32.shl (i32.and (local.get $new-zwj) (i32.const 1))
+                                                         (i32.const 10)))))))))
+
+              ;; Return two values as an array
+              (array.new_fixed $Values 2
+                               (if (result (ref eq)) (local.get $consumed)
+                                   (then (global.get $true))
+                                   (else (global.get $false)))
+                               (ref.i31 (i32.shl (local.get $new-state) (i32.const 1)))))
         
 
          ;;;

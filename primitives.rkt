@@ -550,6 +550,7 @@
  char-alphabetic? char-lower-case? char-upper-case? char-title-case?
  char-numeric? char-symbolic? char-punctuation? char-graphic?
  char-whitespace? char-blank? char-iso-control? char-extended-pictographic?
+ char-grapheme-step
 
  ;; 4.7 Symbols
  symbol?

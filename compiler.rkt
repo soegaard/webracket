@@ -8,6 +8,8 @@
 
 ;; Done
 ;   [x] bytes-utf-8-length
+;   [x] bytes->string/latin-1
+;   [x] char-grapheme-step
 
 ;; Todo
 '(abort-current-continuation
@@ -16,9 +18,6 @@
 
   arity-at-least-value
   arity-at-least?
-  
-  bytes->string/latin-1
-  char-grapheme-step
   
   hash-iterate-first
   hash-iterate-key
@@ -789,6 +788,8 @@
   char-blank?
   char-iso-control?
   char-extended-pictographic?
+
+  char-grapheme-step
 
   eq?
   eqv?
