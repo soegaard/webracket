@@ -1188,6 +1188,30 @@
                            (equal? (bytes-utf-8-length invalid) #f)
                            (equal? (bytes-utf-8-length invalid #\uFFFD) 3))))
 
+              (list "bytes->string/latin-1/basic"
+                    (let* ([bstr (bytes #xfe #xd3 #xd1 #xa5)]
+                           [result (bytes->string/latin-1 bstr)]
+                           [expected (string (integer->char 254)
+                                             (integer->char 211)
+                                             (integer->char 209)
+                                             (integer->char 165))])
+                      (equal? result expected)))
+
+              (list "bytes->string/latin-1/with-range"
+                    (let* ([bstr (bytes 65 66 67 68)]
+                           [slice (bytes->string/latin-1 bstr #\? 1 3)])
+                      (and (equal? slice "BC")
+                           (equal? (string-length slice) 2))))
+
+              (list "bytes->string/latin-1/ignore-err-char"
+                    (let* ([bstr (bytes 255 0 128)]
+                           [default (bytes->string/latin-1 bstr)]
+                           [with-err (bytes->string/latin-1 bstr #\X)])
+                      (and (equal? default with-err)
+                           (= (char->integer (string-ref default 0)) 255)
+                           (= (char->integer (string-ref default 1)) 0)
+                           (= (char->integer (string-ref default 2)) 128))))
+
 
               (list "bytes=?"
                     (and (equal? (bytes=? #"a" #"a" #"a") #t)
