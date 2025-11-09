@@ -168,4 +168,65 @@
        (raise (make-exn:fail:contract (render-message lines) #f))])))
 
 
+(define raise-argument-error*
+  ; todo: use the realm
+  (case-lambda
+    [(who realm expected v)
+     (raise-argument-error who realm expected v)]
+    [(who realm expected bad-pos . vs)
+     (apply raise-argument-error who realm expected vs)]))
+
+
+(define (error-message->adjusted-string name name-realm message message-realm)
+  ; todo: call an error message adjuster
+  (if name
+      (string-append name ": " message)
+      message))
+
+;; Modified from /racket/src/cs/rumble/error.ss
+
+(define (raise-arguments-error who-in what . more)
+  (do-raise-arguments-error who who-in primitive-realm what exn:fail:contract more))
+
+(define (raise-arguments-error* who-in realm what . more)
+  (do-raise-arguments-error who who-in realm what exn:fail:contract more))
+  
+(define (do-raise-arguments-error e-who who realm what exn:fail:contract more)  
+  #;(check e-who symbol? who)
+  #;(check e-who symbol? realm)
+  #;(check e-who string? what)
+  (raise
+   (exn:fail:contract
+    (error-message->adjusted-string
+     who realm
+     (apply
+      string-append
+      what
+      (let loop ([more more])
+        (cond
+          [(null? more) '()]
+          [(string? (car more))
+           (cond
+             [(null? (cdr more))
+              (raise-arguments-error e-who
+                                     "missing value after field string"
+                                     "string"
+                                     (car more))]
+             [else
+              (cons (string-append "\n  "
+                                   (car more) ": "
+                                   (let ([val (cadr more)])
+                                     (reindent/newline
+                                      (if (unquoted-printing-string? val)
+                                          (unquoted-printing-string-value val)
+                                          (error-value->string val)))))
+                    (loop (cddr more)))])]
+          [else
+           (raise-argument-error e-who "string?" (car more))])))
+     realm)
+    (current-continuation-marks))))
+
+
+
+
 
