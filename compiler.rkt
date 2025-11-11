@@ -12,7 +12,7 @@
 ;   [x] char-grapheme-step
 
 ;; Todo
-'(abort-current-continuation
+#;(abort-current-continuation
   call-with-continuation-prompt
   make-continuation-prompt-tag
 
@@ -1038,8 +1038,12 @@
   call-with-values
 
   ; 10.2 Exceptions
+  unquoted-printing-string?
+  unquoted-printing-string
+  unquoted-printing-string-value
+  
   make-srcloc
-  srcloc 
+  srcloc
   srcloc?
   srcloc-source
   srcloc-line
@@ -3314,7 +3318,7 @@
     (unless (set-empty? xs)
       (displayln "\n---\n")
       (displayln bound-at-top)
-      (displayln "\n---\n")
+      ; (displayln "\n---\n")
       ; (pretty-print (unparse-LANF T)) (newline)
       (displayln "\n---\n") (displayln xs) (newline)
       (error 'determine-free-variables "detected free variables (shouldn't be possible)"))

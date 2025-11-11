@@ -148,6 +148,14 @@
          make-exn:fail:syntax:missing-module
          make-exn:fail:syntax:unbound
 
+         error-message->adjusted-string
+         raise-arguments-error
+         raise-arguments-error*
+
+         unquoted-printing-string?
+         unquoted-printing-string
+         unquoted-printing-string-value
+         
           ;; syntax/readerr 
          raise-read-error
          raise-read-eof-error

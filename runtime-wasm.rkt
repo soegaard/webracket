@@ -1723,6 +1723,12 @@
                        (field $exports     (ref eq))    ; (listof symbol?)
                        (field $proc        (ref eq))    ; takes self instance plus instance arguments
                        )))
+
+          (type $UnquotedPrintingString
+                (sub $Heap
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $value (ref eq)))))
           
           ) ; rec
        
@@ -1963,8 +1969,53 @@
                (call $js-log (local.get $expected))
                (call $js-log (local.get $got))
                (unreachable))
-         
-         ;; Singletons
+
+         ;; Unquoted printing strings wrap a string but should display without
+         ;; additional quoting, matching the behavior of the underlying string.
+         (func $unquoted-printing-string? (type $Prim1)
+               (param $v (ref eq))    ;; any/c
+               (result   (ref eq))    ;; boolean?
+               
+               (if (result (ref eq))
+                   (ref.test (ref $UnquotedPrintingString) (local.get $v))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+        (func $unquoted-printing-string (type $Prim1)
+              (param $s (ref eq))    ;; string?
+              (result   (ref eq))    ;; unquoted-printing-string?
+
+              (local $str (ref $String))
+
+              (if (i32.eqz (ref.test (ref $String) (local.get $s)))
+                  (then (call $raise-argument-error:string-expected (local.get $s))
+                        (unreachable)))
+
+              (local.set $str (ref.cast (ref $String) (local.get $s)))
+
+              (struct.new $UnquotedPrintingString
+                          (i32.const 0)
+                          (local.get $str)))
+
+        (func $raise-argument-error:unquoted-printing-string-expected (unreachable))
+        
+        (func $unquoted-printing-string-value (type $Prim1)
+              (param $ups (ref eq))  ;; unquoted-printing-string?
+              (result     (ref eq))  ;; string?
+
+              (local $wrapped (ref $UnquotedPrintingString))
+
+              (if (i32.eqz (ref.test (ref $UnquotedPrintingString) (local.get $ups)))
+                  (then (call $raise-argument-error:unquoted-printing-string-expected (local.get $ups))
+                        (unreachable)))
+
+              (local.set $wrapped (ref.cast (ref $UnquotedPrintingString) (local.get $ups)))
+              (struct.get $UnquotedPrintingString $value (local.get $wrapped)))
+        
+        ;;;
+        ;;; Singletons
+        ;;;
+        
          (global $null              (ref eq) ,(Imm '()))
          (global $undefined         (ref eq) ,(Imm (undefined)))         ;  79
          (global $unsafe-undefined  (ref eq) ,(Imm (unsafe-undefined)))  ; 335
@@ -13040,7 +13091,7 @@
                (local $len   i32)
                (local $arr   (ref $I32Array))
                (local $pos   i32)
-
+               
                ;; === initialize non-defaultable refs ===
                (local.set $s (ref.cast (ref $String) (global.get $string:empty)))
                
@@ -35950,6 +36001,10 @@
                (if (ref.test (ref $Instance) (local.get $v))
                    (then (return (ref.cast (ref $String)
                                            (global.get $string:instance)))))
+               ;; --- Case: unquoted-printing-string ---
+               (if (ref.test (ref $UnquotedPrintingString) (local.get $v))
+                   (then (return (call $format/display:unquoted-printing-string
+                                       (ref.cast (ref $UnquotedPrintingString) (local.get $v))))))
                ;; --- Internal data types ---
                ;; These shouldn't leak to the outside, but nice to know if it happens.
                ;; --- Case: boxed --- (shouldn't happen)
@@ -36470,6 +36525,13 @@
                      (ref.cast (ref $String)
                                (global.get $string:->)))
                (call $growable-array-of-strings->string (local.get $out)))
+
+         (func $format/display:unquoted-printing-string
+               (param $ups (ref $UnquotedPrintingString))
+               (result (ref $String))
+
+               (ref.cast (ref $String)
+                         (struct.get $UnquotedPrintingString $value (local.get $ups))))
 
          (func $format/display:syntax
                (param $stx (ref eq))
