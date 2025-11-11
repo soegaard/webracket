@@ -127,7 +127,6 @@
        (set! value path)
        value])))
 
-
 ;;;
 ;;; WRITE
 ;;;
@@ -368,10 +367,12 @@
       [(box? v)       (emit "#&")
                       (write-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
+
+      [(unquoted-printing-string? v) (emit (unquoted-printing-string-value v))]
       
       [(eq? v undefined)        (emit "#<undefined>")]
       [(eq? v unsafe-undefined) (emit "#<unsafe-undefined>")]
-
+      
       [(external? v)  (emit "#<external>")]
       
       [else           (js-log v) (emit "#<unknown>")])
@@ -531,8 +532,9 @@
                       (display-value (unbox v))]
       [(procedure? v) (emit "#<procedure>")]
       [(external? v)  (emit "#<external>")]
+      [(unquoted-printing-string? v) (emit (unquoted-printing-string-value v))]
       ; If you see `(boxed ...)` something went wrong...
-      [(boxed? v)     (emit "(boxed ")
+      #;[(boxed? v)     (emit "(boxed ")
                       (display-value (unboxed v))
                       (emit ")")]
       [else           (emit "#<unknown>")])
@@ -825,7 +827,8 @@
   (truncate-to-width (get-output-string port) width))
 
 (define error-value->string-handler
-  (let ([value default-error-value->string-handler])
+  (let ([value (λ (value width)
+                 (default-error-value->string-handler value width))])
     (case-lambda
       [() value]
       [(handler)

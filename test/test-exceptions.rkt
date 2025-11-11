@@ -89,17 +89,16 @@
                (equal? (unquoted-printing-string? s)        #f)
                (equal? (unquoted-printing-string-value ups) s))))
 
-  ; Note: display and write are in stdlib, so they
-  ;       are not available here.
-  #;(list "unquoted-printing-string display/write"
-          (let* ([ups (unquoted-printing-string "x\ny")]
-                 [displayed (call-with-output-string
-                             (lambda (p)
-                               (display ups p)))]
-                 [written (call-with-output-string
+  ; Note: display and write are in stdlib, so use --stdlib
+  (list "unquoted-printing-string display/write"
+        (let* ([ups       (unquoted-printing-string "x\ny")]
+               [displayed (call-with-output-string
                            (lambda (p)
-                             (write ups p)))])
-            (and (equal? displayed "x\ny")
-                 (equal? written "x\ny"))))
+                             (display ups p)))]
+               [written (call-with-output-string
+                         (lambda (p)
+                           (write ups p)))])
+          (and (equal? displayed "x\ny")
+               (equal? written   "x\ny"))))
   )
  )
