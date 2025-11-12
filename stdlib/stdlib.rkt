@@ -5,6 +5,11 @@
 (include/reader "ports.rkt"       read-syntax/skip-first-line)
 (include/reader "writing.rkt"     read-syntax/skip-first-line)
 (include/reader "reading.rkt"     read-syntax/skip-first-line)
+(include/reader "evaluation.rkt"  read-syntax/skip-first-line)
+(include/reader "hash-code.rkt"   read-syntax/skip-first-line)
+; Pending implementation of more primitives.
+; (include/reader "regexp.rkt"      read-syntax/skip-first-line)
+
 
 
 ;; The standard library consists of the files above.
