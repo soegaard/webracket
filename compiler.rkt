@@ -433,6 +433,7 @@
     prop:procedure
     prop:authentic
     prop:custom-write
+    prop:equal+hash
 
     struct:exn
     struct:exn:fail
