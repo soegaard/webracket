@@ -24245,7 +24245,45 @@
                                  (local.set $alist (local.get $rest))
                                  (br $walk)))
                     (local.get $ht)))
+
+         ; NOTE - TODO - These "weak" hash tables are dummies.
+         ;             - They simply call the constructors of
+         ;               the non-weak hash table constructors.
          
+         (func $make-weak-hash (type $Prim01) ; one optional argument
+               (param $assocs (ref eq))
+               (result        (ref eq))
+
+               (if (ref.eq (local.get $assocs) (global.get $missing))
+                   (then (local.set $assocs (global.get $null))))
+               (call $make-hash (local.get $assocs)))
+
+         (func $make-weak-hasheq (type $Prim01) ; one optional argument
+               (param $assocs (ref eq))
+               (result        (ref eq))
+
+               (if (ref.eq (local.get $assocs) (global.get $missing))
+                   (then (local.set $assocs (global.get $null))))
+               (call $make-hasheq (local.get $assocs)))
+
+         (func $make-weak-hasheqv (type $Prim01) ; one optional argument
+               (param $assocs (ref eq))
+               (result        (ref eq))
+
+               (if (ref.eq (local.get $assocs) (global.get $missing))
+                   (then (local.set $assocs (global.get $null))))               
+               (call $make-hasheqv (local.get $assocs)))
+
+         (func $make-weak-hashalw (type $Prim01) ; one optional argument
+               (param $assocs (ref eq))
+               (result        (ref eq))
+
+               (if (ref.eq (local.get $assocs) (global.get $missing))
+                   (then (local.set $assocs (global.get $null))))
+               (call $make-hashalw (local.get $assocs)))
+               
+
+
 
          #;(func $raise-argument-error:hash-expected (unreachable))
 

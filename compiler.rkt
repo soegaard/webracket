@@ -26,14 +26,17 @@
 ;   [x] prop:equal+hash
 ;   [x] arity-at-least-value
 ;   [x] arity-at-least?
+;   [x] make-weak-hash
+
+; TODO
+
+;   [ ] format/display needs to have formating for hash tables
 
 ;; Todo
 #;(abort-current-continuation
    call-with-continuation-prompt
    make-continuation-prompt-tag
-
     
-   make-weak-hash       ;     
 
    make-input-port      ; note: The calls in "regexp.rkt" all have 4 arguments.
    progress-evt?
@@ -990,6 +993,11 @@
   make-hasheqv
   make-hash
   make-hashalw
+
+  make-weak-hasheq  ; for now same as make-hasheq
+  make-weak-hasheqv ; for now same as make-hasheqv
+  make-weak-hash    ; for now same as make-hash
+  make-weak-hashalw ; for now same as make-hashalw
 
   hash?
   hash-eq?
@@ -4487,7 +4495,10 @@
          [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
          [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
          [(make-hasheq make-hasheqv
-           make-hash make-hashalw)     (inline-prim/optional sym ae1 0 1)]
+                       make-hash make-hashalw)     (inline-prim/optional sym ae1 0 1)]
+
+         [(make-weak-hasheq make-weak-hasheqv
+           make-weak-hash   make-weak-hashalw)   (inline-prim/optional sym ae1 0 1)]
          [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
          [(string->number)             (inline-prim/optional sym ae1 1 5)]
          [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]

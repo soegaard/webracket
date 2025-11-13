@@ -746,6 +746,11 @@
  make-hash
  make-hashalw
 
+ make-weak-hasheq  
+ make-weak-hasheqv 
+ make-weak-hash    
+ make-weak-hashalw 
+
  eq-hash-code
  eqv-hash-code
  equal-hash-code
