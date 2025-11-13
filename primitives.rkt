@@ -864,6 +864,13 @@
  port-next-location
  port-count-lines!
  port-counts-lines?
+
+ ;; 13.8 Printer Extension
+ prop:custom-write
+ (for-syntax prop:custom-write)
+ custom-write?
+ custom-write-accessor
+
  
  ;; 14.1 Namespaces
  namespace?

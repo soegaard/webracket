@@ -929,6 +929,10 @@
           incomplete-arity
           prop:authentic
           authentic
+          prop:custom-write
+          custom-write
+          custom-write?
+          custom-write-accessor
 
           string
           unix
@@ -1095,6 +1099,7 @@
     (add-runtime-string-constant 'struct-open                "#(struct ")
     (add-runtime-string-constant 'struct?                    "struct?")
     (add-runtime-string-constant 'struct-type?               "struct-type?")
+    (add-runtime-string-constant 'custom-write?              "custom-write?")
     (add-runtime-string-constant 'struct->list:on-opaque     "one of 'error, 'return-false, or 'skip")
     (add-runtime-string-constant 'struct:prefix              "struct:")
     
@@ -29944,6 +29949,8 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
+         
+
          ;; Note: The #:on-opaque keyword is accepted as a positional optional argument.
          ;;       Keyword arguments are not yet supported, so callers must pass the
          ;;       mode as the second argument directly.
@@ -32989,6 +32996,109 @@
          ;;;
          ;;; 13. INPUT AND OUTPUT
          ;;;
+
+         ;; 13.8 Printer Extension
+
+         (func $custom-write? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $type      (ref null $StructType))
+               (local $struct    (ref $Struct))
+               (local $sentinel  (ref eq))
+               (local $prop-name (ref $Symbol))
+               (local $prop-val  (ref eq))
+
+               (if (ref.test (ref $Struct) (local.get $v))
+                   (then (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                         (local.set $type   (struct.get $Struct $type (local.get $struct))))
+                   (else (if (ref.test (ref $StructType) (local.get $v))
+                             (then (local.set $type (ref.cast (ref $StructType) (local.get $v))))
+                             (else (return (global.get $false))))))
+
+               (local.set $prop-name
+                          (ref.cast (ref $Symbol) (global.get $symbol:prop:custom-write)))
+               (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
+               (local.set $prop-val
+                          (call $struct-type-property-lookup-by-name
+                                (ref.as_non_null (local.get $type))
+                                (local.get $prop-name)
+                                (local.get $sentinel)))
+
+               (if (result (ref eq))
+                   (ref.eq (local.get $prop-val) (local.get $sentinel))
+                   (then (global.get $false))
+                   (else (global.get $true))))
+
+         (func $custom-write-accessor (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $type      (ref null $StructType))
+               (local $struct    (ref $Struct))
+               (local $sentinel  (ref eq))
+               (local $prop-name (ref $Symbol))
+               (local $prop-val  (ref eq))
+
+               (if (ref.test (ref $Struct) (local.get $v))
+                   (then (local.set $struct (ref.cast (ref $Struct)
+                                                      (local.get $v)))
+                         (local.set $type (struct.get $Struct $type
+                                                      (local.get $struct))))
+                   (else (if (ref.test (ref $StructType) (local.get $v))
+                             (then (local.set $type (ref.cast (ref $StructType)
+                                                              (local.get $v))))
+                             (else (call $raise-argument-error1
+                                         (global.get
+                                          $symbol:custom-write-accessor)
+                                         (global.get $string:custom-write?)
+                                         (local.get $v))
+                                   (unreachable)))))
+
+               (local.set $prop-name
+                          (ref.cast (ref $Symbol)
+                                    (global.get $symbol:prop:custom-write)))
+               (local.set $sentinel (call $cons (global.get $false)
+                                          (global.get $false)))
+               (local.set $prop-val
+                          (call $struct-type-property-lookup-by-name
+                                (ref.as_non_null (local.get $type))
+                                (local.get $prop-name)
+                                (local.get $sentinel)))
+
+               (if (ref.eq (local.get $prop-val) (local.get $sentinel))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:custom-write-accessor)
+                               (global.get $string:custom-write?)
+                               (local.get $v))
+                         (unreachable)))
+
+               (local.get $prop-val))
+
+         (func $format/display:struct/custom-write
+               (param $s    (ref $Struct))
+               (param $proc (ref $Procedure))
+               (result      (ref $String))
+
+               (local $port (ref $StringPort))
+               (local $args (ref $Args))
+               (local $inv  (ref $ProcedureInvoker))
+
+               (local.set $port
+                          (ref.cast (ref $StringPort)
+                                    (call $open-output-string (global.get $missing))))
+               (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
+               (local.set $args (array.new $Args (global.get $null) (i32.const 3)))
+               (array.set $Args (local.get $args) (i32.const 0) (local.get $s))
+               (array.set $Args (local.get $args) (i32.const 1) (local.get $port))
+               (array.set $Args (local.get $args) (i32.const 2) (global.get $false))
+               (drop (call_ref $ProcedureInvoker
+                               (local.get $proc)
+                               (local.get $args)
+                               (local.get $inv)))
+               (ref.cast (ref $String)
+                         (call $get-output-string (local.get $port))))
+         
 
          ;; 13.10 Fast-Load Serialization
 
@@ -36039,9 +36149,15 @@
                (param $v (ref eq))
                (result   (ref $String))
 
-               (local $s   (ref $String))
-               (local $i31 (ref i31))
-               (local $n   i32)
+               (local $s             (ref $String))
+               (local $i31           (ref i31))
+               (local $n             i32)
+               (local $struct        (ref $Struct))
+               (local $struct-type   (ref $StructType))
+               (local $cw-sentinel   (ref eq))
+               (local $cw-name       (ref $Symbol))
+               (local $cw-val        (ref eq))
+               (local $cw-proc       (ref $Procedure))
                ;; --- Case: fixnum ---
                (if (ref.test (ref i31) (local.get $v))
                    (then (local.set $i31 (ref.cast (ref i31) (local.get $v)))
@@ -36078,8 +36194,25 @@
                    (then (return (call $format/display:syntax (local.get $v)))))
                ;; --- Case: struct (must appear before procedure) ---
                (if (ref.test (ref $Struct) (local.get $v))
-                   (then (return (call $format/display:struct
-                                       (ref.cast (ref $Struct) (local.get $v))))))
+                   (then
+                    (local.set $struct      (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $struct-type (struct.get $Struct $type (local.get $struct)))
+                    (local.set $cw-name     (ref.cast (ref $Symbol)
+                                                      (global.get $symbol:prop:custom-write)))
+                    (local.set $cw-sentinel (call $cons (global.get $false) (global.get $false)))
+                    (local.set $cw-val      (call $struct-type-property-lookup-by-name
+                                                  (local.get $struct-type)
+                                                  (local.get $cw-name)
+                                                  (local.get $cw-sentinel)))
+                    (if (i32.eqz (ref.eq (local.get $cw-val) (local.get $cw-sentinel)))
+                        (then (if (ref.test (ref $Procedure) (local.get $cw-val))
+                                  (then (local.set $cw-proc
+                                                   (ref.cast (ref $Procedure)
+                                                             (local.get $cw-val)))
+                                        (return (call $format/display:struct/custom-write
+                                                      (local.get $struct)
+                                                      (local.get $cw-proc))))))
+                        (else (return (call $format/display:struct (local.get $struct)))))))
                ;; --- Case: closure ---
                (if (ref.test (ref $Closure) (local.get $v))
                    (then (return (call $format/display:procedure
@@ -39124,6 +39257,7 @@
                (global $prop:arity-string        (mut (ref eq)) (global.get $void))
                (global $prop:incomplete-arity    (mut (ref eq)) (global.get $void))
                (global $prop:authentic           (mut (ref eq)) (global.get $void))
+               (global $prop:custom-write        (mut (ref eq)) (global.get $void))
                
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
@@ -39236,7 +39370,15 @@
                                                  (global.get $null)
                                                  (global.get $false)
                                                  (global.get $false))))
-
+                     (global.set $prop:custom-write
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:prop:custom-write))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
                      
 
                      ;; Default to the host platform's path convention (currently Unix)

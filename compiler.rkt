@@ -21,6 +21,8 @@
 ;   [x] raise-result-error        (stdlib/expections.rkt)
 ;   [x] peek-bytes-avail!
 ;   [x] peek-bytes-avail!*
+;   [x] prop:authentic
+;   [x] prop:custom-write
 
 ;; Todo
 #;(abort-current-continuation
@@ -34,8 +36,6 @@
     make-weak-hash       ;     
     progress-evt?
 
-    prop:authentic
-    prop:custom-write
     prop:equal+hash
 )
 
@@ -432,6 +432,7 @@
     prop:object-name
     prop:procedure
     prop:authentic
+    prop:custom-write
 
     struct:exn
     struct:exn:fail
@@ -1088,7 +1089,10 @@
 
   syntax-srcloc  ; in racket/syntax-srcloc
 
-
+  ;; 13.8 Printer Extension
+  custom-write?
+  custom-write-accessor
+  
   ;; 14.9 Structure Inspectors
   object-name
   ; prop:object-name  (see non-literal-constants)

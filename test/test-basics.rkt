@@ -2946,7 +2946,23 @@
                     (let ()
                       (define-values (auth-type make-auth auth? auth-ref auth-set!)
                         (make-struct-type 'authv #f 0 0 #f (list (cons prop:authentic 'ignored))))
-                      (equal? (struct-type-authentic? auth-type) #t)))))
+                      (equal? (struct-type-authentic? auth-type) #t)))
+
+              (list "custom-write?/struct-and-type"
+                    (let ()
+                      (struct fancy (label)
+                        #:property prop:custom-write
+                        (lambda (self port mode)
+                          (if (eq? mode #f)
+                              (write-string "disp:" port)
+                              (write-string "write:" port))
+                          (write-string (fancy-label self) port)))
+                      (define fancy-value (fancy "ok"))
+                      (and (equal? (custom-write? fancy-value) #t)
+                           (equal? (custom-write? fancy)       #f)
+                           (equal? (custom-write? 'plain)      #f))))))
+
+       
        
        (list "5.6 Structure Utilities"
              (list
@@ -3534,7 +3550,27 @@
 
        
        (list "13.5 Writing"
-             (list))
+             (list
+              (list "custom-write-accessor/modes"
+                    (let ()
+                      (struct printable (text)
+                        #:property prop:custom-write
+                        (lambda (self port mode)
+                          (write-string (if (eq? mode #f) "[" "<") port)
+                          (write-string (printable-text self) port)
+                          (write-string (if (eq? mode #f) "]" ">") port)))
+                      (define value (printable "data"))
+                      (define proc (custom-write-accessor value))
+                      (define display-result
+                        (call-with-output-string
+                         (lambda (p)
+                           (proc value p #f))))
+                      (define write-result
+                        (call-with-output-string
+                         (lambda (p)
+                           (proc value p #t))))
+                      (and (equal? display-result "[data]")
+                           (equal? write-result "<data>"))))))
 
        (list "13.7 String Ports"
              (list
