@@ -829,6 +829,9 @@
  read-string!
  read-bytes
  read-string
+ read-bytes-avail!
+ read-bytes-avail!*
+ 
  byte-ready?
  char-ready?
  read-line

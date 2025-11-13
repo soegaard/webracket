@@ -27791,6 +27791,38 @@
                ;; --- Report number of bytes read ---
                (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
 
+         ;; NOTE: Like Racket's read-bytes-avail!, but currently only string ports are supported
+         ;;       and the runtime does not yet produce special results.
+         (func $read-bytes-avail! (type $Prim14)
+               (param $bstr  (ref eq)) ;; bytes?
+               (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result       (ref eq))
+
+               (call $read-bytes!
+                     (local.get $bstr)
+                     (local.get $in)
+                     (local.get $start)
+                     (local.get $end)))
+
+
+         ;; NOTE: Like Racket's read-bytes-avail!*, but currently only string ports are supported
+         ;;       and the runtime does not yet produce special results.
+         (func $read-bytes-avail!* (type $Prim14)
+               (param $bstr  (ref eq)) ;; bytes?
+               (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (param $start (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end   (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result       (ref eq))
+
+               (call $read-bytes-avail!
+                     (local.get $bstr)
+                     (local.get $in)
+                     (local.get $start)
+                     (local.get $end)))
+
+
 
          (func $read-string!:one-argument-is-not-yet-supported (unreachable))
 

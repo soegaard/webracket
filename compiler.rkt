@@ -10,35 +10,34 @@
 ;   [x] bytes-utf-8-length
 ;   [x] bytes->string/latin-1
 ;   [x] char-grapheme-step
+;   [x] unquoted-printing-string
+;   [x] hash-iterate-first        (stdlib/hash.rkt)
+;   [x] hash-iterate-key          (stdlib/hash.rkt)
+;   [x] hash-iterate-next         (stdlib/hash.rkt)
+;   [x] hash-set                  (stdlib/hash.rkt)
+;   [x] raise-arguments-error     (stdlib/expections.rkt)
+;   [x] raise-arguments-error*    (stdlib/expections.rkt)
+;   [x] raise-range-error*        (stdlib/expections.rkt)
+;   [x] raise-result-error        (stdlib/expections.rkt)
 
 ;; Todo
 #;(abort-current-continuation
-  call-with-continuation-prompt
-  make-continuation-prompt-tag
+   call-with-continuation-prompt
+    make-continuation-prompt-tag
 
-  arity-at-least-value
-  arity-at-least?
-  
-  hash-iterate-first
-  hash-iterate-key
-  hash-iterate-next
-  hash-set
-  
-  make-input-port
-  make-weak-hash
-  peek-bytes-avail!
-  peek-bytes-avail!*
-  progress-evt?
-  prop:authentic
-  prop:custom-write
-  prop:equal+hash
+    arity-at-least-value
+    arity-at-least?    
+    
+    make-input-port
+    make-weak-hash       ;     
+    peek-bytes-avail!
+    peek-bytes-avail!*
+    progress-evt?
+    prop:authentic
+    prop:custom-write
+    prop:equal+hash
 
-  raise-arguments-error
-  raise-arguments-error*
-  raise-range-error*
-  raise-result-error
-  
-  unquoted-printing-string)
+)
 
 
 
@@ -948,6 +947,9 @@
   read-string!
   read-bytes
   read-string
+  read-bytes-avail!
+  read-bytes-avail!*  
+
   byte-ready?
   char-ready?
   read-line
@@ -963,6 +965,7 @@
   newline
   write-bytes
   write-string
+
   
   port-next-location
   port-count-lines!
@@ -4417,6 +4420,8 @@
          [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
          [(read-char)                  (inline-prim/optional sym ae1 0 1)]
          [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
+         [(read-bytes-avail!)          (inline-prim/optional sym ae1 1 4)]
+         [(read-bytes-avail!*)         (inline-prim/optional sym ae1 1 4)]
          [(read-string!)               (inline-prim/optional sym ae1 1 4)]
          [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
          [(read-string)                (inline-prim/optional sym ae1 1 2)]
