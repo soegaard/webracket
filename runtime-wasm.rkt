@@ -32343,7 +32343,8 @@
                                                                         (i32.const 1)))
                                                      (array.get $Array (local.get $equal+hash-array) (i32.const 0))
                                                      (array.get $Array (local.get $equal+hash-array) (i32.const 1))
-                                                     (if (i32.eq (local.get $equal+hash-count) (i32.const 3))
+                                                     (if (result (ref eq))
+                                                         (i32.eq (local.get $equal+hash-count) (i32.const 3))
                                                          (then (array.get $Array (local.get $equal+hash-array) (i32.const 2)))
                                                          (else (global.get $false)))))
                          (local.set $processed
