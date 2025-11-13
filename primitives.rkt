@@ -278,7 +278,7 @@
  ;; equal-always-hash-code
  ;; equal-always-hash-code/recur
  ;; equal-always-secondary-hash-code
-
+prop:equal+hash
 
  ;; 4.2 Booleans
  not

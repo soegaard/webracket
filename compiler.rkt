@@ -23,21 +23,21 @@
 ;   [x] peek-bytes-avail!*
 ;   [x] prop:authentic
 ;   [x] prop:custom-write
+;   [x] prop:equal+hash
 
 ;; Todo
 #;(abort-current-continuation
    call-with-continuation-prompt
-    make-continuation-prompt-tag
+   make-continuation-prompt-tag
 
-    arity-at-least-value
-    arity-at-least?    
+   arity-at-least-value
+   arity-at-least?    
     
-    make-input-port
-    make-weak-hash       ;     
-    progress-evt?
-
-    prop:equal+hash
-)
+   make-input-port
+   make-weak-hash       ;     
+   progress-evt?
+   
+   )
 
 
 
