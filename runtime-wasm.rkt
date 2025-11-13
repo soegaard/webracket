@@ -6238,7 +6238,7 @@
                                    (local.get $prop-info)
                                    (ref.cast (ref eq) (local.get $s1))
                                    (ref.cast (ref eq) (local.get $s2))
-                                   (i32.const 0)))))
+                                   (i32.const 1)))))
 
                (local.set $prop-val
                           (call $struct-type-property-lookup-by-name
@@ -6252,7 +6252,7 @@
                                    (local.get $prop-info)
                                    (ref.cast (ref eq) (local.get $s2))
                                    (ref.cast (ref eq) (local.get $s1))
-                                   (i32.const 0)))))
+                                   (i32.const 1)))))
                
                (if (ref.eq (local.get $t1) (local.get $t2))
                    (then
@@ -6349,9 +6349,9 @@
                (local.set $variant (i32.shr_u (i31.get_u (local.get $tag)) (i32.const 1)))
 
                (if (i32.eq (local.get $mode) (i32.const 0))
-                   (then (local.set $recur    (global.get $equal+hash-recur/equal))
+                   (then (local.set $recur    (global.get $equal+hash-recur/equal-always))
                          (local.set $mode-val (global.get $false)))
-                   (else (local.set $recur    (global.get $equal+hash-recur/equal-always))
+                   (else (local.set $recur    (global.get $equal+hash-recur/equal))
                          (local.set $mode-val (global.get $true))))
 
                (if (i32.eq (local.get $variant) (i32.const 3))
@@ -6480,7 +6480,7 @@
                                    (local.get $prop-info)
                                    (ref.cast (ref eq) (local.get $s1))
                                    (ref.cast (ref eq) (local.get $s2))
-                                   (i32.const 1)))))
+                                   (i32.const 0)))))
 
                (local.set $prop-val
                           (call $struct-type-property-lookup-by-name
@@ -6494,7 +6494,7 @@
                                    (local.get $prop-info)
                                    (ref.cast (ref eq) (local.get $s2))
                                    (ref.cast (ref eq) (local.get $s1))
-                                   (i32.const 1)))))
+                                   (i32.const 0)))))
 
                (global.get $false))
 
@@ -26969,7 +26969,7 @@
                     (local.set $h (call $struct-equal+hash-hash
                                         (local.get $prop-info)
                                         (local.get $s)
-                                        (i32.const 0)))
+                                        (i32.const 1)))
                     (struct.set $Heap $hash (local.get $heap) (i32.const 0))
                     (return (local.get $h))))
                (local.set $h      (call $eqv-hash/i32 (local.get $type)))
