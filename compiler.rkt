@@ -19,6 +19,8 @@
 ;   [x] raise-arguments-error*    (stdlib/expections.rkt)
 ;   [x] raise-range-error*        (stdlib/expections.rkt)
 ;   [x] raise-result-error        (stdlib/expections.rkt)
+;   [x] peek-bytes-avail!
+;   [x] peek-bytes-avail!*
 
 ;; Todo
 #;(abort-current-continuation
@@ -30,8 +32,6 @@
     
     make-input-port
     make-weak-hash       ;     
-    peek-bytes-avail!
-    peek-bytes-avail!*
     progress-evt?
     prop:authentic
     prop:custom-write
@@ -4265,6 +4265,20 @@
        (define optionals (make-list (- max n) default))
        `(call ,($ sym) ,@aes ,@optionals))
 
+     ;; Inlines a call to a primitive that accepts optional arguments
+     ;; bundled into a rest list after `rest-start` mandatory arguments.
+     ;; This is used for $peek-bytes-avail! which takes at least 1
+     ;; argument and at most 6. Instead of introducing a new shape
+     ;; (would be $Prim16) we are using $Prim>=1 .
+     (define (inline-prim/optional-rest sym ae1 min max [rest-start min])
+       (define aes (AExpr* ae1))
+       (define n   (length aes))
+       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
+       (define mandatory (take aes rest-start))
+       (define rest       (build-rest-args (drop aes rest-start)))
+       `(call ,($ sym) ,@mandatory ,rest))
+
      (define (inline-range sym ae1)
        (define aes (AExpr* ae1))
        (match aes
@@ -4424,8 +4438,8 @@
          [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
          [(read-bytes-avail!)          (inline-prim/optional sym ae1 1 4)]
          [(read-bytes-avail!*)         (inline-prim/optional sym ae1 1 4)]
-         [(peek-bytes-avail!)          (inline-prim/optional sym ae1 2 6)]
-         [(peek-bytes-avail!*)         (inline-prim/optional sym ae1 2 6)]
+         [(peek-bytes-avail!)          (inline-prim/optional-rest sym ae1 2 6 1)]
+         [(peek-bytes-avail!*)         (inline-prim/optional-rest sym ae1 2 6 1)]
          [(read-string!)               (inline-prim/optional sym ae1 1 4)]
          [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
          [(read-string)                (inline-prim/optional sym ae1 1 2)]

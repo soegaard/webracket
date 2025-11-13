@@ -1305,9 +1305,7 @@
                                 (result (ref eq))))
           (type $Prim15   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
-          (type $Prim16   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
-                                (result (ref eq))))
-
+          ; Instead of introducing an $Prim16 use $Prim>=1 to reduce the number of shapes.
           (type $Prim23   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
           (type $Prim24   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
@@ -28482,15 +28480,62 @@
 
          ;; NOTE: Like Racket's peek-bytes-avail!, but currently only string ports are supported
          ;;       and the progress argument must be #f.
-         (func $peek-bytes-avail! (type $Prim16)
-               (param $bstr     (ref eq)) ;; bytes?
-               (param $skip     (ref eq)) ;; exact-nonnegative-integer?
-               (param $progress (ref eq)) ;; (or/c progress-evt? #f)    (optional, default = #f)
-               (param $in       (ref eq)) ;; input-port?                (optional, default = (current-input-port))
-               (param $start    (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
-               (param $end      (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
-               (result          (ref eq))
+         ;;       Takes at least 1 argument and at most 6.
+         ;;       Instead of introducing a new shaped ($Prim16) we reuse $Prim>=1
+         (func $peek-bytes-avail! (type $Prim>=1)
+               (param $bstr (ref eq)) ;; bytes?
+               (param $rest (ref eq)) ;; remaining arguments as a list
+               (result      (ref eq))
 
+               (local $args     (ref eq))
+               (local $node     (ref $Pair))
+               (local $arg      (ref eq))
+               (local $count    i32)
+               (local $skip     (ref eq))
+               (local $progress (ref eq))
+               (local $in       (ref eq))
+               (local $start    (ref eq))
+               (local $end      (ref eq))
+
+               ;; Initialize optional arguments to "missing"
+               (local.set $skip     (global.get $missing))
+               (local.set $progress (global.get $missing))
+               (local.set $in       (global.get $missing))
+               (local.set $start    (global.get $missing))
+               (local.set $end      (global.get $missing))
+
+               ;; Decode rest arguments (skip, progress, in, start, end)
+               (local.set $args  (local.get $rest))
+               (local.set $count (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (if (ref.eq (local.get $args) (global.get $null))
+                                (then (br $done)))
+                            (local.set $node (ref.cast (ref $Pair) (local.get $args)))
+                            (local.set $arg  (struct.get $Pair $a (local.get $node)))
+                            (local.set $args (struct.get $Pair $d (local.get $node)))
+                            (local.set $count (i32.add (local.get $count) (i32.const 1)))
+                            (if (i32.gt_u (local.get $count) (i32.const 5))
+                                (then (call $raise-arity-mismatch) (unreachable)))
+                            (if (i32.eq (local.get $count) (i32.const 1))
+                                (then (local.set $skip (local.get $arg)))
+                                (else
+                                 (if (i32.eq (local.get $count) (i32.const 2))
+                                     (then (local.set $progress (local.get $arg)))
+                                     (else
+                                      (if (i32.eq (local.get $count) (i32.const 3))
+                                          (then (local.set $in (local.get $arg)))
+                                          (else
+                                           (if (i32.eq (local.get $count) (i32.const 4))
+                                               (then (local.set $start (local.get $arg)))
+                                               (else (local.set $end (local.get $arg))))))))))
+                            (br $loop)))
+
+               ;; Require the skip argument
+               (if (ref.eq (local.get $skip) (global.get $missing))
+                   (then (call $raise-arity-mismatch) (unreachable)))
+
+               ;; Progress defaults to #f and must be #f
                (if (ref.eq (local.get $progress) (global.get $missing))
                    (then (local.set $progress (global.get $false))))
                (if (i32.eqz (ref.eq (local.get $progress) (global.get $false)))
@@ -28506,22 +28551,15 @@
 
          ;; NOTE: Like Racket's peek-bytes-avail!*, but currently only string ports are supported
          ;;       and the progress argument must be #f.
-         (func $peek-bytes-avail!* (type $Prim16)
-               (param $bstr     (ref eq))
-               (param $skip     (ref eq))
-               (param $progress (ref eq))
-               (param $in       (ref eq))
-               (param $start    (ref eq))
-               (param $end      (ref eq))
-               (result          (ref eq))
+         ;;       Takes at least 1 argument and at most 6.
+         (func $peek-bytes-avail!* (type $Prim>=1)
+               (param $bstr (ref eq))
+               (param $rest (ref eq))
+               (result      (ref eq))               
 
                (call $peek-bytes-avail!
                      (local.get $bstr)
-                     (local.get $skip)
-                     (local.get $progress)
-                     (local.get $in)
-                     (local.get $start)
-                     (local.get $end)))
+                     (local.get $rest)))
          
          (func $peek-string!:two-arguments-are-not-yet-supported (unreachable))
 

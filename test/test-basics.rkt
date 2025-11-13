@@ -2960,7 +2960,7 @@
                                 '#(struct:vect-point2 3 4))))))))
 
 
- #;(list "13. Input and Output"
+ (list "13. Input and Output"
 
        (list "13.1 Ports"
              (list
@@ -3057,6 +3057,40 @@
                       (and (equal? first 2)
                            (equal? buffer (bytes 1 2 0 0))
                            (eof-object? second))))
+
+              (list "read-bytes-avail!/basic"
+                    (let* ([buffer (make-bytes 6 (char->integer #\_))]
+                           [port   (open-input-bytes (bytes 65 66 67 68))]
+                           [count  (read-bytes-avail! buffer port 1 5)])
+                      (and (equal? count 4)
+                           (equal? buffer (bytes 95 65 66 67 68 95))
+                           (eof-object? (read-byte port)))))
+
+              (list "read-bytes-avail!/eof"
+                    (let* ([buffer (make-bytes 4 0)]
+                           [port   (open-input-bytes (bytes 1 2))]
+                           [first  (read-bytes-avail! buffer port 0 4)]
+                           [second (read-bytes-avail! buffer port 0 4)])
+                      (and (equal? first 2)
+                           (equal? buffer (bytes 1 2 0 0))
+                           (eof-object? second))))
+
+              (list "read-bytes-avail!*/basic"
+                    (let* ([buffer (make-bytes 5 (char->integer #\_))]
+                           [port   (open-input-bytes (bytes 70 71 72))]
+                           [count  (read-bytes-avail!* buffer port 1 4)])
+                      (and (equal? count 3)
+                           (equal? buffer (bytes 95 70 71 72 95))
+                           (eof-object? (read-bytes-avail!* buffer port 0 4)))))
+
+              (list "read-bytes-avail!*/zero"
+                    (let* ([buffer (make-bytes 4 0)]
+                           [port   (open-input-bytes (bytes 1 2 3))]
+                           [empty  (read-bytes-avail!* buffer port 2 2)]
+                           [count  (read-bytes-avail!* buffer port 0 3)])
+                      (and (equal? empty 0)
+                           (equal? count 3)
+                           (equal? buffer (bytes 1 2 3 0)))))
 
               (list "read-string!/basic"
                     (let* ([buffer (make-string 6 #\_)]
@@ -3347,6 +3381,41 @@
                            (equal? first 9)
                            (equal? second 10))))
 
+              (list "peek-bytes-avail!/basic"
+                    (let* ([buffer (make-bytes 4 0)]
+                           [port   (open-input-bytes (bytes 1 2 3))]
+                           [count  (peek-bytes-avail! buffer 0 #f port 0 3)]
+                           [a      (read-byte port)]
+                           [b      (read-byte port)]
+                           [c      (read-byte port)]
+                           [d      (read-byte port)])
+                      (and (equal? count 3)
+                           (equal? buffer (bytes 1 2 3 0))
+                           (equal? a 1)
+                           (equal? b 2)
+                           (equal? c 3)
+                           (eof-object? d))))
+
+              (list "peek-bytes-avail!/skip"
+                    (let* ([buffer (make-bytes 2 0)]
+                           [port   (open-input-bytes (bytes 9 8 7))]
+                           [count  (peek-bytes-avail! buffer 1 #f port 0 2)]
+                           [first  (read-byte port)]
+                           [rest   (read-bytes 2 port)])
+                      (and (equal? count 2)
+                           (equal? buffer (bytes 8 7))
+                           (equal? first 9)
+                           (equal? rest (bytes 8 7)))))
+
+              (list "peek-bytes-avail!*/zero"
+                    (let* ([buffer (make-bytes 1 111)]
+                           [port   (open-input-bytes (bytes 5 6))]
+                           [count  (peek-bytes-avail!* buffer 0 #f port 0 0)]
+                           [peeked (peek-byte port)])
+                      (and (equal? count 0)
+                           (equal? buffer (bytes 111))
+                           (equal? peeked 5))))
+
               (list "peek-string/basic"
                     (let* ([port  (open-input-string "webRacket")]
                            [chunk (peek-string 3 0 port)]
@@ -3521,7 +3590,29 @@
                            (begin (write-byte 9 port)
                                   (equal? (loc) '(2 8 4)))
                            (equal? (port-next-location 42) #f))))))
-             )
+       )
+
+ (list "10.2 Exceptions"
+             (list
+              (list "unquoted-printing-string basics"
+                    (let* ([s "hello"]
+                           [ups (unquoted-printing-string s)])
+                      (and (equal? (unquoted-printing-string? ups)      #t)
+                           (equal? (unquoted-printing-string? s)        #f)
+                           (equal? (unquoted-printing-string-value ups) s))))
+
+              ; Note: display and write are in stdlib, so they
+              ;       are not available here.
+              #;(list "unquoted-printing-string display/write"
+                    (let* ([ups (unquoted-printing-string "x\ny")]
+                           [displayed (call-with-output-string
+                                       (lambda (p)
+                                         (display ups p)))]
+                           [written (call-with-output-string
+                                      (lambda (p)
+                                        (write ups p)))])
+                      (and (equal? displayed "x\ny")
+                           (equal? written "x\ny"))))))
 
  #;(list "10.2 Exceptions"
        (list
