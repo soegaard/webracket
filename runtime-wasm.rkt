@@ -2211,9 +2211,16 @@
               (unreachable))
         
         ;; Shape codes:
-        ;;   0: exact 0     1: exact 1     2: exact 2     3: exact 3     4: exact 4
+        ;;   0: exact 0
+        ;;   1: exact 1
+        ;;   2: exact 2
+        ;;   3: exact 3
+        ;;   4: exact 4
         ;;   5: exact 5
-        ;;   6: at least 0  7: at least 1  8: at least 2  9: at least >=3
+        ;;   6: at least 0
+        ;;   7: at least 1
+        ;;   8: at least 2
+        ;;   9: at least >=3
         ;;  10-13: like 6-9 but pass rest arguments as $Args arrays
         ;;  14: between 2 and 3 arguments (3rd optional)
         ;;  15: between 3 and 4 arguments (4th optional)
