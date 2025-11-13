@@ -1305,6 +1305,8 @@
                                 (result (ref eq))))
           (type $Prim15   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
+          (type $Prim16   (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (result (ref eq))))
 
           (type $Prim23   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (result (ref eq))))
@@ -28469,6 +28471,51 @@
                (ref.i31 (i32.shl (local.get $copy-count) (i32.const 1))))
 
 
+         (func $peek-bytes-avail!:progress-not-supported (unreachable))
+
+         ;; NOTE: Like Racket's peek-bytes-avail!, but currently only string ports are supported
+         ;;       and the progress argument must be #f.
+         (func $peek-bytes-avail! (type $Prim16)
+               (param $bstr     (ref eq)) ;; bytes?
+               (param $skip     (ref eq)) ;; exact-nonnegative-integer?
+               (param $progress (ref eq)) ;; (or/c progress-evt? #f)    (optional, default = #f)
+               (param $in       (ref eq)) ;; input-port?                (optional, default = (current-input-port))
+               (param $start    (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
+               (param $end      (ref eq)) ;; exact-nonnegative-integer? (optional, default = (bytes-length bstr))
+               (result          (ref eq))
+
+               (if (ref.eq (local.get $progress) (global.get $missing))
+                   (then (local.set $progress (global.get $false))))
+               (if (i32.eqz (ref.eq (local.get $progress) (global.get $false)))
+                   (then (call $peek-bytes-avail!:progress-not-supported)
+                         (unreachable)))
+
+               (call $peek-bytes!
+                     (local.get $bstr)
+                     (local.get $skip)
+                     (local.get $in)
+                     (local.get $start)
+                     (local.get $end)))
+
+         ;; NOTE: Like Racket's peek-bytes-avail!*, but currently only string ports are supported
+         ;;       and the progress argument must be #f.
+         (func $peek-bytes-avail!* (type $Prim16)
+               (param $bstr     (ref eq))
+               (param $skip     (ref eq))
+               (param $progress (ref eq))
+               (param $in       (ref eq))
+               (param $start    (ref eq))
+               (param $end      (ref eq))
+               (result          (ref eq))
+
+               (call $peek-bytes-avail!
+                     (local.get $bstr)
+                     (local.get $skip)
+                     (local.get $progress)
+                     (local.get $in)
+                     (local.get $start)
+                     (local.get $end)))
+         
          (func $peek-string!:two-arguments-are-not-yet-supported (unreachable))
 
          ;; NOTE: The optional input-port argument currently needs to be

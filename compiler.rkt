@@ -948,7 +948,9 @@
   read-bytes
   read-string
   read-bytes-avail!
-  read-bytes-avail!*  
+  read-bytes-avail!*
+  peek-bytes-avail!
+  peek-bytes-avail!*
 
   byte-ready?
   char-ready?
@@ -4422,6 +4424,8 @@
          [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
          [(read-bytes-avail!)          (inline-prim/optional sym ae1 1 4)]
          [(read-bytes-avail!*)         (inline-prim/optional sym ae1 1 4)]
+         [(peek-bytes-avail!)          (inline-prim/optional sym ae1 2 6)]
+         [(peek-bytes-avail!*)         (inline-prim/optional sym ae1 2 6)]
          [(read-string!)               (inline-prim/optional sym ae1 1 4)]
          [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
          [(read-string)                (inline-prim/optional sym ae1 1 2)]

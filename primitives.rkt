@@ -831,6 +831,8 @@
  read-string
  read-bytes-avail!
  read-bytes-avail!*
+ peek-bytes-avail!
+ peek-bytes-avail!*
  
  byte-ready?
  char-ready?
