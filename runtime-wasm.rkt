@@ -956,6 +956,11 @@
           srcloc-span
           srcloc->string
 
+          arity-at-least
+          make-arity-at-least
+          arity-at-least?
+          arity-at-least-value
+
           correlated
           make-correlated
           correlated?
@@ -1139,7 +1144,8 @@
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
-
+    (add-runtime-string-constant 'arity-at-least?            "arity-at-least?")
+    
     (add-runtime-string-constant 'srcloc?                    "srcloc?")
     (add-runtime-string-constant 'srcloc-positive-or-false   "(or/c exact-positive-integer? #f)")
     (add-runtime-string-constant 'srcloc-nonnegative-or-false "(or/c exact-nonnegative-integer? #f)")
@@ -2084,6 +2090,9 @@
          
          ;; Cached srcloc struct type descriptor
          (global $srcloc-type (mut (ref null $StructType)) (ref.null $StructType))
+
+         ;; Cached arity-at-least struct type descriptor
+         (global $arity-at-least-type (mut (ref null $StructType)) (ref.null $StructType))
 
          ;; Cached correlated struct type descriptor
          (global $correlated-type (mut (ref null $StructType)) (ref.null $StructType))
@@ -32987,6 +32996,124 @@
          
          
          (func $raise-argument-error:procedure-expected (unreachable))
+
+         
+         ;; Support for the arity-at-least structure used by procedure-arity.
+         (func $ensure-arity-at-least-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $indices  (ref eq))
+
+               (local.set $existing (global.get $arity-at-least-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $indices (call $list-from-range/checked (i32.const 0) (i32.const 1)))
+                    (local.set $std
+                               (struct.new $StructType
+                                           (i32.const 0)
+                                           (ref.cast (ref $Symbol) (global.get $symbol:arity-at-least))
+                                           (global.get $false)
+                                           (i32.const 1)
+                                           (local.get $indices)
+                                           (global.get $null)
+                                           (global.get $null)
+                                           (ref.cast (ref eq) (call $struct-type-property-table-empty))
+                                           (global.get $false)
+                                           (local.get $indices)
+                                           (global.get $false)
+                                           (ref.cast (ref $Symbol) (global.get $symbol:arity-at-least))))
+                    (global.set $arity-at-least-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         (func $arity-at-least/make
+               (param $value i32)   ;; exact non-negative integer
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-arity-at-least-type))
+               (local.set $fields
+                          (array.new_fixed $Array 1
+                                           (ref.i31 (i32.shl (local.get $value) (i32.const 1)))))
+               (ref.cast (ref eq)
+                         (struct.new $Struct
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (ref.i31 (i32.const 0))
+                                     (global.get $false)
+                                     (ref.func $invoke-struct)
+                                     (local.get $std)
+                                     (local.get $fields))))
+
+         (func $raise-argument-error:arity-at-least-expected
+               (param $who (ref eq))
+               (param $got (ref eq))
+
+               (call $raise-argument-error1
+                     (local.get $who)
+                     (global.get $string:arity-at-least?)
+                     (local.get $got)))
+
+         (func $arity-at-least-unwrap
+               (param $who (ref eq))
+               (param $v   (ref eq))
+               (result (ref $Struct))
+
+               (local $struct (ref $Struct))
+               (local $type   (ref eq))
+               (local $std    (ref $StructType))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-arity-at-least-type))
+               (if (i32.eqz (ref.test (ref $Struct) (local.get $v)))
+                   (then (call $raise-argument-error:arity-at-least-expected (local.get $who) (local.get $v))
+                         (unreachable)))
+               (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+               (local.set $type   (struct.get $Struct $type (local.get $struct)))
+               (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+               (if (i32.eqz (local.get $ok))
+                   (then (call $raise-argument-error:arity-at-least-expected (local.get $who) (local.get $v))
+                         (unreachable)))
+               (local.get $struct))
+
+         (func $arity-at-least? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $type   (ref eq))
+               (local $std    (ref $StructType))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-arity-at-least-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $type   (struct.get $Struct $type (local.get $struct)))
+                    (local.set $ok     (call $struct-type-is-a?/i32 (local.get $type) (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         (func $arity-at-least-value (type $Prim1)
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (local $struct (ref $Struct))
+               (local $fields (ref $Array))
+
+               (local.set $struct (call $arity-at-least-unwrap
+                                         (global.get $symbol:arity-at-least-value)
+                                         (local.get $v)))
+               (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+               (array.get $Array (local.get $fields) (i32.const 0)))
          
          (func $procedure-arity (type $Prim1)
                ; Wrapper: accepts any value, checks that it’s a procedure, then delegates
@@ -33002,24 +33129,34 @@
                             (ref.cast (ref $Procedure) (local.get $proc))))
 
          (func $procedure-arity/checked
-               ; TODO: If you want Racket-style results, convert any negative marker m to
-               ;       a single (arity-at-least (-m - 1)) object (possibly combined with
-               ;       exact integers). For now we return ALL markers as fixnums, including
-               ;       negatives like -2.
+               ; Produces normalized arity information: exact integers or arity-at-least structs.
                (param $p (ref $Procedure))
                (result (ref eq))
 
-               (local $a    (ref eq))
-               (local $arr  (ref $I32Array))
-               (local $n    i32) (local $i i32) (local $m i32)
-               (local $list (ref eq))
-               (local $fx (ref i31))
+               (local $a         (ref eq))
+               (local $arr       (ref $I32Array))
+               (local $n         i32)
+               (local $i         i32)
+               (local $m         i32)
+               (local $list      (ref eq))
+               (local $fx        (ref i31))
+               (local $elem      (ref eq))
+               (local $arity-i32 i32)
+               (local $value     i32)
+
+               ;; Initialize non-defaultable locals
+               (local.set $elem (global.get $false))
 
                ;; 1. Extract arity field (either a fixnum (ref i31) or an $I32Array of markers)
                (local.set $a (struct.get $Procedure $arity (local.get $p)))
-               ;; 2. If it’s a single-arity fixnum, return it as-is
+               ;; 2. If it’s a single-arity fixnum, normalize negatives to arity-at-least
                (if (ref.test (ref i31) (local.get $a))
-                   (then (return (local.get $a))))
+                   (then (local.set $fx       (ref.cast (ref i31) (local.get $a)))
+                         (local.set $arity-i32 (i32.shr_s (i31.get_s (local.get $fx)) (i32.const 1)))
+                         (if (i32.ge_s (local.get $arity-i32) (i32.const 0))
+                             (then (return (local.get $a)))
+                             (else (local.set $value (i32.sub (i32.const -1) (local.get $arity-i32)))
+                                   (return (call $arity-at-least/make (local.get $value)))))))
                ;; 3. Otherwise, cast to $I32Array and build a list of ALL markers (incl. negatives)
                (local.set $arr (ref.cast (ref $I32Array) (local.get $a)))
                (local.set $n   (array.len (local.get $arr)))
@@ -33030,10 +33167,13 @@
                      ;; 4. If done, return the accumulated list
                      (if (i32.lt_s (local.get $i) (i32.const 0))
                          (then (return (local.get $list))))
-                     ;; 5. Read marker m at index i and cons it as a fixnum (handles m >= 0 and m < 0)
+                     ;; 5. Read marker m at index i and normalize it
                      (local.set $m (array.get $I32Array (local.get $arr) (local.get $i)))
-                     (local.set $fx (ref.i31 (i32.shl (local.get $m) (i32.const 1))))
-                     (local.set $list (call $cons (local.get $fx) (local.get $list)))
+                     (if (i32.ge_s (local.get $m) (i32.const 0))
+                         (then (local.set $elem (ref.i31 (i32.shl (local.get $m) (i32.const 1)))))
+                         (else (local.set $value (i32.sub (i32.const -1) (local.get $m)))
+                               (local.set $elem (call $arity-at-least/make (local.get $value)))))
+                     (local.set $list (call $cons (local.get $elem) (local.get $list)))
                      ;; 6. Decrement i and continue
                      (local.set $i (i32.sub (local.get $i) (i32.const 1)))
                      (br $rev))

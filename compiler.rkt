@@ -24,17 +24,18 @@
 ;   [x] prop:authentic
 ;   [x] prop:custom-write
 ;   [x] prop:equal+hash
+;   [x] arity-at-least-value
+;   [x] arity-at-least?
 
 ;; Todo
 #;(abort-current-continuation
    call-with-continuation-prompt
    make-continuation-prompt-tag
 
-   arity-at-least-value
-   arity-at-least?    
     
-   make-input-port
    make-weak-hash       ;     
+
+   make-input-port      ; note: The calls in "regexp.rkt" all have 4 arguments.
    progress-evt?
    
    )
@@ -1033,6 +1034,8 @@
   procedure-arity
   procedure-arity-mask
   procedure-arity-includes?
+  arity-at-least?
+  arity-at-least-value
 
   primitive?
   primitive-closure?

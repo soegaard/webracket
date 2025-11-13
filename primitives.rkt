@@ -754,6 +754,8 @@
  ;; 4.20 Procedures
  procedure? apply procedure-rename procedure->external
  procedure-arity procedure-arity-mask procedure-arity-includes?
+ arity-at-least?
+ arity-at-least-value
  primitive? primitive-closure? primitive-result-arity
  prop:procedure
  

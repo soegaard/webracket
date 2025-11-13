@@ -2836,7 +2836,32 @@
                         (and (equal? (sort (hash-values h)    (λ (x y) (< x y))) expected)
                              (equal? (sort (hash-values h #t) (λ (x y) (< x y))) expected)))))
               
-              )))
+              ))
+
+       (list "4.20.2 Reflecting on Procedures"
+             (list
+              (list "arity-at-least? from procedure-arity"
+                    (let ([arity (procedure-arity list)])
+                      (and (equal? (arity-at-least? arity) #t)
+                           (equal? (arity-at-least-value arity) 0))))
+
+              (list "arity-at-least-value for rest lambda"
+                    (let ([arity (procedure-arity (lambda (x . rest) x))])
+                      (and (arity-at-least? arity)
+                           (equal? (arity-at-least-value arity) 1))))
+
+              (list "procedure-arity case-lambda mix"
+                    (let ([arity (procedure-arity
+                                   (case-lambda
+                                     [(x) x]
+                                     [(x y . rest) y]))])
+                      (and (pair? arity)
+                           (equal? (car arity) 1)
+                           (let ([second (cadr arity)])
+                             (and (arity-at-least? second)
+                                  (equal? (arity-at-least-value second) 2))))))))
+       
+       ) ; ends "4. Datatypes"
 
  (list "5. Structures"
        (list "5.1 Structure Type Properties"
