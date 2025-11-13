@@ -262,6 +262,7 @@
  prop:method-arity-error
  prop:arity-string
  prop:incomplete-arity
+ prop:equal+hash
  
  ;; 4.1 Equality
  eq?

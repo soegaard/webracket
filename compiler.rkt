@@ -23,6 +23,7 @@
 ;   [x] peek-bytes-avail!*
 ;   [x] prop:authentic
 ;   [x] prop:custom-write
+;   [x] prop:equal+hash
 
 ;; Todo
 #;(abort-current-continuation
@@ -36,7 +37,6 @@
     make-weak-hash       ;     
     progress-evt?
 
-    prop:equal+hash
 )
 
 

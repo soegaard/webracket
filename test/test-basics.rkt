@@ -159,8 +159,42 @@
                    (and (fixnum? (equal-hash-code '(1 2)))
                         (eq? (equal-hash-code '(1 2))         (equal-hash-code '(1 2)))
                         (eq? (equal-hash-code (vector 'a 'b)) (equal-hash-code (vector 'a 'b)))
-                        (eq? (equal-hash-code (box 1))        (equal-hash-code (box 1))))))
-       
+                        (eq? (equal-hash-code (box 1))        (equal-hash-code (box 1)))))
+
+             (list "prop:equal+hash"
+                   (let ()
+                     (struct fish (size)
+                       #:property prop:equal+hash
+                       (list
+                        (lambda (self other recur)
+                          (and (fish? other)
+                               (recur (fish-size self) (fish-size other))))
+                        (lambda (self hash) (hash (fish-size self)))
+                        (lambda (self hash) (hash (fish-size self)))))
+                     (define f1 (fish 10))
+                     (define f2 (fish 10))
+                     (define f3 (fish 11))
+                     (struct coral (size)
+                       #:property prop:equal+hash
+                       (list
+                        (lambda (self other recur mode)
+                          (and (coral? other)
+                               (if mode
+                                   #f
+                                   (recur (coral-size self) (coral-size other)))))
+                        (lambda (self hash mode) (hash (coral-size self)))))
+                     (define c1 (coral 5))
+                     (define c2 (coral 5))
+                     (define c3 (coral 6))
+                     (and (equal? f1 f2)
+                          (equal? f2 f1)
+                          (eq? (equal-hash-code f1) (equal-hash-code f2))
+                          (equal? (equal? f1 f3) #f)
+                          (equal? c1 c2)
+                          (equal? (equal-always? c1 c2) #f)
+                          (equal? (equal? c1 c3) #f)
+                          (equal? (equal-always? c1 c3) #f)))))
+
        (list "4.2 Booleans"
              (list
               (list "not"
