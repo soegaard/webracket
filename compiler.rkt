@@ -33,10 +33,10 @@
     make-input-port
     make-weak-hash       ;     
     progress-evt?
+
     prop:authentic
     prop:custom-write
     prop:equal+hash
-
 )
 
 
@@ -431,6 +431,7 @@
     prop:method-arity-error
     prop:object-name
     prop:procedure
+    prop:authentic
 
     struct:exn
     struct:exn:fail
@@ -615,6 +616,7 @@
   struct-type-property?
   struct-type-property-accessor-procedure?
   struct-type-property-predicate-procedure?
+  struct-type-authentic?
   
   struct->list
   struct->vector
@@ -4488,6 +4490,7 @@
          [(struct-type-property?)      (inline-prim/fixed             sym ae1 1)]
          [(struct-type-property-accessor-procedure?)  (inline-prim/fixed            sym ae1 1)]
          [(struct-type-property-predicate-procedure?) (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
+         [(struct-type-authentic?)     (inline-prim/fixed             sym ae1 1)]
          [(struct->list)               (inline-prim/optional/default sym ae1 1  2 '(global.get $symbol:error))]
          [(struct->vector)             (inline-prim/optional         sym ae1 1  2)]
          [(log)                        (inline-prim/optional sym ae1 1 2)]

@@ -876,11 +876,13 @@
 
  ;; 14.5 Impersonators and Chaperones
  prop:impersonator-of
-
+ prop:authentic
+ 
  ;; 14.9 Structure Inspectors
  object-name
  prop:object-name
-
+ struct-type-authentic?
+ 
  ;; 14.14 Linklets and the Core Compiler
  correlated?
  correlated-source

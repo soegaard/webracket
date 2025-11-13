@@ -927,6 +927,8 @@
           arity-string
           prop:incomplete-arity
           incomplete-arity
+          prop:authentic
+          authentic
 
           string
           unix
@@ -1092,6 +1094,7 @@
     (add-runtime-string-constant 'struct-type-descriptor     "#<struct-type-descriptor>")
     (add-runtime-string-constant 'struct-open                "#(struct ")
     (add-runtime-string-constant 'struct?                    "struct?")
+    (add-runtime-string-constant 'struct-type?               "struct-type?")
     (add-runtime-string-constant 'struct->list:on-opaque     "one of 'error, 'return-false, or 'skip")
     (add-runtime-string-constant 'struct:prefix              "struct:")
     
@@ -29912,6 +29915,35 @@
                      (br $walk))
                (unreachable))
 
+         (func $struct-type-authentic? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+
+               (local $std   (ref $StructType))
+               (local $props (ref $HashEqMutable))
+               (local $has   i32)
+
+               (if (i32.eqz (ref.test (ref $StructType) (local.get $v)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:struct-type-authentic?)
+                               (global.get $string:struct-type?)
+                               (local.get $v))
+                         (unreachable)))
+
+               (local.set $std (ref.cast (ref $StructType) (local.get $v)))
+               (local.set $props
+                          (ref.cast (ref $HashEqMutable)
+                                    (struct.get $StructType $properties (local.get $std))))
+               (local.set $has
+                          (call $struct-type-property-table-has-name?/i32
+                                (local.get $props)
+                                (ref.cast (ref $Symbol)
+                                          (global.get $symbol:prop:authentic))))
+               (if (result (ref eq))
+                   (i32.eq (local.get $has) (i32.const 1))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
          ;; Note: The #:on-opaque keyword is accepted as a positional optional argument.
          ;;       Keyword arguments are not yet supported, so callers must pass the
          ;;       mode as the second argument directly.
@@ -31960,6 +31992,11 @@
                                 (local.get $prop)
                                 (local.get $value)
                                 (local.get $sti)))
+               (if (i32.eq (call $symbol=?/i32
+                                       (struct.get $StructTypeProperty $name (local.get $prop))
+                                       (global.get $symbol:prop:authentic))
+                                (i32.const 1))
+                   (then (local.set $processed (global.get $true))))
                (local.set $existing
                           (call $hasheq-ref/plain
                                 (ref.cast (ref eq) (local.get $table))
@@ -39086,6 +39123,7 @@
                (global $prop:method-arity-error  (mut (ref eq)) (global.get $void))
                (global $prop:arity-string        (mut (ref eq)) (global.get $void))
                (global $prop:incomplete-arity    (mut (ref eq)) (global.get $void))
+               (global $prop:authentic           (mut (ref eq)) (global.get $void))
                
                (func $get-bytes (export "get_bytes")
                      (result (ref $Bytes))
@@ -39185,6 +39223,15 @@
                                            (call $make-struct-type-property-descriptor/checked
                                                  (ref.cast (ref $Symbol)
                                                            (global.get $symbol:incomplete-arity))
+                                                 (global.get $false)
+                                                 (global.get $null)
+                                                 (global.get $false)
+                                                 (global.get $false))))
+                     (global.set $prop:authentic
+                                 (ref.cast (ref eq)
+                                           (call $make-struct-type-property-descriptor/checked
+                                                 (ref.cast (ref $Symbol)
+                                                           (global.get $symbol:prop:authentic))
                                                  (global.get $false)
                                                  (global.get $null)
                                                  (global.get $false)

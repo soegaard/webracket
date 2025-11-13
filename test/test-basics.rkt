@@ -2804,7 +2804,7 @@
               
               )))
 
- #;(list "5. Structures"
+ (list "5. Structures"
        (list "5.1 Structure Type Properties"
              (list
               (list "make-struct-type-property/basic"
@@ -2931,6 +2931,23 @@
               
               ))
 
+       (list "5.1 Structure Type Properties"
+             (list
+              (list "struct-type-authentic?/basic"
+                    (let ()
+                      (define-values (plain-type make-plain plain? plain-ref plain-set!)
+                        (make-struct-type 'plain #f 0 0))
+                      (define-values (auth-type make-auth auth? auth-ref auth-set!)
+                        (make-struct-type 'auth #f 0 0 #f (list (cons prop:authentic #t))))
+                      (and (equal? (struct-type-authentic? plain-type) #f)
+                           (equal? (struct-type-authentic? auth-type) #t))))
+
+              (list "struct-type-authentic?/value-ignored"
+                    (let ()
+                      (define-values (auth-type make-auth auth? auth-ref auth-set!)
+                        (make-struct-type 'authv #f 0 0 #f (list (cons prop:authentic 'ignored))))
+                      (equal? (struct-type-authentic? auth-type) #t)))))
+       
        (list "5.6 Structure Utilities"
              (list
               (list "struct->list/basic"
