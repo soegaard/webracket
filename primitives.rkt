@@ -829,6 +829,7 @@
  output-port?
 
  call-with-output-string
+ make-input-port
 
  ;; 13.2 Byte and String Input
  read-byte

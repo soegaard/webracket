@@ -1307,9 +1307,9 @@
           (type $Prim>=3  (func (param (ref eq)) (param (ref eq)) (param (ref eq))
                                 (param (ref eq))      ;; rest list
                                 (result (ref eq))))
-
-          
-          
+          (type $Prim>=4  (func (param (ref eq)) (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (param (ref eq))      ;; rest list
+                                (result (ref eq))))          
 
           (type $Prim01   (func (param (ref eq)) (result (ref eq))))
           (type $Prim02   (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
@@ -1604,6 +1604,25 @@
                        (field $utf8-len    (mut i32))     ;; 0 = idle, 1-4 = number of bytes expected
                        (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
                        (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
+
+          (type $CustomInputPort
+                (sub $InputPort
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))                 ; the port name   (any/c)
+                       (field $bytes (mut (ref $Bytes)))             ; scratch buffer  (bytes)
+                       (field $len   (mut i32))                      ; unused length placeholder
+                       (field $idx   (mut i32))                      ; unused index placeholder
+                       (field $loc   (mut (ref $Location)))          ; the current location
+                       (field $read-proc          (mut (ref eq)))    ; required read-in argument
+                       (field $peek-proc          (mut (ref eq)))    ; required peek argument
+                       (field $close-proc         (mut (ref eq)))    ; required close argument
+                       (field $get-progress-evt   (mut (ref eq)))    ; optional, default = #f
+                       (field $commit-proc        (mut (ref eq)))    ; optional, default = #f
+                       (field $get-location-proc  (mut (ref eq)))    ; optional, default = #f
+                       (field $count-lines-proc   (mut (ref eq)))    ; optional, default = void
+                       (field $init-position-arg  (mut (ref eq)))    ; optional, default = 1
+                       (field $buffer-mode-arg    (mut (ref eq)))))) ; optional, default = #f
 
           
           (type $Hash   ; abstract super type for hashtables
@@ -27795,6 +27814,96 @@
                      (global.get $missing)
                      (global.get $missing)))
 
+         ;; NOTE: This initial implementation only supports delegating reads and
+         ;;       peeks to other input ports. Procedure arguments other than
+         ;;       the close handler are currently unsupported.
+         (func $make-input-port (type $Prim>=4)
+               (param $name   (ref eq)) ;; any/c
+               (param $read   (ref eq)) ;; input-port? or procedure?
+               (param $peek   (ref eq)) ;; input-port? or #f
+               (param $close  (ref eq)) ;; procedure?
+               (param $rest   (ref eq)) ;; list of optional arguments (get-progress-evt commit get-location count-lines! init-position buffer-mode)
+               (result        (ref eq))
+
+               (local $args          (ref eq))
+               (local $node          (ref $Pair))
+               (local $arg           (ref eq))
+               (local $count         i32)
+               (local $progress-evt  (ref eq))
+               (local $commit-proc   (ref eq))
+               (local $get-location  (ref eq))
+               (local $count-lines!  (ref eq))
+               (local $init-position (ref eq))
+               (local $buffer-mode   (ref eq))
+               (local $loc           (ref $Location))
+               (local $bytes         (ref $Bytes))
+
+               ;; --- Initialize optional arguments with their defaults ---
+               (local.set $progress-evt  (global.get $false))
+               (local.set $commit-proc   (global.get $false))
+               (local.set $get-location  (global.get $false))
+               (local.set $count-lines!  (global.get $void))
+               (local.set $init-position (ref.i31 (i32.shl (i32.const 1) (i32.const 1))))
+               (local.set $buffer-mode   (global.get $false))
+
+               ;; --- Decode optional rest arguments ---
+               (local.set $args  (local.get $rest))
+               (local.set $count (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (if (ref.eq (local.get $args) (global.get $null))
+                                (then (br $done)))
+                            (local.set $node  (ref.cast (ref $Pair) (local.get $args)))
+                            (local.set $arg   (struct.get $Pair $a (local.get $node)))
+                            (local.set $args  (struct.get $Pair $d (local.get $node)))
+                            (local.set $count (i32.add (local.get $count) (i32.const 1)))
+                            (if (i32.gt_u (local.get $count) (i32.const 6))
+                                (then (call $raise-arity-mismatch) (unreachable)))
+                            (if (i32.eq (local.get $count) (i32.const 1))
+                                (then (local.set $progress-evt (local.get $arg)))
+                                (else
+                                 (if (i32.eq (local.get $count) (i32.const 2))
+                                     (then (local.set $commit-proc (local.get $arg)))
+                                     (else
+                                      (if (i32.eq (local.get $count) (i32.const 3))
+                                          (then (local.set $get-location (local.get $arg)))
+                                          (else
+                                           (if (i32.eq (local.get $count) (i32.const 4))
+                                               (then (local.set $count-lines! (local.get $arg)))
+                                               (else
+                                                (if (i32.eq (local.get $count) (i32.const 5))
+                                                    (then (local.set $init-position (local.get $arg)))
+                                                    (else (local.set $buffer-mode (local.get $arg))))))))))))
+                            (br $loop)))
+
+               ;; --- For now only support delegating to existing input ports ---
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $read)))
+                   (then (return (global.get $false))))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $peek)))
+                   (then (if (ref.eq (local.get $peek) (global.get $false))
+                             (then)
+                             (else (return (global.get $false))))))
+
+               (local.set $bytes (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               (local.set $loc   (ref.cast (ref $Location) (call $make-initial-location)))
+
+               (struct.new $CustomInputPort
+                           (i32.const 0)              ;; $hash
+                           (local.get $name)          ;; $name
+                           (local.get $bytes)         ;; $bytes (scratch buffer)
+                           (i32.const 0)              ;; $len placeholder
+                           (i32.const 0)              ;; $idx placeholder
+                           (local.get $loc)           ;; $loc
+                           (local.get $read)          ;; $read-proc
+                           (local.get $peek)          ;; $peek-proc
+                           (local.get $close)         ;; $close-proc
+                           (local.get $progress-evt)  ;; $get-progress-evt
+                           (local.get $commit-proc)   ;; $commit-proc
+                           (local.get $get-location)  ;; $get-location-proc
+                           (local.get $count-lines!)  ;; $count-lines-proc
+                           (local.get $init-position) ;; $init-position-arg
+                           (local.get $buffer-mode))) ;; $buffer-mode-arg
+
 
          (func $eof-object? (type $Prim1)
                (param $v (ref eq))
@@ -27842,6 +27951,41 @@
          ;;;  13.2  Byte and String Input
          ;;;
 
+         (func $read-byte/custom  ; read byte from custom input port 
+               (param $port (ref $CustomInputPort))
+               (result      (ref eq))
+
+               (local $delegate (ref eq))
+
+               (local.set $delegate (struct.get $CustomInputPort $read-proc (local.get $port)))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $delegate)))
+                   (then (return (global.get $false))))
+
+               (call $read-byte (local.get $delegate)))
+
+         (func $peek-byte/custom ; peek byte from custom input port
+               (param $port (ref $CustomInputPort))
+               (param $skip (ref eq)) ;; exact-nonnegative-integer?, default = 0
+               (result (ref eq))
+
+               (local $delegate (ref eq))
+               (local $skip-arg (ref eq))
+
+               (local.set $delegate (struct.get $CustomInputPort $peek-proc (local.get $port)))
+               (if (ref.eq (local.get $delegate) (global.get $false))
+                   (then (return (global.get $false))))
+
+               (local.set $skip-arg (local.get $skip))
+               (if (ref.eq (local.get $skip-arg) (global.get $missing))
+                   (then (local.set $skip-arg (ref.i31 (i32.const 0)))))
+
+               (if (ref.test (ref $InputPort) (local.get $delegate))
+                   (then (return (call $peek-byte
+                                       (local.get $delegate)
+                                       (local.get $skip-arg)))))
+
+               (global.get $false))
+         
          (func $read-byte:one-argument-is-not-yet-supported (unreachable))
          
          ;; NOTE: The optional input-port argument currently needs to be
@@ -27877,7 +28021,11 @@
               ;; Ensure the input is a string port.
               (if (ref.test (ref $InputStringPort) (local.get $in))
                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
-                  (else (return (global.get $false))))
+                  (else
+                   (if (ref.test (ref $CustomInputPort) (local.get $in))
+                       (then (return (call $read-byte/custom
+                                            (ref.cast (ref $CustomInputPort) (local.get $in)))))
+                       (else (return (global.get $false))))))
               
               (local.set $idx   (struct.get $InputStringPort $idx (local.get $sp)))
               (local.set $limit (struct.get $InputStringPort $len (local.get $sp)))
