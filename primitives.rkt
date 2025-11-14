@@ -842,6 +842,7 @@
  read-bytes-avail!*
  peek-bytes-avail!
  peek-bytes-avail!*
+ progress-evt?
  
  byte-ready?
  char-ready?

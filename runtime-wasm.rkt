@@ -27584,7 +27584,7 @@
         
         (func $port-count-lines! (type $Prim1)
               (param $p (ref eq))
-              (result   (ref eq))              
+              (result   (ref eq))
               (global.get $void))
 
         ;; Note:
@@ -27956,6 +27956,14 @@
          ;;;  13.2  Byte and String Input
          ;;;
 
+         ;; NOTE: WebRacket currently lacks progress events, so report #f.
+         (func $progress-evt? (type $Prim2)
+               (param $v  (ref eq)) ;; any/c
+               (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
+               (result    (ref eq))
+               
+               (global.get $false))
+         
          (func $read-byte/custom  ; read byte from custom input port
                (param $port (ref $CustomInputPort))
                (result      (ref eq))
@@ -29031,9 +29039,9 @@
                (param $mode (ref eq)) ;; optional read-line-mode?, default = 'linefeed
                (result      (ref eq))
 
-               (local $sp        (ref $InputStringPort))
-               (local $bytes     (ref $Bytes))
-               (local $arr       (ref $I8Array))
+               (local $sp        (ref null $InputStringPort))
+               (local $bytes     (ref null $Bytes))
+               (local $arr       (ref null $I8Array))
                (local $mode-val  (ref eq))
                (local $mode-code i32)
                (local $buf       (ref $I32GrowableArray))

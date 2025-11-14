@@ -27,6 +27,8 @@
 ;   [x] arity-at-least-value
 ;   [x] arity-at-least?
 ;   [x] make-weak-hash
+;   [x] make-input-port      ; note: The calls in "regexp.rkt" all have 4 arguments.
+;   [x] progress-evt?
 
 ; TODO
 
@@ -36,10 +38,6 @@
 #;(abort-current-continuation
    call-with-continuation-prompt
    make-continuation-prompt-tag
-    
-
-   make-input-port      ; note: The calls in "regexp.rkt" all have 4 arguments.
-   progress-evt?
    
    )
 
@@ -960,6 +958,7 @@
   read-bytes-avail!*
   peek-bytes-avail!
   peek-bytes-avail!*
+  progress-evt?
 
   byte-ready?
   char-ready?
@@ -4468,8 +4467,9 @@
          [(peek-string!)               (inline-prim/optional sym ae1 2 5)]
          [(peek-bytes)                 (inline-prim/optional sym ae1 1 3)]
          [(peek-string)                (inline-prim/optional sym ae1 1 3)]
-          [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
+         [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
          [(peek-char)                  (inline-prim/optional sym ae1 0 2)]
+         [(progress-evt?)              (inline-prim/optional sym ae1 1 2)]
          
          [(write-char)                 (inline-prim/optional sym ae1 1 2)]
          [(newline)                    (inline-prim/optional sym ae1 0 1)]
