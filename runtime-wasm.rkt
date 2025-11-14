@@ -34607,7 +34607,6 @@
                    (then
                     (return (struct.get $Port $name
                                         (ref.cast (ref $Port) (local.get $v))))))
-
                ;; Procedures use the cached name field when available.
                (if (ref.test (ref $Procedure) (local.get $v))
                    (then
