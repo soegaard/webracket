@@ -1545,24 +1545,65 @@
                                   (field $convention (ref eq)))))        ;; 'unix or 'windows symbol
 
 
-          (type $Port      (sub $Heap
-                                (struct
-                                  (field $hash  (mut i32))
-                                  (field $name  (mut (ref eq)))))) ; the port name (string) [the object-name]
-          
+          (type $Port
+                (sub $Heap
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq))) ; the port name (string) [the object-name]
+                       ; buffer (if used):
+                       (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
+                       (field $len   (mut i32))                 ; the length of the string
+                       (field $idx   (mut i32))                 ; the current index into the byte string
+                       ; location
+                       (field $loc   (mut (ref $Location))))))  ; the current location
 
-          (type $StringPort (sub $Heap
-                                 (struct
-                                   (field $hash  (mut i32))
-                                   (field $name  (mut (ref eq)))         ; the port name   (string)
-                                   (field $bytes (mut (ref $Bytes)))     ; the byte string (bytes)
-                                   (field $len   (mut i32))              ; the length of the string
-                                   (field $idx   (mut i32))              ; the current index into the string
-                                   (field $loc   (mut (ref $Location)))  ; the current location
-                                   ;; UTF-8 decoder state:
-                                   (field $utf8-len    (mut i32))     ;; 0 = idle, 1-4 = number of bytes expected
-                                   (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
-                                   (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
+          (type $InputPort
+                (sub $Port
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))            ; the port name (string) [the object-name]
+                       (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
+                       (field $len   (mut i32))                 ; the length of the string
+                       (field $idx   (mut i32))                 ; the current index into the byte string
+                       (field $loc   (mut (ref $Location))))))  ; the current location
+
+          (type $OutputPort
+                (sub $Port
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))            ; the port name (string) [the object-name]
+                       (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
+                       (field $len   (mut i32))                 ; the length of the string
+                       (field $idx   (mut i32))                 ; the current index into the byte string
+                       (field $loc   (mut (ref $Location))))))  ; the current location
+
+          (type $InputStringPort
+                (sub $InputPort
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))            ; the port name   (string)
+                       (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
+                       (field $len   (mut i32))                 ; the length of the string
+                       (field $idx   (mut i32))                 ; the current index into the byte string
+                       (field $loc   (mut (ref $Location)))     ; the current location
+                       ;; UTF-8 decoder state:
+                       (field $utf8-len    (mut i32))     ;; 0 = idle, 1-4 = number of bytes expected
+                       (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
+                       (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
+          
+          (type $OutputStringPort
+                (sub $OutputPort
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))         ; the port name   (string)
+                       (field $bytes (mut (ref $Bytes)))     ; the byte string (bytes)
+                       (field $len   (mut i32))              ; the length of the string
+                       (field $idx   (mut i32))              ; the current index into the string
+                       (field $loc   (mut (ref $Location)))  ; the current location
+                       ;; UTF-8 decoder state:
+                       (field $utf8-len    (mut i32))     ;; 0 = idle, 1-4 = number of bytes expected
+                       (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
+                       (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
 
           
           (type $Hash   ; abstract super type for hashtables
@@ -27475,7 +27516,8 @@
               (param $v (ref eq))
               (result (ref eq))
               (if (result (ref eq))
-                  (ref.test (ref $StringPort) (local.get $v))
+                  (i32.or (ref.test (ref $InputStringPort)  (local.get $v))
+                          (ref.test (ref $OutputStringPort) (local.get $v)))
                   (then (global.get $true))
                   (else (global.get $false))))
 
@@ -27490,54 +27532,25 @@
               (param $v (ref eq))
               (result (ref eq))
               (if (result (ref eq))
-                  (ref.test (ref $StringPort) (local.get $v))
+                  (ref.test (ref $Port) (local.get $v))
                   (then (global.get $true))
                   (else (global.get $false))))
 
         (func $input-port? (type $Prim1)
               (param $v (ref eq))
               (result (ref eq))
-
-              (local $port  (ref $StringPort))
-              (local $bytes (ref $Bytes))
-              (local $immutable i32)
-
               (if (result (ref eq))
-                  (ref.test (ref $StringPort) (local.get $v))
-                  (then
-                   (local.set $port (ref.cast (ref $StringPort) (local.get $v)))
-                   (local.set $bytes
-                              (ref.cast (ref $Bytes)
-                                        (struct.get $StringPort $bytes (local.get $port))))
-                   (local.set $immutable (struct.get $Bytes $immutable (local.get $bytes)))
-                   (if (result (ref eq))
-                       (i32.eq (local.get $immutable) (i32.const 1))
-                       (then (global.get $true))
-                       (else (global.get $false))))
+                  (ref.test (ref $InputPort) (local.get $v))
+                  (then (global.get $true))
                   (else (global.get $false))))
 
         (func $output-port? (type $Prim1)
               (param $v (ref eq))
               (result (ref eq))
-
-              (local $port  (ref $StringPort))
-              (local $bytes (ref $Bytes))
-              (local $immutable i32)
-
               (if (result (ref eq))
-                  (ref.test (ref $StringPort) (local.get $v))
-                  (then
-                   (local.set $port (ref.cast (ref $StringPort) (local.get $v)))
-                   (local.set $bytes
-                              (ref.cast (ref $Bytes)
-                                        (struct.get $StringPort $bytes (local.get $port))))
-                   (local.set $immutable (struct.get $Bytes $immutable (local.get $bytes)))
-                   (if (result (ref eq))
-                       (i32.eq (local.get $immutable) (i32.const 0))
-                       (then (global.get $true))
-                       (else (global.get $false))))
+                  (ref.test (ref $OutputPort) (local.get $v))
+                  (then (global.get $true))
                   (else (global.get $false))))
-
         
         ;; Note:
         ;;   WebRacket's current string ports always track line and column
@@ -27552,20 +27565,14 @@
         
         (func $port-count-lines! (type $Prim1)
               (param $p (ref eq))
-              (result   (ref eq))
-              (if (i32.eqz (ref.test (ref $StringPort) (local.get $p)))
-                  (then (call $raise-check-string-port (local.get $p))
-                        (unreachable)))
+              (result   (ref eq))              
               (global.get $void))
 
         ;; Note:
         ;;   See previous note.
         (func $port-counts-lines? (type $Prim1)
               (param $p (ref eq))
-              (result   (ref eq))
-              (if (i32.eqz (ref.test (ref $StringPort) (local.get $p)))
-                  (then (call $raise-check-string-port (local.get $p))
-                        (unreachable)))
+              (result   (ref eq))              
               (global.get $true))
         
 
@@ -27573,14 +27580,14 @@
                (param $p (ref eq))
                (result   (ref eq))
 
-               (local $port (ref null $StringPort))
+               (local $port (ref null $Port))
                (local $loc  (ref null $Location))
-               ;; 1. Check and cast $p to (ref $StringPort)
-               (if (ref.test (ref $StringPort) (local.get $p))
-                   (then (local.set $port (ref.cast (ref $StringPort) (local.get $p))))
+               ;; 1. Check and cast $p to (ref $Port)
+               (if (ref.test (ref $Port) (local.get $p))
+                   (then (local.set $port (ref.cast (ref $Port) (local.get $p))))
                    (else (return (global.get $false))))
                ;; 2. Get location struct from the port
-               (local.set $loc (struct.get $StringPort $loc (local.get $port)))
+               (local.set $loc (struct.get $Port $loc (local.get $port)))
                ;; 3. Extract and return as fixed array of 3 elements
                (array.new_fixed $Values 3
                                 (struct.get $Location $line (local.get $loc))
@@ -27634,7 +27641,7 @@
                (local.set $len (array.len (local.get $arr)))
                ;; --- Initialize location and construct the port ---
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
-               (struct.new $StringPort
+               (struct.new $InputStringPort
                            (i32.const 0)         ;; $hash
                            (local.get $name-val) ;; $name
                            (local.get $port-bs)  ;; $bytes
@@ -27679,7 +27686,7 @@
                (local.set $len (array.len (local.get $arr)))
                ;; --- Initialize location and construct the port ---
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
-               (struct.new $StringPort
+               (struct.new $InputStringPort
                            (i32.const 0)          ;; $hash
                            (local.get $name-val)  ;; $name
                            (local.get $bytes)     ;; $bytes
@@ -27705,7 +27712,7 @@
                ;; Step 2: Make initial location: (line 1, col 0, pos 1)
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
                ;; Step 3: Construct and return the StringPort
-               (struct.new $StringPort
+               (struct.new $OutputStringPort
                            (i32.const 0)                 ;; $hash
                            (global.get $false)           ;; $name  : (ref eq)
                            (local.get $bs)               ;; $bytes : (ref $Bytes)
@@ -27720,7 +27727,7 @@
                (param $name (ref eq)) ;; optional any/c, default = 'string
                (result (ref eq))
 
-               (local $port     (ref $StringPort))
+               (local $port     (ref $OutputStringPort))
                (local $name-val (ref eq))
                ;; Determine the port name, defaulting to 'string when omitted
                (local.set $name-val
@@ -27729,29 +27736,28 @@
                               (then (global.get $symbol:string))
                               (else (local.get $name))))
                ;; Reuse the byte-backed string port and update its name field
-               (local.set $port
-                          (ref.cast (ref $StringPort)
-                                    (call $open-output-bytes)))
-               (struct.set $StringPort $name (local.get $port) (local.get $name-val))
+               (local.set $port (ref.cast (ref $OutputStringPort)
+                                          (call $open-output-bytes)))
+               (struct.set $OutputStringPort $name (local.get $port) (local.get $name-val))
                (local.get $port))
 
          (func $get-output-bytes (type $Prim1)
                (param $out (ref eq))
-               (result (ref eq))
+               (result     (ref eq))
                
-               (local $sp   (ref null $StringPort))
+               (local $sp   (ref null $OutputStringPort))
                (local $bs   (ref $Bytes))
                (local $idx  i32)
                (local $src  (ref $I8Array))
                (local $dest (ref $I8Array))
                (local $res  (ref $Bytes))
                ;; 1. Check that $out is a StringPort
-               (if (ref.test (ref $StringPort) (local.get $out))
-                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $out))))
+               (if (ref.test (ref $OutputStringPort) (local.get $out))
+                   (then (local.set $sp (ref.cast (ref $OutputStringPort) (local.get $out))))
                    (else (call $raise-check-string-port (local.get $out)) (unreachable)))
                ;; 2. Get internal byte string and index
-               (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
-               (local.set $idx (struct.get $StringPort $idx   (local.get $sp)))
+               (local.set $bs  (struct.get $OutputStringPort $bytes (local.get $sp)))
+               (local.set $idx (struct.get $OutputStringPort $idx   (local.get $sp)))
                ;; 3. Extract the I8Array from the Bytes object
                (local.set $src (struct.get $Bytes $bs (local.get $bs)))
                ;; 4. Allocate a new array of length $idx
@@ -27774,7 +27780,7 @@
 
          (func $get-output-string (type $Prim1)
                (param $out (ref eq))
-               (result (ref eq))
+               (result     (ref eq))
 
                (local $bs (ref $Bytes))
 
@@ -27805,7 +27811,7 @@
 
                (local $f    (ref $Procedure))
                (local $finv (ref $ProcedureInvoker))
-               (local $port (ref $StringPort))
+               (local $port (ref $OutputStringPort))
                (local $args (ref $Args))
 
                ;; 1. Ensure the argument is a procedure
@@ -27815,7 +27821,7 @@
 
                ;; 2. Open a fresh output string port
                (local.set $port
-                          (ref.cast (ref $StringPort)
+                          (ref.cast (ref $OutputStringPort)
                                     (call $open-output-string (global.get $missing))))
 
                ;; 3. Prepare the procedure invocation with the port argument
@@ -27844,7 +27850,7 @@
               (param $in (ref eq)) ;; optional input-port?, default = (current-input-port)
               (result    (ref eq))
 
-              (local $sp        (ref null $StringPort))
+              (local $sp        (ref null $InputStringPort))
               (local $bs        (ref eq))
               (local $arr       (ref $I8Array))
               (local $idx       i32)
@@ -27869,27 +27875,27 @@
                   (then (call $read-byte:one-argument-is-not-yet-supported)
                         (unreachable)))
               ;; Ensure the input is a string port.
-              (if (ref.test (ref $StringPort) (local.get $in))
-                  (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+              (if (ref.test (ref $InputStringPort) (local.get $in))
+                  (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
                   (else (return (global.get $false))))
               
-              (local.set $idx   (struct.get $StringPort $idx (local.get $sp)))
-              (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+              (local.set $idx   (struct.get $InputStringPort $idx (local.get $sp)))
+              (local.set $limit (struct.get $InputStringPort $len (local.get $sp)))
               ;; Return the EOF object when no more bytes remain.
               (if (i32.ge_u (local.get $idx) (local.get $limit))
                   (then (return (ref.i31 (i32.const ,eof-value)))))
 
-              (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
+              (local.set $bs  (struct.get $InputStringPort $bytes (local.get $sp)))
               (local.set $arr (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
               (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
 
-              (struct.set $StringPort $idx (local.get $sp)
+              (struct.set $InputStringPort $idx (local.get $sp)
                           (i32.add (local.get $idx) (i32.const 1)))
               ;; Load the existing location information.
-              (local.set $loc  (struct.get $StringPort $loc  (local.get $sp)))
-              (local.set $pos  (struct.get $Location   $pos  (local.get $loc)))
-              (local.set $line (struct.get $Location   $line (local.get $loc)))
-              (local.set $col  (struct.get $Location   $col  (local.get $loc)))
+              (local.set $loc  (struct.get $InputStringPort $loc  (local.get $sp)))
+              (local.set $pos  (struct.get $Location        $pos  (local.get $loc)))
+              (local.set $line (struct.get $Location        $line (local.get $loc)))
+              (local.set $col  (struct.get $Location        $col  (local.get $loc)))
 
               (local.set $int-pos  (if (result i32)
                                        (ref.test (ref i31) (local.get $pos))
@@ -27904,9 +27910,9 @@
                                        (then ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $col)))))
                                        (else (i32.const 0))))
               ;; Update UTF-8 state and column tracking using the read byte.
-              (local.set $len  (struct.get $StringPort $utf8-len   (local.get $sp)))
-              (local.set $left (struct.get $StringPort $utf8-left  (local.get $sp)))
-              (local.set $seen (struct.get $StringPort $utf8-bytes (local.get $sp)))
+              (local.set $len  (struct.get $InputStringPort $utf8-len   (local.get $sp)))
+              (local.set $left (struct.get $InputStringPort $utf8-left  (local.get $sp)))
+              (local.set $seen (struct.get $InputStringPort $utf8-bytes (local.get $sp)))
               (if (i32.eqz (local.get $len))
                   (then
                    ;; Start of UTF-8 sequence
@@ -27925,24 +27931,24 @@
                                           (local.get $len)
                                           (i32.const 4)
                                           (i32.lt_u (local.get $len) (i32.const 4))))
-                              (struct.set $StringPort $utf8-len   (local.get $sp) (local.get $len))
-                              (struct.set $StringPort $utf8-left  (local.get $sp)
+                              (struct.set $InputStringPort $utf8-len   (local.get $sp) (local.get $len))
+                              (struct.set $InputStringPort $utf8-left  (local.get $sp)
                                           (i32.sub (local.get $len) (i32.const 1)))
-                              (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 1))))))))
+                              (struct.set $InputStringPort $utf8-bytes (local.get $sp) (i32.const 1))))))))
                   (else
                    (block
                     (local.set $seen (i32.add (local.get $seen) (i32.const 1)))
                     (local.set $left (i32.sub (local.get $left) (i32.const 1)))
-                    (struct.set $StringPort $utf8-left  (local.get $sp) (local.get $left))
-                    (struct.set $StringPort $utf8-bytes (local.get $sp) (local.get $seen))
+                    (struct.set $InputStringPort $utf8-left  (local.get $sp) (local.get $left))
+                    (struct.set $InputStringPort $utf8-bytes (local.get $sp) (local.get $seen))
                     (if (i32.eqz (local.get $left))
                         (then
                          (local.set $int-col
                                     (i32.sub (local.get $int-col)
                                              (i32.sub (local.get $seen) (i32.const 1))))
-                         (struct.set $StringPort $utf8-len   (local.get $sp) (i32.const 0))
-                         (struct.set $StringPort $utf8-left  (local.get $sp) (i32.const 0))
-                         (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 0)))))))
+                         (struct.set $InputStringPort $utf8-len   (local.get $sp) (i32.const 0))
+                         (struct.set $InputStringPort $utf8-left  (local.get $sp) (i32.const 0))
+                         (struct.set $InputStringPort $utf8-bytes (local.get $sp) (i32.const 0)))))))
               ;; Handle newline, return, and tab characters.
               (if (i32.eq (local.get $byte) (i32.const 10))
                   (then (local.set $int-line (i32.add (local.get $int-line) (i32.const 1)))
@@ -27959,7 +27965,7 @@
               ;; Always advance the absolute position.
               (local.set $int-pos (i32.add (local.get $int-pos) (i32.const 1)))
               ;; Store updated location back into the port.
-              (struct.set $StringPort $loc (local.get $sp)
+              (struct.set $InputStringPort $loc (local.get $sp)
                           (struct.new $Location
                                       (i32.const 0)
                                       (ref.i31 (i32.shl (local.get $int-line) (i32.const 1)))
@@ -27991,7 +27997,7 @@
                    (then (call $read-char:one-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the input is a string port.
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (return (global.get $false))))
 
                (local.set $first (call $read-byte (local.get $in)))
@@ -28100,7 +28106,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-bytes!:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -28221,7 +28227,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-string!:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -28309,7 +28315,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-bytes:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Allocate destination buffer ---
@@ -28389,7 +28395,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-string:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Allocate destination string ---
@@ -28439,7 +28445,7 @@
                (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
                (result    (ref eq))
 
-               (local $sp  (ref null $StringPort))
+               (local $sp  (ref null $InputStringPort))
                (local $idx i32)
                (local $len i32)
 
@@ -28448,12 +28454,12 @@
                    (then (call $byte-ready?:one-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the input is a string port.
-               (if (ref.test (ref $StringPort) (local.get $in))
-                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+               (if (ref.test (ref $InputStringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
                    (else (return (global.get $false))))
 
-               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $len (struct.get $StringPort $len (local.get $sp)))
+               (local.set $idx (struct.get $InputStringPort $idx (local.get $sp)))
+               (local.set $len (struct.get $InputStringPort $len (local.get $sp)))
 
                (if (result (ref eq))
                    (i32.lt_u (local.get $idx) (local.get $len))
@@ -28468,7 +28474,7 @@
                (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
                (result    (ref eq))
 
-               (local $sp        (ref null $StringPort))
+               (local $sp        (ref null $InputStringPort))
                (local $bs        (ref eq))
                (local $arr       (ref $I8Array))
                (local $idx       i32)
@@ -28488,19 +28494,19 @@
                    (then (call $char-ready?:one-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the input is a string port.
-               (if (ref.test (ref $StringPort) (local.get $in))
-                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+               (if (ref.test (ref $InputStringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
                    (else (return (global.get $false))))
 
-               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $len (struct.get $StringPort $len (local.get $sp)))
+               (local.set $idx (struct.get $InputStringPort $idx (local.get $sp)))
+               (local.set $len (struct.get $InputStringPort $len (local.get $sp)))
 
                ;; No characters remain when at EOF.
                (if (i32.ge_u (local.get $idx) (local.get $len))
                    (then (return (global.get $false))))
 
-               (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
-               (local.set $arr (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
+               (local.set $bs   (struct.get $InputStringPort $bytes (local.get $sp)))
+               (local.set $arr  (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
                (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
 
                ;; ASCII characters are always ready when a byte is available.
@@ -28573,7 +28579,7 @@
                (param $mode (ref eq)) ;; optional read-line-mode?, default = 'linefeed
                (result      (ref eq))
 
-               (local $sp        (ref $StringPort))
+               (local $sp        (ref $InputStringPort))
                (local $bytes     (ref $Bytes))
                (local $arr       (ref $I8Array))
                (local $mode-val  (ref eq))
@@ -28596,12 +28602,12 @@
                    (then (call $read-line:no-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the port is a string port.
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
-               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+               (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
                (local.set $bytes
                           (ref.cast (ref $Bytes)
-                                    (struct.get $StringPort $bytes (local.get $sp))))
+                                    (struct.get $InputStringPort $bytes (local.get $sp))))
                (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
 
                ;; Determine the mode symbol, defaulting to 'linefeed.
@@ -28662,8 +28668,8 @@
 
                             (if (i32.eq (local.get $mode-code) (i32.const 2))
                                 (then (if (i32.eq (local.get $cp) (i32.const 13))
-                                          (then (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-                                                (local.set $len (struct.get $StringPort $len (local.get $sp)))
+                                          (then (local.set $idx (struct.get $InputStringPort $idx (local.get $sp)))
+                                                (local.set $len (struct.get $InputStringPort $len (local.get $sp)))
                                                 (if (i32.lt_u (local.get $idx) (local.get $len))
                                                     (then (local.set $next-byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
                                                           (if (i32.eq (local.get $next-byte) (i32.const 10))
@@ -28678,8 +28684,8 @@
                                           (else (if (i32.eq (local.get $cp) (i32.const 13))
                                                     (then (local.set $append (i32.const 0))
                                                           (local.set $break (i32.const 1))
-                                                          (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-                                                          (local.set $len (struct.get $StringPort $len (local.get $sp)))
+                                                          (local.set $idx (struct.get $InputStringPort $idx (local.get $sp)))
+                                                          (local.set $len (struct.get $InputStringPort $len (local.get $sp)))
                                                           (if (i32.lt_u (local.get $idx) (local.get $len))
                                                               (then (local.set $next-byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
                                                                     (if (i32.eq (local.get $next-byte) (i32.const 10))
@@ -28728,7 +28734,7 @@
                (local $to          i32)
                (local $count       i32)
                (local $skip-count  i32)
-               (local $sp          (ref null $StringPort))
+               (local $sp          (ref null $InputStringPort))
                (local $port-bytes  (ref $Bytes))
                (local $port-arr    (ref $I8Array))
                (local $idx         i32)
@@ -28762,9 +28768,9 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $peek-bytes!:two-arguments-are-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
-               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+               (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
 
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -28797,20 +28803,20 @@
                    (then (return (ref.i31 (i32.const 0)))))
 
                ;; --- Determine peek window ---
-               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+               (local.set $idx       (struct.get $InputStringPort $idx (local.get $sp)))
+               (local.set $limit     (struct.get $InputStringPort $len (local.get $sp)))
                (local.set $remaining (i32.sub (local.get $limit) (local.get $idx)))
                (if (i32.le_u (local.get $remaining) (local.get $skip-count))
                    (then (return (global.get $eof))))
-               (local.set $peek-start (i32.add (local.get $idx) (local.get $skip-count)))
-               (local.set $remaining (i32.sub (local.get $limit) (local.get $peek-start)))
+               (local.set $peek-start (i32.add (local.get $idx)   (local.get $skip-count)))
+               (local.set $remaining  (i32.sub (local.get $limit) (local.get $peek-start)))
 
                ;; --- Determine number of bytes to copy ---
                (local.set $copy-count (local.get $count))
                (if (i32.lt_u (local.get $remaining) (local.get $copy-count))
                    (then (local.set $copy-count (local.get $remaining))))
 
-               (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
+               (local.set $port-bytes (struct.get $InputStringPort $bytes (local.get $sp)))
                (local.set $port-arr (struct.get $Bytes $bs (local.get $port-bytes)))
                (local.set $i (i32.const 0))
                ;; --- Copy bytes without consuming the port ---
@@ -28934,7 +28940,7 @@
                (local $to           i32)
                (local $count        i32)
                (local $skip-count   i32)
-               (local $sp           (ref null $StringPort))
+               (local $sp           (ref null $InputStringPort))
                (local $port-bytes   (ref $Bytes))
                (local $src          (ref $I8Array))
                (local $idx          i32)
@@ -28972,9 +28978,9 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $peek-string!:two-arguments-are-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
-               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+               (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
 
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -29007,12 +29013,12 @@
                    (then (return (ref.i31 (i32.const 0)))))
 
                ;; --- Determine peek window and skip characters ---
-               (local.set $idx (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $limit (struct.get $StringPort $len (local.get $sp)))
-               (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
-               (local.set $src (struct.get $Bytes $bs (local.get $port-bytes)))
+               (local.set $idx        (struct.get $InputStringPort $idx   (local.get $sp)))
+               (local.set $limit      (struct.get $InputStringPort $len   (local.get $sp)))
+               (local.set $port-bytes (struct.get $InputStringPort $bytes (local.get $sp)))
+               (local.set $src        (struct.get $Bytes $bs (local.get $port-bytes)))
                (local.set $peek-start (local.get $idx))
-               (local.set $skipped (i32.const 0))
+               (local.set $skipped    (i32.const 0))
                (block $skip-done
                       (loop $skip
                             (br_if $skip-done (i32.ge_u (local.get $skipped) (local.get $skip-count)))
@@ -29135,7 +29141,7 @@
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
                (result      (ref eq))
 
-               (local $sp         (ref null $StringPort))
+               (local $sp         (ref null $InputStringPort))
                (local $bs         (ref eq))
                (local $arr        (ref $I8Array))
                (local $idx        i32)
@@ -29150,8 +29156,8 @@
                    (then (call $peek-byte:no-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the input is a string port.
-               (if (ref.test (ref $StringPort) (local.get $in))
-                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $in))))
+               (if (ref.test (ref $InputStringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
                    (else (return (global.get $false))))
 
                ;; Decode optional skip amount, defaulting to 0.
@@ -29166,16 +29172,16 @@
                         (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1))))
                         (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))))
 
-               (local.set $idx   (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $limit (struct.get $StringPort $len (local.get $sp)))
+               (local.set $idx       (struct.get $InputStringPort $idx (local.get $sp)))
+               (local.set $limit     (struct.get $InputStringPort $len (local.get $sp)))
                (local.set $remaining (i32.sub (local.get $limit) (local.get $idx)))
                (if (i32.ge_u (local.get $skip-count) (local.get $remaining))
                    (then (return (global.get $eof))))
                (local.set $peek-idx (i32.add (local.get $idx) (local.get $skip-count)))
 
-               (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
-               (local.set $arr (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
-               (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $peek-idx)))
+               (local.set $bs       (struct.get $InputStringPort $bytes (local.get $sp)))
+               (local.set $arr      (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs))))
+               (local.set $byte     (array.get_u $I8Array (local.get $arr) (local.get $peek-idx)))
 
                (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
 
@@ -29188,7 +29194,7 @@
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
                (result      (ref eq))
 
-               (local $sp           (ref null $StringPort))
+               (local $sp           (ref null $InputStringPort))
                (local $port-bytes   (ref $Bytes))
                (local $src          (ref $I8Array))
                (local $idx          i32)
@@ -29208,9 +29214,9 @@
                    (then (call $peek-char:no-argument-is-not-yet-supported)
                          (unreachable)))
                ;; Ensure the input is a string port.
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (return (global.get $false))))
-               (local.set $sp (ref.cast (ref $StringPort) (local.get $in)))
+               (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
 
                ;; Decode optional skip amount, defaulting to 0.
                (local.set $skip-count (i32.const 0))
@@ -29224,9 +29230,9 @@
                         (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1))))
                         (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))))
 
-               (local.set $idx        (struct.get $StringPort $idx (local.get $sp)))
-               (local.set $limit      (struct.get $StringPort $len (local.get $sp)))
-               (local.set $port-bytes (struct.get $StringPort $bytes (local.get $sp)))
+               (local.set $idx        (struct.get $InputStringPort $idx   (local.get $sp)))
+               (local.set $limit      (struct.get $InputStringPort $len   (local.get $sp)))
+               (local.set $port-bytes (struct.get $InputStringPort $bytes (local.get $sp)))
                (local.set $src        (struct.get $Bytes $bs (local.get $port-bytes)))
                (local.set $peek-start (local.get $idx))
                (local.set $skipped    (i32.const 0))
@@ -29378,7 +29384,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $peek-bytes:two-arguments-are-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Handle zero-length peek ---
@@ -29476,7 +29482,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $peek-string:two-arguments-are-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Handle zero-length peek ---
@@ -29532,10 +29538,11 @@
          ;;;  13.3  Byte and String Output
          ;;;
 
-         ;; (type $StringPort
+         ;; (type $InputStringPort
+         ;;     (sub $InputPort
          ;;       (struct
-         ;;         (field $bytes (ref eq))     ; the byte string (bytes)
          ;;         (field $name  (ref eq))     ; the port name   (string)
+         ;;         (field $bytes (ref eq))     ; the byte string (bytes)
          ;;         (field $len   i32)          ; the length of the string
          ;;         (field $idx   i32)          ; the current index into the string
          ;;         (field $loc   (ref $Location)))) ; the current location
@@ -29546,7 +29553,7 @@
                (result      (ref eq))
                
                (local $b         i32)
-               (local $sp        (ref null $StringPort))
+               (local $sp        (ref null $OutputStringPort))
                (local $bs        (ref eq))
                (local $idx       i32)
                (local $loc       (ref $Location))
@@ -29570,40 +29577,40 @@
                    (then (local.set $b (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $byte)))
                                                   (i32.const 1))))
                    (else (return (global.get $false))))
-               ;; 2. Cast output to $StringPort
-               (if (ref.test (ref $StringPort) (local.get $out))
-                   (then (local.set $sp (ref.cast (ref $StringPort) (local.get $out))))
+               ;; 2. Cast output to $OutputStringPort
+               (if (ref.test (ref $OutputStringPort) (local.get $out))
+                   (then (local.set $sp (ref.cast (ref $OutputStringPort) (local.get $out))))
                    (else (return (global.get $false))))
                ;; 3. Get buffer and current index
-               (local.set $bs  (struct.get $StringPort $bytes (local.get $sp)))
-               (local.set $idx (struct.get $StringPort $idx   (local.get $sp)))
+               (local.set $bs  (struct.get $OutputStringPort $bytes (local.get $sp)))
+               (local.set $idx (struct.get $OutputStringPort $idx   (local.get $sp)))
                ;; 4. Resize buffer if needed
-               (local.set $old-len (struct.get $StringPort $len (local.get $sp)))
+               (local.set $old-len (struct.get $OutputStringPort $len (local.get $sp)))
                (if (i32.eq (local.get $idx) (local.get $old-len))
                    (then (local.set $new-len (i32.shl (local.get $old-len) (i32.const 1)))
                          (local.set $new-bytes (call $i8array-extend
                                                      (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs)))
                                                      (local.get $new-len)
                                                      (i32.const 0)))
-                         (struct.set $StringPort $bytes (local.get $sp)
+                         (struct.set $OutputStringPort $bytes (local.get $sp)
                                      (struct.new $Bytes
                                                  (i32.const 0)
                                                  (i32.const 0)
                                                  (local.get $new-bytes)))
-                         (struct.set $StringPort $len (local.get $sp) (local.get $new-len))
-                         (local.set $bs (struct.get $StringPort $bytes (local.get $sp)))))
+                         (struct.set $OutputStringPort $len (local.get $sp) (local.get $new-len))
+                         (local.set $bs (struct.get $OutputStringPort $bytes (local.get $sp)))))
                ;; 5. Write byte into array
                (call $i8array-set!
                      (struct.get $Bytes $bs (ref.cast (ref $Bytes) (local.get $bs)))
                      (local.get $idx)
                      (local.get $b))
-               (struct.set $StringPort $idx (local.get $sp)
+               (struct.set $OutputStringPort $idx (local.get $sp)
                            (i32.add (local.get $idx) (i32.const 1)))
                ;; 6. Load old location fields
-               (local.set $loc  (struct.get $StringPort $loc  (local.get $sp)))
-               (local.set $pos  (struct.get $Location   $pos  (local.get $loc)))
-               (local.set $line (struct.get $Location   $line (local.get $loc)))
-               (local.set $col  (struct.get $Location   $col  (local.get $loc)))
+               (local.set $loc  (struct.get $OutputStringPort $loc  (local.get $sp)))
+               (local.set $pos  (struct.get $Location         $pos  (local.get $loc)))
+               (local.set $line (struct.get $Location         $line (local.get $loc)))
+               (local.set $col  (struct.get $Location         $col  (local.get $loc)))
 
                (local.set $int-pos  (if (result i32)
                                         (ref.test (ref i31) (local.get $pos))
@@ -29618,9 +29625,9 @@
                                         (then ,(Half `(i31.get_u (ref.cast (ref i31) (local.get $col)))))
                                         (else (i32.const 0))))
                ;; 7. Decode UTF-8 byte
-               (local.set $len  (struct.get $StringPort $utf8-len   (local.get $sp)))
-               (local.set $left (struct.get $StringPort $utf8-left  (local.get $sp)))
-               (local.set $seen (struct.get $StringPort $utf8-bytes (local.get $sp)))
+               (local.set $len  (struct.get $OutputStringPort $utf8-len   (local.get $sp)))
+               (local.set $left (struct.get $OutputStringPort $utf8-left  (local.get $sp)))
+               (local.set $seen (struct.get $OutputStringPort $utf8-bytes (local.get $sp)))
                ;; Start of UTF-8 sequence?
                (if (i32.eqz (local.get $len))
                    (then
@@ -29644,26 +29651,26 @@
                                           (i32.const 4)
                                           (i32.lt_u (local.get $len) (i32.const 4))))
 
-                              (struct.set $StringPort $utf8-len   (local.get $sp) (local.get $len))
-                              (struct.set $StringPort $utf8-left  (local.get $sp)
+                              (struct.set $OutputStringPort $utf8-len   (local.get $sp) (local.get $len))
+                              (struct.set $OutputStringPort $utf8-left  (local.get $sp)
                                           (i32.sub (local.get $len) (i32.const 1)))
-                              (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 1)))))))
+                              (struct.set $OutputStringPort $utf8-bytes (local.get $sp) (i32.const 1)))))))
                     ;; Inside a sequence
                     (else
                      (block
                       (local.set $seen (i32.add (local.get $seen) (i32.const 1)))
                       (local.set $left (i32.sub (local.get $left) (i32.const 1)))
-                      (struct.set $StringPort $utf8-left  (local.get $sp) (local.get $left))
-                      (struct.set $StringPort $utf8-bytes (local.get $sp) (local.get $seen))
+                      (struct.set $OutputStringPort $utf8-left  (local.get $sp) (local.get $left))
+                      (struct.set $OutputStringPort $utf8-bytes (local.get $sp) (local.get $seen))
                       (if (i32.eqz (local.get $left))
                           (then
                            ;; Sequence complete — count as 1 column
                            (local.set $int-col
                                       (i32.sub (local.get $int-col)
                                                (i32.sub (local.get $seen) (i32.const 1))))
-                           (struct.set $StringPort $utf8-len   (local.get $sp) (i32.const 0))
-                           (struct.set $StringPort $utf8-left  (local.get $sp) (i32.const 0))
-                           (struct.set $StringPort $utf8-bytes (local.get $sp) (i32.const 0))))))))
+                           (struct.set $OutputStringPort $utf8-len   (local.get $sp) (i32.const 0))
+                           (struct.set $OutputStringPort $utf8-left  (local.get $sp) (i32.const 0))
+                           (struct.set $OutputStringPort $utf8-bytes (local.get $sp) (i32.const 0))))))))
                ;; 8. Handle line/column updates
                (if (i32.eq (local.get $b) (i32.const 10)) ;; '\n'
                    (then (local.set $int-line (i32.add (local.get $int-line) (i32.const 1)))
@@ -29680,7 +29687,7 @@
                ;; Always increment position
                (local.set $int-pos (i32.add (local.get $int-pos) (i32.const 1)))
                ;; 9. Store new location
-               (struct.set $StringPort $loc (local.get $sp)
+               (struct.set $OutputStringPort $loc (local.get $sp)
                            (struct.new $Location
                                        (i32.const 0)  ;; hash
                                        (ref.i31 (i32.shl (local.get $int-line) (i32.const 1)))
@@ -29855,7 +29862,7 @@
                (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
                (local.set $len (call $i8array-length (local.get $arr)))
                ;; --- Determine output port ---
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $out)))
+               (if (i32.eqz (ref.test (ref $OutputStringPort) (local.get $out)))
                    (then (call $raise-check-string-port (local.get $out)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -29928,7 +29935,7 @@
                (local.set $arr (struct.get $String $codepoints (local.get $s)))
                (local.set $len (call $i32array-length (local.get $arr)))
                ;; --- Determine output port ---
-               (if (i32.eqz (ref.test (ref $StringPort) (local.get $out)))
+               (if (i32.eqz (ref.test (ref $OutputStringPort) (local.get $out)))
                    (then (call $raise-check-string-port (local.get $out)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -33628,12 +33635,12 @@
                (param $proc (ref $Procedure))
                (result      (ref $String))
 
-               (local $port (ref $StringPort))
+               (local $port (ref $OutputStringPort))
                (local $args (ref $Args))
                (local $inv  (ref $ProcedureInvoker))
 
                (local.set $port
-                          (ref.cast (ref $StringPort)
+                          (ref.cast (ref $OutputStringPort)
                                     (call $open-output-string (global.get $missing))))
                (local.set $inv (struct.get $Procedure $invoke (local.get $proc)))
                (local.set $args (array.new $Args (global.get $null) (i32.const 3)))
@@ -33686,7 +33693,7 @@
                     (local.get $res))
                    (else
                     (if (result (ref eq))
-                        (ref.test (ref $StringPort) (local.get $out))
+                        (ref.test (ref $OutputStringPort) (local.get $out))
                         (then
                          (call $fasl:s-exp->fasl (local.get $v) (local.get $out))
                          (global.get $void))
@@ -34595,11 +34602,11 @@
                     (return (struct.get $StructType $name
                                         (ref.cast (ref $StructType) (local.get $v))))))
 
-               ;; String ports expose the stored port name.
-               (if (ref.test (ref $StringPort) (local.get $v))
+               ;; Ports expose the stored port name.
+               (if (ref.test (ref $Port) (local.get $v))
                    (then
-                    (return (struct.get $StringPort $name
-                                        (ref.cast (ref $StringPort) (local.get $v))))))
+                    (return (struct.get $Port $name
+                                        (ref.cast (ref $Port) (local.get $v))))))
 
                ;; Procedures use the cached name field when available.
                (if (ref.test (ref $Procedure) (local.get $v))
