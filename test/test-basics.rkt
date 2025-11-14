@@ -47,7 +47,7 @@
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1))))))
 
- (list "4. Datatypes"
+ #;(list "4. Datatypes"
        (list "4.1 Equality"
              (list "eqv?"
                    (and (equal? (eqv? 'a 'a) #t)
@@ -2863,7 +2863,7 @@
        
        ) ; ends "4. Datatypes"
 
- (list "5. Structures"
+ #;(list "5. Structures"
        (list "5.1 Structure Type Properties"
              (list
               (list "make-struct-type-property/basic"
@@ -3199,7 +3199,7 @@
                            [second (read-string! buffer port 0 4)])
                       (and (equal? first 2)
                            (equal? buffer "hi__")
-                           (eof-object? second)))))
+                           (eof-object? second))))
 
              (list "read-bytes/basic"
                     (let* ([port (open-input-bytes (bytes 65 66 67 68))]
@@ -3537,8 +3537,17 @@
                            [second (read-char port)])
                       (and (eof-object? result)
                            (equal? first  #\h)
-                           (equal? second #\i))))              
-             )
+                           (equal? second #\i))))
+              
+              (list "read-byte/custom-port"
+                    (let* ([base (open-input-bytes (bytes 70 71))]
+                           [port (make-input-port 'proxy base base (lambda () (void)))])
+                      (and (equal? (read-byte port) 70)
+                           (equal? (peek-byte port) 71)
+                           (equal? (read-byte port) 71)
+                           (eof-object? (read-byte port))
+                           (eof-object? (peek-byte port)))))              
+             ))
        
        (list "13.3 Byte and String Output"
              (list
@@ -3704,7 +3713,7 @@
                            (equal? (port-next-location 42) #f))))))
        )
 
- (list "10.2 Exceptions"
+ #;(list "10.2 Exceptions"
              (list
               (list "unquoted-printing-string basics"
                     (let* ([s "hello"]

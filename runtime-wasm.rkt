@@ -27963,28 +27963,36 @@
 
                (call $read-byte (local.get $delegate)))
 
-         (func $peek-byte/custom ; peek byte from custom input port
+         (func $peek-byte/custom  ;; peek byte from custom input port
                (param $port (ref $CustomInputPort))
-               (param $skip (ref eq)) ;; exact-nonnegative-integer?, default = 0
-               (result (ref eq))
+               (param $skip (ref eq))        ;; exact-nonnegative-integer?, default = 0
+               (result      (ref eq))
 
                (local $delegate (ref eq))
                (local $skip-arg (ref eq))
-
-               (local.set $delegate (struct.get $CustomInputPort $peek-proc (local.get $port)))
-               (if (ref.eq (local.get $delegate) (global.get $false))
-                   (then (return (global.get $false))))
-
+               
+               ;; Normalize skip: $missing => 0, otherwise pass through
                (local.set $skip-arg (local.get $skip))
                (if (ref.eq (local.get $skip-arg) (global.get $missing))
                    (then (local.set $skip-arg (ref.i31 (i32.const 0)))))
 
+               ;; Look up delegate
+               (local.set $delegate (struct.get $CustomInputPort $peek-proc (local.get $port)))
+
+               ;; TODO: If delegate is #f, then peeking should be done via read-byte.
+               (if (ref.eq (local.get $delegate) (global.get $false))
+                   (then (return (global.get $false))))
+
+               ;; If delegate is an input port, just forward to peek-byte
                (if (ref.test (ref $InputPort) (local.get $delegate))
                    (then (return (call $peek-byte
                                        (local.get $delegate)
                                        (local.get $skip-arg)))))
 
+               ;; Delegate is neither #f nor an input port: cannot peek
+               ; TODO: raise an exception here.
                (global.get $false))
+
          
          (func $read-byte:one-argument-is-not-yet-supported (unreachable))
          
@@ -29298,18 +29306,16 @@
                (local $skip-count i32)
                (local $peek-idx   i32)
                (local $byte       i32)
+               (local $skip-arg   (ref eq))
 
                ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $peek-byte:no-argument-is-not-yet-supported)
                          (unreachable)))
-               ;; Ensure the input is a string port.
-               (if (ref.test (ref $InputStringPort) (local.get $in))
-                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
-                   (else (return (global.get $false))))
 
                ;; Decode optional skip amount, defaulting to 0.
                (local.set $skip-count (i32.const 0))
+               (local.set $skip-arg   (ref.i31 (i32.const 0)))
                (if (ref.eq (local.get $skip) (global.get $missing))
                    (then)
                    (else
@@ -29317,8 +29323,20 @@
                         (then (call $raise-check-fixnum (local.get $skip)) (unreachable)))
                     (local.set $skip-count (i31.get_u (ref.cast (ref i31) (local.get $skip))))
                     (if (i32.eqz (i32.and (local.get $skip-count) (i32.const 1)))
-                        (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1))))
+                        (then (local.set $skip-count (i32.shr_u (local.get $skip-count) (i32.const 1)))
+                              (local.set $skip-arg   (ref.i31 (i32.shl (local.get $skip-count)
+                                                                       (i32.const 1)))))
                         (else (call $raise-check-fixnum (local.get $skip)) (unreachable)))))
+
+               ;; Ensure the input is a supported port and dispatch accordingly.
+               (if (ref.test (ref $InputStringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
+                   (else
+                    (if (ref.test (ref $CustomInputPort) (local.get $in))
+                        (then (return (call $peek-byte/custom
+                                             (ref.cast (ref $CustomInputPort) (local.get $in))
+                                             (local.get $skip-arg))))
+                        (else (return (global.get $false))))))
 
                (local.set $idx       (struct.get $InputStringPort $idx (local.get $sp)))
                (local.set $limit     (struct.get $InputStringPort $len (local.get $sp)))
