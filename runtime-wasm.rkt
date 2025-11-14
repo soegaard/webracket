@@ -28343,8 +28343,8 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-char:one-argument-is-not-yet-supported)
                          (unreachable)))
-               ;; Ensure the input is a string port.
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               ;; Ensure the input is an input port.
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (return (global.get $false))))
 
                (local.set $first (call $read-byte (local.get $in)))
@@ -28453,7 +28453,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-bytes!:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -28574,7 +28574,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-string!:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
                (if (ref.eq (local.get $start) (global.get $missing))
@@ -28662,7 +28662,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-bytes:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Allocate destination buffer ---
@@ -28742,7 +28742,7 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-string:one-argument-is-not-yet-supported)
                          (unreachable)))
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
                ;; --- Allocate destination string ---
@@ -28919,8 +28919,113 @@
 
          (func $raise-read-line:bad-mode (param $mode (ref eq)) (unreachable))
 
-         ;; NOTE: Currently only string ports are supported, and the optional input-port
-         ;;       argument must be supplied explicitly until (current-input-port) exists.
+         (func $read-line/custom
+               (param $port        (ref $CustomInputPort))
+               (param $mode-code   i32)
+               (result             (ref eq))
+
+               (local $buf         (ref $I32GrowableArray))
+               (local $count       i32)
+               (local $res         (ref eq))
+               (local $tagged      i32)
+               (local $cp          i32)
+               (local $append      i32)
+               (local $stop        i32)
+               (local $consume     i32)
+               (local $skip        (ref eq))
+               (local $peek        (ref eq))
+               (local $peek-tagged i32)
+               (local $peek-byte   i32)
+
+               (local.set $buf   (call $make-i32growable-array (i32.const 32)))
+               (local.set $count (i32.const 0))
+
+               (block $done
+                      (loop $loop
+                            (local.set $res (call $read-char (local.get $port)))
+                            (if (ref.eq (local.get $res) (global.get $false))
+                                (then (return (global.get $false))))
+                            (if (ref.eq (local.get $res) (global.get $eof))
+                                (then (if (i32.eqz (local.get $count))
+                                          (then (return (global.get $eof)))
+                                          (else (br $done)))))
+                            (if (i32.eqz (ref.test (ref i31) (local.get $res)))
+                                (then (return (global.get $false))))
+                            (local.set $tagged (i31.get_u (ref.cast (ref i31) (local.get $res))))
+                            (if (i32.ne (i32.and (local.get $tagged) (i32.const ,char-mask))
+                                        (i32.const ,char-tag))
+                                (then (return (global.get $false))))
+                            
+                            (local.set $cp      (i32.shr_u (local.get $tagged) (i32.const ,char-shift)))
+                            (local.set $append  (i32.const 1))
+                            (local.set $stop    (i32.const 0))
+                            (local.set $consume (i32.const 0))
+
+                            (if (i32.eq (local.get $mode-code) (i32.const 0))
+                                (then (if (i32.eq (local.get $cp) (i32.const 10))
+                                          (then (local.set $append (i32.const 0))
+                                                (local.set $stop   (i32.const 1))))))
+
+                            (if (i32.eq (local.get $mode-code) (i32.const 1))
+                                (then (if (i32.eq (local.get $cp) (i32.const 13))
+                                          (then (local.set $append (i32.const 0))
+                                                (local.set $stop   (i32.const 1))))))
+
+                            (if (i32.eq (local.get $mode-code) (i32.const 3))
+                                (then (if (i32.eq (local.get $cp) (i32.const 10))
+                                          (then (local.set $append (i32.const 0))
+                                                (local.set $stop   (i32.const 1))))))
+
+                            (if (i32.eq (local.get $mode-code) (i32.const 4))
+                                (then (if (i32.or (i32.eq (local.get $cp) (i32.const 10))
+                                                  (i32.eq (local.get $cp) (i32.const 13)))
+                                          (then (local.set $append (i32.const 0))
+                                                (local.set $stop   (i32.const 1))))))
+
+                            (if (i32.or (i32.eq (local.get $mode-code) (i32.const 2))
+                                        (i32.eq (local.get $mode-code) (i32.const 3)))
+                                (then (if (i32.eq (local.get $cp) (i32.const 13))
+                                          (then (local.set $append (i32.const 0))
+                                                (local.set $stop   (i32.const 1))
+                                                (local.set $peek (call $peek-byte (local.get $port)
+                                                                        (global.get $missing)))
+                                                (if (ref.eq (local.get $peek) (global.get $false))
+                                                    (then (return (global.get $false))))
+                                                (if (ref.eq (local.get $peek) (global.get $eof))
+                                                    (then)
+                                                    (else (if (i32.eqz (ref.test (ref i31) (local.get $peek)))
+                                                              (then (return (global.get $false))))
+                                                          (local.set $peek-tagged
+                                                                     (i31.get_u (ref.cast (ref i31) (local.get $peek))))
+                                                          (if (i32.ne (i32.and (local.get $peek-tagged) (i32.const 1))
+                                                                     (i32.const 0))
+                                                              (then (return (global.get $false))))
+                                                          (local.set $peek-byte
+                                                                     (i32.shr_u (local.get $peek-tagged)
+                                                                                (i32.const 1)))
+                                                          (if (i32.eq (local.get $peek-byte) (i32.const 10))
+                                                              (then (local.set $consume (i32.const 1))))))))))
+
+                            (if (i32.eq (local.get $append) (i32.const 1))
+                                (then (call $i32growable-array-add! (local.get $buf) (local.get $cp))
+                                      (local.set $count (i32.add (local.get $count) (i32.const 1)))))
+
+                            (if (i32.eq (local.get $stop) (i32.const 1))
+                                (then (if (i32.eq (local.get $consume) (i32.const 1))
+                                          (then (local.set $skip (call $read-char (local.get $port)))
+                                                (if (ref.eq (local.get $skip) (global.get $false))
+                                                    (then (return (global.get $false))))
+                                                (if (ref.eq (local.get $skip) (global.get $eof))
+                                                    (then (return (global.get $false))))))
+                                      (br $done)))
+
+                            (br $loop)))
+
+               (local.set $res (call $i32growable-array->immutable-string (local.get $buf)))
+               (local.get $res))
+
+               ;; NOTE: String and custom input ports are supported, and the optional input-port
+               ;;       argument must be supplied explicitly until (current-input-port) exists.
          (func $read-line (type $Prim02)
                (param $in   (ref eq)) ;; optional input-port?, default = (current-input-port)
                (param $mode (ref eq)) ;; optional read-line-mode?, default = 'linefeed
@@ -28948,14 +29053,6 @@
                (if (ref.eq (local.get $in) (global.get $missing))
                    (then (call $read-line:no-argument-is-not-yet-supported)
                          (unreachable)))
-               ;; Ensure the port is a string port.
-               (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
-                   (then (call $raise-check-string-port (local.get $in)) (unreachable)))
-               (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
-               (local.set $bytes
-                          (ref.cast (ref $Bytes)
-                                    (struct.get $InputStringPort $bytes (local.get $sp))))
-               (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
 
                ;; Determine the mode symbol, defaulting to 'linefeed.
                (local.set $mode-val
@@ -28979,7 +29076,21 @@
                 (call $raise-read-line:bad-mode (local.get $mode-val))
                 (unreachable))
 
-               (local.set $buf (call $make-i32growable-array (i32.const 32)))
+               ;; Dispatch based on the input port type.
+               (if (ref.test (ref $InputStringPort) (local.get $in))
+                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
+                         (local.set $bytes
+                                    (ref.cast (ref $Bytes)
+                                              (struct.get $InputStringPort $bytes (local.get $sp))))
+                         (local.set $arr (struct.get $Bytes $bs (local.get $bytes))))
+                   (else (if (ref.test (ref $CustomInputPort) (local.get $in))
+                             (then (return (call $read-line/custom
+                                                 (ref.cast (ref $CustomInputPort) (local.get $in))
+                                                 (local.get $mode-code))))
+                             (else (call $raise-check-string-port (local.get $in))
+                                   (unreachable)))))
+
+               (local.set $buf   (call $make-i32growable-array (i32.const 32)))
                (local.set $count (i32.const 0))
 
                (block $done
