@@ -1545,12 +1545,17 @@
                                   (field $convention (ref eq)))))        ;; 'unix or 'windows symbol
 
 
+          (type $Port      (sub $Heap
+                                (struct
+                                  (field $hash  (mut i32))
+                                  (field $name  (mut (ref eq)))))) ; the port name (string) [the object-name]
+          
 
           (type $StringPort (sub $Heap
                                  (struct
                                    (field $hash  (mut i32))
-                                   (field $bytes (mut (ref $Bytes)))     ; the byte string (bytes)
                                    (field $name  (mut (ref eq)))         ; the port name   (string)
+                                   (field $bytes (mut (ref $Bytes)))     ; the byte string (bytes)
                                    (field $len   (mut i32))              ; the length of the string
                                    (field $idx   (mut i32))              ; the current index into the string
                                    (field $loc   (mut (ref $Location)))  ; the current location
@@ -27631,8 +27636,8 @@
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
                (struct.new $StringPort
                            (i32.const 0)         ;; $hash
-                           (local.get $port-bs)  ;; $bytes
                            (local.get $name-val) ;; $name
+                           (local.get $port-bs)  ;; $bytes
                            (local.get $len)      ;; $len
                            (i32.const 0)         ;; $idx
                            (local.get $loc)      ;; $loc
@@ -27676,8 +27681,8 @@
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
                (struct.new $StringPort
                            (i32.const 0)          ;; $hash
-                           (local.get $bytes)     ;; $bytes
                            (local.get $name-val)  ;; $name
+                           (local.get $bytes)     ;; $bytes
                            (local.get $len)       ;; $len (byte length)
                            (i32.const 0)          ;; $idx
                            (local.get $loc)       ;; $loc
@@ -27702,8 +27707,8 @@
                ;; Step 3: Construct and return the StringPort
                (struct.new $StringPort
                            (i32.const 0)                 ;; $hash
-                           (local.get $bs)               ;; $bytes : (ref $Bytes)
                            (global.get $false)           ;; $name  : (ref eq)
+                           (local.get $bs)               ;; $bytes : (ref $Bytes)
                            (i32.const 32)                ;; $len   : i32
                            (i32.const 0)                 ;; $idx   : i32
                            (local.get $loc)              ;; $loc   : (ref $Location)
