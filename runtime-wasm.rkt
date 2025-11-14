@@ -27814,9 +27814,8 @@
                      (global.get $missing)
                      (global.get $missing)))
 
-         ;; NOTE: This initial implementation only supports delegating reads and
-         ;;       peeks to other input ports. Procedure arguments other than
-         ;;       the close handler are currently unsupported.
+         ;; NOTE: Procedure-based custom ports currently support only immediate
+         ;;       byte operations without events or special results.
          (func $make-input-port (type $Prim>=4)
                (param $name   (ref eq)) ;; any/c
                (param $read   (ref eq)) ;; input-port? or procedure?
@@ -27876,15 +27875,21 @@
                                                     (else (local.set $buffer-mode (local.get $arg))))))))))))
                             (br $loop)))
 
-               ;; --- For now only support delegating to existing input ports ---
-               (if (i32.eqz (ref.test (ref $InputPort) (local.get $read)))
+               ;; --- Ensure read-in is either an input port or a procedure ---
+               (if (i32.eqz (i32.or (ref.test (ref $InputPort) (local.get $read))
+                                    (ref.test (ref $Procedure) (local.get $read))))
+                   ; TODO: raise exception
                    (then (return (global.get $false))))
-               (if (i32.eqz (ref.test (ref $InputPort) (local.get $peek)))
-                   (then (if (ref.eq (local.get $peek) (global.get $false))
-                             (then)
-                             (else (return (global.get $false))))))
-
-               (local.set $bytes (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+               
+               ;; --- Ensure peek-in is #f, an input port, or a procedure ---
+               (if (i32.eqz (ref.eq (local.get $peek) (global.get $false)))
+                   (then
+                    (if (i32.eqz (i32.or (ref.test (ref $InputPort) (local.get $peek))
+                                         (ref.test (ref $Procedure) (local.get $peek))))
+                        ; TODO: raise exception
+                        (then (return (global.get $false))))))
+               
+               (local.set $bytes (ref.cast (ref $Bytes)    (global.get $bytes:empty)))
                (local.set $loc   (ref.cast (ref $Location) (call $make-initial-location)))
 
                (struct.new $CustomInputPort
@@ -27951,31 +27956,144 @@
          ;;;  13.2  Byte and String Input
          ;;;
 
-         (func $read-byte/custom  ; read byte from custom input port 
+         (func $read-byte/custom  ; read byte from custom input port
                (param $port (ref $CustomInputPort))
                (result      (ref eq))
 
-               (local $delegate (ref eq))
-
+               (local $delegate  (ref eq))
+               (local $buffer    (ref $Bytes))
+               (local $arr       (ref $I8Array))
+               (local $buf-len   i32)
+               (local $idx       i32)
+               (local $len       i32)
+               (local $proc      (ref $Procedure))
+               (local $inv       (ref $ProcedureInvoker))
+               (local $args      (ref $Args))
+               (local $result    (ref eq))
+               (local $count-raw i32)
+               (local $count     i32)
+               (local $byte      i32)
+         
                (local.set $delegate (struct.get $CustomInputPort $read-proc (local.get $port)))
-               (if (i32.eqz (ref.test (ref $InputPort) (local.get $delegate)))
+               ;; Delegate to another input port when provided.
+               (if (ref.test (ref $InputPort) (local.get $delegate))
+                   (then (return (call $read-byte (local.get $delegate)))))
+
+               ;; Procedure-based handler: maintain scratch buffer and cached bytes.
+               ;;   - the delegate is passed a mutable byte string to return the read bytes
+               (local.set $buffer  (struct.get $CustomInputPort $bytes (local.get $port)))
+               (local.set $arr     (struct.get $Bytes $bs              (local.get $buffer)))
+               (local.set $buf-len (call $i8array-length               (local.get $arr)))
+               (local.set $idx     (struct.get $CustomInputPort $idx   (local.get $port)))
+               (local.set $len     (struct.get $CustomInputPort $len   (local.get $port)))
+
+               (if (i32.ge_u (local.get $idx) (local.get $len))
+                   (then
+                    ;; Ensure scratch buffer has capacity.
+                    (if (i32.eqz (local.get $buf-len))
+                        (then (local.set $buffer
+                                         (ref.cast (ref $Bytes)
+                                                   (call $make-bytes
+                                                         (ref.i31 (i32.shl (i32.const 4096)
+                                                                           (i32.const 1)))
+                                                         (global.get $missing))))
+                              (struct.set $CustomInputPort $bytes (local.get $port) (local.get $buffer))
+                              (local.set $arr    (struct.get $Bytes $bs (local.get $buffer)))
+                              (local.set $buf-len (call $i8array-length (local.get $arr)))))
+
+                    ;; Require a procedure to produce fresh bytes.
+                    (if (i32.eqz (ref.test (ref $Procedure) (local.get $delegate)))
+                        (then (return (global.get $false))))
+
+                    (local.set $proc (ref.cast (ref $Procedure) (local.get $delegate)))
+                    (local.set $inv  (struct.get $Procedure $invoke (local.get $proc)))
+                    (local.set $args (array.new_fixed $Args 1 (local.get $buffer)))
+                    (local.set $result
+                               (call_ref $ProcedureInvoker
+                                         (local.get $proc)
+                                         (local.get $args)
+                                         (local.get $inv)))
+
+                    ;; Interpret procedure result.
+                    (if (ref.eq (local.get $result) (global.get $eof))
+                        (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                              (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                              (return (global.get $eof))))
+
+                    (if (i32.eqz (ref.test (ref i31) (local.get $result)))
+                        (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                              (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                              (return (global.get $false))))
+
+                    (local.set $count-raw (i31.get_s (ref.cast (ref i31) (local.get $result))))
+                    (if (i32.and (local.get $count-raw) (i32.const 1))
+                        (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                              (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                              (return (global.get $false))))
+
+                    (local.set $count (i32.shr_s (local.get $count-raw) (i32.const 1)))
+                    (if (i32.lt_s (local.get $count) (i32.const 0))
+                        (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                              (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                              (return (global.get $false))))
+                    (if (i32.gt_u (local.get $count) (local.get $buf-len))
+                        (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                              (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                              (return (global.get $false))))
+                    (struct.set $CustomInputPort $len (local.get $port) (local.get $count))
+                    (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                    (local.set $idx (i32.const 0))
+                    (local.set $len (local.get $count))
+                    (if (i32.eqz (local.get $count))
+                        (then (return (global.get $false))))))
+
+               ;; Deliver next buffered byte.
+               (if (i32.ge_u (local.get $idx) (local.get $len))
                    (then (return (global.get $false))))
 
-               (call $read-byte (local.get $delegate)))
+               (local.set $buffer (struct.get $CustomInputPort $bytes (local.get $port)))
+               (local.set $arr    (struct.get $Bytes $bs              (local.get $buffer)))
+               (local.set $byte   (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+               (struct.set $CustomInputPort $idx
+                           (local.get $port)
+                           (i32.add (local.get $idx) (i32.const 1)))
 
+               (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
+    
          (func $peek-byte/custom  ;; peek byte from custom input port
                (param $port (ref $CustomInputPort))
                (param $skip (ref eq))        ;; exact-nonnegative-integer?, default = 0
                (result      (ref eq))
 
-               (local $delegate (ref eq))
-               (local $skip-arg (ref eq))
-               
-               ;; Normalize skip: $missing => 0, otherwise pass through
+               (local $delegate  (ref eq))
+               (local $skip-arg  (ref eq))
+               (local $skip-count i32)
+               (local $skip-raw  i32)
+               (local $buffer    (ref $Bytes))
+               (local $arr       (ref $I8Array))
+               (local $buf-len   i32)
+               (local $idx       i32)
+               (local $len       i32)
+               (local $proc      (ref $Procedure))
+               (local $inv       (ref $ProcedureInvoker))
+               (local $args      (ref $Args))
+               (local $result    (ref eq))
+               (local $count-raw i32)
+               (local $count     i32)
+               (local $byte      i32)
+
+               ;; Normalize skip argument for procedure-based handlers.
+               (local.set $skip-count (i32.const 0))
                (local.set $skip-arg (local.get $skip))
                (if (ref.eq (local.get $skip-arg) (global.get $missing))
-                   (then (local.set $skip-arg (ref.i31 (i32.const 0)))))
-
+                   (then (local.set $skip-arg (ref.i31 (i32.const 0))))
+                   (else (if (i32.eqz (ref.test (ref i31) (local.get $skip-arg)))
+                             (then (return (global.get $false))))
+                         (local.set $skip-raw (i31.get_u (ref.cast (ref i31) (local.get $skip-arg))))
+                         (if (i32.and (local.get $skip-raw) (i32.const 1))
+                             (then (return (global.get $false))))
+                         (local.set $skip-count (i32.shr_u (local.get $skip-raw) (i32.const 1)))))
+               
                ;; Look up delegate
                (local.set $delegate (struct.get $CustomInputPort $peek-proc (local.get $port)))
 
@@ -27987,12 +28105,89 @@
                (if (ref.test (ref $InputPort) (local.get $delegate))
                    (then (return (call $peek-byte
                                        (local.get $delegate)
-                                       (local.get $skip-arg)))))
+                                       (local.get $skip)))))
 
-               ;; Delegate is neither #f nor an input port: cannot peek
-               ; TODO: raise an exception here.
-               (global.get $false))
+               ;; Procedure-based handler. Only skip = 0 is currently supported.
+               (if (i32.ne (local.get $skip-count) (i32.const 0))
+                   (then (return (global.get $false))))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $delegate)))
+                   (then (return (global.get $false))))
 
+               (local.set $buffer (struct.get $CustomInputPort $bytes (local.get $port)))
+               (local.set $arr    (struct.get $Bytes $bs (local.get $buffer)))
+               (local.set $buf-len (call $i8array-length (local.get $arr)))
+               (local.set $idx (struct.get $CustomInputPort $idx (local.get $port)))
+               (local.set $len (struct.get $CustomInputPort $len (local.get $port)))
+
+               ;; Use buffered data when available.
+               (if (i32.lt_u (local.get $idx) (local.get $len))
+                   (then (local.set $byte (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+                         (return (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))))
+
+               ;; Ensure scratch buffer exists before invoking procedure.
+               (if (i32.eqz (local.get $buf-len))
+                   (then (local.set $buffer
+                                    (ref.cast (ref $Bytes)
+                                              (call $make-bytes
+                                                    (ref.i31 (i32.shl (i32.const 4096)
+                                                                      (i32.const 1)))
+                                                    (global.get $missing))))
+                         (struct.set $CustomInputPort $bytes (local.get $port) (local.get $buffer))
+                         (local.set $arr    (struct.get $Bytes $bs (local.get $buffer)))
+                         (local.set $buf-len (call $i8array-length (local.get $arr)))))
+
+               (local.set $proc (ref.cast (ref $Procedure) (local.get $delegate)))
+               (local.set $inv  (struct.get $Procedure $invoke (local.get $proc)))
+               (local.set $args (array.new_fixed $Args 3
+                                                (local.get $buffer)
+                                                (local.get $skip-arg)
+                                                (global.get $false)))
+               (local.set $result
+                          (call_ref $ProcedureInvoker
+                                    (local.get $proc)
+                                    (local.get $args)
+                                    (local.get $inv)))
+
+               (if (ref.eq (local.get $result) (global.get $false))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $false))))
+               (if (ref.eq (local.get $result) (global.get $eof))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $eof))))
+               (if (i32.eqz (ref.test (ref i31) (local.get $result)))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $false))))
+
+               (local.set $count-raw (i31.get_s (ref.cast (ref i31) (local.get $result))))
+               (if (i32.and (local.get $count-raw) (i32.const 1))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $false))))
+
+               (local.set $count (i32.shr_s (local.get $count-raw) (i32.const 1)))
+               (if (i32.lt_s (local.get $count) (i32.const 0))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $false))))
+               (if (i32.gt_u (local.get $count) (local.get $buf-len))
+                   (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
+                         (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+                         (return (global.get $false))))
+               (struct.set $CustomInputPort $len (local.get $port) (local.get $count))
+               (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
+               (local.set $len (local.get $count))
+               (local.set $idx (i32.const 0))
+
+               (if (i32.eqz (local.get $count))
+                   (then (return (global.get $false))))
+
+               (local.set $buffer (struct.get $CustomInputPort $bytes (local.get $port)))
+               (local.set $arr    (struct.get $Bytes $bs (local.get $buffer)))
+               (local.set $byte   (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+               (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
          
          (func $read-byte:one-argument-is-not-yet-supported (unreachable))
          
