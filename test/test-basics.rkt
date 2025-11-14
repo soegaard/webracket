@@ -3080,7 +3080,56 @@
                        (write-string "ok" out)
                        (and (equal? (output-port? out) #t)
                             (equal? (output-port? (open-input-string "x")) #f)
-                            (equal? (output-port? #f) #f))))))
+                            (equal? (output-port? #f) #f))))
+
+               (list "make-input-port/read-in-proc"
+                    (let* ([data (bytes 80 81 82)]
+                           [index 0]
+                           [port (make-input-port
+                                  'reader
+                                  (lambda (dest)
+                                    (if (< index 3)
+                                        (begin
+                                          (bytes-set! dest 0 (bytes-ref data index))
+                                          (set! index (add1 index))
+                                          1)
+                                        eof))
+                                  #f
+                                  (lambda () (void)))])
+                      (and (equal? (read-byte port) 80)
+                           (equal? (read-byte port) 81)
+                           (equal? (read-byte port) 82)
+                           (eof-object? (read-byte port)))))
+
+              (list "make-input-port/peek-in-proc"
+                    (let* ([data (bytes 90 91 92)]
+                           [index 0]
+                           [port (make-input-port
+                                  'peeker
+                                  (lambda (dest)
+                                    (if (< index 3)
+                                        (begin
+                                          (bytes-set! dest 0 (bytes-ref data index))
+                                          (set! index (add1 index))
+                                          1)
+                                        eof))
+                                  (lambda (dest skip evt)
+                                    (let ([pos (+ index skip)])
+                                      (if (< pos 3)
+                                          (begin
+                                            (bytes-set! dest 0 (bytes-ref data pos))
+                                            1)
+                                          eof)))
+                                  (lambda () (void)))])
+                      (and (equal? (peek-byte port) 90)
+                           (equal? (peek-byte port) 90)
+                           (equal? (read-byte port) 90)
+                           (equal? (peek-byte port) 91)
+                           (equal? (read-byte port) 91)
+                           (equal? (read-byte port) 92)
+                           (eof-object? (peek-byte port))
+                           (eof-object? (read-byte port)))))
+               ))
 
        
        (list "13.3 Byte and String Input"

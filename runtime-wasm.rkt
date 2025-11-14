@@ -28175,18 +28175,14 @@
                (if (i32.gt_u (local.get $count) (local.get $buf-len))
                    (then (struct.set $CustomInputPort $len (local.get $port) (i32.const 0))
                          (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
-                         (return (global.get $false))))
-               (struct.set $CustomInputPort $len (local.get $port) (local.get $count))
-               (struct.set $CustomInputPort $idx (local.get $port) (i32.const 0))
-               (local.set $len (local.get $count))
-               (local.set $idx (i32.const 0))
+                         (return (global.get $false))))               
 
                (if (i32.eqz (local.get $count))
                    (then (return (global.get $false))))
 
                (local.set $buffer (struct.get $CustomInputPort $bytes (local.get $port)))
                (local.set $arr    (struct.get $Bytes $bs (local.get $buffer)))
-               (local.set $byte   (array.get_u $I8Array (local.get $arr) (local.get $idx)))
+               (local.set $byte   (array.get_u $I8Array (local.get $arr) (i32.const 0)))
                (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
          
          (func $read-byte:one-argument-is-not-yet-supported (unreachable))
