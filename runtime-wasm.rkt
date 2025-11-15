@@ -37850,6 +37850,60 @@
                                (global.get $string:->)))
                (call $growable-array-of-strings->string (local.get $out)))
 
+         (func $format/display:assoc
+               (param $alist (ref eq))  ;; association list (list of pairs)
+               (result       (ref $String))
+
+               (local $out       (ref $GrowableArray))
+               (local $cursor    (ref eq))
+               (local $cell      (ref $Pair))
+               (local $entry     (ref eq))
+               (local $entry-str (ref $String))
+               (local $first?    i32)
+
+               ;; Empty association list prints as "()".
+               (if (ref.eq (local.get $alist) (global.get $null))
+                   (then (return (ref.cast (ref $String) (global.get $string:null)))))
+
+               ;; Prepare builders and iteration state.
+               (local.set $out    (call $make-growable-array (i32.const 8)))
+               (local.set $cursor (local.get $alist))
+               (local.set $first? (i32.const 1))
+
+               ;; Emit opening parenthesis.
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:open-paren)))
+
+               ;; Iterate through the list, verifying every element is a pair
+               ;; and printing it using the generic formatter.
+               (block $done
+                      (loop $walk
+                            (br_if $done (ref.eq (local.get $cursor) (global.get $null)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $cursor)))
+                                (then (call $raise-format/display:pair:expected-pair)
+                                      (unreachable)))
+                            (local.set $cell (ref.cast (ref $Pair) (local.get $cursor)))
+                            (local.set $entry (struct.get $Pair $a (local.get $cell)))
+                            (if (i32.eqz (ref.test (ref $Pair) (local.get $entry)))
+                                (then (call $raise-format/display:pair:expected-pair)
+                                      (unreachable)))
+                            (if (i32.eqz (local.get $first?))
+                                (then (call $growable-array-add! (local.get $out)
+                                                                   (ref.cast (ref $String)
+                                                                            (global.get $string:space))))
+                                (else (local.set $first? (i32.const 0))))
+                            (local.set $entry-str (call $format/display (local.get $entry)))
+                            (call $growable-array-add! (local.get $out) (local.get $entry-str))
+                            (local.set $cursor (struct.get $Pair $d (local.get $cell)))
+                            (br $walk)))
+
+               ;; Close and materialize the final string.
+               (call $growable-array-add! (local.get $out)
+                                        (ref.cast (ref $String)
+                                                 (global.get $string:close-paren)))
+               (call $growable-array-of-strings->string (local.get $out)))
+
          (func $format/display:unquoted-printing-string
                (param $ups (ref $UnquotedPrintingString))
                (result (ref $String))
