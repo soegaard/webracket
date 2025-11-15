@@ -164,16 +164,6 @@
       
       (define do-raise-arguments-error
         (let ()
-          (define (string-has-newline? str)
-            (let loop ([i 0])
-              (if (fx= i (string-length str))
-                  #f
-                  (or (eqv? #\newline (string-ref str i))
-                      (loop (fx+ i 1))))))
-
-          (define (string-starts-newline? str)
-            (eqv? #\newline (string-ref str 0)))
-
           (define (string-insert-indentation str i-str)
             (apply
              string-append
@@ -190,13 +180,13 @@
                   (loop start (fx+ i 1))]))))
           (define (reindent s amt)
             (if (and (string-has-newline? s)
-                     (not (string-starts-newline? s)))
+                     (not (string-starts-with-newline? s)))
                 (string-insert-indentation s (make-string amt #\space))
                 s))
 
           (define (reindent/newline str)
             (if (and (string-has-newline? str)
-                     (not (string-starts-newline? str)))
+                     (not (string-starts-with-newline? str)))
                 (string-append "\n   " (string-insert-indentation str "   "))
                 str))
           
@@ -295,48 +285,6 @@
 
 
       (define (make-raise-value-error error-name singular plural)
-        (define indent "   ")
-        (define (string-has-newline? str)
-          (let ([len (string-length str)])
-            (let loop ([i 0])
-              (cond
-                [(= i len) #f]
-                [(char=? (string-ref str i) #\newline) #t]
-                [else (loop (add1 i))]))))
-
-        (define (string-starts-with-newline? str)
-          (and (> (string-length str) 0)
-               (char=? (string-ref str 0) #\newline)))
-
-        (define (indent-lines str)
-          (define out (open-output-string))
-          (define len (string-length str))
-          (when (> len 0)
-            (write-string indent out)
-            (let loop ([i 0])
-              (when (< i len)
-                (define ch (string-ref str i))
-                (write-char ch out)
-                (when (and (char=? ch #\newline)
-                           (< (add1 i) len))
-                  (write-string indent out))
-                (loop (add1 i)))))
-          (get-output-string out))
-
-        (define (format-field prefix content)
-          (if (and (string-has-newline? content)
-                   (not (string-starts-with-newline? content)))
-              (string-append prefix "\n" (indent-lines content))
-              (string-append prefix content)))
-
-        (define (value->string v)
-          (define handler (error-value->string-handler))
-          (define raw (handler v (error-print-width)))
-          (cond
-            [(string? raw) raw]
-            [(bytes? raw) (bytes->string/utf-8 raw)]
-            [else "..."]))
-
         (define (join-with-newline strs)
           (if (null? strs)
               ""
