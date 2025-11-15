@@ -1078,6 +1078,10 @@
     (add-runtime-string-constant 'double-quote               "\"")
     (add-runtime-string-constant 'hash-t                     "#t")
     (add-runtime-string-constant 'hash-f                     "#f")
+    (add-runtime-string-constant 'hash-hash                  "#hash")
+    (add-runtime-string-constant 'hash-hasheq                "#hasheq")
+    (add-runtime-string-constant 'hash-hasheqv               "#hasheqv")
+    (add-runtime-string-constant 'hash-hashalw               "#hashalw")
     (add-runtime-string-constant 'null                       "()")
     (add-runtime-string-constant 'eof                        "#<eof>")
     (add-runtime-string-constant 'void                       "#<void>")
@@ -37188,6 +37192,7 @@
                (local $cw-name       (ref $Symbol))
                (local $cw-val        (ref eq))
                (local $cw-proc       (ref $Procedure))
+               (local $hash          (ref $Hash))
                ;; --- Case: fixnum ---
                (if (ref.test (ref i31) (local.get $v))
                    (then (local.set $i31 (ref.cast (ref i31) (local.get $v)))
@@ -37305,6 +37310,10 @@
                          (if (i32.eq (i32.and (local.get $n) (i32.const ,char-mask))
                                      (i32.const ,char-tag))
                              (then (return (call $format/display:char (local.get $v)))))))
+               ;; --- Case: hash table ---
+               (if (ref.test (ref $Hash) (local.get $v))
+                   (then (local.set $hash (ref.cast (ref $Hash) (local.get $v)))
+                         (return (call $format/display:hash (local.get $hash)))))
                ;; --- Case: namespace ---
                (if (ref.test (ref $Namespace) (local.get $v))
                    (then (return (call $format/display:namespace
@@ -37343,6 +37352,40 @@
                ;; --- Fallback ---
                (call $raise-format/display:unknown-datatype)
                (unreachable))
+
+         (func $format/display:hash
+               (param $ht (ref $Hash))
+               (result (ref $String))
+
+               (local $alist      (ref eq))
+               (local $alist-str  (ref $String))
+               (local $prefix     (ref $String))
+               (local $out        (ref $GrowableArray))
+
+               ;; Convert hash entries to an association list.
+               (local.set $alist (call $hash->list
+                                          (ref.cast (ref eq) (local.get $ht))
+                                          (global.get $false)))
+               (local.set $alist-str (call $format/display:assoc (local.get $alist)))
+
+               ;; Determine hash prefix based on table equivalence.
+               (local.set $prefix (ref.cast (ref $String)
+                                           (global.get $string:hash-hash)))
+               (if (ref.test (ref $HashEq) (local.get $ht))
+                   (then (local.set $prefix (ref.cast (ref $String)
+                                                      (global.get $string:hash-hasheq)))))
+               (if (ref.test (ref $HashEqv) (local.get $ht))
+                   (then (local.set $prefix (ref.cast (ref $String)
+                                                      (global.get $string:hash-hasheqv)))))
+               (if (ref.test (ref $HashEqualAlways) (local.get $ht))
+                   (then (local.set $prefix (ref.cast (ref $String)
+                                                      (global.get $string:hash-hashalw)))))
+
+               ;; Prefix + association list content -> final string.
+               (local.set $out (call $make-growable-array (i32.const 2)))
+               (call $growable-array-add! (local.get $out) (local.get $prefix))
+               (call $growable-array-add! (local.get $out) (local.get $alist-str))
+               (call $growable-array-of-strings->string (local.get $out)))
 
          (func $format/display:variable-reference
                (param $v (ref eq))
