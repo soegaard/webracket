@@ -17,7 +17,7 @@
                      syntax/loc
                      with-syntax
                      generate-temporaries))
-(provide define-syntax)
+(provide define-syntax define-syntax-rule)
 
 ; core
 (provide (rename-out [#%plain-module-begin #%module-begin]
