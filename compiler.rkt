@@ -30,16 +30,13 @@
 ;   [x] make-input-port      ; note: The calls in "regexp.rkt" all have 4 arguments.
 ;   [x] progress-evt?
 
-; TODO
-
-;   [ ] format/display needs to have formating for hash tables
+;   [x] format/display needs to have formating for hash tables
 
 ;; Todo
 #;(abort-current-continuation
    call-with-continuation-prompt
    make-continuation-prompt-tag   
    )
-
 
 
 
@@ -1177,6 +1174,10 @@
   unsafe-struct-set!
 
   unsafe-string-length
+
+  unsafe-bytes-length
+  unsafe-bytes-ref
+  unsafe-bytes-set!
 
   namespace?
   make-empty-namespace
@@ -4480,8 +4481,9 @@
          [(make-bytes)                 (inline-prim/optional sym ae1 1 2)]
 
          [(substring)                  (inline-prim/optional sym ae1 2 3)]
-         [(subbytes)                   (inline-prim/optional sym ae1 2 3)]
+         [(subbytes)                   (inline-prim/optional sym ae1 2 3)]         
          [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
+         [(string->bytes/utf-8)        (inline-prim/optional/default sym ae1 1 4 (Imm #f))]
          [(bytes->string/utf-8)        (inline-prim/optional sym ae1 1 4)]
          [(bytes->string/latin-1)      (inline-prim/optional sym ae1 1 4)]
          [(bytes-utf-8-length)         (inline-prim/optional sym ae1 1 4)]
@@ -4768,8 +4770,12 @@
                                        (call $make-bytes ,(Imm n) ,(Imm 0))))
                      ; Initialize
                      (λ ($bs i v)
-                        `(call $bytes-set!/checked ,$bs (i32.const ,i)
-                               (i32.shr_s (i31.get_s ,v) (i32.const 1))))
+                       `(call $bytes-set!/checked                         
+                              ,$bs                                        
+                              (i32.const ,i)                              
+                              (i32.shr_s
+                               (i31.get_s (ref.cast i31ref ,v)) 
+                               (i32.const 1))))
                      ; Finish
                      (λ ($bs) $bs))]
          [(string)
@@ -4781,8 +4787,7 @@
                                     (i32.const ,i)
                                     (i32.shr_s
                                      (i31.get_s
-                                      (ref.cast (ref i31)
-                                                (call $char->integer ,v)))
+                                      (ref.cast (ref i31) (call $char->integer ,v)))
                                      (i32.const 1))))
                      (λ ($a)
                         `(struct.new $String
