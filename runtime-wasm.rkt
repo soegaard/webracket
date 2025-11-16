@@ -37157,6 +37157,57 @@
                          (struct.get $String $codepoints (local.get $str)))
                         (i32.const 1))))
 
+        (func $unsafe-bytes-length (type $Prim1)
+              (param $b   (ref eq))
+              (result     (ref eq))
+
+              (local $bs  (ref $Bytes))
+
+              (local.set $bs (ref.cast (ref $Bytes) (local.get $b)))
+              (ref.i31 (i32.shl
+                        (array.len
+                         (struct.get $Bytes $bs (local.get $bs)))
+                        (i32.const 1))))
+
+        (func $unsafe-bytes-ref (type $Prim2)
+              (param $bstr (ref eq)) ;; bytes
+              (param $k    (ref eq)) ;; fixnum index
+              (result      (ref eq))
+
+              (local $bs  (ref $Bytes))
+              (local $arr (ref $I8Array))
+              (local $idx i32)
+
+              (local.set $bs  (ref.cast (ref $Bytes) (local.get $bstr)))
+              (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+              (local.set $idx (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $k)))
+                                         (i32.const 1)))
+
+              (ref.i31 (i32.shl (call $i8array-ref (local.get $arr) (local.get $idx))
+                                (i32.const 1))))
+
+        (func $unsafe-bytes-set! (type $Prim3)
+              (param $bstr (ref eq)) ;; bytes
+              (param $k    (ref eq)) ;; fixnum index
+              (param $b    (ref eq)) ;; byte
+              (result (ref eq))
+
+              (local $bs  (ref $Bytes))
+              (local $arr (ref $I8Array))
+              (local $idx i32)
+              (local $bv  i32)
+
+              (local.set $bs  (ref.cast (ref $Bytes) (local.get $bstr)))
+              (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
+              (local.set $idx (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $k)))
+                                         (i32.const 1)))
+              (local.set $bv  (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $b)))
+                                         (i32.const 1)))
+
+              (call $i8array-set! (local.get $arr) (local.get $idx) (local.get $bv))
+              (global.get $void))
+        
+
         ;; 17.4 Unsafe Extflonum Operations
         ;; 17.5 Unsafe Impersonators and Chaperones
         ;; 17.6 Unsafe Assertions

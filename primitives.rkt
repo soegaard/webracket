@@ -963,7 +963,9 @@
  unsafe-struct-set!
  unsafe-string-length
 
-
+ unsafe-bytes-length
+ unsafe-bytes-ref
+ unsafe-bytes-set!
 
  
  ;; FFI
