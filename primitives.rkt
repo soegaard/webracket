@@ -755,6 +755,14 @@
  eqv-hash-code
  equal-hash-code
 
+ mutable-hash-iterate-first
+ mutable-hash-iterate-next
+ mutable-hash-iterate-key
+ mutable-hash-iterate-value
+ mutable-hash-iterate-pair
+ mutable-hash-iterate-key+value
+
+
  
  ;; 4.20 Procedures
  procedure? apply procedure-rename procedure->external
@@ -1530,3 +1538,62 @@
 
 (define (instance-variable-box instance symbol can-create?)
   (error 'linklet-name "not in full Racket"))
+
+;;;
+;;; Iteration for mutable hash tables
+;;;
+
+;; Mutable-hash-only iteration helpers
+(define (mutable-hash-iterate-first ht)
+  (unless (mutable-hash? ht)
+    (raise-argument-error 'mutable-hash-iterate-first "mutable-hash?" ht))
+  (hash-iterate-first ht))
+
+(define (mutable-hash-iterate-next ht pos)
+  (unless (mutable-hash? ht)
+    (raise-argument-error 'mutable-hash-iterate-next "mutable-hash?" ht))
+  (hash-iterate-next ht pos))
+
+(define mutable-hash-iterate-key
+  (case-lambda
+    [(ht pos)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-key "mutable-hash?" ht))
+     (hash-iterate-key ht pos)]
+    [(ht pos bad-index-v)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-key "mutable-hash?" ht))
+     (hash-iterate-key ht pos bad-index-v)]))
+
+(define mutable-hash-iterate-value
+  (case-lambda
+    [(ht pos)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-value "mutable-hash?" ht))
+     (hash-iterate-value ht pos)]
+    [(ht pos bad-index-v)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-value "mutable-hash?" ht))
+     (hash-iterate-value ht pos bad-index-v)]))
+
+(define mutable-hash-iterate-pair
+  (case-lambda
+    [(ht pos)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-pair "mutable-hash?" ht))
+     (hash-iterate-pair ht pos)]
+    [(ht pos bad-index-v)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-pair "mutable-hash?" ht))
+     (hash-iterate-pair ht pos bad-index-v)]))
+
+(define mutable-hash-iterate-key+value
+  (case-lambda
+    [(ht pos)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-key+value "mutable-hash?" ht))
+     (hash-iterate-key+value ht pos)]
+    [(ht pos bad-index-v)
+     (unless (mutable-hash? ht)
+       (raise-argument-error 'mutable-hash-iterate-key+value "mutable-hash?" ht))
+     (hash-iterate-key+value ht pos bad-index-v)]))

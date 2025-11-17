@@ -736,6 +736,13 @@
   ; slice-by
 
   ; 4.10.10 Immutable Cyclic Data
+
+  mutable-hash-iterate-first
+  mutable-hash-iterate-next
+  mutable-hash-iterate-key
+  mutable-hash-iterate-value
+  mutable-hash-iterate-pair
+  mutable-hash-iterate-key+value
   
   
   ; 4.21 Void
@@ -746,10 +753,10 @@
   ;; BOOLEANS
   boolean? boolean=? false? not xor immutable?
   mutable-string? immutable-string?
-  mutable-bytes? immutable-bytes?
+  mutable-bytes?  immutable-bytes?
   mutable-vector? immutable-vector?
-  mutable-box? immutable-box?
-  mutable-hash? immutable-hash?
+  mutable-box?    immutable-box?
+  mutable-hash?   immutable-hash?
 
   ;; CHARACTERS
   char?
@@ -2079,6 +2086,8 @@
                              [(hash-equal? ht)
                               `(app ,h ,(var:make-hash)
                                     ,(loop (hash->list ht)))]
+                             ; todo: immutable hashes
+                             ; todo: always equal hashes
                              [else
                               (error 'datum->construction-expr
                                      "unsupported hash table: ~a" ht)])]
@@ -4250,7 +4259,7 @@
      (define (inline-prim/fixed sym ae1 arg-count)
        (define aes (AExpr* ae1))
        (define n   (length aes))
-       (when (> n arg-count) (error 'primapp "too many arguments: ~a" sym))
+       (when (> n arg-count) (raise-syntax-error 'primapp "too many arguments" s))
        (when (< n arg-count) (error 'primapp "too few arguments: ~a"  sym))
        `(call ,($ sym) ,@aes))
 
@@ -4263,7 +4272,7 @@
        (define filler `(global.get $missing))
        (define aes (AExpr* ae1))
        (define n   (length aes))
-       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (> n max) (raise-syntax-error 'primapp "too many arguments" s))
        (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
        (define optionals (make-list (- max n) filler))
        `(call ,($ sym) ,@aes ,@optionals))
@@ -4278,7 +4287,7 @@
        (define filler `(global.get $missing))
        (define aes (AExpr* ae1))
        (define n   (length aes))
-       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (> n max) (raise-syntax-error 'primapp "too many arguments" s))
        (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
        (define optionals (make-list (- max n) default))
        `(call ,($ sym) ,@aes ,@optionals))
@@ -4291,7 +4300,7 @@
      (define (inline-prim/optional-rest sym ae1 min max [rest-start min])
        (define aes (AExpr* ae1))
        (define n   (length aes))
-       (when (> n max) (error 'primapp "too many arguments: ~a" sym))
+       (when (> n max) (raise-syntax-error 'primapp "too many arguments" s))
        (when (< n min) (error 'primapp "too few arguments: ~a"  sym))
        (define mandatory (take aes rest-start))
        (define rest       (build-rest-args (drop aes rest-start)))
