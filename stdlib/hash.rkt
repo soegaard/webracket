@@ -5,12 +5,6 @@
 ;; The implementation of regular expressions uses immutable hash tables.
 ;; We use immutable hash tables in form of Patricia trees (see "stdlib/intmap.rkt").
 
-(define string?
-  (let ()
-    (λ (x)
-      (js-log "works!")
-      (string? x))))
-
 
 (define-values (immutable-hash-ref ; to avoid name clash
                 hash-iterate-first
@@ -37,8 +31,7 @@
         [(intmap? ht) (js-log "hash-iterate-first - B")
                       (intmap-iterate-first ht)]
         [(hash? ht)   (js-log "hash-iterate-first - D")
-                      (error 'hash-iterate-first
-                             "expected immutable hash table")]        
+                      (hash-iterate-first ht)]
         [else         (js-log "hash-iterate-first - C")
                       (error 'hash-iterate-first
                              "expected immutable hash table")]))
@@ -54,69 +47,72 @@
          (unless (intmap? ht)
            (error 'hash-iterate-first "expected immutable hash table"))
 
-         (define key  (intmap-iterate-key ht pos bad-index-v))
+         (cond
+           [(intmap? ht)  (define key  (intmap-iterate-key ht pos bad-index-v))
 
-         (when (eq? key fail)
-           (raise-arguments-error hash-iterate-key "no element at index"
-                                  "index" pos))
-         key]))
+                          (when (eq? key fail)
+                            (raise-arguments-error hash-iterate-key "no element at index"
+                                                   "index" pos))
+                          key]
+           [(hash? ht)    (mutable-hash-iterate-key pos bad-index-v)]
+           [else          (error 'hash-iterate-key
+                                 "expected a hash table")])]))
 
     (define hash-iterate-value
       (case-lambda
         [(ht pos)
          (hash-iterate-value ht pos fail)]
         [(ht pos bad-index-v)
-         (unless (intmap? ht)
-           (error 'hash-iterate-value "expected immutable hash table"))
-
-         (define value (intmap-iterate-value ht pos bad-index-v))
-
-         (when (eq? value fail)
-           (raise-arguments-error hash-iterate-value "no element at index"
-                                  "index" pos))
-         value]))
+         (cond
+           [(intmap? ht) (define value (intmap-iterate-value ht pos bad-index-v))            
+                         (when (eq? value fail)
+                           (raise-arguments-error hash-iterate-value "no element at index"
+                                                  "index" pos))
+                         value]
+           [(hash? ht)   (mutable-hash-iterate-value ht pos fail)]
+           [else         (error 'hash-iterate-value "expected a hash table")])]))
 
     (define hash-iterate-pair
       (case-lambda
         [(ht pos)
          (hash-iterate-pair ht pos fail)]
         [(ht pos bad-index-v)
-         (unless (intmap? ht)
-           (error 'hash-iterate-pair "expected immutable hash table"))
-
-         (define pair (intmap-iterate-pair ht pos fail))
-
          (cond
-           [(eq? pair fail)
-            (if (eq? bad-index-v fail)
-                (raise-arguments-error hash-iterate-pair "no element at index"
-                                       "index" pos)
-                (cons bad-index-v bad-index-v))]
-           [else pair])]))
+           [(hash?   ht) (mutable-hash-iterate-pair ht pos fail)]
+           [(intmap? ht) (define pair (intmap-iterate-pair ht pos fail))                         
+                         (cond
+                           [(eq? pair fail)
+                            (if (eq? bad-index-v fail)
+                                (raise-arguments-error hash-iterate-pair "no element at index"
+                                                       "index" pos)
+                                (cons bad-index-v bad-index-v))]
+                           [else pair])]
+           [else
+            (error 'hash-iterate-pair "expected a hash table")])]))
 
     (define hash-iterate-key+value
       (case-lambda
         [(ht pos)
          (hash-iterate-key+value ht pos fail)]
         [(ht pos bad-index-v)
-         (unless (intmap? ht)
-           (error 'hash-iterate-key+value "expected immutable hash table"))
-
-         (define pair (intmap-iterate-pair ht pos fail))
-
          (cond
-           [(eq? pair fail)
-            (if (eq? bad-index-v fail)
-                (raise-arguments-error hash-iterate-key+value "no element at index"
-                                       "index" pos)
-                (values bad-index-v bad-index-v))]
-           [else (values (car pair) (cdr pair))])]))
+           [(hash?   ht) (hash-iterate-key+value ht pos fail)]
+           [(intmap? ht) (define pair (intmap-iterate-pair ht pos fail))
+                         (cond
+                           [(eq? pair fail)
+                            (if (eq? bad-index-v fail)
+                                (raise-arguments-error hash-iterate-key+value "no element at index"
+                                                       "index" pos)
+                                (values bad-index-v bad-index-v))]
+                           [else (values (car pair) (cdr pair))])]
+           [else
+            (error 'hash-iterate-key+value "expected immutable hash table")])]))
 
     (define (hash-iterate-next ht pos)
       (cond
+        [(hash?   ht) (mutable-hash-iterate-next ht pos)]
         [(intmap? ht) (intmap-iterate-next ht pos)]
-        [else         (error 'hash-iterate-next
-                             "expected immutable hash table")]))
+        [else         (error 'hash-iterate-next "expected hash table")]))
 
     (define (hash-set ht key v)
       (cond
