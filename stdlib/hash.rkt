@@ -26,14 +26,10 @@
                              "expected immutable hash table")]))
     
     (define (hash-iterate-first ht)
-      (js-log "hash-iterate-first - A")
       (cond
-        [(intmap? ht) (js-log "hash-iterate-first - B")
-                      (intmap-iterate-first ht)]
-        [(hash? ht)   (js-log "hash-iterate-first - D")
-                      (hash-iterate-first ht)]
-        [else         (js-log "hash-iterate-first - C")
-                      (error 'hash-iterate-first
+        [(intmap? ht) (intmap-iterate-first ht)]
+        [(hash? ht)   (hash-iterate-first ht)]
+        [else         (error 'hash-iterate-first
                              "expected immutable hash table")]))
 
     
@@ -54,7 +50,7 @@
                             (raise-arguments-error hash-iterate-key "no element at index"
                                                    "index" pos))
                           key]
-           [(hash? ht)    (mutable-hash-iterate-key pos bad-index-v)]
+           [(hash? ht)    (mutable-hash-iterate-key ht pos bad-index-v)]
            [else          (error 'hash-iterate-key
                                  "expected a hash table")])]))
 
@@ -96,7 +92,7 @@
          (hash-iterate-key+value ht pos fail)]
         [(ht pos bad-index-v)
          (cond
-           [(hash?   ht) (hash-iterate-key+value ht pos fail)]
+           [(hash?   ht) (mutable-hash-iterate-key+value ht pos fail)]
            [(intmap? ht) (define pair (intmap-iterate-pair ht pos fail))
                          (cond
                            [(eq? pair fail)
