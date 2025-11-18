@@ -26011,31 +26011,31 @@
               (unreachable))
 
         ,@(append*
-          (for/list ([iter-key         '($hasheq-iterate-key
-                                         $hasheqv-iterate-key
-                                         $hashequal-iterate-key
-                                         $hashalw-iterate-key)]
-                     [iter-value       '($hasheq-iterate-value
-                                         $hasheqv-iterate-value
-                                         $hashequal-iterate-value
-                                         $hashalw-iterate-value)]
-                     [iter-pair        '($hasheq-iterate-pair
-                                         $hasheqv-iterate-pair
-                                         $hashequal-iterate-pair
-                                         $hashalw-iterate-pair)]
-                     [iter-key+value   '($hasheq-iterate-key+value
-                                         $hasheqv-iterate-key+value
-                                         $hashequal-iterate-key+value
-                                         $hashalw-iterate-key+value)]
-                     [type             '($HashEqMutable
-                                         $HashEqvMutable
-                                         $HashEqualMutable
-                                         $HashEqualAlwaysMutable)]
-                     [raise-expected   '($raise-argument-error:mutable-hasheq-expected
-                                         $raise-argument-error:mutable-hasheqv-expected
-                                         $raise-argument-error:mutable-hash-expected
-                                         $raise-argument-error:mutable-hashalw-expected)])
-            `((func ,iter-key
+           (for/list ([iter-key         '($hasheq-iterate-key
+                                          $hasheqv-iterate-key
+                                          $hashequal-iterate-key
+                                          $hashalw-iterate-key)]
+                      [iter-value       '($hasheq-iterate-value
+                                          $hasheqv-iterate-value
+                                          $hashequal-iterate-value
+                                          $hashalw-iterate-value)]
+                      [iter-pair        '($hasheq-iterate-pair
+                                          $hasheqv-iterate-pair
+                                          $hashequal-iterate-pair
+                                          $hashalw-iterate-pair)]
+                      [iter-key+value   '($hasheq-iterate-key+value
+                                          $hasheqv-iterate-key+value
+                                          $hashequal-iterate-key+value
+                                          $hashalw-iterate-key+value)]
+                      [type             '($HashEqMutable
+                                          $HashEqvMutable
+                                          $HashEqualMutable
+                                          $HashEqualAlwaysMutable)]
+                      [raise-expected   '($raise-argument-error:mutable-hasheq-expected
+                                          $raise-argument-error:mutable-hasheqv-expected
+                                          $raise-argument-error:mutable-hash-expected
+                                          $raise-argument-error:mutable-hashalw-expected)])
+             `((func ,iter-key
                      (type $Prim13)
                      (param $ht        (ref eq))  ;; mutable hash table
                      (param $pos       (ref eq))  ;; iteration position
@@ -26048,45 +26048,45 @@
                      (local $index    i32)
                      (local $key      (ref eq))
 
-                     ;; Check that ht is expected table type
-                     (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
-                         (then (call ,raise-expected (local.get $ht))
-                               (unreachable)))
-
-                     ;; Decode and validate position
-                     (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
-                     (if (i32.and (local.get $index) (i32.const 1))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
-
-                     (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
-                     (local.set $entries (struct.get ,type $entries (local.get $table)))
-                     (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-
-                     (if (i32.ge_u (local.get $index) (local.get $capacity))
-                         (then (br $bad-index)))
-
-                     (local.set $key
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.shl (local.get $index) (i32.const 1))))
-                     (if (ref.eq (local.get $key) (global.get $missing))
-                         (then (br $bad-index)))
-                     (if (ref.eq (local.get $key) (global.get $tombstone))
-                         (then (br $bad-index)))
-
-                     (return (local.get $key))
-
                      (block $bad-index
-                            (if (ref.eq (local.get $bad-index) (global.get $missing))
-                                (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                            ;; Check that ht is expected table type
+                            (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                                (then (call ,raise-expected (local.get $ht))
                                       (unreachable)))
-                            (return (local.get $bad-index))))
 
+                            ;; Decode and validate position
+                            (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
+                            (if (i32.and (local.get $index) (i32.const 1))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
+
+                            (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
+                            (local.set $entries (struct.get ,type $entries (local.get $table)))
+                            (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                            
+                            (if (i32.ge_u (local.get $index) (local.get $capacity))
+                                (then (br $bad-index)))
+
+                            (local.set $key
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.shl (local.get $index) (i32.const 1))))
+                            (if (ref.eq (local.get $key) (global.get $missing))
+                                (then (br $bad-index)))
+                            (if (ref.eq (local.get $key) (global.get $tombstone))
+                                (then (br $bad-index)))
+
+                            (return (local.get $key)))
+
+                     (if (ref.eq (local.get $bad-index) (global.get $missing))
+                         (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                               (unreachable)))
+                     (return (local.get $bad-index)))
+               
                (func ,iter-value
                      (type $Prim13)
                      (param $ht        (ref eq))  ;; mutable hash table
@@ -26100,48 +26100,48 @@
                      (local $index    i32)
                      (local $key      (ref eq))
 
-                     ;; Check that ht is expected table type
-                     (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
-                         (then (call ,raise-expected (local.get $ht))
-                               (unreachable)))
-
-                     ;; Decode and validate position
-                     (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
-                     (if (i32.and (local.get $index) (i32.const 1))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
-
-                     (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
-                     (local.set $entries (struct.get ,type $entries (local.get $table)))
-                     (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-
-                     (if (i32.ge_u (local.get $index) (local.get $capacity))
-                         (then (br $bad-index)))
-
-                     (local.set $key
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.shl (local.get $index) (i32.const 1))))
-                     (if (ref.eq (local.get $key) (global.get $missing))
-                         (then (br $bad-index)))
-                     (if (ref.eq (local.get $key) (global.get $tombstone))
-                         (then (br $bad-index)))
-
-                     (return (array.get $Array
-                                        (local.get $entries)
-                                        (i32.add (i32.shl (local.get $index) (i32.const 1))
-                                                 (i32.const 1))))
-
                      (block $bad-index
-                            (if (ref.eq (local.get $bad-index) (global.get $missing))
-                                (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                            ;; Check that ht is expected table type
+                            (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                                (then (call ,raise-expected (local.get $ht))
                                       (unreachable)))
-                            (return (local.get $bad-index))))
+                            
+                            ;; Decode and validate position
+                            (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
+                            (if (i32.and (local.get $index) (i32.const 1))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
+                            
+                            (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
+                            (local.set $entries (struct.get ,type $entries (local.get $table)))
+                            (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+                            
+                            (if (i32.ge_u (local.get $index) (local.get $capacity))
+                                (then (br $bad-index)))
 
+                            (local.set $key
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.shl (local.get $index) (i32.const 1))))
+                            (if (ref.eq (local.get $key) (global.get $missing))
+                                (then (br $bad-index)))
+                            (if (ref.eq (local.get $key) (global.get $tombstone))
+                                (then (br $bad-index)))
+
+                            (return (array.get $Array
+                                               (local.get $entries)
+                                               (i32.add (i32.shl (local.get $index) (i32.const 1))
+                                                        (i32.const 1)))))
+
+                     (if (ref.eq (local.get $bad-index) (global.get $missing))
+                         (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                               (unreachable)))
+                     (return (local.get $bad-index)))
+               
                (func ,iter-pair
                      (type $Prim13)
                      (param $ht        (ref eq))  ;; mutable hash table
@@ -26156,50 +26156,51 @@
                      (local $key      (ref eq))
                      (local $val      (ref eq))
 
-                     ;; Check that ht is expected table type
-                     (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
-                         (then (call ,raise-expected (local.get $ht))
-                               (unreachable)))
-
-                     ;; Decode and validate position
-                     (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
-                     (if (i32.and (local.get $index) (i32.const 1))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
-
-                     (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
-                     (local.set $entries (struct.get ,type $entries (local.get $table)))
-                     (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-
-                     (if (i32.ge_u (local.get $index) (local.get $capacity))
-                         (then (br $bad-index)))
-
-                     (local.set $key
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.shl (local.get $index) (i32.const 1))))
-                     (if (ref.eq (local.get $key) (global.get $missing))
-                         (then (br $bad-index)))
-                     (if (ref.eq (local.get $key) (global.get $tombstone))
-                         (then (br $bad-index)))
-
-                     (local.set $val
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.add (i32.shl (local.get $index) (i32.const 1))
-                                                    (i32.const 1))))
-                     (return (call $cons (local.get $key) (local.get $val)))
-
                      (block $bad-index
-                            (if (ref.eq (local.get $bad-index) (global.get $missing))
-                                (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                            ;; Check that ht is expected table type
+                            (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                                (then (call ,raise-expected (local.get $ht))
                                       (unreachable)))
-                            (return (call $cons (local.get $bad-index) (local.get $bad-index)))))
 
+                            ;; Decode and validate position
+                            (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
+                            (if (i32.and (local.get $index) (i32.const 1))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            
+                            (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
+
+                            (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
+                            (local.set $entries (struct.get ,type $entries (local.get $table)))
+                            (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+
+                            (if (i32.ge_u (local.get $index) (local.get $capacity))
+                                (then (br $bad-index)))
+
+                            (local.set $key
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.shl (local.get $index) (i32.const 1))))
+                            (if (ref.eq (local.get $key) (global.get $missing))
+                                (then (br $bad-index)))
+                            (if (ref.eq (local.get $key) (global.get $tombstone))
+                                (then (br $bad-index)))
+
+                            (local.set $val
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.add (i32.shl (local.get $index) (i32.const 1))
+                                                           (i32.const 1))))
+                            (return (call $cons (local.get $key) (local.get $val))))
+
+                     (if (ref.eq (local.get $bad-index) (global.get $missing))
+                         (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                               (unreachable)))
+                     (return (call $cons (local.get $bad-index) (local.get $bad-index))))
+               
                (func ,iter-key+value
                      (type $Prim13)
                      (param $ht        (ref eq))  ;; mutable hash table
@@ -26214,52 +26215,52 @@
                      (local $key      (ref eq))
                      (local $val      (ref eq))
 
-                     ;; Check that ht is expected table type
-                     (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
-                         (then (call ,raise-expected (local.get $ht))
-                               (unreachable)))
-
-                     ;; Decode and validate position
-                     (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
-                     (if (i32.and (local.get $index) (i32.const 1))
-                         (then (call $raise-check-fixnum (local.get $pos))
-                               (unreachable)))
-                     (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
-
-                     (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
-                     (local.set $entries (struct.get ,type $entries (local.get $table)))
-                     (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
-
-                     (if (i32.ge_u (local.get $index) (local.get $capacity))
-                         (then (br $bad-index)))
-
-                     (local.set $key
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.shl (local.get $index) (i32.const 1))))
-                     (if (ref.eq (local.get $key) (global.get $missing))
-                         (then (br $bad-index)))
-                     (if (ref.eq (local.get $key) (global.get $tombstone))
-                         (then (br $bad-index)))
-
-                     (local.set $val
-                                (array.get $Array
-                                           (local.get $entries)
-                                           (i32.add (i32.shl (local.get $index) (i32.const 1))
-                                                    (i32.const 1))))
-                     (return (array.new_fixed $Values 2 (local.get $key) (local.get $val)))
-
                      (block $bad-index
-                            (if (ref.eq (local.get $bad-index) (global.get $missing))
-                                (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                            ;; Check that ht is expected table type
+                            (if (i32.eqz (ref.test (ref ,type) (local.get $ht)))
+                                (then (call ,raise-expected (local.get $ht))
                                       (unreachable)))
-                            (return (array.new_fixed $Values 2
-                                                     (local.get $bad-index)
-                                                     (local.get $bad-index))))))))
 
+                            ;; Decode and validate position
+                            (if (i32.eqz (ref.test (ref i31) (local.get $pos)))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i31.get_u (ref.cast (ref i31) (local.get $pos))))
+                            (if (i32.and (local.get $index) (i32.const 1))
+                                (then (call $raise-check-fixnum (local.get $pos))
+                                      (unreachable)))
+                            (local.set $index (i32.shr_u (local.get $index) (i32.const 1)))
+
+                            (local.set $table   (ref.cast (ref ,type) (local.get $ht)))
+                            (local.set $entries (struct.get ,type $entries (local.get $table)))
+                            (local.set $capacity (i32.div_u (array.len (local.get $entries)) (i32.const 2)))
+
+                            (if (i32.ge_u (local.get $index) (local.get $capacity))
+                                (then (br $bad-index)))
+
+                            (local.set $key
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.shl (local.get $index) (i32.const 1))))
+                            (if (ref.eq (local.get $key) (global.get $missing))
+                                (then (br $bad-index)))
+                            (if (ref.eq (local.get $key) (global.get $tombstone))
+                                (then (br $bad-index)))
+
+                            (local.set $val
+                                       (array.get $Array
+                                                  (local.get $entries)
+                                                  (i32.add (i32.shl (local.get $index) (i32.const 1))
+                                                           (i32.const 1))))
+                            (return (array.new_fixed $Values 2 (local.get $key) (local.get $val))))
+
+                     (if (ref.eq (local.get $bad-index) (global.get $missing))
+                         (then (call $raise-mutable-hash-iterate-bad-index (local.get $pos))
+                               (unreachable)))
+                     (return (array.new_fixed $Values 2
+                                              (local.get $bad-index)
+                                              (local.get $bad-index)))))))
+        
         ; General hash-count
         (func $hash-count (type $Prim1)
               (param $ht (ref eq))
@@ -41275,9 +41276,9 @@
                                     
                                     (br $entry-body:done)))
                             ;; If any wasm exception reaches here, crash so the host prints a stack trace.
-                            (call $entry-uncaught-exception2 (local.get 0))
+                            #;(call $entry-uncaught-exception2 (local.get 0))
                             #;(call $entry-uncaught-exception1 (local.get 0))
-                            #;(call $entry-uncaught-exception)
+                            (call $entry-uncaught-exception)
                             (unreachable))
                      
                      ; Return the result
