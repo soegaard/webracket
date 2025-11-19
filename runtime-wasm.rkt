@@ -19301,9 +19301,7 @@
                
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
-               (local $outer  (ref eq))
                (local $pair   (ref $Pair))
-               (local $elem   (ref eq))
                (local $nlists i32)
                
                (local $lists  (ref $Args))  ;; cursors for each list
@@ -19324,24 +19322,9 @@
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
                
                ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
-               (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
-               (block $count_done
-                      (loop $count
-                            (if (ref.eq (local.get $outer) (global.get $null))
-                                (then (br $count_done)))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
-                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (if (i32.eqz
-                                 (i32.or
-                                  (ref.eq (local.get $elem) (global.get $null))
-                                  (ref.test (ref $Pair) (local.get $elem))))
-                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
-                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (br $count)))
+               (local.set $nlists (call $validate-list-args
+                                        (global.get $symbol:map)
+                                        (local.get $xss)))
 
                ;; Racket's map requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
@@ -19350,19 +19333,7 @@
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
-
-               (local.set $outer (local.get $xss))
-               (local.set $i (i32.const 0))
-               (block $seed_done
-                      (loop $seed
-                            (if (i32.ge_u (local.get $i) (local.get $nlists))
-                                (then (br $seed_done)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (array.set $Args (local.get $lists) (local.get $i) (local.get $elem))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $seed)))
+               (call $seed-list-args (local.get $xss) (local.get $lists))
 
                ;; 4) Main loop: stop at the shortest list
                (local.set $acc (global.get $null))
@@ -19452,9 +19423,7 @@
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
-               (local $outer  (ref eq))
                (local $pair   (ref $Pair))
-               (local $elem   (ref eq))
                (local $nlists i32)
 
                (local $lists  (ref $Args))  ;; cursors for each list
@@ -19472,24 +19441,9 @@
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
                ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
-               (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
-               (block $count_done
-                      (loop $count
-                            (if (ref.eq (local.get $outer) (global.get $null))
-                                (then (br $count_done)))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
-                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (if (i32.eqz
-                                 (i32.or
-                                  (ref.eq (local.get $elem) (global.get $null))
-                                  (ref.test (ref $Pair) (local.get $elem))))
-                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
-                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (br $count)))
+               (local.set $nlists (call $validate-list-args
+                                        (global.get $symbol:andmap)
+                                        (local.get $xss)))
 
                ;; Racket's andmap requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
@@ -19499,18 +19453,7 @@
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
-               (local.set $outer (local.get $xss))
-               (local.set $i (i32.const 0))
-               (block $seed_done
-                      (loop $seed
-                            (if (i32.ge_u (local.get $i) (local.get $nlists))
-                                (then (br $seed_done)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (array.set $Args (local.get $lists) (local.get $i) (local.get $elem))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $seed)))
+               (call $seed-list-args (local.get $xss) (local.get $lists))
 
                ;; 4) Main loop: stop at the shortest list or when f returns #f
                (loop $loop
@@ -19582,9 +19525,7 @@
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
-               (local $outer  (ref eq))
                (local $pair   (ref $Pair))
-               (local $elem   (ref eq))
                (local $nlists i32)
 
                (local $lists  (ref $Args))  ;; cursors for each list
@@ -19602,24 +19543,9 @@
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
                ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
-               (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
-               (block $count_done
-                      (loop $count
-                            (if (ref.eq (local.get $outer) (global.get $null))
-                                (then (br $count_done)))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
-                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (if (i32.eqz
-                                 (i32.or
-                                  (ref.eq (local.get $elem) (global.get $null))
-                                  (ref.test (ref $Pair) (local.get $elem))))
-                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
-                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (br $count)))
+               (local.set $nlists (call $validate-list-args
+                                        (global.get $symbol:ormap)
+                                        (local.get $xss)))
 
                ;; Racket's ormap requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
@@ -19629,18 +19555,7 @@
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
-               (local.set $outer (local.get $xss))
-               (local.set $i (i32.const 0))
-               (block $seed_done
-                      (loop $seed
-                            (if (i32.ge_u (local.get $i) (local.get $nlists))
-                                (then (br $seed_done)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (array.set $Args (local.get $lists) (local.get $i) (local.get $elem))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $seed)))
+               (call $seed-list-args (local.get $xss) (local.get $lists))
 
                ;; 4) Main loop: stop at the shortest list or when f returns truthy
                (loop $loop
@@ -20175,37 +20090,25 @@
                (result      (ref eq))
                
                (local $xss   (ref eq))
-               (local $outer (ref eq))
-               (local $pair  (ref $Pair))
-               (local $elem  (ref eq))
                (local $nlists i32)
                (local $ys    (ref eq))
-
+               (local $outer (ref null $Pair))
+               
                ;; combine first list with the rest
                (local.set $xss (call $list* (local.get $xs) (local.get $rest)))
                (local.set $ys  (global.get $null))
 
                ;; Walk outer list xss to count #lists; capture second list
-               (local.set $nlists (i32.const 0))
-               (local.set $outer (local.get $xss))
-               (block $count_done
-                      (loop $count
-                            (if (ref.eq (local.get $outer) (global.get $null))
-                                (then (br $count_done)))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
-                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (if (i32.eqz
-                                 (i32.or
-                                  (ref.eq (local.get $elem) (global.get $null))
-                                  (ref.test (ref $Pair) (local.get $elem))))
-                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
-                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (if (i32.eq (local.get $nlists) (i32.const 2))
-                                (then (local.set $ys (local.get $elem))))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (br $count)))
+               (local.set $nlists (call $validate-list-args
+                                        (global.get $symbol:foldl)
+                                        (local.get $xss)))
+
+               (if (i32.ge_u (local.get $nlists) (i32.const 2))
+                   (then (local.set $outer (ref.cast (ref $Pair) (local.get $xss)))
+                         (local.set $outer
+                                    (ref.cast (ref $Pair)
+                                              (struct.get $Pair $d (local.get $outer))))
+                         (local.set $ys    (struct.get $Pair $a (local.get $outer)))))
 
                ;; Racket's foldl requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
@@ -20329,9 +20232,7 @@
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
-               (local $outer  (ref eq))
                (local $pair   (ref $Pair))
-               (local $elem   (ref eq))
                (local $nlists i32)
 
                (local $lists  (ref $Args))
@@ -20349,24 +20250,9 @@
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
                ;; Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
-               (local.set $nlists (i32.const 0))
-               (local.set $outer  (local.get $xss))
-               (block $count_done
-                      (loop $count
-                            (if (ref.eq (local.get $outer) (global.get $null))
-                                (then (br $count_done)))
-                            (if (i32.eqz (ref.test (ref $Pair) (local.get $outer)))
-                                (then (call $raise-pair-expected (local.get $outer)) (unreachable)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (if (i32.eqz
-                                 (i32.or
-                                  (ref.eq (local.get $elem) (global.get $null))
-                                  (ref.test (ref $Pair) (local.get $elem))))
-                                (then (call $raise-pair-expected (local.get $elem)) (unreachable)))
-                            (local.set $nlists (i32.add (local.get $nlists) (i32.const 1)))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (br $count)))
+               (local.set $nlists (call $validate-list-args
+                                        (global.get $symbol:foldl)
+                                        (local.get $xss)))
 
                ;; Racket's foldl requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
@@ -20378,18 +20264,7 @@
                                             (i32.add (local.get $nlists) (i32.const 1))))
 
                ;; Seed list cursors from xss
-               (local.set $outer (local.get $xss))
-               (local.set $i (i32.const 0))
-               (block $seed_done
-                      (loop $seed
-                            (if (i32.ge_u (local.get $i) (local.get $nlists))
-                                (then (br $seed_done)))
-                            (local.set $pair (ref.cast (ref $Pair) (local.get $outer)))
-                            (local.set $elem (struct.get $Pair $a (local.get $pair)))
-                            (array.set $Args (local.get $lists) (local.get $i) (local.get $elem))
-                            (local.set $outer (struct.get $Pair $d (local.get $pair)))
-                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                            (br $seed)))
+               (call $seed-list-args (local.get $xss) (local.get $lists))
 
                ;; Main loop: stop at the shortest list
                (loop $loop
