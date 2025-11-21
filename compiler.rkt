@@ -1802,7 +1802,7 @@
     ; todo: insert test of letrec
     (check-equal? (test #'(set! x 3)) '(set! x '3))
     (check-equal? (test #'(if 1 2 3)) '(if '1 '2 '3))
-    (check-equal? (test #'(begin  1 2 3)) '(begin  '1 '2 '3))
+    (check-equal? (test #'(begin  1 2 3)) '(topbegin  '1 '2 '3))
     (check-equal? (test #'(begin0 1 2 3)) '(begin0 '1 '2 '3))
     (check-equal? (test #'(with-continuation-mark 1 2 3)) '(with-continuation-mark '1 '2 '3))
     (check-equal? (test #'(#%plain-app + 1 2)) '(+ '1 '2))
@@ -2878,15 +2878,17 @@
                (flatten-topbegin
                 (parse
                  (expand-syntax stx))))))))))))
+    
     (check-equal? (test #'(+ 1 2)) '(primapp + '1 '2))
-    (check-equal? (test #'(begin (define foo 3)    (foo 1 2)))
-                  ; At the top-level the expression is evaluted before
+    (check-equal? (test #'(begin (define foo 3) (foo 1 2)))
+                  ; At the top-level the expression is evaluated before
                   ; the binding is created.
                   ; Also (#%top . foo) looks up foo in the current
                   ; namespace by name, so it should not be renamed.
                   ; But ... until we implement namespaces, we store
                   ; top-level variables in a `boxed`.
-                  '(begin (define-values (foo) (primapp boxed '3)) (app (#%top . foo) '1 '2)))
+                  '(topbegin (define-values (foo) '3)
+                             (app (#%top . foo) '1 '2)))
     (check-equal? (test #'((λ (x) 1) 2))
                   '(closedapp (λ (x) '1) '2))
     (check-equal? (test #'((λ (x y) 1) 2 3))
@@ -3170,7 +3172,7 @@
     (check-equal? (test #'(+ 2 (* 4 5)))
                   '(let-values (((t.1) (primapp * '4 '5))) (primapp + '2 t.1)))
     (check-equal? (test #'(begin (+ 2 (* 4 5)) (+ (* 6 7) (/ 8 9))))
-                  '(begin
+                  '(topbegin
                      (let-values (((t.1) (primapp * '4 '5))) (primapp + '2 t.1))
                      (let-values (((t.2) (primapp * '6 '7)))
                        (let-values (((t.3) (primapp / '8 '9))) (primapp + t.2 t.3)))))
