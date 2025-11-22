@@ -11263,12 +11263,7 @@
         ;;;
 
          (func $external? (type $Prim1)
-               (param $v (ref eq))
-               (result   (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $External) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$External))
 
         (func $external-null? (param $v (ref eq)) (result (ref eq))
               (if (result (ref eq))
@@ -16592,12 +16587,7 @@
                (ref.test (ref $Keyword) (local.get $v)))
 
          (func $keyword? (type $Prim1)
-               (param $v (ref eq))
-               (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $Keyword) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$Keyword))
          
          (func $string->keyword (type $Prim1)
                (param $str (ref eq))
@@ -16726,28 +16716,32 @@
                              (global.get $false)))    ;; d = null
          
         ;; Pair related exceptions
-        (func $raise-pair-expected (param $x (ref eq)) (unreachable))
-        (func $raise-bad-list-ref-index
-              (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
-              (unreachable))
-        (func $raise-bad-list-set-index
-              (param $xs (ref eq)) (param $i i32) (param $len i32)
-              (unreachable))
-          (func $pair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
-                    (then (global.get $true))
-                    (else (global.get $false))))
+         (func $raise-pair-expected (param $x (ref eq)) (unreachable))
+         (func $raise-bad-list-ref-index
+               (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
+               (unreachable))
+         (func $raise-bad-list-set-index
+               (param $xs (ref eq)) (param $i i32) (param $len i32)
+               (unreachable))
 
-          (func $cons? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-                (call $pair? (local.get $v)))
+         (func $pair? (type $Prim1)
+               ,@(make-predicate-body '$Pair))
 
-          (func $null? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-                (if (result (ref eq)) (ref.eq (local.get $v) (global.get $null))
-                    (then (global.get $true))
-                    (else (global.get $false))))
+         (func $cons? (type $Prim1)
+               ,@(make-predicate-body '$Pair))
 
-          (func $empty? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-                (call $null? (local.get $v)))
+         (func $null? (type $Prim1)
+               (param $v (ref eq))
+               (result (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (local.get $v) (global.get $null))
+                   (then (global.get $true))
+                   (else (global.get $false))))
+
+         (func $empty? (type $Prim1)
+               (param $v (ref eq))
+               (result   (ref eq))
+               (call $null? (local.get $v)))
 
          (func $cons (type $Prim2) (param $a (ref eq)) (param $d (ref eq)) (result (ref eq))
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
@@ -22045,10 +22039,8 @@
         ;; mpair? : any/c -> boolean?
         (func $raise-mpair-expected (param $x (ref eq)) (unreachable))
 
-        (func $mpair? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-              (if (result (ref eq)) (ref.test (ref $MPair) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+        (func $mpair? (type $Prim1)
+              ,@(make-predicate-body '$MPair))
 
         ;; mcons : any/c any/c -> mpair?
         (func $mcons (type $Prim2)
@@ -24065,10 +24057,7 @@
 
 
          (func $boxed? (type $Prim1)
-               (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Boxed) (local.get $v))
-                    (then (global.get $true))
-                    (else (global.get $false))))
+               ,@(make-predicate-body '$Boxed))
 
          ;;;
          ;;; 4.14 Boxes
@@ -24077,10 +24066,7 @@
          ;; https://docs.racket-lang.org/reference/boxes.html
 
          (func $box? (type $Prim1)
-               (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq)) (ref.test (ref $Box) (local.get $v))
-                    (then (global.get $true))
-                    (else (global.get $false))))
+               ,@(make-predicate-body '$Box))
 
          (func $box (type $Prim1) (param $v (ref eq))  (result (ref eq))
                (struct.new $Box
@@ -28162,28 +28148,13 @@
         ;;   written.
 
         (func $port? (type $Prim1)
-              (param $v (ref eq))
-              (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $Port) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+              ,@(make-predicate-body '$Port))
 
         (func $input-port? (type $Prim1)
-              (param $v (ref eq))
-              (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $InputPort) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+              ,@(make-predicate-body '$InputPort))
 
         (func $output-port? (type $Prim1)
-              (param $v (ref eq))
-              (result (ref eq))
-              (if (result (ref eq))
-                  (ref.test (ref $OutputPort) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+              ,@(make-predicate-body '$OutputPort))
         
         ;; Note:
         ;;   WebRacket's current string ports always track line and column
@@ -31301,20 +31272,14 @@
          (func $struct?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $Struct) (local.get $v)))
 
-         (func $struct? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $Struct) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+         (func $struct? (type $Prim1)
+               ,@(make-predicate-body '$Struct))
 
          (func $struct-type?/i32 (param $v (ref eq)) (result i32)
                (ref.test (ref $StructType) (local.get $v)))
 
-         (func $struct-type? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StructType) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+         (func $struct-type? (type $Prim1)
+               ,@(make-predicate-body '$StructType))
 
          (func $raise-check-struct-type (unreachable))
          
@@ -32766,30 +32731,17 @@
                          (struct.get $Closure $code (local.get $accessor))))
 
 
-         (func $struct-constructor-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StructConstructorProcedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+         (func $struct-constructor-procedure? (type $Prim1)
+               ,@(make-predicate-body '$StructConstructorProcedure))
 
-         (func $struct-predicate-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StructPredicateProcedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+         (func $struct-predicate-procedure? (type $Prim1)
+               ,@(make-predicate-body '$StructPredicateProcedure))
          
-         (func $struct-accessor-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StructAccessorProcedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+         (func $struct-accessor-procedure? (type $Prim1)
+               ,@(make-predicate-body '$StructAccessorProcedure))
 
-         (func $struct-mutator-procedure? (type $Prim1) (param $v (ref eq)) (result (ref eq))
-               (if (result (ref eq))
-                   (ref.test (ref $StructMutatorProcedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
-
+         (func $struct-mutator-procedure? (type $Prim1)
+               ,@(make-predicate-body '$StructMutatorProcedure))
 
 
          ;; TODO
@@ -33959,13 +33911,7 @@
          ;;;
 
          (func $procedure? (type $Prim1)
-               (param $v (ref eq))
-               (result   (ref eq))
-
-               (if (result (ref eq))
-                   (ref.test (ref $Procedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$Procedure))
 
          ; Notes: repacking of arguments are done in $invoke-closure,
          ;        so no repacking is needed in $apply.
@@ -34445,13 +34391,7 @@
          (func $raise-argument-error:primitive-procedure-expected (unreachable))
          
          (func $primitive? (type $Prim1)
-               (param $v (ref eq))
-               (result (ref eq))
-
-               (if (result (ref eq))
-                   (ref.test (ref $PrimitiveProcedure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$PrimitiveProcedure))
 
          (func $primitive-result-arity (type $Prim1)
                (param $v (ref eq))
@@ -34468,13 +34408,7 @@
 
 
          (func $primitive-closure? (type $Prim1)
-               (param $v (ref eq))
-               (result (ref eq))
-
-               (if (result (ref eq))
-                   (ref.test (ref $PrimitiveClosure) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$PrimitiveClosure))
 
          ;;;
          ;;;  4.21 Void
@@ -35570,13 +35504,7 @@
         ;; 14.1 Namespaces
         
         (func $namespace? (type $Prim1)
-              (param $v (ref eq))
-              (result   (ref eq))
-
-              (if (result (ref eq))
-                  (ref.test (ref $Namespace) (local.get $v))
-                  (then (global.get $true))
-                  (else (global.get $false))))
+              ,@(make-predicate-body '$Namespace))
         
         ; We need dummy implementations of `#%variable-reference` and `variable-reference-from-unsafe?`
         ; in order to run code from an expand `for`.
