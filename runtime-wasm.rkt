@@ -1204,6 +1204,27 @@
     (add-runtime-bytes-constant  'non-empty                 #"_")
 
 
+    ;;;
+    ;;; Predicate Generator
+    ;;;
+
+    ; Note: We could generate
+    ;          (func $predicate-name? (type $Prim1) ...)
+    ;;      too, but it is convenient to grep for function definitions 
+    ;       using "func $name".
+    
+    (define (make-predicate-body ref-type)
+      `((param $v (ref eq))
+        (result   (ref eq))
+        (if (result (ref eq))
+            (ref.test (ref ,ref-type) (local.get $v))
+            (then (global.get $true))
+            (else (global.get $false)))))
+
+    ;;;
+    ;;; WEB-ASSEMBLY
+    ;;;
+    
 
     `(module
          ;;;
@@ -2058,13 +2079,7 @@
          ;; Unquoted printing strings wrap a string but should display without
          ;; additional quoting, matching the behavior of the underlying string.
          (func $unquoted-printing-string? (type $Prim1)
-               (param $v (ref eq))    ;; any/c
-               (result   (ref eq))    ;; boolean?
-               
-               (if (result (ref eq))
-                   (ref.test (ref $UnquotedPrintingString) (local.get $v))
-                   (then (global.get $true))
-                   (else (global.get $false))))
+               ,@(make-predicate-body '$UnquotedPrintingString))
 
         (func $unquoted-printing-string (type $Prim1)
               (param $s (ref eq))    ;; string?
@@ -19847,14 +19862,6 @@
                      (br $loop))
                (unreachable))
         
-         ;; ; TODO : The implementation of $append-map can be made more efficient.
-         ;; (func $append-map (type $Prim>=1)
-         ;;       (param $proc (ref eq))   ;; procedure
-         ;;       (param $xss  (ref eq))   ;; list of lists
-         ;;       (result      (ref eq))
-         ;;       ;; Proc results must be lists; map and append handle validation.
-         ;;       (call $append
-         ;;             (call $map (local.get $proc) (local.get $xss))))
 
          (func $count (type $Prim>=1)
                (param $proc (ref eq))   ;; procedure
@@ -24396,9 +24403,6 @@
                (call $make-hashalw (local.get $assocs)))
                
 
-
-
-         #;(func $raise-argument-error:hash-expected (unreachable))
 
          (func $raise-hash-ref-key-not-found (param $key (ref eq)) (unreachable))
 
@@ -32729,7 +32733,7 @@
 
          (func $struct-field-accessor/specialized
                ;; TODO: This just calls the generic accessor.
-               ;;       Making a specialized accessor ought to be more effecient.
+               ;;       Making a specialized accessor ought to be more efficient.
                (type $ClosureCode)
                (param $clos (ref $Closure))
                (param $args (ref $Args))
@@ -35578,7 +35582,7 @@
         ; in order to run code from an expand `for`.
 
         ; The form `#%variable-reference` can occur in a fully expanded syntax,
-        ; so it is handled in the elsewhere (for now, we only handle the case `(#%variable-reference)`.
+        ; so it is handled elsewhere (for now, we only handle the case `(#%variable-reference)`.
 
         ; This function determines if the variable stems from a module compiled in unsafe mode or not.
         (func $variable-reference-from-unsafe? (type $Prim1)
