@@ -83,6 +83,8 @@
   (and (correlated? a)
        (correlated-property a key)))
 
+; from racket/linklet:
+;   (datum->correlated d [srcloc #f] [props #f])
 (define (wrap-property-set a key val)
   (let ([a (if (correlated? a)
                a

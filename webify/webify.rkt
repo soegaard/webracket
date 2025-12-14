@@ -1,4 +1,6 @@
 #lang racket/base
+(provide webify-linklet)
+
 (require "aim.rkt"
          "match.rkt"
          "gensym.rkt"
@@ -50,47 +52,52 @@
                         #:enforce-constant?     enforce-constant?
                         #:allow-inline?         allow-inline?
                         #:no-prompt?            no-prompt?
-                        #:prim-knowns           prim-knowns          ; hasheq : sym -> known-procedure/folding or ...
-                        #:primitives            primitives           ; hasheq : sym -> value (the actual Racket primitive)
+                        #:prim-knowns           prim-knowns
+                        ;   hasheq : sym -> known-procedure/folding or ...
+                        #:primitives            primitives
+                        ;   hasheq : sym -> value (the actual Racket primitive)
                         #:compiler-query        compiler-query
                         #:get-import-knowns     get-import-knowns
                         #:import-keys           import-keys)
-  (define (unwrap x) x)
-  (define (im-int-id id) (unwrap (if (pair? id) (cadr id) id)))
-  (define (im-ext-id id) (unwrap (if (pair? id) (car id) id)))
-  (define (ex-int-id id) (unwrap (if (pair? id) (car id) id)))
-  (define (ex-ext-id id) (unwrap (if (pair? id) (cadr id) id)))
+  (with-deterministic-gensym
+    (define (unwrap x) x)
+    (define (im-int-id id) (unwrap (if (pair? id) (cadr id) id)))
+    (define (im-ext-id id) (unwrap (if (pair? id) (car id) id)))
+    (define (ex-int-id id) (unwrap (if (pair? id) (car id) id)))
+    (define (ex-ext-id id) (unwrap (if (pair? id) (cadr id) id)))
 
-  (match lk
-    [`(linklet ,im-idss ,ex-ids . ,bodys)
-     ;; For imports, map symbols to gensymed `variable` argument names,
-     ;; keeping `import` records in groups:
-     (define grps
-       (for/list ([im-ids (in-list im-idss)]
-                  [index  (in-naturals)])
-         ;; An import key from `import-keys` lets us get cross-module
-         ;; information on demand
-         (import-group index (and import-keys (vector-ref import-keys index))
-                       get-import-knowns #f #f
-                       '())))
+    (match lk
+      [`(linklet ,im-idss ,ex-ids . ,bodys)
+       ;; For imports, map symbols to gensymed `variable` argument names,
+       ;; keeping `import` records in groups:
+       (define grps
+         (for/list ([im-ids (in-list im-idss)]
+                    [index  (in-naturals)])
+           ;; An import key from `import-keys` lets us get cross-module
+           ;; information on demand
+           (import-group index (and import-keys (vector-ref import-keys index))
+                         get-import-knowns #f #f
+                         '())))
 
-     ;; Record import information in both the `imports` table and within
-     ;; the import-group record
-     (define imports
-       (let ([imports (make-hasheq)])
-         (for ([im-ids (in-list im-idss)]
-               [grp    (in-list grps)])
-           (set-import-group-imports!
-            grp
-            (for/list ([im-id (in-list im-ids)])
-              (define id     (im-int-id im-id))
-              (define ext-id (im-ext-id im-id))
-              (define int-id (deterministic-gensym id))
-              (define im     (import grp int-id id ext-id))
-              (hash-set! imports id     im)
-              (hash-set! imports int-id im) ; useful for optimizer to look up known info late
-              im)))
-         imports))
+       ;; Record import information in both the `imports` table and within
+       ;; the import-group record
+       (define imports
+         (let ([imports (make-hasheq)])
+           (for ([im-ids (in-list im-idss)]
+                 [grp    (in-list grps)])
+             (set-import-group-imports!
+              grp
+              (for/list ([im-id (in-list im-ids)])
+                (define id     (im-int-id im-id))
+                (define ext-id (im-ext-id im-id))
+                (define int-id (deterministic-gensym id))
+                (define im     (import grp int-id id ext-id))
+                (hash-set! imports id     im)
+                ; useful for optimizer to look up known info late
+                (hash-set! imports int-id im)
+                
+                im)))
+           imports))
        ;; Inlining can add new import groups or add imports to an existing group
        (define new-grps '())
        (define add-import!
@@ -133,11 +140,13 @@
         (for/list ([grp (in-list all-grps)])
           (for/list ([im (in-list (import-group-imports grp))])
             (import-ext-id im)))
-        ;; Exports (external names, but paired with source name if it's different):
+        ;; Exports
+        ;;   (external names, but paired with source name if it's different):
         (for/list ([ex-id (in-list ex-ids)])
           (define sym     (ex-ext-id ex-id))
           (define int-sym (ex-int-id ex-id))
-          (define src-sym (hash-ref src-syms int-sym sym)) ; external name unless 'source-name
+          (define src-sym (hash-ref src-syms int-sym sym))
+          ;  src-sym 
           (if (eq? sym src-sym) sym (cons sym src-sym)))
         ;; Import keys --- revised if we added any import groups
         (if (null? new-grps)
@@ -173,7 +182,7 @@
             [(not (set!ed-mutated-state? (hash-ref mutated id #f)))
              (define ext-id (ex-ext-id ex-id))
              (hash-set knowns ext-id (or v a-known-constant))]
-            [else knowns])))]))
+            [else knowns])))])))
 
 ;; ----------------------------------------
 
