@@ -2,9 +2,10 @@
 
 The WebRacket language is a subset of Racket that compiles to WebAssembly (wasm).
 
-The goal is eventually to have a compiler for full Racket. 
-However, to quote Piet Hein, "Things take time".
-The subset supported by the WebRacket compiler is however large enough,
+The long-term goal is to support full Racket.
+However, to quote Piet Hein, “Things take time.”
+
+The subset supported by the WebRacket compiler is large enough,
 to enable programmers to build practical programs for the web.
 
 The generated WebAssembly can be run either in the terminal (via Node) or in the browser.
@@ -19,7 +20,19 @@ Included are bindings for the DOM, Canvas, MathJax, XTermJS and JSXGraph.
 The hope is that this project allows the Racket community to experiment with WebAssembly.
 The ideal outcome is that the experience can be used to extend the normal Racket compiler
 with a WebAssembly backend. In the mean time, we can have fun writing Racket programs
-that runs in the browser.
+that run in the browser.
+
+
+# Is WebRacket for you?
+
+If you want to develop Racket programs that run in the browser and 
+want to avoid JavaScript, then WebRacket is for you.
+
+The FFI allows you to use WebRacket functions as event callbacks 
+on the JavaScript side.
+
+See `examples/` for a few WebRacket projects.
+
 
 
 # Overview of the supported language subset
@@ -36,18 +49,20 @@ some are reimplemented in WebRacket.
 Most basic data types are implemented, some have restrictions.
 
 ### Numbers
-The numerical tower only contains only flonums and fixnums.
+The numerical tower contains only flonums and fixnums.
 Complex numbers and bignums are missing.
 
 ### Hash Tables
-Mutable hash tables of all for varities (eq?, eqv?, equal?, always?) are supported.
+Mutable hash tables of all four varieties (`eq?` `eqv?` `equal?` `always`) are supported.
+The values of all mutable hash table are strongly held, even 
+those created by the weak construtors.
+
 Immutable hash tables are not yet supported.
-The values of a hash table are strongly held (i.e. no weak hash tables yet).
+
 
 ### Regular Expressions
 No direct support for regular expressions at the moment.
-These will materialize when the support for linklets and modules improve.
-[The `expander` source contains an implementation of regular expressions.]
+These will materialize once the support for linklets and modules improve.
 
 ### Ports
 Since the main target is the browser, only string (and byte string) ports are supported.
@@ -56,8 +71,7 @@ If there is interest for file ports (for the terminal), let me know.
 ### Structures
 Most structure related bells and whistles are implemented including super structures, 
 structure properties and applicable structures. 
-Most notable feature missing is prefab structures.
-
+The most notable missing feature is prefab structures.
 
 
 ## Syntactic Forms
@@ -90,8 +104,7 @@ The hope is that the community will help write bindings for commonly used librar
 To some degree the generation of foreign function interfaces can be automated
 with the help of an LLM.
 
-Included are bindings for the DOM, Canvas, MathJax, XTermJS and JSXGraph.
-
+Included bindings currently cover the Math, DOM, Canvas, MathJax, XTermJS, and JSXGraph.
 
 # The Road Ahead
 
@@ -100,7 +113,8 @@ After the initial release, the focus is to fix bugs found by early adopters.
 Then the top priority is to support modules.
 Work on implementing linklets (needed to support modules) have already started.
 
-Due to my interests, complex numbers and bignums are likely to appear sooner rather than later.
+Due to my personal interests, complex numbers and bignums are likely to appear
+sooner rather than later.
 
 Impersonators and chaperones are needed to support contracts.
 
@@ -110,6 +124,16 @@ regular expressions present in the source of the Racket expander.
 Support for continuations and continuation marks, although high on the wish list,
 is something that is trickier to implement given the nature of the target.
 Last resort is to add a CPS pass to the compiler.
+
+# Installation - short version
+
+You need:
+
+- wasm-tools from the Bytecode Alliance (version 1.243.0 or newer)
+- Node.js (recent version; needs to support --experimental-wasm-exnref)
+- Racket 9.0
+- raco-static-web
+- a clone of the `webracket` repo
 
 
 # Installation
@@ -132,7 +156,7 @@ locally, the package `raco-static-web` by Sam Philips is very convenient.
 
 ## wasm-tools
 
-1. Download the lates release from:
+1. Download the latest release from:
 
        https://github.com/bytecodealliance/wasm-tools/releases
 
@@ -216,7 +240,7 @@ The passes are as follows:
     infer-names
     convert-quotations
     explicit-begin
-    explict-case-lambda
+    explicit-case-lambda
     α-rename
     assignment-conversion
     categorize-applications
@@ -232,9 +256,9 @@ The code generator generates WebAssembly in the form of S-expressions
 in the "folded" format.
 
 This code generator is inspired by "Destination-driven Code Generation"
-by Dybvig, Hieb and Butler. There are som differences however. The code
-generator in the paper generates "flat" code (assembler) where as we
-generate nested Web Assembly instructions.
+by Dybvig, Hieb and Butler. There are some differences, however. The code
+generator in the paper generates "flat" code (assembler) whereas we
+generate nested WebAssembly instructions.
 
 Finally, the external tool `wasm-tools parse` converts the S-expression
 representation into bytecode format.
@@ -244,6 +268,50 @@ The WebAssembly runtime is in "runtime-wasm.rkt".
 The standard library (implemented in WebRacket) is found in `stdlib/`.
 FFI bindings for popular libraries are in `ffi/`.
 
+It has been a design goal to avoid relying on functionality provided
+by the WebAssembly host if possible. Who knows - maybe someone needs
+a non-JavaScript host at some point? For browser functionality there
+is no way around interfacing with the JavaScript host. The JavaScript
+part of the runtime support is in `assembler.rkt`. 
 
 
+# Examples
+
+The folder `examples/` contains a few examples that show different 
+aspects of WebRacket. 
+
+## Running the examples
+
+1. Go to the `examples/` folder
+2. Start a local web-server
+
+    raco static-web
+    
+3. Open  http://localhost:8000/  in your favorite browser.
+4. Click on a folder and then click the html file.
+
+
+## examples/mathjax4
+
+Something about the example.
+
+## examples/matrix-rain
+
+Something about the example.
+
+## examples/minischeme
+
+Something about the example.
+
+## examples/pict
+
+Something about the example.
+
+## examples/space-invaders
+
+Something about the example.
+
+## examples/xtermjs-demo
+
+Something about the example.
 
