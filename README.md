@@ -322,6 +322,11 @@ This example demonstrates how to use `js-var` and `js-send` to get
 access to the JavaScript object `MathJax` and how to invoke methods
 such as `typesetPromise`.
 
+<p align="center">
+  <img src="assets/screenshots/examples/mathjax4.png"
+       alt="MathJax 4 example"
+       width="50%">
+</p>
 
 ## examples/matrix-rain
 
@@ -340,6 +345,14 @@ The demo highlights WebRacket's bindings for external JS libraries,
 terminal control through the XtermJS FFI, and real-time animation
 using browser callbacks.
 
+<p align="center">
+  <img src="assets/screenshots/examples/matrix-rain.png"
+       alt="Matrix - digital rain example"
+       width="50%">
+</p>
+
+Improvements to this example are welcome.
+
 
 ## examples/minischeme
 
@@ -353,10 +366,22 @@ The terminal itself is backed by `xterm.js`.
 
 Improvements to this example are welcome.
 
+<p align="center">
+  <img src="assets/screenshots/examples/minischeme.png"
+       alt="MiniScheme example"
+       width="50%">
+</p>
+
 
 ## examples/pict
 
 This is a port of the picture library `pict`.
+
+<p align="center">
+  <img src="assets/screenshots/examples/pict.png"
+       alt="Pict example"
+       width="50%">
+</p>
 
 
 ## examples/space-invaders
@@ -369,6 +394,12 @@ entities with mutable structs, handles keyboard input for movement and
 shooting, and drives gameplay with a `requestAnimationFrame` loop. The
 game illustrates WebRacket's canvas bindings, event handling for user
 input, and stateful animation of sprites in a browser environment.
+
+<p align="center">
+  <img src="assets/screenshots/examples/space-invaders.png"
+       alt="space invaders example"
+       width="25%">
+</p>
 
 
 ## examples/xtermjs-demo
@@ -383,3 +414,9 @@ add-ons, and routes user input to a set of built-in demo commands.
 It demonstrates styling and layout via WebRacket's DOM FFI, deep
 terminal control through the XtermJS bindings, and integration of JS
 add-ons from Racket code.
+
+<p align="center">
+  <img src="assets/screenshots/examples/xtermjs.png"
+       alt="xtermjs example"
+       width="50%">
+</p>
