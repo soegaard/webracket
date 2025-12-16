@@ -19,7 +19,7 @@ Included are bindings for the DOM, Canvas, MathJax, XTermJS and JSXGraph.
 
 The hope is that this project allows the Racket community to experiment with WebAssembly.
 The ideal outcome is that the experience can be used to extend the normal Racket compiler
-with a WebAssembly backend. In the mean time, we can have fun writing Racket programs
+with a WebAssembly backend. In the meantime, we can have fun writing Racket programs
 that run in the browser.
 
 
@@ -53,16 +53,15 @@ The numerical tower contains only flonums and fixnums.
 Complex numbers and bignums are missing.
 
 ### Hash Tables
-Mutable hash tables of all four varieties (`eq?` `eqv?` `equal?` `always`) are supported.
-The values of all mutable hash table are strongly held, even 
-those created by the weak construtors.
+Mutable hash tables of all four varieties (`eq?` `eqv?` `equal?` `always?`) are supported.
+The values of all mutable hash tables are strongly held, even for tables created by the weak construtors.
 
 Immutable hash tables are not yet supported.
 
 
 ### Regular Expressions
 No direct support for regular expressions at the moment.
-These will materialize once the support for linklets and modules improve.
+These will materialize once support for linklets and modules improves.
 
 ### Ports
 Since the main target is the browser, only string (and byte string) ports are supported.
@@ -176,7 +175,7 @@ locally, the package `raco-static-web` by Sam Philips is very convenient.
        wasm-tools
 
 Depending on security settings, you might get a dialog on macOS.
-If so, open the system prefences and find the "Privacy and Security" tab.
+If so, open the system preferences and find the "Privacy and Security" tab.
 Then allow `wasm-tools` to run
 
 
@@ -280,6 +279,14 @@ part of the runtime support is in `assembler.rkt`.
 The folder `examples/` contains a few examples that show different 
 aspects of WebRacket. 
 
+Examples include:
+- MathJax 4 two-pane editor/preview
+- Matrix digital rain
+- MiniScheme REPL
+- pict port
+- Space Invaders
+- xtermjs demo
+
 ## Running the examples
 
 1. Go to the `examples/` folder
@@ -293,25 +300,86 @@ aspects of WebRacket.
 
 ## examples/mathjax4
 
-Something about the example.
+The JavaScript library MathJax allows web page authors to use 
+mathematical formulas on their web pages. 
+
+The MathJax example allows you to experiment with the
+newest version, namely MathJax 4.
+
+The page will load MathJax 4 from a CDN (content delivery network).
+The user is then presented with a simple two-pane editor/preview interface.
+Any LaTeX formula entered on the left, is rendered and displayed on the right.
+
+The implementation is in one file "mathjax4.rkt".
+
+Given html in the form of an S-expression, the program dynamically
+generates a web page with an "Input Pane" and a "Preview Pane".
+An event handler is attached to the input pane, such that the 
+WebRacket function `update-preview-handler` is called each time
+there are changes in the input pane.
+
+This example demonstrates how to use `js-var` and `js-send` to get
+access to the JavaScript object `MathJax` and how to invoke methods
+such as `typesetPromise`.
+
 
 ## examples/matrix-rain
 
-Something about the example.
+The movie "Matrix" by the Wachowskis featured a neat effect known
+as "Digital Rain".
+
+    https://en.wikipedia.org/wiki/Digital_rain
+    
+The effect shows constantly falling characters, mostly green,
+falling down the screen.
+
+The example uses the library `xterm.js` which emulates a
+terminal in the browser.
+
+The demo highlights WebRacket's bindings for external JS libraries,
+terminal control through the XtermJS FFI, and real-time animation
+using browser callbacks.
+
 
 ## examples/minischeme
 
-Something about the example.
+MiniScheme provides an interactive Scheme REPL.
+
+There are two parts to this example.
+
+A small "Scheme" interpreter handles reading and evaluation of the user input.
+Large parts of an editor is implemented to make the repl tolerable to use.
+The terminal itself is backed by `xterm.js`.
+
+Improvements to this example are welcome.
+
 
 ## examples/pict
 
-Something about the example.
+This is a port of the picture library `pict`.
+
 
 ## examples/space-invaders
 
-Something about the example.
+Space Invaders is a 1978 shoot'em up video game.
+
+The example uses a 2D canvas to render the playing area.
+It sets up the canvas and styles entirely from WebRacket, tracks game
+entities with mutable structs, handles keyboard input for movement and
+shooting, and drives gameplay with a `requestAnimationFrame` loop. The
+game illustrates WebRacket's canvas bindings, event handling for user
+input, and stateful animation of sprites in a browser environment.
+
 
 ## examples/xtermjs-demo
 
-Something about the example.
+The XtermJS Demo recreates the interactive terminal shown on the
+xterm.js homepage. 
 
+It constructs the page layout and styling with DOM operations,
+initializes an xterm.js instance with theme options, registers
+add-ons, and routes user input to a set of built-in demo commands. 
+
+It demonstrates styling and layout via WebRacket's DOM FFI, deep
+terminal control through the XtermJS bindings, and integration of JS
+add-ons from Racket code.
