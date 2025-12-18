@@ -2,8 +2,21 @@
 ;;; MiniScheme
 ;;;
 
-;; This is a mini Scheme repl.
+;; This file implements a little "mini Scheme" evaluator and
+;; a repl to interact with the evaluator.
 ;; The terminal is provided by Xtermjs.
+
+;; Project Idea
+;;   - replace the evaluator with your own interpreter
+
+
+;;;
+;;; Build Instructions
+;;;
+
+;; racket ../../webracket.rkt --ffi standard --ffi xtermjs --ffi js --ffi dom  --stdlib -b minischeme.rkt
+
+;; Start a local web-server and open "minischeme.html".
 
 ;;;
 ;;; Scripts and CSS-files
@@ -136,10 +149,10 @@
   (js-append-child! container terminal-host)
   (js-append-child! body container))
 
+
 ;;;
 ;;; The Terminal
 ;;;
-
 
 (define term #f) ; the Terminal js-object
 
@@ -649,6 +662,7 @@
               (loop (add1 i)
                     (cons (if (printable-char? ch) ch #\?) acc))))))
     (define highlighted (highlight sanitized))
+    ; (define highlighted sanitized)
     (define prefix (if prompt-line?
                        (string-append ansi-white the-prompt ansi-reset)
                        ""))
@@ -902,10 +916,13 @@
          (not (char=? first #\#)))))
 
 (define (bound-token? token)
-  (and minischeme-global-env
+  ; Note: We are using `get-minischeme-global-env` to make sure
+  ;      `minischeme-global-env` is initialized.
+  (define env (get-minischeme-global-env))
+  (and env
        (identifier-token? token)
        (let ([sym (string->symbol token)])
-         (env-bound? minischeme-global-env sym))))
+         (env-bound? env sym))))
 
 (define (highlight-token token)
   (cond
@@ -921,11 +938,16 @@
       (apply string-append ordered)))
 
 (define (highlight input)
-  (define len (string-length input))  
+  (define len (string-length input))
+
   (define (emit-token pieces token-chars)
-    (if (null? token-chars)
-        pieces
-        (cons (highlight-token (list->string (reverse token-chars))) pieces)))
+    (cond
+      [(null? token-chars)
+       pieces]
+      [else
+       (define hi-token (highlight-token (list->string (reverse token-chars))))
+       (cons hi-token pieces)]))
+  
   (let loop ([i           0]
              [token-chars '()]
              [pieces      '()]
@@ -1392,6 +1414,7 @@
   (js-send term "onData"   (vector term-on-data))
   (js-send term "onBinary" (vector term-on-binary)))
 
+
 ;;;
 ;;; MiniScheme
 ;;;
@@ -1533,12 +1556,12 @@
   (hash-set! (store-table st) addr value))
 
 (define (literal? expr)
-  (or (null? expr)
+  (or (null?    expr)
       (boolean? expr)
-      (number? expr)
-      (string? expr)
-      (bytes? expr)
-      (char? expr)))
+      (number?  expr)
+      (string?  expr)
+      (bytes?   expr)
+      (char?    expr)))
 
 (define (ensure-identifier sym)
   (unless (symbol? sym)
@@ -1573,17 +1596,29 @@
   (define base-env   (make-env #f))
   (define base-store (make-store))
 
-  (define all '())
+  (define all-primitives '())
+  (define all-constants  '())
   
   (define (install name proc)
     (define addr (store-alloc! base-store (prim name proc)))
     (env-define! base-env name addr)
-    (set! all (cons name all)))
+    (set! all-primitives (cons name all-primitives)))
 
   (define (numeric name f)
     (install name (λ (args)
                     (check-numbers name args)
                     (apply f args))))
+
+  (define (constant name value)
+    (define addr (store-alloc! base-store value))
+    (env-define! base-env name addr)
+    (set! all-constants (cons name all-constants)))
+
+  (constant 'null   '())
+  (constant 'empty  '())
+  (constant 'true   #t)
+  (constant 'false  #f)
+  
   (numeric '+  +)
   (numeric '*  *)
   (install '-  (λ (args)
@@ -1661,16 +1696,25 @@
                        (check-arg-count 'equal? args 2)
                        (equal? (car args) (cadr args))))
 
-  ; The syntax highligther needs to know the names
+  ; The syntax highlighter needs to know the names
   ; of the primitives.
   (set! all-primitives-names
-        (map symbol->string (sort all (λ (x y) (symbol<? x y)))))
+        (map symbol->string (sort all-primitives (λ (x y) (symbol<? x y)))))
+
+  (constant 'primitives (sort all-primitives (λ (x y) (symbol<? x y))))
+  (constant 'constants  (sort all-constants  (λ (x y) (symbol<? x y))))  
+  (constant 'help       (list "Available primitives and constants:"
+                              (sort (append all-primitives all-constants)
+                                    (λ (x y) (symbol<? x y)))))
   
   ; Return environment and store
   (values base-env base-store))
 
 (define minischeme-global-env   #f)
 (define minischeme-global-store #f)
+
+(define (get-minischeme-global-env)
+  minischeme-global-env)
 
 (define (reset-minischeme-state!)
   (define-values (env store) (create-initial-state))
