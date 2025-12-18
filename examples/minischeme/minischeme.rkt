@@ -35,7 +35,11 @@
   ; fits the terminal dimension to a containing element
   "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js")
 
-(define scripts         (list xtermjs-url xtermjs-addon-fit-url))
+(define xtermjs-addon-clipboard-url
+  ; enables clipboard integration for mouse copy/paste
+  "https://cdn.jsdelivr.net/npm/@xterm/addon-clipboard@0.1.0/lib/addon-clipboard.min.js")
+
+(define scripts         (list xtermjs-url xtermjs-addon-fit-url xtermjs-addon-clipboard-url))
 (define scripts-to-load (length scripts))
 (define scripts-loaded  0)
 
@@ -119,6 +123,7 @@
             "  background: rgba(15, 18, 26, 0.85);\n"
             "  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);\n"
             "}\n"
+
             ".minischeme-title {\n"
             "  margin: 0 0 16px;\n"
             "  color: #E2F1FF;\n"
@@ -126,6 +131,15 @@
             "  text-align: center;\n"
             "  letter-spacing: 0.12em;\n"
             "}\n"
+
+            ".minischeme-description {\n"
+            "  margin: 0 0 20px;\n"
+            "  color: #C7D7EA;\n"
+            "  font-size: 14px;\n"
+            "  line-height: 1.6;\n"
+            "  text-align: left;\n"
+            "}\n"
+
             ".minischeme-terminal {\n"
             "  background: rgb(0,0,0);\n"
             "  padding: 12px;"
@@ -142,10 +156,29 @@
   (js-set-attribute! title "class" "minischeme-title")
   (js-set! title "textContent" "MiniScheme")
 
+  (define description1 (js-create-element "p"))
+  (js-set-attribute! description1 "class" "minischeme-description")
+  (js-set! description1 "textContent"
+           "This is a small interpreter implemented in WebRacket.")
+
+  (define description2 (js-create-element "p"))
+  (js-set-attribute! description2 "class" "minischeme-description")
+  (js-set! description2 "textContent"
+           "The variables `keywords`, `constants`, and `primitives` are available in the repl.")
+
+  (define description3 (js-create-element "p"))
+  (js-set-attribute! description3 "class" "minischeme-description")
+  (js-set! description3 "textContent"
+           "Some Emacs keybindings are available.")
+
+  
   (set! terminal-host (js-create-element "div"))
   (js-set-attribute! terminal-host "class" "minischeme-terminal")
 
   (js-append-child! container title)
+  (js-append-child! container description1)
+  (js-append-child! container description2)
+  (js-append-child! container description3)
   (js-append-child! container terminal-host)
   (js-append-child! body container))
 
@@ -180,8 +213,16 @@
            [addon-constructor (js-ref/extern addon-namespace "FitAddon")])
       (js-new addon-constructor (vector))))
 
+  ; Use clipboard addon
+  (define clipboard-addon
+    (let* ([win               (js-window-window)]
+           [addon-namespace   (js-ref/extern win "ClipboardAddon")]
+           [addon-constructor (js-ref/extern addon-namespace "ClipboardAddon")])
+      (js-new addon-constructor (vector))))
+
   (set! term (xterm-terminal-new terminal-options))
   (xterm-terminal-load-addon term fit-addon)
+  (xterm-terminal-load-addon term clipboard-addon)
   (xterm-terminal-open term terminal-host)
   (xterm-fit-addon-fit fit-addon)
   (xterm-terminal-focus term))
@@ -1403,8 +1444,11 @@
     (js-log (string-append "<data> " data)))
   (void))
 
-(define (enable-mouse-events!)
-  (xterm-terminal-write term (DECSET "1000") (void)))
+(define (enable-mouse-events!)  
+  ; (xterm-terminal-write term (DECSET "1000") (void))
+  ; Keep default mouse behavior enabled so users can select text and use
+  ; the clipboard via the mouse (using the Clipboard addon).
+  (void))
 
 (define (register-terminal-handlers!)
   (set! term-on-key        (procedure->external handle-key-event))
