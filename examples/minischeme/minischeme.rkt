@@ -192,6 +192,7 @@
 (define term-on-key    #f)
 (define term-on-data   #f)
 (define term-on-binary #f)
+(define last-key-data  #f) ; for pasting into the terminal
 
 (define (init-terminal)
   (define terminal-options
@@ -1413,6 +1414,9 @@
   (define key (js-ref event "key"))
   (define dom-event (js-ref event "domEvent"))
   (when dom-event (js-send dom-event "preventDefault" (vector)))
+  (when (string? key)
+    ; user pasted something into the terminal
+    (set! last-key-data key))
   (cond
     [(equal? key UP)            (on-cursor-up)]
     [(equal? key DOWN)          (on-cursor-down)]
@@ -1439,9 +1443,14 @@
   (render-current-buffer)
   (void))
 
-(define (handle-data-event data . _)
-  #;(when (string? data)
-    (js-log (string-append "<data> " data)))
+(define (handle-data-event data . _)  
+  (cond
+    [(and last-key-data (equal? data last-key-data))
+     (set! last-key-data #f)]
+    [(and (string? data) current-buffer (buffer-can-edit-here? current-buffer))
+     (insert-pasted-text! current-buffer data)
+     (history-update-after-edit! current-buffer)
+     (render-current-buffer)])  
   (void))
 
 (define (enable-mouse-events!)  
@@ -1458,6 +1467,41 @@
   (js-send term "onData"   (vector term-on-data))
   (js-send term "onBinary" (vector term-on-binary)))
 
+(define (last-item xs)
+  (if (null? xs) #f (last xs)))
+
+(define (insert-pasted-text! b data)
+  (define row         (mark-row (buffer-point b)))
+  (define col         (mark-col (buffer-point b)))
+  (define line        (buffer-line-at-point b))
+  (define raw         (line-raw line))
+  (define before      (substring raw 0 col))
+  (define after       (substring raw col (string-length raw)))
+  (define pieces      (string->lines data))
+  (define first-piece (car pieces))
+  (define remaining   (cdr pieces))
+  (define new-first   (string-append before first-piece))
+  
+  (line-dirty! line)
+  (set-line-raw! line new-first)
+  (cond
+    [(null? remaining)
+     (set-line-raw! line (string-append new-first after))
+     (mark-move-to! (buffer-point b) row (string-length new-first))]
+    [else
+     (define last-piece (last-item remaining))
+     (define middle-pieces
+       (let loop ([rest remaining]
+                  [acc  '()])
+         (if (null? (cdr rest))
+             (reverse acc)
+             (loop (cdr rest) (cons (car rest) acc)))))
+     (define insert-lines (append middle-pieces (list (string-append last-piece after))))
+     (buffer-set-point! b (add1 row) 0)
+     (buffer-insert-raw-lines! b insert-lines)
+     (mark-move-to! (buffer-point b)
+                    (+ row (length insert-lines))
+                    (string-length last-piece))]))
 
 ;;;
 ;;; MiniScheme
