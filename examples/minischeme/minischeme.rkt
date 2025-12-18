@@ -1399,7 +1399,7 @@
   (void))
 
 (define (handle-data-event data . _)
-  (when (string? data)
+  #;(when (string? data)
     (js-log (string-append "<data> " data)))
   (void))
 
@@ -1598,6 +1598,7 @@
 
   (define all-primitives '())
   (define all-constants  '())
+  (define all-keywords   (map string->symbol all-keywords-names))
   
   (define (install name proc)
     (define addr (store-alloc! base-store (prim name proc)))
@@ -1702,7 +1703,8 @@
         (map symbol->string (sort all-primitives (λ (x y) (symbol<? x y)))))
 
   (constant 'primitives (sort all-primitives (λ (x y) (symbol<? x y))))
-  (constant 'constants  (sort all-constants  (λ (x y) (symbol<? x y))))  
+  (constant 'constants  (sort all-constants  (λ (x y) (symbol<? x y))))
+  (constant 'keywords   (sort all-keywords   (λ (x y) (symbol<? x y))))
   (constant 'help       (list "Available primitives and constants:"
                               (sort (append all-primitives all-constants)
                                     (λ (x y) (symbol<? x y)))))
