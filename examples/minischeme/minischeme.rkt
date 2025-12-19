@@ -192,6 +192,7 @@
 (define term-on-key    #f)
 (define term-on-data   #f)
 (define term-on-binary #f)
+(define term-on-click  #f) 
 (define last-key-data  #f) ; for pasting into the terminal
 
 (define (init-terminal)
@@ -672,6 +673,32 @@
   (define display-row  (+ base-row wrapped-rows))
   (define display-col  (remainder offset cols))
   (values display-row display-col))
+
+(define (buffer-position-from-display b display-row display-col cols)
+  (define len         (buffer-lines-count b))
+  (define total-rows  (max 1 (buffer-total-visible-rows b cols)))
+  (define safe-row    (min (max 0 display-row) (sub1 total-rows)))
+  (define safe-col    (min (max 0 display-col) (sub1 cols)))
+  (let loop ([row       0]
+             [row-start 0])
+    (cond
+      [(>= row len)
+       (define fallback-row (sub1 len))
+       (values fallback-row
+               (string-length (line-raw (buffer-line-at b fallback-row))))]
+      [else
+       (define line-rows (line-visible-rows b row cols))
+       (define row-end   (+ row-start line-rows))
+       (if (< safe-row row-end)
+           (let* ([relative    (- safe-row row-start)]
+                  [offset      (+ (* relative cols) safe-col)]
+                  [prompt-len  (prompt-offset b row)]
+                  [raw-len     (string-length (line-raw (buffer-line-at b row)))]
+                  [max-offset  (+ prompt-len raw-len)]
+                  [clamped     (min (max offset prompt-len) max-offset)]
+                  [col         (max 0 (- clamped prompt-len))])
+             (values row col))
+           (loop (add1 row) row-end))])))
 
 (define (buffer-adjust-first-screen-row! b display-row rows total-rows)
   (define max-first     (max 0 (- total-rows rows)))
@@ -1443,21 +1470,83 @@
   (render-current-buffer)
   (void))
 
-(define (handle-data-event data . _)  
+(define (handle-data-event data . _)
+  (when (string? data)
+    (js-log (string-append "<data> " data)))
   (cond
     [(and last-key-data (equal? data last-key-data))
      (set! last-key-data #f)]
     [(and (string? data) current-buffer (buffer-can-edit-here? current-buffer))
      (insert-pasted-text! current-buffer data)
      (history-update-after-edit! current-buffer)
-     (render-current-buffer)])  
+     (render-current-buffer)])
+  (void))
+
+(define (terminal-cell-dimensions)
+  (js-log "terminal-cell-dimensions")
+  (define core           (and term (js-ref term "_core")))
+  (define render-service (and core (js-ref core "_renderService")))
+  (define dims           (and render-service (js-ref render-service "dimensions")))
+  (define width          (and dims (js-ref dims "actualCellWidth")))
+  (define height         (and dims (js-ref dims "actualCellHeight")))
+
+  (js-log (format "core: ~a, render-service: ~a, dims: ~a, width: ~a, height: ~a"
+                  core render-service dims width height))
+  
+  (if (and (number? width) (number? height) (> width 0) (> height 0))
+      (values width height)
+      (values #f #f)))
+
+(define (event->viewport-coordinates event)
+  (js-log "event->viewport-coordinates")
+  (define target (or (js-ref event "currentTarget") (js-ref event "target")))
+  (js-log (format "target: ~a" target))
+  (define-values (cell-width cell-height) (terminal-cell-dimensions))
+  (js-log (format "w,h: ~a, ~a" cell-width cell-height))
+  (if (and target cell-width cell-height)
+      (let* ([rect      (js-send target "getBoundingClientRect" (vector))]
+             [left      (and rect (js-ref rect "left"))]
+             [top       (and rect (js-ref rect "top"))]
+             [client-x  (js-ref event "clientX")]
+             [client-y  (js-ref event "clientY")])
+        (if (and (number? left) (number? top)
+                 (number? client-x) (number? client-y))
+            (let* ([col (inexact->exact (max 0 (floor (/ (- client-x left) cell-width))))]
+                   [row (inexact->exact (max 0 (floor (/ (- client-y top) cell-height))))])
+              (values row col))
+            (values #f #f)))
+      (values #f #f)))
+
+(define (move-point-from-viewport! viewport-row viewport-col)
+  (when (and term current-buffer)
+    (define b            current-buffer)
+    (define cols0        (inexact->exact (xterm-terminal-cols term)))
+    (define cols         (if (> cols0 0) cols0 1))
+    (define display-row  (+ (buffer-first-screen-row b) viewport-row))
+    (define display-col  viewport-col)
+    (define-values (row col)
+      (buffer-position-from-display b display-row display-col cols))
+    (buffer-set-point! b row col)
+    (render-current-buffer)))
+
+(define (handle-terminal-click event . _)
+  (js-log "handle-terminal-click")
+  (define-values (row col) (event->viewport-coordinates event))
+  (js-log (format "(row,col) = (~a,~a)" row col))
+  (when (and row col)
+    (move-point-from-viewport! row col))
   (void))
 
 (define (enable-mouse-events!)  
   ; (xterm-terminal-write term (DECSET "1000") (void))
   ; Keep default mouse behavior enabled so users can select text and use
   ; the clipboard via the mouse (using the Clipboard addon).
-  (void))
+  (define screen (js-query-selector ".xterm-screen"))
+  (js-log "enable-mouse-events!")
+  (js-log (format "screen: ~a" screen))
+  (when screen
+    (set! term-on-click (procedure->external handle-terminal-click))
+    (js-add-event-listener! screen "mousedown" term-on-click)))
 
 (define (register-terminal-handlers!)
   (set! term-on-key        (procedure->external handle-key-event))
