@@ -1484,25 +1484,23 @@
 
 (define (terminal-cell-dimensions)
   (js-log "terminal-cell-dimensions")
-  (define core           (and term (js-ref term "_core")))
-  (define render-service (and core (js-ref core "_renderService")))
-  (define dims           (and render-service (js-ref render-service "dimensions")))
-  (define width          (and dims (js-ref dims "actualCellWidth")))
-  (define height         (and dims (js-ref dims "actualCellHeight")))
-
-  (js-log (format "core: ~a, render-service: ~a, dims: ~a, width: ~a, height: ~a"
-                  core render-service dims width height))
-  
-  (if (and (number? width) (number? height) (> width 0) (> height 0))
-      (values width height)
+  (define screen        (js-query-selector ".xterm-screen"))
+  (define cols          (and term (xterm-terminal-cols term)))
+  (define rows          (and term (xterm-terminal-rows term)))
+  (define rect          (and screen (js-send screen "getBoundingClientRect" (vector))))
+  (define total-width   (and rect (js-ref rect "width")))
+  (define total-height  (and rect (js-ref rect "height")))
+  (define valid-cols?   (and (number? cols) (> cols 0)))
+  (define valid-rows?   (and (number? rows) (> rows 0)))
+  (define valid-width?  (and (number? total-width) (> total-width 0)))
+  (define valid-height? (and (number? total-height) (> total-height 0)))
+  (if (and valid-cols? valid-rows? valid-width? valid-height?)
+      (values (/ total-width cols) (/ total-height rows))
       (values #f #f)))
 
 (define (event->viewport-coordinates event)
-  (js-log "event->viewport-coordinates")
   (define target (or (js-ref event "currentTarget") (js-ref event "target")))
-  (js-log (format "target: ~a" target))
   (define-values (cell-width cell-height) (terminal-cell-dimensions))
-  (js-log (format "w,h: ~a, ~a" cell-width cell-height))
   (if (and target cell-width cell-height)
       (let* ([rect      (js-send target "getBoundingClientRect" (vector))]
              [left      (and rect (js-ref rect "left"))]
