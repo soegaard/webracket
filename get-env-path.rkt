@@ -1,9 +1,34 @@
 #lang racket/base
+;;;
+;;; exec-path-from-shell.rkt
+;;;
 
-;; exec-path-from-shell.rkt
-;;
-;; Import env vars from your login shell, so (system ...) sees the same
-;; PATH etc. as your terminal.
+;; Functions such as `system` and `system*` search for commands in the
+;; search path of the current process. If a program is invoked from a
+;; terminal the process inherits the value of the search path from
+;; the shell. This allows calls such as `(system "node -v")` to work.
+
+;; Alas, if we are in a GUI program such as DrRacket or Emacs on macOS,
+;; then the current process does not inherit the standard shell
+;; search path. Instead, a minimal search path is used.
+
+;; Racket programs calling out to external program using `system` or
+;; `system*` therefore behave differently, when used in the editor.
+
+;; To fix this, the function `exec-path-from-shell-initialize` below
+;; looks up the shell search path and installs in the current process,
+;; such that `system` and `system*` can be used from the editor
+;; without hard coding paths.
+
+;; The search path for commands is called `exec-path` in the commands below.
+
+;; I have tested `exec-path-from-shell-initialize` on both macOS and Ubuntu.
+;; Report back if you encounter problems on other systems.
+
+
+;;;
+;;; Imports
+;;;
 
 (require racket/string
          racket/list
@@ -13,6 +38,10 @@
          racket/format
          file/sha1     ; for bytes->hex-string
          json)
+
+;;;
+;;; Exports
+;;;
 
 (provide
  ;; Initialize Racket’s process environment from the user’s login shell.
@@ -140,15 +169,22 @@
 
 (define (extract-between-markers out)
   ;; Expect: __RESULT\0 PAYLOAD \0__RESULT
-  (define pre  (bytes-append #"__RESULT" (bytes 0)))
-  (define post (bytes-append (bytes 0) #"__RESULT"))
-  (define i    (bytes-index-of out pre 0))
-  (unless i
+  (define pre-null  (bytes-append #"__RESULT" (bytes 0)))
+  (define post-null (bytes-append (bytes 0) #"__RESULT"))
+  (define pre-text  #"__RESULT\\000")
+  (define post-text #"\\000__RESULT")
+
+  (define (extract pre post)
+    (define i (bytes-index-of out pre 0))
+    (and i
+         (let ([j (bytes-index-of out post (+ i (bytes-length pre)))])
+           (and j (subbytes out (+ i (bytes-length pre)) j)))))
+
+  (define payload (or (extract pre-null post-null)
+                      (extract pre-text post-text)))
+  (unless payload
     (error 'exec-path-from-shell "Expected marker in output, got: ~s" out))
-  (define j (bytes-index-of out post (+ i (bytes-length pre))))
-  (unless j
-    (error 'exec-path-from-shell "Expected end marker in output, got: ~s" out))
-  (subbytes out (+ i (bytes-length pre)) j))
+  payload)
 
 
 (define (run-shell-c shell args)
@@ -270,10 +306,9 @@
 
 (define (exec-path-from-shell-setenv! name value)
   ;; Install into Racket's environment so (system ...) inherits it.
-  ;; If value is #f, remove the var (mirrors “unset”).
   (if value
       (putenv name value)
-      (putenv name #f)))
+      (void)))
 
 (define (exec-path-from-shell-copy-envs names)
   (define pairs (exec-path-from-shell-getenvs names))
