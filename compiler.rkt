@@ -3821,7 +3821,7 @@
 
 ;;; This code generator is inspired by "Destination-driven Code Generation"
 ;;; by Dybvig, Hieb and Butler. There are som differences however. The code
-;;; generator in the paper generates "flat" code (assembler) where as we
+;;; generator in the paper generates "flat" code (assembler) whereas we
 ;;; generate nested Web Assembly instructions.
 
 ;;; The code generator for an expression takes a data destination (dd) and a control destionation (cd)
@@ -3891,12 +3891,12 @@
     ;; 1. Classify variables
     (define-values (top-vars module-vars local-vars provides)
       (classify-variables T))
-    (displayln "-- Provides --"           (current-error-port))
-    (displayln provides                   (current-error-port))
-    (displayln "-- Top-vars --"           (current-error-port))
-    (displayln (sort (map syntax->datum (map variable-id top-vars))
-                     symbol<?)
-               (current-error-port))
+    ;; (displayln "-- Provides --"           (current-error-port))
+    ;; (displayln provides                   (current-error-port))
+    ;; (displayln "-- Top-vars --"           (current-error-port))
+    ;; (displayln (sort (map syntax->datum (map variable-id top-vars))
+    ;;                  symbol<?)
+    ;;            (current-error-port))
 
     (define (literal=? x y) (eq? (syntax->datum (variable-id x))
                                  (syntax->datum (variable-id y))))
