@@ -1777,7 +1777,7 @@
           ;    - evaluate expressions and definitions
           
 
-          ;; Namespace now maps Symbol → Boxed via a single hasheq/mutable table
+          ;; Namespace now maps Symbol -> Boxed via a single hasheq/mutable table
           (type $Namespace
                 (sub $Heap
                      (struct
@@ -9516,14 +9516,51 @@
          (func $fx- (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
-         ; Since an integer n is represented as 2n, we need to halve one argument. 
-         (func $fx* (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               (ref.i31 (i32.mul (i31.get_s (ref.cast i31ref (local.get $x)))
-                                 ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
          (func $fx/ (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Double `(i31.get_s (ref.cast i31ref (local.get $y)))))))
+
+         ; Since an integer n is represented as 2n, we need to halve one argument.
+         ;   This version doesn't throw an exception on overflow.
+         #;(func $fx* (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
+                 (ref.i31 (i32.mul (i31.get_s (ref.cast i31ref (local.get $x)))
+                                   ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
+
+         (func $raise-fixnum-overflow (unreachable))
+         
+         (func $fx* (type $Prim2)
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (result   (ref eq))
+
+               (local $pt i64) ;; tagged product payload: 2xy
+
+               ;; Fixnums are tagged as 2n.
+               ;; If x = 2a and y = 2b, then:
+               ;;   (x * y) >> 1 = (2a * 2b) >> 1 = 2ab
+               ;; which is exactly the tagged payload for the product.
+               (local.set $pt
+                          (i64.shr_s
+                           (i64.mul
+                            (i64.extend_i32_s
+                             (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                            (i64.extend_i32_s
+                             (i31.get_s (ref.cast (ref i31) (local.get $y)))))
+                           (i64.const 1)))
+
+               ;; Tagged payload must fit in signed i31 and remain even:
+               ;; range is [-2^30, 2^30-2].
+               (if (i32.or
+                    (i64.lt_s (local.get $pt) (i64.const -1073741824))  ;; -2^30
+                    (i64.gt_s (local.get $pt) (i64.const  1073741822))) ;;  2^30-2
+                   (then
+                    (call $raise-fixnum-overflow)
+                    (unreachable))
+                   (else))
+
+               (ref.i31 (i32.wrap_i64 (local.get $pt))))
+
 
          
 
