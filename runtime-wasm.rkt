@@ -1198,6 +1198,8 @@
     (add-runtime-string-constant  'arity-error:start         "arity error: ")
     (add-runtime-string-constant  'arity-error:received      "received: ")
     (add-runtime-string-constant  'arity-error:expected      "expected: ")
+    (add-runtime-string-constant  'fx-overflow:middle        ": fixnum overflow with arguments ")
+    (add-runtime-string-constant  'fx-overflow:and           " and ")
 
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
@@ -9527,7 +9529,32 @@
                  (ref.i31 (i32.mul (i31.get_s (ref.cast i31ref (local.get $x)))
                                    ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
-         (func $raise-fixnum-overflow (unreachable))
+         (func $raise-fx-overflow
+               (param $who (ref eq))
+               (param $x (ref eq))
+               (param $y (ref eq))
+               (local $message (ref $String))
+               (local $who-str (ref $String))
+               (local $x-str (ref $String))
+               (local $y-str (ref $String))
+
+               (local.set $who-str (call $format/display (local.get $who)))
+               (local.set $x-str (call $format/display (local.get $x)))
+               (local.set $y-str (call $format/display (local.get $y)))
+               (local.set $message (call $string-append/2
+                                         (local.get $who-str)
+                                         (global.get $string:fx-overflow:middle)))
+               (local.set $message (call $string-append/2
+                                         (local.get $message)
+                                         (local.get $x-str)))
+               (local.set $message (call $string-append/2
+                                         (local.get $message)
+                                         (global.get $string:fx-overflow:and)))
+               (local.set $message (call $string-append/2
+                                         (local.get $message)
+                                         (local.get $y-str)))
+               (drop (call $js-log (local.get $message)))
+               (unreachable))
          
          (func $fx* (type $Prim2)
                (param $x (ref eq))
@@ -9555,7 +9582,7 @@
                     (i64.lt_s (local.get $pt) (i64.const -1073741824))  ;; -2^30
                     (i64.gt_s (local.get $pt) (i64.const  1073741822))) ;;  2^30-2
                    (then
-                    (call $raise-fixnum-overflow)
+                    (call $raise-fx-overflow (global.get $symbol:fx*) (local.get $x) (local.get $y))
                     (unreachable))
                    (else))
 
