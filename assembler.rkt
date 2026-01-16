@@ -1,6 +1,8 @@
 #lang at-exp racket
 (provide run wat->wasm runtime)
-(require "fasl.rkt")
+
+(require "fasl.rkt"
+         "get-env-path.rkt")
 
 ;;;
 ;;; ASSEMBLER
@@ -38,15 +40,10 @@
 ;;; NOTES
 ;;; 
 
-; The assembler `wat2wasm` from the "official" wabt tools
-; does not support the GC proposal (which includes i31).
-; The tool has a flag `--enable-gc` but it has no effect on the assembler.
-; The issue is that the options are shared between a set of tools,
-; and some of the other tools support the GC proposal.
+;; We are using an external assembler to compile wat files into
+;; wasm bytecode.
 
-; (define tool-path "/Users/soegaard/Dropbox/github/wabt/bin")
-
-; The chosen assembler is instead `wasm-tools` which is a Rust project.
+; The chosen assembler is `wasm-tools` which is a Rust project.
 ; There are prebuilt binaries in the release assets:
 ;
 ;     https://github.com/bytecodealliance/wasm-tools/releases
@@ -60,11 +57,18 @@
 ; The `parse` tool converts from the textual format (wat) to
 ; the binary format (wasm). 
 
-;;;
-;;; ASSEMBLER
-;;;
 
-(define assembler-path "/Users/soegaard/tmp/wasm-tools-1.230.0-aarch64-macos")
+;; Alternatives
+
+; The assembler `wat2wasm` from the "official" wabt tools
+; does not support the GC proposal (which includes i31).
+; The tool has a flag `--enable-gc` but it has no effect on the assembler.
+; The issue is that the options are shared between a set of tools,
+; and some of the other tools support the GC proposal.
+
+
+(exec-path-from-shell-initialize) ; use the search path for a normal shell
+
 
 ;;;
 ;;; RUNTIME
@@ -2160,7 +2164,7 @@ const wasmModule
       (λ ()
         (set! success?
               (system
-               (format (~a assembler-path "/" "wasm-tools  parse ~a -o ~a")
+               (format (~a "wasm-tools  parse ~a -o ~a")
                        out.wat out.wasm))))))
   ; 3. If there were any errors, display the error messages
   (unless success?
