@@ -1198,8 +1198,6 @@
     (add-runtime-string-constant  'arity-error:start         "arity error: ")
     (add-runtime-string-constant  'arity-error:received      "received: ")
     (add-runtime-string-constant  'arity-error:expected      "expected: ")
-    (add-runtime-string-constant  'fx-overflow:middle        ": fixnum overflow with arguments ")
-    (add-runtime-string-constant  'fx-overflow:and           " and ")
 
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
@@ -9518,55 +9516,10 @@
          (func $fx- (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.sub (i31.get_s (ref.cast i31ref (local.get $x)))
                                  (i31.get_s (ref.cast i31ref (local.get $y))))))
-         (func $raise-fx-overflow
-               (param $who (ref eq))
-               (param $x (ref eq))
-               (param $y (ref eq))
-               (local $message (ref $String))
-               (local $who-str (ref $String))
-               (local $x-str (ref $String))
-               (local $y-str (ref $String))
-
-               (local.set $who-str (call $format/display (local.get $who)))
-               (local.set $x-str (call $format/display (local.get $x)))
-               (local.set $y-str (call $format/display (local.get $y)))
-               (local.set $message (call $string-append/2
-                                         (local.get $who-str)
-                                         (global.get $string:fx-overflow:middle)))
-               (local.set $message (call $string-append/2
-                                         (local.get $message)
-                                         (local.get $x-str)))
-               (local.set $message (call $string-append/2
-                                         (local.get $message)
-                                         (global.get $string:fx-overflow:and)))
-               (local.set $message (call $string-append/2
-                                         (local.get $message)
-                                         (local.get $y-str)))
-               (drop (call $js-log (local.get $message)))
-               (unreachable))
-
-         ; Since an integer n is represented as 2n, we need to halve one argument.
+         ; Since an integer n is represented as 2n, we need to halve one argument. 
          (func $fx* (type $Prim2) (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
-               (local $x-tag i32)
-               (local $y-tag i32)
-               (local $xv i32)
-               (local $yv i32)
-               (local $prod i64)
-
-               (local.set $x-tag (i31.get_s (ref.cast i31ref (local.get $x))))
-               (local.set $y-tag (i31.get_s (ref.cast i31ref (local.get $y))))
-               (local.set $xv (i32.shr_s (local.get $x-tag) (i32.const 1)))
-               (local.set $yv (i32.shr_s (local.get $y-tag) (i32.const 1)))
-               (local.set $prod (i64.mul (i64.extend_i32_s (local.get $xv))
-                                         (i64.extend_i32_s (local.get $yv))))
-               (if (i32.or (i64.lt_s (local.get $prod) (i64.const -536870912))
-                           (i64.gt_s (local.get $prod) (i64.const  536870911)))
-                   (then (call $raise-fx-overflow
-                               (global.get $symbol:fx*)
-                               (local.get $x)
-                               (local.get $y))
-                         (unreachable)))
-               (ref.i31 (i32.shl (i32.wrap_i64 (local.get $prod)) (i32.const 1))))
+               (ref.i31 (i32.mul (i31.get_s (ref.cast i31ref (local.get $x)))
+                                 ,(Half `(i31.get_s (ref.cast i31ref (local.get $y)))))))
 
          (func $fx/ (param $x (ref eq)) (param $y (ref eq)) (result (ref eq))
                (ref.i31 (i32.div_s (i31.get_s (ref.cast i31ref (local.get $x)))
