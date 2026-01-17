@@ -66,6 +66,7 @@
         (struct:exn:fail:contract                ensure-exn:fail:contract-type)
         (struct:exn:fail:contract:arity          ensure-exn:fail:contract:arity-type)
         (struct:exn:fail:contract:divide-by-zero ensure-exn:fail:contract:divide-by-zero-type)
+        (struct:exn:fail:contract:non-fixnum-result ensure-exn:fail:contract:non-fixnum-result-type)
         (struct:exn:fail:contract:variable       ensure-exn:fail:contract:variable-type)
         (struct:exn:fail:read                    ensure-exn:fail:read-type)
         (struct:exn:fail:read:eof                ensure-exn:fail:read:eof-type)
@@ -1026,6 +1027,9 @@
           exn:fail:contract:divide-by-zero
           exn:fail:contract:divide-by-zero?
           make-exn:fail:contract:divide-by-zero
+          exn:fail:contract:non-fixnum-result
+          exn:fail:contract:non-fixnum-result?
+          make-exn:fail:contract:non-fixnum-result
           exn:fail:contract:variable
           exn:fail:contract:variable?
           make-exn:fail:contract:variable
@@ -2164,6 +2168,7 @@
          (global $exn:fail:contract-type                (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:contract:arity-type          (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:contract:divide-by-zero-type (mut (ref null $StructType)) (ref.null $StructType))
+         (global $exn:fail:contract:non-fixnum-result-type (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:contract:variable-type       (mut (ref null $StructType)) (ref.null $StructType))
 
          (global $exn:fail:read-type                    (mut (ref null $StructType)) (ref.null $StructType))
@@ -4566,6 +4571,37 @@
                     (local.set $existing (local.get $std))))
                (ref.as_non_null (local.get $existing)))
 
+         ;; Kernel exception fail:contract:non-fixnum-result struct type descriptor cache
+         (func $ensure-exn:fail:contract:non-fixnum-result-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:contract:non-fixnum-result-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail:contract-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:non-fixnum-result))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:contract:non-fixnum-result))))
+                    (global.set $exn:fail:contract:non-fixnum-result-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
          ;; Kernel exception fail:contract:variable struct type descriptor cache
          (func $ensure-exn:fail:contract:variable-type
                (result (ref $StructType))
@@ -4747,6 +4783,29 @@
                            (local.get $std)
                            (local.get $fields)))
 
+         ;; Construct a kernel exception:fail:contract:non-fixnum-result instance
+         (func $exn:fail:contract:non-fixnum-result/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:contract:non-fixnum-result-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
          ;; Construct a kernel exception:fail:contract:variable instance
          (func $exn:fail:contract:variable/make
                (param $message (ref eq)) ; string
@@ -4894,6 +4953,51 @@
                (local $ok     i32)
 
                (local.set $std (call $ensure-exn:fail:contract:divide-by-zero-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; exn:fail:contract:non-fixnum-result : string? continuation-mark-set? -> exn:fail:contract:non-fixnum-result
+         (func $exn:fail:contract:non-fixnum-result (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:non-fixnum-result/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:contract:non-fixnum-result) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail:contract:non-fixnum-result : string? continuation-mark-set? -> exn:fail:contract:non-fixnum-result
+         (func $make-exn:fail:contract:non-fixnum-result (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:contract:non-fixnum-result/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:contract:non-fixnum-result) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail:contract:non-fixnum-result? : any/c -> boolean?
+         (func $exn:fail:contract:non-fixnum-result? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:contract:non-fixnum-result-type))
                (if (result (ref eq))
                    (ref.test (ref $Struct) (local.get $v))
                    (then

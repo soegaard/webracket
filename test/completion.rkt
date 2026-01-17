@@ -1570,7 +1570,7 @@
   correlated-property
   correlated-property-symbol-keys
 
-    make-instance
+  make-instance
   instance?
   instance-name
   instance-data
@@ -1597,13 +1597,15 @@
   struct:exn:fail:contract
   struct:exn:fail:contract:arity
   struct:exn:fail:contract:divide-by-zero
+  struct:exn:fail:contract:non-fixnum-result
   struct:exn:fail:contract:variable
   struct:exn:fail:read
   struct:exn:fail:read:eof
   struct:exn:fail:read:non-char
   struct:exn:fail:syntax
   struct:exn:fail:syntax:missing-module
-  struct:exn:fail:syntax:unbound         ))
+  struct:exn:fail:syntax:unbound
+         ))
 
 (define standard-library-identifiers
   '(current-error-port
