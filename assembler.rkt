@@ -67,7 +67,7 @@
 ; and some of the other tools support the GC proposal.
 
 
-(exec-path-from-shell-initialize) ; use the search path for a normal shell
+(void (exec-path-from-shell-initialize)) ; use the search path for a normal shell
 
 
 ;;;
