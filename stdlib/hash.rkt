@@ -44,13 +44,13 @@
            (error 'hash-iterate-first "expected immutable hash table"))
 
          (cond
+           [(hash? ht)    (mutable-hash-iterate-key ht pos bad-index-v)]
            [(intmap? ht)  (define key  (intmap-iterate-key ht pos bad-index-v))
 
                           (when (eq? key fail)
                             (raise-arguments-error hash-iterate-key "no element at index"
                                                    "index" pos))
                           key]
-           [(hash? ht)    (mutable-hash-iterate-key ht pos bad-index-v)]
            [else          (error 'hash-iterate-key
                                  "expected a hash table")])]))
 
@@ -60,12 +60,12 @@
          (hash-iterate-value ht pos fail)]
         [(ht pos bad-index-v)
          (cond
+           [(hash? ht)   (mutable-hash-iterate-value ht pos fail)]
            [(intmap? ht) (define value (intmap-iterate-value ht pos bad-index-v))            
                          (when (eq? value fail)
                            (raise-arguments-error hash-iterate-value "no element at index"
                                                   "index" pos))
                          value]
-           [(hash? ht)   (mutable-hash-iterate-value ht pos fail)]
            [else         (error 'hash-iterate-value "expected a hash table")])]))
 
     (define hash-iterate-pair
