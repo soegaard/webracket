@@ -541,7 +541,8 @@
                                  (and (= s 3.0) (= r 6.0)))))
                     (list "expt"
                           (and (equal? (expt 2 5) 32)
-                               (equal? (expt 9.0 0.5) 3.0)))
+                               (equal? (expt 9.0 0.5) 3.0)
+                               (= (- (expt 2 29)) -536870912)))
                     (list "exp"
                           (and (equal? (exp 0) 1)
                                (< (abs (- (exp 1.0) 2.718281828459045)) 1e-12)))
