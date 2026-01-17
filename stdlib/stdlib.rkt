@@ -8,12 +8,12 @@
 (include/reader "evaluation.rkt"  read-syntax/skip-first-line)
 (include/reader "hash-code.rkt"   read-syntax/skip-first-line)
 (include/reader "intmap.rkt"      read-syntax/skip-first-line)
-(include/reader "hash.rkt"        read-syntax/skip-first-line)
+;(include/reader "hash.rkt"        read-syntax/skip-first-line)
 ; Pending implementation of more primitives.
 ; Note:
 ;   TODO: change hash-ref to immutable-hash-ref in "regexp.rkt"
 ;         but only when used with immutable hash tables.
-(include/reader "regexp.rkt"      read-syntax/skip-first-line)
+;(include/reader "regexp.rkt"      read-syntax/skip-first-line)
 
 
 
