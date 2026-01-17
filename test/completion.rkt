@@ -1558,28 +1558,52 @@
   (symbol->string s))
 
 (define implemented-constants
-  '(null undefined unsafe-undefined empty true false pi eof
-         prop:arity-string
-         prop:checked-procedure  
-         prop:impersonator-of
-         prop:incomplete-arity
-         prop:method-arity-error
-         prop:object-name
-         prop:procedure
+  '(  correlated?
+  correlated-source
+  correlated-line
+  correlated-column
+  correlated-position
+  correlated-span
+  correlated-e
+  correlated->datum
+  datum->correlated
+  correlated-property
+  correlated-property-symbol-keys
 
-         struct:exn
-         struct:exn:fail
-         struct:exn:fail:contract
-         struct:exn:fail:contract:arity
-         struct:exn:fail:contract:divide-by-zero
-         struct:exn:fail:contract:variable
-         struct:exn:fail:read
-         struct:exn:fail:read:eof
-         struct:exn:fail:read:non-char
-         struct:exn:fail:syntax
-         struct:exn:fail:syntax:missing-module
-         struct:exn:fail:syntax:unbound
-         ))
+    make-instance
+  instance?
+  instance-name
+  instance-data
+  instance-variable-names
+  instance-set-variable-value!
+  instance-unset-variable!
+  instance-variable-value
+
+
+  null undefined unsafe-undefined empty true false pi eof
+  prop:arity-string
+  prop:checked-procedure  
+  prop:impersonator-of
+  prop:incomplete-arity
+  prop:method-arity-error
+  prop:object-name
+  prop:procedure
+  prop:authentic
+  prop:custom-write
+  prop:equal+hash
+
+  struct:exn
+  struct:exn:fail
+  struct:exn:fail:contract
+  struct:exn:fail:contract:arity
+  struct:exn:fail:contract:divide-by-zero
+  struct:exn:fail:contract:variable
+  struct:exn:fail:read
+  struct:exn:fail:read:eof
+  struct:exn:fail:read:non-char
+  struct:exn:fail:syntax
+  struct:exn:fail:syntax:missing-module
+  struct:exn:fail:syntax:unbound         ))
 
 (define standard-library-identifiers
   '(current-error-port
@@ -1939,6 +1963,8 @@
             argmax
             argmin
             arithmetic-shift
+            arity-at-least-value
+            arity-at-least?
             asin
             asinh
             assf
@@ -1961,6 +1987,7 @@
             box-immutable
             box?
             boxed
+            boxed?
             build-list
             build-string
             build-vector
@@ -1970,6 +1997,7 @@
             bytes->immutable-bytes
             bytes->list
             bytes->path
+            bytes->string/latin-1
             bytes->string/utf-8
             bytes-append
             bytes-append*
@@ -1980,6 +2008,7 @@
             bytes-length
             bytes-ref
             bytes-set!
+            bytes-utf-8-length
             bytes<?
             bytes=?
             bytes>?
@@ -2034,6 +2063,7 @@
             char-foldcase
             char-general-category
             char-grapheme-break-property
+            char-grapheme-step
             char-graphic?
             char-iso-control?
             char-lower-case?
@@ -2061,11 +2091,24 @@
             check-string
             cons
             cons?
+            correlated->datum
+            correlated-column
+            correlated-e
+            correlated-line
+            correlated-position
+            correlated-property
+            correlated-property-symbol-keys
+            correlated-source
+            correlated-span
+            correlated?
             cos
             cosh
             count
             current-continuation-marks
             current-inspector
+            custom-write-accessor
+            custom-write?
+            datum->correlated
             datum->syntax
             degrees->radians
             double-flonum?
@@ -2257,6 +2300,15 @@
             inexact?
             infinite?
             input-port?
+            instance-data
+            instance-name
+            instance-set-variable-value!
+            instance-unset-variable!
+            instance-variable-box
+            instance-variable-names
+            instance-variable-value
+            instance?
+            instantiate-linklet
             integer->char
             integer-length
             integer-sqrt
@@ -2271,6 +2323,10 @@
             last-pair
             lcm
             length
+            linklet-export-variables
+            linklet-import-variables
+            linklet-name
+            linklet?
             list
             list*
             list->bytes
@@ -2284,6 +2340,7 @@
             list?
             log
             make-bytes
+            make-compiled-linklet
             make-empty-hash
             make-empty-hashalw
             make-empty-hasheq
@@ -2305,6 +2362,8 @@
             make-hashalw
             make-hasheq
             make-hasheqv
+            make-input-port
+            make-instance
             make-list
             make-srcloc
             make-string
@@ -2314,6 +2373,10 @@
             make-struct-type-property
             make-vector
             make-void
+            make-weak-hash
+            make-weak-hashalw
+            make-weak-hasheq
+            make-weak-hasheqv
             map
             match:error
             max
@@ -2371,6 +2434,8 @@
             peek-byte
             peek-bytes
             peek-bytes!
+            peek-bytes-avail!
+            peek-bytes-avail!*
             peek-char
             peek-string
             peek-string!
@@ -2390,6 +2455,7 @@
             procedure-arity-mask
             procedure-rename
             procedure?
+            progress-evt?
             quotient
             quotient/remainder
             radians->degrees
@@ -2403,6 +2469,8 @@
             read-byte
             read-bytes
             read-bytes!
+            read-bytes-avail!
+            read-bytes-avail!*
             read-char
             read-line
             read-string
@@ -2508,6 +2576,7 @@
             struct-constructor-procedure?
             struct-mutator-procedure?
             struct-predicate-procedure?
+            struct-type-authentic?
             struct-type-property-accessor-procedure?
             struct-type-property-predicate-procedure?
             struct-type-property?
@@ -2548,6 +2617,9 @@
             twelfth
             unbox
             unboxed
+            unquoted-printing-string
+            unquoted-printing-string-value
+            unquoted-printing-string?
             unsafe-car
             unsafe-cdr
             unsafe-fl/
@@ -2570,17 +2642,43 @@
             unsafe-flsqrt
             unsafe-fltan
             unsafe-fltruncate
+            unsafe-fx*
+            unsafe-fx*/wraparound
             unsafe-fx+
+            unsafe-fx+/wraparound
+            unsafe-fx-
+            unsafe-fx-/wraparound
             unsafe-fx<
+            unsafe-fx<=
             unsafe-fx=
+            unsafe-fx>
+            unsafe-fx>=
+            unsafe-fxabs
+            unsafe-fxand
+            unsafe-fxior
+            unsafe-fxlshift
+            unsafe-fxlshift/wraparound
+            unsafe-fxmax
+            unsafe-fxmin
+            unsafe-fxmodulo
+            unsafe-fxnot
+            unsafe-fxpopcount
+            unsafe-fxpopcount16
+            unsafe-fxpopcount32
             unsafe-fxquotient
+            unsafe-fxremainder
+            unsafe-fxrshift
+            unsafe-fxrshift/logical
+            unsafe-fxxor
             unsafe-string-length
+            unsafe-bytes-length
             unsafe-struct-ref
             unsafe-struct-set!
             unsafe-vector*-length
             unsafe-vector*-set!
             unsafe-vector-length
             unsafe-vector-ref
+            unsafe-vector-set!
             values
             variable-reference-constant?
             variable-reference-from-unsafe?
@@ -2626,7 +2724,6 @@
             write-string
             xor
             zero?)
-
 
 
           ))

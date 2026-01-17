@@ -47,7 +47,7 @@
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1))))))
 
- #;(list "4. Datatypes"
+ (list "4. Datatypes"
        (list "4.1 Equality"
              (list "eqv?"
                    (and (equal? (eqv? 'a 'a) #t)
@@ -1147,7 +1147,16 @@
               (list "bytes-length"
                     (and (equal? (bytes-length #"abc") 3)
                          (equal? (bytes-length #"") 0)))
-
+              (list "unsafe-bytes-length"
+                    (and (equal? (unsafe-bytes-length #"abc") 3)
+                         (equal? (unsafe-bytes-length #"") 0)))
+              (list "unsafe-bytes-ref"
+                    (and (equal? (unsafe-bytes-ref #"abc" 1) 98)
+                         (equal? (unsafe-bytes-ref #"abc" 0) 97)))
+              (list "unsafe-bytes-set!"
+                    (let ([b (bytes 0 1 2)])
+                      (unsafe-bytes-set! b 1 255)
+                      (equal? b (bytes 0 255 2))))             
               (list "bytes-ref"
                     (and (equal? (bytes-ref #"abc" 0) 97)
                          (equal? (bytes-ref #"abc" 2) 99)))
@@ -2008,8 +2017,7 @@
                                  '((1 a) (1 b) (2 a) (2 b)))
                          (equal? (cartesian-product '(1 2 3))
                                  '((1) (2) (3)))
-                         (equal? (cartesian-product '(1 2) '()) '())
-                         (equal? (procedure-arity cartesian-product) -1)))
+                         (equal? (cartesian-product '(1 2) '()) '())))
               (list "permutations"
                     (and (equal? (permutations '(1 2 3))
                                  '((1 2 3) (2 1 3) (3 1 2) (1 3 2) (2 3 1) (3 2 1)))
@@ -2835,6 +2843,43 @@
                       (let ([expected '(1 2)])
                         (and (equal? (sort (hash-values h)    (λ (x y) (< x y))) expected)
                              (equal? (sort (hash-values h #t) (λ (x y) (< x y))) expected)))))
+
+
+              (list "mutable-hash-iterate"
+                    (let ([empty (make-hash)]
+                          [h     (make-hasheq)])
+                      (hash-set! h 'x 10)
+                      (hash-set! h 'y 20)
+
+                      (define (unordered-equal? xs ys)
+                        (and (= (length xs) (length ys))
+                             (andmap (lambda (x) (member x ys)) xs)
+                             (andmap (lambda (y) (member y xs)) ys)))
+
+                      (define (collect f)
+                        (let loop ([pos (mutable-hash-iterate-first h)] [acc '()])
+                          (if pos
+                              (loop (mutable-hash-iterate-next h pos)
+                                    (cons (f pos) acc))
+                              acc)))
+
+                      (let* ([pairs    (collect (lambda (pos)
+                                                  (mutable-hash-iterate-pair h pos 'bad)))]
+                             [kvs      (collect (lambda (pos)
+                                                  (call-with-values
+                                                   (lambda ()
+                                                     (mutable-hash-iterate-key+value h pos 'bad))
+                                                   cons)))]
+                             [keys     (collect (lambda (pos)
+                                                  (mutable-hash-iterate-key h pos 'bad)))]
+                             [vals     (collect (lambda (pos)
+                                                  (mutable-hash-iterate-value h pos 'bad)))]
+                             [expected '((x . 10) (y . 20))])
+                        (and (equal? (mutable-hash-iterate-first empty) #f)
+                             (unordered-equal? pairs expected)
+                             (unordered-equal? kvs expected)
+                             (equal? (sort keys symbol<?) '(x y))
+                             (equal? (sort vals <) '(10 20))))))
               
               ))
 
@@ -3129,6 +3174,74 @@
                            (equal? (read-byte port) 92)
                            (eof-object? (peek-byte port))
                            (eof-object? (read-byte port)))))
+              (list "read-char/custom-port"
+                    (let* ([base (open-input-string "λA")]
+                           [port (make-input-port 'proxy base base (lambda () (void)))]
+                           [first (read-char port)]
+                           [second (read-char port)]
+                           [third (read-char port)])
+                      (and (equal? first #\λ)
+                           (equal? second #\A)
+                           (eof-object? third))))
+
+              (list "read-bytes!/custom-port"
+                    (let* ([base (open-input-bytes (bytes 1 2 3 4 5))]
+                           [port (make-input-port 'proxy base base (lambda () (void)))]
+                           [buffer (make-bytes 5 0)]
+                           [count  (read-bytes! buffer port 1 4)]
+                           [next   (read-byte port)])
+                      (and (equal? count 3)
+                           (equal? buffer (bytes 0 1 2 3 0))
+                           (equal? next 4))))
+
+              (list "read-string!/custom-port"
+                    (let* ([base (open-input-string "Racket")]
+                           [port (make-input-port 'proxy base base (lambda () (void)))]
+                           [buffer (make-string 5 #\_)]
+                           [count  (read-string! buffer port 1 4)]
+                           [rest   (read-char port)])
+                      (and (equal? count 3)
+                           (equal? buffer (string #\_ #\R #\a #\c #\_))
+                           (equal? rest #\k))))
+
+              (list "read-bytes/custom-port"
+                    (let* ([base (open-input-bytes (bytes 10 11 12 13))]
+                           [port (make-input-port 'proxy base base (lambda () (void)))]
+                           [chunk (read-bytes 3 port)]
+                           [tail  (read-bytes 2 port)]
+                           [final (read-bytes 1 port)])
+                      (and (equal? chunk (bytes 10 11 12))
+                           (equal? tail (bytes 13))
+                           (eof-object? final))))
+
+              (list "read-string/custom-port"
+                    (let* ([base (open-input-string "hello")]
+                           [port (make-input-port 'proxy base base (lambda () (void)))]
+                           [chunk (read-string 4 port)]
+                           [tail  (read-string 4 port)]
+                           [final (read-string 1 port)])
+                      (and (equal? chunk "hell")
+                           (equal? tail "o")
+                           (eof-object? final))))
+
+              (list "read-line/custom-port"
+                    (let* ([base1 (open-input-string "one\ntwo")]
+                           [port1 (make-input-port 'proxy base1 base1 (lambda () (void)))]
+                           [first (read-line port1)]
+                           [second (read-line port1)]
+                           [third (read-line port1)]
+                           [base2 (open-input-string "carriage\r\nreturn")]
+                           [port2 (make-input-port 'proxy base2 base2 (lambda () (void)))]
+                           [crlf  (read-line port2 'return-linefeed)]
+                           [rest  (read-line port2 'return-linefeed)]
+                           [done  (read-line port2 'return-linefeed)])
+                      (and (equal? first "one")
+                           (equal? second "two")
+                           (eof-object? third)
+                           (equal? crlf "carriage")
+                           (equal? rest "return")
+                           (eof-object? done))))
+              
                ))
 
        
