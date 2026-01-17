@@ -3910,22 +3910,28 @@
                      [arity-make    (make-exn:fail:contract:arity "made-arity" marks)]
                      [divide        (exn:fail:contract:divide-by-zero "divide" marks)]
                      [divide-make   (make-exn:fail:contract:divide-by-zero "made-divide" marks)]
+                     [non-fixnum    (exn:fail:contract:non-fixnum-result "non-fixnum" marks)]
+                     [non-fixnum-make (make-exn:fail:contract:non-fixnum-result "made-non-fixnum" marks)]
                      [variable      (exn:fail:contract:variable "variable" marks 'id)]
                      [variable-make (make-exn:fail:contract:variable "made-variable" marks 'made-id)])
                 (and (equal? (exn:fail? contract) #t)
                      (equal? (exn:fail:contract? contract) #t)
                      (equal? (exn:fail:contract? arity) #t)
                      (equal? (exn:fail:contract? divide) #t)
+                     (equal? (exn:fail:contract? non-fixnum) #t)
                      (equal? (exn:fail:contract? variable) #t)
                      (equal? (exn:fail:contract? contract-make) #t)
                      (equal? (exn:fail:contract? arity-make) #t)
                      (equal? (exn:fail:contract? divide-make) #t)
+                     (equal? (exn:fail:contract? non-fixnum-make) #t)
                      (equal? (exn:fail:contract? variable-make) #t)
                      (equal? (exn:fail:contract:arity? contract) #f)
                      (equal? (exn:fail:contract:arity? arity) #t)
                      (equal? (exn:fail:contract:arity? arity-make) #t)
                      (equal? (exn:fail:contract:divide-by-zero? divide) #t)
                      (equal? (exn:fail:contract:divide-by-zero? divide-make) #t)
+                     (equal? (exn:fail:contract:non-fixnum-result? non-fixnum) #t)
+                     (equal? (exn:fail:contract:non-fixnum-result? non-fixnum-make) #t)
                      (equal? (exn:fail:contract:variable? variable) #t)
                      (equal? (exn:fail:contract:variable? variable-make) #t)
                      (equal? (exn:fail:contract:variable-id variable) 'id)
@@ -3933,6 +3939,7 @@
                      (equal? (exn-message contract) "contract")
                      (equal? (exn-message arity) "arity")
                      (equal? (exn-message divide) "divide")
+                     (equal? (exn-message non-fixnum) "non-fixnum")
                      (equal? (exn-message variable) "variable"))))
 
         (list "exn:fail:read structures"
@@ -4320,4 +4327,3 @@
          )
 
  )
-

@@ -1572,6 +1572,7 @@
          struct:exn:fail:contract
          struct:exn:fail:contract:arity
          struct:exn:fail:contract:divide-by-zero
+         struct:exn:fail:contract:non-fixnum-result
          struct:exn:fail:contract:variable
          struct:exn:fail:read
          struct:exn:fail:read:eof
