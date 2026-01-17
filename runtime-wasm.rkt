@@ -1207,6 +1207,8 @@
     (add-runtime-string-constant  'fx-overflow:middle        ": fixnum overflow with arguments ")
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
+    (add-runtime-string-constant  'expected-fixnum:got       "expected fixnum, got: ")
+
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
     (add-runtime-bytes-constant  'non-empty                 #"_")
@@ -9673,6 +9675,46 @@
                      (global.get $true))
                (unreachable))
 
+         (func $fixnum?/i32
+               (param $v (ref eq))
+               (result   i32)
+
+               (if (result i32)
+                   (ref.test (ref i31) (local.get $v))
+                   (then (i32.eqz
+                          (i32.and
+                           (i31.get_u (ref.cast (ref i31) (local.get $v)))
+                           (i32.const 1))))
+                   (else (i32.const 0))))
+
+         (func $ensure-fixnum-argument
+               (param $who (ref eq))
+               (param $x   (ref eq))
+
+               (local $message (ref $String))
+               (local $who-str (ref $String))
+               (local $x-str   (ref $String))
+               (local $exn     (ref $Struct))
+
+               (if (i32.eqz (call $fixnum?/i32 (local.get $x)))
+                   (then
+                    (local.set $who-str (call $format/display (local.get $who)))
+                    (local.set $x-str   (call $format/display (local.get $x)))
+
+                    (local.set $message (call $string-append/2
+                                              (local.get $who-str)
+                                              (global.get $string:expected-fixnum:got)))
+                    (local.set $message (call $string-append/2
+                                              (local.get $message)
+                                              (local.get $x-str)))
+
+                    (local.set $exn     (call $exn:fail:contract/make
+                                              (ref.cast (ref eq) (local.get $message))
+                                              (global.get $null)))
+
+                    (call $raise (ref.cast (ref eq) (local.get $exn)) (global.get $true))
+                    (unreachable))))
+
          
          (func $fx* (type $Prim2)
                (param $x (ref eq))
@@ -9681,23 +9723,31 @@
 
                (local $pt i64) ;; tagged product payload: 2xy
 
-
                ;; Check fixnum arguments
-               (if (i32.eqz (ref.test (ref i31) (local.get $x)))
+               ;; - note: this avoids functions calls in the non-error case
+               (if (i32.eqz
+                    (i32.and
+                     (if (result i32) (ref.test (ref i31) (local.get $x))
+                         (then
+                          (i32.eqz
+                           (i32.and
+                            (i31.get_u (ref.cast (ref i31) (local.get $x)))
+                            (i32.const 1))))
+                         (else
+                          (i32.const 0)))
+                     (if (result i32) (ref.test (ref i31) (local.get $y))
+                         (then
+                          (i32.eqz
+                           (i32.and
+                            (i31.get_u (ref.cast (ref i31) (local.get $y)))
+                            (i32.const 1))))
+                         (else
+                          (i32.const 0)))))
                    (then
-                    (call $raise-argument-error
-                          (global.get $symbol:fx*)
-                          (global.get $symbol:fixnum)
-                          (local.get $x))
-                    (unreachable)))
+                    (call $ensure-fixnum-argument (global.get $symbol:fx*) (local.get $x))
+                    (call $ensure-fixnum-argument (global.get $symbol:fx*) (local.get $y)))
+                   (else))
 
-               (if (i32.eqz (ref.test (ref i31) (local.get $y)))
-                   (then
-                    (call $raise-argument-error
-                          (global.get $symbol:fx*)
-                          (global.get $symbol:fixnum)
-                          (local.get $y))
-                    (unreachable)))
                
                ;; Fixnums are tagged as 2n.
                ;; If x = 2a and y = 2b, then:
