@@ -7568,11 +7568,11 @@
                   (then
                        (if (f64.eq (f64.floor (local.get $res)) (local.get $res))
                        (then
-                        ;; 1073741823.0 = 2^30-1 and -1073741824.0 = -2^30
+                        ;; 536870911.0 = 2^29-1 and -536870912.0 = -2^29
                         ;; ensure result fits in fixnum range before converting
-                        (if (f64.le (local.get $res) (f64.const 1073741823.0))
+                        (if (f64.le (local.get $res) (f64.const 536870911.0))
                             (then
-                             (if (f64.ge (local.get $res) (f64.const -1073741824.0))
+                             (if (f64.ge (local.get $res) (f64.const -536870912.0))
                                  (then
                                   (return (ref.i31 (i32.shl (i32.trunc_f64_s (local.get $res)) (i32.const 1))))))))))))
 
