@@ -106,6 +106,7 @@
     exn:fail:contract
     exn:fail:contract:arity
     exn:fail:contract:divide-by-zero
+    exn:fail:contract:non-fixnum-result
     exn:fail:contract:variable
     exn:fail:read
     exn:fail:read:eof

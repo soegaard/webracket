@@ -92,6 +92,7 @@
          struct:exn:fail:contract
          struct:exn:fail:contract:arity
          struct:exn:fail:contract:divide-by-zero
+         struct:exn:fail:contract:non-fixnum-result
          struct:exn:fail:contract:variable
          struct:exn:fail:read
          struct:exn:fail:read:eof
@@ -114,6 +115,8 @@
          exn:fail:contract:arity?
          exn:fail:contract:divide-by-zero
          exn:fail:contract:divide-by-zero?
+         exn:fail:contract:non-fixnum-result
+         exn:fail:contract:non-fixnum-result?
          exn:fail:contract:variable
          exn:fail:contract:variable?
          exn:fail:contract:variable-id
@@ -140,6 +143,7 @@
          make-exn:fail:contract
          make-exn:fail:contract:arity
          make-exn:fail:contract:divide-by-zero
+         make-exn:fail:contract:non-fixnum-result
          make-exn:fail:contract:variable
          make-exn:fail:read
          make-exn:fail:read:eof

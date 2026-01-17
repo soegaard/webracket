@@ -438,6 +438,7 @@
     struct:exn:fail:contract
     struct:exn:fail:contract:arity
     struct:exn:fail:contract:divide-by-zero
+    struct:exn:fail:contract:non-fixnum-result
     struct:exn:fail:contract:variable
     struct:exn:fail:read
     struct:exn:fail:read:eof
@@ -558,6 +559,10 @@
   exn:fail:contract:divide-by-zero
   exn:fail:contract:divide-by-zero?
   make-exn:fail:contract:divide-by-zero
+
+  exn:fail:contract:non-fixnum-result
+  exn:fail:contract:non-fixnum-result?
+  make-exn:fail:contract:non-fixnum-result
   
   exn:fail:contract:variable
   exn:fail:contract:variable?
@@ -1549,6 +1554,7 @@
                          kern-exn:fail:contract kern-exn:fail:contract?
                          kern-exn:fail:contract:arity kern-exn:fail:contract:arity?
                          kern-exn:fail:contract:divide-by-zero kern-exn:fail:contract:divide-by-zero?
+                         kern-exn:fail:contract:non-fixnum-result kern-exn:fail:contract:non-fixnum-result?
                          kern-exn:fail:contract:variable kern-exn:fail:contract:variable?
                          kern-exn:fail:contract:variable-id
                          kern-exn:fail:read kern-exn:fail:read?
@@ -1573,6 +1579,8 @@
     [kern-exn:fail:contract:arity?          #'exn:fail:contract:arity?]
     [kern-exn:fail:contract:divide-by-zero  #'exn:fail:contract:divide-by-zero]
     [kern-exn:fail:contract:divide-by-zero? #'exn:fail:contract:divide-by-zero?]
+    [kern-exn:fail:contract:non-fixnum-result #'exn:fail:contract:non-fixnum-result]
+    [kern-exn:fail:contract:non-fixnum-result? #'exn:fail:contract:non-fixnum-result?]
     [kern-exn:fail:contract:variable        #'exn:fail:contract:variable]
     [kern-exn:fail:contract:variable?       #'exn:fail:contract:variable?]
     [kern-exn:fail:contract:variable-id     #'exn:fail:contract:variable-id]
