@@ -1,4 +1,12 @@
 #lang racket/base
+;;;
+;;; FASL Constants 
+;;;
+
+; The FASL (Fast-Load Serialization) constants are shared between
+; the runtime and the assembler in `runtime-wasm.rkt` and `assembler.rkt`
+; respectively.
+
 (provide fasl-fixnum
          fasl-character
          fasl-symbol
