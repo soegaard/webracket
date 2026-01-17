@@ -65,8 +65,8 @@
 (define (wrap p)
   (datum->syntax #f p)
   ; p
-  #;
-  (cond
+ 
+  #;(cond
     [(and (pair? p)
           (eq? (car p) 'define-values))
      ;; expander doesn't use a correalted for id list, so avoid
@@ -92,36 +92,46 @@
                     (x y [z ext-z] w c1 c2)
                     .
                     ,(map
-                      wrap
-                      '((define-values (struct:s make-s s? s-ref s-set!)
-                          (make-struct-type 's #f 2 0 #f))
-                        (define-values (y) (make-s (lambda () x) 5))
-                        (define-values (x) (lambda () y))
-                        (x)
-                        (define-values (w) (case-lambda [() (+ 1 7)] [(a) x]))
-                        (letrec-values ([(loop) (lambda () (loop))]) (loop))
-                        (let-values ([(a) 1] [(b) 2]) (list a b))
-                        (let-values ([(a b) (values 1 (+ 2 3))])
-                          (list a
-                                b
-                                (arithmetic-shift 3 1000)
-                                (fx+ 4 5) (fx+ 4 (expt 2 40)) (fx* (fxlshift 1 20) (fxlshift 1 20))
-                                (unsafe-fx+ 4 5) (unsafe-fx+ 4 (expt 2 40))
-                                (integer->char 48)
-                                (char->integer '#\1)
-                                (void (void) eof-object null)))
-                        (define-values (adds-unsafe) (lambda (x)
-                                                       (list (unsafe-fx+ x 1)
-                                                             (unsafe-fx+ x 2))))
-                        (define-values (adds-safe) (lambda (x)
-                                                     (list (fx+ x 1)
-                                                           (unsafe-fx+ x 2))))
-                        (define-values (adds-still-unsafe) (lambda (x)
-                                                             (list (unsafe-fx+ x 1)
-                                                                   (fx+ x 2))))
-                        (define-values (done) (z))
-                        (define-values (call) (lambda () (values 'c1 'c2)))
-                        (define-values (c1 c2) (call)))))
+                      values ; wrap
+                      '(
+                        (define-values (x) 1)
+                        ;; (define y 2)
+                        ;; (define z 3)
+                        ;; (define w 4)
+                        ;; (define c1 5)
+                        ;; (define c2 6)
+                        ;; (define-values (struct:s make-s s? s-ref s-set!)
+                        ;;   (make-struct-type 's #f 2 0 #f))
+                        ;; (define-values (y) (make-s (lambda () x) 5))
+                        ;; (define-values (x) (lambda () y))
+                        ;; (x)
+                        ;; (define-values (w) (case-lambda [() (+ 1 7)] [(a) x]))
+                        ;; (letrec-values ([(loop) (lambda () (loop))]) (loop))
+                        ;; (let-values ([(a) 1] [(b) 2]) (list a b))
+                        ;; (let-values ([(a b) (values 1 (+ 2 3))])
+                        ;;   (list a
+                        ;;         b
+                        ;;         (arithmetic-shift 3 1000)
+                        ;;         (fx+ 4 5) (fx+ 4 (expt 2 40)) (fx* (fxlshift 1 20) (fxlshift 1 20))
+                        ;;         (unsafe-fx+ 4 5) (unsafe-fx+ 4 (expt 2 40))
+                        ;;         (integer->char 48)
+                        ;;         (char->integer '#\1)
+                        ;;         (void (void) eof-object null)))
+                        ;; (define-values (adds-unsafe) (lambda (x)
+                        ;;                                (list (unsafe-fx+ x 1)
+                        ;;                                      (unsafe-fx+ x 2))))
+                        ;; (define-values (adds-safe) (lambda (x)
+                        ;;                              (list (fx+ x 1)
+                        ;;                                    (unsafe-fx+ x 2))))
+                        ;; (define-values (adds-still-unsafe) (lambda (x)
+                        ;;                                      (list (unsafe-fx+ x 1)
+                        ;;                                            (fx+ x 2))))
+                        ;; (define-values (done) (z))
+                        ;; (define-values (call) (lambda () (values 'c1 'c2)))
+                        ;; (define-values (c1 c2) (call))
+
+                        )))
+                  
                   #:serializable?-box     #t          
                   #:datum-intern?         #t          
                   #:target                #f          
@@ -136,6 +146,16 @@
                   #:get-import-knowns     #f          
                   #:import-keys           #f))
 
+'unwrapped-webified
 (pretty-print (unwrap webified))
-#;(pretty-print exports-info)
+'exports-info
+(pretty-print exports-info)
+
+;; The exports info for the examples is:
+;;   '#hasheq((c1    . #s(known-constant))
+;;            (c2    . #s(known-constant))
+;;            (ext-z . #s(known-constant))
+;;            (w     . #s(known-constant))
+;;            (x     . #s(known-constant))
+;;            (y     . #s(known-constant)))
 
