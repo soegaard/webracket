@@ -61,19 +61,19 @@
     ;;;
 
     (define exception-struct-type-bindings
-      '((struct:exn                              ensure-exn-type)
-        (struct:exn:fail                         ensure-exn:fail-type)
-        (struct:exn:fail:contract                ensure-exn:fail:contract-type)
-        (struct:exn:fail:contract:arity          ensure-exn:fail:contract:arity-type)
-        (struct:exn:fail:contract:divide-by-zero ensure-exn:fail:contract:divide-by-zero-type)
+      '((struct:exn                                 ensure-exn-type)
+        (struct:exn:fail                            ensure-exn:fail-type)
+        (struct:exn:fail:contract                   ensure-exn:fail:contract-type)
+        (struct:exn:fail:contract:arity             ensure-exn:fail:contract:arity-type)
+        (struct:exn:fail:contract:divide-by-zero    ensure-exn:fail:contract:divide-by-zero-type)
         (struct:exn:fail:contract:non-fixnum-result ensure-exn:fail:contract:non-fixnum-result-type)
-        (struct:exn:fail:contract:variable       ensure-exn:fail:contract:variable-type)
-        (struct:exn:fail:read                    ensure-exn:fail:read-type)
-        (struct:exn:fail:read:eof                ensure-exn:fail:read:eof-type)
-        (struct:exn:fail:read:non-char           ensure-exn:fail:read:non-char-type)
-        (struct:exn:fail:syntax                  ensure-exn:fail:syntax-type)
-        (struct:exn:fail:syntax:missing-module   ensure-exn:fail:syntax:missing-module-type)
-        (struct:exn:fail:syntax:unbound          ensure-exn:fail:syntax:unbound-type)))
+        (struct:exn:fail:contract:variable          ensure-exn:fail:contract:variable-type)
+        (struct:exn:fail:read                       ensure-exn:fail:read-type)
+        (struct:exn:fail:read:eof                   ensure-exn:fail:read:eof-type)
+        (struct:exn:fail:read:non-char              ensure-exn:fail:read:non-char-type)
+        (struct:exn:fail:syntax                     ensure-exn:fail:syntax-type)
+        (struct:exn:fail:syntax:missing-module      ensure-exn:fail:syntax:missing-module-type)
+        (struct:exn:fail:syntax:unbound             ensure-exn:fail:syntax:unbound-type)))
     
     ;;;
     ;;; Primitives
@@ -1057,6 +1057,8 @@
           make-exn:fail:syntax:unbound
 
           mutator
+
+          fixnum
           
           match
           error
@@ -9635,16 +9637,19 @@
 
          (func $raise-fx-overflow
                (param $who (ref eq))
-               (param $x (ref eq))
-               (param $y (ref eq))
+               (param $x   (ref eq))
+               (param $y   (ref eq))
+
                (local $message (ref $String))
                (local $who-str (ref $String))
-               (local $x-str (ref $String))
-               (local $y-str (ref $String))
+               (local $x-str   (ref $String))
+               (local $y-str   (ref $String))
+               (local $exn     (ref $Struct))
 
                (local.set $who-str (call $format/display (local.get $who)))
-               (local.set $x-str (call $format/display (local.get $x)))
-               (local.set $y-str (call $format/display (local.get $y)))
+               (local.set $x-str   (call $format/display (local.get $x)))
+               (local.set $y-str   (call $format/display (local.get $y)))
+
                (local.set $message (call $string-append/2
                                          (local.get $who-str)
                                          (global.get $string:fx-overflow:middle)))
@@ -9657,8 +9662,17 @@
                (local.set $message (call $string-append/2
                                          (local.get $message)
                                          (local.get $y-str)))
-               (drop (call $js-log (local.get $message)))
+
+               (local.set $exn     (call $exn:fail:contract:non-fixnum-result/make
+                                         (ref.cast (ref eq) (local.get $message))
+                                         (global.get $null)))
+
+               ;; barrier? is ignored by WebRacket raise, but pass #t for compatibility
+               (call $raise
+                     (ref.cast (ref eq) (local.get $exn))
+                     (global.get $true))
                (unreachable))
+
          
          (func $fx* (type $Prim2)
                (param $x (ref eq))
@@ -9667,6 +9681,24 @@
 
                (local $pt i64) ;; tagged product payload: 2xy
 
+
+               ;; Check fixnum arguments
+               (if (i32.eqz (ref.test (ref i31) (local.get $x)))
+                   (then
+                    (call $raise-argument-error
+                          (global.get $symbol:fx*)
+                          (global.get $symbol:fixnum)
+                          (local.get $x))
+                    (unreachable)))
+
+               (if (i32.eqz (ref.test (ref i31) (local.get $y)))
+                   (then
+                    (call $raise-argument-error
+                          (global.get $symbol:fx*)
+                          (global.get $symbol:fixnum)
+                          (local.get $y))
+                    (unreachable)))
+               
                ;; Fixnums are tagged as 2n.
                ;; If x = 2a and y = 2b, then:
                ;;   (x * y) >> 1 = (2a * 2b) >> 1 = 2ab
