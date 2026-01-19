@@ -3330,20 +3330,7 @@
     [(letrec-values ,s (((,x ...) ,[ce rhs-xs]) ...) ,[e xs])
      (values E (set-difference (set-union* (cons xs rhs-xs)) (set-union* (map ids->id-set x))))])
 
-  ;; 1. Find all top-level variables
-  ;; TODO - problem: `bound-at-top-level` assumes top-begin has been flattened,
-  ;         but ... we are seeing nested top-begin in:
-  ;;   (comp+ #'(begin (define (visible-inside t1)
-  ;;                     (match t1 [_ visible-inside]))
-  ;;                   (visible-inside 11)))
-
-    ;; (TopLevelForm (t)
-    ;;   ; turns out it is best keep unique tags (Expr also has a begin)
-    ;;   (topbegin s t ...)           => (topbegin t ...)
-    ;;   (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
-    ;;   (#%expression s e)           => (#%expression e)
-    ;;   g)
-  
+  ;; 1. Find all top-level variables  
   (set! bound-at-top
         (let loop ([T T])
           (nanopass-case (LANF TopLevelForm) T
