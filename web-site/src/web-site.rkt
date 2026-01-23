@@ -1,6 +1,17 @@
-;;
-;; WebRacket Website
-;;
+;;;
+;;; WebRacket Website
+;;;
+
+;;;
+;;; Build Instructions
+;;;
+;; Install dependencies: Node.js, wasm-tools, and Racket.
+;; Compile with: racket webracket.rkt --browser --stdlib web-site/src/web-site.rkt
+;; Open web-site/src/web-site.html directly or copy the output into web-site/public.
+
+;;;
+;;; Color Helpers
+;;;
 
 ;; byte->hex : Integer -> String
 ;; Converts an 8-bit number into a two-character uppercase hex string.
@@ -19,6 +30,10 @@
 (define red    (make-color* 209 58 58))   ; #D13A3A
 (define gold   (make-color* 242 183 5))   ; #F2B705
 
+;;;
+;;; DOM Helpers
+;;;
+
 ;; make-element : String (U #f String) (U #f String) -> Any
 ;; Creates a DOM element with optional class name and text content.
 (define (make-element tag [class-name #f] [text #f])
@@ -34,6 +49,10 @@
 (define (append-children! parent children)
   (for-each (λ (child) (js-append-child! parent child)) children)
   parent)
+
+;;;
+;;; Section Builders
+;;;
 
 ;; make-list : (Listof String) (U #f String) -> Any
 ;; Builds a <ul> node from a list of text items and an optional class.
@@ -69,6 +88,10 @@
      (js-append-child! grid item))
    cards)
   grid)
+
+;;;
+;;; Page Layout
+;;;
 
 ;; init-dom : -> Void
 ;; Builds and attaches the page DOM plus its CSS styles.
@@ -341,5 +364,9 @@ CSS
   (define footer-right (make-element "span" #f "Made for the Racket community."))
   (append-children! footer (list footer-left footer-right))
   (js-append-child! page footer))
+
+;;;
+;;; Entry Point
+;;;
 
 (init-dom)
