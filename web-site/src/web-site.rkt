@@ -47,10 +47,13 @@
       `(ul (@ (class ,class-name)) ,@list-items)
       `(ul ,@list-items)))
 
-;; section-block : String (U #f String) (Listof List) -> List
+;; section-block : String (U #f String) (Listof List) (U #f String) -> List
 ;;   Creates a section container with a title, optional subtitle, and content.
-(define (section-block title subtitle content)
-  `(section (@ (class "section"))
+(define (section-block title subtitle content [section-id #f])
+  (define attrs (if section-id
+                    `(@ (class "section") (id ,section-id))
+                    `(@ (class "section"))))
+  `(section ,attrs
             (div (@ (class "section-header"))
                  (h2 (@ (class "section-title")) ,title)
                  ,@(if subtitle
@@ -102,10 +105,40 @@ a { color: var(--blue); text-decoration: none; }
 .page {
   width: min(1200px, 92vw);
   margin: 0 auto;
-  padding: 56px 0 80px;
+  padding: 32px 0 80px;
   display: flex;
   flex-direction: column;
   gap: 56px;
+}
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.nav-logo {
+  width: 34px;
+  height: 34px;
+}
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.95rem;
+}
+.nav-link {
+  color: var(--text);
+  opacity: 0.8;
+}
+.nav-link:hover {
+  opacity: 1;
 }
 .hero {
   display: grid;
@@ -141,19 +174,6 @@ a { color: var(--blue); text-decoration: none; }
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--muted);
   font-size: 0.85rem;
-}
-.logo-card {
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.logo-card img {
-  width: min(260px, 60vw);
-  height: auto;
 }
 .section {
   display: flex;
@@ -219,6 +239,18 @@ CSS
 
   (define page-structure
     `(div (@ (class "page"))
+          (nav (@ (class "navbar"))
+               (div (@ (class "nav-left"))
+                    (img (@ (class "nav-logo")
+                            (src "assets/hex-racket-wasm-logo.svg")
+                            (alt "WebRacket logo")))
+                    (span "WebRacket"))
+               (div (@ (class "nav-links"))
+                    (a (@ (class "nav-link") (href "is-webracket-for-you.html")) "For You")
+                    (a (@ (class "nav-link") (href "overview.html")) "Overview")
+                    (a (@ (class "nav-link") (href "roadmap.html")) "Road Ahead")
+                    (a (@ (class "nav-link") (href "installation.html")) "Installation")
+                    (a (@ (class "nav-link") (href "examples.html")) "Examples")))
           (section (@ (class "hero"))
                    (div (@ (class "hero-panel"))
                         (h1 (@ (class "hero-title")) "WebRacket")
@@ -226,10 +258,7 @@ CSS
                 "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
                         (div (@ (class "pill-row"))
                              (span (@ (class "pill")) "JS + DOM FFI")
-                             (span (@ (class "pill")) "Runs in browsers + Node")))
-                   (div (@ (class "logo-card"))
-                        (img (@ (src "assets/hex-racket-wasm-logo.svg")
-                                (alt "WebRacket hex logo")))))
+                             (span (@ (class "pill")) "Runs in browsers + Node"))))
           ,(section-block
             "Why WebRacket?"
             "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
