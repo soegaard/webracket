@@ -5,18 +5,19 @@
 ;;;
 ;;; Build Instructions
 ;;;
-;; Install dependencies: Node.js, wasm-tools, and Racket.
-;; Compile with: racket webracket.rkt --browser --stdlib web-site/src/web-site.rkt
-;; Open web-site/src/web-site.html directly or copy the output into web-site/public.
+
+;; Compile with:
+;;     racket webracket.rkt --browser --stdlib web-site/src/web-site.rkt
+
 
 ;;;
 ;;; Color Helpers
 ;;;
 
 ;; byte->hex : Integer -> String
-;; Converts an 8-bit number into a two-character uppercase hex string.
+;;   Converts an 8-bit number into a two-character uppercase hex string.
 (define (byte->hex n)
-  (define s (number->string n 16))
+  (define s      (number->string n 16))
   (define padded (if (= (string-length s) 1) (string-append "0" s) s))
   (string-upcase padded))
 
@@ -24,6 +25,10 @@
 ;; Builds a CSS hex color string from RGB byte components.
 (define (make-color* r g b)
   (string-append "#" (byte->hex r) (byte->hex g) (byte->hex b)))
+
+;;;
+;;; Color Theme
+;;;
 
 (define purple (make-color* 101 79 240))  ; #654FF0
 (define blue   (make-color* 74 108 255))  ; #4A6CFF
@@ -35,7 +40,7 @@
 ;;;
 
 ;; make-element : String (U #f String) (U #f String) -> Any
-;; Creates a DOM element with optional class name and text content.
+;;   Creates a DOM element with optional class name and text content.
 (define (make-element tag [class-name #f] [text #f])
   (define node (js-create-element tag))
   (when class-name
@@ -68,9 +73,9 @@
 ;; section-block : String (U #f String) -> Any
 ;; Creates a section container with a title and optional subtitle.
 (define (section-block title subtitle)
-  (define section (make-element "section" "section"))
-  (define header (make-element "div" "section-header"))
-  (define title-node (make-element "h2" "section-title" title))
+  (define section    (make-element "section" "section"))
+  (define header     (make-element "div"     "section-header"))
+  (define title-node (make-element "h2"      "section-title" title))
   (js-append-child! header title-node)
   (when subtitle
     (js-append-child! header (make-element "p" "section-lead" subtitle)))
@@ -235,8 +240,8 @@ a { color: var(--blue); text-decoration: none; }
   padding-top: 20px;
 }
 .highlight { color: var(--gold); font-weight: 600; }
-.accent { color: var(--blue); }
-.warning { color: var(--red); }
+.accent    { color: var(--blue); }
+.warning   { color: var(--red); }
 CSS
     purple blue red gold))
   (js-append-child! head style)
@@ -244,10 +249,10 @@ CSS
   (define page (make-element "div" "page"))
   (js-append-child! body page)
 
-  (define hero (make-element "section" "hero"))
-  (define hero-panel (make-element "div" "hero-panel"))
-  (define hero-pill (make-element "div" "pill" "Racket → WebAssembly"))
-  (define hero-title (make-element "h1" "hero-title" "WebRacket"))
+  (define hero       (make-element "section" "hero"))
+  (define hero-panel (make-element "div"     "hero-panel"))
+  (define hero-pill  (make-element "div"     "pill" "Racket → WebAssembly"))
+  (define hero-title (make-element "h1"      "hero-title" "WebRacket"))
   (define hero-lead
     (make-element
      "p"
@@ -289,17 +294,17 @@ CSS
     (card-grid
      (list
       (list (make-element "h3" #f "Numbers")
-            (make-element "p" #f "Flonums and fixnums with fast WebAssembly execution."))
+            (make-element "p"  #f "Flonums and fixnums with fast WebAssembly execution."))
       (list (make-element "h3" #f "Hash Tables")
-            (make-element "p" #f "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
+            (make-element "p"  #f "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
       (list (make-element "h3" #f "Structures")
-            (make-element "p" #f "Support for structure properties, super structures, and applicable structs."))
+            (make-element "p"  #f "Support for structure properties, super structures, and applicable structs."))
       (list (make-element "h3" #f "Syntax")
-            (make-element "p" #f "Standard Racket expander support, including for and match forms."))
+            (make-element "p"  #f "Standard Racket expander support, including for and match forms."))
       (list (make-element "h3" #f "Control Flow")
-            (make-element "p" #f "Tail calls, multiple values, and upward exceptions are all supported."))
+            (make-element "p"  #f "Tail calls, multiple values, and upward exceptions are all supported."))
       (list (make-element "h3" #f "Concurrency")
-            (make-element "p" #f "Single-threaded execution today, with a future path toward richer models."))))))
+            (make-element "p"  #f "Single-threaded execution today, with a future path toward richer models.")))))
   (js-append-child! capabilities capability-cards)
   (js-append-child! page capabilities)
 
@@ -323,13 +328,13 @@ CSS
     (card-grid
      (list
       (list (make-element "h3" #f "Frontend")
-            (make-element "p" #f "Racket syntax is expanded, then normalized into a compiler-friendly core."))
+            (make-element "p"  #f "Racket syntax is expanded, then normalized into a compiler-friendly core."))
       (list (make-element "h3" #f "Middle End")
-            (make-element "p" #f "Nanopass phases like closure conversion and ANF shape the program."))
+            (make-element "p"  #f "Nanopass phases like closure conversion and ANF shape the program."))
       (list (make-element "h3" #f "Backend")
-            (make-element "p" #f "Destination-driven code generation emits folded WebAssembly code."))
+            (make-element "p"  #f "Destination-driven code generation emits folded WebAssembly code."))
       (list (make-element "h3" #f "Runtime")
-            (make-element "p" #f "A custom runtime avoids reliance on host functionality where possible.")))))
+            (make-element "p"  #f "A custom runtime avoids reliance on host functionality where possible.")))))
   (js-append-child! pipeline pipeline-cards)
   (js-append-child! page pipeline)
 
@@ -359,8 +364,8 @@ CSS
   (js-append-child! examples examples-list)
   (js-append-child! page examples)
 
-  (define footer (make-element "footer" "footer"))
-  (define footer-left (make-element "span" #f "WebRacket — Racket for the browser."))
+  (define footer       (make-element "footer" "footer"))
+  (define footer-left  (make-element "span" #f "WebRacket — Racket for the browser."))
   (define footer-right (make-element "span" #f "Made for the Racket community."))
   (append-children! footer (list footer-left footer-right))
   (js-append-child! page footer))
