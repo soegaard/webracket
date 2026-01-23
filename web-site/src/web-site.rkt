@@ -22,7 +22,7 @@
   (string-upcase padded))
 
 ;; make-color* : Integer Integer Integer -> String
-;; Builds a CSS hex color string from RGB byte components.
+;;   Builds a CSS hex color string from RGB byte components.
 (define (make-color* r g b)
   (string-append "#" (byte->hex r) (byte->hex g) (byte->hex b)))
 
@@ -40,7 +40,7 @@
 ;;;
 
 ;; make-list : (Listof String) (U #f String) -> List
-;; Builds a <ul> sxml node from a list of text items and an optional class.
+;;   Builds a <ul> sxml node from a list of text items and an optional class.
 (define (make-list items [class-name #f])
   (define list-items (map (λ (item) `(li ,item)) items))
   (if class-name
@@ -48,7 +48,7 @@
       `(ul ,@list-items)))
 
 ;; section-block : String (U #f String) (Listof List) -> List
-;; Creates a section container with a title, optional subtitle, and content.
+;;   Creates a section container with a title, optional subtitle, and content.
 (define (section-block title subtitle content)
   `(section (@ (class "section"))
             (div (@ (class "section-header"))
@@ -59,7 +59,7 @@
             ,@content))
 
 ;; card-grid : (Listof (Listof List)) -> List
-;; Wraps card content lists into a grid container.
+;;   Wraps card content lists into a grid container.
 (define (card-grid cards)
   `(div (@ (class "card-grid"))
         ,@(map (λ (card) `(div (@ (class "card")) ,@card)) cards)))
@@ -223,7 +223,7 @@ CSS
                         (div (@ (class "pill")) "Racket → WebAssembly")
                         (h1 (@ (class "hero-title")) "WebRacket")
                         (p (@ (class "hero-lead"))
-                           "A Racket-to-WebAssembly compiler and runtime that makes it possible to build practical browser experiences without leaving the Racket ecosystem.")
+                "A Racket-to-WebAssembly compiler and runtime that makes it possible to build practical browser experiences without leaving the Racket ecosystem.")
                         (div (@ (class "pill-row"))
                              (span (@ (class "pill")) "Wasm-GC compatible")
                              (span (@ (class "pill")) "JS + DOM FFI")
