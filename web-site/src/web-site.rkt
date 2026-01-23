@@ -2,11 +2,15 @@
 ;; WebRacket Website
 ;;
 
+;; byte->hex : Integer -> String
+;; Converts an 8-bit number into a two-character uppercase hex string.
 (define (byte->hex n)
   (define s (number->string n 16))
   (define padded (if (= (string-length s) 1) (string-append "0" s) s))
   (string-upcase padded))
 
+;; make-color* : Integer Integer Integer -> String
+;; Builds a CSS hex color string from RGB byte components.
 (define (make-color* r g b)
   (string-append "#" (byte->hex r) (byte->hex g) (byte->hex b)))
 
@@ -15,6 +19,8 @@
 (define red    (make-color* 209 58 58))   ; #D13A3A
 (define gold   (make-color* 242 183 5))   ; #F2B705
 
+;; make-element : String (U #f String) (U #f String) -> Any
+;; Creates a DOM element with optional class name and text content.
 (define (make-element tag [class-name #f] [text #f])
   (define node (js-create-element tag))
   (when class-name
@@ -23,10 +29,14 @@
     (js-set! node "textContent" text))
   node)
 
+;; append-children! : Any (Listof Any) -> Any
+;; Appends a list of DOM nodes to a parent node and returns the parent.
 (define (append-children! parent children)
   (for-each (λ (child) (js-append-child! parent child)) children)
   parent)
 
+;; make-list : (Listof String) (U #f String) -> Any
+;; Builds a <ul> node from a list of text items and an optional class.
 (define (make-list items [class-name #f])
   (define list-node (make-element "ul" class-name))
   (for-each
@@ -36,6 +46,8 @@
    items)
   list-node)
 
+;; section-block : String (U #f String) -> Any
+;; Creates a section container with a title and optional subtitle.
 (define (section-block title subtitle)
   (define section (make-element "section" "section"))
   (define header (make-element "div" "section-header"))
@@ -46,6 +58,8 @@
   (js-append-child! section header)
   section)
 
+;; card-grid : (Listof (Listof Any)) -> Any
+;; Wraps card content lists into a grid container.
 (define (card-grid cards)
   (define grid (make-element "div" "card-grid"))
   (for-each
@@ -56,6 +70,8 @@
    cards)
   grid)
 
+;; init-dom : -> Void
+;; Builds and attaches the page DOM plus its CSS styles.
 (define (init-dom)
   (define head (js-document-head))
   (define body (js-document-body))
@@ -63,140 +79,143 @@
   (define style (js-create-element "style"))
   (js-set!
    style "textContent"
-   (string-append
-    ":root {\n"
-    "  --purple: " purple ";\n"
-    "  --blue: " blue ";\n"
-    "  --red: " red ";\n"
-    "  --gold: " gold ";\n"
-    "  --bg: #0C0D1A;\n"
-    "  --surface: #14162B;\n"
-    "  --surface-soft: rgba(255, 255, 255, 0.03);\n"
-    "  --text: #E6E8F2;\n"
-    "  --muted: #B6BDDD;\n"
-    "}\n"
-    "* { box-sizing: border-box; }\n"
-    "body {\n"
-    "  margin: 0;\n"
-    "  font-family: 'Inter', 'Fira Code', system-ui, sans-serif;\n"
-    "  background: radial-gradient(circle at top, rgba(101, 79, 240, 0.25), transparent 55%), var(--bg);\n"
-    "  color: var(--text);\n"
-    "  min-height: 100vh;\n"
-    "}\n"
-    "a { color: var(--blue); text-decoration: none; }\n"
-    ".page {\n"
-    "  width: min(1200px, 92vw);\n"
-    "  margin: 0 auto;\n"
-    "  padding: 56px 0 80px;\n"
-    "  display: flex;\n"
-    "  flex-direction: column;\n"
-    "  gap: 56px;\n"
-    "}\n"
-    ".hero {\n"
-    "  display: grid;\n"
-    "  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));\n"
-    "  gap: 32px;\n"
-    "  align-items: center;\n"
-    "}\n"
-    ".hero-panel {\n"
-    "  background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));\n"
-    "  border: 1px solid rgba(101, 79, 240, 0.3);\n"
-    "  border-radius: 28px;\n"
-    "  padding: 36px;\n"
-    "  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);\n"
-    "}\n"
-    ".hero-title {\n"
-    "  font-size: clamp(2rem, 4vw, 3rem);\n"
-    "  margin: 0 0 12px;\n"
-    "}\n"
-    ".hero-lead {\n"
-    "  margin: 0 0 22px;\n"
-    "  color: var(--muted);\n"
-    "  line-height: 1.6;\n"
-    "}\n"
-    ".pill-row {\n"
-    "  display: flex;\n"
-    "  flex-wrap: wrap;\n"
-    "  gap: 12px;\n"
-    "}\n"
-    ".pill {\n"
-    "  border-radius: 999px;\n"
-    "  padding: 6px 14px;\n"
-    "  background: var(--surface-soft);\n"
-    "  border: 1px solid rgba(255, 255, 255, 0.08);\n"
-    "  color: var(--muted);\n"
-    "  font-size: 0.85rem;\n"
-    "}\n"
-    ".logo-card {\n"
-    "  background: var(--surface);\n"
-    "  border-radius: 24px;\n"
-    "  padding: 32px;\n"
-    "  display: flex;\n"
-    "  align-items: center;\n"
-    "  justify-content: center;\n"
-    "  border: 1px solid rgba(255, 255, 255, 0.08);\n"
-    "}\n"
-    ".logo-card img {\n"
-    "  width: min(260px, 60vw);\n"
-    "  height: auto;\n"
-    "}\n"
-    ".section {\n"
-    "  display: flex;\n"
-    "  flex-direction: column;\n"
-    "  gap: 24px;\n"
-    "}\n"
-    ".section-header {\n"
-    "  display: flex;\n"
-    "  flex-direction: column;\n"
-    "  gap: 8px;\n"
-    "}\n"
-    ".section-title {\n"
-    "  margin: 0;\n"
-    "  font-size: 1.6rem;\n"
-    "}\n"
-    ".section-lead {\n"
-    "  margin: 0;\n"
-    "  color: var(--muted);\n"
-    "  line-height: 1.6;\n"
-    "}\n"
-    ".card-grid {\n"
-    "  display: grid;\n"
-    "  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n"
-    "  gap: 18px;\n"
-    "}\n"
-    ".card {\n"
-    "  background: var(--surface);\n"
-    "  border: 1px solid rgba(255, 255, 255, 0.08);\n"
-    "  border-radius: 20px;\n"
-    "  padding: 20px;\n"
-    "  display: flex;\n"
-    "  flex-direction: column;\n"
-    "  gap: 10px;\n"
-    "}\n"
-    ".card h3 { margin: 0; font-size: 1.05rem; }\n"
-    ".card p { margin: 0; color: var(--muted); line-height: 1.5; }\n"
-    ".steps {\n"
-    "  display: grid;\n"
-    "  gap: 12px;\n"
-    "  background: var(--surface);\n"
-    "  border-radius: 18px;\n"
-    "  padding: 22px;\n"
-    "  border: 1px solid rgba(255, 255, 255, 0.08);\n"
-    "}\n"
-    ".steps li { margin-bottom: 10px; color: var(--muted); }\n"
-    ".steps li:last-child { margin-bottom: 0; }\n"
-    ".footer {\n"
-    "  display: flex;\n"
-    "  justify-content: space-between;\n"
-    "  flex-wrap: wrap;\n"
-    "  gap: 12px;\n"
-    "  color: var(--muted);\n"
-    "  border-top: 1px solid rgba(255, 255, 255, 0.08);\n"
-    "  padding-top: 20px;\n"
-    "}\n"
-    ".highlight { color: var(--gold); font-weight: 600; }\n"
-    ".accent { color: var(--blue); }\n"
-    ".warning { color: var(--red); }\n"))
+   (format
+    #<<CSS
+:root {
+  --purple: ~a;
+  --blue: ~a;
+  --red: ~a;
+  --gold: ~a;
+  --bg: #0C0D1A;
+  --surface: #14162B;
+  --surface-soft: rgba(255, 255, 255, 0.03);
+  --text: #E6E8F2;
+  --muted: #B6BDDD;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', 'Fira Code', system-ui, sans-serif;
+  background: radial-gradient(circle at top, rgba(101, 79, 240, 0.25), transparent 55%), var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+a { color: var(--blue); text-decoration: none; }
+.page {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+  padding: 56px 0 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+.hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 32px;
+  align-items: center;
+}
+.hero-panel {
+  background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));
+  border: 1px solid rgba(101, 79, 240, 0.3);
+  border-radius: 28px;
+  padding: 36px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+.hero-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0 0 12px;
+}
+.hero-lead {
+  margin: 0 0 22px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pill {
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: var(--surface-soft);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.logo-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.logo-card img {
+  width: min(260px, 60vw);
+  height: auto;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.section-title {
+  margin: 0;
+  font-size: 1.6rem;
+}
+.section-lead {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card h3 { margin: 0; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); line-height: 1.5; }
+.steps {
+  display: grid;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.steps li { margin-bottom: 10px; color: var(--muted); }
+.steps li:last-child { margin-bottom: 0; }
+.footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 20px;
+}
+.highlight { color: var(--gold); font-weight: 600; }
+.accent { color: var(--blue); }
+.warning { color: var(--red); }
+CSS
+    purple blue red gold))
   (js-append-child! head style)
 
   (define page (make-element "div" "page"))
