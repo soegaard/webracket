@@ -162,6 +162,44 @@ a { color: var(--blue); text-decoration: none; }
   color: var(--muted);
   line-height: 1.6;
 }
+.hero-carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.carousel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.carousel-frame {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.35);
+  aspect-ratio: 4 / 3;
+  background: var(--surface);
+}
+.carousel-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.02);
+  animation: carouselFade 30s infinite;
+}
+@keyframes carouselFade {
+  0% { opacity: 0; transform: scale(1.02); }
+  6% { opacity: 1; transform: scale(1); }
+  18% { opacity: 1; transform: scale(1); }
+  26% { opacity: 0; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
 .pill-row {
   display: flex;
   flex-wrap: wrap;
@@ -259,6 +297,35 @@ CSS
                         (div (@ (class "pill-row"))
                              (span (@ (class "pill")) "JS + DOM FFI")
                              (span (@ (class "pill")) "Runs in browsers + Node"))))
+                   (div (@ (class "hero-carousel"))
+                        (div (@ (class "carousel-header"))
+                             (span "Example screenshots")
+                             (span (@ (class "highlight")) "Live demos"))
+                        (div (@ (class "carousel-frame"))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/mathjax4.png")
+                                     (alt "MathJax 4 editor")
+                                     (style "animation-delay: 0s;")))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/matrix-rain.png")
+                                     (alt "Matrix digital rain demo")
+                                     (style "animation-delay: 5s;")))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/xtermjs.png")
+                                     (alt "XtermJS terminal demo")
+                                     (style "animation-delay: 10s;")))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/minischeme.png")
+                                     (alt "MiniScheme browser REPL")
+                                     (style "animation-delay: 15s;")))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/space-invaders.png")
+                                     (alt "Space Invaders canvas game")
+                                     (style "animation-delay: 20s;")))
+                             (img (@ (class "carousel-shot")
+                                     (src "assets/screenshots/pict.png")
+                                     (alt "Pict rendering demo")
+                                     (style "animation-delay: 25s;"))))))
           ,(section-block
             "Why WebRacket?"
             "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
