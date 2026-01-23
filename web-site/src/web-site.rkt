@@ -153,12 +153,22 @@ a { color: var(--blue); text-decoration: none; }
   padding: 36px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
+.hero-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+}
+.hero-copy {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
 .hero-title {
   font-size: clamp(2rem, 4vw, 3rem);
   margin: 0 0 12px;
 }
 .hero-lead {
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -166,20 +176,22 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 0 0 auto;
+  width: min(260px, 45vw);
 }
 .carousel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 .carousel-frame {
   position: relative;
-  border-radius: 22px;
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
   aspect-ratio: 4 / 3;
   background: var(--surface);
 }
@@ -292,40 +304,42 @@ CSS
           (section (@ (class "hero"))
                    (div (@ (class "hero-panel"))
                         (h1 (@ (class "hero-title")) "WebRacket")
-                        (p  (@ (class "hero-lead"))
-                "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
-                        (div (@ (class "pill-row"))
-                             (span (@ (class "pill")) "JS + DOM FFI")
-                             (span (@ (class "pill")) "Runs in browsers + Node"))))
-                   (div (@ (class "hero-carousel"))
-                        (div (@ (class "carousel-header"))
-                             (span "Example screenshots")
-                             (span (@ (class "highlight")) "Live demos"))
-                        (div (@ (class "carousel-frame"))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/mathjax4.png")
-                                     (alt   "MathJax 4 editor")
-                                     (style "animation-delay: 0s;")))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/matrix-rain.png")
-                                     (alt   "Matrix digital rain demo")
-                                     (style "animation-delay: 5s;")))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/xtermjs.png")
-                                     (alt   "XtermJS terminal demo")
-                                     (style "animation-delay: 10s;")))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/minischeme.png")
-                                     (alt   "MiniScheme browser REPL")
-                                     (style "animation-delay: 15s;")))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/space-invaders.png")
-                                     (alt   "Space Invaders canvas game")
-                                     (style "animation-delay: 20s;")))
-                             (img (@ (class "carousel-shot")
-                                     (src   "assets/examples/screenshots/pict.png")
-                                     (alt   "Pict rendering demo")
-                                     (style "animation-delay: 25s;")))))
+                        (div (@ (class "hero-content"))
+                             (div (@ (class "hero-copy"))
+                                  (p  (@ (class "hero-lead"))
+                                      "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
+                                  (div (@ (class "pill-row"))
+                                       (span (@ (class "pill")) "JS + DOM FFI")
+                                       (span (@ (class "pill")) "Runs in browsers + Node")))
+                             (div (@ (class "hero-carousel"))
+                                  (div (@ (class "carousel-header"))
+                                       (span "Example screenshots")
+                                       (span (@ (class "highlight")) "Live demos"))
+                                  (div (@ (class "carousel-frame"))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/mathjax4.png")
+                                               (alt   "MathJax 4 editor")
+                                               (style "animation-delay: 0s;")))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/matrix-rain.png")
+                                               (alt   "Matrix digital rain demo")
+                                               (style "animation-delay: 5s;")))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/xtermjs.png")
+                                               (alt   "XtermJS terminal demo")
+                                               (style "animation-delay: 10s;")))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/minischeme.png")
+                                               (alt   "MiniScheme browser REPL")
+                                               (style "animation-delay: 15s;")))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/space-invaders.png")
+                                               (alt   "Space Invaders canvas game")
+                                               (style "animation-delay: 20s;")))
+                                       (img (@ (class "carousel-shot")
+                                               (src   "assets/examples/screenshots/pict.png")
+                                               (alt   "Pict rendering demo")
+                                               (style "animation-delay: 25s;"))))))))
           ,(section-block
             "Why WebRacket?"
             "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
