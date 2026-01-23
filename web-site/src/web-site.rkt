@@ -278,13 +278,13 @@ CSS
                      `(p "Flonums and fixnums."))
                (list `(h3 "Hash Tables")
                      `(p "Mutable hash tables for "
-                         (code "eq?")
+                         (strong (code "eq?"))
                          ", "
-                         (code "eqv?")
+                         (strong (code "eqv?"))
                          ", "
-                         (code "equal?")
+                         (strong (code "equal?"))
                          ", and "
-                         (code "always?")
+                         (strong (code "always?"))
                          " comparisons."))
                (list `(h3 "Structures")
                      `(p "Support for structure properties, super structures, and applicable structs."))
