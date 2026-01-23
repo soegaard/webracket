@@ -7,7 +7,7 @@
 ;;;
 
 ;; Compile with:
-;;     racket webracket.rkt --browser --stdlib web-site/src/web-site.rkt
+;;     racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
 
 
 ;;;
@@ -39,9 +39,9 @@
 ;;; SXML Helpers
 ;;;
 
-;; make-list : (Listof String) (U #f String) -> List
+;; make-ul-list : (Listof String) (U #f String) -> List
 ;;   Builds a <ul> sxml node from a list of text items and an optional class.
-(define (make-list items [class-name #f])
+(define (make-ul-list items [class-name #f])
   (define list-items (map (λ (item) `(li ,item)) items))
   (if class-name
       `(ul (@ (class ,class-name)) ,@list-items)
@@ -214,6 +214,7 @@ a { color: var(--blue); text-decoration: none; }
 .warning   { color: var(--red); }
 CSS
          purple blue red gold))))
+  
   (js-append-child! head style)
 
   (define page-structure
@@ -235,7 +236,7 @@ CSS
             "Why WebRacket?"
             "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
             (list
-             (make-list
+             (make-ul-list
               (list
                "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
                "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
@@ -257,12 +258,12 @@ CSS
                (list `(h3 "Control Flow")
                      `(p "Tail calls, multiple values, and upward exceptions are all supported."))
                (list `(h3 "Concurrency")
-                     `(p "Single-threaded execution today, with a future path toward richer models.")))))))
+                     `(p "Single-threaded execution today, with a future path toward richer models."))))))
           ,(section-block
             "Toolchain Essentials"
             "A small set of tools power the WebRacket workflow from source to the browser."
             (list
-             (make-list
+             (make-ul-list
               (list
                (string-append "wasm-tools builds and validates the WebAssembly output. ")
                (string-append "Node.js enables running generated programs in the terminal. ")
@@ -281,12 +282,12 @@ CSS
                (list `(h3 "Backend")
                      `(p "Destination-driven code generation emits folded WebAssembly code."))
                (list `(h3 "Runtime")
-                     `(p "A custom runtime avoids reliance on host functionality where possible.")))))))
+                     `(p "A custom runtime avoids reliance on host functionality where possible."))))))
           ,(section-block
             "Roadmap"
             "The long-term goal is full Racket support, but there is plenty more to tackle next."
             (list
-             (make-list
+             (make-ul-list
               (list
                "Fix bugs reported by early adopters and stabilize the current runtime."
                "Unlock modules by completing linklet support."
@@ -296,7 +297,7 @@ CSS
             "Example Projects"
             "WebRacket already powers interactive demos that showcase browser APIs."
             (list
-             (make-list
+             (make-ul-list
               (list
                "MathJax 4 editor with live formula preview."
                "Matrix digital rain with XtermJS terminal rendering."
