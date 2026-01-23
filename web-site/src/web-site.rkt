@@ -221,12 +221,10 @@ CSS
     `(div (@ (class "page"))
           (section (@ (class "hero"))
                    (div (@ (class "hero-panel"))
-                        (div (@ (class "pill")) "Racket → WebAssembly")
                         (h1 (@ (class "hero-title")) "WebRacket")
-                        (p (@ (class "hero-lead"))
-                "A Racket-to-WebAssembly compiler and runtime that makes it possible to build practical browser experiences without leaving the Racket ecosystem.")
+                        (p  (@ (class "hero-lead"))
+                "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
                         (div (@ (class "pill-row"))
-                             (span (@ (class "pill")) "Wasm-GC compatible")
                              (span (@ (class "pill")) "JS + DOM FFI")
                              (span (@ (class "pill")) "Runs in browsers + Node")))
                    (div (@ (class "logo-card"))
@@ -248,7 +246,7 @@ CSS
              (card-grid
               (list
                (list `(h3 "Numbers")
-                     `(p "Flonums and fixnums with fast WebAssembly execution."))
+                     `(p "Flonums and fixnums."))
                (list `(h3 "Hash Tables")
                      `(p "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
                (list `(h3 "Structures")
@@ -256,9 +254,13 @@ CSS
                (list `(h3 "Syntax")
                      `(p "Standard Racket expander support, including for and match forms."))
                (list `(h3 "Control Flow")
-                     `(p "Tail calls, multiple values, and upward exceptions are all supported."))
+                     `(p "Tail calls, multiple values, and upward exceptions."))
+               (list `(h3 "Builtins")
+                     `(p "Large parts of racket/base is available."))
                (list `(h3 "Concurrency")
-                     `(p "Single-threaded execution today, with a future path toward richer models."))))))
+                     `(p "Single-threaded execution only."))
+               (list `(h3 "Modules")
+                     `(p "Work in progress. Use include for now."))))))
           ,(section-block
             "Toolchain Essentials"
             "A small set of tools power the WebRacket workflow from source to the browser."
