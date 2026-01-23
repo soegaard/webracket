@@ -144,7 +144,7 @@ a { color: var(--blue); text-decoration: none; }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 32px;
-  align-items: center;
+  align-items: stretch;
 }
 .hero-panel {
   background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));
@@ -152,6 +152,10 @@ a { color: var(--blue); text-decoration: none; }
   border-radius: 28px;
   padding: 36px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
 }
 .hero-copy {
   flex: 1 1 260px;
@@ -170,7 +174,8 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: min(260px, 45vw);
+  width: min(240px, 100%);
+  flex: 1;
 }
 .hero-carousel-panel {
   background: var(--surface);
@@ -178,6 +183,9 @@ a { color: var(--blue); text-decoration: none; }
   border-radius: 24px;
   padding: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 .carousel-header {
   display: flex;
@@ -201,7 +209,7 @@ a { color: var(--blue); text-decoration: none; }
   inset: 12px;
   width: calc(100% - 24px);
   height: calc(100% - 24px);
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0;
   transform: scale(1.02);
   animation: carouselFade 30s infinite;
