@@ -36,63 +36,33 @@
 (define gold   (make-color* 242 183 5))   ; #F2B705
 
 ;;;
-;;; DOM Helpers
+;;; SXML Helpers
 ;;;
 
-;; make-element : String (U #f String) (U #f String) -> Any
-;;   Creates a DOM element with optional class name and text content.
-(define (make-element tag [class-name #f] [text #f])
-  (define node (js-create-element tag))
-  (when class-name
-    (js-set-attribute! node "class" class-name))
-  (when text
-    (js-set! node "textContent" text))
-  node)
-
-;; append-children! : Any (Listof Any) -> Any
-;; Appends a list of DOM nodes to a parent node and returns the parent.
-(define (append-children! parent children)
-  (for-each (λ (child) (js-append-child! parent child)) children)
-  parent)
-
-;;;
-;;; Section Builders
-;;;
-
-;; make-list : (Listof String) (U #f String) -> Any
-;; Builds a <ul> node from a list of text items and an optional class.
+;; make-list : (Listof String) (U #f String) -> List
+;; Builds a <ul> sxml node from a list of text items and an optional class.
 (define (make-list items [class-name #f])
-  (define list-node (make-element "ul" class-name))
-  (for-each
-   (λ (item)
-     (define li (make-element "li" #f item))
-     (js-append-child! list-node li))
-   items)
-  list-node)
+  (define list-items (map (λ (item) `(li ,item)) items))
+  (if class-name
+      `(ul (@ (class ,class-name)) ,@list-items)
+      `(ul ,@list-items)))
 
-;; section-block : String (U #f String) -> Any
-;; Creates a section container with a title and optional subtitle.
-(define (section-block title subtitle)
-  (define section    (make-element "section" "section"))
-  (define header     (make-element "div"     "section-header"))
-  (define title-node (make-element "h2"      "section-title" title))
-  (js-append-child! header title-node)
-  (when subtitle
-    (js-append-child! header (make-element "p" "section-lead" subtitle)))
-  (js-append-child! section header)
-  section)
+;; section-block : String (U #f String) (Listof List) -> List
+;; Creates a section container with a title, optional subtitle, and content.
+(define (section-block title subtitle content)
+  `(section (@ (class "section"))
+            (div (@ (class "section-header"))
+                 (h2 (@ (class "section-title")) ,title)
+                 ,@(if subtitle
+                       (list `(p (@ (class "section-lead")) ,subtitle))
+                       '()))
+            ,@content))
 
-;; card-grid : (Listof (Listof Any)) -> Any
+;; card-grid : (Listof (Listof List)) -> List
 ;; Wraps card content lists into a grid container.
 (define (card-grid cards)
-  (define grid (make-element "div" "card-grid"))
-  (for-each
-   (λ (card)
-     (define item (make-element "div" "card"))
-     (append-children! item card)
-     (js-append-child! grid item))
-   cards)
-  grid)
+  `(div (@ (class "card-grid"))
+        ,@(map (λ (card) `(div (@ (class "card")) ,@card)) cards)))
 
 ;;;
 ;;; Page Layout
@@ -104,11 +74,11 @@
   (define head (js-document-head))
   (define body (js-document-body))
 
-  (define style (js-create-element "style"))
-  (js-set!
-   style "textContent"
-   (format
-    #<<CSS
+  (define style
+    (sxml->dom
+     `(style
+       ,(format
+         #<<CSS
 :root {
   --purple: ~a;
   --blue: ~a;
@@ -243,132 +213,100 @@ a { color: var(--blue); text-decoration: none; }
 .accent    { color: var(--blue); }
 .warning   { color: var(--red); }
 CSS
-    purple blue red gold))
+         purple blue red gold))))
   (js-append-child! head style)
 
-  (define page (make-element "div" "page"))
-  (js-append-child! body page)
-
-  (define hero       (make-element "section" "hero"))
-  (define hero-panel (make-element "div"     "hero-panel"))
-  (define hero-pill  (make-element "div"     "pill" "Racket → WebAssembly"))
-  (define hero-title (make-element "h1"      "hero-title" "WebRacket"))
-  (define hero-lead
-    (make-element
-     "p"
-     "hero-lead"
-     "A Racket-to-WebAssembly compiler and runtime that makes it possible to build practical browser experiences without leaving the Racket ecosystem."))
-  (define hero-pill-row (make-element "div" "pill-row"))
-  (append-children!
-   hero-pill-row
-   (list (make-element "span" "pill" "Wasm-GC compatible")
-         (make-element "span" "pill" "JS + DOM FFI")
-         (make-element "span" "pill" "Runs in browsers + Node")))
-  (append-children! hero-panel (list hero-pill hero-title hero-lead hero-pill-row))
-
-  (define logo-card (make-element "div" "logo-card"))
-  (define logo (js-create-element "img"))
-  (js-set-attribute! logo "src" "assets/hex-racket-wasm-logo.svg")
-  (js-set-attribute! logo "alt" "WebRacket hex logo")
-  (js-append-child! logo-card logo)
-
-  (append-children! hero (list hero-panel logo-card))
-  (js-append-child! page hero)
-
-  (define intro (section-block
-                 "Why WebRacket?"
-                 "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."))
-  (define intro-copy
-    (make-list
-     (list
-      "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
-      "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
-      "Use WebRacket to prototype ideas that could influence a future Racket WebAssembly backend.")))
-  (js-append-child! intro intro-copy)
-  (js-append-child! page intro)
-
-  (define capabilities (section-block
-                        "Language Coverage"
-                        "WebRacket implements a substantial portion of Racket with a focus on practical web applications."))
-  (define capability-cards
-    (card-grid
-     (list
-      (list (make-element "h3" #f "Numbers")
-            (make-element "p"  #f "Flonums and fixnums with fast WebAssembly execution."))
-      (list (make-element "h3" #f "Hash Tables")
-            (make-element "p"  #f "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
-      (list (make-element "h3" #f "Structures")
-            (make-element "p"  #f "Support for structure properties, super structures, and applicable structs."))
-      (list (make-element "h3" #f "Syntax")
-            (make-element "p"  #f "Standard Racket expander support, including for and match forms."))
-      (list (make-element "h3" #f "Control Flow")
-            (make-element "p"  #f "Tail calls, multiple values, and upward exceptions are all supported."))
-      (list (make-element "h3" #f "Concurrency")
-            (make-element "p"  #f "Single-threaded execution today, with a future path toward richer models.")))))
-  (js-append-child! capabilities capability-cards)
-  (js-append-child! page capabilities)
-
-  (define tooling (section-block
-                  "Toolchain Essentials"
-                  "A small set of tools power the WebRacket workflow from source to the browser."))
-  (define tooling-list
-    (make-list
-     (list
-      (string-append "wasm-tools builds and validates the WebAssembly output. ")
-      (string-append "Node.js enables running generated programs in the terminal. ")
-      (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
-     "steps"))
-  (js-append-child! tooling tooling-list)
-  (js-append-child! page tooling)
-
-  (define pipeline (section-block
-                    "Compiler Pipeline"
-                    "WebRacket uses a direct-style compiler with NanoPass transformations before emitting WebAssembly."))
-  (define pipeline-cards
-    (card-grid
-     (list
-      (list (make-element "h3" #f "Frontend")
-            (make-element "p"  #f "Racket syntax is expanded, then normalized into a compiler-friendly core."))
-      (list (make-element "h3" #f "Middle End")
-            (make-element "p"  #f "Nanopass phases like closure conversion and ANF shape the program."))
-      (list (make-element "h3" #f "Backend")
-            (make-element "p"  #f "Destination-driven code generation emits folded WebAssembly code."))
-      (list (make-element "h3" #f "Runtime")
-            (make-element "p"  #f "A custom runtime avoids reliance on host functionality where possible.")))))
-  (js-append-child! pipeline pipeline-cards)
-  (js-append-child! page pipeline)
-
-  (define roadmap (section-block
-                  "Roadmap"
-                  "The long-term goal is full Racket support, but there is plenty more to tackle next."))
-  (define roadmap-list
-    (make-list
-     (list
-      "Fix bugs reported by early adopters and stabilize the current runtime."
-      "Unlock modules by completing linklet support."
-      "Add complex numbers, bignums, impersonators, and chaperones."
-      "Improve regular expression support and consider CPS for continuations.")))
-  (js-append-child! roadmap roadmap-list)
-  (js-append-child! page roadmap)
-
-  (define examples (section-block
-                    "Example Projects"
-                    "WebRacket already powers interactive demos that showcase browser APIs."))
-  (define examples-list
-    (make-list
-     (list
-      "MathJax 4 editor with live formula preview."
-      "Matrix digital rain with XtermJS terminal rendering."
-      "MiniScheme interactive REPL in the browser."
-      "Space Invaders canvas game and Pict rendering demo.")))
-  (js-append-child! examples examples-list)
-  (js-append-child! page examples)
-
-  (define footer       (make-element "footer" "footer"))
-  (define footer-left  (make-element "span" #f "WebRacket — Racket for the browser."))
-  (define footer-right (make-element "span" #f "Made for the Racket community."))
-  (append-children! footer (list footer-left footer-right))
-  (js-append-child! page footer))
+  (define page-structure
+    `(div (@ (class "page"))
+          (section (@ (class "hero"))
+                   (div (@ (class "hero-panel"))
+                        (div (@ (class "pill")) "Racket → WebAssembly")
+                        (h1 (@ (class "hero-title")) "WebRacket")
+                        (p (@ (class "hero-lead"))
+                           "A Racket-to-WebAssembly compiler and runtime that makes it possible to build practical browser experiences without leaving the Racket ecosystem.")
+                        (div (@ (class "pill-row"))
+                             (span (@ (class "pill")) "Wasm-GC compatible")
+                             (span (@ (class "pill")) "JS + DOM FFI")
+                             (span (@ (class "pill")) "Runs in browsers + Node")))
+                   (div (@ (class "logo-card"))
+                        (img (@ (src "assets/hex-racket-wasm-logo.svg")
+                                (alt "WebRacket hex logo")))))
+          ,(section-block
+            "Why WebRacket?"
+            "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
+            (list
+             (make-list
+              (list
+               "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
+               "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
+               "Use WebRacket to prototype ideas that could influence a future Racket WebAssembly backend."))))
+          ,(section-block
+            "Language Coverage"
+            "WebRacket implements a substantial portion of Racket with a focus on practical web applications."
+            (list
+             (card-grid
+              (list
+               (list `(h3 "Numbers")
+                     `(p "Flonums and fixnums with fast WebAssembly execution."))
+               (list `(h3 "Hash Tables")
+                     `(p "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
+               (list `(h3 "Structures")
+                     `(p "Support for structure properties, super structures, and applicable structs."))
+               (list `(h3 "Syntax")
+                     `(p "Standard Racket expander support, including for and match forms."))
+               (list `(h3 "Control Flow")
+                     `(p "Tail calls, multiple values, and upward exceptions are all supported."))
+               (list `(h3 "Concurrency")
+                     `(p "Single-threaded execution today, with a future path toward richer models.")))))))
+          ,(section-block
+            "Toolchain Essentials"
+            "A small set of tools power the WebRacket workflow from source to the browser."
+            (list
+             (make-list
+              (list
+               (string-append "wasm-tools builds and validates the WebAssembly output. ")
+               (string-append "Node.js enables running generated programs in the terminal. ")
+               (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
+              "steps")))
+          ,(section-block
+            "Compiler Pipeline"
+            "WebRacket uses a direct-style compiler with NanoPass transformations before emitting WebAssembly."
+            (list
+             (card-grid
+              (list
+               (list `(h3 "Frontend")
+                     `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
+               (list `(h3 "Middle End")
+                     `(p "Nanopass phases like closure conversion and ANF shape the program."))
+               (list `(h3 "Backend")
+                     `(p "Destination-driven code generation emits folded WebAssembly code."))
+               (list `(h3 "Runtime")
+                     `(p "A custom runtime avoids reliance on host functionality where possible.")))))))
+          ,(section-block
+            "Roadmap"
+            "The long-term goal is full Racket support, but there is plenty more to tackle next."
+            (list
+             (make-list
+              (list
+               "Fix bugs reported by early adopters and stabilize the current runtime."
+               "Unlock modules by completing linklet support."
+               "Add complex numbers, bignums, impersonators, and chaperones."
+               "Improve regular expression support and consider CPS for continuations."))))
+          ,(section-block
+            "Example Projects"
+            "WebRacket already powers interactive demos that showcase browser APIs."
+            (list
+             (make-list
+              (list
+               "MathJax 4 editor with live formula preview."
+               "Matrix digital rain with XtermJS terminal rendering."
+               "MiniScheme interactive REPL in the browser."
+               "Space Invaders canvas game and Pict rendering demo."))))
+          (footer (@ (class "footer"))
+                  (span "WebRacket — Racket for the browser.")
+                  (span "Made for the Racket community."))))
+  (define page (sxml->dom page-structure))
+  (js-append-child! body page))
 
 ;;;
 ;;; Entry Point
