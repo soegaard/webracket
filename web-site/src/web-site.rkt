@@ -277,7 +277,15 @@ CSS
                (list `(h3 "Numbers")
                      `(p "Flonums and fixnums."))
                (list `(h3 "Hash Tables")
-                     `(p "Mutable hash tables for eq?, eqv?, equal?, and always? comparisons."))
+                     `(p "Mutable hash tables for "
+                         (code "eq?")
+                         ", "
+                         (code "eqv?")
+                         ", "
+                         (code "equal?")
+                         ", and "
+                         (code "always?")
+                         " comparisons."))
                (list `(h3 "Structures")
                      `(p "Support for structure properties, super structures, and applicable structs."))
                (list `(h3 "Syntax")
