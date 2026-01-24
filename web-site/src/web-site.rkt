@@ -357,33 +357,27 @@ a { color: var(--blue); text-decoration: none; }
   display: block;
   height: 3px;
   width: 64px;
-  margin-top: 12px;
-  background: linear-gradient(100deg, var(--section-accent-strong, rgba(101, 79, 240, 0.55)) 0%, var(--section-accent, rgba(101, 79, 240, 0.38)) 55%, rgba(255, 255, 255, 0.42) 72%, var(--section-accent, rgba(101, 79, 240, 0.38)) 100%); /* Accent bar uses section tokens + sweep highlight */
-  background-size: 200% 100%;
-  background-position: 0% 50%;
+  margin-top: 10px;
+  background: hsla(var(--accent-h, 252), 78%, 72%, var(--accent-a, 0.55));
   border-radius: 999px;
-  opacity: 0.48;
   pointer-events: none;
-  transition: background-position 1150ms ease;
-}
-
-/* Signature moment: subtle accent sweep on section hover/focus */
-.section:hover .section-title::after,
-.section:focus-within .section-title::after {
-  background-position: 100% 50%;
 }
 
 /* Section bands + per-section accent tokens */
 .section {
   overflow: hidden;
   overflow: clip;
-  --section-accent: rgba(101, 79, 240, 0.36);
-  --section-accent-strong: rgba(101, 79, 240, 0.6);
-  --section-band-opacity: 0.085;
-  --section-band: radial-gradient(140% 120% at 12% -10%, rgba(101, 79, 240, 0.22), rgba(12, 13, 26, 0) 60%);
-  --section-card-border: rgba(122, 134, 255, 0.18);
-  --section-card-border-strong: rgba(140, 150, 255, 0.24);
-  --section-card-border-hover: rgba(176, 186, 255, 0.34);
+  --accent-h: 252;
+  --accent-a: 0.55;
+  --accent-band-a: 0.1;
+  --accent-border-a: 0.1;
+  --accent-border-strong-a: 0.14;
+  --accent-border-hover-a: 0.18;
+  --section-band-opacity: 0.65;
+  --section-band: radial-gradient(140% 120% at 12% -10%, hsla(var(--accent-h), 70%, 66%, var(--accent-band-a)), rgba(12, 13, 26, 0) 60%);
+  --section-card-border: hsla(var(--accent-h), 75%, 75%, var(--accent-border-a));
+  --section-card-border-strong: hsla(var(--accent-h), 75%, 75%, var(--accent-border-strong-a));
+  --section-card-border-hover: hsla(var(--accent-h), 75%, 80%, var(--accent-border-hover-a));
 }
 .section::before {
   inset: -18%;
@@ -392,44 +386,19 @@ a { color: var(--blue); text-decoration: none; }
   z-index: 0;
 }
 .section--coverage {
-  --section-accent: rgba(114, 94, 255, 0.4);
-  --section-accent-strong: rgba(126, 109, 255, 0.68);
-  --section-band: radial-gradient(150% 120% at -4% -12%, rgba(118, 102, 255, 0.28), rgba(12, 13, 26, 0) 62%);
-  --section-card-border: rgba(130, 141, 255, 0.2);
-  --section-card-border-strong: rgba(148, 160, 255, 0.26);
-  --section-card-border-hover: rgba(186, 195, 255, 0.36);
+  --accent-h: 262;
 }
 .section--toolchain {
-  --section-accent: rgba(92, 131, 255, 0.38);
-  --section-accent-strong: rgba(108, 147, 255, 0.64);
-  --section-band: linear-gradient(145deg, rgba(88, 126, 255, 0.22) 0%, rgba(12, 13, 26, 0) 64%);
-  --section-card-border: rgba(120, 155, 255, 0.2);
-  --section-card-border-strong: rgba(139, 172, 255, 0.26);
-  --section-card-border-hover: rgba(179, 199, 255, 0.35);
+  --accent-h: 244;
 }
 .section--pipeline {
-  --section-accent: rgba(105, 118, 255, 0.38);
-  --section-accent-strong: rgba(122, 134, 255, 0.66);
-  --section-band: radial-gradient(150% 120% at 52% -18%, rgba(110, 119, 255, 0.26), rgba(12, 13, 26, 0) 63%);
-  --section-card-border: rgba(132, 144, 255, 0.2);
-  --section-card-border-strong: rgba(151, 163, 255, 0.26);
-  --section-card-border-hover: rgba(188, 197, 255, 0.35);
+  --accent-h: 232;
 }
 .section--roadmap {
-  --section-accent: rgba(123, 105, 255, 0.37);
-  --section-accent-strong: rgba(141, 124, 255, 0.65);
-  --section-band: linear-gradient(205deg, rgba(126, 110, 255, 0.24) 0%, rgba(12, 13, 26, 0) 68%);
-  --section-card-border: rgba(140, 146, 255, 0.2);
-  --section-card-border-strong: rgba(158, 166, 255, 0.26);
-  --section-card-border-hover: rgba(193, 198, 255, 0.34);
+  --accent-h: 250;
 }
 .section--examples {
-  --section-accent: rgba(90, 142, 255, 0.39);
-  --section-accent-strong: rgba(108, 159, 255, 0.66);
-  --section-band: radial-gradient(150% 120% at -8% 118%, rgba(90, 143, 255, 0.3), rgba(12, 13, 26, 0) 64%);
-  --section-card-border: rgba(121, 166, 255, 0.21);
-  --section-card-border-strong: rgba(139, 184, 255, 0.27);
-  --section-card-border-hover: rgba(177, 207, 255, 0.36);
+  --accent-h: 238;
 }
 
 /* Coverage grid */
@@ -441,7 +410,7 @@ a { color: var(--blue); text-decoration: none; }
 }
 .coverage-grid .card:nth-child(even) {
   background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: hsla(var(--accent-h), 75%, 80%, 0.14);
 }
 .coverage-grid .card h3 {
   font-size: 1.18rem;
@@ -596,7 +565,7 @@ a { color: var(--blue); text-decoration: none; }
 }
 .examples-grid .card {
   background: linear-gradient(145deg, rgba(20, 22, 43, 0.95), rgba(20, 22, 43, 0.7));
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: hsla(var(--accent-h), 75%, 78%, 0.12);
 }
 .example-link {
   margin-top: auto;
