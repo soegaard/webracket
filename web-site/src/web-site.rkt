@@ -155,7 +155,6 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 18px;
-  height: 100%;
 }
 .hero-copy {
   flex: 1 1 260px;
@@ -174,7 +173,6 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1;
 }
 .hero-carousel-panel {
   background: var(--surface);
@@ -184,7 +182,6 @@ a { color: var(--blue); text-decoration: none; }
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 .carousel-header {
   display: flex;
@@ -207,7 +204,7 @@ a { color: var(--blue); text-decoration: none; }
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0;
   transform: scale(1.02);
   animation: carouselFade 30s infinite;
