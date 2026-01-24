@@ -487,12 +487,13 @@ a { color: var(--blue); text-decoration: none; }
   position: relative;
   padding-top: 36px;
 }
+/* Anchor step badges */
 .pipeline-grid .card::before {
   counter-increment: step;
   content: counter(step);
   position: absolute;
-  top: 14px;
-  left: 16px;
+  top: 12px;
+  left: 14px;
   width: 28px;
   height: 28px;
   border-radius: 999px;
@@ -503,7 +504,32 @@ a { color: var(--blue); text-decoration: none; }
   color: #F3F4FF;
   background: rgba(101, 79, 240, 0.3);
   border: 1px solid rgba(101, 79, 240, 0.45);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transform: translate(-2px, -2px);
+  z-index: 2;
+}
+.pipeline-grid .card > * {
+  position: relative;
+  z-index: 1;
+}
+/* Subtle directional cue */
+.pipeline-grid .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 120% at 12% 8%, rgba(101, 79, 240, 0.08), rgba(101, 79, 240, 0) 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+.pipeline-grid .card:nth-child(2)::after {
+  background: radial-gradient(120% 120% at 38% 8%, rgba(101, 79, 240, 0.08), rgba(101, 79, 240, 0) 60%);
+}
+.pipeline-grid .card:nth-child(3)::after {
+  background: radial-gradient(120% 120% at 62% 8%, rgba(101, 79, 240, 0.08), rgba(101, 79, 240, 0) 60%);
+}
+.pipeline-grid .card:nth-child(4)::after {
+  background: radial-gradient(120% 120% at 88% 8%, rgba(101, 79, 240, 0.08), rgba(101, 79, 240, 0) 60%);
 }
 @media (min-width: 1000px) {
   .pipeline-grid::after {
