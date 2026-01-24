@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "-- Compiling web-site.rkt --"
 racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
 
