@@ -505,7 +505,7 @@ a { color: var(--blue); text-decoration: none; }
   background: rgba(101, 79, 240, 0.3);
   border: 1px solid rgba(101, 79, 240, 0.45);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12);
-  transform: translate(-2px, -2px);
+  transform: translate(-2px, -6px);
   z-index: 2;
 }
 .pipeline-grid .card > * {
@@ -781,7 +781,7 @@ CSS
                (list `(h3 "Frontend")
                      `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
                (list `(h3 "Middle End")
-                     `(p "Nanopass phases like closure conversion and ANF shape the program."))
+                     `(p "Nanopass passes like closure conversion and ANF make environments and intermediate values explicit."))
                (list `(h3 "Backend")
                      `(p "Destination-driven code generation emits folded WebAssembly code."))
                (list `(h3 "Runtime")
