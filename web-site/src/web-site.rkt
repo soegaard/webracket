@@ -507,14 +507,7 @@ a { color: var(--blue); text-decoration: none; }
 }
 @media (min-width: 1000px) {
   .pipeline-grid::after {
-    content: "";
-    position: absolute;
-    top: 28px;
-    left: 24px;
-    right: 24px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-    opacity: 0.7;
+    content: none;
   }
 }
 
