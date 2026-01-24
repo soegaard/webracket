@@ -144,7 +144,7 @@ a { color: var(--blue); text-decoration: none; }
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 32px;
-  align-items: stretch;
+  align-items: start;
 }
 .hero-panel {
   background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));
@@ -194,7 +194,6 @@ a { color: var(--blue); text-decoration: none; }
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
   aspect-ratio: 4 / 3;
   background: var(--surface);
