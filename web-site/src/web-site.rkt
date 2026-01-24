@@ -341,7 +341,7 @@ CSS
                                   (img (@ (class "carousel-shot")
                                           (src   "assets/examples/screenshots/pict.png")
                                           (alt   "Pict rendering demo")
-                                          (style "animation-delay: 25s;"))))))))
+                                          (style "animation-delay: 25s;")))))))
           ,(section-block
             "Why WebRacket?"
             "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
