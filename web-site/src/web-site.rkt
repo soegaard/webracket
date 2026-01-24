@@ -84,14 +84,14 @@
          #<<CSS
 :root {
   --purple: ~a;
-  --blue: ~a;
-  --red: ~a;
-  --gold: ~a;
-  --bg: #0C0D1A;
-  --surface: #14162B;
+  --blue:   ~a;
+  --red:    ~a;
+  --gold:   ~a;
+  --bg:           #0C0D1A;
+  --surface:      #14162B;
   --surface-soft: rgba(255, 255, 255, 0.03);
-  --text: #E6E8F2;
-  --muted: #B6BDDD;
+  --text:         #E6E8F2;
+  --muted:        #B6BDDD;
 }
 * { box-sizing: border-box; }
 body {
@@ -144,7 +144,7 @@ a { color: var(--blue); text-decoration: none; }
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: center;
 }
 .hero-panel {
   background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));
@@ -157,8 +157,7 @@ a { color: var(--blue); text-decoration: none; }
   gap: 18px;
 }
 .hero-copy {
-  flex: 1 1 260px;
-  min-width: 220px;
+  flex: none;
 }
 .hero-title {
   font-size: clamp(2rem, 4vw, 3rem);
