@@ -8,7 +8,8 @@
 
 ;; Compile with:
 ;;     racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
-
+;; Build script which also copies assets:
+;;     ./build.sh
 
 ;;;
 ;;; Color Helpers
@@ -735,7 +736,7 @@ CSS
                      `(p "Single-threaded execution only."))
                (list `(h3 "Modules")
                      `(p "Work in progress. Use include for now.")))
-              "coverage-grid")))
+              "coverage-grid"))
             #f
             "section--coverage")
           ,(section-block
@@ -749,7 +750,7 @@ CSS
                       (string-append "wasm-tools builds and validates the WebAssembly output. ")
                       (string-append "Node.js enables running generated programs in the terminal. ")
                       (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
-                     "toolchain-list"))))
+                     "toolchain-list")))
             #f
             "section--toolchain")
           ,(section-block
@@ -766,7 +767,7 @@ CSS
                      `(p "Destination-driven code generation emits folded WebAssembly code."))
                (list `(h3 "Runtime")
                      `(p "A custom runtime avoids reliance on host functionality where possible.")))
-              "pipeline-grid")))
+              "pipeline-grid"))
             #f
             "section--pipeline")
           ,(section-block
@@ -778,7 +779,7 @@ CSS
                "Fix bugs reported by early adopters and stabilize the current runtime."
                "Unlock modules by completing linklet support."
                "Add complex numbers, bignums, impersonators, and chaperones."
-               "Improve regular expression support and consider CPS for continuations."))))
+               "Improve regular expression support and consider CPS for continuations.")))
             #f
             "section--roadmap")
           ,(section-block
@@ -799,7 +800,7 @@ CSS
                (list `(h3 "Canvas + Pict")
                      `(p "Space Invaders and Pict rendering showcase.")
                      `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
-              "examples-grid")))
+              "examples-grid"))
             "examples"
             "section--examples")
           (footer (@ (class "footer"))
