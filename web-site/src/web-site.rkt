@@ -142,7 +142,7 @@ a { color: var(--blue); text-decoration: none; }
 }
 .hero {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 2fr 1fr;
   gap: 32px;
   align-items: stretch;
 }
@@ -174,7 +174,6 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: min(240px, 100%);
   flex: 1;
 }
 .hero-carousel-panel {
@@ -202,18 +201,16 @@ a { color: var(--blue); text-decoration: none; }
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
   aspect-ratio: 4 / 3;
   background: var(--surface);
-  padding: 12px;
 }
 .carousel-shot {
   position: absolute;
-  inset: 12px;
-  width: calc(100% - 24px);
-  height: calc(100% - 24px);
-  object-fit: contain;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   opacity: 0;
   transform: scale(1.02);
   animation: carouselFade 30s infinite;
-  border-radius: 10px;
 }
 @keyframes carouselFade {
   0% { opacity: 0; transform: scale(1.02); }
