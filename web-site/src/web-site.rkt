@@ -47,12 +47,15 @@
       `(ul (@ (class ,class-name)) ,@list-items)
       `(ul ,@list-items)))
 
-;; section-block : String (U #f String) (Listof List) (U #f String) -> List
+;; section-block : String (U #f String) (Listof List) (U #f String) (U #f String) -> List
 ;;   Creates a section container with a title, optional subtitle, and content.
-(define (section-block title subtitle content [section-id #f])
+(define (section-block title subtitle content [section-id #f] [section-class #f])
+  (define class-name (if section-class
+                         (string-append "section " section-class)
+                         "section"))
   (define attrs (if section-id
-                    `(@ (class "section") (id ,section-id))
-                    `(@ (class "section"))))
+                    `(@ (class ,class-name) (id ,section-id))
+                    `(@ (class ,class-name))))
   `(section ,attrs
             (div (@ (class "section-header"))
                  (h2 (@ (class "section-title")) ,title)
@@ -61,10 +64,13 @@
                        '()))
             ,@content))
 
-;; card-grid : (Listof (Listof List)) -> List
+;; card-grid : (Listof (Listof List)) (U #f String) -> List
 ;;   Wraps card content lists into a grid container.
-(define (card-grid cards)
-  `(div (@ (class "card-grid"))
+(define (card-grid cards [class-name #f])
+  (define base-class (if class-name
+                         (string-append "card-grid " class-name)
+                         "card-grid"))
+  `(div (@ (class ,base-class))
         ,@(map (λ (card) `(div (@ (class "card")) ,@card)) cards)))
 
 ;;;
@@ -337,6 +343,245 @@ a { color: var(--blue); text-decoration: none; }
 }
 .steps li { margin-bottom: 12px; color: var(--muted); line-height: 1.65; }
 .steps li:last-child { margin-bottom: 0; }
+.section-title::after {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 48px;
+  margin-top: 12px;
+  background: linear-gradient(90deg, rgba(101, 79, 240, 0.55), rgba(74, 108, 255, 0.35));
+  border-radius: 999px;
+  opacity: 0.75;
+}
+
+/* Section bands */
+.section { overflow: hidden; overflow: clip; }
+.section::before {
+  inset: -20%;
+  opacity: 0.12;
+  filter: blur(18px);
+}
+.section--coverage::before {
+  background: radial-gradient(120% 120% at 0% 0%, rgba(101, 79, 240, 0.32), rgba(12, 13, 26, 0.1) 55%, transparent 78%);
+}
+.section--toolchain::before {
+  background: linear-gradient(140deg, rgba(74, 108, 255, 0.22), rgba(12, 13, 26, 0.12) 55%, transparent 80%);
+}
+.section--pipeline::before {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(101, 79, 240, 0.3), rgba(12, 13, 26, 0.12) 55%, transparent 80%);
+}
+.section--roadmap::before {
+  background: linear-gradient(200deg, rgba(101, 79, 240, 0.2), rgba(12, 13, 26, 0.12) 52%, transparent 82%);
+}
+.section--examples::before {
+  background: radial-gradient(120% 120% at 0% 100%, rgba(74, 108, 255, 0.26), rgba(12, 13, 26, 0.12) 55%, transparent 80%);
+}
+
+/* Coverage grid */
+.coverage-grid {
+  gap: 24px;
+}
+.coverage-grid .card {
+  padding: 22px;
+}
+.coverage-grid .card:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.coverage-grid .card h3 {
+  font-size: 1.18rem;
+  color: #F8F9FF;
+}
+.coverage-grid .card p {
+  font-size: 0.92rem;
+  line-height: 1.62;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (min-width: 1000px) {
+  .coverage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 720px) and (max-width: 999px) {
+  .coverage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Toolchain panel */
+.toolchain-panel {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 70ch;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.toolchain-lede {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.toolchain-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.toolchain-list li {
+  margin-bottom: 12px;
+  padding-left: 26px;
+  position: relative;
+  line-height: 1.7;
+}
+.toolchain-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: rgba(101, 79, 240, 0.85);
+  font-weight: 700;
+}
+
+/* Pipeline flow */
+.pipeline-grid {
+  counter-reset: step;
+  position: relative;
+}
+.pipeline-grid .card {
+  position: relative;
+  padding-top: 36px;
+}
+.pipeline-grid .card::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #F3F4FF;
+  background: rgba(101, 79, 240, 0.3);
+  border: 1px solid rgba(101, 79, 240, 0.45);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+@media (min-width: 1000px) {
+  .pipeline-grid::after {
+    content: "";
+    position: absolute;
+    top: 28px;
+    left: 24px;
+    right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    opacity: 0.7;
+  }
+}
+
+/* Hero CTA */
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-top: 6px;
+}
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, rgba(101, 79, 240, 0.95), rgba(74, 108, 255, 0.85));
+  border: 1px solid rgba(74, 108, 255, 0.6);
+  color: #F9FAFF;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 12px 24px rgba(74, 108, 255, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+.cta-button:focus-visible {
+  outline: 2px solid rgba(242, 183, 5, 0.8);
+  outline-offset: 3px;
+}
+.cta-link {
+  color: var(--text);
+  font-weight: 500;
+  opacity: 0.85;
+}
+.cta-link:hover,
+.cta-link:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+.cta-link:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 3px;
+}
+
+/* Examples emphasis */
+.examples-grid {
+  gap: 20px;
+}
+.examples-grid .card {
+  background: linear-gradient(145deg, rgba(20, 22, 43, 0.95), rgba(20, 22, 43, 0.7));
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.example-link {
+  margin-top: auto;
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.example-link::after {
+  content: " →";
+}
+.example-link:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 3px;
+}
+@media (min-width: 900px) {
+  .examples-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Motion + reduced motion */
+.cta-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+.cta-button:hover::after,
+.cta-button:focus-visible::after {
+  transform: translateX(120%);
+}
+.hero-carousel-panel {
+  animation: heroPulse 14s ease-in-out infinite;
+}
+@keyframes heroPulse {
+  0%, 100% { box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 24px 46px rgba(101, 79, 240, 0.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-button::after { transition: none; transform: none; }
+  .hero-carousel-panel { animation: none; }
+}
 .footer {
   display: flex;
   justify-content: space-between;
@@ -354,6 +599,9 @@ a { color: var(--blue); text-decoration: none; }
   .hero { grid-template-columns: 1fr; gap: 24px; }
   .section { margin-top: 56px; padding: 24px 18px; }
   .card-grid { grid-template-columns: 1fr; gap: 20px; }
+}
+@media (min-width: 720px) and (max-width: 900px) {
+  .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 CSS
          purple blue red gold))))
@@ -382,7 +630,10 @@ CSS
                                  "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
                              (div (@ (class "pill-row"))
                                   (span (@ (class "pill")) "JS + DOM FFI")
-                                  (span (@ (class "pill")) "Runs in browsers + Node"))))
+                                  (span (@ (class "pill")) "Runs in browsers + Node"))
+                             (div (@ (class "hero-cta"))
+                                  (a (@ (class "cta-button") (href "#examples")) "Try Live Demo")
+                                  (a (@ (class "cta-link") (href "https://github.com/racket/webracket")) "View on GitHub"))))
                    (div (@ (class "hero-carousel-panel"))
                         (div (@ (class "hero-carousel"))
                              (div (@ (class "carousel-header"))
@@ -451,17 +702,24 @@ CSS
                (list `(h3 "Concurrency")
                      `(p "Single-threaded execution only."))
                (list `(h3 "Modules")
-                     `(p "Work in progress. Use include for now."))))))
+                     `(p "Work in progress. Use include for now.")))
+              "coverage-grid")))
+            #f
+            "section--coverage")
           ,(section-block
             "Toolchain Essentials"
             "A small set of tools power the WebRacket workflow from source to the browser."
             (list
-             (make-ul-list
-              (list
-               (string-append "wasm-tools builds and validates the WebAssembly output. ")
-               (string-append "Node.js enables running generated programs in the terminal. ")
-               (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
-              "steps")))
+             `(div (@ (class "toolchain-panel"))
+                   (p (@ (class "toolchain-lede")) "Three tools cover build, run, and serve with minimal setup.")
+                   ,(make-ul-list
+                     (list
+                      (string-append "wasm-tools builds and validates the WebAssembly output. ")
+                      (string-append "Node.js enables running generated programs in the terminal. ")
+                      (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
+                     "toolchain-list"))))
+            #f
+            "section--toolchain")
           ,(section-block
             "Compiler Pipeline"
             "WebRacket uses a direct-style compiler with NanoPass transformations before emitting WebAssembly."
@@ -475,7 +733,10 @@ CSS
                (list `(h3 "Backend")
                      `(p "Destination-driven code generation emits folded WebAssembly code."))
                (list `(h3 "Runtime")
-                     `(p "A custom runtime avoids reliance on host functionality where possible."))))))
+                     `(p "A custom runtime avoids reliance on host functionality where possible.")))
+              "pipeline-grid")))
+            #f
+            "section--pipeline")
           ,(section-block
             "Roadmap"
             "The long-term goal is full Racket support, but there is plenty more to tackle next."
@@ -486,16 +747,29 @@ CSS
                "Unlock modules by completing linklet support."
                "Add complex numbers, bignums, impersonators, and chaperones."
                "Improve regular expression support and consider CPS for continuations."))))
+            #f
+            "section--roadmap")
           ,(section-block
             "Example Projects"
             "WebRacket already powers interactive demos that showcase browser APIs."
             (list
-             (make-ul-list
+             (card-grid
               (list
-               "MathJax 4 editor with live formula preview."
-               "Matrix digital rain with XtermJS terminal rendering."
-               "MiniScheme interactive REPL in the browser."
-               "Space Invaders canvas game and Pict rendering demo."))))
+               (list `(h3 "MathJax 4 Editor")
+                     `(p "Live formula preview with WebRacket + MathJax.")
+                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+               (list `(h3 "Matrix Rain")
+                     `(p "Terminal-style animation powered by XtermJS.")
+                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+               (list `(h3 "MiniScheme REPL")
+                     `(p "Interactive Scheme session running in the browser.")
+                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+               (list `(h3 "Canvas + Pict")
+                     `(p "Space Invaders and Pict rendering showcase.")
+                     `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
+              "examples-grid")))
+            "examples"
+            "section--examples")
           (footer (@ (class "footer"))
                   (span "WebRacket — Racket for the browser.")
                   (span "Made for the Racket community."))))
