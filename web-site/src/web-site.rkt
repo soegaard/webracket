@@ -173,7 +173,8 @@ a { color: var(--blue); text-decoration: none; }
   margin: 0 0 12px;
 }
 .hero-lead {
-  margin: 0 0 18px;
+  /* Hero spacing polish */
+  margin: 0 0 22px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -227,6 +228,8 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  /* Hero spacing polish */
+  margin-bottom: 8px;
 }
 .pill {
   border-radius: 999px;
@@ -555,7 +558,8 @@ a { color: var(--blue); text-decoration: none; }
   flex-wrap: wrap;
   gap: 14px;
   align-items: center;
-  margin-top: 6px;
+  /* Hero spacing polish */
+  margin-top: 12px;
 }
 .cta-button {
   display: inline-flex;
