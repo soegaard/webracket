@@ -78,17 +78,144 @@
 ;;; Page Layout
 ;;;
 
+;;;
+;;; Examples Data
+;;;
+
+(define examples
+  (list
+   (hash 'id "mathjax4"
+         'title "MathJax 4 Editor"
+         'path "examples/mathjax4"
+         'entry "mathjax.html"
+         'summary "Live two-pane editor that previews LaTeX formulas with MathJax 4."
+         'features (list "DOM + JS FFI"
+                         "MathJax interop"
+                         "Event handlers"
+                         "Dynamic updates")
+         'featured? #t)
+   (hash 'id "matrix-rain"
+         'title "Matrix Rain"
+         'path "examples/matrix-rain"
+         'entry "matrix-rain.html"
+         'summary "Terminal-style animation that recreates the Matrix digital rain effect."
+         'features (list "JS FFI"
+                         "XtermJS integration"
+                         "Timers / animation loop"
+                         "DOM styling")
+         'featured? #t)
+   (hash 'id "xtermjs-demo"
+         'title "XtermJS Demo"
+         'path "examples/xtermjs-demo"
+         'entry "xtermjs-demo.html"
+         'summary "Interactive terminal demo with themed styling and built-in commands."
+         'features (list "JS FFI"
+                         "DOM layout"
+                         "Input handling"
+                         "XtermJS add-ons"))
+   (hash 'id "minischeme"
+         'title "MiniScheme REPL"
+         'path "examples/minischeme"
+         'entry "minischeme.html"
+         'summary "Browser-based Scheme REPL with a lightweight evaluator and editor."
+         'features (list "Evaluator/runtime integration"
+                         "Ports + printing output"
+                         "Error handling"
+                         "XtermJS terminal")
+         'featured? #t)
+   (hash 'id "space-invaders"
+         'title "Space Invaders"
+         'path "examples/space-invaders"
+         'entry "space-invaders.html"
+         'summary "Classic arcade shooter rendered on a canvas with keyboard controls."
+         'features (list "Canvas API via JS FFI"
+                         "Animation loop"
+                         "Keyboard events"
+                         "Mutable game state")
+         'featured? #t)
+   (hash 'id "pict"
+         'title "Canvas + Pict"
+         'path "examples/pict"
+         'entry "pict.html"
+         'summary "Port of Racket’s pict rendering pipeline to the browser."
+         'features (list "Graphics rendering pipeline"
+                         "Canvas interop"
+                         "Vector drawing"
+                         "Performance"))
+   (hash 'id "raco-tiles"
+         'title "Raccoon Tiles"
+         'path "examples/raco"
+         'entry "tiles.html"
+         'summary "Pixel-art tile sheet rendered to canvas with a custom palette."
+         'features (list "Canvas drawing"
+                         "Color palette"
+                         "Geometry helpers"
+                         "Layout math"))))
+
+;; example-demo-url : Hash -> (U #f String)
+;;   Builds the local demo URL when an entry HTML file is available.
+(define (example-demo-url example)
+  (define entry (hash-ref example 'entry #f))
+  (and entry (string-append (hash-ref example 'path) "/" entry)))
+
+;; example-source-url : Hash -> String
+;;   Builds the GitHub source URL for the example folder.
+(define (example-source-url example)
+  (string-append "https://github.com/soegaard/webracket/tree/main/"
+                 (hash-ref example 'path)))
+
+;; example-card : Hash -> List
+;;   Creates a card for a single example entry.
+(define (example-card example)
+  (define title (hash-ref example 'title))
+  (define summary (hash-ref example 'summary))
+  (define features (hash-ref example 'features))
+  (define demo-url (example-demo-url example))
+  (define source-url (example-source-url example))
+  `(div (@ (class "card example-card"))
+        (h3 ,title)
+        (p ,summary)
+        (div (@ (class "example-showcases"))
+             (span (@ (class "example-label")) "Showcases:")
+             ,(make-ul-list features "feature-list"))
+        (div (@ (class "example-actions"))
+             ,@(if demo-url
+                   (list `(a (@ (class "example-action example-action--primary")
+                                (href ,demo-url))
+                             "Open demo →"))
+                   '())
+             (a (@ (class "example-action") (href ,source-url)) "View source →"))))
+
+;; examples-grid : (Listof Hash) -> List
+;;   Wraps example cards into a responsive grid.
+(define (examples-grid cards)
+  `(div (@ (class "card-grid examples-grid"))
+        ,@(map example-card cards)))
+
 ;; current-page : -> Symbol
 ;;   Determines which page to render based on the URL path.
 (define (current-page)
   (define path (js-ref (js-window-location) "pathname"))
   (cond
     [(string-suffix? path "installation.html") 'installation]
+    [(string-suffix? path "examples.html") 'examples]
+    [(string-suffix? path "overview.html") 'overview]
+    [(string-suffix? path "roadmap.html") 'roadmap]
+    [(string-suffix? path "is-webracket-for-you.html") 'for-you]
     [else 'home]))
+
+;; nav-link : String String Symbol Symbol -> List
+;;   Creates a nav link with active state styling.
+(define (nav-link label href page-id active-page)
+  (define class-name (if (eq? active-page page-id)
+                         "nav-link nav-link--active"
+                         "nav-link"))
+  `(a (@ (class ,class-name) (href ,href)) ,label))
 
 ;; navbar : -> List
 ;;   Shared navigation header for all pages.
 (define (navbar)
+  (define active-page (current-page))
   `(nav (@ (class "navbar"))
         (div (@ (class "nav-left"))
              (img (@ (class "nav-logo")
@@ -96,11 +223,11 @@
                      (alt "WebRacket logo")))
              (span "WebRacket"))
         (div (@ (class "nav-links"))
-             (a (@ (class "nav-link") (href "is-webracket-for-you.html")) "For You")
-             (a (@ (class "nav-link") (href "overview.html")) "Overview")
-             (a (@ (class "nav-link") (href "roadmap.html")) "Road Ahead")
-             (a (@ (class "nav-link") (href "installation.html")) "Installation")
-             (a (@ (class "nav-link") (href "examples.html")) "Examples"))))
+             ,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
+             ,(nav-link "Overview" "overview.html" 'overview active-page)
+             ,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
+             ,(nav-link "Installation" "installation.html" 'installation active-page)
+             ,(nav-link "Examples" "examples.html" 'examples active-page))))
 
 ;; footer-section : -> List
 ;;   Shared footer for all pages.
@@ -270,6 +397,43 @@
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
             "examples-grid"))
           "examples"
+          "section--examples")
+        ,(footer-section)))
+
+;; examples-page : -> List
+;;   Examples page layout.
+(define (examples-page)
+  (define featured-examples
+    (filter (λ (example) (hash-ref example 'featured? #f)) examples))
+  `(div (@ (class "page"))
+        ,(navbar)
+        (section (@ (class "examples-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "DOM + JS FFI")
+                           (span (@ (class "pill")) "Canvas")
+                           (span (@ (class "pill")) "MathJax")
+                           (span (@ (class "pill")) "XtermJS")
+                           (span (@ (class "pill")) "REPL"))
+                      (h1 (@ (class "hero-title")) "Examples")
+                      (p (@ (class "hero-lead"))
+                         "Interactive demos that showcase browser APIs and WebRacket features.")
+                      (p (@ (class "hero-sublead"))
+                         "Each example includes a live demo link (when available) and source code on GitHub."))))
+        ,@(if (null? featured-examples)
+              '()
+              (list
+               (section-block
+                "Featured"
+                "Start here for the most representative WebRacket demos."
+                (list (examples-grid featured-examples))
+                #f
+                "section--examples")))
+        ,(section-block
+          "All examples"
+          "Browse every example in the repository."
+          (list (examples-grid examples))
+          #f
           "section--examples")
         ,(footer-section)))
 
@@ -447,6 +611,18 @@ a { color: var(--blue); text-decoration: none; }
 .nav-link:hover {
   opacity: 1;
 }
+.nav-link--active {
+  opacity: 1;
+  font-weight: 600;
+}
+.nav-link--active::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: 6px;
+  background: rgba(74, 108, 255, 0.85);
+  border-radius: 999px;
+}
 .hero {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -463,6 +639,14 @@ a { color: var(--blue); text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.examples-hero {
+  margin-top: 32px;
+}
+.hero-sublead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 .hero-copy {
   flex: none;
@@ -1076,6 +1260,53 @@ pre code {
   background: linear-gradient(145deg, rgba(20, 22, 43, 0.95), rgba(20, 22, 43, 0.7));
   border-color: hsla(var(--accent-h), 75%, 78%, 0.12);
 }
+.example-card {
+  gap: 16px;
+}
+.example-showcases {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.example-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(230, 232, 242, 0.7);
+}
+.feature-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.feature-list li {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+.example-actions {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.example-action {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+.example-action:hover,
+.example-action:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+.example-action--primary {
+  color: var(--blue);
+  font-weight: 600;
+}
 .example-link {
   margin-top: auto;
   color: var(--blue);
@@ -1161,6 +1392,7 @@ CSS
 
   (define page-structure
     (case (current-page)
+      [(examples) (examples-page)]
       [(installation) (installation-page)]
       [else (home-page)]))
   
