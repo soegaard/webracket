@@ -372,8 +372,7 @@
                  (p "Keep exploring with a quick demo or a deeper read.")
                  (ul (@ (class "install-next-steps-list"))
                      (li (a (@ (href "#install-quick-test")) "Try the examples"))
-                     (li (a (@ (href "examples.html")) "Browse live demos"))
-                     (li (a (@ (href "https://github.com/soegaard/webracket#readme")) "Read the README"))))))
+                     (li (a (@ (href "examples.html")) "Browse live demos")))))
           #f
           "install-section")
         ,(footer-section)))
