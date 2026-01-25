@@ -7,3 +7,6 @@ cp web-site.wasm ../public
 cp web-site.html ../public
 
 echo "-- Done --"
+if [[ "$(uname)" == "Darwin" ]]; then
+  afplay /System/Library/Sounds/Glass.aiff
+fi
