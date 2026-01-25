@@ -6,6 +6,7 @@ echo "-- Copying Assets --"
 cp web-site.wasm ../public
 cp web-site.html ../public
 cp installation.html ../public
+cp examples.html ../public
 
 echo "-- Done --"
 if [[ "$(uname)" == "Darwin" ]]; then
