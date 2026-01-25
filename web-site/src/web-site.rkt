@@ -88,69 +88,78 @@
                     (cons 'title "MathJax 4 Editor")
                     (cons 'path "examples/mathjax4")
                     (cons 'entry "mathjax.html")
-                    (cons 'summary "Live two-pane editor that previews LaTeX formulas with MathJax 4.")
-                    (cons 'features (list "DOM + JS FFI"
-                                          "MathJax interop"
-                                          "Event handlers"
-                                          "Dynamic updates"))
-                    (cons 'featured? #t)))
+                    (cons 'tags (list 'dom 'mathjax))
+                    (cons 'summary "Live two-pane editor with instant MathJax 4 LaTeX preview.")
+                    (cons 'features (list "MathJax 4 interop"
+                                          "DOM + JS FFI"
+                                          "Event-driven updates"
+                                          "Editor state"))))
    (make-hash (list (cons 'id "matrix-rain")
                     (cons 'title "Matrix Rain")
                     (cons 'path "examples/matrix-rain")
                     (cons 'entry "matrix-rain.html")
-                    (cons 'summary "Terminal-style animation that recreates the Matrix digital rain effect.")
-                    (cons 'features (list "JS FFI"
-                                          "XtermJS integration"
+                    (cons 'tags (list 'xterm 'dom))
+                    (cons 'summary "Matrix rain animation rendered in a browser terminal.")
+                    (cons 'features (list "XtermJS integration"
+                                          "JS FFI"
                                           "Timers / animation loop"
-                                          "DOM styling"))
-                    (cons 'featured? #t)))
+                                          "DOM styling"))))
    (make-hash (list (cons 'id "xtermjs-demo")
                     (cons 'title "XtermJS Demo")
                     (cons 'path "examples/xtermjs-demo")
                     (cons 'entry "xtermjs-demo.html")
-                    (cons 'summary "Interactive terminal demo with themed styling and built-in commands.")
-                    (cons 'features (list "JS FFI"
+                    (cons 'tags (list 'xterm 'dom))
+                    (cons 'summary "Interactive terminal with themed styling and built-in commands.")
+                    (cons 'features (list "XtermJS add-ons"
                                           "DOM layout"
                                           "Input handling"
-                                          "XtermJS add-ons"))))
+                                          "Command dispatch"))))
    (make-hash (list (cons 'id "minischeme")
                     (cons 'title "MiniScheme REPL")
                     (cons 'path "examples/minischeme")
                     (cons 'entry "minischeme.html")
-                    (cons 'summary "Browser-based Scheme REPL with a lightweight evaluator and editor.")
-                    (cons 'features (list "Evaluator/runtime integration"
-                                          "Ports + printing output"
-                                          "Error handling"
-                                          "XtermJS terminal"))
-                    (cons 'featured? #t)))
+                    (cons 'tags (list 'repl 'xterm))
+                    (cons 'summary "Browser-based Scheme REPL with evaluator, editor, and output.")
+                    (cons 'features (list "XtermJS terminal"
+                                          "Runtime evaluator"
+                                          "Input + history"
+                                          "Ports + printing"))))
    (make-hash (list (cons 'id "space-invaders")
                     (cons 'title "Space Invaders")
                     (cons 'path "examples/space-invaders")
                     (cons 'entry "space-invaders.html")
-                    (cons 'summary "Classic arcade shooter rendered on a canvas with keyboard controls.")
+                    (cons 'tags (list 'canvas 'dom))
+                    (cons 'summary "Arcade shooter on canvas with responsive keyboard controls.")
                     (cons 'features (list "Canvas API via JS FFI"
-                                          "Animation loop"
                                           "Keyboard events"
-                                          "Mutable game state"))
-                    (cons 'featured? #t)))
+                                          "Animation loop"
+                                          "Mutable game state"))))
    (make-hash (list (cons 'id "pict")
                     (cons 'title "Canvas + Pict")
                     (cons 'path "examples/pict")
                     (cons 'entry "pict.html")
-                    (cons 'summary "Port of Racket’s pict rendering pipeline to the browser.")
+                    (cons 'tags (list 'canvas))
+                    (cons 'summary "Racket pict rendering pipeline compiled for the browser canvas.")
                     (cons 'features (list "Graphics rendering pipeline"
                                           "Canvas interop"
                                           "Vector drawing"
-                                          "Performance"))))
+                                          "Performance focus"))))
    (make-hash (list (cons 'id "raco-tiles")
                     (cons 'title "Raccoon Tiles")
                     (cons 'path "examples/raco")
                     (cons 'entry "tiles.html")
-                    (cons 'summary "Pixel-art tile sheet rendered to canvas with a custom palette.")
+                    (cons 'tags (list 'canvas))
+                    (cons 'summary "Pixel-art tile sheet drawn on canvas with a custom palette.")
                     (cons 'features (list "Canvas drawing"
-                                          "Color palette"
+                                          "Palette mapping"
                                           "Geometry helpers"
-                                          "Layout math"))))))
+                                          "Grid layout"))))))
+
+(define featured-example-ids
+  (list "mathjax4"
+        "minischeme"
+        "space-invaders"
+        "matrix-rain"))
 
 ;; example-demo-url : Hash -> (U #f String)
 ;;   Builds the local demo URL when an entry HTML file is available.
@@ -164,32 +173,58 @@
   (string-append "https://github.com/soegaard/webracket/tree/main/"
                  (hash-ref example 'path)))
 
+;; example-kind-class : (Listof Symbol) -> (U #f String)
+;;   Picks a category class for subtle accent styling.
+(define (example-kind-class tags)
+  (cond
+    [(member 'mathjax tags) "kind-mathjax"]
+    [(member 'repl tags) "kind-repl"]
+    [(member 'xterm tags) "kind-xterm"]
+    [(member 'canvas tags) "kind-canvas"]
+    [(member 'dom tags) "kind-dom"]
+    [else #f]))
+
+;; example-tags-string : (Listof Symbol) -> String
+;;   Joins tags for data attributes.
+(define (example-tags-string tags)
+  (string-join (map symbol->string tags) " "))
+
 ;; example-card : Hash -> List
 ;;   Creates a card for a single example entry.
 (define (example-card example)
   (define title (hash-ref example 'title))
   (define summary (hash-ref example 'summary))
   (define features (hash-ref example 'features))
+  (define tags (hash-ref example 'tags '()))
+  (define kind-class (example-kind-class tags))
+  (define tags-string (example-tags-string tags))
   (define demo-url (example-demo-url example))
   (define source-url (example-source-url example))
-  `(div (@ (class "card example-card"))
+  `(div (@ (class ,(string-append "card example-card"
+                                 (if kind-class (string-append " " kind-class) "")))
+           (data-tags ,tags-string))
         (h3 ,title)
         (p ,summary)
         (div (@ (class "example-showcases"))
-             (span (@ (class "example-label")) "Showcases:")
+             (span (@ (class "sr-only")) "Showcases:")
              ,(make-ul-list features "feature-list"))
         (div (@ (class "example-actions"))
              ,@(if demo-url
-                   (list `(a (@ (class "example-action example-action--primary")
+                   (list `(a (@ (class "example-action action-primary")
                                 (href ,demo-url))
                              "Open demo →"))
                    '())
-             (a (@ (class "example-action") (href ,source-url)) "View source →"))))
+             (a (@ (class "example-action action-secondary")
+                   (href ,source-url))
+                "View source →"))))
 
 ;; examples-grid : (Listof Hash) -> List
 ;;   Wraps example cards into a responsive grid.
-(define (examples-grid cards)
-  `(div (@ (class "card-grid examples-grid"))
+(define (examples-grid cards [class-name #f])
+  (define base-class (if class-name
+                         (string-append "card-grid examples-grid " class-name)
+                         "card-grid examples-grid"))
+  `(div (@ (class ,base-class))
         ,@(map example-card cards)))
 
 ;; current-page : -> Symbol
@@ -404,7 +439,13 @@
 ;;   Examples page layout.
 (define (examples-page)
   (define featured-examples
-    (filter (λ (example) (hash-ref example 'featured? #f)) examples))
+    (filter (λ (example)
+              (member (hash-ref example 'id) featured-example-ids))
+            examples))
+  (define all-examples
+    (filter (λ (example)
+              (not (member (hash-ref example 'id) featured-example-ids)))
+            examples))
   `(div (@ (class "page"))
         ,(navbar)
         (section (@ (class "examples-hero"))
@@ -426,13 +467,13 @@
                (section-block
                 "Featured"
                 "Start here for the most representative WebRacket demos."
-                (list (examples-grid featured-examples))
+                (list (examples-grid featured-examples "examples-grid--featured"))
                 #f
                 "section--examples")))
         ,(section-block
           "All examples"
           "Browse every example in the repository."
-          (list (examples-grid examples))
+          (list (examples-grid all-examples))
           #f
           "section--examples")
         ,(footer-section)))
@@ -1253,6 +1294,17 @@ pre code {
 }
 
 /* Examples emphasis */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .examples-grid {
   gap: 20px;
 }
@@ -1260,27 +1312,45 @@ pre code {
   background: linear-gradient(145deg, rgba(20, 22, 43, 0.95), rgba(20, 22, 43, 0.7));
   border-color: hsla(var(--accent-h), 75%, 78%, 0.12);
 }
+.examples-grid--featured .card {
+  padding: 24px;
+  border-color: hsla(var(--accent-h), 78%, 82%, 0.18);
+}
+.examples-grid--featured .card:nth-child(even) {
+  padding-top: 26px;
+}
 .example-card {
   gap: 16px;
+  position: relative;
 }
+.example-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--example-accent, rgba(101, 79, 240, 0.16)), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.example-card.kind-dom { --example-accent: rgba(74, 108, 255, 0.16); }
+.example-card.kind-canvas { --example-accent: rgba(92, 132, 255, 0.16); }
+.example-card.kind-repl { --example-accent: rgba(132, 93, 255, 0.16); }
+.example-card.kind-mathjax { --example-accent: rgba(144, 110, 255, 0.16); }
+.example-card.kind-xterm { --example-accent: rgba(98, 93, 255, 0.16); }
 .example-showcases {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.example-label {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(230, 232, 242, 0.7);
-}
 .feature-list {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 .feature-list li {
   margin-bottom: 0;
@@ -1296,16 +1366,23 @@ pre code {
   color: var(--text);
   font-weight: 500;
   font-size: 0.9rem;
-  opacity: 0.85;
+  opacity: 0.82;
 }
 .example-action:hover,
 .example-action:focus-visible {
   opacity: 1;
   text-decoration: underline;
 }
-.example-action--primary {
+.action-primary {
   color: var(--blue);
   font-weight: 600;
+}
+.action-secondary {
+  opacity: 0.65;
+}
+.action-secondary:hover,
+.action-secondary:focus-visible {
+  opacity: 0.9;
 }
 .example-link {
   margin-top: auto;
