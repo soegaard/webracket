@@ -289,7 +289,7 @@
                       (p (@ (class "hero-lead"))
                          "Set up WebRacket for terminal and browser workflows.")
                       (p (@ (class "install-hero-note"))
-                         "WebRacket requires wasm-tools and Node.js for compilation and testing.")))
+                         "Requires wasm-tools and Node.js for compilation and testing.")))
         ,(section-block
           "Prerequisites"
           "Short-version checklist for a working WebRacket setup."
@@ -322,13 +322,13 @@
            `(div (@ (class "install-steps"))
                  (div (@ (class "install-step-card"))
                       (h3 "1. wasm-tools")
-                      (p "Download the latest wasm-tools release from the Bytecode Alliance.")
+                      (p "Download the latest wasm-tools release.")
                       (p (a (@ (href "https://github.com/bytecodealliance/wasm-tools/releases"))
                             "https://github.com/bytecodealliance/wasm-tools/releases"))
-                      (p "Extract it and move the binary onto your PATH.")
+                      (p "Extract it and add it to your PATH.")
                       (pre (code "tar -xvf wasm-tools-1.243.0-aarch64-macos.tar.gz"))
                       (pre (code "sudo mv wasm-tools /usr/local/bin/"))
-                      (p "Verify the installation:")
+                      (p "Verify:")
                       (pre (code "wasm-tools"))
                       (div (@ (class "callout"))
                            (strong "Troubleshooting: ")
@@ -337,11 +337,11 @@
                            " to run from System Settings."))
                  (div (@ (class "install-step-card"))
                       (h3 "2. Node.js")
-                      (p "Install a recent Node.js release.")
+                      (p "Install Node.js.")
                       (p (a (@ (href "https://nodejs.org/en/download")) "https://nodejs.org/en/download"))
-                      (p " Verify Node runs runs in your terminal.")
+                      (p "Confirm Node runs:")
                       (pre (code "node"))
-                      (p "Confirm the required flags work.")
+                      (p "Confirm required flags:")
                       (pre (code "node --experimental-wasm-exnref --expose-gc"))
                       (div (@ (class "callout"))
                            (strong "Troubleshooting: ")
@@ -355,18 +355,25 @@
                             "https://download.racket-lang.org/")))
                  (div (@ (class "install-step-card"))
                       (h3 "4. raco-static-web")
-                      (p "Install the local web server package and verify it starts in a folder with an HTML file.")
+                      (p "Install the local web server package, then run it in a folder with an HTML file.")
                       (pre (code "raco pkg install raco-static-web"))
                       (pre (code "raco static-web")))
                  (div (@ (class "install-step-card"))
                       (h3 "5. Clone the WebRacket repo")
                       (p "Clone the WebRacket repository (contains compiler and examples).")
                       (pre (code "git clone https://github.com/soegaard/webracket.git")))
-                 (div (@ (class "install-step-card"))
+                 (div (@ (class "install-step-card") (id "install-quick-test"))
                       (h3 "6. Quick test: Run the examples")
-                      (p "Serve the examples locally.")
+                      (p "Serve the examples and open one in your browser.")
                       (pre (code "cd examples\nraco static-web"))
-                      (p "Open http://localhost:8000/ and select an example - find the html file."))))
+                      (p "Open http://localhost:8000/ and select an example - find the html file.")))
+           `(div (@ (class "install-next-steps"))
+                 (h3 "Next steps")
+                 (p "Keep exploring with a quick demo or a deeper read.")
+                 (ul (@ (class "install-next-steps-list"))
+                     (li (a (@ (href "#install-quick-test")) "Try the examples"))
+                     (li (a (@ (href "examples.html")) "Browse live demos"))
+                     (li (a (@ (href "https://github.com/soegaard/webracket#readme")) "Read the README"))))))
           #f
           "install-section")
         ,(footer-section)))
@@ -598,25 +605,38 @@ a { color: var(--blue); text-decoration: none; }
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
-/* Subtle left→right progression cue for Installation Steps */
+/* Installation: spacing polish */
+.install-step-card p + pre,
+.install-step-card pre + pre,
+.install-step-card pre + p,
+.install-step-card p + .callout {
+  margin-top: 4px;
+}
+/* Installation: progression cue */
 .install-steps .install-step-card::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(130% 120% at 12% 10%, rgba(101, 79, 240, 0.07), rgba(101, 79, 240, 0) 62%);
+  background: radial-gradient(130% 120% at 10% 8%, rgba(101, 79, 240, 0.08), rgba(101, 79, 240, 0) 62%);
   pointer-events: none;
 }
 .install-steps .install-step-card:nth-child(2)::after {
-  background: radial-gradient(130% 120% at 35% 10%, rgba(101, 79, 240, 0.06), rgba(101, 79, 240, 0) 62%);
+  background: radial-gradient(130% 120% at 25% 8%, rgba(101, 79, 240, 0.07), rgba(101, 79, 240, 0) 62%);
 }
 .install-steps .install-step-card:nth-child(3)::after {
-  background: radial-gradient(130% 120% at 60% 10%, rgba(101, 79, 240, 0.05), rgba(101, 79, 240, 0) 62%);
+  background: radial-gradient(130% 120% at 40% 8%, rgba(101, 79, 240, 0.065), rgba(101, 79, 240, 0) 62%);
 }
-.install-steps .install-step-card:nth-child(n+4)::after {
-  background: radial-gradient(130% 120% at 85% 10%, rgba(101, 79, 240, 0.05), rgba(101, 79, 240, 0) 62%);
+.install-steps .install-step-card:nth-child(4)::after {
+  background: radial-gradient(130% 120% at 60% 8%, rgba(101, 79, 240, 0.06), rgba(101, 79, 240, 0) 62%);
+}
+.install-steps .install-step-card:nth-child(5)::after {
+  background: radial-gradient(130% 120% at 75% 8%, rgba(101, 79, 240, 0.055), rgba(101, 79, 240, 0) 62%);
+}
+.install-steps .install-step-card:nth-child(6)::after {
+  background: radial-gradient(130% 120% at 90% 8%, rgba(101, 79, 240, 0.07), rgba(101, 79, 240, 0) 62%);
 }
 .install-step-card h3 {
   margin: 0;
@@ -627,13 +647,51 @@ a { color: var(--blue); text-decoration: none; }
   margin: 0;
   color: var(--muted);
 }
+/* Installation: troubleshooting callout refinement */
 .callout {
-  background: rgba(101, 79, 240, 0.12);
-  border: 1px solid rgba(101, 79, 240, 0.28);
+  background: rgba(101, 79, 240, 0.09);
+  border: 1px solid rgba(101, 79, 240, 0.22);
   border-radius: 14px;
   padding: 12px 14px;
   color: var(--muted);
   font-size: 0.9rem;
+}
+/* Installation: Step 6 completion emphasis */
+.install-step-card:nth-child(6) {
+  border-color: rgba(101, 79, 240, 0.32);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.34);
+}
+.install-step-card:nth-child(6) h3::after {
+  content: " ✓";
+  color: rgba(230, 232, 242, 0.7);
+  font-size: 0.95rem;
+}
+.install-next-steps {
+  margin-top: 32px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 22px 24px;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.install-next-steps h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #F7F8FF;
+}
+.install-next-steps p {
+  margin: 0;
+  color: var(--muted);
+}
+.install-next-steps-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
 }
 pre {
   background: #0B0D1D;
