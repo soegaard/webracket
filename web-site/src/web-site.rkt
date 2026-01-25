@@ -78,6 +78,297 @@
 ;;; Page Layout
 ;;;
 
+;; current-page : -> Symbol
+;;   Determines which page to render based on the URL path.
+(define (current-page)
+  (define path (js-ref (js-window-location) "pathname"))
+  (cond
+    [(string-suffix? path "installation.html") 'installation]
+    [else 'home]))
+
+;; navbar : -> List
+;;   Shared navigation header for all pages.
+(define (navbar)
+  `(nav (@ (class "navbar"))
+        (div (@ (class "nav-left"))
+             (img (@ (class "nav-logo")
+                     (src "assets/hex-racket-wasm-logo.svg")
+                     (alt "WebRacket logo")))
+             (span "WebRacket"))
+        (div (@ (class "nav-links"))
+             (a (@ (class "nav-link") (href "is-webracket-for-you.html")) "For You")
+             (a (@ (class "nav-link") (href "overview.html")) "Overview")
+             (a (@ (class "nav-link") (href "roadmap.html")) "Road Ahead")
+             (a (@ (class "nav-link") (href "installation.html")) "Installation")
+             (a (@ (class "nav-link") (href "examples.html")) "Examples"))))
+
+;; footer-section : -> List
+;;   Shared footer for all pages.
+(define (footer-section)
+  `(footer (@ (class "footer"))
+           (span "WebRacket — Racket for the browser.")
+           (span "Made for the Racket community.")))
+
+;; home-page : -> List
+;;   Homepage layout.
+(define (home-page)
+  `(div (@ (class "page"))
+        ,(navbar)
+        (section (@ (class "hero"))
+                 (div (@ (class "hero-panel"))
+                      (h1 (@ (class "hero-title")) "WebRacket")
+                      (div (@ (class "hero-copy"))
+                           (p  (@ (class "hero-lead"))
+                               "A Racket to WebAssembly compiler. " (br)
+                               "Build practical browser applications with Racket.")
+                           #;(div (@ (class "pill-row"))
+                                (span (@ (class "pill")) "JS + DOM FFI")
+                                (span (@ (class "pill")) "Runs in browsers + Node"))
+                           (div (@ (class "hero-cta"))
+                                (a (@ (class "cta-button") (href "#examples")) "Try Live Demo")
+                                (a (@ (class "cta-link") (href "https://github.com/soegaard/webracket")) "View on GitHub"))))
+                 (div (@ (class "hero-carousel-panel"))
+                      (div (@ (class "hero-carousel"))
+                           (div (@ (class "carousel-header"))
+                                (span "Example screenshots")
+                                (span (@ (class "highlight")) "Live demos"))
+                           (div (@ (class "carousel-frame"))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/mathjax4.png")
+                                        (alt   "MathJax 4 editor")
+                                        (style "animation-delay: 0s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/matrix-rain.png")
+                                        (alt   "Matrix digital rain demo")
+                                        (style "animation-delay: 5s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/xtermjs.png")
+                                        (alt   "XtermJS terminal demo")
+                                        (style "animation-delay: 10s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/minischeme.png")
+                                        (alt   "MiniScheme browser REPL")
+                                        (style "animation-delay: 15s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/space-invaders.png")
+                                        (alt   "Space Invaders canvas game")
+                                        (style "animation-delay: 20s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/pict.png")
+                                        (alt   "Pict rendering demo")
+                                        (style "animation-delay: 25s;")))))))
+        ,(section-block
+          "Why WebRacket?"
+          "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
+          (list
+           (make-ul-list
+            (list
+             "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
+             "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
+             "Use WebRacket to prototype ideas that could influence a future Racket WebAssembly backend."))))
+        ,(section-block
+          "Language Coverage"
+          "WebRacket implements a substantial portion of Racket with a focus on practical web applications."
+          (list
+           (card-grid
+            (list
+             (list `(h3 "Numbers")
+                   `(p "Flonums and fixnums."))
+             (list `(h3 "Hash Tables")
+                   `(p "Mutable hash tables for "
+                       (strong (code "eq?"))
+                       ", "
+                       (strong (code "eqv?"))
+                       ", "
+                       (strong (code "equal?"))
+                       ", and "
+                       (strong (code "always?"))
+                       " comparisons."))
+             (list `(h3 "Structures")
+                   `(p "Support for structure properties, super structures, and applicable structs."))
+             (list `(h3 "Syntax")
+                   `(p "Standard Racket expander support, including for and match forms."))
+             (list `(h3 "Control Flow")
+                   `(p "Tail calls, multiple values, and upward exceptions."))
+             (list `(h3 "Builtins")
+                   `(p "Large parts of racket/base is available."))
+             (list `(h3 "Concurrency")
+                   `(p "Single-threaded execution only."))
+             (list `(h3 "Modules")
+                   `(p "Work in progress. Use include for now.")))
+            "coverage-grid"))
+          #f
+          "section--coverage")
+        ,(section-block
+          "Toolchain Essentials"
+          "A small set of tools power the WebRacket workflow from source to the browser."
+          (list
+           `(div (@ (class "toolchain-panel"))
+                 (p (@ (class "toolchain-lede")) "Three tools cover build, run, and serve with minimal setup.")
+                 ,(make-ul-list
+                   (list
+                    (string-append "wasm-tools builds and validates the WebAssembly output. ")
+                    (string-append "Node.js enables running generated programs in the terminal. ")
+                    (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
+                   "toolchain-list")))
+          #f
+          "section--toolchain")
+        ,(section-block
+          "Compiler Pipeline"
+          "WebRacket uses a direct-style compiler with NanoPass transformations before emitting WebAssembly."
+          (list
+           (card-grid
+            (list
+             (list `(div (@ (class "pipeline-header"))
+                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         (h3 (@ (class "pipeline-title")) "Frontend"))
+                   `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
+             (list `(div (@ (class "pipeline-header"))
+                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         (h3 (@ (class "pipeline-title")) "Middle End"))
+                   `(p "Nanopass passes like closure conversion and ANF make environments and intermediate values explicit."))
+             (list `(div (@ (class "pipeline-header"))
+                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         (h3 (@ (class "pipeline-title")) "Backend"))
+                   `(p "Destination-driven code generation emits folded WebAssembly code."))
+             (list `(div (@ (class "pipeline-header"))
+                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         (h3 (@ (class "pipeline-title")) "Runtime"))
+                   `(p "A custom runtime avoids reliance on host functionality where possible.")))
+            "pipeline-grid"))
+          #f
+          "section--pipeline")
+        ,(section-block
+          "Roadmap"
+          "The long-term goal is full Racket support, but there is plenty more to tackle next."
+          (list
+           (make-ul-list
+            (list
+             "Fix bugs reported by early adopters and stabilize the current runtime."
+             "Unlock modules by completing linklet support."
+             "Add complex numbers, bignums, impersonators, and chaperones."
+             "Improve regular expression support and consider CPS for continuations.")))
+          #f
+          "section--roadmap")
+        ,(section-block
+          "Example Projects"
+          "WebRacket already powers interactive demos that showcase browser APIs."
+          (list
+           (card-grid
+            (list
+             (list `(h3 "MathJax 4 Editor")
+                   `(p "Live formula preview with WebRacket + MathJax.")
+                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             (list `(h3 "Matrix Rain")
+                   `(p "Terminal-style animation powered by XtermJS.")
+                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             (list `(h3 "MiniScheme REPL")
+                   `(p "Interactive Scheme session running in the browser.")
+                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             (list `(h3 "Canvas + Pict")
+                   `(p "Space Invaders and Pict rendering showcase.")
+                   `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
+            "examples-grid"))
+          "examples"
+          "section--examples")
+        ,(footer-section)))
+
+;; installation-page : -> List
+;;   Installation page layout.
+(define (installation-page)
+  `(div (@ (class "page"))
+        ,(navbar)
+        (section (@ (class "install-hero"))
+                 (div (@ (class "install-hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "wasm-tools")
+                           (span (@ (class "pill")) "Node.js")
+                           (span (@ (class "pill")) "Racket 9+")
+                           (span (@ (class "pill")) "raco-static-web"))
+                      (h1 (@ (class "hero-title")) "Installation")
+                      (p (@ (class "hero-lead"))
+                         "Set up WebRacket for terminal and browser workflows.")
+                      (p (@ (class "install-hero-note"))
+                         "WebRacket requires wasm-tools and Node.js for compilation and testing.")))
+        ,(section-block
+          "Prerequisites"
+          "Short-version checklist for a working WebRacket setup."
+          (list
+           `(div (@ (class "install-grid"))
+                 (div (@ (class "install-grid-item"))
+                      (span (@ (class "install-grid-icon")) "✓")
+                      (span (@ (class "install-grid-text")) "wasm-tools (Bytecode Alliance) v1.243.0+"))
+                 (div (@ (class "install-grid-item"))
+                      (span (@ (class "install-grid-icon")) "✓")
+                      (span (@ (class "install-grid-text"))
+                            "Node.js (must support "
+                            (code "--experimental-wasm-exnref")
+                            ")."))
+                 (div (@ (class "install-grid-item"))
+                      (span (@ (class "install-grid-icon")) "✓")
+                      (span (@ (class "install-grid-text")) "Racket 9.0"))
+                 (div (@ (class "install-grid-item"))
+                      (span (@ (class "install-grid-icon")) "✓")
+                      (span (@ (class "install-grid-text")) "raco-static-web"))
+                 (div (@ (class "install-grid-item"))
+                      (span (@ (class "install-grid-icon")) "✓")
+                      (span (@ (class "install-grid-text")) "WebRacket repo clone"))))
+          #f
+          "install-section")
+        ,(section-block
+          "Installation Steps"
+          "Follow the steps below to install dependencies and run WebRacket locally."
+          (list
+           `(div (@ (class "install-steps"))
+                 (div (@ (class "install-step-card"))
+                      (h3 "1. wasm-tools")
+                      (p "Download the latest wasm-tools release from the Bytecode Alliance.")
+                      (p (a (@ (href "https://github.com/bytecodealliance/wasm-tools/releases"))
+                            "https://github.com/bytecodealliance/wasm-tools/releases"))
+                      (p "Extract it and move the binary onto your PATH.")
+                      (pre (code "tar -xvf wasm-tools-1.243.0-aarch64-macos.tar.gz"))
+                      (pre (code "sudo mv wasm-tools /usr/local/bin/"))
+                      (p "Verify the installation:")
+                      (pre (code "wasm-tools"))
+                      (div (@ (class "callout"))
+                           (strong "Troubleshooting: ")
+                           "On macOS, you may get a Privacy & Security prompt. Allow "
+                           (code "wasm-tools")
+                           " to run from System Settings."))
+                 (div (@ (class "install-step-card"))
+                      (h3 "2. Node.js")
+                      (p "Install a recent Node.js release.")
+                      (p (a (@ (href "https://nodejs.org/en/download")) "https://nodejs.org/en/download"))
+                      (p " Verify Node runs runs in your terminal.")
+                      (pre (code "node"))
+                      (p "Confirm the required flags work.")
+                      (pre (code "node --experimental-wasm-exnref --expose-gc"))
+                      (div (@ (class "callout"))
+                           (strong "Troubleshooting: ")
+                           "WebRacket needs support for "
+                           (code "--experimental-wasm-exnref")
+                           ", so the command above must start without errors."))
+                 (div (@ (class "install-step-card"))
+                      (h3 "3. Racket")
+                      (p "Install Racket 9 or newer."))
+                 (div (@ (class "install-step-card"))
+                      (h3 "4. raco-static-web")
+                      (p "Install the local web server package and verify it starts in a folder with an HTML file.")
+                      (pre (code "raco pkg install raco-static-web"))
+                      (pre (code "raco static-web")))
+                 (div (@ (class "install-step-card"))
+                      (h3 "5. Clone the WebRacket repo")
+                      (p "Clone the WebRacket repository (contains compiler and examples).")
+                      (pre (code "git clone https://github.com/soegaard/webracket.git")))
+                 (div (@ (class "install-step-card"))
+                      (h3 "6. Quick test: Run the examples")
+                      (p "Serve the examples locally.")
+                      (pre (code "cd examples\nraco static-web"))
+                      (p "Open http://localhost:8000/ and select an example - find the html file."))))
+          #f
+          "install-section")
+        ,(footer-section)))
+
 ;; init-dom : -> Void
 ;; Builds and attaches the page DOM plus its CSS styles.
 (define (init-dom)
@@ -239,6 +530,106 @@ a { color: var(--blue); text-decoration: none; }
   color: var(--muted);
   font-size: 0.85rem;
 }
+.install-hero {
+  margin-top: 32px;
+}
+.install-hero-panel {
+  background: linear-gradient(145deg, rgba(101, 79, 240, 0.18), rgba(74, 108, 255, 0.08));
+  border: 1px solid rgba(101, 79, 240, 0.28);
+  border-radius: 28px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+}
+.install-hero-note {
+  margin: 0;
+  color: var(--muted);
+  max-width: 70ch;
+}
+.install-grid {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+.install-grid-item {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+}
+.install-grid-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(101, 79, 240, 0.25);
+  border: 1px solid rgba(101, 79, 240, 0.45);
+  color: #F5F6FF;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.install-grid-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.install-steps {
+  display: grid;
+  gap: 24px;
+}
+.install-step-card {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.install-step-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #F7F8FF;
+}
+.install-step-card p {
+  margin: 0;
+  color: var(--muted);
+}
+.callout {
+  background: rgba(101, 79, 240, 0.12);
+  border: 1px solid rgba(101, 79, 240, 0.28);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+pre {
+  background: #0B0D1D;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #F7F8FF;
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+code {
+  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+pre code {
+  white-space: pre-wrap;
+}
 .section {
   position: relative;
   display: flex;
@@ -248,6 +639,9 @@ a { color: var(--blue); text-decoration: none; }
   padding: 28px 24px;
   border-radius: 28px;
   overflow: hidden;
+}
+.install-section {
+  margin-top: 84px;
 }
 .section::before {
   content: "";
@@ -662,6 +1056,16 @@ a { color: var(--blue); text-decoration: none; }
 .highlight { color: var(--gold); font-weight: 600; }
 .accent    { color: var(--blue); }
 .warning   { color: var(--red); }
+@media (min-width: 860px) {
+  .install-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .install-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 900px) {
   .page { padding: 24px 0 64px; }
   .hero { grid-template-columns: 1fr; gap: 24px; }
@@ -677,181 +1081,12 @@ CSS
   (js-append-child! head style)
 
   (define page-structure
-    `(div (@ (class "page"))
-          (nav (@ (class "navbar"))
-               (div (@ (class "nav-left"))
-                    (img (@ (class "nav-logo")
-                            (src "assets/hex-racket-wasm-logo.svg")
-                            (alt "WebRacket logo")))
-                    (span "WebRacket"))
-               (div (@ (class "nav-links"))
-                    (a (@ (class "nav-link") (href "is-webracket-for-you.html")) "For You")
-                    (a (@ (class "nav-link") (href "overview.html")) "Overview")
-                    (a (@ (class "nav-link") (href "roadmap.html")) "Road Ahead")
-                    (a (@ (class "nav-link") (href "installation.html")) "Installation")
-                    (a (@ (class "nav-link") (href "examples.html")) "Examples")))
-          (section (@ (class "hero"))
-                   (div (@ (class "hero-panel"))
-                        (h1 (@ (class "hero-title")) "WebRacket")
-                        (div (@ (class "hero-copy"))
-                             (p  (@ (class "hero-lead"))
-                                 "A Racket to WebAssembly compiler."
-                                 (br)
-                                 "Build practical browser applications with Racket.")
-                             #;(div (@ (class "pill-row"))
-                                  (span (@ (class "pill")) "JS + DOM FFI")
-                                  (span (@ (class "pill")) "Runs in browsers + Node"))
-                             (div (@ (class "hero-cta"))
-                                  (a (@ (class "cta-button") (href "#examples")) "Try Live Demo")
-                                  (a (@ (class "cta-link") (href "https://github.com/soegaard/webracket")) "View on GitHub"))))
-                   (div (@ (class "hero-carousel-panel"))
-                        (div (@ (class "hero-carousel"))
-                             (div (@ (class "carousel-header"))
-                                  (span "Example screenshots")
-                                  (span (@ (class "highlight")) "Live demos"))
-                             (div (@ (class "carousel-frame"))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/mathjax4.png")
-                                          (alt   "MathJax 4 editor")
-                                          (style "animation-delay: 0s;")))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/matrix-rain.png")
-                                          (alt   "Matrix digital rain demo")
-                                          (style "animation-delay: 5s;")))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/xtermjs.png")
-                                          (alt   "XtermJS terminal demo")
-                                          (style "animation-delay: 10s;")))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/minischeme.png")
-                                          (alt   "MiniScheme browser REPL")
-                                          (style "animation-delay: 15s;")))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/space-invaders.png")
-                                          (alt   "Space Invaders canvas game")
-                                          (style "animation-delay: 20s;")))
-                                  (img (@ (class "carousel-shot")
-                                          (src   "assets/examples/screenshots/pict.png")
-                                          (alt   "Pict rendering demo")
-                                          (style "animation-delay: 25s;")))))))
-          ,(section-block
-            "Why WebRacket?"
-            "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
-            (list
-             (make-ul-list
-              (list
-               "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
-               "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
-               "Use WebRacket to prototype ideas that could influence a future Racket WebAssembly backend."))))
-          ,(section-block
-            "Language Coverage"
-            "WebRacket implements a substantial portion of Racket with a focus on practical web applications."
-            (list
-             (card-grid
-              (list
-               (list `(h3 "Numbers")
-                     `(p "Flonums and fixnums."))
-               (list `(h3 "Hash Tables")
-                     `(p "Mutable hash tables for "
-                         (strong (code "eq?"))
-                         ", "
-                         (strong (code "eqv?"))
-                         ", "
-                         (strong (code "equal?"))
-                         ", and "
-                         (strong (code "always?"))
-                         " comparisons."))
-               (list `(h3 "Structures")
-                     `(p "Support for structure properties, super structures, and applicable structs."))
-               (list `(h3 "Syntax")
-                     `(p "Standard Racket expander support, including for and match forms."))
-               (list `(h3 "Control Flow")
-                     `(p "Tail calls, multiple values, and upward exceptions."))
-               (list `(h3 "Builtins")
-                     `(p "Large parts of racket/base is available."))
-               (list `(h3 "Concurrency")
-                     `(p "Single-threaded execution only."))
-               (list `(h3 "Modules")
-                     `(p "Work in progress. Use include for now.")))
-              "coverage-grid"))
-            #f
-            "section--coverage")
-          ,(section-block
-            "Toolchain Essentials"
-            "A small set of tools power the WebRacket workflow from source to the browser."
-            (list
-             `(div (@ (class "toolchain-panel"))
-                   (p (@ (class "toolchain-lede")) "Three tools cover build, run, and serve with minimal setup.")
-                   ,(make-ul-list
-                     (list
-                      (string-append "wasm-tools builds and validates the WebAssembly output. ")
-                      (string-append "Node.js enables running generated programs in the terminal. ")
-                      (string-append "raco-static-web makes it easy to serve compiled artifacts locally."))
-                     "toolchain-list")))
-            #f
-            "section--toolchain")
-          ,(section-block
-            "Compiler Pipeline"
-            "WebRacket uses a direct-style compiler with NanoPass transformations before emitting WebAssembly."
-            (list
-             (card-grid
-              (list
-               (list `(div (@ (class "pipeline-header"))
-                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
-                           (h3 (@ (class "pipeline-title")) "Frontend"))
-                     `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
-               (list `(div (@ (class "pipeline-header"))
-                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
-                           (h3 (@ (class "pipeline-title")) "Middle End"))
-                     `(p "Nanopass passes like closure conversion and ANF make environments and intermediate values explicit."))
-               (list `(div (@ (class "pipeline-header"))
-                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
-                           (h3 (@ (class "pipeline-title")) "Backend"))
-                     `(p "Destination-driven code generation emits folded WebAssembly code."))
-               (list `(div (@ (class "pipeline-header"))
-                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
-                           (h3 (@ (class "pipeline-title")) "Runtime"))
-                     `(p "A custom runtime avoids reliance on host functionality where possible.")))
-              "pipeline-grid"))
-            #f
-            "section--pipeline")
-          ,(section-block
-            "Roadmap"
-            "The long-term goal is full Racket support, but there is plenty more to tackle next."
-            (list
-             (make-ul-list
-              (list
-               "Fix bugs reported by early adopters and stabilize the current runtime."
-               "Unlock modules by completing linklet support."
-               "Add complex numbers, bignums, impersonators, and chaperones."
-               "Improve regular expression support and consider CPS for continuations.")))
-            #f
-            "section--roadmap")
-          ,(section-block
-            "Example Projects"
-            "WebRacket already powers interactive demos that showcase browser APIs."
-            (list
-             (card-grid
-              (list
-               (list `(h3 "MathJax 4 Editor")
-                     `(p "Live formula preview with WebRacket + MathJax.")
-                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
-               (list `(h3 "Matrix Rain")
-                     `(p "Terminal-style animation powered by XtermJS.")
-                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
-               (list `(h3 "MiniScheme REPL")
-                     `(p "Interactive Scheme session running in the browser.")
-                     `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
-               (list `(h3 "Canvas + Pict")
-                     `(p "Space Invaders and Pict rendering showcase.")
-                     `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
-              "examples-grid"))
-            "examples"
-            "section--examples")
-          (footer (@ (class "footer"))
-                  (span "WebRacket — Racket for the browser.")
-                  (span "Made for the Racket community."))))
+    (case (current-page)
+      [(installation) (installation-page)]
+      [else (home-page)]))
+  
   (define page (sxml->dom page-structure))
+  
   (js-append-child! body page))
 
 ;;;
