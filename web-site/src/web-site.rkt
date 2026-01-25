@@ -350,7 +350,9 @@
                            ", so the command above must start without errors."))
                  (div (@ (class "install-step-card"))
                       (h3 "3. Racket")
-                      (p "Install Racket 9 or newer."))
+                      (p "Install Racket 9 or newer.")
+                      (p (a (@ (href "https://download.racket-lang.org/"))
+                            "https://download.racket-lang.org/")))
                  (div (@ (class "install-step-card"))
                       (h3 "4. raco-static-web")
                       (p "Install the local web server package and verify it starts in a folder with an HTML file.")
@@ -592,9 +594,29 @@ a { color: var(--blue); text-decoration: none; }
   border-radius: 24px;
   padding: 26px;
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+/* Subtle left→right progression cue for Installation Steps */
+.install-steps .install-step-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(130% 120% at 12% 10%, rgba(101, 79, 240, 0.07), rgba(101, 79, 240, 0) 62%);
+  pointer-events: none;
+}
+.install-steps .install-step-card:nth-child(2)::after {
+  background: radial-gradient(130% 120% at 35% 10%, rgba(101, 79, 240, 0.06), rgba(101, 79, 240, 0) 62%);
+}
+.install-steps .install-step-card:nth-child(3)::after {
+  background: radial-gradient(130% 120% at 60% 10%, rgba(101, 79, 240, 0.05), rgba(101, 79, 240, 0) 62%);
+}
+.install-steps .install-step-card:nth-child(n+4)::after {
+  background: radial-gradient(130% 120% at 85% 10%, rgba(101, 79, 240, 0.05), rgba(101, 79, 240, 0) 62%);
 }
 .install-step-card h3 {
   margin: 0;
