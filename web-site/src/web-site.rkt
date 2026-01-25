@@ -485,15 +485,20 @@ a { color: var(--blue); text-decoration: none; }
 }
 .pipeline-grid .card {
   position: relative;
-  padding-top: 36px;
+  padding-top: 20px;
 }
-/* Anchor step badges */
+/* Pipeline: inline step badge + title */
 .pipeline-grid .card::before {
+  content: none;
+}
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.pipeline-step {
   counter-increment: step;
-  content: counter(step);
-  position: absolute;
-  top: 12px;
-  left: 14px;
   width: 28px;
   height: 28px;
   border-radius: 999px;
@@ -506,7 +511,14 @@ a { color: var(--blue); text-decoration: none; }
   border: 1px solid rgba(101, 79, 240, 0.45);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12);
   transform: translate(-2px, -6px);
-  z-index: 2;
+  flex-shrink: 0;
+}
+.pipeline-step::before {
+  content: counter(step);
+}
+.pipeline-title {
+  margin: 0;
+  line-height: 1.2;
 }
 .pipeline-grid .card > * {
   position: relative;
@@ -778,13 +790,21 @@ CSS
             (list
              (card-grid
               (list
-               (list `(h3 "Frontend")
+               (list `(div (@ (class "pipeline-header"))
+                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                           (h3 (@ (class "pipeline-title")) "Frontend"))
                      `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
-               (list `(h3 "Middle End")
+               (list `(div (@ (class "pipeline-header"))
+                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                           (h3 (@ (class "pipeline-title")) "Middle End"))
                      `(p "Nanopass passes like closure conversion and ANF make environments and intermediate values explicit."))
-               (list `(h3 "Backend")
+               (list `(div (@ (class "pipeline-header"))
+                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                           (h3 (@ (class "pipeline-title")) "Backend"))
                      `(p "Destination-driven code generation emits folded WebAssembly code."))
-               (list `(h3 "Runtime")
+               (list `(div (@ (class "pipeline-header"))
+                           (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                           (h3 (@ (class "pipeline-title")) "Runtime"))
                      `(p "A custom runtime avoids reliance on host functionality where possible.")))
               "pipeline-grid"))
             #f
