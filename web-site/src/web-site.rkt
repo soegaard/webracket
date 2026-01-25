@@ -697,7 +697,7 @@ CSS
                                   (span (@ (class "pill")) "Runs in browsers + Node"))
                              (div (@ (class "hero-cta"))
                                   (a (@ (class "cta-button") (href "#examples")) "Try Live Demo")
-                                  (a (@ (class "cta-link") (href "https://github.com/racket/webracket")) "View on GitHub"))))
+                                  (a (@ (class "cta-link") (href "https://github.com/soegaard/webracket")) "View on GitHub"))))
                    (div (@ (class "hero-carousel-panel"))
                         (div (@ (class "hero-carousel"))
                              (div (@ (class "carousel-header"))
