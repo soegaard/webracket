@@ -84,73 +84,73 @@
 
 (define examples
   (list
-   (hash 'id "mathjax4"
-         'title "MathJax 4 Editor"
-         'path "examples/mathjax4"
-         'entry "mathjax.html"
-         'summary "Live two-pane editor that previews LaTeX formulas with MathJax 4."
-         'features (list "DOM + JS FFI"
-                         "MathJax interop"
-                         "Event handlers"
-                         "Dynamic updates")
-         'featured? #t)
-   (hash 'id "matrix-rain"
-         'title "Matrix Rain"
-         'path "examples/matrix-rain"
-         'entry "matrix-rain.html"
-         'summary "Terminal-style animation that recreates the Matrix digital rain effect."
-         'features (list "JS FFI"
-                         "XtermJS integration"
-                         "Timers / animation loop"
-                         "DOM styling")
-         'featured? #t)
-   (hash 'id "xtermjs-demo"
-         'title "XtermJS Demo"
-         'path "examples/xtermjs-demo"
-         'entry "xtermjs-demo.html"
-         'summary "Interactive terminal demo with themed styling and built-in commands."
-         'features (list "JS FFI"
-                         "DOM layout"
-                         "Input handling"
-                         "XtermJS add-ons"))
-   (hash 'id "minischeme"
-         'title "MiniScheme REPL"
-         'path "examples/minischeme"
-         'entry "minischeme.html"
-         'summary "Browser-based Scheme REPL with a lightweight evaluator and editor."
-         'features (list "Evaluator/runtime integration"
-                         "Ports + printing output"
-                         "Error handling"
-                         "XtermJS terminal")
-         'featured? #t)
-   (hash 'id "space-invaders"
-         'title "Space Invaders"
-         'path "examples/space-invaders"
-         'entry "space-invaders.html"
-         'summary "Classic arcade shooter rendered on a canvas with keyboard controls."
-         'features (list "Canvas API via JS FFI"
-                         "Animation loop"
-                         "Keyboard events"
-                         "Mutable game state")
-         'featured? #t)
-   (hash 'id "pict"
-         'title "Canvas + Pict"
-         'path "examples/pict"
-         'entry "pict.html"
-         'summary "Port of Racket’s pict rendering pipeline to the browser."
-         'features (list "Graphics rendering pipeline"
-                         "Canvas interop"
-                         "Vector drawing"
-                         "Performance"))
-   (hash 'id "raco-tiles"
-         'title "Raccoon Tiles"
-         'path "examples/raco"
-         'entry "tiles.html"
-         'summary "Pixel-art tile sheet rendered to canvas with a custom palette."
-         'features (list "Canvas drawing"
-                         "Color palette"
-                         "Geometry helpers"
-                         "Layout math"))))
+   (make-hash (list (cons 'id "mathjax4")
+                    (cons 'title "MathJax 4 Editor")
+                    (cons 'path "examples/mathjax4")
+                    (cons 'entry "mathjax.html")
+                    (cons 'summary "Live two-pane editor that previews LaTeX formulas with MathJax 4.")
+                    (cons 'features (list "DOM + JS FFI"
+                                          "MathJax interop"
+                                          "Event handlers"
+                                          "Dynamic updates"))
+                    (cons 'featured? #t)))
+   (make-hash (list (cons 'id "matrix-rain")
+                    (cons 'title "Matrix Rain")
+                    (cons 'path "examples/matrix-rain")
+                    (cons 'entry "matrix-rain.html")
+                    (cons 'summary "Terminal-style animation that recreates the Matrix digital rain effect.")
+                    (cons 'features (list "JS FFI"
+                                          "XtermJS integration"
+                                          "Timers / animation loop"
+                                          "DOM styling"))
+                    (cons 'featured? #t)))
+   (make-hash (list (cons 'id "xtermjs-demo")
+                    (cons 'title "XtermJS Demo")
+                    (cons 'path "examples/xtermjs-demo")
+                    (cons 'entry "xtermjs-demo.html")
+                    (cons 'summary "Interactive terminal demo with themed styling and built-in commands.")
+                    (cons 'features (list "JS FFI"
+                                          "DOM layout"
+                                          "Input handling"
+                                          "XtermJS add-ons"))))
+   (make-hash (list (cons 'id "minischeme")
+                    (cons 'title "MiniScheme REPL")
+                    (cons 'path "examples/minischeme")
+                    (cons 'entry "minischeme.html")
+                    (cons 'summary "Browser-based Scheme REPL with a lightweight evaluator and editor.")
+                    (cons 'features (list "Evaluator/runtime integration"
+                                          "Ports + printing output"
+                                          "Error handling"
+                                          "XtermJS terminal"))
+                    (cons 'featured? #t)))
+   (make-hash (list (cons 'id "space-invaders")
+                    (cons 'title "Space Invaders")
+                    (cons 'path "examples/space-invaders")
+                    (cons 'entry "space-invaders.html")
+                    (cons 'summary "Classic arcade shooter rendered on a canvas with keyboard controls.")
+                    (cons 'features (list "Canvas API via JS FFI"
+                                          "Animation loop"
+                                          "Keyboard events"
+                                          "Mutable game state"))
+                    (cons 'featured? #t)))
+   (make-hash (list (cons 'id "pict")
+                    (cons 'title "Canvas + Pict")
+                    (cons 'path "examples/pict")
+                    (cons 'entry "pict.html")
+                    (cons 'summary "Port of Racket’s pict rendering pipeline to the browser.")
+                    (cons 'features (list "Graphics rendering pipeline"
+                                          "Canvas interop"
+                                          "Vector drawing"
+                                          "Performance"))))
+   (make-hash (list (cons 'id "raco-tiles")
+                    (cons 'title "Raccoon Tiles")
+                    (cons 'path "examples/raco")
+                    (cons 'entry "tiles.html")
+                    (cons 'summary "Pixel-art tile sheet rendered to canvas with a custom palette.")
+                    (cons 'features (list "Canvas drawing"
+                                          "Color palette"
+                                          "Geometry helpers"
+                                          "Layout math"))))))
 
 ;; example-demo-url : Hash -> (U #f String)
 ;;   Builds the local demo URL when an entry HTML file is available.
