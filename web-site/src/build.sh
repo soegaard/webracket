@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "-- Compiling web-site.rkt --"
-racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
+racket ../../webracket.rkt --browser --ffi dom --ffi standard --stdlib web-site.rkt
 
 echo "-- Copying Assets --"
 cp web-site.wasm ../public
