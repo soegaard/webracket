@@ -695,8 +695,10 @@ CSS
                         (h1 (@ (class "hero-title")) "WebRacket")
                         (div (@ (class "hero-copy"))
                              (p  (@ (class "hero-lead"))
-                                 "A Racket to WebAssembly compiler. Build practical browser applications with Racket.")
-                             (div (@ (class "pill-row"))
+                                 "A Racket to WebAssembly compiler."
+                                 (br)
+                                 "Build practical browser applications with Racket.")
+                             #;(div (@ (class "pill-row"))
                                   (span (@ (class "pill")) "JS + DOM FFI")
                                   (span (@ (class "pill")) "Runs in browsers + Node"))
                              (div (@ (class "hero-cta"))
