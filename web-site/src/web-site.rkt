@@ -289,7 +289,7 @@
                       (p (@ (class "hero-lead"))
                          "Set up WebRacket for terminal and browser workflows.")
                       (p (@ (class "install-hero-note"))
-                         "WebRacket requires wasm-tools and Node.js for compilation and testing.")))
+                         "Requires wasm-tools and Node.js for compilation and testing.")))
         ,(section-block
           "Prerequisites"
           "Short-version checklist for a working WebRacket setup."
