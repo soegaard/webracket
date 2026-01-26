@@ -92,7 +92,7 @@
                     (cons 'summary "Live two-pane editor with instant MathJax 4 LaTeX preview.")
                     (cons 'features (list "MathJax 4 interop"
                                           "DOM + JS FFI"
-                                          "Event-driven updates"
+                                          "Input handling"
                                           "Editor state"))))
    (make-hash (list (cons 'id "matrix-rain")
                     (cons 'title "Matrix Rain")
@@ -101,9 +101,8 @@
                     (cons 'tags (list 'xterm 'dom))
                     (cons 'summary "Matrix rain animation rendered in a browser terminal.")
                     (cons 'features (list "XtermJS integration"
-                                          "JS FFI"
-                                          "Timers / animation loop"
-                                          "DOM styling"))))
+                                          "DOM + JS FFI"
+                                          "Timers / animation loop"))))
    (make-hash (list (cons 'id "xtermjs-demo")
                     (cons 'title "XtermJS Demo")
                     (cons 'path "examples/xtermjs-demo")
@@ -111,7 +110,6 @@
                     (cons 'tags (list 'xterm 'dom))
                     (cons 'summary "Interactive terminal with themed styling and built-in commands.")
                     (cons 'features (list "XtermJS add-ons"
-                                          "DOM layout"
                                           "Input handling"
                                           "Command dispatch"))))
    (make-hash (list (cons 'id "minischeme")
@@ -121,8 +119,8 @@
                     (cons 'tags (list 'repl 'xterm))
                     (cons 'summary "Browser-based Scheme REPL with evaluator, editor, and output.")
                     (cons 'features (list "XtermJS terminal"
+                                          "Input handling + history"
                                           "Runtime evaluator"
-                                          "Input + history"
                                           "Ports + printing"))))
    (make-hash (list (cons 'id "space-invaders")
                     (cons 'title "Space Invaders")
@@ -130,9 +128,9 @@
                     (cons 'entry "space-invaders.html")
                     (cons 'tags (list 'canvas 'dom))
                     (cons 'summary "Arcade shooter on canvas with responsive keyboard controls.")
-                    (cons 'features (list "Canvas API via JS FFI"
+                    (cons 'features (list "Canvas API via DOM + JS FFI"
                                           "Keyboard events"
-                                          "Animation loop"
+                                          "Timers / animation loop"
                                           "Mutable game state"))))
    (make-hash (list (cons 'id "pict")
                     (cons 'title "Canvas + Pict")
@@ -140,9 +138,8 @@
                     (cons 'entry "pict.html")
                     (cons 'tags (list 'canvas))
                     (cons 'summary "Racket pict rendering pipeline compiled for the browser canvas.")
-                    (cons 'features (list "Graphics rendering pipeline"
-                                          "Canvas interop"
-                                          "Vector drawing"
+                    (cons 'features (list "Canvas interop"
+                                          "Graphics rendering pipeline"
                                           "Performance focus"))))
    (make-hash (list (cons 'id "raco-tiles")
                     (cons 'title "Raccoon Tiles")
@@ -150,9 +147,8 @@
                     (cons 'entry "tiles.html")
                     (cons 'tags (list 'canvas))
                     (cons 'summary "Pixel-art tile sheet drawn on canvas with a custom palette.")
-                    (cons 'features (list "Canvas drawing"
+                    (cons 'features (list "Canvas interop"
                                           "Palette mapping"
-                                          "Geometry helpers"
                                           "Grid layout"))))))
 
 (define featured-example-ids
@@ -178,8 +174,8 @@
 (define (example-kind-class tags)
   (cond
     [(member 'mathjax tags) "kind-mathjax"]
-    [(member 'repl tags) "kind-repl"]
     [(member 'xterm tags) "kind-xterm"]
+    [(member 'repl tags) "kind-repl"]
     [(member 'canvas tags) "kind-canvas"]
     [(member 'dom tags) "kind-dom"]
     [else #f]))
@@ -458,9 +454,9 @@
                            (span (@ (class "pill")) "REPL"))
                       (h1 (@ (class "hero-title")) "Examples")
                       (p (@ (class "hero-lead"))
-                         "Interactive demos that showcase browser APIs and WebRacket features.")
+                         "Interactive demos showcasing browser APIs and WebRacket features.")
                       (p (@ (class "hero-sublead"))
-                         "Each example includes a live demo link (when available) and source code on GitHub.")))
+                         "Each example links to a live demo (when available) and source on GitHub.")))
         ,@(if (null? featured-examples)
               '()
               (list
@@ -469,13 +465,29 @@
                 "Start here for the most representative WebRacket demos."
                 (list (examples-grid featured-examples "examples-grid--featured"))
                 #f
-                "section--examples")))
+                "section--examples section-featured")))
         ,(section-block
           "All examples"
           "Browse every example in the repository."
           (list (examples-grid all-examples))
           #f
           "section--examples")
+        ,(section-block
+          "Next steps"
+          "Ready to build your own? Here are a few good places to continue."
+          (list
+           `(ul (@ (class "next-steps-links"))
+                (li (a (@ (class "example-action action-primary")
+                          (href "installation.html"))
+                       "Installation"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "overview.html"))
+                       "Overview"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "roadmap.html"))
+                       "Road Ahead"))))
+          #f
+          "section--examples section-next-steps")
         ,(footer-section)))
 
 ;; installation-page : -> List
@@ -1294,6 +1306,10 @@ pre code {
 }
 
 /* Examples emphasis */
+/* Examples: featured accent line */
+.section-featured .section-title::after {
+  width: 72px;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1322,7 +1338,9 @@ pre code {
 .example-card {
   gap: 16px;
   position: relative;
+  overflow: hidden;
 }
+/* Examples: category cue strip */
 .example-card::before {
   content: "";
   position: absolute;
@@ -1330,15 +1348,14 @@ pre code {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--example-accent, rgba(101, 79, 240, 0.16)), transparent);
-  opacity: 0.8;
+  background: var(--example-accent, rgba(101, 79, 240, 0.22));
   pointer-events: none;
 }
-.example-card.kind-dom { --example-accent: rgba(74, 108, 255, 0.16); }
-.example-card.kind-canvas { --example-accent: rgba(92, 132, 255, 0.16); }
-.example-card.kind-repl { --example-accent: rgba(132, 93, 255, 0.16); }
-.example-card.kind-mathjax { --example-accent: rgba(144, 110, 255, 0.16); }
-.example-card.kind-xterm { --example-accent: rgba(98, 93, 255, 0.16); }
+.example-card.kind-dom { --example-accent: rgba(82, 110, 255, 0.22); }
+.example-card.kind-canvas { --example-accent: rgba(86, 138, 255, 0.22); }
+.example-card.kind-repl { --example-accent: rgba(132, 96, 255, 0.24); }
+.example-card.kind-mathjax { --example-accent: rgba(146, 112, 255, 0.24); }
+.example-card.kind-xterm { --example-accent: rgba(88, 92, 255, 0.24); }
 .example-showcases {
   display: flex;
   flex-direction: column;
@@ -1361,6 +1378,17 @@ pre code {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+.next-steps-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.next-steps-links li {
+  margin: 0;
 }
 .example-action {
   color: var(--text);
