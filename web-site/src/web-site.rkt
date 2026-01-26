@@ -99,7 +99,7 @@
                     (cons 'path "examples/matrix-rain")
                     (cons 'entry "matrix-rain.html")
                     (cons 'tags (list 'xterm 'dom))
-                    (cons 'summary "Matrix-style digital rain rendered in a browser terminal.")
+                    (cons 'summary "Matrix rain animation rendered in a browser terminal.")
                     (cons 'features (list "XtermJS integration"
                                           "DOM + JS FFI"
                                           "Timers / animation loop"))))
@@ -117,7 +117,7 @@
                     (cons 'path "examples/minischeme")
                     (cons 'entry "minischeme.html")
                     (cons 'tags (list 'repl 'xterm))
-                    (cons 'summary "Browser-based Scheme REPL with editor, evaluator, and output.")
+                    (cons 'summary "Browser-based Scheme REPL with evaluator, editor, and output.")
                     (cons 'features (list "XtermJS terminal"
                                           "Input handling + history"
                                           "Runtime evaluator"
@@ -460,36 +460,34 @@
         ,@(if (null? featured-examples)
               '()
               (list
-               `(section (@ (class "section-featured"))
-                         ,(section-block
-                           "Featured"
-                           "Start here for the most representative WebRacket demos."
-                           (list (examples-grid featured-examples "examples-grid--featured"))
-                           #f
-                           "section--examples"))))
+               (section-block
+                "Featured"
+                "Start here for the most representative WebRacket demos."
+                (list (examples-grid featured-examples "examples-grid--featured"))
+                #f
+                "section--examples section-featured")))
         ,(section-block
           "All examples"
           "Browse every example in the repository."
           (list (examples-grid all-examples))
           #f
           "section--examples")
-        (section (@ (class "next-steps-panel"))
-                 ,(section-block
-                   "Next steps"
-                   "Ready to build your own? Here are a few good places to continue."
-                   (list
-                    `(ul (@ (class "next-steps-links"))
-                         (li (a (@ (class "example-action action-primary")
-                                   (href "installation.html"))
-                                "Installation →"))
-                         (li (a (@ (class "example-action action-secondary")
-                                   (href "overview.html"))
-                                "Overview →"))
-                         (li (a (@ (class "example-action action-secondary")
-                                   (href "roadmap.html"))
-                                "Road Ahead →"))))
-                   #f
-                   "section--examples section-next-steps"))
+        ,(section-block
+          "Next steps"
+          "Ready to build your own? Here are a few good places to continue."
+          (list
+           `(ul (@ (class "next-steps-links"))
+                (li (a (@ (class "example-action action-primary")
+                          (href "installation.html"))
+                       "Installation"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "overview.html"))
+                       "Overview"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "roadmap.html"))
+                       "Road Ahead"))))
+          #f
+          "section--examples section-next-steps")
         ,(footer-section)))
 
 ;; installation-page : -> List
@@ -1307,11 +1305,10 @@ pre code {
   outline-offset: 3px;
 }
 
-/* Featured accent */
+/* Examples emphasis */
+/* Examples: featured accent line */
 .section-featured .section-title::after {
-  height: 3px;
-  opacity: 0.95;
-  width: 84px;
+  width: 72px;
 }
 .sr-only {
   position: absolute;
@@ -1343,7 +1340,7 @@ pre code {
   position: relative;
   overflow: hidden;
 }
-/* Example category strip */
+/* Examples: category cue strip */
 .example-card::before {
   content: "";
   position: absolute;
@@ -1351,23 +1348,14 @@ pre code {
   left: 0;
   right: 0;
   height: 2px;
-  opacity: 0.25;
+  background: var(--example-accent, rgba(101, 79, 240, 0.22));
   pointer-events: none;
 }
-.kind-dom::before { background: #6A7CFF; }
-.kind-canvas::before { background: #5FB6FF; }
-.kind-mathjax::before { background: #8B6CFF; }
-.kind-xterm::before { background: #5662D9; }
-.kind-repl::before { background: #7A5CFF; }
-/* Featured card emphasis */
-.section-featured .example-card {
-  padding: calc(var(--card-padding) + 8px);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-}
-.section-featured .example-card h3 {
-  font-size: 1.06em;
-}
+.example-card.kind-dom { --example-accent: rgba(82, 110, 255, 0.22); }
+.example-card.kind-canvas { --example-accent: rgba(86, 138, 255, 0.22); }
+.example-card.kind-repl { --example-accent: rgba(132, 96, 255, 0.24); }
+.example-card.kind-mathjax { --example-accent: rgba(146, 112, 255, 0.24); }
+.example-card.kind-xterm { --example-accent: rgba(88, 92, 255, 0.24); }
 .example-showcases {
   display: flex;
   flex-direction: column;
@@ -1401,14 +1389,6 @@ pre code {
 }
 .next-steps-links li {
   margin: 0;
-}
-/* Next steps CTA */
-.next-steps-panel {
-  background: rgba(120, 100, 255, 0.12);
-  border-left: 2px solid rgba(140, 120, 255, 0.8);
-}
-.next-steps-panel a:hover {
-  text-decoration: underline;
 }
 .example-action {
   color: var(--text);
