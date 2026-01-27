@@ -1,4 +1,5 @@
 ;;;
+<<<<<<< HEAD
 ;;; Completion of functions in the chapters:
 ;;;   Data Structures
 ;;;   Input and Output
@@ -12,6 +13,12 @@
 ; A drop down triangle reveals a list of functions in the chapter.
 ; Each function is linked to its documentation.
 
+=======
+;;; Implementation Status Dashboard data + helpers.
+;;; Included by web-site.rkt to render the WebRacket status page.
+;;;
+
+>>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
 
 (define (sort-symbols syms)
   (define (insert sym lst)
@@ -2773,6 +2780,7 @@
 ; (js-log prepared-chapters)
 
 
+<<<<<<< HEAD
 ;;; Gauge component: renders a flex container with a gradient-filled bar
 ;;; showing the percentage. The unfilled portion is covered with a grey
 ;;; overlay so the gradient corresponds to the entire gauge, not just the
@@ -2807,11 +2815,16 @@
                ,(number->string primitives-cnt)
                ")"))
   )
+=======
+(define (format-percent pct)
+  (inexact->exact (round (* 100 pct))))
+>>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
 
 (define (primitive-url sym)
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
+<<<<<<< HEAD
 (define (primitive-li sym implemented-set)
   (define stdlib?  (memq sym standard-library-identifiers))
   (define checked? (memq sym implemented-set))
@@ -2831,6 +2844,27 @@
     [(list title primitives)
      #;(define implemented (filter (lambda (p) (memq p implemented-primitives))
                                    primitives))
+=======
+(define (primitive-status sym implemented-set)
+  (cond
+    [(memq sym standard-library-identifiers) (values "status-chip status-chip--stdlib" "Stdlib")]
+    [(memq sym implemented-set) (values "status-chip status-chip--done" "Implemented")]
+    [else (values "status-chip status-chip--todo" "Missing")]))
+
+(define (primitive-item sym implemented-set)
+  (define-values (status-class status-label) (primitive-status sym implemented-set))
+  `(li (@ (class "status-item"))
+       (span (@ (class ,status-class)) ,status-label)
+       (a (@ (class "status-link")
+             (href ,(primitive-url sym))
+             (target "_blank")
+             (rel "noreferrer noopener"))
+          (code ,(symbol->string sym)))))
+
+(define (section-card section implemented-set)
+  (match section
+    [(list title primitives)
+>>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
      (define implemented
        (for/list ([p (in-list primitives)]
                   #:when (memq p implemented-set))
@@ -2839,6 +2873,7 @@
      (define pct (if (null? primitives)
                      0
                      (/ (length implemented) (length primitives))))
+<<<<<<< HEAD
 
      (define list-id (format "sec-~a-list" idx))
      (define tri-id  (format "sec-~a-tri"  idx))
@@ -2926,3 +2961,86 @@
         ,@chapters-sxml))
 
 (js-append-child! (js-document-body) (sxml->dom page))
+=======
+     (define pct-num (format-percent pct))
+     `(details (@ (class "status-section"))
+       (summary (@ (class "status-summary"))
+                (div (@ (class "status-summary-main"))
+                     (h3 (@ (class "status-title")) ,title)
+                     (p (@ (class "status-count"))
+                        ,(format "~a of ~a primitives" (length implemented) (length primitives))))
+                (div (@ (class "status-summary-metric"))
+                     (span (@ (class "status-percent")) ,(format "~a%" pct-num))
+                     (div (@ (class "status-bar"))
+                          (div (@ (class "status-bar-fill")
+                                  (style ,(format "width: ~a%;" pct-num)))))))
+       (div (@ (class "status-body"))
+            (ul (@ (class "status-list"))
+                ,@(map (λ (sym) (primitive-item sym implemented-set))
+                       (sort-symbols primitives)))))]))
+
+(define (chapter-block chapter)
+  (match chapter
+    [(list title sections implemented-set)
+     `(div (@ (class "status-chapter"))
+           (div (@ (class "status-chapter-header"))
+                (h3 ,title))
+           (div (@ (class "status-chapter-grid"))
+                ,@(map (λ (section) (section-card section implemented-set))
+                       sections)))]))
+
+(define (implementation-status-page)
+  `(div (@ (class "page page--status"))
+        ,(navbar)
+        (section (@ (class "status-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Runtime primitives")
+                           (span (@ (class "pill")) "Stdlib coverage")
+                           (span (@ (class "pill")) "Documentation links"))
+                      (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard")
+                      (p (@ (class "hero-lead"))
+                         "Track WebRacket primitive coverage and browse per-section completion against the Racket reference.")
+                      (p (@ (class "hero-sublead"))
+                         "Each function links to the Racket docs; sections expand to show implemented, stdlib-backed, and missing primitives.")))
+        ,(section-block
+          "At a glance"
+          "Summary metrics across the tracked chapters."
+          (list
+           (card-grid
+            (list
+             (list `(h3 "Implemented primitives")
+                   `(p (@ (class "status-metric"))
+                       ,(number->string (length implemented-primitives)))
+                   `(p "Runtime primitives implemented in WebRacket."))
+             (list `(h3 "Stdlib coverage")
+                   `(p (@ (class "status-metric"))
+                       ,(number->string total-standard-library-identifiers))
+                   `(p "Identifiers provided by the WebRacket standard library."))
+             (list `(h3 "Missing primitives")
+                   `(p (@ (class "status-metric"))
+                       ,(number->string missing-primitives))
+                   `(p "Still to be implemented in the runtime."))
+             (list `(h3 "Stdlib-only identifiers")
+                   `(p (@ (class "status-metric"))
+                       ,(number->string (- (length standard-library-identifiers)
+                                           total-standard-library-identifiers)))
+                   `(p "Identifiers that exist only in the WebRacket standard library."))))
+            "status-summary-grid")
+           (callout
+            'info
+            "About the counts"
+            `(p "Pict functions are tracked separately and excluded from primitive totals. "
+                "Stdlib identifiers count as covered for completeness."))))
+          #f
+          "section--status")
+        ,(section-block
+          "Completion by chapter"
+          "Expand a section to see which primitives are implemented or still missing."
+          (list
+           `(div (@ (class "status-chapters"))
+                 ,@(map chapter-block prepared-chapters)))
+          #f
+          "section--status")
+        ,(footer-section)))
+>>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2

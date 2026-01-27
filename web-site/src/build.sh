@@ -8,6 +8,7 @@ cp web-site.html ../public/index.html
 cp installation.html ../public
 cp documentation.html ../public
 cp examples.html ../public
+cp implementation-status.html ../public
 
 echo "-- Done --"
 if [[ "$(uname)" == "Darwin" ]]; then
