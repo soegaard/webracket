@@ -1416,6 +1416,7 @@ pre {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
+  --card-max-w: 380px;
 }
 .status-section {
   background: var(--surface);
@@ -1423,6 +1424,8 @@ pre {
   border-radius: 20px;
   overflow: hidden;
   transition: transform 150ms ease, border-color 150ms ease;
+  max-width: var(--card-max-w);
+  justify-self: start;
 }
 .status-section[open] {
   grid-column: 1 / -1;
@@ -1459,6 +1462,9 @@ pre {
 .status-title {
   margin: 0;
   font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .status-count {
   margin: 0;
