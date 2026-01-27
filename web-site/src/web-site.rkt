@@ -180,6 +180,17 @@
     [(member 'dom tags) "kind-dom"]
     [else #f]))
 
+;; example-kind-label : (Listof Symbol) -> (U #f String)
+;;   Labels the kind pill in example cards.
+(define (example-kind-label tags)
+  (cond
+    [(member 'mathjax tags) "MathJax"]
+    [(member 'xterm tags) "XtermJS"]
+    [(member 'repl tags) "REPL"]
+    [(member 'canvas tags) "Canvas"]
+    [(member 'dom tags) "DOM"]
+    [else #f]))
+
 ;; example-tags-string : (Listof Symbol) -> String
 ;;   Joins tags for data attributes.
 (define (example-tags-string tags)
@@ -193,6 +204,7 @@
   (define features    (hash-ref example 'features))
   (define tags        (hash-ref example 'tags '()))
   (define kind-class  (example-kind-class  tags))
+  (define kind-label  (example-kind-label  tags))
   (define tags-string (example-tags-string tags))
   (define demo-url    (example-demo-url    example))
   (define source-url  (example-source-url  example))
@@ -200,7 +212,11 @@
   `(div (@ (class ,(string-append base-class
                                  (if kind-class (string-append " " kind-class) "")))
            (data-tags ,tags-string))
-        (h3 ,title)
+        (div (@ (class "example-header"))
+             (h3 ,title)
+             ,@(if kind-label
+                   (list `(span (@ (class "example-kind")) ,kind-label))
+                   '()))
         (p ,summary)
         (div (@ (class "example-showcases"))
              (span (@ (class "sr-only")) "Showcases:")
@@ -1331,6 +1347,9 @@ pre code {
 }
 .section-featured .card.example-card {
   padding: calc(var(--card-padding) + 8px);
+  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.32));
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--example-accent, rgba(101, 79, 240, 0.1));
+  background: linear-gradient(180deg, var(--example-accent, rgba(101, 79, 240, 0.08)), rgba(0, 0, 0, 0)) , var(--surface);
 }
 .sr-only {
   position: absolute;
@@ -1350,6 +1369,32 @@ pre code {
   gap: 16px;
   position: relative;
   overflow: hidden;
+  --example-accent: rgba(101, 79, 240, 0.22);
+  --example-accent-strong: rgba(101, 79, 240, 0.4);
+}
+.example-card:hover,
+.example-card:focus-within {
+  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.4));
+  transform: translateY(-2px);
+  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.32), 0 14px 24px var(--example-accent, rgba(101, 79, 240, 0.12));
+}
+.example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.example-kind {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--example-accent-strong, rgba(101, 79, 240, 0.4));
+  color: #E7EBFF;
+  background: var(--example-accent, rgba(101, 79, 240, 0.12));
+  white-space: nowrap;
 }
 /* Examples: category cue strip */
 .example-card::before {
@@ -1359,14 +1404,37 @@ pre code {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--example-accent, rgba(101, 79, 240, 0.22));
+  background: linear-gradient(90deg, var(--example-accent, rgba(101, 79, 240, 0.22)), rgba(0, 0, 0, 0));
   pointer-events: none;
+  transition: background 200ms ease;
 }
-.example-card.kind-dom { --example-accent: rgba(82, 110, 255, 0.22); }
-.example-card.kind-canvas { --example-accent: rgba(86, 138, 255, 0.22); }
-.example-card.kind-repl { --example-accent: rgba(132, 96, 255, 0.24); }
-.example-card.kind-mathjax { --example-accent: rgba(146, 112, 255, 0.24); }
-.example-card.kind-xterm { --example-accent: rgba(88, 92, 255, 0.24); }
+.example-card:hover::before,
+.example-card:focus-within::before {
+  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.4)), rgba(0, 0, 0, 0));
+}
+.section-featured .example-card::before {
+  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.4)), rgba(0, 0, 0, 0));
+}
+.example-card.kind-dom {
+  --example-accent: rgba(82, 110, 255, 0.22);
+  --example-accent-strong: rgba(82, 110, 255, 0.42);
+}
+.example-card.kind-canvas {
+  --example-accent: rgba(86, 138, 255, 0.22);
+  --example-accent-strong: rgba(86, 138, 255, 0.42);
+}
+.example-card.kind-repl {
+  --example-accent: rgba(132, 96, 255, 0.24);
+  --example-accent-strong: rgba(132, 96, 255, 0.44);
+}
+.example-card.kind-mathjax {
+  --example-accent: rgba(146, 112, 255, 0.24);
+  --example-accent-strong: rgba(146, 112, 255, 0.45);
+}
+.example-card.kind-xterm {
+  --example-accent: rgba(88, 92, 255, 0.24);
+  --example-accent-strong: rgba(88, 92, 255, 0.44);
+}
 .example-showcases {
   display: flex;
   flex-direction: column;
@@ -1415,9 +1483,23 @@ pre code {
 .action-primary {
   color: var(--blue);
   font-weight: 600;
+  opacity: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 200ms ease;
+}
+.action-primary:hover,
+.action-primary:focus-visible {
+  transform: translateX(2px);
+  text-decoration: underline;
+}
+.action-primary:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.7);
+  outline-offset: 3px;
 }
 .action-secondary {
-  opacity: 0.65;
+  opacity: 0.78;
 }
 .action-secondary:hover,
 .action-secondary:focus-visible {
