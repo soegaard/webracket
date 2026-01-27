@@ -2824,6 +2824,8 @@
                  ,@(map (λ (section) (section-card section implemented-set))
                         sections)))]))
 
+
+  
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
         ,(navbar)
@@ -2860,15 +2862,13 @@
                    `(p (@ (class "status-metric"))
                        ,(number->string (- (length standard-library-identifiers)
                                            total-standard-library-identifiers)))
-                   `(p "Identifiers that exist only in the WebRacket standard library."))))
+                   `(p "Identifiers that exist only in the WebRacket standard library.")))))
             "status-summary-grid")
-           (callout
-            'info
-            "About the counts"
-            `(p "Pict functions are tracked separately and excluded from primitive totals. "
-                "Stdlib identifiers count as covered for completeness."))))
-          #f
-          "section--status")
+        ,(callout
+          'info
+          "About the counts"
+          `(p "Pict functions are tracked separately and excluded from primitive totals. "
+              "Stdlib identifiers count as covered for completeness."))
         ,(section-block
           "Completion by chapter"
           "Expand a section to see which primitives are implemented or still missing."
@@ -2877,4 +2877,5 @@
                  ,@(map chapter-block prepared-chapters)))
           #f
           "section--status")
-        ,(footer-section))
+        ,(footer-section)
+        ))
