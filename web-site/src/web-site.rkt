@@ -1493,13 +1493,21 @@ pre {
   border-radius: 999px;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --pct: 0%;
+  --pct-decimal: 0;
+  --pct-decimal-safe: max(var(--pct-decimal), 0.01);
 }
 .status-bar-fill {
   height: 100%;
+  width: var(--pct);
   background: linear-gradient(90deg, rgba(209, 58, 58, 0.85),
                                       rgba(242, 183, 5, 0.85),
                                       rgba(74, 108, 255, 0.9));
+  background-size: calc(100% / var(--pct-decimal-safe)) 100%;
+  background-position: left center;
+  background-repeat: no-repeat;
   box-shadow: 0 0 10px rgba(74, 108, 255, 0.2);
+  transition: width 220ms ease;
 }
 .status-bar-fill--low {
   background: linear-gradient(90deg, rgba(209, 58, 58, 0.92),
