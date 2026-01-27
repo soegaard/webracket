@@ -188,14 +188,14 @@
 ;; example-card : Hash -> List
 ;;   Creates a card for a single example entry.
 (define (example-card example)
-  (define title (hash-ref example 'title))
-  (define summary (hash-ref example 'summary))
-  (define features (hash-ref example 'features))
-  (define tags (hash-ref example 'tags '()))
-  (define kind-class (example-kind-class tags))
+  (define title       (hash-ref example 'title))
+  (define summary     (hash-ref example 'summary))
+  (define features    (hash-ref example 'features))
+  (define tags        (hash-ref example 'tags '()))
+  (define kind-class  (example-kind-class  tags))
   (define tags-string (example-tags-string tags))
-  (define demo-url (example-demo-url example))
-  (define source-url (example-source-url example))
+  (define demo-url    (example-demo-url    example))
+  (define source-url  (example-source-url  example))
   `(div (@ (class ,(string-append "card example-card"
                                  (if kind-class (string-append " " kind-class) "")))
            (data-tags ,tags-string))
