@@ -196,7 +196,8 @@
   (define tags-string (example-tags-string tags))
   (define demo-url    (example-demo-url    example))
   (define source-url  (example-source-url  example))
-  `(div (@ (class ,(string-append "card example-card"
+  (define base-class "card example-card")
+  `(div (@ (class ,(string-append base-class
                                  (if kind-class (string-append " " kind-class) "")))
            (data-tags ,tags-string))
         (h3 ,title)
@@ -616,6 +617,7 @@
   --surface-soft: rgba(255, 255, 255, 0.03);
   --text:         #E6E8F2;
   --muted:        #B6BDDD;
+  --card-padding: 20px;
 }
 * { box-sizing: border-box; }
 body {
@@ -1034,7 +1036,7 @@ pre code {
   background: var(--surface);
   border: 1px solid var(--section-card-border, rgba(255, 255, 255, 0.08)); /* Per-section card tint */
   border-radius: 20px;
-  padding: 20px;
+  padding: var(--card-padding);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1326,6 +1328,9 @@ pre code {
 /* Examples: featured accent line */
 .section-featured .section-title::after {
   width: 72px;
+}
+.section-featured .card.example-card {
+  padding: calc(var(--card-padding) + 8px);
 }
 .sr-only {
   position: absolute;
