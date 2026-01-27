@@ -65,6 +65,12 @@
   `(a (@ (class "code-link") (href ,url) (target "_blank") (rel "noreferrer noopener"))
       (code ,text)))
 
+;; code-pill : String String -> List
+;;   Builds a compact pill-style code link.
+(define (code-pill url text)
+  `(a (@ (class "code-pill") (href ,url) (target "_blank") (rel "noreferrer noopener"))
+      ,text))
+
 ;; make-ul-list : (Listof String) (U #f String) -> List
 ;;   Builds a <ul> sxml node from a list of text items and an optional class.
 (define (make-ul-list items [class-name #f])
@@ -600,9 +606,16 @@
                ,(code-link "https://github.com/nanopass/nanopass-framework-racket" "NanoPass")
                " framework.")
            `(p "The passes are as follows:")
-           `(pre (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code"))
+           `(div (@ (class "pass-list-block"))
+                 (div (@ (class "pass-list-label")) "Compiler passes")
+                 (pre (@ (class "pass-list"))
+                      (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code")))
            `(p "See the comments in \"" ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
                "\" for an explanation of each pass.")
+           (callout
+            'note
+            "Why so many passes?"
+            `(p "Small, focused passes keep each transformation understandable, testable, and easier to evolve."))
            `(p "The code generator generates WebAssembly in the form of " (code "S-expressions")
                " in the \"folded\" format.")
            `(p "This code generator is inspired by \""
@@ -623,14 +636,14 @@
                ,(code-link "https://bytecodealliance.github.io/wasm-tools/parse"
                            "parse")
                " converts the S-expression representation into bytecode format.")
-           `(p "The main part of the compiler is in \""
-               ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
-               "\". The WebAssembly "
-               "runtime is in \"" ,(code-link (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
-               "\". The standard library (implemented in "
-               "WebRacket) is found in " ,(code-link (gh-dir "stdlib/") "stdlib/")
+           `(p "The main part of the compiler is in "
+               ,(code-pill (gh-file "compiler.rkt") "compiler.rkt")
+               ". The WebAssembly runtime is in "
+               ,(code-pill (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
+               ". The standard library (implemented in WebRacket) is found in "
+               ,(code-pill (gh-dir "stdlib/") "stdlib/")
                ". FFI bindings for popular libraries are in "
-               ,(code-link (gh-dir "ffi/") "ffi/") ".")
+               ,(code-pill (gh-dir "ffi/") "ffi/") ".")
            `(p "It has been a design goal to avoid relying on functionality provided by the "
                "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
                "at some point? For browser functionality there is no way around interfacing with "
@@ -640,7 +653,27 @@
             'note
             "Runtime goal"
             `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
-                "non-JavaScript environments when they become viable.")))
+                "non-JavaScript environments when they become viable."))
+           (callout
+            'info
+            "Further reading"
+            `(p "Explore the compiler and runtime sources to see how WebRacket’s pipeline fits together.")
+            `(div (@ (class "doc-cta-group"))
+                  (a (@ (class "doc-cta doc-cta--primary")
+                        (href ,(gh-file "compiler.rkt"))
+                        (target "_blank")
+                        (rel "noreferrer noopener"))
+                     "Open compiler.rkt")
+                  (a (@ (class "doc-cta")
+                        (href ,(gh-file "runtime-wasm.rkt"))
+                        (target "_blank")
+                        (rel "noreferrer noopener"))
+                     "View runtime")
+                  (a (@ (class "doc-cta")
+                        (href ,(gh-dir "stdlib/"))
+                        (target "_blank")
+                        (rel "noreferrer noopener"))
+                     "Browse stdlib"))))
           #f
           #f)
         ,(footer-section)))
@@ -789,6 +822,28 @@ a.code-link:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.6);
   outline-offset: 2px;
   border-radius: 4px;
+}
+a.code-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #E9ECFA;
+  font-size: 0.85rem;
+  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  line-height: 1.4;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+a.code-pill:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+}
+a.code-pill:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.7);
+  outline-offset: 3px;
 }
 .page {
   width: min(1200px, 92vw);
@@ -1069,25 +1124,27 @@ a.code-link:focus-visible {
 /* Installation: troubleshooting callout refinement */
 .callout {
   background: rgba(101, 79, 240, 0.08);
-  border: 1px solid rgba(101, 79, 240, 0.24);
+  border: 1px solid rgba(101, 79, 240, 0.18);
+  border-left: 3px solid hsla(var(--accent-h, 252), 78%, 72%, 0.6);
   border-radius: 16px;
-  padding: 14px 16px;
+  padding: 14px 18px;
   color: var(--muted);
   font-size: 0.92rem;
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 .callout--note {
   background: rgba(101, 79, 240, 0.08);
-  border-color: rgba(101, 79, 240, 0.24);
+  border-color: rgba(101, 79, 240, 0.18);
 }
 .callout--info {
   background: rgba(74, 108, 255, 0.08);
-  border-color: rgba(74, 108, 255, 0.26);
+  border-color: rgba(74, 108, 255, 0.2);
 }
 .callout--warn {
   background: rgba(242, 183, 5, 0.1);
-  border-color: rgba(242, 183, 5, 0.28);
+  border-color: rgba(242, 183, 5, 0.2);
 }
 .section .callout {
   margin: 18px 0;
@@ -1102,6 +1159,7 @@ a.code-link:focus-visible {
   color: #F2F4FF;
   font-weight: 600;
   margin: 0;
+  line-height: 1.2;
 }
 .callout-icon {
   width: 20px;
@@ -1112,7 +1170,7 @@ a.code-link:focus-visible {
   opacity: 0.9;
 }
 .callout-title + * {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .callout p,
 .callout pre {
@@ -1174,6 +1232,22 @@ pre {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+}
+.pass-list-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 72ch;
+}
+.pass-list-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pass-list {
+  padding: 16px 18px;
+  line-height: 1.75;
 }
 code {
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -1351,6 +1425,39 @@ pre code {
   --example-card-border: hsla(var(--accent-h), 75%, 75%, 0.09);
   --example-card-shadow: 0 13px 26px rgba(0, 0, 0, 0.23);
   --example-divider: rgba(255, 255, 255, 0.084);
+}
+.doc-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.doc-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #F4F6FF;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.doc-cta:hover,
+.doc-cta:focus-visible {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+.doc-cta:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.7);
+  outline-offset: 3px;
+}
+.doc-cta--primary {
+  background: linear-gradient(120deg, rgba(101, 79, 240, 0.9), rgba(74, 108, 255, 0.8));
+  border-color: rgba(74, 108, 255, 0.55);
+  box-shadow: 0 10px 20px rgba(74, 108, 255, 0.22);
 }
 
 /* Coverage grid */
