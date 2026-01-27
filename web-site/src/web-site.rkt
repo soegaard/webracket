@@ -1430,14 +1430,16 @@ pre {
   overflow: visible;
 }
 .status-summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 18px;
+  row-gap: 10px;
   align-items: center;
-  gap: 16px;
   padding: 18px 20px;
   cursor: pointer;
   list-style: none;
-  flex-wrap: wrap;
   transition: background 150ms ease, border-color 150ms ease;
+  --meter-w: 220px;
 }
 .status-summary:hover {
   background: rgba(74, 108, 255, 0.08);
@@ -1453,7 +1455,6 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1 1 220px;
 }
 .status-title {
   margin: 0;
@@ -1465,12 +1466,10 @@ pre {
   font-size: 0.85rem;
 }
 .status-summary-metric {
-  margin-left: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
-  flex: 1 1 220px;
+  gap: 4px;
 }
 .status-summary-action {
   display: inline-flex;
@@ -1480,7 +1479,6 @@ pre {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-left: 12px;
 }
 .status-summary-chevron {
   font-size: 1rem;
@@ -1495,8 +1493,9 @@ pre {
   color: var(--text);
 }
 .status-bar {
-  width: clamp(160px, 36vw, 260px);
-  height: 9px;
+  width: min(var(--meter-w), 100%);
+  max-width: var(--meter-w);
+  height: 10px;
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   overflow: hidden;
@@ -1533,6 +1532,18 @@ pre {
   --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.92),
                                                rgba(101, 79, 240, 0.94));
   box-shadow: 0 0 12px rgba(101, 79, 240, 0.32);
+}
+@media (min-width: 720px) and (max-width: 999px) {
+  .status-summary {
+    --meter-w: 200px;
+  }
+}
+@media (max-width: 719px) {
+  .status-summary {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+    --meter-w: 100%;
+  }
 }
 .status-body {
   padding: 6px 16px 10px;
