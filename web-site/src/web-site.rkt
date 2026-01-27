@@ -249,10 +249,11 @@
   (define active-page (current-page))
   `(nav (@ (class "navbar"))
         (div (@ (class "nav-left"))
-             (img (@ (class "nav-logo")
-                     (src "assets/hex-racket-wasm-logo.svg")
-                     (alt "WebRacket logo")))
-             (span "WebRacket"))
+             (a (@ (class "nav-home") (href "index.html"))
+                (img (@ (class "nav-logo")
+                        (src "assets/hex-racket-wasm-logo.svg")
+                        (alt "WebRacket logo")))
+                (span "WebRacket")))
         (div (@ (class "nav-links"))
              ,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
              ,(nav-link "Overview" "overview.html" 'overview active-page)
@@ -646,6 +647,22 @@ a { color: var(--blue); text-decoration: none; }
   gap: 12px;
   font-weight: 600;
   font-size: 1.05rem;
+}
+.nav-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+.nav-home:hover,
+.nav-home:focus-visible {
+  opacity: 0.9;
+}
+.nav-home:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 4px;
+  border-radius: 999px;
+  padding-right: 4px;
 }
 .nav-logo {
   width: 34px;
