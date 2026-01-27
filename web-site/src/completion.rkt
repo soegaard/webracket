@@ -2788,10 +2788,9 @@
     (a (@ (class ,(string-append "prim-row prim-row--link " row-class))
           (href ,(primitive-url sym))
           (target "_blank")
-          (rel "noreferrer noopener")
-          (title ,name))
+          (rel "noreferrer noopener"))
        (span (@ (class ,(string-append status-class " prim-badge"))) ,status-label)
-       (span (@ (class "prim-name"))
+       (span (@ (class "prim-name") (title ,name))
             (code ,name)))))
 
 (define (section-id title)
