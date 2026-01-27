@@ -2871,7 +2871,7 @@
                                              pct-num
                                              pct-decimal)))
                           (div (@ (class ,(format "status-bar-fill status-bar-fill--~a"
-                                                  tier)))))))
+                                                  tier))))))
                 (div (@ (class "status-summary-action"))
                      (span (@ (class "status-summary-text")) "View")
                      (span (@ (class "status-summary-chevron")) "▸")))
