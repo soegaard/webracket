@@ -4,7 +4,7 @@ racket ../../webracket.rkt --browser --ffi dom --ffi standard --stdlib web-site.
 
 echo "-- Copying Assets --"
 cp web-site.wasm ../public
-cp web-site.html ../public
+cp web-site.html ../public/index.html
 cp installation.html ../public
 cp examples.html ../public
 
