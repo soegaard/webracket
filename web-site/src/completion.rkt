@@ -2829,8 +2829,9 @@
   (define missing (- total implemented-count))
   (define pct (if (zero? total) 0 (/ implemented-count total)))
   (define pct-num (format-percent pct))
+  (define pct-decimal (exact->inexact pct))
   (define tier (section-progress-tier pct-num))
-  (list title primitives implemented-count total missing pct-num tier (section-id title)))
+  (list title primitives implemented-count total missing pct-num pct-decimal tier (section-id title)))
 
 (define (section-card section implemented-set)
   (match section
@@ -2844,8 +2845,9 @@
      (define implemented-count (list-ref stats 2))
      (define total (list-ref stats 3))
      (define pct-num (list-ref stats 5))
-     (define tier (list-ref stats 6))
-     (define anchor-id (list-ref stats 7))
+     (define pct-decimal (list-ref stats 6))
+     (define tier (list-ref stats 7))
+     (define anchor-id (list-ref stats 8))
      (define aria-label
        (format "~a: ~a%, ~a of ~a primitives implemented"
                title pct-num implemented-count total))
@@ -2864,10 +2866,12 @@
                              (aria-label ,aria-label)
                              (aria-valuemin "0")
                              (aria-valuemax "100")
-                             (aria-valuenow ,(number->string pct-num)))
+                             (aria-valuenow ,(number->string pct-num))
+                             (style ,(format "--pct: ~a%; --pct-decimal: ~a;"
+                                             pct-num
+                                             pct-decimal)))
                           (div (@ (class ,(format "status-bar-fill status-bar-fill--~a"
-                                                  tier))
-                                  (style ,(format "width: ~a%;" pct-num))))))
+                                                  tier)))))))
                 (div (@ (class "status-summary-action"))
                      (span (@ (class "status-summary-text")) "View")
                      (span (@ (class "status-summary-chevron")) "▸")))
