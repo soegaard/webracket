@@ -1533,24 +1533,60 @@ pre {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
 }
-.status-item {
-  display: flex;
+.prim-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.status-link {
-  color: var(--text);
+.prim-row--link {
+  text-decoration: none;
+  color: inherit;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
-.status-link code {
+.prim-row--link:hover {
+  background: rgba(74, 108, 255, 0.08);
+  border-color: rgba(74, 108, 255, 0.25);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+.prim-row--link:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.7);
+  outline-offset: 3px;
+}
+.prim-badge {
+  justify-self: start;
+  width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+.prim-name {
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  justify-self: start;
+}
+.prim-name code {
+  display: block;
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   font-size: 0.9rem;
+  white-space: inherit;
+  overflow: inherit;
+  text-overflow: inherit;
 }
 .status-chip {
   border-radius: 999px;
@@ -2235,6 +2271,16 @@ pre code {
 @media (min-width: 1000px) {
   .install-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .prim-row {
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+  }
+  .prim-badge {
+    width: 120px;
   }
 }
 @media (max-width: 900px) {

@@ -2778,13 +2778,21 @@
 
 (define (primitive-item sym implemented-set)
   (define-values (status-class status-label) (primitive-status sym implemented-set))
-  `(li (@ (class "status-item"))
-       (span (@ (class ,status-class)) ,status-label)
-       (a (@ (class "status-link")
-             (href ,(primitive-url sym))
-             (target "_blank")
-             (rel "noreferrer noopener"))
-          (code ,(symbol->string sym)))))
+  (define name (symbol->string sym))
+  (define row-class
+    (cond
+      [(memq sym standard-library-identifiers) "prim-row--stdlib"]
+      [(memq sym implemented-set) "prim-row--implemented"]
+      [else "prim-row--missing"]))
+  `(li
+    (a (@ (class ,(string-append "prim-row prim-row--link " row-class))
+          (href ,(primitive-url sym))
+          (target "_blank")
+          (rel "noreferrer noopener")
+          (title ,name))
+       (span (@ (class ,(string-append status-class " prim-badge"))) ,status-label)
+       (span (@ (class "prim-name"))
+            (code ,name)))))
 
 (define (section-id title)
   ;; Build a slug without regex: ASCII alphanumerics separated by single hyphens.
