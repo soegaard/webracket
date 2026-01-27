@@ -2787,9 +2787,30 @@
           (code ,(symbol->string sym)))))
 
 (define (section-id title)
-  (define raw (regexp-replace* #px"[^a-z0-9]+" (string-downcase title) "-"))
-  (define trimmed (regexp-replace* #px"(^-+|-+$)" raw ""))
-  (string-append "section-" (if (string=? trimmed "") "untitled" trimmed)))
+  ;; Build a slug without regex: ASCII alphanumerics separated by single hyphens.
+  (define (ascii-alnum? ch)
+    (define code (char->integer ch))
+    (or (and (<= (char->integer #\a) code)
+             (<= code (char->integer #\z)))
+        (and (<= (char->integer #\0) code)
+             (<= code (char->integer #\9)))))
+  (define lower (string-downcase title))
+  (define-values (rev-chars _last-hyphen? _saw-char?)
+    (for/fold ([chars '()] [last-hyphen? #f] [saw-char? #f])
+              ([ch (in-string lower)])
+      (cond
+        [(ascii-alnum? ch)
+         (values (cons ch chars) #f #t)]
+        [(or last-hyphen? (not saw-char?))
+         (values chars #t saw-char?)]
+        [else
+         (values (cons #\- chars) #t saw-char?)])))
+  (define trimmed-rev
+    (if (and (pair? rev-chars) (char=? (car rev-chars) #\-))
+        (cdr rev-chars)
+        rev-chars))
+  (define cleaned (list->string (reverse trimmed-rev)))
+  (string-append "section-" (if (string=? cleaned "") "untitled" cleaned)))
 
 (define (section-implemented-count primitives implemented-set)
   (for/sum ([p (in-list primitives)]
@@ -3133,5 +3154,3 @@
           "section--status")
         ,(status-smooth-scroll-script)
         ,(footer-section)))
-
-
