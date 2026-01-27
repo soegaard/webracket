@@ -3080,7 +3080,7 @@
                            (span (@ (class "pill")) "Runtime primitives")
                            (span (@ (class "pill")) "Stdlib coverage")
                            (span (@ (class "pill")) "Documentation links"))
-                      (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard !!")
+                      (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard")
                       (p (@ (class "hero-lead"))
                          "A progress tracker for contributors and users. "
                          "See which Racket primitives are implemented, what's missing, "
