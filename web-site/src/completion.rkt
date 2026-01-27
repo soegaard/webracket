@@ -2883,9 +2883,21 @@
        (div (@ (class "status-body"))
             (div (@ (class "status-body-header"))
                  (div (@ (class "status-body-legend"))
-                      (span (@ (class "status-chip status-chip--done")) "Implemented")
-                      (span (@ (class "status-chip status-chip--stdlib")) "Stdlib")
-                      (span (@ (class "status-chip status-chip--todo")) "Missing"))
+                      (button (@ (class "status-chip status-chip--done status-chip--filter status-chip--active")
+                                 (type "button")
+                                 (aria-pressed "true")
+                                 (data-status-group "implemented"))
+                              "Implemented")
+                      (button (@ (class "status-chip status-chip--stdlib status-chip--filter")
+                                 (type "button")
+                                 (aria-pressed "false")
+                                 (data-status-group "stdlib"))
+                              "Stdlib")
+                      (button (@ (class "status-chip status-chip--todo status-chip--filter")
+                                 (type "button")
+                                 (aria-pressed "false")
+                                 (data-status-group "missing"))
+                              "Missing"))
                  (button (@ (class "status-body-hint")
                             (type "button")
                             (onclick "var details = this.closest('details'); if (details) { details.removeAttribute('open'); }"))
@@ -3076,6 +3088,75 @@
      "  }\n"
      "})();"))
 
+(define (status-filter-script)
+  `(script
+     "(function() {\n"
+     "  const statusOrderMap = {\n"
+     "    implemented: ['implemented', 'stdlib', 'missing'],\n"
+     "    stdlib: ['stdlib', 'implemented', 'missing'],\n"
+     "    missing: ['missing', 'implemented', 'stdlib']\n"
+     "  };\n"
+     "  const getRowStatus = (row) => {\n"
+     "    if (row.classList.contains('prim-row--implemented')) return 'implemented';\n"
+     "    if (row.classList.contains('prim-row--stdlib')) return 'stdlib';\n"
+     "    return 'missing';\n"
+     "  };\n"
+     "  const getRowName = (row) => {\n"
+     "    const name = row.querySelector('.prim-name');\n"
+     "    return name ? name.textContent.trim() : row.textContent.trim();\n"
+     "  };\n"
+     "  const sortList = (listEl, activeGroup, activeDir) => {\n"
+     "    const priority = statusOrderMap[activeGroup] || statusOrderMap.implemented;\n"
+     "    const items = Array.from(listEl.querySelectorAll('li'));\n"
+     "    const decorated = items.map((item, index) => {\n"
+     "      const row = item.querySelector('.prim-row');\n"
+     "      const status = row ? getRowStatus(row) : 'missing';\n"
+     "      const name = row ? getRowName(row) : '';\n"
+     "      return { item, index, status, name };\n"
+     "    });\n"
+     "    decorated.sort((a, b) => {\n"
+     "      const groupDiff = priority.indexOf(a.status) - priority.indexOf(b.status);\n"
+     "      if (groupDiff !== 0) return groupDiff;\n"
+     "      const dir = a.status === activeGroup ? activeDir : 'asc';\n"
+     "      const nameDiff = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });\n"
+     "      if (nameDiff !== 0) return dir === 'asc' ? nameDiff : -nameDiff;\n"
+     "      return a.index - b.index;\n"
+     "    });\n"
+     "    decorated.forEach(({ item }) => listEl.appendChild(item));\n"
+     "  };\n"
+     "  document.querySelectorAll('.status-section').forEach((section) => {\n"
+     "    let activeGroup = 'implemented';\n"
+     "    let activeDir = 'asc';\n"
+     "    const listEl = section.querySelector('.status-list');\n"
+     "    const buttons = section.querySelectorAll('[data-status-group]');\n"
+     "    if (!listEl || buttons.length === 0) return;\n"
+     "    const syncButtons = () => {\n"
+     "      buttons.forEach((button) => {\n"
+     "        const group = button.getAttribute('data-status-group');\n"
+     "        const isActive = group === activeGroup;\n"
+     "        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');\n"
+     "        button.classList.toggle('status-chip--active', isActive);\n"
+     "      });\n"
+     "    };\n"
+     "    buttons.forEach((button) => {\n"
+     "      button.addEventListener('click', () => {\n"
+     "        const group = button.getAttribute('data-status-group');\n"
+     "        if (!group) return;\n"
+     "        if (group === activeGroup) {\n"
+     "          activeDir = activeDir === 'asc' ? 'desc' : 'asc';\n"
+     "        } else {\n"
+     "          activeGroup = group;\n"
+     "          activeDir = 'asc';\n"
+     "        }\n"
+     "        syncButtons();\n"
+     "        sortList(listEl, activeGroup, activeDir);\n"
+     "      });\n"
+     "    });\n"
+     "    syncButtons();\n"
+     "    sortList(listEl, activeGroup, activeDir);\n"
+     "  });\n"
+     "})();"))
+
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
         ,(navbar)
@@ -3168,7 +3249,8 @@
                             (target "_blank")
                             (rel "noreferrer noopener"))
                          "See issues"))))
-          #f
-          "section--status")
+         #f
+         "section--status")
         ,(status-smooth-scroll-script)
+        ,(status-filter-script)
         ,(footer-section)))

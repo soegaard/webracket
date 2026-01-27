@@ -1690,6 +1690,16 @@ pre {
   letter-spacing: 0.04em;
   font-weight: 600;
 }
+.status-chip--filter {
+  cursor: pointer;
+}
+.status-chip--filter:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+}
+.status-chip--active {
+  box-shadow: 0 0 0 1px rgba(233, 236, 255, 0.6);
+}
 .status-chip--done {
   background: rgba(74, 108, 255, 0.18);
   color: #C9D5FF;
