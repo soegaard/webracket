@@ -2786,6 +2786,32 @@
              (rel "noreferrer noopener"))
           (code ,(symbol->string sym)))))
 
+(define (section-id title)
+  (define raw
+    (regexp-replace* #px"[^a-z0-9]+" (string-downcase title) "-"))
+  (define trimmed (regexp-replace* #px"(^-+|-+$)" raw ""))
+  (string-append "section-" (if (string=? trimmed "") "untitled" trimmed)))
+
+(define (section-implemented-count primitives implemented-set)
+  (for/sum ([p (in-list primitives)]
+            #:when (memq p implemented-set))
+    1))
+
+(define (section-progress-tier pct-num)
+  (cond
+    [(< pct-num 20) "low"]
+    [(> pct-num 80) "strong"]
+    [else "mid"]))
+
+(define (section-stats title primitives implemented-set)
+  (define implemented-count (section-implemented-count primitives implemented-set))
+  (define total (length primitives))
+  (define missing (- total implemented-count))
+  (define pct (if (zero? total) 0 (/ implemented-count total)))
+  (define pct-num (format-percent pct))
+  (define tier (section-progress-tier pct-num))
+  (list title primitives implemented-count total missing pct-num tier (section-id title)))
+
 (define (section-card section implemented-set)
   (match section
     [(list title primitives)
@@ -2794,21 +2820,37 @@
                   #:when (memq p implemented-set))
          p))
 
-     (define pct (if (null? primitives)
-                     0
-                     (/ (length implemented) (length primitives))))
-     (define pct-num (format-percent pct))
-     `(details (@ (class "status-section"))
-       (summary (@ (class "status-summary"))
+     (define stats (section-stats title primitives implemented-set))
+     (define implemented-count (list-ref stats 2))
+     (define total (list-ref stats 3))
+     (define pct-num (list-ref stats 5))
+     (define tier (list-ref stats 6))
+     (define anchor-id (list-ref stats 7))
+     (define aria-label
+       (format "~a: ~a%, ~a of ~a primitives implemented"
+               title pct-num implemented-count total))
+     `(details (@ (class ,(format "status-section status-section--~a" tier))
+                  (id ,anchor-id))
+       (summary (@ (class "status-summary")
+                   (aria-label ,aria-label))
                 (div (@ (class "status-summary-main"))
                      (h3 (@ (class "status-title")) ,title)
                      (p (@ (class "status-count"))
-                        ,(format "~a of ~a primitives" (length implemented) (length primitives))))
+                        ,(format "~a of ~a primitives" implemented-count total)))
                 (div (@ (class "status-summary-metric"))
                      (span (@ (class "status-percent")) ,(format "~a%" pct-num))
-                     (div (@ (class "status-bar"))
-                          (div (@ (class "status-bar-fill")
-                                  (style ,(format "width: ~a%;" pct-num)))))))
+                     (div (@ (class "status-bar")
+                             (role "progressbar")
+                             (aria-label ,aria-label)
+                             (aria-valuemin "0")
+                             (aria-valuemax "100")
+                             (aria-valuenow ,(number->string pct-num)))
+                          (div (@ (class ,(format "status-bar-fill status-bar-fill--~a"
+                                                  tier))
+                                  (style ,(format "width: ~a%;" pct-num))))))
+                (div (@ (class "status-summary-action"))
+                     (span (@ (class "status-summary-text")) "View")
+                     (span (@ (class "status-summary-chevron")) "▸")))
        (div (@ (class "status-body"))
             (ul (@ (class "status-list"))
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
@@ -2824,6 +2866,178 @@
                  ,@(map (λ (section) (section-card section implemented-set))
                         sections)))]))
 
+(define (find-first pred lst)
+  (cond
+    [(null? lst) #f]
+    [(pred (car lst)) (car lst)]
+    [else (find-first pred (cdr lst))]))
+
+(define all-section-stats
+  (for*/list ([chapter (in-list prepared-chapters)]
+              [section (in-list (second chapter))])
+    (match chapter
+      [(list _ _ implemented-set)
+       (match section
+         [(list title primitives)
+          (section-stats title primitives implemented-set)])])))
+
+(define attention-metadata
+  (list (list "Exceptions" "Exceptions"
+              "Signals core error paths and user-facing diagnostics.")
+        (list "Procedures" "Procedures"
+              "Enables higher-order functions and arity-sensitive APIs.")
+        (list "Ports" "Ports"
+              "Unlocks I/O, REPL workflows, and stream-based tooling.")
+        (list "Hashes" "Hashes"
+              "Powerful dictionaries used throughout stdlib.")
+        (list "Sequences" "Sequences"
+              "Backbone for iteration forms and comprehensions.")
+        (list "Paths" "Paths"
+              "OS path handling for files, dirs, and tooling.")
+        (list "Macros" "Syntax Object Content"
+              "Macro expansion and syntax tooling depend on this set.")))
+
+(define (attention-candidates)
+  (for/list ([entry (in-list attention-metadata)]
+             #:when (match entry
+                     [(list _ section-title _)
+                      (find-first (λ (stat)
+                                    (string-ci=? (car stat) section-title))
+                                  all-section-stats)]))
+    (match entry
+      [(list display section-title note)
+       (define stat
+         (find-first (λ (item) (string-ci=? (car item) section-title))
+                     all-section-stats))
+       (define title (car stat))
+       (define implemented-count (list-ref stat 2))
+       (define total (list-ref stat 3))
+       (define missing (list-ref stat 4))
+       (define pct-num (list-ref stat 5))
+       (define anchor-id (list-ref stat 7))
+       (list display title note implemented-count total missing pct-num anchor-id)])))
+
+(define (take-up-to lst n)
+  (if (or (zero? n) (null? lst))
+      '()
+      (cons (car lst) (take-up-to (cdr lst) (sub1 n)))))
+
+(define (needs-attention-items)
+  (define filtered
+    (filter (λ (item)
+              (define pct-num (list-ref item 6))
+              (define total (list-ref item 4))
+              (and (< pct-num 60) (> total 4)))
+            (attention-candidates)))
+  (define sorted
+    (sort filtered
+          (λ (a b)
+            (define pct-a (list-ref a 6))
+            (define pct-b (list-ref b 6))
+            (define missing-a (list-ref a 5))
+            (define missing-b (list-ref b 5))
+            (cond
+              [(< pct-a pct-b) #t]
+              [(> pct-a pct-b) #f]
+              [else (> missing-a missing-b)]))))
+  (take-up-to sorted 6))
+
+(define (attention-card item)
+  (define display (list-ref item 0))
+  (define title (list-ref item 1))
+  (define note (list-ref item 2))
+  (define implemented-count (list-ref item 3))
+  (define total (list-ref item 4))
+  (define pct-num (list-ref item 6))
+  (define anchor-id (list-ref item 7))
+  (define label
+    (format "~a: ~a%, ~a of ~a primitives implemented"
+            title pct-num implemented-count total))
+  (list `(div (@ (class "attention-header"))
+              (h3 ,display)
+              (span (@ (class "attention-percent")) ,(format "~a%" pct-num)))
+        `(p (@ (class "attention-count"))
+            ,(format "~a of ~a primitives implemented" implemented-count total))
+        `(p (@ (class "attention-note")) ,note)
+        `(a (@ (class "attention-link")
+               (href ,(string-append "#" anchor-id))
+               (data-attention-target ,anchor-id)
+               (aria-label ,(string-append "View missing for " label)))
+            "View missing")))
+
+(define (status-legend)
+  `(div (@ (class "status-legend"))
+        (div (@ (class "status-legend-title")) "Legend")
+        (ul (@ (class "status-legend-list"))
+            (li (span (@ (class "status-legend-term")) "Implemented primitives")
+                " implemented in the WebRacket runtime.")
+            (li (span (@ (class "status-legend-term")) "Stdlib coverage")
+                " identifiers provided by the stdlib (counted as covered).")
+            (li (span (@ (class "status-legend-term")) "Missing primitives")
+                " not yet implemented in the runtime.")
+            (li "Pict is tracked separately."))))
+
+(define (status-insight-callout)
+  (define strong-candidates
+    (list "Pict Datatype" "Booleans" "Keywords" "Mpairs"))
+  (define weak-candidates
+    (list "Procedures" "Ports" "Sequences" "Paths" "Exceptions"
+          "Syntax Object Content"))
+  (define sorted-strong
+    (sort all-section-stats (λ (a b) (> (list-ref a 5) (list-ref b 5)))))
+  (define sorted-weak
+    (sort all-section-stats (λ (a b) (< (list-ref a 5) (list-ref b 5)))))
+  (define strong
+    (or (find-first (λ (stat) (member (car stat) strong-candidates))
+                    sorted-strong)
+        (car sorted-strong)))
+  (define weak
+    (or (find-first (λ (stat) (member (car stat) weak-candidates))
+                    sorted-weak)
+        (car sorted-weak)))
+  (define strong-title (car strong))
+  (define strong-implemented (list-ref strong 2))
+  (define strong-total (list-ref strong 3))
+  (define strong-pct (list-ref strong 5))
+  (define weak-title (car weak))
+  (define weak-implemented (list-ref weak 2))
+  (define weak-total (list-ref weak 3))
+  (define weak-pct (list-ref weak 5))
+  (callout
+   'info
+   "What this tells us"
+   `(p ,(format "Coverage is strongest in ~a at ~a% (~a of ~a)."
+                strong-title strong-pct strong-implemented strong-total))
+   `(p ,(format "The thinnest areas remain ~a at ~a% (~a of ~a), so shoring up"
+                weak-title weak-pct weak-implemented weak-total)
+       " these gaps will unlock more programs.")))
+
+(define (status-smooth-scroll-script)
+  `(script
+     "(function() {\n"
+     "  const openTarget = (targetId) => {\n"
+     "    const section = document.getElementById(targetId);\n"
+     "    if (!section) return;\n"
+     "    section.open = true;\n"
+     "    const summary = section.querySelector('summary');\n"
+     "    section.scrollIntoView({ behavior: 'smooth', block: 'start' });\n"
+     "    if (summary) summary.focus({ preventScroll: true });\n"
+     "  };\n"
+     "  document.querySelectorAll('[data-attention-target]').forEach((link) => {\n"
+     "    link.addEventListener('click', (event) => {\n"
+     "      const targetId = link.getAttribute('data-attention-target');\n"
+     "      if (!targetId) return;\n"
+     "      event.preventDefault();\n"
+     "      openTarget(targetId);\n"
+     "      history.replaceState(null, '', `#${targetId}`);\n"
+     "    });\n"
+     "  });\n"
+     "  if (window.location.hash) {\n"
+     "    const targetId = window.location.hash.slice(1);\n"
+     "    if (targetId) openTarget(targetId);\n"
+     "  }\n"
+     "})();"))
+
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
         ,(navbar)
@@ -2835,9 +3049,15 @@
                            (span (@ (class "pill")) "Documentation links"))
                       (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard")
                       (p (@ (class "hero-lead"))
-                         "Track WebRacket primitive coverage and browse per-section completion against the Racket reference.")
+                         "A progress tracker for contributors and users. "
+                         "See which Racket primitives are implemented, what's missing, "
+                         "and where to help next.")
                       (p (@ (class "hero-sublead"))
-                         "Each function links to the Racket docs; sections expand to show implemented, stdlib-backed, and missing primitives.")))
+                         "Each function links to the Racket docs; sections expand to show "
+                         "implemented, stdlib-backed, and missing primitives.")
+                      (p (@ (class "hero-note"))
+                         "How to read this: Implemented means built into the WebRacket runtime, "
+                         "while stdlib identifiers count as covered.")))
         ,(section-block
           "At a glance"
           "Summary metrics across the tracked chapters."
@@ -2870,11 +3090,48 @@
           #f
           "section--status")
         ,(section-block
+          "Needs attention"
+          "Highest-impact gaps to unlock more programs."
+          (list
+           (card-grid (map attention-card (needs-attention-items))
+                      "attention-grid"))
+          #f
+          "section--status")
+        `(div (@ (class "status-insight"))
+              ,(status-insight-callout))
+        ,(section-block
           "Completion by chapter"
           "Expand a section to see which primitives are implemented or still missing."
           (list
+           (status-legend)
+           `(p (@ (class "status-helper"))
+               "Click a card to expand missing primitives.")
            `(div (@ (class "status-chapters"))
                  ,@(map chapter-block prepared-chapters)))
           #f
           "section--status")
+        ,(section-block
+          "Help close the gaps"
+          "Contribute runtime support or stdlib coverage to unlock more programs."
+          (list
+           `(div (@ (class "status-cta"))
+                 (div (@ (class "status-cta-actions"))
+                      (a (@ (class "cta-button")
+                            (href ,(gh-file "runtime-wasm.rkt"))
+                            (target "_blank")
+                            (rel "noreferrer noopener"))
+                         "Open runtime sources")
+                      (a (@ (class "cta-link")
+                            (href ,(gh-dir "stdlib"))
+                            (target "_blank")
+                            (rel "noreferrer noopener"))
+                         "Browse stdlib")
+                      (a (@ (class "cta-link")
+                            (href "https://github.com/soegaard/webracket/issues")
+                            (target "_blank")
+                            (rel "noreferrer noopener"))
+                         "See issues"))))
+          #f
+          "section--status")
+        ,(status-smooth-scroll-script)
         ,(footer-section))
