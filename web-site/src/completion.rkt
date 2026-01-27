@@ -2877,4 +2877,4 @@
                  ,@(map chapter-block prepared-chapters)))
           #f
           "section--status")
-        ,(footer-section)))
+        ,(footer-section))
