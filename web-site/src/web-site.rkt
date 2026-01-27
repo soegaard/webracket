@@ -1493,35 +1493,37 @@ pre {
   border-radius: 999px;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  --pct: 0%;
-  --pct-decimal: 0;
-  --pct-decimal-safe: max(var(--pct-decimal), 0.01);
+  --pct: 0;
+  --p: clamp(0, calc(var(--pct) / 100), 1);
+  --p-safe: max(var(--p), 0.001);
 }
 .status-bar-fill {
   height: 100%;
-  width: var(--pct);
-  background: linear-gradient(90deg, rgba(209, 58, 58, 0.85),
-                                      rgba(242, 183, 5, 0.85),
-                                      rgba(74, 108, 255, 0.9));
-  background-size: calc(100% / var(--pct-decimal-safe)) 100%;
-  background-position: left center;
+  width: calc(var(--p) * 100%);
+  background: var(--progress-gradient);
+  background-size: calc(100% / var(--p-safe)) 100%;
+  background-position: 0 50%;
   background-repeat: no-repeat;
+  border-radius: inherit;
   box-shadow: 0 0 10px rgba(74, 108, 255, 0.2);
   transition: width 220ms ease;
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.85),
+                                               rgba(242, 183, 5, 0.85),
+                                               rgba(74, 108, 255, 0.9));
 }
 .status-bar-fill--low {
-  background: linear-gradient(90deg, rgba(209, 58, 58, 0.92),
-                                      rgba(242, 183, 5, 0.65));
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.92),
+                                               rgba(242, 183, 5, 0.65));
   box-shadow: 0 0 12px rgba(209, 58, 58, 0.28);
 }
 .status-bar-fill--mid {
-  background: linear-gradient(90deg, rgba(242, 183, 5, 0.78),
-                                      rgba(74, 108, 255, 0.82));
+  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.78),
+                                               rgba(74, 108, 255, 0.82));
   box-shadow: 0 0 12px rgba(74, 108, 255, 0.18);
 }
 .status-bar-fill--strong {
-  background: linear-gradient(90deg, rgba(74, 108, 255, 0.92),
-                                      rgba(101, 79, 240, 0.94));
+  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.92),
+                                               rgba(101, 79, 240, 0.94));
   box-shadow: 0 0 12px rgba(101, 79, 240, 0.32);
 }
 .status-body {
