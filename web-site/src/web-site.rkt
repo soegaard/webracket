@@ -1414,9 +1414,23 @@ pre {
 }
 .status-chapter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  --card-max-w: 380px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+@media (max-width: 1100px) {
+  .status-chapter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .status-chapter-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.status-chapter-grid > * {
+  width: 100%;
+  min-width: 0;
 }
 .status-section {
   background: var(--surface);
@@ -1424,8 +1438,7 @@ pre {
   border-radius: 20px;
   overflow: hidden;
   transition: transform 150ms ease, border-color 150ms ease;
-  max-width: var(--card-max-w);
-  justify-self: start;
+  min-width: 0;
 }
 .status-section[open] {
   grid-column: 1 / -1;
