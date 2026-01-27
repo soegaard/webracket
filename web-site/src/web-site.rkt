@@ -139,6 +139,8 @@
 ;;; Page Layout
 ;;;
 
+(include "completion.rkt")
+
 ;;;
 ;;; Examples Data
 ;;;
@@ -309,6 +311,7 @@
     [(string-suffix? path "documentation.html") 'documentation]
     [(string-suffix? path "installation.html") 'installation]
     [(string-suffix? path "examples.html") 'examples]
+    [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "overview.html") 'overview]
     [(string-suffix? path "roadmap.html") 'roadmap]
     [(string-suffix? path "is-webracket-for-you.html") 'for-you]
@@ -337,6 +340,7 @@
              ,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
              ,(nav-link "Overview" "overview.html" 'overview active-page)
              ,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
+             ,(nav-link "Status" "implementation-status.html" 'implementation-status active-page)
              ,(nav-link "Documentation" "documentation.html" 'documentation active-page)
              ,(nav-link "Installation" "installation.html" 'installation active-page)
              ,(nav-link "Examples" "examples.html" 'examples active-page))))
@@ -1278,6 +1282,148 @@ pre {
 .page--docs .card:focus-within {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.26);
 }
+.page--status .card {
+  background: rgba(255, 255, 255, 0.03);
+}
+.status-hero {
+  margin-top: 32px;
+}
+.status-summary-grid .status-metric {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  font-weight: 600;
+  color: var(--text);
+}
+.status-chapters {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.status-chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.status-chapter-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.status-chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.status-section {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.status-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.status-summary::after {
+  content: "▸";
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 150ms ease;
+}
+.status-section[open] .status-summary::after {
+  transform: rotate(90deg);
+}
+.status-summary::-webkit-details-marker {
+  display: none;
+}
+.status-summary-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.status-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.status-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.status-summary-metric {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.status-percent {
+  font-weight: 600;
+  color: var(--text);
+}
+.status-bar {
+  width: 160px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(209, 58, 58, 0.85), rgba(242, 183, 5, 0.85), rgba(74, 108, 255, 0.9));
+}
+.status-body {
+  padding: 0 20px 20px;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.status-link {
+  color: var(--text);
+}
+.status-link code {
+  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.9rem;
+}
+.status-chip {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.status-chip--done {
+  background: rgba(74, 108, 255, 0.18);
+  color: #C9D5FF;
+  border: 1px solid rgba(74, 108, 255, 0.35);
+}
+.status-chip--stdlib {
+  background: rgba(242, 183, 5, 0.18);
+  color: #F7E3A1;
+  border: 1px solid rgba(242, 183, 5, 0.35);
+}
+.status-chip--todo {
+  background: rgba(209, 58, 58, 0.18);
+  color: #F7B1B1;
+  border: 1px solid rgba(209, 58, 58, 0.35);
+}
 code {
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
@@ -1940,6 +2086,7 @@ CSS
 
   (define page-structure
     (case (current-page)
+      [(implementation-status) (implementation-status-page)]
       [(documentation) (documentation-page)]
       [(examples) (examples-page)]
       [(installation) (installation-page)]
