@@ -640,9 +640,9 @@
             'note
             "Runtime goal"
             `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
-                "non-JavaScript environments when they become viable.")))
-          #f
-          #f)
+                "non-JavaScript environments when they become viable."))
+           #f
+           #f)
         ,(footer-section)))
 
 ;; installation-page : -> List
