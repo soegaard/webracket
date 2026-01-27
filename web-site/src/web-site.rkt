@@ -574,7 +574,7 @@
 ;; documentation-page : -> List
 ;;   Documentation page layout.
 (define (documentation-page)
-  `(div (@ (class "page"))
+  `(div (@ (class "page page--docs"))
         ,(navbar)
         (section (@ (class "docs-hero"))
                  (div (@ (class "hero-panel"))
@@ -589,91 +589,96 @@
           "Short Compiler Overview"
           #f
           (list
-           `(p "The WebRacket compiler is a direct-style compiler. This choice has made it easier "
-               "to relate the generated code to the source program. In the future we will probably "
-               "need to add a CPS-pass in order to support continuations and continuation marks.")
-           (callout
-            'note
-            "Note"
-            `(p "WebRacket stays in direct style to keep the compiler pipeline easy to trace. "
-                "A future CPS pass may be added to support continuations and continuation marks."))
-           `(p "The frontend of the WebRacket compiler uses "
-               ,(code-link "https://docs.racket-lang.org/reference/reader.html#%28def._%28%28quote._~23~25kernel%29._read-syntax%29%29"
-                           "read-syntax")
-               " to read a WebRacket program from a file. The resulting syntax object is fed into "
-               "the normal Racket expander to produce a program in fully expanded form.")
-           `(p "The middle end of the compiler consists of several passes implemented using the "
-               ,(code-link "https://github.com/nanopass/nanopass-framework-racket" "NanoPass")
-               " framework.")
-           `(p "The passes are as follows:")
-           `(div (@ (class "pass-list-block"))
-                 (div (@ (class "pass-list-label")) "Compiler passes")
-                 (pre (@ (class "pass-list"))
-                      (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code")))
-           `(p "See the comments in \"" ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
-               "\" for an explanation of each pass.")
-           (callout
-            'note
-            "Why so many passes?"
-            `(p "Small, focused passes keep each transformation understandable, testable, and easier to evolve."))
-           `(p "The code generator generates WebAssembly in the form of " (code "S-expressions")
-               " in the \"folded\" format.")
-           `(p "This code generator is inspired by \""
-               ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138"
-                     "Destination-driven Code Generation")
-               "\" by Dybvig, "
-               "Hieb and Butler. There are some differences, however. The code generator in the paper "
-               "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
-           (callout
-            'info
-            "Source paper"
-            `(p "Read the full \"Destination-driven Code Generation\" paper on "
-                ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138" "IU ScholarWorks")
-                " for background on the generator’s design and terminology."))
-           `(p "Finally, the external tool "
-               ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
-               " "
-               ,(code-link "https://bytecodealliance.github.io/wasm-tools/parse"
-                           "parse")
-               " converts the S-expression representation into bytecode format.")
-           `(p "The main part of the compiler is in "
-               ,(code-pill (gh-file "compiler.rkt") "compiler.rkt")
-               ". The WebAssembly runtime is in "
-               ,(code-pill (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
-               ". The standard library (implemented in WebRacket) is found in "
-               ,(code-pill (gh-dir "stdlib/") "stdlib/")
-               ". FFI bindings for popular libraries are in "
-               ,(code-pill (gh-dir "ffi/") "ffi/") ".")
-           `(p "It has been a design goal to avoid relying on functionality provided by the "
-               "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
-               "at some point? For browser functionality there is no way around interfacing with "
-               "the JavaScript host. The JavaScript part of the runtime support is in "
-               ,(code-link (gh-file "assembler.rkt") "assembler.rkt") ".")
-           (callout
-            'note
-            "Runtime goal"
-            `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
-                "non-JavaScript environments when they become viable."))
-           (callout
-            'info
-            "Further reading"
-            `(p "Explore the compiler and runtime sources to see how WebRacket’s pipeline fits together.")
-            `(div (@ (class "doc-cta-group"))
-                  (a (@ (class "doc-cta doc-cta--primary")
-                        (href ,(gh-file "compiler.rkt"))
-                        (target "_blank")
-                        (rel "noreferrer noopener"))
-                     "Open compiler.rkt")
-                  (a (@ (class "doc-cta")
-                        (href ,(gh-file "runtime-wasm.rkt"))
-                        (target "_blank")
-                        (rel "noreferrer noopener"))
-                     "View runtime")
-                  (a (@ (class "doc-cta")
-                        (href ,(gh-dir "stdlib/"))
-                        (target "_blank")
-                        (rel "noreferrer noopener"))
-                     "Browse stdlib"))))
+           `(div (@ (class "doc-content"))
+                 (p "The WebRacket compiler is a direct-style compiler. This choice has made it easier "
+                    "to relate the generated code to the source program. In the future we will probably "
+                    "need to add a CPS-pass in order to support continuations and continuation marks.")
+                 ,(callout
+                   'note
+                   "Note"
+                   `(p "WebRacket stays in direct style to keep the compiler pipeline easy to trace. "
+                       "A future CPS pass may be added to support continuations and continuation marks."))
+                 (p "The frontend of the WebRacket compiler uses "
+                    ,(code-link "https://docs.racket-lang.org/reference/reader.html#%28def._%28%28quote._~23~25kernel%29._read-syntax%29%29"
+                                "read-syntax")
+                    " to read a WebRacket program from a file. The resulting syntax object is fed into "
+                    "the normal Racket expander to produce a program in fully expanded form.")
+                 (p "The middle end of the compiler consists of several passes implemented using the "
+                    ,(code-link "https://github.com/nanopass/nanopass-framework-racket" "NanoPass")
+                    " framework.")
+                 (p "The passes are as follows:")
+                 (div (@ (class "pass-list-block"))
+                      (div (@ (class "pass-list-label pass-list-label--quiet")) "Compiler passes")
+                      (pre (@ (class "pass-list"))
+                           (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code")))
+                 (p "See the comments in \"" ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
+                    "\" for an explanation of each pass.")
+                 ,(callout
+                   'note
+                   "Why so many passes?"
+                   `(p "Small, focused passes keep each transformation understandable, testable, and easier to evolve."))
+                 (p (@ (class "doc-spacer-top"))
+                    "The code generator generates WebAssembly in the form of " (code "S-expressions")
+                    " in the \"folded\" format.")
+                 (p "This code generator is inspired by \""
+                    ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138"
+                          "Destination-driven Code Generation")
+                    "\" by Dybvig, "
+                    "Hieb and Butler. There are some differences, however. The code generator in the paper "
+                    "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
+                 ,(callout
+                   'info
+                   "Source paper"
+                   `(p "Read the full \"Destination-driven Code Generation\" paper on "
+                       ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138" "IU ScholarWorks")
+                       " for background on the generator’s design and terminology."))
+                 (p (@ (class "doc-spacer-top"))
+                    "Finally, the external tool "
+                    ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
+                    " "
+                    ,(code-link "https://bytecodealliance.github.io/wasm-tools/parse"
+                                "parse")
+                    " converts the S-expression representation into bytecode format.")
+                 (p "The main part of the compiler is in "
+                    ,(code-pill (gh-file "compiler.rkt") "compiler.rkt")
+                    ". The WebAssembly runtime is in "
+                    ,(code-pill (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
+                    ". The standard library (implemented in WebRacket) is found in "
+                    ,(code-pill (gh-dir "stdlib/") "stdlib/")
+                    ". FFI bindings for popular libraries are in "
+                    ,(code-pill (gh-dir "ffi/") "ffi/") ".")
+                 (p "It has been a design goal to avoid relying on functionality provided by the "
+                    "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
+                    "at some point? For browser functionality there is no way around interfacing with "
+                    "the JavaScript host. The JavaScript part of the runtime support is in "
+                    ,(code-link (gh-file "assembler.rkt") "assembler.rkt") ".")
+                 ,(callout
+                   'note
+                   "Runtime goal"
+                   `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
+                       "non-JavaScript environments when they become viable."))
+                 (div (@ (class "doc-cta-card"))
+                      ,(callout
+                        'info
+                        "Further reading"
+                        `(p "Explore the compiler and runtime sources to see how WebRacket’s pipeline fits together. "
+                            "Want a closer look? Browse the real compiler and runtime code.")
+                        `(div (@ (class "doc-cta-group"))
+                              (a (@ (class "doc-cta doc-cta--primary")
+                                    (href ,(gh-file "compiler.rkt"))
+                                    (target "_blank")
+                                    (rel "noreferrer noopener"))
+                                 "Open compiler.rkt")
+                              (a (@ (class "doc-cta")
+                                    (href ,(gh-file "runtime-wasm.rkt"))
+                                    (target "_blank")
+                                    (rel "noreferrer noopener"))
+                                 "View runtime")
+                              (a (@ (class "doc-cta")
+                                    (href ,(gh-dir "stdlib/"))
+                                    (target "_blank")
+                                    (rel "noreferrer noopener"))
+                                 "Browse stdlib"))))))
           #f
           #f)
         ,(footer-section)))
@@ -827,7 +832,7 @@ a.code-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 8px;
+  padding: 2px 11px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -835,11 +840,14 @@ a.code-pill {
   font-size: 0.85rem;
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   line-height: 1.4;
-  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+  cursor: pointer;
+  box-shadow: 0 0 0 rgba(101, 79, 240, 0);
+  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 a.code-pill:hover {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(101, 79, 240, 0.25);
 }
 a.code-pill:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.7);
@@ -1123,27 +1131,27 @@ a.code-pill:focus-visible {
 }
 /* Installation: troubleshooting callout refinement */
 .callout {
-  background: rgba(101, 79, 240, 0.08);
+  background: rgba(101, 79, 240, 0.065);
   border: 1px solid rgba(101, 79, 240, 0.18);
   border-left: 3px solid hsla(var(--accent-h, 252), 78%, 72%, 0.6);
   border-radius: 16px;
-  padding: 14px 18px;
-  color: var(--muted);
+  padding: 12px 16px;
+  color: rgba(207, 214, 238, 0.92);
   font-size: 0.92rem;
   line-height: 1.7;
   margin: 0;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 .callout--note {
-  background: rgba(101, 79, 240, 0.08);
+  background: rgba(101, 79, 240, 0.065);
   border-color: rgba(101, 79, 240, 0.18);
 }
 .callout--info {
-  background: rgba(74, 108, 255, 0.08);
+  background: rgba(74, 108, 255, 0.065);
   border-color: rgba(74, 108, 255, 0.2);
 }
 .callout--warn {
-  background: rgba(242, 183, 5, 0.1);
+  background: rgba(242, 183, 5, 0.09);
   border-color: rgba(242, 183, 5, 0.2);
 }
 .section .callout {
@@ -1241,13 +1249,34 @@ pre {
 }
 .pass-list-label {
   font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--muted);
 }
 .pass-list {
   padding: 16px 18px;
   line-height: 1.75;
+}
+.pass-list-label--quiet {
+  opacity: 0.72;
+}
+.doc-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.page--docs .doc-spacer-top {
+  margin-top: 18px;
+}
+.page--docs .callout {
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.16);
+}
+.page--docs .card {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+.page--docs .card:hover,
+.page--docs .card:focus-within {
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.26);
 }
 code {
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -1458,6 +1487,10 @@ pre code {
   background: linear-gradient(120deg, rgba(101, 79, 240, 0.9), rgba(74, 108, 255, 0.8));
   border-color: rgba(74, 108, 255, 0.55);
   box-shadow: 0 10px 20px rgba(74, 108, 255, 0.22);
+  font-weight: 700;
+}
+.doc-cta-card .callout-title {
+  font-size: 1rem;
 }
 
 /* Coverage grid */
