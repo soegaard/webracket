@@ -1527,35 +1527,34 @@ pre {
   box-shadow: 0 0 12px rgba(101, 79, 240, 0.32);
 }
 .status-body {
-  padding: 0 20px 20px;
+  padding: 0 18px 14px;
 }
 .status-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 10px;
 }
 .prim-row {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 .prim-row--link {
   text-decoration: none;
   color: inherit;
-  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms ease, border-color 150ms ease;
 }
 .prim-row--link:hover {
-  background: rgba(74, 108, 255, 0.08);
-  border-color: rgba(74, 108, 255, 0.25);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  background: rgba(74, 108, 255, 0.06);
+  border-color: rgba(74, 108, 255, 0.2);
 }
 .prim-row--link:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.7);
@@ -1567,9 +1566,9 @@ pre {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
 }
 .prim-name {
@@ -2276,8 +2275,8 @@ pre code {
 @media (max-width: 520px) {
   .prim-row {
     grid-template-columns: 120px minmax(0, 1fr);
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 10px;
+    padding: 8px 12px;
   }
   .prim-badge {
     width: 120px;
