@@ -1282,8 +1282,25 @@ pre {
 .page--docs .card:focus-within {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.26);
 }
+.page--status {
+  --status-card-padding: 14px;
+  --status-card-gap: 8px;
+  --status-section-spacing: 60px;
+  --status-progress-height: 6px;
+}
 .page--status .card {
   background: rgba(255, 255, 255, 0.03);
+  padding: var(--status-card-padding);
+  gap: var(--status-card-gap);
+}
+.page--status .card:nth-child(even) {
+  padding-top: var(--status-card-padding);
+}
+.page--status .card-grid {
+  gap: calc(var(--status-card-gap) * 2);
+}
+.page--status .card-grid > * {
+  min-width: 0;
 }
 .status-hero {
   margin-top: 32px;
@@ -1294,10 +1311,16 @@ pre {
   opacity: 0.7;
 }
 .section--status {
-  margin-top: 84px;
+  margin-top: var(--status-section-spacing);
+}
+.section--status .section-header {
+  margin-bottom: calc(var(--status-card-gap) * 2);
+}
+.section--status .section-title + * {
+  margin-top: calc(var(--status-card-gap) * 1.5);
 }
 .status-insight {
-  margin-top: 28px;
+  margin-top: calc(var(--status-card-gap) * 2);
 }
 .status-insight .callout {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
@@ -1313,12 +1336,27 @@ pre {
   font-weight: 600;
   color: var(--text);
 }
-.attention-grid {
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-}
 .attention-grid .card {
-  padding: 18px 20px;
-  gap: 10px;
+  padding: var(--status-card-padding);
+  gap: var(--status-card-gap);
+}
+.attention-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 700px) {
+  .attention-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .attention-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .attention-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .attention-header {
   display: flex;
@@ -1350,7 +1388,7 @@ pre {
   color: #C9D5FF;
   text-decoration: none;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: calc(var(--status-card-gap) / 2) calc(var(--status-card-gap) + 2px);
   background: rgba(74, 108, 255, 0.15);
   border: 1px solid rgba(74, 108, 255, 0.35);
   transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
@@ -1368,8 +1406,8 @@ pre {
 .status-legend {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: var(--status-card-gap);
+  padding: var(--status-card-padding);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
@@ -1394,19 +1432,19 @@ pre {
   font-weight: 600;
 }
 .status-helper {
-  margin: 12px 0 0;
+  margin: calc(var(--status-card-gap) / 2) 0 0;
   color: rgba(182, 189, 221, 0.8);
   font-size: 0.9rem;
 }
 .status-chapters {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: calc(var(--status-card-gap) * 2);
 }
 .status-chapter {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: calc(var(--status-card-gap) * 1.5);
 }
 .status-chapter-header h3 {
   margin: 0;
@@ -1415,7 +1453,7 @@ pre {
 .status-chapter-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
+  gap: calc(var(--status-card-gap) * 2);
   align-items: stretch;
 }
 @media (max-width: 1100px) {
@@ -1439,6 +1477,7 @@ pre {
   overflow: hidden;
   transition: transform 150ms ease, border-color 150ms ease;
   min-width: 0;
+  width: 100%;
 }
 .status-section[open] {
   grid-column: 1 / -1;
@@ -1448,10 +1487,10 @@ pre {
 .status-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 16px;
-  row-gap: 10px;
+  column-gap: calc(var(--status-card-gap) * 2);
+  row-gap: var(--status-card-gap);
   align-items: center;
-  padding: 18px 20px;
+  padding: var(--status-card-padding);
   cursor: pointer;
   list-style: none;
   transition: background 150ms ease, border-color 150ms ease;
@@ -1470,7 +1509,7 @@ pre {
 .status-summary-main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: calc(var(--status-card-gap) / 2);
   min-width: 0;
 }
 .status-title {
@@ -1490,7 +1529,7 @@ pre {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: calc(var(--status-card-gap) / 2);
 }
 .status-summary-action {
   display: inline-flex;
@@ -1516,7 +1555,7 @@ pre {
 .status-bar {
   width: min(var(--meter-w), 100%);
   max-width: var(--meter-w);
-  height: 10px;
+  height: var(--status-progress-height);
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   overflow: hidden;
@@ -1571,17 +1610,13 @@ pre {
   }
 }
 .status-body {
-  padding: 6px 16px 10px;
-  overflow-x: auto;
+  padding: calc(var(--status-card-gap) / 2) var(--status-card-padding) var(--status-card-gap);
+  overflow-x: visible;
   overflow-y: visible;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
-}
-.status-body::-webkit-scrollbar {
-  height: 10px;
 }
 .status-section[open] .status-body {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: var(--status-card-gap);
+  padding-top: var(--status-card-gap);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -1591,12 +1626,12 @@ pre {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 0 4px 6px;
+  padding: 0 2px calc(var(--status-card-gap) / 2);
 }
 .status-body-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--status-card-gap);
 }
 .status-body-hint {
   color: rgba(182, 189, 221, 0.75);
@@ -1622,8 +1657,14 @@ pre {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 10px;
-  margin-top: 6px;
+  gap: var(--status-card-gap);
+  margin-top: calc(var(--status-card-gap) / 2);
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.status-list::-webkit-scrollbar {
+  height: 8px;
 }
 .status-section .status-list,
 .status-section .status-list > li {
@@ -1640,12 +1681,13 @@ pre {
   grid-template-columns: 132px minmax(0, 1fr);
   align-items: center;
   column-gap: 12px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: calc(var(--status-card-gap) - 2px) calc(var(--status-card-gap) + 2px);
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.035);
   width: max-content;
   min-width: 100%;
+  white-space: nowrap;
 }
 .prim-row--link {
   text-decoration: none;
