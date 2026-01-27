@@ -571,7 +571,7 @@
            `(p "The code generator generates WebAssembly in the form of " (code "S-expressions")
                " in the \"folded\" format.")
            `(p "This code generator is inspired by \""
-               ,(ext "https://legacy.cs.indiana.edu/~dyb/pubs/dest.pdf"
+               ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138"
                      "Destination-driven Code Generation")
                "\" by Dybvig, "
                "Hieb and Butler. There are some differences, however. The code generator in the paper "
@@ -579,7 +579,7 @@
            `(p "Finally, the external tool "
                ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
                " "
-               ,(code-link "https://bytecodealliance.github.io/wasm-tools/cli/wasm-tools-parse.html"
+               ,(code-link "https://bytecodealliance.github.io/wasm-tools/parse"
                            "parse")
                " converts the S-expression representation into bytecode format.")
            `(p "The main part of the compiler is in \""
@@ -597,25 +597,6 @@
                ,(code-link (gh-file "assembler.rkt") "assembler.rkt") "."))
           #f
           #f)
-        ,(section-block
-          "Next steps"
-          "Keep exploring with deeper dives into the WebRacket roadmap and guides."
-          (list
-           `(ul (@ (class "next-steps-links"))
-                (li (a (@ (class "example-action action-primary")
-                          (href "overview.html"))
-                       "Overview"))
-                (li (a (@ (class "example-action action-secondary")
-                          (href "roadmap.html"))
-                       "Road Ahead"))
-                (li (a (@ (class "example-action action-secondary")
-                          (href "installation.html"))
-                       "Installation"))
-                (li (a (@ (class "example-action action-secondary")
-                          (href "examples.html"))
-                       "Examples"))))
-          #f
-          "section--examples section-next-steps")
         ,(footer-section)))
 
 ;; installation-page : -> List
