@@ -1148,6 +1148,9 @@ pre code {
 }
 .section--examples {
   --accent-h: 238;
+  --example-card-border: hsla(var(--accent-h), 75%, 75%, 0.09);
+  --example-card-shadow: 0 13px 26px rgba(0, 0, 0, 0.23);
+  --example-divider: rgba(255, 255, 255, 0.084);
 }
 
 /* Coverage grid */
@@ -1347,9 +1350,9 @@ pre code {
 }
 .section-featured .card.example-card {
   padding: calc(var(--card-padding) + 8px);
-  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.32));
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--example-accent, rgba(101, 79, 240, 0.1));
-  background: linear-gradient(180deg, var(--example-accent, rgba(101, 79, 240, 0.08)), rgba(0, 0, 0, 0)) , var(--surface);
+  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.28));
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.28), 0 0 0 1px var(--example-accent, rgba(101, 79, 240, 0.09));
+  background: linear-gradient(180deg, var(--example-accent, rgba(101, 79, 240, 0.07)), rgba(0, 0, 0, 0)) , var(--surface);
 }
 .sr-only {
   position: absolute;
@@ -1366,17 +1369,22 @@ pre code {
   gap: 20px;
 }
 .example-card {
-  gap: 16px;
+  gap: 14px;
   position: relative;
   overflow: hidden;
-  --example-accent: rgba(101, 79, 240, 0.22);
-  --example-accent-strong: rgba(101, 79, 240, 0.4);
+  --example-accent: rgba(101, 79, 240, 0.2);
+  --example-accent-strong: rgba(101, 79, 240, 0.36);
+  border-color: var(--example-card-border, rgba(255, 255, 255, 0.08));
+  box-shadow: var(--example-card-shadow, 0 14px 28px rgba(0, 0, 0, 0.25));
+}
+.example-card h3::after {
+  background: var(--example-divider, rgba(255, 255, 255, 0.084));
 }
 .example-card:hover,
 .example-card:focus-within {
-  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.4));
+  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.36));
   transform: translateY(-2px);
-  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.32), 0 14px 24px var(--example-accent, rgba(101, 79, 240, 0.12));
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.3), 0 12px 20px var(--example-accent, rgba(101, 79, 240, 0.1));
 }
 .example-header {
   display: flex;
@@ -1389,11 +1397,12 @@ pre code {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid var(--example-accent-strong, rgba(101, 79, 240, 0.4));
-  color: #E7EBFF;
-  background: var(--example-accent, rgba(101, 79, 240, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1px var(--example-accent, rgba(101, 79, 240, 0.18));
   white-space: nowrap;
 }
 /* Examples: category cue strip */
@@ -1410,43 +1419,43 @@ pre code {
 }
 .example-card:hover::before,
 .example-card:focus-within::before {
-  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.4)), rgba(0, 0, 0, 0));
+  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.36)), rgba(0, 0, 0, 0));
 }
 .section-featured .example-card::before {
-  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.4)), rgba(0, 0, 0, 0));
+  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.36)), rgba(0, 0, 0, 0));
 }
 .example-card.kind-dom {
-  --example-accent: rgba(82, 110, 255, 0.22);
-  --example-accent-strong: rgba(82, 110, 255, 0.42);
+  --example-accent: rgba(82, 110, 255, 0.2);
+  --example-accent-strong: rgba(82, 110, 255, 0.38);
 }
 .example-card.kind-canvas {
-  --example-accent: rgba(86, 138, 255, 0.22);
-  --example-accent-strong: rgba(86, 138, 255, 0.42);
+  --example-accent: rgba(86, 138, 255, 0.2);
+  --example-accent-strong: rgba(86, 138, 255, 0.38);
 }
 .example-card.kind-repl {
-  --example-accent: rgba(132, 96, 255, 0.24);
-  --example-accent-strong: rgba(132, 96, 255, 0.44);
+  --example-accent: rgba(132, 96, 255, 0.22);
+  --example-accent-strong: rgba(132, 96, 255, 0.4);
 }
 .example-card.kind-mathjax {
-  --example-accent: rgba(146, 112, 255, 0.24);
-  --example-accent-strong: rgba(146, 112, 255, 0.45);
+  --example-accent: rgba(146, 112, 255, 0.22);
+  --example-accent-strong: rgba(146, 112, 255, 0.41);
 }
 .example-card.kind-xterm {
-  --example-accent: rgba(88, 92, 255, 0.24);
-  --example-accent-strong: rgba(88, 92, 255, 0.44);
+  --example-accent: rgba(88, 92, 255, 0.22);
+  --example-accent-strong: rgba(88, 92, 255, 0.4);
 }
 .example-showcases {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .feature-list {
   margin: 0;
   padding-left: 18px;
   display: grid;
-  gap: 4px;
+  gap: 3px;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
 }
 .feature-list li {
   margin-bottom: 0;
@@ -1456,7 +1465,7 @@ pre code {
   margin-top: auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 .next-steps-links {
   list-style: none;
@@ -1473,7 +1482,8 @@ pre code {
   color: var(--text);
   font-weight: 500;
   font-size: 0.9rem;
-  opacity: 0.82;
+  opacity: 0.8;
+  transition: opacity 150ms ease;
 }
 .example-action:hover,
 .example-action:focus-visible {
@@ -1487,7 +1497,7 @@ pre code {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: transform 200ms ease;
+  transition: transform 200ms ease, color 200ms ease;
 }
 .action-primary:hover,
 .action-primary:focus-visible {
@@ -1499,11 +1509,11 @@ pre code {
   outline-offset: 3px;
 }
 .action-secondary {
-  opacity: 0.78;
+  opacity: 0.72;
 }
 .action-secondary:hover,
 .action-secondary:focus-visible {
-  opacity: 0.9;
+  opacity: 0.88;
 }
 .example-link {
   margin-top: auto;
