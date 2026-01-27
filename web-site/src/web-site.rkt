@@ -40,6 +40,31 @@
 ;;; SXML Helpers
 ;;;
 
+;; GitHub base URLs for linking source files.
+(define gh-base-file "https://github.com/soegaard/webracket/blob/main/")
+(define gh-base-dir "https://github.com/soegaard/webracket/tree/main/")
+
+;; gh-file : String -> String
+;;   Builds a GitHub blob URL for a file path.
+(define (gh-file path)
+  (string-append gh-base-file path))
+
+;; gh-dir : String -> String
+;;   Builds a GitHub tree URL for a directory path.
+(define (gh-dir path)
+  (string-append gh-base-dir path))
+
+;; ext : String Any ... -> List
+;;   Builds an external link with target and rel attributes.
+(define (ext url . content)
+  `(a (@ (href ,url) (target "_blank") (rel "noreferrer noopener")) ,@content))
+
+;; code-link : String String -> List
+;;   Builds a code-styled external link.
+(define (code-link url text)
+  `(a (@ (class "code-link") (href ,url) (target "_blank") (rel "noreferrer noopener"))
+      (code ,text)))
+
 ;; make-ul-list : (Listof String) (U #f String) -> List
 ;;   Builds a <ul> sxml node from a list of text items and an optional class.
 (define (make-ul-list items [class-name #f])
@@ -532,31 +557,44 @@
                "to relate the generated code to the source program. In the future we will probably "
                "need to add a CPS-pass in order to support continuations and continuation marks.")
            `(p "The frontend of the WebRacket compiler uses "
-               (code "read-syntax")
+               ,(code-link "https://docs.racket-lang.org/reference/reader.html#%28def._%28%28quote._~23~25kernel%29._read-syntax%29%29"
+                           "read-syntax")
                " to read a WebRacket program from a file. The resulting syntax object is fed into "
                "the normal Racket expander to produce a program in fully expanded form.")
            `(p "The middle end of the compiler consists of several passes implemented using the "
-               (code "NanoPass")
+               ,(code-link "https://github.com/nanopass/nanopass-framework-racket" "NanoPass")
                " framework.")
            `(p "The passes are as follows:")
            `(pre (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code"))
-           `(p "See the comments in \"" (code "compiler.rkt") "\" for an explanation of each pass.")
+           `(p "See the comments in \"" ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
+               "\" for an explanation of each pass.")
            `(p "The code generator generates WebAssembly in the form of " (code "S-expressions")
                " in the \"folded\" format.")
-           `(p "This code generator is inspired by \"Destination-driven Code Generation\" by Dybvig, "
+           `(p "This code generator is inspired by \""
+               ,(ext "https://legacy.cs.indiana.edu/~dyb/pubs/dest.pdf"
+                     "Destination-driven Code Generation")
+               "\" by Dybvig, "
                "Hieb and Butler. There are some differences, however. The code generator in the paper "
                "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
-           `(p "Finally, the external tool " (code "wasm-tools") " " (code "parse")
+           `(p "Finally, the external tool "
+               ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
+               " "
+               ,(code-link "https://bytecodealliance.github.io/wasm-tools/cli/wasm-tools-parse.html"
+                           "parse")
                " converts the S-expression representation into bytecode format.")
-           `(p "The main part of the compiler is in \"" (code "compiler.rkt") "\". The WebAssembly "
-               "runtime is in \"" (code "runtime-wasm.rkt") "\". The standard library (implemented in "
-               "WebRacket) is found in " (code "stdlib/") ". FFI bindings for popular libraries are in "
-               (code "ffi/") ".")
+           `(p "The main part of the compiler is in \""
+               ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
+               "\". The WebAssembly "
+               "runtime is in \"" ,(code-link (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
+               "\". The standard library (implemented in "
+               "WebRacket) is found in " ,(code-link (gh-dir "stdlib/") "stdlib/")
+               ". FFI bindings for popular libraries are in "
+               ,(code-link (gh-dir "ffi/") "ffi/") ".")
            `(p "It has been a design goal to avoid relying on functionality provided by the "
                "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
                "at some point? For browser functionality there is no way around interfacing with "
                "the JavaScript host. The JavaScript part of the runtime support is in "
-               (code "assembler.rkt") "."))
+               ,(code-link (gh-file "assembler.rkt") "assembler.rkt") "."))
           #f
           #f)
         ,(section-block
@@ -717,6 +755,14 @@ body {
   min-height: 100vh;
 }
 a { color: var(--blue); text-decoration: none; }
+a.code-link { color: inherit; }
+a.code-link code { color: inherit; }
+a.code-link:hover { text-decoration: underline; }
+a.code-link:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 .page {
   width: min(1200px, 92vw);
   margin: 0 auto;
