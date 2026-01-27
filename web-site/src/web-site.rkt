@@ -1448,14 +1448,14 @@ pre {
 .status-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 18px;
+  column-gap: 16px;
   row-gap: 10px;
   align-items: center;
   padding: 18px 20px;
   cursor: pointer;
   list-style: none;
   transition: background 150ms ease, border-color 150ms ease;
-  --meter-w: 220px;
+  --meter-w: 132px;
 }
 .status-summary:hover {
   background: rgba(74, 108, 255, 0.08);
@@ -1471,13 +1471,15 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 .status-title {
   margin: 0;
   font-size: 1.05rem;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 0;
 }
 .status-count {
   margin: 0;
@@ -1562,6 +1564,10 @@ pre {
     grid-template-columns: 1fr;
     row-gap: 8px;
     --meter-w: 100%;
+  }
+  .status-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 .status-body {
