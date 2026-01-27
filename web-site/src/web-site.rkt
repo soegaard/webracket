@@ -1578,6 +1578,19 @@ pre {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.status-body-hint:hover {
+  color: rgba(210, 217, 245, 0.95);
+}
+.status-body-hint:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+  border-radius: 999px;
 }
 .status-list {
   list-style: none;
