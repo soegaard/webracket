@@ -532,31 +532,31 @@
                "to relate the generated code to the source program. In the future we will probably "
                "need to add a CPS-pass in order to support continuations and continuation marks.")
            `(p "The frontend of the WebRacket compiler uses "
-               ,(code "read-syntax")
+               (code "read-syntax")
                " to read a WebRacket program from a file. The resulting syntax object is fed into "
                "the normal Racket expander to produce a program in fully expanded form.")
            `(p "The middle end of the compiler consists of several passes implemented using the "
-               ,(code "NanoPass")
+               (code "NanoPass")
                " framework.")
            `(p "The passes are as follows:")
            `(pre (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code"))
-           `(p "See the comments in \"" ,(code "compiler.rkt") "\" for an explanation of each pass.")
-           `(p "The code generator generates WebAssembly in the form of " ,(code "S-expressions")
+           `(p "See the comments in \"" (code "compiler.rkt") "\" for an explanation of each pass.")
+           `(p "The code generator generates WebAssembly in the form of " (code "S-expressions")
                " in the \"folded\" format.")
            `(p "This code generator is inspired by \"Destination-driven Code Generation\" by Dybvig, "
                "Hieb and Butler. There are some differences, however. The code generator in the paper "
                "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
-           `(p "Finally, the external tool " ,(code "wasm-tools") " " ,(code "parse")
+           `(p "Finally, the external tool " (code "wasm-tools") " " (code "parse")
                " converts the S-expression representation into bytecode format.")
-           `(p "The main part of the compiler is in \"" ,(code "compiler.rkt") "\". The WebAssembly "
-               "runtime is in \"" ,(code "runtime-wasm.rkt") "\". The standard library (implemented in "
-               "WebRacket) is found in " ,(code "stdlib/") ". FFI bindings for popular libraries are in "
-               ,(code "ffi/") ".")
+           `(p "The main part of the compiler is in \"" (code "compiler.rkt") "\". The WebAssembly "
+               "runtime is in \"" (code "runtime-wasm.rkt") "\". The standard library (implemented in "
+               "WebRacket) is found in " (code "stdlib/") ". FFI bindings for popular libraries are in "
+               (code "ffi/") ".")
            `(p "It has been a design goal to avoid relying on functionality provided by the "
                "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
                "at some point? For browser functionality there is no way around interfacing with "
                "the JavaScript host. The JavaScript part of the runtime support is in "
-               ,(code "assembler.rkt") "."))
+               (code "assembler.rkt") "."))
           #f
           #f)
         ,(section-block
