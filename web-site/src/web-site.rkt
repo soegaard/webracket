@@ -73,6 +73,36 @@
       `(ul (@ (class ,class-name)) ,@list-items)
       `(ul ,@list-items)))
 
+;; callout : (U Symbol String) (U #f String) List ... -> List
+;;   Builds a reusable callout box with a variant and optional title.
+(define (callout kind title . body)
+  (define kind-key
+    (cond
+      [(symbol? kind) kind]
+      [(string? kind) (string->symbol kind)]
+      [else 'note]))
+  (define kind-class
+    (case kind-key
+      [(info) "callout--info"]
+      [(warn warning) "callout--warn"]
+      [else "callout--note"]))
+  (define icon
+    (case kind-key
+      [(info) "ℹ"]
+      [(warn warning) "⚠"]
+      [else "✦"]))
+  (define show-title?
+    (and title
+         (not (and (string? title) (string=? title "")))))
+  (define title-node
+    (and show-title?
+         `(div (@ (class "callout-title"))
+               (span (@ (class "callout-icon")) ,icon)
+               (span (@ (class "callout-label")) ,title))))
+  `(div (@ (class ,(string-append "callout " kind-class)))
+        ,@(if title-node (list title-node) '())
+        ,@body))
+
 ;; section-block : String (U #f String) (Listof List) (U #f String) (U #f String) -> List
 ;;   Creates a section container with a title, optional subtitle, and content.
 (define (section-block title subtitle content [section-id #f] [section-class #f])
@@ -556,6 +586,11 @@
            `(p "The WebRacket compiler is a direct-style compiler. This choice has made it easier "
                "to relate the generated code to the source program. In the future we will probably "
                "need to add a CPS-pass in order to support continuations and continuation marks.")
+           (callout
+            'note
+            "Note"
+            `(p "WebRacket stays in direct style to keep the compiler pipeline easy to trace. "
+                "A future CPS pass may be added to support continuations and continuation marks."))
            `(p "The frontend of the WebRacket compiler uses "
                ,(code-link "https://docs.racket-lang.org/reference/reader.html#%28def._%28%28quote._~23~25kernel%29._read-syntax%29%29"
                            "read-syntax")
@@ -576,6 +611,12 @@
                "\" by Dybvig, "
                "Hieb and Butler. There are some differences, however. The code generator in the paper "
                "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
+           (callout
+            'info
+            "Source paper"
+            `(p "Read the full \"Destination-driven Code Generation\" paper on "
+                ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138" "IU ScholarWorks")
+                " for background on the generator’s design and terminology."))
            `(p "Finally, the external tool "
                ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
                " "
@@ -595,6 +636,11 @@
                "at some point? For browser functionality there is no way around interfacing with "
                "the JavaScript host. The JavaScript part of the runtime support is in "
                ,(code-link (gh-file "assembler.rkt") "assembler.rkt") "."))
+           (callout
+            'note
+            "Runtime goal"
+            `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
+                "non-JavaScript environments when they become viable.")))
           #f
           #f)
         ,(footer-section)))
@@ -1022,12 +1068,64 @@ a.code-link:focus-visible {
 }
 /* Installation: troubleshooting callout refinement */
 .callout {
-  background: rgba(101, 79, 240, 0.09);
-  border: 1px solid rgba(101, 79, 240, 0.22);
-  border-radius: 14px;
-  padding: 12px 14px;
+  background: rgba(101, 79, 240, 0.08);
+  border: 1px solid rgba(101, 79, 240, 0.24);
+  border-radius: 16px;
+  padding: 14px 16px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0;
+}
+.callout--note {
+  background: rgba(101, 79, 240, 0.08);
+  border-color: rgba(101, 79, 240, 0.24);
+}
+.callout--info {
+  background: rgba(74, 108, 255, 0.08);
+  border-color: rgba(74, 108, 255, 0.26);
+}
+.callout--warn {
+  background: rgba(242, 183, 5, 0.1);
+  border-color: rgba(242, 183, 5, 0.28);
+}
+.section .callout {
+  margin: 18px 0;
+}
+.install-step-card .callout {
+  margin: 0;
+}
+.callout-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #F2F4FF;
+  font-weight: 600;
+  margin: 0;
+}
+.callout-icon {
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.callout-title + * {
+  margin-top: 6px;
+}
+.callout p,
+.callout pre {
+  margin: 0;
+}
+.callout p + p,
+.callout p + pre,
+.callout pre + p,
+.callout pre + pre {
+  margin-top: 6px;
+}
+.callout a {
+  overflow-wrap: anywhere;
 }
 /* Installation: Step 6 completion emphasis */
 .install-step-card:nth-child(6) {
