@@ -1,24 +1,7 @@
 ;;;
-<<<<<<< HEAD
-;;; Completion of functions in the chapters:
-;;;   Data Structures
-;;;   Input and Output
-;;;
-
-;; racket -l errortrace -t ../webracket.rkt -- --stdlib --ffi standard.ffi --ffi dom.ffi -b completion.rkt
-
-; This program displays a web-page with a section for each section in
-; the Data Structure chapter in the reference.
-; Each section shows a gauge with the percentage completed.
-; A drop down triangle reveals a list of functions in the chapter.
-; Each function is linked to its documentation.
-
-=======
 ;;; Implementation Status Dashboard data + helpers.
 ;;; Included by web-site.rkt to render the WebRacket status page.
 ;;;
-
->>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
 
 (define (sort-symbols syms)
   (define (insert sym lst)
@@ -2780,71 +2763,13 @@
 ; (js-log prepared-chapters)
 
 
-<<<<<<< HEAD
-;;; Gauge component: renders a flex container with a gradient-filled bar
-;;; showing the percentage. The unfilled portion is covered with a grey
-;;; overlay so the gradient corresponds to the entire gauge, not just the
-;;; filled width.
-(define (make-gauge pct implemented-cnt primitives-cnt title)
-  ; (js-log 'make-gauge)  
-  (define pct-num       (inexact->exact (round (* 100 pct))))
-  (define pct-str       (number->string pct-num))
-  (define remaining-str (number->string (- 100 pct-num)))
-  (define container-style 
-    (string-append "position:relative;"
-                   "background:linear-gradient(to right, red, green);"
-                   "width:200px;height:20px;"
-                   "border:1px solid #000;"))
-  (define overlay-style 
-    (string-append "position:absolute;top:0;right:0;height:100%;width:"
-                   remaining-str
-                   "%;background:#ddd;"))
-  `(span (@ (style "display:flex;align-items:center;gap:8px;"))
-         (span (@ (style "width:5em;"))
-               ,title)
-         (span (@ (style ,container-style))
-               (span (@ (style ,overlay-style))))
-         " "
-         (span (@ (style "font-size: 2em;width:3em;text-align:right;"))
-               ,(string-append pct-str "%"))
-         " "
-         (span (@ (style "font-size: 1em;width:6em;text-align:right;"))
-               "("
-               ,(number->string implemented-cnt)
-               " of "
-               ,(number->string primitives-cnt)
-               ")"))
-  )
-=======
 (define (format-percent pct)
   (inexact->exact (round (* 100 pct))))
->>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
 
 (define (primitive-url sym)
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
-<<<<<<< HEAD
-(define (primitive-li sym implemented-set)
-  (define stdlib?  (memq sym standard-library-identifiers))
-  (define checked? (memq sym implemented-set))
-  (define box      (cond [stdlib?  "☒"]
-                         [checked? "☑"]
-                         [else     "☐"]))
-  (define str      (symbol->string sym))
-  `(li
-     (label
-       (span ,box)
-       (a (@ (href ,(primitive-url sym)))
-          ,str))))
-
-(define (section->sxml section idx implemented-set)
-  ; (js-log 'section->sxml)
-  (match section
-    [(list title primitives)
-     #;(define implemented (filter (lambda (p) (memq p implemented-primitives))
-                                   primitives))
-=======
 (define (primitive-status sym implemented-set)
   (cond
     [(memq sym standard-library-identifiers) (values "status-chip status-chip--stdlib" "Stdlib")]
@@ -2864,7 +2789,6 @@
 (define (section-card section implemented-set)
   (match section
     [(list title primitives)
->>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
      (define implemented
        (for/list ([p (in-list primitives)]
                   #:when (memq p implemented-set))
@@ -2873,95 +2797,6 @@
      (define pct (if (null? primitives)
                      0
                      (/ (length implemented) (length primitives))))
-<<<<<<< HEAD
-
-     (define list-id (format "sec-~a-list" idx))
-     (define tri-id  (format "sec-~a-tri"  idx))
-     
-     (define toggle-script
-       (format (string-append "var ul=document.getElementById('~a');"
-                              "var tri=document.getElementById('~a');"
-                              "if(  ul.style.display==='none'){ul.style.display='';tri.textContent='\\u25BC';}"
-                              "else{ul.style.display='none';tri.textContent='\\u25B6';}")
-               list-id tri-id))
-
-     
-     (js-log tri-id)
-     
-     `(section              
-       (div (h2 ,(make-gauge pct (length implemented) (length primitives) title))
-            (span (@ (id      ,tri-id)
-                     (class   "section-tri")
-                     (onclick ,toggle-script)
-                     (style   "cursor:pointer;"))
-                  "▶")
-            (ul (@ (id    ,list-id)
-                   (class "section-list")
-                   (style "display:none;"))
-                ,@(map (lambda (sym) (primitive-li sym implemented-set))
-                       (sort-symbols primitives)))
-            (hr)))]))
-
-
-(define toggle-all-script
-  (string-append
-   "var btn=document.getElementById('toggle-all');"
-   "var open=btn.getAttribute('data-open')==='true';"
-   "var lists=document.getElementsByClassName('section-list');"
-   "var tris=document.getElementsByClassName('section-tri');"
-   "if(open){"
-   "for(var i=0;i<lists.length;i++){lists[i].style.display='none';}"
-   "for(var i=0;i<tris.length;i++){tris[i].textContent='\\u25B6';}"
-   "btn.setAttribute('data-open','false');"
-   "btn.textContent='Expand All';"
-   "}else{"
-   "for(var i=0;i<lists.length;i++){lists[i].style.display='';}"
-   "for(var i=0;i<tris.length;i++){tris[i].textContent='\\u25BC';}"
-   "btn.setAttribute('data-open','true');"
-   "btn.textContent='Collapse All';"
-   "}"))
-
-
-(define-values (chapters-sxml _)
-  (for/fold ([nodes '()] [idx 0])
-            ([chapter (in-list prepared-chapters)])
-    (match chapter
-      [(list title sections implemented-set)
-       (define rendered
-         (for/list ([section (in-list sections)]
-                    [i       (in-naturals idx)])
-           (section->sxml section i implemented-set)))
-       (values (append nodes
-                       (list `(h2 (@ (style "color:red; font-size: 2.5rem; font-family: sans-serif;"))
-                                  ,title))
-                       rendered
-                       #;(add-between rendered '(div)))
-               (+ idx (length sections)))])))
-
-(define page
-  `(div (h1 (@ (style "font-size: 3.5rem; font-family: sans-serif;"))
-            "WebRacket Implementation Progress")
-        (div "Primitives: "
-              ,(number->string (length implemented-primitives)))
-        (div "Standard library: "
-              ,(number->string total-standard-library-identifiers))
-        (div "Missing: "
-             ,(number->string missing-primitives))
-        (div "Standard library (not in Racket): "
-             ,(number->string (- (length standard-library-identifiers)
-                                 total-standard-library-identifiers)))
-        (div)
-        (div "The pict functions are tracked separately and are not included in the implemented or missing primitive counts.")
-        
-        (button (@ (id "toggle-all")
-                    (data-open "false")
-                    (onclick ,toggle-all-script)
-                    (style "margin: 1em 0; padding: 0.5em 1em;"))
-                "Expand All")
-        ,@chapters-sxml))
-
-(js-append-child! (js-document-body) (sxml->dom page))
-=======
      (define pct-num (format-percent pct))
      `(details (@ (class "status-section"))
        (summary (@ (class "status-summary"))
@@ -2986,8 +2821,8 @@
            (div (@ (class "status-chapter-header"))
                 (h3 ,title))
            (div (@ (class "status-chapter-grid"))
-                ,@(map (λ (section) (section-card section implemented-set))
-                       sections)))]))
+                 ,@(map (λ (section) (section-card section implemented-set))
+                        sections)))]))
 
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
@@ -3043,4 +2878,3 @@
           #f
           "section--status")
         ,(footer-section)))
->>>>>>> dc8d6c1878ffce7d3fdfc81688e7734bc5f0f1e2
