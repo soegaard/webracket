@@ -1341,17 +1341,6 @@ pre code {
 .examples-grid {
   gap: 20px;
 }
-.examples-grid .card {
-  background: linear-gradient(145deg, rgba(20, 22, 43, 0.95), rgba(20, 22, 43, 0.7));
-  border-color: hsla(var(--accent-h), 75%, 78%, 0.12);
-}
-.examples-grid--featured .card {
-  padding: 24px;
-  border-color: hsla(var(--accent-h), 78%, 82%, 0.18);
-}
-.examples-grid--featured .card:nth-child(even) {
-  padding-top: 26px;
-}
 .example-card {
   gap: 16px;
   position: relative;
