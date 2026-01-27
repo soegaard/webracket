@@ -635,14 +635,14 @@
                "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
                "at some point? For browser functionality there is no way around interfacing with "
                "the JavaScript host. The JavaScript part of the runtime support is in "
-               ,(code-link (gh-file "assembler.rkt") "assembler.rkt") "."))
+               ,(code-link (gh-file "assembler.rkt") "assembler.rkt") ".")
            (callout
             'note
             "Runtime goal"
             `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
-                "non-JavaScript environments when they become viable."))
-           #f
-           #f)
+                "non-JavaScript environments when they become viable.")))
+          #f
+          #f)
         ,(footer-section)))
 
 ;; installation-page : -> List
