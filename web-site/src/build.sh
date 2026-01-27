@@ -6,6 +6,7 @@ echo "-- Copying Assets --"
 cp web-site.wasm ../public
 cp web-site.html ../public/index.html
 cp installation.html ../public
+cp documentation.html ../public
 cp examples.html ../public
 
 echo "-- Done --"

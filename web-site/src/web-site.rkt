@@ -245,6 +245,7 @@
 (define (current-page)
   (define path (js-ref (js-window-location) "pathname"))
   (cond
+    [(string-suffix? path "documentation.html") 'documentation]
     [(string-suffix? path "installation.html") 'installation]
     [(string-suffix? path "examples.html") 'examples]
     [(string-suffix? path "overview.html") 'overview]
@@ -275,6 +276,7 @@
              ,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
              ,(nav-link "Overview" "overview.html" 'overview active-page)
              ,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
+             ,(nav-link "Documentation" "documentation.html" 'documentation active-page)
              ,(nav-link "Installation" "installation.html" 'installation active-page)
              ,(nav-link "Examples" "examples.html" 'examples active-page))))
 
@@ -508,6 +510,76 @@
           "section--examples section-next-steps")
         ,(footer-section)))
 
+;; documentation-page : -> List
+;;   Documentation page layout.
+(define (documentation-page)
+  `(div (@ (class "page"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Compiler passes")
+                           (span (@ (class "pill")) "Runtime")
+                           (span (@ (class "pill")) "FFI"))
+                      (h1 (@ (class "hero-title")) "Documentation")
+                      (p (@ (class "hero-lead"))
+                         "Reference notes for WebRacket’s compiler and runtime.")))
+        ,(section-block
+          "Short Compiler Overview"
+          #f
+          (list
+           `(p "The WebRacket compiler is a direct-style compiler. This choice has made it easier "
+               "to relate the generated code to the source program. In the future we will probably "
+               "need to add a CPS-pass in order to support continuations and continuation marks.")
+           `(p "The frontend of the WebRacket compiler uses "
+               ,(code "read-syntax")
+               " to read a WebRacket program from a file. The resulting syntax object is fed into "
+               "the normal Racket expander to produce a program in fully expanded form.")
+           `(p "The middle end of the compiler consists of several passes implemented using the "
+               ,(code "NanoPass")
+               " framework.")
+           `(p "The passes are as follows:")
+           `(pre (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code"))
+           `(p "See the comments in \"" ,(code "compiler.rkt") "\" for an explanation of each pass.")
+           `(p "The code generator generates WebAssembly in the form of " ,(code "S-expressions")
+               " in the \"folded\" format.")
+           `(p "This code generator is inspired by \"Destination-driven Code Generation\" by Dybvig, "
+               "Hieb and Butler. There are some differences, however. The code generator in the paper "
+               "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
+           `(p "Finally, the external tool " ,(code "wasm-tools") " " ,(code "parse")
+               " converts the S-expression representation into bytecode format.")
+           `(p "The main part of the compiler is in \"" ,(code "compiler.rkt") "\". The WebAssembly "
+               "runtime is in \"" ,(code "runtime-wasm.rkt") "\". The standard library (implemented in "
+               "WebRacket) is found in " ,(code "stdlib/") ". FFI bindings for popular libraries are in "
+               ,(code "ffi/") ".")
+           `(p "It has been a design goal to avoid relying on functionality provided by the "
+               "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
+               "at some point? For browser functionality there is no way around interfacing with "
+               "the JavaScript host. The JavaScript part of the runtime support is in "
+               ,(code "assembler.rkt") "."))
+          #f
+          #f)
+        ,(section-block
+          "Next steps"
+          "Keep exploring with deeper dives into the WebRacket roadmap and guides."
+          (list
+           `(ul (@ (class "next-steps-links"))
+                (li (a (@ (class "example-action action-primary")
+                          (href "overview.html"))
+                       "Overview"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "roadmap.html"))
+                       "Road Ahead"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "installation.html"))
+                       "Installation"))
+                (li (a (@ (class "example-action action-secondary")
+                          (href "examples.html"))
+                       "Examples"))))
+          #f
+          "section--examples section-next-steps")
+        ,(footer-section)))
+
 ;; installation-page : -> List
 ;;   Installation page layout.
 (define (installation-page)
@@ -729,6 +801,9 @@ a { color: var(--blue); text-decoration: none; }
   gap: 18px;
 }
 .examples-hero {
+  margin-top: 32px;
+}
+.docs-hero {
   margin-top: 32px;
 }
 .hero-sublead {
@@ -1600,6 +1675,7 @@ CSS
 
   (define page-structure
     (case (current-page)
+      [(documentation) (documentation-page)]
       [(examples) (examples-page)]
       [(installation) (installation-page)]
       [else (home-page)]))
