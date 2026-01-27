@@ -1527,7 +1527,7 @@ pre {
   box-shadow: 0 0 12px rgba(101, 79, 240, 0.32);
 }
 .status-body {
-  padding: 0 18px 14px;
+  padding: 6px 16px 10px;
 }
 .status-list {
   list-style: none;
@@ -1535,17 +1535,17 @@ pre {
   margin: 0;
   display: grid;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 .prim-row {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.035);
 }
 .prim-row--link {
   text-decoration: none;
@@ -1566,10 +1566,11 @@ pre {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
 }
 .prim-name {
   min-width: 0;
@@ -2276,7 +2277,7 @@ pre code {
   .prim-row {
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 10px;
-    padding: 8px 12px;
+    padding: 9px 12px;
   }
   .prim-badge {
     width: 120px;
