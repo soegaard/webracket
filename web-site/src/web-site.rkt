@@ -1422,6 +1422,12 @@ pre {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   overflow: hidden;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+.status-section[open] {
+  grid-column: 1 / -1;
+  z-index: 2;
+  overflow: visible;
 }
 .status-summary {
   display: flex;
@@ -1447,6 +1453,7 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 220px;
 }
 .status-title {
   margin: 0;
@@ -1463,6 +1470,7 @@ pre {
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+  flex: 1 1 220px;
 }
 .status-summary-action {
   display: inline-flex;
@@ -1487,7 +1495,7 @@ pre {
   color: var(--text);
 }
 .status-bar {
-  width: 160px;
+  width: clamp(160px, 36vw, 260px);
   height: 9px;
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
@@ -1528,24 +1536,67 @@ pre {
 }
 .status-body {
   padding: 6px 16px 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.status-body::-webkit-scrollbar {
+  height: 10px;
+}
+.status-section[open] .status-body {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+.status-body-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 4px 6px;
+}
+.status-body-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.status-body-hint {
+  color: rgba(182, 189, 221, 0.75);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .status-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin-top: 6px;
+}
+.status-section .status-list,
+.status-section .status-list > li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.status-section .status-list > li {
+  border: 0;
+  background: transparent;
 }
 .prim-row {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
+  grid-template-columns: 132px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  column-gap: 12px;
+  padding: 8px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.035);
+  width: max-content;
+  min-width: 100%;
 }
 .prim-row--link {
   text-decoration: none;
@@ -1562,7 +1613,7 @@ pre {
 }
 .prim-badge {
   justify-self: start;
-  width: 140px;
+  width: 132px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1576,17 +1627,11 @@ pre {
   min-width: 0;
   text-align: left;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
   justify-self: start;
-}
-.prim-name code {
-  display: block;
   font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   font-size: 0.9rem;
-  white-space: inherit;
-  overflow: inherit;
-  text-overflow: inherit;
 }
 .status-chip {
   border-radius: 999px;

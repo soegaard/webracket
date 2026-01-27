@@ -2790,8 +2790,7 @@
           (target "_blank")
           (rel "noreferrer noopener"))
        (span (@ (class ,(string-append status-class " prim-badge"))) ,status-label)
-       (span (@ (class "prim-name") (title ,name))
-            (code ,name)))))
+       (span (@ (class "prim-name") (title ,name)) ,name))))
 
 (define (section-id title)
   ;; Build a slug without regex: ASCII alphanumerics separated by single hyphens.
@@ -2879,6 +2878,12 @@
                      (span (@ (class "status-summary-text")) "View")
                      (span (@ (class "status-summary-chevron")) "▸")))
        (div (@ (class "status-body"))
+            (div (@ (class "status-body-header"))
+                 (div (@ (class "status-body-legend"))
+                      (span (@ (class "status-chip status-chip--done")) "Implemented")
+                      (span (@ (class "status-chip status-chip--stdlib")) "Stdlib")
+                      (span (@ (class "status-chip status-chip--todo")) "Missing"))
+                 (div (@ (class "status-body-hint")) "Close to collapse"))
             (ul (@ (class "status-list"))
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
                        (sort-symbols primitives)))))]))
