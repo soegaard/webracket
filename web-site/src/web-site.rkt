@@ -1285,10 +1285,23 @@ pre {
 .page--status {
   --status-card-padding: 10px;
   --status-card-gap: 5px;
-  --status-section-spacing: 38px;
-  --status-progress-height: 3px;
-  --status-attention-padding: 9px;
-  --status-attention-gap: 4px;
+  --status-stack-gap-base: 2.5px;
+  --status-stack-gap: var(--status-stack-gap-base);
+  --status-section-spacing: 35px;
+  --status-section-padding-y: 26px;
+  --status-section-padding-x: 22px;
+  --status-section-header-gap: calc(var(--status-card-gap) * 1.3);
+  --status-section-title-gap: calc(var(--status-card-gap) * 0.9);
+  --status-progress-height: 2.6px;
+  --status-progress-label-height: 1.05rem;
+  --status-progress-row-height: calc(var(--status-progress-label-height) + var(--status-progress-height) + var(--status-stack-gap));
+  --status-title-line-height: 1.2em;
+  --status-meta-line-height: 1.2em;
+  --status-desc-line-height: 1.35em;
+  --status-cta-line-height: 1.1em;
+  --status-cta-height: 26px;
+  --status-attention-padding: 8px;
+  --status-attention-gap: 3px;
 }
 .page--status .card {
   background: rgba(255, 255, 255, 0.03);
@@ -1307,6 +1320,9 @@ pre {
 .status-hero {
   margin-top: 32px;
 }
+.page--status .section {
+  padding: var(--status-section-padding-y) var(--status-section-padding-x);
+}
 .page--status .section-title::after {
   height: 4px;
   width: 76px;
@@ -1316,10 +1332,10 @@ pre {
   margin-top: var(--status-section-spacing);
 }
 .section--status .section-header {
-  margin-bottom: calc(var(--status-card-gap) * 1.4);
+  margin-bottom: var(--status-section-header-gap);
 }
 .section--status .section-title + * {
-  margin-top: calc(var(--status-card-gap) * 1.0);
+  margin-top: var(--status-section-title-gap);
 }
 .status-insight {
   margin-top: calc(var(--status-card-gap) * 1.3);
@@ -1339,8 +1355,9 @@ pre {
   color: var(--text);
 }
 .attention-grid .card {
+  --status-stack-gap: calc(var(--status-stack-gap-base) - 1px);
   padding: var(--status-attention-padding);
-  gap: var(--status-attention-gap);
+  gap: var(--status-stack-gap);
 }
 .attention-grid {
   grid-template-columns: minmax(0, 1fr);
@@ -1368,6 +1385,9 @@ pre {
   min-width: 0;
 }
 .attention-header h3 {
+  margin: 0;
+  line-height: var(--status-title-line-height);
+  height: var(--status-title-line-height);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1377,18 +1397,25 @@ pre {
   font-weight: 600;
   color: var(--text);
   font-size: 0.95rem;
+  line-height: var(--status-title-line-height);
+  height: var(--status-title-line-height);
 }
 .attention-count {
   margin: 0;
   color: var(--muted);
   font-size: 0.85rem;
-  line-height: 1.2;
-  min-height: 1.2em;
+  line-height: var(--status-meta-line-height);
+  height: var(--status-meta-line-height);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .attention-note {
   margin: 0;
   color: rgba(182, 189, 221, 0.92);
   font-size: 0.9rem;
+  line-height: var(--status-desc-line-height);
+  height: calc(var(--status-desc-line-height) * 2);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1403,11 +1430,12 @@ pre {
   color: #C9D5FF;
   text-decoration: none;
   border-radius: 999px;
-  padding: calc(var(--status-attention-gap) / 2) calc(var(--status-attention-gap) + 4px);
+  padding: 0 calc(var(--status-attention-gap) + 4px);
   background: rgba(74, 108, 255, 0.15);
   border: 1px solid rgba(74, 108, 255, 0.35);
   transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
-  min-height: 26px;
+  min-height: var(--status-cta-height);
+  height: var(--status-cta-height);
 }
 .attention-link:hover,
 .attention-link:focus-visible {
@@ -1504,7 +1532,7 @@ pre {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: calc(var(--status-card-gap) * 1.6);
-  row-gap: calc(var(--status-card-gap) * 0.8);
+  row-gap: var(--status-stack-gap);
   align-items: center;
   padding: var(--status-card-padding);
   cursor: pointer;
@@ -1528,12 +1556,14 @@ pre {
 .status-summary-main {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--status-card-gap) / 4);
+  gap: var(--status-stack-gap);
   min-width: 0;
 }
 .status-title {
   margin: 0;
   font-size: 1.05rem;
+  line-height: var(--status-title-line-height);
+  height: var(--status-title-line-height);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1543,16 +1573,21 @@ pre {
   margin: 0;
   color: var(--muted);
   font-size: 0.85rem;
-  line-height: 1.2;
-  min-height: 1.2em;
+  line-height: var(--status-meta-line-height);
+  height: var(--status-meta-line-height);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .status-summary-metric {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: calc(var(--status-card-gap) / 4);
+  justify-content: center;
+  gap: var(--status-stack-gap);
   min-width: 0;
-  min-height: calc(var(--status-progress-height) + 1.4rem);
+  min-height: var(--status-progress-row-height);
+  height: var(--status-progress-row-height);
 }
 .status-summary-action {
   display: inline-flex;
@@ -1562,8 +1597,9 @@ pre {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  min-height: 1.1em;
-  line-height: 1.1;
+  min-height: var(--status-cta-line-height);
+  height: var(--status-cta-line-height);
+  line-height: var(--status-cta-line-height);
 }
 .status-summary-chevron {
   font-size: 1rem;
@@ -1576,6 +1612,8 @@ pre {
 .status-percent {
   font-weight: 600;
   color: var(--text);
+  line-height: var(--status-progress-label-height);
+  height: var(--status-progress-label-height);
 }
 .status-bar {
   width: min(var(--meter-w), 100%);
@@ -1584,7 +1622,7 @@ pre {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   --pct: 0;
   --p: clamp(0, calc(var(--pct) / 100), 1);
   --p-safe: max(var(--p), 0.001);
@@ -1597,26 +1635,26 @@ pre {
   background-position: 0 50%;
   background-repeat: no-repeat;
   border-radius: inherit;
-  box-shadow: 0 0 4px rgba(74, 108, 255, 0.12);
+  box-shadow: 0 0 3px rgba(74, 108, 255, 0.1);
   transition: width 220ms ease;
   --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.62),
                                                rgba(242, 183, 5, 0.62),
-                                               rgba(74, 108, 255, 0.68));
+                                               rgba(74, 108, 255, 0.64));
 }
 .status-bar-fill--low {
-  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.7),
-                                               rgba(242, 183, 5, 0.5));
-  box-shadow: 0 0 5px rgba(209, 58, 58, 0.16);
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.66),
+                                               rgba(242, 183, 5, 0.48));
+  box-shadow: 0 0 4px rgba(209, 58, 58, 0.12);
 }
 .status-bar-fill--mid {
-  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.6),
-                                               rgba(74, 108, 255, 0.62));
-  box-shadow: 0 0 5px rgba(74, 108, 255, 0.12);
+  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.56),
+                                               rgba(74, 108, 255, 0.6));
+  box-shadow: 0 0 4px rgba(74, 108, 255, 0.1);
 }
 .status-bar-fill--strong {
-  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.68),
-                                               rgba(101, 79, 240, 0.72));
-  box-shadow: 0 0 5px rgba(101, 79, 240, 0.16);
+  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.64),
+                                               rgba(101, 79, 240, 0.66));
+  box-shadow: 0 0 4px rgba(101, 79, 240, 0.12);
 }
 @media (min-width: 720px) and (max-width: 999px) {
   .status-summary {
@@ -1637,6 +1675,7 @@ pre {
 .status-body {
   padding: calc(var(--status-card-gap) / 2) var(--status-card-padding) calc(var(--status-card-gap) * 0.75);
   overflow: hidden;
+  min-width: 0;
 }
 .status-section[open] .status-body {
   margin-top: calc(var(--status-card-gap) * 0.8);
@@ -1685,6 +1724,7 @@ pre {
   margin-top: calc(var(--status-card-gap) / 4);
   overflow-x: auto;
   max-width: 100%;
+  min-width: 0;
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 .status-list::-webkit-scrollbar {
@@ -1785,7 +1825,7 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 11px 18px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
