@@ -2860,18 +2860,18 @@
   (cond
     [(< pct-num 20) "low"]
     [(> pct-num 80) "strong"]
-    [else "mid"]))
+    [else           "mid"]))
 
 ;; section-stats: string? (listof symbol?) (listof symbol?) -> list?
 ;;   Compute summary stats for a section.
 ;;   Returns a list of stats (title, primitives, counts, and ids).
 (define (section-stats title primitives implemented-set)
   (define implemented-count (section-implemented-count primitives implemented-set))
-  (define total (length primitives))
-  (define missing (- total implemented-count))
-  (define pct (if (zero? total) 0 (/ implemented-count total)))
-  (define pct-num (format-percent pct))
-  (define tier (section-progress-tier pct-num))
+  (define total             (length primitives))
+  (define missing           (- total implemented-count))
+  (define pct               (if (zero? total) 0 (/ implemented-count total)))
+  (define pct-num           (format-percent pct))
+  (define tier              (section-progress-tier pct-num))
   (list title primitives implemented-count total missing pct-num tier (section-id title)))
 
 ;; section-card: list? (listof symbol?) -> list?
@@ -2885,15 +2885,14 @@
                   #:when (memq p implemented-set))
          p))
 
-     (define stats (section-stats title primitives implemented-set))
+     (define stats             (section-stats title primitives implemented-set))
      (define implemented-count (list-ref stats 2))
-     (define total (list-ref stats 3))
-     (define pct-num (list-ref stats 5))
-     (define tier (list-ref stats 6))
-     (define anchor-id (list-ref stats 7))
-     (define aria-label
-       (format "~a: ~a%, ~a of ~a primitives implemented"
-               title pct-num implemented-count total))
+     (define total             (list-ref stats 3))
+     (define pct-num           (list-ref stats 5))
+     (define tier              (list-ref stats 6))
+     (define anchor-id         (list-ref stats 7))
+     (define aria-label        (format "~a: ~a%, ~a of ~a primitives implemented"
+                                       title pct-num implemented-count total))
      `(details (@ (class ,(format "status-section status-section--~a" tier))
                   (id ,anchor-id))
        (summary (@ (class "status-summary")
@@ -2909,13 +2908,13 @@
                           (span (@ (class "status-summary-chevron")) "▸")))
                 (div (@ (class "status-summary-metric"))
                      (span (@ (class "status-percent")) ,(format "~a%" pct-num))
-                     (div (@ (class "status-bar")
-                             (role "progressbar")
-                             (aria-label ,aria-label)
+                     (div (@ (class         "status-bar")
+                             (role          "progressbar")
+                             (aria-label    ,aria-label)
                              (aria-valuemin "0")
                              (aria-valuemax "100")
                              (aria-valuenow ,(number->string pct-num))
-                             (style ,(format "--pct: ~a;" pct-num)))
+                             (style         ,(format "--pct: ~a;" pct-num)))
                           (div (@ (class ,(format "status-bar-fill status-bar-fill--~a"
                                                   tier))))))
                 )
@@ -2923,18 +2922,18 @@
             (div (@ (class "status-body-header"))
                  (div (@ (class "status-body-legend"))
                       (button (@ (class "status-chip status-chip--done status-chip--filter status-chip--active")
-                                 (type "button")
-                                 (aria-pressed "true")
+                                 (type              "button")
+                                 (aria-pressed      "true")
                                  (data-status-group "implemented"))
                               "Implemented")
                       (button (@ (class "status-chip status-chip--stdlib status-chip--filter")
-                                 (type "button")
-                                 (aria-pressed "false")
+                                 (type              "button")
+                                 (aria-pressed      "false")
                                  (data-status-group "stdlib"))
                               "Stdlib")
                       (button (@ (class "status-chip status-chip--todo status-chip--filter")
-                                 (type "button")
-                                 (aria-pressed "false")
+                                 (type              "button")
+                                 (aria-pressed      "false")
                                  (data-status-group "missing"))
                               "Missing"))
                  (button (@ (class "status-body-hint")
@@ -2962,9 +2961,9 @@
 ;;   Returns the matching element or #f when none matches.
 (define (find-first pred lst)
   (cond
-    [(null? lst) #f]
+    [(null? lst)       #f]
     [(pred (car lst)) (car lst)]
-    [else (find-first pred (cdr lst))]))
+    [else             (find-first pred (cdr lst))]))
 
 (define all-section-stats
   (for*/list ([chapter (in-list prepared-chapters)]
@@ -3006,12 +3005,12 @@
        (define stat
          (find-first (λ (item) (string-ci=? (car item) section-title))
                      all-section-stats))
-       (define title (car stat))
+       (define title             (car stat))
        (define implemented-count (list-ref stat 2))
-       (define total (list-ref stat 3))
-       (define missing (list-ref stat 4))
-       (define pct-num (list-ref stat 5))
-       (define anchor-id (list-ref stat 7))
+       (define total             (list-ref stat 3))
+       (define missing           (list-ref stat 4))
+       (define pct-num           (list-ref stat 5))
+       (define anchor-id         (list-ref stat 7))
        (list display title note implemented-count total missing pct-num anchor-id)])))
 
 ;; take-up-to: list? exact-nonnegative-integer? -> list?
@@ -3049,13 +3048,13 @@
 ;;   Render an attention card summary for a section.
 ;;   Returns an S-expression representing the attention card markup.
 (define (attention-card item)
-  (define display (list-ref item 0))
-  (define title (list-ref item 1))
-  (define note (list-ref item 2))
+  (define display           (list-ref item 0))
+  (define title             (list-ref item 1))
+  (define note              (list-ref item 2))
   (define implemented-count (list-ref item 3))
-  (define total (list-ref item 4))
-  (define pct-num (list-ref item 6))
-  (define anchor-id (list-ref item 7))
+  (define total             (list-ref item 4))
+  (define pct-num           (list-ref item 6))
+  (define anchor-id         (list-ref item 7))
   (define label
     (format "~a: ~a%, ~a of ~a primitives implemented"
             title pct-num implemented-count total))
@@ -3107,14 +3106,15 @@
     (or (find-first (λ (stat) (member (car stat) weak-candidates))
                     sorted-weak)
         (car sorted-weak)))
-  (define strong-title (car strong))
+  (define strong-title       (car strong))
   (define strong-implemented (list-ref strong 2))
-  (define strong-total (list-ref strong 3))
-  (define strong-pct (list-ref strong 5))
-  (define weak-title (car weak))
-  (define weak-implemented (list-ref weak 2))
-  (define weak-total (list-ref weak 3))
-  (define weak-pct (list-ref weak 5))
+  (define strong-total       (list-ref strong 3))
+  (define strong-pct         (list-ref strong 5))
+  (define weak-title         (car weak))
+  (define weak-implemented   (list-ref weak 2))
+  (define weak-total         (list-ref weak 3))
+  (define weak-pct           (list-ref weak 5))
+
   (callout
    'info
    "What this tells us"
@@ -3128,7 +3128,7 @@
 ;;   Convert a DOM NodeList into a Racket list.
 ;;   Returns a list of nodes in the same order.
 (define (node-list->list node-list)
-  (define len (js-ref node-list "length"))
+  (define len   (js-ref node-list "length"))
   (define count (if (number? len) (inexact->exact len) 0))
   (let loop ([idx 0]
              [acc '()])
@@ -3151,7 +3151,7 @@
 ;;   Returns #t when the class is present.
 (define (classlist-contains? element class-name)
   (define selector (string-append "." class-name))
-  (define result (and element (js-matches element selector)))
+  (define result   (and element (js-matches element selector)))
   (and (number? result) (not (zero? result))))
 
 ;; element-text: any/c -> string?
@@ -3173,7 +3173,7 @@
     (define summary (js-element-query-selector section "summary"))
     (js-send section "scrollIntoView"
              (vector (js-object (vector (vector "behavior" "smooth")
-                                        (vector "block" "start")))))
+                                        (vector "block"    "start")))))
     (when summary
       (js-send summary "focus"
                (vector (js-object (vector (vector "preventScroll" #t))))))))
@@ -3207,8 +3207,8 @@
 (define (status-row-status row)
   (cond
     [(and row (classlist-contains? row "prim-row--implemented")) "implemented"]
-    [(and row (classlist-contains? row "prim-row--stdlib")) "stdlib"]
-    [else "missing"]))
+    [(and row (classlist-contains? row "prim-row--stdlib"))      "stdlib"]
+    [else                                                        "missing"]))
 
 ;; status-row-name: any/c any/c -> string?
 ;;   Resolve the display name for a row for sorting.
@@ -3225,35 +3225,32 @@
 ;;   Returns the ordered list of status labels.
 (define (status-group-order group)
   (cond
-    [(string=? group "stdlib") (list "stdlib" "implemented" "missing")]
+    [(string=? group "stdlib")  (list "stdlib"  "implemented" "missing")]
     [(string=? group "missing") (list "missing" "implemented" "stdlib")]
-    [else (list "implemented" "stdlib" "missing")]))
+    [else                       (list "implemented" "stdlib" "missing")]))
 
 ;; status-order-index: string? (listof string?) -> exact-nonnegative-integer?
 ;;   Find the index of a status in an ordering list.
 ;;   Returns the index of the status in the ordering list.
 (define (status-order-index status order)
-  (let loop ([rest order]
-             [idx 0])
+  (let loop ([rest order] [idx 0])
     (cond
-      [(null? rest) idx]
+      [(null? rest)                 idx]
       [(string=? status (car rest)) idx]
-      [else (loop (cdr rest) (add1 idx))])))
+      [else                         (loop (cdr rest) (add1 idx))])))
 
 ;; status-sort-list!: any/c string? string? -> void?
 ;;   Sort a status list in place by group and name.
 ;;   Returns (void) after sorting the list in place.
 (define (status-sort-list! list-el active-group active-dir)
-  (define items
-    (node-list->list (js-element-query-selector-all list-el "li")))
-  (define priority (status-group-order active-group))
-  (define decorated
-    (for/list ([item (in-list items)]
-               [index (in-naturals)])
-      (define row (js-element-query-selector item ".prim-row"))
-      (define status (status-row-status row))
-      (define name (status-row-name row item))
-      (list item index status name)))
+  (define items     (node-list->list (js-element-query-selector-all list-el "li")))
+  (define priority  (status-group-order active-group))
+  (define decorated (for/list ([item (in-list items)]
+                               [index (in-naturals)])
+                      (define row    (js-element-query-selector item ".prim-row"))
+                      (define status (status-row-status row))
+                      (define name   (status-row-name row item))
+                      (list item index status name)))
   ;; item<?: list? list? -> boolean?
   ;;   Compare two decorated rows for sorting order.
   ;;   Returns #t when the first row sorts before the second.
@@ -3273,17 +3270,17 @@
          [(string-ci<? name-a name-b) (string=? dir "asc")]
          [(string-ci>? name-a name-b) (string=? dir "desc")]
          [else (< (list-ref a 1) (list-ref b 1))])]))
+  
   (for ([entry (in-list (sort decorated item<?))])
-    (js-append-child! list-el (list-ref entry 0)))
-  (void))
+    (js-append-child! list-el (list-ref entry 0))))
 
 ;; status-sync-buttons!: list? string? -> void?
 ;;   Sync filter button states to active group.
 ;;   Returns (void) after updating button state.
 (define (status-sync-buttons! buttons active-group)
   (for ([button (in-list buttons)])
-    (define group (js-get-attribute button "data-status-group"))
-    (define is-active (and (string? group) (string=? group active-group)))
+    (define group      (js-get-attribute button "data-status-group"))
+    (define is-active  (and (string? group) (string=? group active-group)))
     (js-set-attribute! button "aria-pressed" (if is-active "true" "false"))
     (define class-list (js-ref button "classList"))
     (when class-list
@@ -3301,13 +3298,15 @@
       (node-list->list (js-element-query-selector-all section "[data-status-group]")))
     (when (and list-el (pair? button-list))
       (define active-group "implemented")
-      (define active-dir "asc")
+      (define active-dir   "asc")
+
       ;; sync-and-sort!: -> void?
       ;;   Refresh button state and re-sort the list.
       ;;   Returns (void) after syncing state.
       (define (sync-and-sort!)
         (status-sync-buttons! button-list active-group)
         (status-sort-list! list-el active-group active-dir))
+      
       (for ([button (in-list button-list)])
         (define handler
           (procedure->external
@@ -3318,13 +3317,13 @@
                    (set! active-dir (if (string=? active-dir "asc") "desc" "asc"))
                    (begin
                      (set! active-group group)
-                     (set! active-dir "asc")))
+                     (set! active-dir   "asc")))
                (sync-and-sort!))
              (void))))
         (remember-status-handler! handler)
         (js-add-event-listener! button "click" handler))
-      (sync-and-sort!)))
-  (void))
+      
+      (sync-and-sort!))))
 
 ;; init-status-collapse-buttons!: -> void?
 ;;   Attach handlers to collapse expanded sections.
@@ -3340,8 +3339,7 @@
            (js-remove-attribute! details "open"))
          (void))))
     (remember-status-handler! handler)
-    (js-add-event-listener! button "click" handler))
-  (void))
+    (js-add-event-listener! button "click" handler)))
 
 ;; init-status-page-handlers!: -> void?
 ;;   Initialize all behavior for the status page.
@@ -3349,8 +3347,7 @@
 (define (init-status-page-handlers!)
   (init-status-smooth-scroll!)
   (init-status-filter!)
-  (init-status-collapse-buttons!)
-  (void))
+  (init-status-collapse-buttons!))
 
 ;; implementation-status-page: -> list?
 ;;   Render the implementation status dashboard page.
