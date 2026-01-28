@@ -2514,7 +2514,10 @@ CSS
   
   (define page (sxml->dom page-structure))
   
-  (js-append-child! body page))
+  (js-append-child! body page)
+
+  (when (eq? (current-page) 'implementation-status)
+    (init-status-page-handlers!)))
 
 ;;;
 ;;; Entry Point

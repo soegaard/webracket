@@ -2899,8 +2899,7 @@
                                  (data-status-group "missing"))
                               "Missing"))
                  (button (@ (class "status-body-hint")
-                            (type "button")
-                            (onclick "var details = this.closest('details'); if (details) { details.removeAttribute('open'); }"))
+                            (type "button"))
                          "Close to collapse"))
             (ul (@ (class "status-list"))
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
@@ -3062,100 +3061,173 @@
                 weak-title weak-pct weak-implemented weak-total)
        " these gaps will unlock more programs.")))
 
-(define (status-smooth-scroll-script)
-  `(script
-     "(function() {\n"
-     "  const openTarget = (targetId) => {\n"
-     "    const section = document.getElementById(targetId);\n"
-     "    if (!section) return;\n"
-     "    section.open = true;\n"
-     "    const summary = section.querySelector('summary');\n"
-     "    section.scrollIntoView({ behavior: 'smooth', block: 'start' });\n"
-     "    if (summary) summary.focus({ preventScroll: true });\n"
-     "  };\n"
-     "  document.querySelectorAll('[data-attention-target]').forEach((link) => {\n"
-     "    link.addEventListener('click', (event) => {\n"
-     "      const targetId = link.getAttribute('data-attention-target');\n"
-     "      if (!targetId) return;\n"
-     "      event.preventDefault();\n"
-     "      openTarget(targetId);\n"
-     "      history.replaceState(null, '', `#${targetId}`);\n"
-     "    });\n"
-     "  });\n"
-     "  if (window.location.hash) {\n"
-     "    const targetId = window.location.hash.slice(1);\n"
-     "    if (targetId) openTarget(targetId);\n"
-     "  }\n"
-     "})();"))
+(define (node-list->list node-list)
+  (define len (js-ref node-list "length"))
+  (define count (if (number? len) (inexact->exact len) 0))
+  (let loop ([idx 0]
+             [acc '()])
+    (if (>= idx count)
+        (reverse acc)
+        (loop (add1 idx)
+              (cons (js-send node-list "item" (vector idx)) acc)))))
 
-(define (status-filter-script)
-  `(script
-     "(function() {\n"
-     "  const statusOrderMap = {\n"
-     "    implemented: ['implemented', 'stdlib', 'missing'],\n"
-     "    stdlib: ['stdlib', 'implemented', 'missing'],\n"
-     "    missing: ['missing', 'implemented', 'stdlib']\n"
-     "  };\n"
-     "  const getRowStatus = (row) => {\n"
-     "    if (row.classList.contains('prim-row--implemented')) return 'implemented';\n"
-     "    if (row.classList.contains('prim-row--stdlib')) return 'stdlib';\n"
-     "    return 'missing';\n"
-     "  };\n"
-     "  const getRowName = (row) => {\n"
-     "    const name = row.querySelector('.prim-name');\n"
-     "    return name ? name.textContent.trim() : row.textContent.trim();\n"
-     "  };\n"
-     "  const sortList = (listEl, activeGroup, activeDir) => {\n"
-     "    const priority = statusOrderMap[activeGroup] || statusOrderMap.implemented;\n"
-     "    const items = Array.from(listEl.querySelectorAll('li'));\n"
-     "    const decorated = items.map((item, index) => {\n"
-     "      const row = item.querySelector('.prim-row');\n"
-     "      const status = row ? getRowStatus(row) : 'missing';\n"
-     "      const name = row ? getRowName(row) : '';\n"
-     "      return { item, index, status, name };\n"
-     "    });\n"
-     "    decorated.sort((a, b) => {\n"
-     "      const groupDiff = priority.indexOf(a.status) - priority.indexOf(b.status);\n"
-     "      if (groupDiff !== 0) return groupDiff;\n"
-     "      const dir = a.status === activeGroup ? activeDir : 'asc';\n"
-     "      const nameDiff = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });\n"
-     "      if (nameDiff !== 0) return dir === 'asc' ? nameDiff : -nameDiff;\n"
-     "      return a.index - b.index;\n"
-     "    });\n"
-     "    decorated.forEach(({ item }) => listEl.appendChild(item));\n"
-     "  };\n"
-     "  document.querySelectorAll('.status-section').forEach((section) => {\n"
-     "    let activeGroup = 'implemented';\n"
-     "    let activeDir = 'asc';\n"
-     "    const listEl = section.querySelector('.status-list');\n"
-     "    const buttons = section.querySelectorAll('[data-status-group]');\n"
-     "    if (!listEl || buttons.length === 0) return;\n"
-     "    const syncButtons = () => {\n"
-     "      buttons.forEach((button) => {\n"
-     "        const group = button.getAttribute('data-status-group');\n"
-     "        const isActive = group === activeGroup;\n"
-     "        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');\n"
-     "        button.classList.toggle('status-chip--active', isActive);\n"
-     "      });\n"
-     "    };\n"
-     "    buttons.forEach((button) => {\n"
-     "      button.addEventListener('click', () => {\n"
-     "        const group = button.getAttribute('data-status-group');\n"
-     "        if (!group) return;\n"
-     "        if (group === activeGroup) {\n"
-     "          activeDir = activeDir === 'asc' ? 'desc' : 'asc';\n"
-     "        } else {\n"
-     "          activeGroup = group;\n"
-     "          activeDir = 'asc';\n"
-     "        }\n"
-     "        syncButtons();\n"
-     "        sortList(listEl, activeGroup, activeDir);\n"
-     "      });\n"
-     "    });\n"
-     "    syncButtons();\n"
-     "    sortList(listEl, activeGroup, activeDir);\n"
-     "  });\n"
-     "})();"))
+(define (classlist-contains? element class-name)
+  (define class-list (js-ref element "classList"))
+  (and class-list
+       (not (zero? (js-send class-list "contains" (vector class-name))))))
+
+(define (element-text element)
+  (define content (and element (js-ref element "textContent")))
+  (if (string? content)
+      (string-trim content)
+      ""))
+
+(define (status-open-target! target-id)
+  (define section (js-get-element-by-id target-id))
+  (when section
+    (js-set! section "open" #t)
+    (define summary (js-element-query-selector section "summary"))
+    (js-send section "scrollIntoView"
+             (vector (js-object (vector (vector "behavior" "smooth")
+                                        (vector "block" "start")))))
+    (when summary
+      (js-send summary "focus"
+               (vector (js-object (vector (vector "preventScroll" #t))))))))
+
+(define (init-status-smooth-scroll!)
+  (define links (node-list->list (js-query-selector-all "[data-attention-target]")))
+  (for ([link (in-list links)])
+    (define handler
+      (procedure->external
+       (lambda (evt)
+         (define target-id (js-get-attribute link "data-attention-target"))
+         (when (and (string? target-id) (not (string=? target-id "")))
+           (js-event-prevent-default evt)
+           (status-open-target! target-id)
+           (js-send (js-window-history) "replaceState"
+                    (vector (js-null) "" (string-append "#" target-id))))
+         (void))))
+    (js-add-event-listener! link "click" handler))
+  (define hash (js-ref (js-window-location) "hash"))
+  (when (and (string? hash) (> (string-length hash) 1))
+    (status-open-target! (substring hash 1)))
+  (void))
+
+(define (status-row-status row)
+  (cond
+    [(and row (classlist-contains? row "prim-row--implemented")) "implemented"]
+    [(and row (classlist-contains? row "prim-row--stdlib")) "stdlib"]
+    [else "missing"]))
+
+(define (status-row-name row item)
+  (define name-node (and row (js-element-query-selector row ".prim-name")))
+  (define name (if name-node (element-text name-node) ""))
+  (if (string=? name "")
+      (element-text (or row item))
+      name))
+
+(define (status-group-order group)
+  (cond
+    [(string=? group "stdlib") (list "stdlib" "implemented" "missing")]
+    [(string=? group "missing") (list "missing" "implemented" "stdlib")]
+    [else (list "implemented" "stdlib" "missing")]))
+
+(define (status-order-index status order)
+  (let loop ([rest order]
+             [idx 0])
+    (cond
+      [(null? rest) idx]
+      [(string=? status (car rest)) idx]
+      [else (loop (cdr rest) (add1 idx))])))
+
+(define (status-sort-list! list-el active-group active-dir)
+  (define items
+    (node-list->list (js-element-query-selector-all list-el "li")))
+  (define priority (status-group-order active-group))
+  (define decorated
+    (for/list ([item (in-list items)]
+               [index (in-naturals)])
+      (define row (js-element-query-selector item ".prim-row"))
+      (define status (status-row-status row))
+      (define name (status-row-name row item))
+      (list item index status name)))
+  (define (item<? a b)
+    (define status-a (list-ref a 2))
+    (define status-b (list-ref b 2))
+    (define diff (- (status-order-index status-a priority)
+                    (status-order-index status-b priority)))
+    (cond
+      [(< diff 0) #t]
+      [(> diff 0) #f]
+      [else
+       (define dir (if (string=? status-a active-group) active-dir "asc"))
+       (define name-a (list-ref a 3))
+       (define name-b (list-ref b 3))
+       (cond
+         [(string-ci<? name-a name-b) (string=? dir "asc")]
+         [(string-ci>? name-a name-b) (string=? dir "desc")]
+         [else (< (list-ref a 1) (list-ref b 1))])]))
+  (for ([entry (in-list (sort decorated item<?))])
+    (js-append-child! list-el (list-ref entry 0)))
+  (void))
+
+(define (status-sync-buttons! buttons active-group)
+  (for ([button (in-list buttons)])
+    (define group (js-get-attribute button "data-status-group"))
+    (define is-active (and (string? group) (string=? group active-group)))
+    (js-set-attribute! button "aria-pressed" (if is-active "true" "false"))
+    (define class-list (js-ref button "classList"))
+    (when class-list
+      (js-send class-list "toggle"
+               (vector "status-chip--active" (and is-active #t))))))
+
+(define (init-status-filter!)
+  (define sections (node-list->list (js-query-selector-all ".status-section")))
+  (for ([section (in-list sections)])
+    (define list-el (js-element-query-selector section ".status-list"))
+    (define button-list
+      (node-list->list (js-element-query-selector-all section "[data-status-group]")))
+    (when (and list-el (pair? button-list))
+      (define active-group "implemented")
+      (define active-dir "asc")
+      (define (sync-and-sort!)
+        (status-sync-buttons! button-list active-group)
+        (status-sort-list! list-el active-group active-dir))
+      (for ([button (in-list button-list)])
+        (define handler
+          (procedure->external
+           (lambda (_evt)
+             (define group (js-get-attribute button "data-status-group"))
+             (when (and (string? group) (not (string=? group "")))
+               (if (string=? group active-group)
+                   (set! active-dir (if (string=? active-dir "asc") "desc" "asc"))
+                   (begin
+                     (set! active-group group)
+                     (set! active-dir "asc")))
+               (sync-and-sort!))
+             (void))))
+        (js-add-event-listener! button "click" handler))
+      (sync-and-sort!)))
+  (void))
+
+(define (init-status-collapse-buttons!)
+  (define buttons (node-list->list (js-query-selector-all ".status-body-hint")))
+  (for ([button (in-list buttons)])
+    (define handler
+      (procedure->external
+       (lambda (_evt)
+         (define details (js-send button "closest" (vector "details")))
+         (when details
+           (js-remove-attribute! details "open"))
+         (void))))
+    (js-add-event-listener! button "click" handler))
+  (void))
+
+(define (init-status-page-handlers!)
+  (init-status-smooth-scroll!)
+  (init-status-filter!)
+  (init-status-collapse-buttons!)
+  (void))
 
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
@@ -3251,6 +3323,4 @@
                          "See issues"))))
          #f
          "section--status")
-        ,(status-smooth-scroll-script)
-        ,(status-filter-script)
         ,(footer-section)))
