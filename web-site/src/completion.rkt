@@ -2990,7 +2990,7 @@
               [(< pct-a pct-b) #t]
               [(> pct-a pct-b) #f]
               [else (> missing-a missing-b)]))))
-  (take-up-to sorted 6))
+  (take-up-to sorted 4))
 
 (define (attention-card item)
   (define display (list-ref item 0))
