@@ -2779,8 +2779,8 @@
 (define (primitive-status sym implemented-set)
   (cond
     [(memq sym standard-library-identifiers) (values "status-chip status-chip--stdlib" "Stdlib")]
-    [(memq sym implemented-set) (values "status-chip status-chip--done" "Implemented")]
-    [else (values "status-chip status-chip--todo" "Missing")]))
+    [(memq sym implemented-set)              (values "status-chip status-chip--done"   "Implemented")]
+    [else                                    (values "status-chip status-chip--todo"   "Missing")]))
 
 ;; Render a primitive list item with status badge and link.
 (define (primitive-item sym implemented-set)
@@ -2789,8 +2789,8 @@
   (define row-class
     (cond
       [(memq sym standard-library-identifiers) "prim-row--stdlib"]
-      [(memq sym implemented-set) "prim-row--implemented"]
-      [else "prim-row--missing"]))
+      [(memq sym implemented-set)              "prim-row--implemented"]
+      [else                                    "prim-row--missing"]))
   `(li
     (a (@ (class ,(string-append "prim-row prim-row--link " row-class))
           (href ,(primitive-url sym))
