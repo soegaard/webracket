@@ -3187,6 +3187,7 @@
     (define handler
       (procedure->external
        (lambda (evt)
+         (js-log "status-smooth-scroll-click")
          (define target-id (js-get-attribute link "data-attention-target"))
          (when (and (string? target-id) (not (string=? target-id "")))
            (js-event-prevent-default evt)
@@ -3311,6 +3312,7 @@
         (define handler
           (procedure->external
            (lambda (_evt)
+             (js-log "status-filter-click")
              (define group (js-get-attribute button "data-status-group"))
              (when (and (string? group) (not (string=? group "")))
                (if (string=? group active-group)
@@ -3334,6 +3336,7 @@
     (define handler
       (procedure->external
        (lambda (_evt)
+         (js-log "status-collapse-click")
          (define details (js-send button "closest" (vector "details")))
          (when details
            (js-remove-attribute! details "open"))
