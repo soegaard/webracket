@@ -5,9 +5,11 @@
 
 ;; sort-symbols: (listof symbol?) -> (listof symbol?)
 ;;   Return a sorted list of symbols using symbol<? ordering.
+;;   Returns the sorted list of symbols.
 (define (sort-symbols syms)
   ;; insert: symbol? (listof symbol?) -> (listof symbol?)
   ;;   Insert a symbol into a sorted list.
+  ;;   Returns the updated sorted list containing the symbol.
   (define (insert sym lst)
     (if (null? lst)
         (cons sym '())
@@ -1550,6 +1552,7 @@
 
 ;; symbol->title: symbol? -> string?
 ;;   Convert a symbol into a title string for headings.
+;;   Returns the title string for the heading.
 (define (symbol->title s)
   (symbol->string s))
 
@@ -2771,17 +2774,20 @@
 
 ;; format-percent: real? -> exact-integer?
 ;;   Convert a 0-1 progress ratio into a rounded percentage.
+;;   Returns the rounded percentage as an exact integer.
 (define (format-percent pct)
   (inexact->exact (round (* 100 pct))))
 
 ;; primitive-url: symbol? -> string?
 ;;   Build the Racket documentation URL for a primitive.
+;;   Returns the documentation URL as a string.
 (define (primitive-url sym)
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
 ;; primitive-status: symbol? (listof symbol?) -> (values string? string?)
 ;;   Classify a primitive by implementation status.
+;;   Returns the status CSS class and the status label.
 (define (primitive-status sym implemented-set)
   (cond
     [(memq sym standard-library-identifiers) (values "status-chip status-chip--stdlib" "Stdlib")]
@@ -2790,6 +2796,7 @@
 
 ;; primitive-item: symbol? (listof symbol?) -> list?
 ;;   Render a primitive list item with status badge and link.
+;;   Returns an S-expression representing the list item markup.
 (define (primitive-item sym implemented-set)
   (define-values (status-class status-label) (primitive-status sym implemented-set))
   (define name (symbol->string sym))
@@ -2808,10 +2815,12 @@
 
 ;; section-id: string? -> string?
 ;;   Create a stable HTML id from a section title.
+;;   Returns the derived HTML id string.
 (define (section-id title)
   ;; ascii-alnum?: char? -> boolean?
   ;;   Build a slug without regex: ASCII alphanumerics separated by single hyphens.
   ;;   Recognize ASCII lowercase letters and digits.
+  ;;   Returns #t when the character is ASCII alphanumeric.
   (define (ascii-alnum? ch)
     (define code (char->integer ch))
     (or (and (<= (char->integer #\a) code)
@@ -2838,6 +2847,7 @@
 
 ;; section-implemented-count: (listof symbol?) (listof symbol?) -> exact-nonnegative-integer?
 ;;   Count implemented primitives in a section.
+;;   Returns the number of implemented primitives in the section.
 (define (section-implemented-count primitives implemented-set)
   (for/sum ([p (in-list primitives)]
             #:when (memq p implemented-set))
@@ -2845,6 +2855,7 @@
 
 ;; section-progress-tier: real? -> string?
 ;;   Map progress percentage to a UI tier label.
+;;   Returns the tier label string.
 (define (section-progress-tier pct-num)
   (cond
     [(< pct-num 20) "low"]
@@ -2853,6 +2864,7 @@
 
 ;; section-stats: string? (listof symbol?) (listof symbol?) -> list?
 ;;   Compute summary stats for a section.
+;;   Returns a list of stats (title, primitives, counts, and ids).
 (define (section-stats title primitives implemented-set)
   (define implemented-count (section-implemented-count primitives implemented-set))
   (define total (length primitives))
@@ -2864,6 +2876,7 @@
 
 ;; section-card: list? (listof symbol?) -> list?
 ;;   Render a status card for a section of primitives.
+;;   Returns an S-expression representing the card markup.
 (define (section-card section implemented-set)
   (match section
     [(list title primitives)
@@ -2933,6 +2946,7 @@
 
 ;; chapter-block: list? -> list?
 ;;   Render a chapter block containing section cards.
+;;   Returns an S-expression representing the chapter markup.
 (define (chapter-block chapter)
   (match chapter
     [(list title sections implemented-set)
@@ -2945,6 +2959,7 @@
 
 ;; find-first: procedure? list? -> (or/c #f any/c)
 ;;   Return the first list element that satisfies pred.
+;;   Returns the matching element or #f when none matches.
 (define (find-first pred lst)
   (cond
     [(null? lst) #f]
@@ -2978,6 +2993,7 @@
 
 ;; attention-candidates: -> list?
 ;;   Build attention metadata entries that match known sections.
+;;   Returns the matching attention metadata entries.
 (define (attention-candidates)
   (for/list ([entry (in-list attention-metadata)]
              #:when (match entry
@@ -3000,6 +3016,7 @@
 
 ;; take-up-to: list? exact-nonnegative-integer? -> list?
 ;;   Take up to n items from a list.
+;;   Returns a list with at most n items.
 (define (take-up-to lst n)
   (if (or (zero? n) (null? lst))
       '()
@@ -3007,6 +3024,7 @@
 
 ;; needs-attention-items: -> list?
 ;;   Select top attention items with low completion.
+;;   Returns a list of attention items to highlight.
 (define (needs-attention-items)
   (define filtered
     (filter (λ (item)
@@ -3029,6 +3047,7 @@
 
 ;; attention-card: list? -> list?
 ;;   Render an attention card summary for a section.
+;;   Returns an S-expression representing the attention card markup.
 (define (attention-card item)
   (define display (list-ref item 0))
   (define title (list-ref item 1))
@@ -3054,6 +3073,7 @@
 
 ;; status-legend: -> list?
 ;;   Render the legend explaining status chips.
+;;   Returns an S-expression representing the legend markup.
 (define (status-legend)
   `(div (@ (class "status-legend"))
         (div (@ (class "status-legend-title")) "Legend")
@@ -3068,6 +3088,7 @@
 
 ;; status-insight-callout: -> list?
 ;;   Render a callout highlighting strongest and weakest sections.
+;;   Returns an S-expression representing the callout markup.
 (define (status-insight-callout)
   (define strong-candidates
     (list "Pict Datatype" "Booleans" "Keywords" "Mpairs"))
@@ -3105,6 +3126,7 @@
 
 ;; node-list->list: any/c -> list?
 ;;   Convert a DOM NodeList into a Racket list.
+;;   Returns a list of nodes in the same order.
 (define (node-list->list node-list)
   (define len (js-ref node-list "length"))
   (define count (if (number? len) (inexact->exact len) 0))
@@ -3119,12 +3141,14 @@
 
 ;; remember-status-handler!: procedure? -> void?
 ;;   Store event handlers so they stay reachable.
+;;   Returns (void) after storing the handler.
 (define (remember-status-handler! handler)
   (set! status-handler-store (cons handler status-handler-store))
   (void))
 
 ;; classlist-contains?: any/c string? -> boolean?
 ;;   Check whether an element's classList contains a class.
+;;   Returns #t when the class is present.
 (define (classlist-contains? element class-name)
   (define selector (string-append "." class-name))
   (define result (and element (js-matches element selector)))
@@ -3132,6 +3156,7 @@
 
 ;; element-text: any/c -> string?
 ;;   Extract trimmed textContent from an element.
+;;   Returns the trimmed text or "" when unavailable.
 (define (element-text element)
   (define content (and element (js-ref element "textContent")))
   (if (string? content)
@@ -3140,6 +3165,7 @@
 
 ;; status-open-target!: string? -> void?
 ;;   Expand and scroll to a status section by id.
+;;   Returns (void) after handling the scroll.
 (define (status-open-target! target-id)
   (define section (js-get-element-by-id target-id))
   (when section
@@ -3154,6 +3180,7 @@
 
 ;; init-status-smooth-scroll!: -> void?
 ;;   Wire smooth scrolling for attention card links.
+;;   Returns (void) after wiring link handlers.
 (define (init-status-smooth-scroll!)
   (define links (node-list->list (js-query-selector-all "[data-attention-target]")))
   (for ([link (in-list links)])
@@ -3176,6 +3203,7 @@
 
 ;; status-row-status: any/c -> string?
 ;;   Derive the status label from a primitive row element.
+;;   Returns the status label string.
 (define (status-row-status row)
   (cond
     [(and row (classlist-contains? row "prim-row--implemented")) "implemented"]
@@ -3184,6 +3212,7 @@
 
 ;; status-row-name: any/c any/c -> string?
 ;;   Resolve the display name for a row for sorting.
+;;   Returns the resolved row name string.
 (define (status-row-name row item)
   (define name-node (and row (js-element-query-selector row ".prim-name")))
   (define name (if name-node (element-text name-node) ""))
@@ -3193,6 +3222,7 @@
 
 ;; status-group-order: string? -> (listof string?)
 ;;   Return status precedence ordering for a group filter.
+;;   Returns the ordered list of status labels.
 (define (status-group-order group)
   (cond
     [(string=? group "stdlib") (list "stdlib" "implemented" "missing")]
@@ -3201,6 +3231,7 @@
 
 ;; status-order-index: string? (listof string?) -> exact-nonnegative-integer?
 ;;   Find the index of a status in an ordering list.
+;;   Returns the index of the status in the ordering list.
 (define (status-order-index status order)
   (let loop ([rest order]
              [idx 0])
@@ -3211,6 +3242,7 @@
 
 ;; status-sort-list!: any/c string? string? -> void?
 ;;   Sort a status list in place by group and name.
+;;   Returns (void) after sorting the list in place.
 (define (status-sort-list! list-el active-group active-dir)
   (define items
     (node-list->list (js-element-query-selector-all list-el "li")))
@@ -3224,6 +3256,7 @@
       (list item index status name)))
   ;; item<?: list? list? -> boolean?
   ;;   Compare two decorated rows for sorting order.
+  ;;   Returns #t when the first row sorts before the second.
   (define (item<? a b)
     (define status-a (list-ref a 2))
     (define status-b (list-ref b 2))
@@ -3246,6 +3279,7 @@
 
 ;; status-sync-buttons!: list? string? -> void?
 ;;   Sync filter button states to active group.
+;;   Returns (void) after updating button state.
 (define (status-sync-buttons! buttons active-group)
   (for ([button (in-list buttons)])
     (define group (js-get-attribute button "data-status-group"))
@@ -3258,6 +3292,7 @@
 
 ;; init-status-filter!: -> void?
 ;;   Initialize filter buttons and sorting per section.
+;;   Returns (void) after wiring filter interactions.
 (define (init-status-filter!)
   (define sections (node-list->list (js-query-selector-all ".status-section")))
   (for ([section (in-list sections)])
@@ -3269,6 +3304,7 @@
       (define active-dir "asc")
       ;; sync-and-sort!: -> void?
       ;;   Refresh button state and re-sort the list.
+      ;;   Returns (void) after syncing state.
       (define (sync-and-sort!)
         (status-sync-buttons! button-list active-group)
         (status-sort-list! list-el active-group active-dir))
@@ -3292,6 +3328,7 @@
 
 ;; init-status-collapse-buttons!: -> void?
 ;;   Attach handlers to collapse expanded sections.
+;;   Returns (void) after wiring collapse handlers.
 (define (init-status-collapse-buttons!)
   (define buttons (node-list->list (js-query-selector-all ".status-body-hint")))
   (for ([button (in-list buttons)])
@@ -3308,6 +3345,7 @@
 
 ;; init-status-page-handlers!: -> void?
 ;;   Initialize all behavior for the status page.
+;;   Returns (void) after initializing handlers.
 (define (init-status-page-handlers!)
   (init-status-smooth-scroll!)
   (init-status-filter!)
@@ -3316,6 +3354,7 @@
 
 ;; implementation-status-page: -> list?
 ;;   Render the implementation status dashboard page.
+;;   Returns an S-expression representing the page markup.
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
         ,(navbar)
