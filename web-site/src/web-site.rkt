@@ -1364,19 +1364,14 @@ pre {
 .attention-grid {
   grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 700px) {
+@media (min-width: 680px) {
   .attention-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (min-width: 1000px) {
+@media (min-width: 1180px) {
   .attention-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1200px) {
-  .attention-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 .attention-header {
