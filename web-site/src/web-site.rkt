@@ -1284,24 +1284,26 @@ pre {
 }
 .page--status {
   --status-card-padding: 10px;
-  --status-card-gap: 5.5px;
-  --status-stack-gap-base: 2.8px;
+  --status-card-gap: 5.2px;
+  --status-stack-gap-base: 2.6px;
   --status-stack-gap: var(--status-stack-gap-base);
-  --status-section-spacing: 32px;
-  --status-section-padding-y: 24px;
+  --status-section-spacing: 30px;
+  --status-section-padding-y: 22.5px;
   --status-section-padding-x: 20px;
   --status-section-header-gap: calc(var(--status-card-gap) * 1.3);
   --status-section-title-gap: calc(var(--status-card-gap) * 0.9);
-  --status-progress-height: 2.3px;
+  --status-progress-height: 2.1px;
   --status-progress-label-height: 1.05rem;
+  --status-progress-gap: calc(var(--status-stack-gap) - 0.4px);
+  --status-row-padding: 1px;
   --status-progress-row-height: calc(var(--status-progress-label-height) + var(--status-progress-height) + var(--status-stack-gap));
   --status-title-line-height: 1.2em;
   --status-meta-line-height: 1.2em;
   --status-desc-line-height: 1.35em;
   --status-cta-line-height: 1.1em;
   --status-cta-height: 26px;
-  --status-attention-padding: 8px;
-  --status-attention-gap: 3.5px;
+  --status-attention-padding: 7px;
+  --status-attention-gap: 3px;
 }
 .page--status .card {
   background: rgba(255, 255, 255, 0.03);
@@ -1383,6 +1385,8 @@ pre {
   align-items: baseline;
   gap: 12px;
   min-width: 0;
+  padding: var(--status-row-padding) 0;
+  flex: 0 0 auto;
 }
 .attention-header h3 {
   margin: 0;
@@ -1432,6 +1436,7 @@ pre {
   border: 1px solid rgba(74, 108, 255, 0.35);
   transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
   min-height: var(--status-cta-height);
+  padding-block: var(--status-row-padding);
   flex: 0 0 auto;
 }
 .attention-link:hover,
@@ -1569,18 +1574,22 @@ pre {
   color: var(--muted);
   font-size: 0.85rem;
   line-height: var(--status-meta-line-height);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: calc(var(--status-meta-line-height) * 2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .status-summary-metric {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
-  gap: var(--status-stack-gap);
+  gap: var(--status-progress-gap);
   min-width: 0;
   min-height: var(--status-progress-row-height);
+  padding: var(--status-row-padding) 0;
   flex: 0 0 auto;
 }
 .status-summary-action {
@@ -1593,6 +1602,7 @@ pre {
   text-transform: uppercase;
   min-height: var(--status-cta-line-height);
   line-height: var(--status-cta-line-height);
+  padding: var(--status-row-padding) 0;
   flex: 0 0 auto;
 }
 .status-summary-chevron {
@@ -1615,7 +1625,7 @@ pre {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   --pct: 0;
   --p: clamp(0, calc(var(--pct) / 100), 1);
   --p-safe: max(var(--p), 0.001);
@@ -1628,26 +1638,26 @@ pre {
   background-position: 0 50%;
   background-repeat: no-repeat;
   border-radius: inherit;
-  box-shadow: 0 0 2px rgba(74, 108, 255, 0.08);
+  box-shadow: 0 0 2px rgba(74, 108, 255, 0.06);
   transition: width 220ms ease;
-  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.56),
-                                               rgba(242, 183, 5, 0.56),
-                                               rgba(74, 108, 255, 0.58));
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.5),
+                                               rgba(242, 183, 5, 0.5),
+                                               rgba(74, 108, 255, 0.52));
 }
 .status-bar-fill--low {
-  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.6),
-                                               rgba(242, 183, 5, 0.44));
-  box-shadow: 0 0 3px rgba(209, 58, 58, 0.1);
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.54),
+                                               rgba(242, 183, 5, 0.4));
+  box-shadow: 0 0 3px rgba(209, 58, 58, 0.08);
 }
 .status-bar-fill--mid {
-  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.5),
-                                               rgba(74, 108, 255, 0.54));
-  box-shadow: 0 0 3px rgba(74, 108, 255, 0.08);
+  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.44),
+                                               rgba(74, 108, 255, 0.48));
+  box-shadow: 0 0 3px rgba(74, 108, 255, 0.06);
 }
 .status-bar-fill--strong {
-  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.58),
-                                               rgba(101, 79, 240, 0.6));
-  box-shadow: 0 0 3px rgba(101, 79, 240, 0.1);
+  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.52),
+                                               rgba(101, 79, 240, 0.54));
+  box-shadow: 0 0 3px rgba(101, 79, 240, 0.08);
 }
 @media (min-width: 720px) and (max-width: 999px) {
   .status-summary {
@@ -1817,7 +1827,7 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 9px 18px;
+  padding: 7.5px 18px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
