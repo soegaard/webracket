@@ -3074,7 +3074,11 @@
 (define (classlist-contains? element class-name)
   (define class-list (js-ref element "classList"))
   (and class-list
-       (not (zero? (js-send class-list "contains" (vector class-name))))))
+       (let ([result (js-send class-list "contains" (vector class-name))])
+         (cond
+           [(boolean? result) result]
+           [(number? result) (not (zero? result))]
+           [else #f]))))
 
 (define (element-text element)
   (define content (and element (js-ref element "textContent")))
