@@ -3071,14 +3071,16 @@
         (loop (add1 idx)
               (cons (js-send node-list "item" (vector idx)) acc)))))
 
+(define status-handler-store '())
+
+(define (remember-status-handler! handler)
+  (set! status-handler-store (cons handler status-handler-store))
+  (void))
+
 (define (classlist-contains? element class-name)
-  (define class-list (js-ref element "classList"))
-  (and class-list
-       (let ([result (js-send class-list "contains" (vector class-name))])
-         (cond
-           [(boolean? result) result]
-           [(number? result) (not (zero? result))]
-           [else #f]))))
+  (define selector (string-append "." class-name))
+  (define result (and element (js-matches element selector)))
+  (and (number? result) (not (zero? result))))
 
 (define (element-text element)
   (define content (and element (js-ref element "textContent")))
@@ -3111,6 +3113,7 @@
            (js-send (js-window-history) "replaceState"
                     (vector (js-null) "" (string-append "#" target-id))))
          (void))))
+    (remember-status-handler! handler)
     (js-add-event-listener! link "click" handler))
   (define hash (js-ref (js-window-location) "hash"))
   (when (and (string? hash) (> (string-length hash) 1))
@@ -3210,6 +3213,7 @@
                      (set! active-dir "asc")))
                (sync-and-sort!))
              (void))))
+        (remember-status-handler! handler)
         (js-add-event-listener! button "click" handler))
       (sync-and-sort!)))
   (void))
@@ -3224,6 +3228,7 @@
          (when details
            (js-remove-attribute! details "open"))
          (void))))
+    (remember-status-handler! handler)
     (js-add-event-listener! button "click" handler))
   (void))
 
