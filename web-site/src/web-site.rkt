@@ -1283,12 +1283,12 @@ pre {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.26);
 }
 .page--status {
-  --status-card-padding: 12px;
-  --status-card-gap: 6px;
-  --status-section-spacing: 44px;
-  --status-progress-height: 4px;
-  --status-attention-padding: 10px;
-  --status-attention-gap: 5px;
+  --status-card-padding: 10px;
+  --status-card-gap: 5px;
+  --status-section-spacing: 38px;
+  --status-progress-height: 3px;
+  --status-attention-padding: 9px;
+  --status-attention-gap: 4px;
 }
 .page--status .card {
   background: rgba(255, 255, 255, 0.03);
@@ -1316,13 +1316,13 @@ pre {
   margin-top: var(--status-section-spacing);
 }
 .section--status .section-header {
-  margin-bottom: calc(var(--status-card-gap) * 1.6);
+  margin-bottom: calc(var(--status-card-gap) * 1.4);
 }
 .section--status .section-title + * {
-  margin-top: calc(var(--status-card-gap) * 1.2);
+  margin-top: calc(var(--status-card-gap) * 1.0);
 }
 .status-insight {
-  margin-top: calc(var(--status-card-gap) * 1.5);
+  margin-top: calc(var(--status-card-gap) * 1.3);
 }
 .status-insight .callout {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
@@ -1365,11 +1365,13 @@ pre {
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
+  min-width: 0;
 }
 .attention-header h3 {
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .attention-percent {
   font-weight: 600;
@@ -1405,7 +1407,7 @@ pre {
   background: rgba(74, 108, 255, 0.15);
   border: 1px solid rgba(74, 108, 255, 0.35);
   transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
-  min-height: 28px;
+  min-height: 26px;
 }
 .attention-link:hover,
 .attention-link:focus-visible {
@@ -1501,14 +1503,17 @@ pre {
 .status-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: calc(var(--status-card-gap) * 2);
-  row-gap: var(--status-card-gap);
+  column-gap: calc(var(--status-card-gap) * 1.6);
+  row-gap: calc(var(--status-card-gap) * 0.8);
   align-items: center;
   padding: var(--status-card-padding);
   cursor: pointer;
   list-style: none;
   transition: background 150ms ease, border-color 150ms ease;
   --meter-w: 150px;
+}
+.status-summary > * {
+  min-width: 0;
 }
 .status-summary:hover {
   background: rgba(74, 108, 255, 0.08);
@@ -1523,7 +1528,7 @@ pre {
 .status-summary-main {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--status-card-gap) / 3);
+  gap: calc(var(--status-card-gap) / 4);
   min-width: 0;
 }
 .status-title {
@@ -1545,7 +1550,9 @@ pre {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: calc(var(--status-card-gap) / 3);
+  gap: calc(var(--status-card-gap) / 4);
+  min-width: 0;
+  min-height: calc(var(--status-progress-height) + 1.4rem);
 }
 .status-summary-action {
   display: inline-flex;
@@ -1555,7 +1562,8 @@ pre {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  min-height: 1em;
+  min-height: 1.1em;
+  line-height: 1.1;
 }
 .status-summary-chevron {
   font-size: 1rem;
@@ -1573,10 +1581,10 @@ pre {
   width: min(var(--meter-w), 100%);
   max-width: var(--meter-w);
   height: var(--status-progress-height);
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   --pct: 0;
   --p: clamp(0, calc(var(--pct) / 100), 1);
   --p-safe: max(var(--p), 0.001);
@@ -1589,26 +1597,26 @@ pre {
   background-position: 0 50%;
   background-repeat: no-repeat;
   border-radius: inherit;
-  box-shadow: 0 0 6px rgba(74, 108, 255, 0.18);
+  box-shadow: 0 0 4px rgba(74, 108, 255, 0.12);
   transition: width 220ms ease;
-  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.78),
-                                               rgba(242, 183, 5, 0.78),
-                                               rgba(74, 108, 255, 0.82));
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.62),
+                                               rgba(242, 183, 5, 0.62),
+                                               rgba(74, 108, 255, 0.68));
 }
 .status-bar-fill--low {
-  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.82),
-                                               rgba(242, 183, 5, 0.6));
-  box-shadow: 0 0 8px rgba(209, 58, 58, 0.22);
+  --progress-gradient: linear-gradient(90deg, rgba(209, 58, 58, 0.7),
+                                               rgba(242, 183, 5, 0.5));
+  box-shadow: 0 0 5px rgba(209, 58, 58, 0.16);
 }
 .status-bar-fill--mid {
-  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.7),
-                                               rgba(74, 108, 255, 0.76));
-  box-shadow: 0 0 8px rgba(74, 108, 255, 0.16);
+  --progress-gradient: linear-gradient(90deg, rgba(242, 183, 5, 0.6),
+                                               rgba(74, 108, 255, 0.62));
+  box-shadow: 0 0 5px rgba(74, 108, 255, 0.12);
 }
 .status-bar-fill--strong {
-  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.82),
-                                               rgba(101, 79, 240, 0.86));
-  box-shadow: 0 0 8px rgba(101, 79, 240, 0.24);
+  --progress-gradient: linear-gradient(90deg, rgba(74, 108, 255, 0.68),
+                                               rgba(101, 79, 240, 0.72));
+  box-shadow: 0 0 5px rgba(101, 79, 240, 0.16);
 }
 @media (min-width: 720px) and (max-width: 999px) {
   .status-summary {
@@ -1628,8 +1636,7 @@ pre {
 }
 .status-body {
   padding: calc(var(--status-card-gap) / 2) var(--status-card-padding) calc(var(--status-card-gap) * 0.75);
-  overflow-x: visible;
-  overflow-y: visible;
+  overflow: hidden;
 }
 .status-section[open] .status-body {
   margin-top: calc(var(--status-card-gap) * 0.8);
@@ -1674,8 +1681,8 @@ pre {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--status-card-gap);
-  margin-top: calc(var(--status-card-gap) / 3);
+  gap: calc(var(--status-card-gap) / 2);
+  margin-top: calc(var(--status-card-gap) / 4);
   overflow-x: auto;
   max-width: 100%;
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
@@ -1698,7 +1705,7 @@ pre {
   grid-template-columns: 132px minmax(0, 1fr);
   align-items: center;
   column-gap: 12px;
-  padding: calc(var(--status-card-gap) - 2px) calc(var(--status-card-gap) + 2px);
+  padding: calc(var(--status-card-gap) - 3px) calc(var(--status-card-gap) + 1px);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.035);
@@ -1777,8 +1784,8 @@ pre {
 .status-cta {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px 20px;
+  gap: 12px;
+  padding: 14px 18px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
