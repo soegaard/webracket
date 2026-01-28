@@ -3275,12 +3275,21 @@
   (for ([entry (in-list (sort decorated item<?))])
     (js-append-child! list-el (list-ref entry 0))))
 
+;; status-group->string: any/c -> (or/c string? #f)
+;;   Normalize DOM attribute values to a string (or #f).
+;;   Returns a string value for JS external strings.
+(define (status-group->string group)
+  (cond
+    [(external? group) (external-string->string group)]
+    [else group]))
+
 ;; status-sync-buttons!: list? string? -> void?
 ;;   Sync filter button states to active group.
 ;;   Returns (void) after updating button state.
 (define (status-sync-buttons! buttons active-group)
   (for ([button (in-list buttons)])
-    (define group      (js-get-attribute button "data-status-group"))
+    (define group      (status-group->string
+                        (js-get-attribute button "data-status-group")))
     (define is-active  (and (string? group) (string=? group active-group)))
     (js-set-attribute! button "aria-pressed" (if is-active "true" "false"))
     (define class-list (js-ref button "classList"))
@@ -3313,7 +3322,8 @@
           (procedure->external
            (lambda (_evt)
              (js-log "status-filter-click")
-             (define group (js-get-attribute button "data-status-group"))
+             (define group (status-group->string
+                            (js-get-attribute button "data-status-group")))
              (js-log (format "status-filter-debug: group=~a active-group=~a active-dir=~a list-items=~a"
                              group
                              active-group
