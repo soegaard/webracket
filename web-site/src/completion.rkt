@@ -3,9 +3,11 @@
 ;;; Included by web-site.rkt to render the WebRacket status page.
 ;;;
 
-;; Return a sorted list of symbols using symbol<? ordering.
+;; Contract: (listof symbol?) -> (listof symbol?)
+;;   Return a sorted list of symbols using symbol<? ordering.
 (define (sort-symbols syms)
-  ;; Insert a symbol into a sorted list.
+  ;; Contract: symbol? (listof symbol?) -> (listof symbol?)
+  ;;   Insert a symbol into a sorted list.
   (define (insert sym lst)
     (if (null? lst)
         (cons sym '())
@@ -1546,7 +1548,8 @@
     ; todo : implement string-titlecase
     (string-titlecase (symbol->string s)))
 
-;; Convert a symbol into a title string for headings.
+;; Contract: symbol? -> string?
+;;   Convert a symbol into a title string for headings.
 (define (symbol->title s)
   (symbol->string s))
 
@@ -2766,23 +2769,27 @@
 ; (js-log prepared-chapters)
 
 
-;; Convert a 0-1 progress ratio into a rounded percentage.
+;; Contract: real? -> exact-integer?
+;;   Convert a 0-1 progress ratio into a rounded percentage.
 (define (format-percent pct)
   (inexact->exact (round (* 100 pct))))
 
-;; Build the Racket documentation URL for a primitive.
+;; Contract: symbol? -> string?
+;;   Build the Racket documentation URL for a primitive.
 (define (primitive-url sym)
   (string-append "https://docs.racket-lang.org/search/index.html?q="
                  (symbol->string sym)))
 
-;; Classify a primitive by implementation status.
+;; Contract: symbol? (listof symbol?) -> (values string? string?)
+;;   Classify a primitive by implementation status.
 (define (primitive-status sym implemented-set)
   (cond
     [(memq sym standard-library-identifiers) (values "status-chip status-chip--stdlib" "Stdlib")]
     [(memq sym implemented-set)              (values "status-chip status-chip--done"   "Implemented")]
     [else                                    (values "status-chip status-chip--todo"   "Missing")]))
 
-;; Render a primitive list item with status badge and link.
+;; Contract: symbol? (listof symbol?) -> list?
+;;   Render a primitive list item with status badge and link.
 (define (primitive-item sym implemented-set)
   (define-values (status-class status-label) (primitive-status sym implemented-set))
   (define name (symbol->string sym))
@@ -2799,10 +2806,12 @@
        (span (@ (class ,(string-append status-class " prim-badge"))) ,status-label)
        (span (@ (class "prim-name") (title ,name)) ,name))))
 
-;; Create a stable HTML id from a section title.
+;; Contract: string? -> string?
+;;   Create a stable HTML id from a section title.
 (define (section-id title)
-  ;; Build a slug without regex: ASCII alphanumerics separated by single hyphens.
-  ;; Recognize ASCII lowercase letters and digits.
+  ;; Contract: char? -> boolean?
+  ;;   Build a slug without regex: ASCII alphanumerics separated by single hyphens.
+  ;;   Recognize ASCII lowercase letters and digits.
   (define (ascii-alnum? ch)
     (define code (char->integer ch))
     (or (and (<= (char->integer #\a) code)
@@ -2827,20 +2836,23 @@
   (define cleaned (list->string (reverse trimmed-rev)))
   (string-append "section-" (if (string=? cleaned "") "untitled" cleaned)))
 
-;; Count implemented primitives in a section.
+;; Contract: (listof symbol?) (listof symbol?) -> exact-nonnegative-integer?
+;;   Count implemented primitives in a section.
 (define (section-implemented-count primitives implemented-set)
   (for/sum ([p (in-list primitives)]
             #:when (memq p implemented-set))
     1))
 
-;; Map progress percentage to a UI tier label.
+;; Contract: real? -> string?
+;;   Map progress percentage to a UI tier label.
 (define (section-progress-tier pct-num)
   (cond
     [(< pct-num 20) "low"]
     [(> pct-num 80) "strong"]
     [else "mid"]))
 
-;; Compute summary stats for a section.
+;; Contract: string? (listof symbol?) (listof symbol?) -> list?
+;;   Compute summary stats for a section.
 (define (section-stats title primitives implemented-set)
   (define implemented-count (section-implemented-count primitives implemented-set))
   (define total (length primitives))
@@ -2850,7 +2862,8 @@
   (define tier (section-progress-tier pct-num))
   (list title primitives implemented-count total missing pct-num tier (section-id title)))
 
-;; Render a status card for a section of primitives.
+;; Contract: list? (listof symbol?) -> list?
+;;   Render a status card for a section of primitives.
 (define (section-card section implemented-set)
   (match section
     [(list title primitives)
@@ -2918,7 +2931,8 @@
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
                        (sort-symbols primitives)))))]))
 
-;; Render a chapter block containing section cards.
+;; Contract: list? -> list?
+;;   Render a chapter block containing section cards.
 (define (chapter-block chapter)
   (match chapter
     [(list title sections implemented-set)
@@ -2929,7 +2943,8 @@
                  ,@(map (λ (section) (section-card section implemented-set))
                         sections)))]))
 
-;; Return the first list element that satisfies pred.
+;; Contract: procedure? list? -> (or/c #f any/c)
+;;   Return the first list element that satisfies pred.
 (define (find-first pred lst)
   (cond
     [(null? lst) #f]
@@ -2961,7 +2976,8 @@
         (list "Macros" "Syntax Object Content"
               "Macro expansion and syntax tooling depend on this set.")))
 
-;; Build attention metadata entries that match known sections.
+;; Contract: -> list?
+;;   Build attention metadata entries that match known sections.
 (define (attention-candidates)
   (for/list ([entry (in-list attention-metadata)]
              #:when (match entry
@@ -2982,13 +2998,15 @@
        (define anchor-id (list-ref stat 7))
        (list display title note implemented-count total missing pct-num anchor-id)])))
 
-;; Take up to n items from a list.
+;; Contract: list? exact-nonnegative-integer? -> list?
+;;   Take up to n items from a list.
 (define (take-up-to lst n)
   (if (or (zero? n) (null? lst))
       '()
       (cons (car lst) (take-up-to (cdr lst) (sub1 n)))))
 
-;; Select top attention items with low completion.
+;; Contract: -> list?
+;;   Select top attention items with low completion.
 (define (needs-attention-items)
   (define filtered
     (filter (λ (item)
@@ -3009,7 +3027,8 @@
               [else (> missing-a missing-b)]))))
   (take-up-to sorted 4))
 
-;; Render an attention card summary for a section.
+;; Contract: list? -> list?
+;;   Render an attention card summary for a section.
 (define (attention-card item)
   (define display (list-ref item 0))
   (define title (list-ref item 1))
@@ -3033,7 +3052,8 @@
                (aria-label ,(string-append "View missing for " label)))
             "View missing")))
 
-;; Render the legend explaining status chips.
+;; Contract: -> list?
+;;   Render the legend explaining status chips.
 (define (status-legend)
   `(div (@ (class "status-legend"))
         (div (@ (class "status-legend-title")) "Legend")
@@ -3046,7 +3066,8 @@
                 " not yet implemented in the runtime.")
             (li "Pict is tracked separately."))))
 
-;; Render a callout highlighting strongest and weakest sections.
+;; Contract: -> list?
+;;   Render a callout highlighting strongest and weakest sections.
 (define (status-insight-callout)
   (define strong-candidates
     (list "Pict Datatype" "Booleans" "Keywords" "Mpairs"))
@@ -3082,7 +3103,8 @@
                 weak-title weak-pct weak-implemented weak-total)
        " these gaps will unlock more programs.")))
 
-;; Convert a DOM NodeList into a Racket list.
+;; Contract: any/c -> list?
+;;   Convert a DOM NodeList into a Racket list.
 (define (node-list->list node-list)
   (define len (js-ref node-list "length"))
   (define count (if (number? len) (inexact->exact len) 0))
@@ -3095,25 +3117,29 @@
 
 (define status-handler-store '())
 
-;; Store event handlers so they stay reachable.
+;; Contract: procedure? -> void?
+;;   Store event handlers so they stay reachable.
 (define (remember-status-handler! handler)
   (set! status-handler-store (cons handler status-handler-store))
   (void))
 
-;; Check whether an element's classList contains a class.
+;; Contract: any/c string? -> boolean?
+;;   Check whether an element's classList contains a class.
 (define (classlist-contains? element class-name)
   (define selector (string-append "." class-name))
   (define result (and element (js-matches element selector)))
   (and (number? result) (not (zero? result))))
 
-;; Extract trimmed textContent from an element.
+;; Contract: any/c -> string?
+;;   Extract trimmed textContent from an element.
 (define (element-text element)
   (define content (and element (js-ref element "textContent")))
   (if (string? content)
       (string-trim content)
       ""))
 
-;; Expand and scroll to a status section by id.
+;; Contract: string? -> void?
+;;   Expand and scroll to a status section by id.
 (define (status-open-target! target-id)
   (define section (js-get-element-by-id target-id))
   (when section
@@ -3126,7 +3152,8 @@
       (js-send summary "focus"
                (vector (js-object (vector (vector "preventScroll" #t))))))))
 
-;; Wire smooth scrolling for attention card links.
+;; Contract: -> void?
+;;   Wire smooth scrolling for attention card links.
 (define (init-status-smooth-scroll!)
   (define links (node-list->list (js-query-selector-all "[data-attention-target]")))
   (for ([link (in-list links)])
@@ -3147,14 +3174,16 @@
     (status-open-target! (substring hash 1)))
   (void))
 
-;; Derive the status label from a primitive row element.
+;; Contract: any/c -> string?
+;;   Derive the status label from a primitive row element.
 (define (status-row-status row)
   (cond
     [(and row (classlist-contains? row "prim-row--implemented")) "implemented"]
     [(and row (classlist-contains? row "prim-row--stdlib")) "stdlib"]
     [else "missing"]))
 
-;; Resolve the display name for a row for sorting.
+;; Contract: any/c any/c -> string?
+;;   Resolve the display name for a row for sorting.
 (define (status-row-name row item)
   (define name-node (and row (js-element-query-selector row ".prim-name")))
   (define name (if name-node (element-text name-node) ""))
@@ -3162,14 +3191,16 @@
       (element-text (or row item))
       name))
 
-;; Return status precedence ordering for a group filter.
+;; Contract: string? -> (listof string?)
+;;   Return status precedence ordering for a group filter.
 (define (status-group-order group)
   (cond
     [(string=? group "stdlib") (list "stdlib" "implemented" "missing")]
     [(string=? group "missing") (list "missing" "implemented" "stdlib")]
     [else (list "implemented" "stdlib" "missing")]))
 
-;; Find the index of a status in an ordering list.
+;; Contract: string? (listof string?) -> exact-nonnegative-integer?
+;;   Find the index of a status in an ordering list.
 (define (status-order-index status order)
   (let loop ([rest order]
              [idx 0])
@@ -3178,7 +3209,8 @@
       [(string=? status (car rest)) idx]
       [else (loop (cdr rest) (add1 idx))])))
 
-;; Sort a status list in place by group and name.
+;; Contract: any/c string? string? -> void?
+;;   Sort a status list in place by group and name.
 (define (status-sort-list! list-el active-group active-dir)
   (define items
     (node-list->list (js-element-query-selector-all list-el "li")))
@@ -3190,7 +3222,8 @@
       (define status (status-row-status row))
       (define name (status-row-name row item))
       (list item index status name)))
-  ;; Compare two decorated rows for sorting order.
+  ;; Contract: list? list? -> boolean?
+  ;;   Compare two decorated rows for sorting order.
   (define (item<? a b)
     (define status-a (list-ref a 2))
     (define status-b (list-ref b 2))
@@ -3211,7 +3244,8 @@
     (js-append-child! list-el (list-ref entry 0)))
   (void))
 
-;; Sync filter button states to active group.
+;; Contract: list? string? -> void?
+;;   Sync filter button states to active group.
 (define (status-sync-buttons! buttons active-group)
   (for ([button (in-list buttons)])
     (define group (js-get-attribute button "data-status-group"))
@@ -3222,7 +3256,8 @@
       (js-send class-list "toggle"
                (vector "status-chip--active" (and is-active #t))))))
 
-;; Initialize filter buttons and sorting per section.
+;; Contract: -> void?
+;;   Initialize filter buttons and sorting per section.
 (define (init-status-filter!)
   (define sections (node-list->list (js-query-selector-all ".status-section")))
   (for ([section (in-list sections)])
@@ -3232,7 +3267,8 @@
     (when (and list-el (pair? button-list))
       (define active-group "implemented")
       (define active-dir "asc")
-      ;; Refresh button state and re-sort the list.
+      ;; Contract: -> void?
+      ;;   Refresh button state and re-sort the list.
       (define (sync-and-sort!)
         (status-sync-buttons! button-list active-group)
         (status-sort-list! list-el active-group active-dir))
@@ -3254,7 +3290,8 @@
       (sync-and-sort!)))
   (void))
 
-;; Attach handlers to collapse expanded sections.
+;; Contract: -> void?
+;;   Attach handlers to collapse expanded sections.
 (define (init-status-collapse-buttons!)
   (define buttons (node-list->list (js-query-selector-all ".status-body-hint")))
   (for ([button (in-list buttons)])
@@ -3269,14 +3306,16 @@
     (js-add-event-listener! button "click" handler))
   (void))
 
-;; Initialize all behavior for the status page.
+;; Contract: -> void?
+;;   Initialize all behavior for the status page.
 (define (init-status-page-handlers!)
   (init-status-smooth-scroll!)
   (init-status-filter!)
   (init-status-collapse-buttons!)
   (void))
 
-;; Render the implementation status dashboard page.
+;; Contract: -> list?
+;;   Render the implementation status dashboard page.
 (define (implementation-status-page)
   `(div (@ (class "page page--status"))
         ,(navbar)
