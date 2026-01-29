@@ -694,7 +694,7 @@
 ;; quick-start-page : -> List
 ;;   Quick Start page layout.
 (define (quick-start-page)
-  `(div (@ (class "page page--docs"))
+  `(div (@ (class "page page--docs page--quick-start"))
         ,(navbar)
         (section (@ (class "docs-hero"))
                  (div (@ (class "hero-panel"))
@@ -729,7 +729,7 @@
            `(p "If you already installed everything, skip to Step 2.")
            `(p "Otherwise, follow the full " (a (@ (href "installation.html")) "Installation") " guide."))
           #f
-          #f)
+          "section--quick-start-step")
         ,(section-block
           "Step 2 — Get WebRacket"
           #f
@@ -737,7 +737,7 @@
            `(p "Clone the repository and enter it:")
            `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket")))
           #f
-          #f)
+          "section--quick-start-step")
         ,(section-block
           "Step 3 — Run a Demo Site"
           #f
@@ -748,7 +748,7 @@
            `(p "Now open your browser at:")
            `(p (a (@ (href "http://localhost:8000")) "http://localhost:8000")))
           #f
-          #f)
+          "section--quick-start-step")
         ,(section-block
           "Step 4 — Try a Demo"
           #f
@@ -762,7 +762,7 @@
                  (p "Each demo shows Racket code compiled to WebAssembly and executed in the browser.")
                  (p "If something breaks, try a different demo — support varies by feature."))))
           #f
-          #f)
+          "section--quick-start-step")
         ,(section-block
           "Step 5 — Peek at the Source"
           #f
@@ -776,7 +776,7 @@
                  (p "You don’t need to understand the compiler yet — just get a feel for how Racket "
                     "maps to the browser."))))
           #f
-          #f)
+          "section--quick-start-step")
         ,(section-block
           "How to Think About WebRacket (Mental Model)"
           #f
@@ -794,15 +794,18 @@
           "If Something Doesn’t Work"
           #f
           (list
-           `(p "WebRacket is still evolving, and not all Racket features are implemented.")
-           `(p "If a demo fails:")
-           `(ul
-             (li "Try another example")
-             (li "Check the " (a (@ (href "implementation-status.html")) "Status Dashboard")
-                 " to see what’s implemented")
-             (li "Ask for help in the " (a (@ (href "community.html")) "Community") " page")))
+           (callout
+            'note
+            #f
+            `(p "WebRacket is still evolving, and not all Racket features are implemented.")
+            `(p "If a demo fails:")
+            `(ul
+              (li "Try another example")
+              (li "Check the " (a (@ (href "implementation-status.html")) "Status Dashboard")
+                  " to see what’s implemented")
+              (li "Ask for help in the " (a (@ (href "community.html")) "Community") " page"))))
           #f
-          #f)
+          "section--quick-start-callout")
         ,(section-block
           "Where to Go Next"
           #f
@@ -834,20 +837,24 @@
                    `(div (@ (class "doc-cta-group"))
                          (a (@ (class "doc-cta doc-cta--primary")
                                (href "community.html"))
-                            "Go to Community"))))))
+                            "Go to Community"))))
+            "card-grid--quick-start"))
           #f
           #f)
         ,(section-block
           "Optional: Your First Tiny Program"
           #f
           (list
-           `(p "If you want to try a minimal Racket program, create: " (code "hello.rkt"))
-           `(pre (code "#lang racket\n\n(displayln \"Hello from WebRacket!\")"))
-           `(p "Then compile it using the WebRacket toolchain (see "
-               (a (@ (href "documentation.html")) "Documentation")
-               " for details)."))
+           (callout
+            'info
+            #f
+            `(p "If you want to try a minimal Racket program, create: " (code "hello.rkt"))
+            `(pre (code "#lang racket\n\n(displayln \"Hello from WebRacket!\")"))
+            `(p "Then compile it using the WebRacket toolchain (see "
+                (a (@ (href "documentation.html")) "Documentation")
+                " for details).")))
           #f
-          #f)
+          "section--quick-start-callout")
         ,(footer-section)))
 
 ;; installation-page : -> List
@@ -1485,6 +1492,57 @@ pre {
 .page--docs .card:hover,
 .page--docs .card:focus-within {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.26);
+}
+.page--quick-start .docs-hero .hero-panel {
+  padding: 32px;
+  gap: 16px;
+}
+.page--quick-start .hero-lead {
+  margin-bottom: 18px;
+}
+.page--quick-start .section {
+  margin-top: 66px;
+  padding: 26px 24px;
+}
+.page--quick-start .section-header {
+  margin-bottom: 20px;
+  gap: 5px;
+}
+.page--quick-start .section-title + * {
+  margin-top: 18px;
+}
+.page--quick-start .section > p {
+  margin: 0 0 12px;
+}
+.page--quick-start .section > p:last-child {
+  margin-bottom: 0;
+}
+.page--quick-start .section > pre {
+  margin: 8px 0 12px;
+}
+.page--quick-start .section > pre:last-child {
+  margin-bottom: 0;
+}
+.page--quick-start .section > p + pre {
+  margin-top: 6px;
+}
+.page--quick-start .section > pre + p {
+  margin-top: 6px;
+}
+.page--quick-start .section--quick-start-step .section-title {
+  font-weight: 650;
+}
+.page--quick-start .section--quick-start-step .section-title + * {
+  margin-top: 16px;
+}
+.page--quick-start .section--quick-start-callout .callout {
+  margin: 14px 0 0;
+}
+.card-grid--quick-start .card {
+  align-items: flex-start;
+}
+.card-grid--quick-start .card .doc-cta-group {
+  margin-top: auto;
 }
 .page--status {
   --status-card-padding: 10px;
