@@ -3163,7 +3163,7 @@
 ;;   Read the computed grid-template-columns string for an element.
 ;;   Returns the computed grid template columns (or "" if unavailable).
 (define (grid-template-columns element)
-  (define style   (and element (js-window-get-computed-style element)))
+  (define style   (and element (js-window-get-computed-style element #f)))
   (define columns (and style (js-ref style "gridTemplateColumns")))
   (define legacy  (and style (js-ref style "grid-template-columns")))
   (cond
