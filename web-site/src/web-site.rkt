@@ -135,14 +135,18 @@
 ;;   Quick Start step section with numbered badge.
 (define (quick-start-step step-number title content)
   `(section (@ (class "section section--quick-start-step"))
-            (div (@ (class "section-header quick-start-step-header"))
-                 (span (@ (class "pipeline-step quick-start-step-badge")
+            (div (@ (class "section-header qs-step-header"))
+                 (span (@ (class "pipeline-step qs-step-badge")
                           (aria-hidden "true"))
                        "")
-                 (h2 (@ (class "section-title"))
-                     (span (@ (class "sr-only"))
-                           ,(format "Step ~a: " step-number))
-                     ,title))
+                 (div (@ (class "qs-step-titleblock"))
+                      (h2 (@ (class "section-title qs-step-title"))
+                          (span (@ (class "sr-only"))
+                                ,(format "Step ~a: " step-number))
+                          ,title)
+                      (div (@ (class "qs-step-underline")
+                              (aria-hidden "true"))
+                           "")))
             ,@content))
 
 ;; card-grid : (Listof (Listof List)) (U #f String) -> List
@@ -1514,6 +1518,10 @@ pre {
   margin-top: 66px;
   padding: 26px 24px;
 }
+.page--quick-start .section--quick-start-step {
+  margin-top: 56px;
+  padding: 22px 22px;
+}
 .page--quick-start .section-header {
   margin-bottom: 20px;
   gap: 5px;
@@ -1542,26 +1550,37 @@ pre {
 .page--quick-start .section--quick-start-step .section-title {
   font-weight: 650;
 }
-.page--quick-start .section--quick-start-step .section-header {
+.page--quick-start .section--quick-start-step .qs-step-header {
   flex-direction: row;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
 }
-.page--quick-start .quick-start-step-badge {
-  width: 24px;
-  height: 24px;
-  font-size: 0.75rem;
+.page--quick-start .qs-step-badge {
+  width: 22px;
+  height: 22px;
+  font-size: 0.7rem;
   transform: none;
+  margin-top: 3px;
 }
 .page--quick-start .quick-start-steps {
   counter-reset: step;
 }
-.page--quick-start .quick-start-step-header .section-title {
+.page--quick-start .qs-step-titleblock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   flex: 1;
   min-width: 0;
 }
-.page--quick-start .section--quick-start-step .section-title + * {
-  margin-top: 16px;
+.page--quick-start .qs-step-title + * {
+  margin-top: 8px;
+}
+.page--quick-start .qs-step-underline {
+  width: 110px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(101, 79, 240, 0.3);
 }
 .page--quick-start .section--quick-start-callout .callout {
   margin: 14px 0 0;
