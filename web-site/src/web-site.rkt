@@ -126,6 +126,20 @@
                        '()))
             ,@content))
 
+;; step-badge : -> List
+;;   Shared numbered badge for step-based layouts.
+(define (step-badge)
+  `(span (@ (class "pipeline-step") (aria-hidden "true")) ""))
+
+;; quick-start-step : String (Listof List) -> List
+;;   Quick Start step section with numbered badge.
+(define (quick-start-step title content)
+  `(section (@ (class "section section--quick-start-step"))
+            (div (@ (class "section-header quick-start-step-header"))
+                 ,(step-badge)
+                 (h2 (@ (class "section-title")) ,title))
+            ,@content))
+
 ;; card-grid : (Listof (Listof List)) (U #f String) -> List
 ;;   Wraps card content lists into a grid container.
 (define (card-grid cards [class-name #f])
@@ -467,19 +481,19 @@
            (card-grid
             (list
              (list `(div (@ (class "pipeline-header"))
-                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         ,(step-badge)
                          (h3 (@ (class "pipeline-title")) "Frontend"))
                    `(p "Racket syntax is expanded, then normalized into a compiler-friendly core."))
              (list `(div (@ (class "pipeline-header"))
-                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         ,(step-badge)
                          (h3 (@ (class "pipeline-title")) "Middle End"))
                    `(p "Nanopass passes like closure conversion and ANF make environments and intermediate values explicit."))
              (list `(div (@ (class "pipeline-header"))
-                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         ,(step-badge)
                          (h3 (@ (class "pipeline-title")) "Backend"))
                    `(p "Destination-driven code generation emits folded WebAssembly code."))
              (list `(div (@ (class "pipeline-header"))
-                         (span (@ (class "pipeline-step") (aria-hidden "true")) "")
+                         ,(step-badge)
                          (h3 (@ (class "pipeline-title")) "Runtime"))
                    `(p "A custom runtime avoids reliance on host functionality where possible.")))
             "pipeline-grid"))
@@ -717,66 +731,52 @@
                  (a (@ (href "implementation-status.html")) "status") ")")))
           #f
           #f)
-        ,(section-block
-          "Step 1 — Minimal Requirements"
-          #f
-          (list
-           `(p "You’ll need:")
-           `(ul
-             (li "Racket (9.0 or newer)")
-             (li "Node.js")
-             (li "wasm-tools"))
-           `(p "If you already installed everything, skip to Step 2.")
-           `(p "Otherwise, follow the full " (a (@ (href "installation.html")) "Installation") " guide."))
-          #f
-          "section--quick-start-step")
-        ,(section-block
-          "Step 2 — Get WebRacket"
-          #f
-          (list
-           `(p "Clone the repository and enter it:")
-           `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket")))
-          #f
-          "section--quick-start-step")
-        ,(section-block
-          "Step 3 — Run a Demo Site"
-          #f
-          (list
-           `(p "WebRacket includes ready-made demos. To serve them locally:")
-           `(pre (code "cd examples\nraco static-web"))
-           `(p "This starts a local web server.")
-           `(p "Now open your browser at:")
-           `(p (a (@ (href "http://localhost:8000")) "http://localhost:8000")))
-          #f
-          "section--quick-start-step")
-        ,(section-block
-          "Step 4 — Try a Demo"
-          #f
-          (list
-           `(p "Pick one of the demos and open it in your browser.")
-           `(p "Some good starting points:")
-           `(ul
-             (li "MathJax Editor — live LaTeX preview in the browser")
-             (li "Mini REPL — interactive Racket in a web page")
-             (li "Graphics / Canvas demos — Racket driving browser graphics"
-                 (p "Each demo shows Racket code compiled to WebAssembly and executed in the browser.")
-                 (p "If something breaks, try a different demo — support varies by feature."))))
-          #f
-          "section--quick-start-step")
-        ,(section-block
-          "Step 5 — Peek at the Source"
-          #f
-          (list
-           `(p "Each demo has a Racket source file in the examples/ directory.")
-           `(p "Open one and notice:")
-           `(ul
-             (li "It looks like normal Racket")
-             (li "It uses browser features (DOM, canvas, terminal, etc.)")
-             (li "It is compiled to WebAssembly before running"
-                 (p "You don’t need to understand the compiler yet — just get a feel for how Racket "
-                    "maps to the browser."))))
-          #f
-          "section--quick-start-step")
+        (div (@ (class "quick-start-steps"))
+             ,(quick-start-step
+               "Step 1: Minimal Requirements"
+               (list
+                `(p "You’ll need:")
+                `(ul
+                  (li "Racket (9.0 or newer)")
+                  (li "Node.js")
+                  (li "wasm-tools"))
+                `(p "If you already installed everything, skip to Step 2.")
+                `(p "Otherwise, follow the full " (a (@ (href "installation.html")) "Installation") " guide.")))
+             ,(quick-start-step
+               "Step 2: Get WebRacket"
+               (list
+                `(p "Clone the repository and enter it:")
+                `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket"))))
+             ,(quick-start-step
+               "Step 3: Run a Demo Site"
+               (list
+                `(p "WebRacket includes ready-made demos. To serve them locally:")
+                `(pre (code "cd examples\nraco static-web"))
+                `(p "This starts a local web server.")
+                `(p "Now open your browser at:")
+                `(p (a (@ (href "http://localhost:8000")) "http://localhost:8000"))))
+             ,(quick-start-step
+               "Step 4: Try a Demo"
+               (list
+                `(p "Pick one of the demos and open it in your browser.")
+                `(p "Some good starting points:")
+                `(ul
+                  (li "MathJax Editor — live LaTeX preview in the browser")
+                  (li "Mini REPL — interactive Racket in a web page")
+                  (li "Graphics / Canvas demos — Racket driving browser graphics"
+                      (p "Each demo shows Racket code compiled to WebAssembly and executed in the browser.")
+                      (p "If something breaks, try a different demo — support varies by feature.")))))
+             ,(quick-start-step
+               "Step 5: Peek at the Source"
+               (list
+                `(p "Each demo has a Racket source file in the examples/ directory.")
+                `(p "Open one and notice:")
+                `(ul
+                  (li "It looks like normal Racket")
+                  (li "It uses browser features (DOM, canvas, terminal, etc.)")
+                  (li "It is compiled to WebAssembly before running"
+                      (p "You don’t need to understand the compiler yet — just get a feel for how Racket "
+                         "maps to the browser.")))))))
         ,(section-block
           "How to Think About WebRacket (Mental Model)"
           #f
@@ -1531,6 +1531,18 @@ pre {
 }
 .page--quick-start .section--quick-start-step .section-title {
   font-weight: 650;
+}
+.page--quick-start .section--quick-start-step .section-header {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 14px;
+}
+.page--quick-start .quick-start-steps {
+  counter-reset: step;
+}
+.page--quick-start .quick-start-step-header .section-title {
+  flex: 1;
+  min-width: 0;
 }
 .page--quick-start .section--quick-start-step .section-title + * {
   margin-top: 16px;
