@@ -8,6 +8,9 @@
 (define mathjax-default-expression
   "\\int_{0}^{\\pi} \\sin(x)\\,dx = 2")
 
+(define (mathjax-display latex)
+  (string-append "$$" latex "$$"))
+
 (define (mathjax-page)
   `(div (@ (class "page page--mathjax"))
         ,(navbar)
@@ -49,7 +52,7 @@
                       (div (@ (id "mathjax-preview")
                               (class "mathjax-preview")
                               (aria-live "polite"))
-                           ,(string-append "$$" mathjax-default-expression "$$")))))
+                           ,(mathjax-display mathjax-default-expression)))))
           #f
           "section--mathjax")
         ,(section-block
@@ -82,7 +85,7 @@
       (when mathjax-loaded?
         (mathjax-typeset-clear mathjax-preview))
       (js-set! mathjax-preview "textContent"
-               (string-append "$$" latex "$$"))
+               (mathjax-display latex))
       (when mathjax-loaded?
         (mathjax-typeset-promise mathjax-preview))))
   (void))
@@ -106,14 +109,21 @@
 
 (define (load-mathjax-script!)
   (define existing (js-get-element-by-id "mathjax-script"))
-  (when (not existing)
-    (define head   (js-document-head))
-    (define script (js-create-element "script"))
-    (js-set-attribute! script "id" "mathjax-script")
-    (js-set-attribute! script "async" "")
-    (js-set-attribute! script "src" mathjax-cdn-url)
-    (js-add-event-listener! script "load" mathjax-loaded-handler)
-    (js-append-child! head script)))
+  (if existing
+      (begin
+        (define mathjax (js-ref (js-var "window") "MathJax"))
+        (when mathjax
+          (set! mathjax-loaded? #t)
+          (render-mathjax-preview))
+        (js-add-event-listener! existing "load" mathjax-loaded-handler))
+      (begin
+        (define head   (js-document-head))
+        (define script (js-create-element "script"))
+        (js-set-attribute! script "id" "mathjax-script")
+        (js-set-attribute! script "async" "")
+        (js-set-attribute! script "src" mathjax-cdn-url)
+        (js-add-event-listener! script "load" mathjax-loaded-handler)
+        (js-append-child! head script))))
 
 (define (init-mathjax-page!)
   (set! mathjax-textarea (js-get-element-by-id "mathjax-input"))
