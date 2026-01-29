@@ -776,7 +776,7 @@
                   (li "It uses browser features (DOM, canvas, terminal, etc.)")
                   (li "It is compiled to WebAssembly before running"
                       (p "You don’t need to understand the compiler yet — just get a feel for how Racket "
-                         "maps to the browser.")))))))
+                         "maps to the browser."))))))
         ,(section-block
           "How to Think About WebRacket (Mental Model)"
           #f
