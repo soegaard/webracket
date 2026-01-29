@@ -829,7 +829,7 @@
             'note
             "WebRacket note"
             `(p "For WebRacket topics, start a thread on Discourse or ask in Discord. "
-                "Include a link to the demo, code snippet, and browser details when reporting issues."))))
+                "Include a link to the demo, code snippet, and browser details when reporting issues.")))
           #f
           #f)
         ,(footer-section)))
