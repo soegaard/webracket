@@ -3311,10 +3311,10 @@
                      "asc"))
                (define next-group group)
                (set-active-state! next-group next-dir)
-               (sync-and-sort! next-group next-dir))))))
+               (sync-and-sort! next-group next-dir)))))
 
         (remember-status-handler! handler)
-        (js-add-event-listener! button "click" handler))
+        (js-add-event-listener! button "click" handler)))
 
       (set-active-state! (active-group) (active-dir))
       (sync-and-sort! (active-group) (active-dir))))
