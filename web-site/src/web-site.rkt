@@ -162,6 +162,7 @@
 ;;;
 
 (include "completion.rkt")
+(include "examples/mathjax.rkt")
 
 ;;;
 ;;; Examples Data
@@ -173,6 +174,8 @@
                     (cons 'title "MathJax 4 Editor")
                     (cons 'path "examples/mathjax4")
                     (cons 'entry "mathjax.html")
+                    (cons 'demo-url "mathjax.html")
+                    (cons 'source-path "web-site/src/examples/mathjax.rkt")
                     (cons 'tags (list 'dom 'mathjax))
                     (cons 'summary "Live two-pane editor with instant MathJax 4 LaTeX preview.")
                     (cons 'features (list "MathJax 4 interop"
@@ -245,14 +248,24 @@
 ;; example-demo-url : Hash -> (U #f String)
 ;;   Builds the local demo URL when an entry HTML file is available.
 (define (example-demo-url example)
+  (define demo-url (hash-ref example 'demo-url #f))
   (define entry (hash-ref example 'entry #f))
-  (and entry (string-append (hash-ref example 'path) "/" entry)))
+  (cond
+    [demo-url demo-url]
+    [entry (string-append (hash-ref example 'path) "/" entry)]
+    [else #f]))
 
 ;; example-source-url : Hash -> String
 ;;   Builds the GitHub source URL for the example folder.
 (define (example-source-url example)
-  (string-append "https://github.com/soegaard/webracket/tree/main/"
-                 (hash-ref example 'path)))
+  (define source-path (hash-ref example 'source-path #f))
+  (cond
+    [(and source-path (string-suffix? source-path ".rkt"))
+     (gh-file source-path)]
+    [source-path
+     (gh-dir source-path)]
+    [else
+     (gh-dir (hash-ref example 'path))]))
 
 ;; example-kind-class : (Listof Symbol) -> (U #f String)
 ;;   Picks a category class for subtle accent styling.
@@ -334,6 +347,7 @@
     [(string-suffix? path "quick-start.html")           'quick-start]
     [(string-suffix? path "installation.html")          'installation]
     [(string-suffix? path "examples.html")              'examples]
+    [(string-suffix? path "mathjax.html")               'mathjax]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "community.html")             'community]
     [(string-suffix? path "overview.html")              'overview]
@@ -527,7 +541,7 @@
             (list
              (list `(h3 "MathJax 4 Editor")
                    `(p "Live formula preview with WebRacket + MathJax.")
-                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+                   `(a (@ (class "example-link") (href "mathjax.html")) "Open demo"))
              (list `(h3 "Matrix Rain")
                    `(p "Terminal-style animation powered by XtermJS.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
@@ -1168,6 +1182,9 @@ a.code-pill:focus-visible {
   margin-top: 32px;
 }
 .docs-hero {
+  margin-top: 32px;
+}
+.mathjax-hero {
   margin-top: 32px;
 }
 .hero-sublead {
@@ -2821,6 +2838,89 @@ pre code {
   outline: 2px solid rgba(74, 108, 255, 0.6);
   outline-offset: 3px;
 }
+.mathjax-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+.mathjax-pane {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 320px;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
+}
+.mathjax-pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.pane-label {
+  font-weight: 600;
+}
+.pane-meta {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  opacity: 0.8;
+}
+.mathjax-input {
+  width: 100%;
+  min-height: 240px;
+  resize: vertical;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.mathjax-input:focus {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+  border-color: rgba(74, 108, 255, 0.7);
+}
+.mathjax-preview {
+  flex: 1;
+  min-height: 240px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+}
+.mathjax-preview mjx-container {
+  font-size: 120%;
+}
+.mathjax-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.mathjax-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mathjax-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 @media (min-width: 900px) {
   .examples-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2892,6 +2992,7 @@ pre code {
   .hero { grid-template-columns: 1fr; gap: 24px; }
   .section { margin-top: 56px; padding: 24px 18px; }
   .card-grid { grid-template-columns: 1fr; gap: 20px; }
+  .mathjax-grid { grid-template-columns: 1fr; }
 }
 @media (min-width: 720px) and (max-width: 900px) {
   .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2909,11 +3010,15 @@ CSS
       [(quick-start)           (quick-start-page)]
       [(installation)          (installation-page)]
       [(community)             (community-page)]
+      [(mathjax)               mathjax-page-layout]
       [else                    (home-page)]))
   
   (define page (sxml->dom page-structure))
   
   (js-append-child! body page)
+
+  (when (eq? (current-page) 'mathjax)
+    (init-mathjax-page!))
 
   (when (eq? (current-page) 'implementation-status)
     (init-status-page-handlers!)))
