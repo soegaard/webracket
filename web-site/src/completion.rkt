@@ -3133,6 +3133,142 @@
       (string-trim content)
       ""))
 
+;; count-grid-columns: string? -> exact-positive-integer?
+;;   Count grid template columns from a computed style string.
+;;   Returns the number of columns (minimum 1).
+(define (count-grid-columns template)
+  (define len (string-length template))
+  (define count
+    (let loop ([idx 0]
+               [depth 0]
+               [in-token? #f]
+               [acc 0])
+      (if (>= idx len)
+          (if in-token? (add1 acc) acc)
+          (let ([ch (string-ref template idx)])
+            (cond
+              [(char=? ch #\()
+               (loop (add1 idx) (add1 depth) in-token? acc)]
+              [(char=? ch #\))
+               (loop (add1 idx) (max 0 (sub1 depth)) in-token? acc)]
+              [(and (char-whitespace? ch) (= depth 0))
+               (if in-token?
+                   (loop (add1 idx) depth #f (add1 acc))
+                   (loop (add1 idx) depth #f acc))]
+              [else
+               (loop (add1 idx) depth #t acc)])))))
+  (if (> count 0) count 1))
+
+;; grid-template-columns: any/c -> string?
+;;   Read the computed grid-template-columns string for an element.
+;;   Returns the computed grid template columns (or "" if unavailable).
+(define (grid-template-columns element)
+  (define style   (and element (js-window-get-computed-style element)))
+  (define columns (and style (js-ref style "gridTemplateColumns")))
+  (define legacy  (and style (js-ref style "grid-template-columns")))
+  (cond
+    [(string? columns) columns]
+    [(string? legacy)  legacy]
+    [else              ""]))
+
+;; status-grid-column-count: any/c -> exact-positive-integer?
+;;   Resolve the current grid column count for a status grid.
+;;   Returns the column count (minimum 1).
+(define (status-grid-column-count grid)
+  (count-grid-columns (grid-template-columns grid)))
+
+;; status-grid-title: any/c -> string?
+;;   Extract the section title for a status card.
+;;   Returns the card title string.
+(define (status-grid-title card)
+  (define title-node (and card (js-element-query-selector card ".status-title")))
+  (element-text title-node))
+
+;; status-grid-sort: list? -> list?
+;;   Sort cards by title, case-insensitive, with stable tiebreakers.
+;;   Returns the sorted list of cards.
+(define (status-grid-sort cards)
+  (define decorated
+    (for/list ([card (in-list cards)]
+               [idx (in-naturals)])
+      (list card idx (status-grid-title card))))
+  (define (card<? a b)
+    (define title-a (list-ref a 2))
+    (define title-b (list-ref b 2))
+    (cond
+      [(string-ci<? title-a title-b) #t]
+      [(string-ci>? title-a title-b) #f]
+      [else (< (list-ref a 1) (list-ref b 1))]))
+  (map car (sort decorated card<?)))
+
+;; status-grid-column-major: list? exact-positive-integer? -> list?
+;;   Reorder cards into column-major visual order.
+;;   Returns the reordered list of cards.
+(define (status-grid-column-major cards columns)
+  (define count (length cards))
+  (if (zero? count)
+      '()
+      (let* ([cols      (max 1 columns)]
+             [row-count (inexact->exact (ceiling (/ count cols)))]
+             [reordered (make-vector count #f)])
+        (for ([card (in-list cards)]
+              [idx (in-naturals)])
+          (define target (+ (* (remainder idx row-count) cols)
+                            (quotient idx row-count)))
+          (when (< target count)
+            (vector-set! reordered target card)))
+        (filter values (vector->list reordered)))))
+
+;; status-grid-current-columns: any/c -> (or/c exact-positive-integer? #f)
+;;   Read stored column count metadata for a status grid.
+;;   Returns the stored column count or #f.
+(define (status-grid-current-columns grid)
+  (define raw (js-get-attribute grid "data-status-columns"))
+  (define parsed (and (string? raw) (string->number raw)))
+  (and (integer? parsed) (positive? parsed) parsed))
+
+;; status-reorder-grid!: any/c -> void?
+;;   Reorder a status grid's cards into column-major alphabetical order.
+;;   Returns (void) after reordering.
+(define (status-reorder-grid! grid)
+  (define columns (status-grid-column-count grid))
+  (define previous (status-grid-current-columns grid))
+  (when (or (not previous) (not (= previous columns)))
+    (define cards (node-list->list (js-ref grid "children")))
+    (when (pair? cards)
+      (define sorted (status-grid-sort cards))
+      (define reordered (status-grid-column-major sorted columns))
+      (for ([card (in-list reordered)])
+        (js-append-child! grid card)))
+    (js-set-attribute! grid "data-status-columns" (number->string columns))))
+
+;; status-reorder-card-grids!: -> void?
+;;   Reorder all status chapter grids to column-major alphabetical order.
+;;   Returns (void) after reordering.
+(define (status-reorder-card-grids!)
+  (define grids (node-list->list (js-query-selector-all ".status-chapter-grid")))
+  (for ([grid (in-list grids)])
+    (status-reorder-grid! grid)))
+
+;; init-status-card-grid-order!: -> void?
+;;   Initialize column-major ordering and resize handling for chapter grids.
+;;   Returns (void) after wiring handlers.
+(define status-grid-resize-timer #f)
+
+(define (init-status-card-grid-order!)
+  (define (refresh!)
+    (status-reorder-card-grids!))
+  (define external-refresh (procedure->external refresh!))
+  (define (schedule-refresh . _)
+    (when status-grid-resize-timer
+      (js-window-clear-timeout status-grid-resize-timer))
+    (set! status-grid-resize-timer
+          (js-window-set-timeout/delay external-refresh 80.)))
+  (status-reorder-card-grids!)
+  (define handler (procedure->external schedule-refresh))
+  (remember-status-handler! handler)
+  (js-add-event-listener! (js-window-window) "resize" handler))
+
 ;; status-open-target!: string? -> void?
 ;;   Expand and scroll to a status section by id.
 ;;   Returns (void) after handling the scroll.
@@ -3338,6 +3474,7 @@
 ;;   Initialize all behavior for the status page.
 ;;   Returns (void) after initializing handlers.
 (define (init-status-page-handlers!)
+  (init-status-card-grid-order!)
   (init-status-smooth-scroll!)
   (init-status-filter!)
   (init-status-collapse-buttons!))
