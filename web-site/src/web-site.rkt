@@ -143,11 +143,9 @@
                       (h2 (@ (class "section-title qs-step-title"))
                           (span (@ (class "sr-only"))
                                 ,(format "Step ~a: " step-number))
-                          ,title)
-                      (div (@ (class "qs-step-underline")
-                              (aria-hidden "true"))
-                           "")))
-            ,@content))
+                          ,title)))
+            (div (@ (class "qs-step-body"))
+                 ,@content)))
 
 ;; card-grid : (Listof (Listof List)) (U #f String) -> List
 ;;   Wraps card content lists into a grid container.
@@ -1511,6 +1509,12 @@ pre {
   padding: 32px;
   gap: 16px;
 }
+.page--quick-start {
+  --qs-step-padding-x: 24px;
+  --qs-step-padding-y: 20px;
+  --qs-step-badge-size: 28px;
+  --qs-step-gap: 28px;
+}
 .page--quick-start .hero-lead {
   margin-bottom: 18px;
 }
@@ -1519,8 +1523,14 @@ pre {
   padding: 26px 24px;
 }
 .page--quick-start .section--quick-start-step {
-  margin-top: 56px;
-  padding: 22px 22px;
+  margin-top: 0;
+  padding: var(--qs-step-padding-y) var(--qs-step-padding-x);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  position: relative;
+  z-index: 1;
 }
 .page--quick-start .section-header {
   margin-bottom: 20px;
@@ -1555,19 +1565,25 @@ pre {
 }
 .page--quick-start .section--quick-start-step .qs-step-header {
   flex-direction: row;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .page--quick-start .qs-step-badge {
-  width: 22px;
-  height: 22px;
-  font-size: 0.7rem;
+  width: var(--qs-step-badge-size);
+  height: var(--qs-step-badge-size);
+  font-size: 0.8rem;
   transform: none;
-  margin-top: 3px;
+  margin-top: 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .page--quick-start .quick-start-steps {
   counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: var(--qs-step-gap);
+  margin-top: 56px;
+  position: relative;
 }
 .page--quick-start .qs-step-titleblock {
   display: flex;
@@ -1579,14 +1595,53 @@ pre {
 .page--quick-start .qs-step-title + * {
   margin-top: 8px;
 }
-.page--quick-start .qs-step-underline {
-  width: 110px;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(101, 79, 240, 0.3);
+.page--quick-start .qs-step-title {
+  font-size: 1.28rem;
+  color: #f6f7ff;
+}
+.page--quick-start .qs-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  line-height: 1.65;
+}
+.page--quick-start .qs-step-body > p {
+  margin: 0;
+}
+.page--quick-start .qs-step-body > ul {
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(245, 247, 255, 0.86);
+}
+.page--quick-start .qs-step-body > pre {
+  margin: 4px 0;
+}
+.page--quick-start .qs-step-body > p + pre,
+.page--quick-start .qs-step-body > ul + pre,
+.page--quick-start .qs-step-body > pre + p,
+.page--quick-start .qs-step-body > pre + ul {
+  margin-top: 8px;
+}
+.page--quick-start .qs-step-body > pre:last-child,
+.page--quick-start .qs-step-body > p:last-child,
+.page--quick-start .qs-step-body > ul:last-child {
+  margin-bottom: 0;
 }
 .page--quick-start .section--quick-start-callout .callout {
   margin: 14px 0 0;
+}
+@media (min-width: 720px) {
+  .page--quick-start .quick-start-steps::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--qs-step-padding-x) + (var(--qs-step-badge-size) / 2));
+    top: calc(var(--qs-step-padding-y) + (var(--qs-step-badge-size) / 2));
+    bottom: calc(var(--qs-step-padding-y) + (var(--qs-step-badge-size) / 2));
+    width: 2px;
+    background: rgba(101, 79, 240, 0.18);
+    border-radius: 999px;
+    pointer-events: none;
+  }
 }
 .card-grid--quick-start .card {
   align-items: flex-start;
