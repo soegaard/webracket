@@ -131,13 +131,18 @@
 (define (step-badge)
   `(span (@ (class "pipeline-step") (aria-hidden "true")) ""))
 
-;; quick-start-step : String (Listof List) -> List
+;; quick-start-step : Integer String (Listof List) -> List
 ;;   Quick Start step section with numbered badge.
-(define (quick-start-step title content)
+(define (quick-start-step step-number title content)
   `(section (@ (class "section section--quick-start-step"))
             (div (@ (class "section-header quick-start-step-header"))
-                 ,(step-badge)
-                 (h2 (@ (class "section-title")) ,title))
+                 (span (@ (class "pipeline-step quick-start-step-badge")
+                          (aria-hidden "true"))
+                       "")
+                 (h2 (@ (class "section-title"))
+                     (span (@ (class "sr-only"))
+                           ,(format "Step ~a: " step-number))
+                     ,title))
             ,@content))
 
 ;; card-grid : (Listof (Listof List)) (U #f String) -> List
@@ -733,7 +738,8 @@
           #f)
         (div (@ (class "quick-start-steps"))
              ,(quick-start-step
-               "Step 1: Minimal Requirements"
+               1
+               "Minimal Requirements"
                (list
                 `(p "You’ll need:")
                 `(ul
@@ -743,12 +749,14 @@
                 `(p "If you already installed everything, skip to Step 2.")
                 `(p "Otherwise, follow the full " (a (@ (href "installation.html")) "Installation") " guide.")))
              ,(quick-start-step
-               "Step 2: Get WebRacket"
+               2
+               "Get WebRacket"
                (list
                 `(p "Clone the repository and enter it:")
                 `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket"))))
              ,(quick-start-step
-               "Step 3: Run a Demo Site"
+               3
+               "Run a Demo Site"
                (list
                 `(p "WebRacket includes ready-made demos. To serve them locally:")
                 `(pre (code "cd examples\nraco static-web"))
@@ -756,7 +764,8 @@
                 `(p "Now open your browser at:")
                 `(p (a (@ (href "http://localhost:8000")) "http://localhost:8000"))))
              ,(quick-start-step
-               "Step 4: Try a Demo"
+               4
+               "Try a Demo"
                (list
                 `(p "Pick one of the demos and open it in your browser.")
                 `(p "Some good starting points:")
@@ -767,7 +776,8 @@
                       (p "Each demo shows Racket code compiled to WebAssembly and executed in the browser.")
                       (p "If something breaks, try a different demo — support varies by feature.")))))
              ,(quick-start-step
-               "Step 5: Peek at the Source"
+               5
+               "Peek at the Source"
                (list
                 `(p "Each demo has a Racket source file in the examples/ directory.")
                 `(p "Open one and notice:")
@@ -1534,8 +1544,14 @@ pre {
 }
 .page--quick-start .section--quick-start-step .section-header {
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
+}
+.page--quick-start .quick-start-step-badge {
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+  transform: none;
 }
 .page--quick-start .quick-start-steps {
   counter-reset: step;
