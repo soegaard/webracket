@@ -3010,7 +3010,7 @@ CSS
       [(quick-start)           (quick-start-page)]
       [(installation)          (installation-page)]
       [(community)             (community-page)]
-      [(mathjax)               mathjax-page-layout]
+      [(mathjax)               (mathjax-page)]
       [else                    (home-page)]))
   
   (define page (sxml->dom page-structure))

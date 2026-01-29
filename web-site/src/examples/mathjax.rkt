@@ -8,7 +8,7 @@
 (define mathjax-default-expression
   "\\int_{0}^{\\pi} \\sin(x)\\,dx = 2")
 
-(define mathjax-page-layout
+(define (mathjax-page)
   `(div (@ (class "page page--mathjax"))
         ,(navbar)
         (section (@ (class "mathjax-hero"))
