@@ -2728,6 +2728,7 @@
        (for/sum ([entry (in-list sections)])
          (length (cdr entry)))]
       [_ 0])))
+
 (define total-standard-library-identifiers
   (for/sum ([chapter (in-list chapter-datasets)])
     (match chapter
@@ -3269,9 +3270,10 @@
 (define (init-status-filter!)
   (define sections (node-list->list (js-query-selector-all ".status-section")))
   (for ([section (in-list sections)])
-    (define list-el (js-element-query-selector section ".status-list"))
-    (define button-list
-      (node-list->list (js-element-query-selector-all section "[data-status-group]")))
+    (define list-el     (js-element-query-selector section ".status-list"))
+    (define button-list (node-list->list
+                         (js-element-query-selector-all section "[data-status-group]")))
+
     (when (and list-el (pair? button-list))
       (define active-group "implemented")
       (define active-dir   "asc")
@@ -3296,6 +3298,7 @@
                      (set! active-group group)
                      (set! active-dir   "asc")))
                (sync-and-sort!))))))
+      
         (remember-status-handler! handler)
         (js-add-event-listener! button "click" handler))
       
