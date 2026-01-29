@@ -3317,7 +3317,7 @@
         (js-add-event-listener! button "click" handler))
 
       (set-active-state! (active-group) (active-dir))
-      (sync-and-sort! (active-group) (active-dir)))))
+      (sync-and-sort! (active-group) (active-dir))))
 
 ;; init-status-collapse-buttons!: -> void?
 ;;   Attach handlers to collapse expanded sections.
