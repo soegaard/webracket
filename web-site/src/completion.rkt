@@ -3217,7 +3217,7 @@
                             (quotient idx row-count)))
           (when (< target count)
             (vector-set! reordered target card)))
-        (filter values (vector->list reordered)))))
+        (filter (λ (item) item) (vector->list reordered)))))
 
 ;; status-grid-current-columns: any/c -> (or/c exact-positive-integer? #f)
 ;;   Read stored column count metadata for a status grid.
