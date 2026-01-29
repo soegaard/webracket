@@ -738,7 +738,7 @@
                  (a (@ (href "documentation.html")) "docs") ", and "
                  (a (@ (href "implementation-status.html")) "status") ")")))
           #f
-          #f)
+          "section--quick-start-what")
         (div (@ (class "quick-start-steps"))
              ,(quick-start-step
                1
@@ -1513,9 +1513,9 @@ pre {
 .page--quick-start {
   --qs-step-padding-left: 26px;
   --qs-step-padding-right: 20px;
-  --qs-step-padding-y: 16px;
+  --qs-step-padding-y: 14px;
   --qs-step-badge-size: 28px;
-  --qs-step-gap: 14px;
+  --qs-step-gap: 12px;
 }
 .page--quick-start .hero-lead {
   margin-bottom: 18px;
@@ -1530,13 +1530,31 @@ pre {
   background: var(--surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
   position: relative;
   z-index: 1;
+}
+.page--quick-start .section--quick-start-what {
+  padding-bottom: 22px;
+}
+.page--quick-start .section--quick-start-what ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.page--quick-start .section--quick-start-what ul li {
+  margin: 0;
+  line-height: 1.55;
+}
+.page--quick-start .section--quick-start-what ul li + li {
+  margin-top: 4px;
 }
 .page--quick-start .section-header {
   margin-bottom: 12px;
   gap: 5px;
+}
+.page--quick-start .section--quick-start-what .section-header {
+  margin-bottom: 10px;
+  gap: 4px;
 }
 .page--quick-start .section-title + * {
   margin-top: 8px;
@@ -1560,7 +1578,7 @@ pre {
   margin-top: 6px;
 }
 .page--quick-start .section--quick-start-step .section-title {
-  font-weight: 650;
+  font-weight: 675;
 }
 .page--quick-start .section--quick-start-step .qs-step-title::after {
   content: none;
@@ -1569,7 +1587,7 @@ pre {
   flex-direction: row;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .page--quick-start .qs-step-badge {
   width: var(--qs-step-badge-size);
@@ -1589,21 +1607,22 @@ pre {
   display: flex;
   flex-direction: column;
   gap: var(--qs-step-gap);
-  margin-top: 46px;
+  margin-top: 36px;
   position: relative;
 }
 .page--quick-start .qs-step-titleblock {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 1px;
   flex: 1;
   min-width: 0;
 }
 .page--quick-start .qs-step-title {
   font-size: 1.28rem;
   line-height: 1.2;
-  color: #f6f7ff;
+  color: #fbfbff;
+  font-weight: 600;
 }
 .page--quick-start .qs-step-title + .qs-step-intro {
   margin-top: 0;
@@ -1617,7 +1636,7 @@ pre {
 .page--quick-start .qs-step-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   line-height: 1.6;
 }
 .page--quick-start .qs-step-body > p {
@@ -1633,18 +1652,18 @@ pre {
   line-height: 1.5;
 }
 .page--quick-start .qs-step-body > ul li + li {
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .page--quick-start .qs-step-body > pre {
-  margin: 2px 0;
-  padding: 8px 10px;
+  margin: 1px 0;
+  padding: 6px 9px;
   font-size: 0.88rem;
 }
 .page--quick-start .qs-step-body > p + pre,
 .page--quick-start .qs-step-body > ul + pre,
 .page--quick-start .qs-step-body > pre + p,
 .page--quick-start .qs-step-body > pre + ul {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .page--quick-start .qs-step-body > pre:last-child,
 .page--quick-start .qs-step-body > p:last-child,
