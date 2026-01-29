@@ -3,24 +3,6 @@
 ;;; Included by web-site.rkt to render the WebRacket status page.
 ;;;
 
-;; sort-symbols: (listof symbol?) -> (listof symbol?)
-;;   Return a sorted list of symbols using symbol<? ordering.
-;;   Returns the sorted list of symbols.
-(define (sort-symbols syms)
-  ;; insert: symbol? (listof symbol?) -> (listof symbol?)
-  ;;   Insert a symbol into a sorted list.
-  ;;   Returns the updated sorted list containing the symbol.
-  (define (insert sym lst)
-    (if (null? lst)
-        (cons sym '())
-        (if (symbol<? sym (car lst))
-            (cons sym lst)
-            (cons (car lst) (insert sym (cdr lst))))))
-  (if (null? syms)
-      '()
-      (insert (car syms) (sort-symbols (cdr syms)))))
-
-
 (define datatypes-primitives
   '(
     (equality
@@ -2940,7 +2922,7 @@
                          "Close to collapse"))
             (ul (@ (class "status-list"))
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
-                       (sort-symbols primitives)))))]))
+                       (sort primitives symbol<?)))))]))
 
 ;; chapter-block: list? -> list?
 ;;   Render a chapter block containing section cards.
@@ -2954,15 +2936,6 @@
            (div (@ (class "status-chapter-grid"))
                  ,@(map (λ (section) (section-card section implemented-set))
                         sections)))]))
-
-;; find-first: procedure? list? -> (or/c #f any/c)
-;;   Return the first list element that satisfies pred.
-;;   Returns the matching element or #f when none matches.
-(define (find-first pred lst)
-  (cond
-    [(null? lst)       #f]
-    [(pred (car lst)) (car lst)]
-    [else             (find-first pred (cdr lst))]))
 
 (define all-section-stats
   (for*/list ([chapter (in-list prepared-chapters)]
@@ -2996,14 +2969,14 @@
   (for/list ([entry (in-list attention-metadata)]
              #:when (match entry
                      [(list _ section-title _)
-                      (find-first (λ (stat)
-                                    (string-ci=? (car stat) section-title))
-                                  all-section-stats)]))
+                      (memf (λ (stat)
+                              (string-ci=? (car stat) section-title))
+                            all-section-stats)]))
     (match entry
       [(list display section-title note)
        (define stat
-         (find-first (λ (item) (string-ci=? (car item) section-title))
-                     all-section-stats))
+         (car (memf (λ (item) (string-ci=? (car item) section-title))
+                    all-section-stats)))
        (define title             (car stat))
        (define implemented-count (list-ref stat 2))
        (define total             (list-ref stat 3))
@@ -3011,14 +2984,6 @@
        (define pct-num           (list-ref stat 5))
        (define anchor-id         (list-ref stat 7))
        (list display title note implemented-count total missing pct-num anchor-id)])))
-
-;; take-up-to: list? exact-nonnegative-integer? -> list?
-;;   Take up to n items from a list.
-;;   Returns a list with at most n items.
-(define (take-up-to lst n)
-  (if (or (zero? n) (null? lst))
-      '()
-      (cons (car lst) (take-up-to (cdr lst) (sub1 n)))))
 
 ;; needs-attention-items: -> list?
 ;;   Select top attention items with low completion.
@@ -3041,7 +3006,7 @@
               [(< pct-a pct-b) #t]
               [(> pct-a pct-b) #f]
               [else (> missing-a missing-b)]))))
-  (take-up-to sorted 4))
+  (take sorted 4))
 
 ;; attention-card: list? -> list?
 ;;   Render an attention card summary for a section.
@@ -3097,13 +3062,19 @@
     (sort all-section-stats (λ (a b) (> (list-ref a 5) (list-ref b 5)))))
   (define sorted-weak
     (sort all-section-stats (λ (a b) (< (list-ref a 5) (list-ref b 5)))))
+  (define strong-match
+    (memf (λ (stat) (member (car stat) strong-candidates))
+          sorted-strong))
   (define strong
-    (or (find-first (λ (stat) (member (car stat) strong-candidates))
-                    sorted-strong)
+    (if strong-match
+        (car strong-match)
         (car sorted-strong)))
+  (define weak-match
+    (memf (λ (stat) (member (car stat) weak-candidates))
+          sorted-weak))
   (define weak
-    (or (find-first (λ (stat) (member (car stat) weak-candidates))
-                    sorted-weak)
+    (if weak-match
+        (car weak-match)
         (car sorted-weak)))
   (define strong-title       (car strong))
   (define strong-implemented (list-ref strong 2))
@@ -3142,8 +3113,7 @@
 ;;   Store event handlers so they stay reachable.
 ;;   Returns (void) after storing the handler.
 (define (remember-status-handler! handler)
-  (set! status-handler-store (cons handler status-handler-store))
-  (void))
+  (set! status-handler-store (cons handler status-handler-store)))
 
 ;; classlist-contains?: any/c string? -> boolean?
 ;;   Check whether an element's classList contains a class.
@@ -3191,14 +3161,12 @@
            (js-event-prevent-default evt)
            (status-open-target! target-id)
            (js-send (js-window-history) "replaceState"
-                    (vector (js-null) "" (string-append "#" target-id))))
-         (void))))
+                    (vector (js-null) "" (string-append "#" target-id)))))))
     (remember-status-handler! handler)
     (js-add-event-listener! link "click" handler))
   (define hash (js-ref (js-window-location) "hash"))
   (when (and (string? hash) (> (string-length hash) 1))
-    (status-open-target! (substring hash 1)))
-  (void))
+    (status-open-target! (substring hash 1))))
 
 ;; status-row-status: any/c -> string?
 ;;   Derive the status label from a primitive row element.
@@ -3327,8 +3295,7 @@
                    (begin
                      (set! active-group group)
                      (set! active-dir   "asc")))
-               (sync-and-sort!))
-             (void))))
+               (sync-and-sort!))))))
         (remember-status-handler! handler)
         (js-add-event-listener! button "click" handler))
       
@@ -3345,8 +3312,7 @@
        (lambda (_evt)
          (define details (js-send button "closest" (vector "details")))
          (when details
-           (js-remove-attribute! details "open"))
-         (void))))
+           (js-remove-attribute! details "open")))))
     (remember-status-handler! handler)
     (js-add-event-listener! button "click" handler)))
 
