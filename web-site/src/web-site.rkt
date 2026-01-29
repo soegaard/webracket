@@ -312,6 +312,7 @@
     [(string-suffix? path "installation.html") 'installation]
     [(string-suffix? path "examples.html") 'examples]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
+    [(string-suffix? path "community.html") 'community]
     [(string-suffix? path "overview.html") 'overview]
     [(string-suffix? path "roadmap.html") 'roadmap]
     [(string-suffix? path "is-webracket-for-you.html") 'for-you]
@@ -343,6 +344,7 @@
              ,(nav-link "Status" "implementation-status.html" 'implementation-status active-page)
              ,(nav-link "Documentation" "documentation.html" 'documentation active-page)
              ,(nav-link "Installation" "installation.html" 'installation active-page)
+             ,(nav-link "Community" "community.html" 'community active-page)
              ,(nav-link "Examples" "examples.html" 'examples active-page))))
 
 ;; footer-section : -> List
@@ -789,6 +791,47 @@
                      (li (a (@ (href "examples.html")) "Browse live demos")))))
           #f
           "install-section")
+        ,(footer-section)))
+
+;; community-page : -> List
+;;   Community page layout.
+(define (community-page)
+  `(div (@ (class "page"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (h1 (@ (class "hero-title")) "Community")
+                      (p (@ (class "hero-lead"))
+                         "Where to ask questions, share progress, and get help.")))
+        ,(section-block
+          "Community spaces"
+          "Choose the best place to connect with the Racket community."
+          (list
+           (card-grid
+            (list
+             (list `(h3 "Racket Discourse")
+                   `(p "Forum for questions, announcements, and longer-form discussions.")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "https://racket.discourse.group/")
+                               (target "_blank")
+                               (rel "noreferrer noopener"))
+                            "Open Discourse")))
+             (list `(h3 "Racket Discord")
+                   `(p "Real-time chat for quick questions and coordination.")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "https://discord.gg/6Zq8sH5")
+                               (target "_blank")
+                               (rel "noreferrer noopener"))
+                            "Join Discord")))))
+           (callout
+            'note
+            "WebRacket note"
+            `(p "For WebRacket topics, start a thread on Discourse or ask in Discord. "
+                "Include a link to the demo, code snippet, and browser details when reporting issues."))))
+          #f
+          #f)
         ,(footer-section)))
 
 ;; init-dom : -> Void
@@ -2510,6 +2553,7 @@ CSS
       [(documentation) (documentation-page)]
       [(examples) (examples-page)]
       [(installation) (installation-page)]
+      [(community) (community-page)]
       [else (home-page)]))
   
   (define page (sxml->dom page-structure))
