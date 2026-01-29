@@ -3269,55 +3269,55 @@
 ;;   Returns (void) after wiring filter interactions.
 (define (init-status-filter!)
   (define sections (node-list->list (js-query-selector-all ".status-section")))
+
   (for ([section (in-list sections)])
     (define list-el     (js-element-query-selector section ".status-list"))
     (define button-list (node-list->list
                          (js-element-query-selector-all section "[data-status-group]")))
 
     (when (and list-el (pair? button-list))
-      (let* ([active-group
-              (lambda ()
-                (define current (status-group->string
-                                 (js-get-attribute section "data-status-active-group")))
-                (if (string? current) current "implemented"))]
-             [active-dir
-              (lambda ()
-                (define current (status-group->string
-                                 (js-get-attribute section "data-status-active-dir")))
-                (if (string? current) current "asc"))]
-             [set-active-state!
-              (lambda (group dir)
-                (js-set-attribute! section "data-status-active-group" group)
-                (js-set-attribute! section "data-status-active-dir" dir))]
-             ;; sync-and-sort!: -> void?
-             ;;   Refresh button state and re-sort the list.
-             ;;   Returns (void) after syncing state.
-             [sync-and-sort!
-              (lambda (group dir)
-                (status-sync-buttons! button-list group)
-                (status-sort-list! list-el group dir))])
-        (for ([button (in-list button-list)])
-          (define handler
-            (procedure->external
-             (lambda (_evt)
-               (define group (status-group->string
-                              (js-get-attribute button "data-status-group")))
-               (when (and (string? group) (not (string=? group "")))
-                 (define current-group (active-group))
-                 (define current-dir   (active-dir))
-                 (define next-dir
-                   (if (string=? group current-group)
-                       (if (string=? current-dir "asc") "desc" "asc")
-                       "asc"))
-                 (define next-group group)
-                 (set-active-state! next-group next-dir)
-                 (sync-and-sort! next-group next-dir)))))
+      (define (active-group)
+        (define current (status-group->string
+                         (js-get-attribute section "data-status-active-group")))
+        (if (string? current) current "implemented"))
+        
+      (define (active-dir)
+        (define current (status-group->string
+                         (js-get-attribute section "data-status-active-dir")))
+        (if (string? current) current "asc"))
 
-          (remember-status-handler! handler)
-          (js-add-event-listener! button "click" handler)))
+      (define (set-active-state! group dir)
+        (js-set-attribute! section "data-status-active-group" group)
+        (js-set-attribute! section "data-status-active-dir"   dir))
+      
+      ;; sync-and-sort!: -> void?
+      ;;   Refresh button state and re-sort the list.
+      ;;   Returns (void) after syncing state.
+      (define (sync-and-sort! group dir)
+        (status-sync-buttons! button-list group)
+        (status-sort-list! list-el group dir))
+      
+      (for ([button (in-list button-list)])
+        (define handler
+          (procedure->external
+           (lambda (_evt)
+             (define group (status-group->string
+                            (js-get-attribute button "data-status-group")))
+             (when (and (string? group) (not (string=? group "")))
+               (define current-group (active-group))
+               (define current-dir   (active-dir))
+               (define next-dir      (if (string=? group current-group)
+                                         (if (string=? current-dir "asc") "desc" "asc")
+                                         "asc"))
+               (define next-group    group)
+               (set-active-state! next-group next-dir)
+               (sync-and-sort!    next-group next-dir)))))
 
-        (set-active-state! (active-group) (active-dir))
-        (sync-and-sort! (active-group) (active-dir)))))
+        (remember-status-handler! handler)
+        (js-add-event-listener! button "click" handler))
+
+      (set-active-state! (active-group) (active-dir))
+      (sync-and-sort!    (active-group) (active-dir)))))
 
 ;; init-status-collapse-buttons!: -> void?
 ;;   Attach handlers to collapse expanded sections.
