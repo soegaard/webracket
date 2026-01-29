@@ -854,7 +854,7 @@
             "card-grid--quick-start"))
           #f
           #f)
-        ,(section-block
+        #;,(section-block
           "Optional: Your First Tiny Program"
           #f
           (list
