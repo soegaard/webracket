@@ -131,9 +131,9 @@
 (define (step-badge)
   `(span (@ (class "pipeline-step") (aria-hidden "true")) ""))
 
-;; quick-start-step : Integer String (Listof List) -> List
+;; quick-start-step : Integer String (U #f String) (Listof List) -> List
 ;;   Quick Start step section with numbered badge.
-(define (quick-start-step step-number title content)
+(define (quick-start-step step-number title intro content)
   `(section (@ (class "section section--quick-start-step"))
             (div (@ (class "section-header qs-step-header"))
                  (span (@ (class "pipeline-step qs-step-badge")
@@ -141,9 +141,10 @@
                        "")
                  (div (@ (class "qs-step-titleblock"))
                       (h2 (@ (class "section-title qs-step-title"))
-                          (span (@ (class "sr-only"))
-                                ,(format "Step ~a: " step-number))
-                          ,title)))
+                          ,title)
+                      ,@(if intro
+                            (list `(p (@ (class "qs-step-intro")) ,intro))
+                            '())))
             (div (@ (class "qs-step-body"))
                  ,@content)))
 
@@ -742,8 +743,8 @@
              ,(quick-start-step
                1
                "Minimal Requirements"
+               "You’ll need:"
                (list
-                `(p "You’ll need:")
                 `(ul
                   (li "Racket (9.0 or newer)")
                   (li "Node.js")
@@ -753,14 +754,14 @@
              ,(quick-start-step
                2
                "Get WebRacket"
+               "Clone the repository and enter it:"
                (list
-                `(p "Clone the repository and enter it:")
                 `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket"))))
              ,(quick-start-step
                3
                "Run a Demo Site"
+               "WebRacket includes ready-made demos. To serve them locally:"
                (list
-                `(p "WebRacket includes ready-made demos. To serve them locally:")
                 `(pre (code "cd examples\nraco static-web"))
                 `(p "This starts a local web server.")
                 `(p "Now open your browser at:")
@@ -768,8 +769,8 @@
              ,(quick-start-step
                4
                "Try a Demo"
+               "Pick one of the demos and open it in your browser."
                (list
-                `(p "Pick one of the demos and open it in your browser.")
                 `(p "Some good starting points:")
                 `(ul
                   (li "MathJax Editor — live LaTeX preview in the browser")
@@ -780,8 +781,8 @@
              ,(quick-start-step
                5
                "Peek at the Source"
+               "Each demo has a Racket source file in the examples/ directory."
                (list
-                `(p "Each demo has a Racket source file in the examples/ directory.")
                 `(p "Open one and notice:")
                 `(ul
                   (li "It looks like normal Racket")
@@ -1510,10 +1511,10 @@ pre {
   gap: 16px;
 }
 .page--quick-start {
-  --qs-step-padding-x: 24px;
-  --qs-step-padding-y: 20px;
+  --qs-step-padding-x: 22px;
+  --qs-step-padding-y: 18px;
   --qs-step-badge-size: 28px;
-  --qs-step-gap: 28px;
+  --qs-step-gap: 16px;
 }
 .page--quick-start .hero-lead {
   margin-bottom: 18px;
@@ -1525,19 +1526,19 @@ pre {
 .page--quick-start .section--quick-start-step {
   margin-top: 0;
   padding: var(--qs-step-padding-y) var(--qs-step-padding-x);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
   position: relative;
   z-index: 1;
 }
 .page--quick-start .section-header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   gap: 5px;
 }
 .page--quick-start .section-title + * {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .page--quick-start .section > p {
   margin: 0 0 12px;
@@ -1565,62 +1566,81 @@ pre {
 }
 .page--quick-start .section--quick-start-step .qs-step-header {
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .page--quick-start .qs-step-badge {
   width: var(--qs-step-badge-size);
   height: var(--qs-step-badge-size);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   transform: none;
   margin-top: 0;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: rgba(101, 79, 240, 0.3);
+  border: 1px solid rgba(101, 79, 240, 0.45);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 .page--quick-start .quick-start-steps {
   counter-reset: step;
   display: flex;
   flex-direction: column;
   gap: var(--qs-step-gap);
-  margin-top: 56px;
+  margin-top: 46px;
   position: relative;
 }
 .page--quick-start .qs-step-titleblock {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
   flex: 1;
   min-width: 0;
-}
-.page--quick-start .qs-step-title + * {
-  margin-top: 8px;
 }
 .page--quick-start .qs-step-title {
   font-size: 1.28rem;
   color: #f6f7ff;
 }
+.page--quick-start .qs-step-title + .qs-step-intro {
+  margin-top: 0;
+}
+.page--quick-start .qs-step-intro {
+  margin: 0;
+  color: rgba(182, 189, 221, 0.92);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
 .page--quick-start .qs-step-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  line-height: 1.65;
+  gap: 8px;
+  line-height: 1.6;
 }
 .page--quick-start .qs-step-body > p {
   margin: 0;
 }
 .page--quick-start .qs-step-body > ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
   color: rgba(245, 247, 255, 0.86);
 }
+.page--quick-start .qs-step-body > ul li {
+  margin: 0;
+  line-height: 1.55;
+}
+.page--quick-start .qs-step-body > ul li + li {
+  margin-top: 4px;
+}
 .page--quick-start .qs-step-body > pre {
-  margin: 4px 0;
+  margin: 2px 0;
+  padding: 10px 12px;
+  font-size: 0.88rem;
 }
 .page--quick-start .qs-step-body > p + pre,
 .page--quick-start .qs-step-body > ul + pre,
 .page--quick-start .qs-step-body > pre + p,
 .page--quick-start .qs-step-body > pre + ul {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .page--quick-start .qs-step-body > pre:last-child,
 .page--quick-start .qs-step-body > p:last-child,
@@ -1629,19 +1649,6 @@ pre {
 }
 .page--quick-start .section--quick-start-callout .callout {
   margin: 14px 0 0;
-}
-@media (min-width: 720px) {
-  .page--quick-start .quick-start-steps::before {
-    content: "";
-    position: absolute;
-    left: calc(var(--qs-step-padding-x) + (var(--qs-step-badge-size) / 2));
-    top: calc(var(--qs-step-padding-y) + (var(--qs-step-badge-size) / 2));
-    bottom: calc(var(--qs-step-padding-y) + (var(--qs-step-badge-size) / 2));
-    width: 2px;
-    background: rgba(101, 79, 240, 0.18);
-    border-radius: 999px;
-    pointer-events: none;
-  }
 }
 .card-grid--quick-start .card {
   align-items: flex-start;
