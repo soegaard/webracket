@@ -309,6 +309,7 @@
   (define path (js-ref (js-window-location) "pathname"))
   (cond
     [(string-suffix? path "documentation.html")         'documentation]
+    [(string-suffix? path "quick-start.html")           'quick-start]
     [(string-suffix? path "installation.html")          'installation]
     [(string-suffix? path "examples.html")              'examples]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
@@ -343,6 +344,7 @@
              #;,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
              ,(nav-link "Status"        "implementation-status.html" 'implementation-status active-page)
              ,(nav-link "Documentation" "documentation.html"         'documentation         active-page)
+             ,(nav-link "Quick Start"   "quick-start.html"           'quick-start           active-page)
              ,(nav-link "Installation"  "installation.html"          'installation          active-page)
              ,(nav-link "Community"     "community.html"             'community             active-page)
              ,(nav-link "Examples"      "examples.html"              'examples              active-page))))
@@ -685,6 +687,165 @@
                                     (target "_blank")
                                     (rel "noreferrer noopener"))
                                  "Browse stdlib"))))))
+          #f
+          #f)
+        ,(footer-section)))
+
+;; quick-start-page : -> List
+;;   Quick Start page layout.
+(define (quick-start-page)
+  `(div (@ (class "page page--docs"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (h1 (@ (class "hero-title")) "Quick Start")
+                      (p (@ (class "hero-lead"))
+                         "Get a WebRacket program running in your browser in about 10 minutes.")
+                      (p "This guide shows the shortest path from a fresh checkout to a working demo. "
+                         "If you want full setup details, see the "
+                         (a (@ (href "installation.html")) "Installation")
+                         " page.")))
+        ,(section-block
+          "What You’ll Do"
+          #f
+          (list
+           `(ul
+             (li "Run a WebRacket demo locally")
+             (li "Open a Racket program running in the browser")
+             (li "See where to go next (" (a (@ (href "examples.html")) "examples") ", "
+                 (a (@ (href "documentation.html")) "docs") ", and "
+                 (a (@ (href "implementation-status.html")) "status") ")"))))
+          #f
+          #f)
+        ,(section-block
+          "Step 1 — Minimal Requirements"
+          #f
+          (list
+           `(p "You’ll need:")
+           `(ul
+             (li "Racket (9.0 or newer)")
+             (li "Node.js")
+             (li "wasm-tools"))
+           `(p "If you already installed everything, skip to Step 2.")
+           `(p "Otherwise, follow the full " (a (@ (href "installation.html")) "Installation") " guide."))
+          #f
+          #f)
+        ,(section-block
+          "Step 2 — Get WebRacket"
+          #f
+          (list
+           `(p "Clone the repository and enter it:")
+           `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket")))
+          #f
+          #f)
+        ,(section-block
+          "Step 3 — Run a Demo Site"
+          #f
+          (list
+           `(p "WebRacket includes ready-made demos. To serve them locally:")
+           `(pre (code "cd examples\nraco static-web"))
+           `(p "This starts a local web server.")
+           `(p "Now open your browser at:")
+           `(p (a (@ (href "http://localhost:8000")) "http://localhost:8000")))
+          #f
+          #f)
+        ,(section-block
+          "Step 4 — Try a Demo"
+          #f
+          (list
+           `(p "Pick one of the demos and open it in your browser.")
+           `(p "Some good starting points:")
+           `(ul
+             (li "MathJax Editor — live LaTeX preview in the browser")
+             (li "Mini REPL — interactive Racket in a web page")
+             (li "Graphics / Canvas demos — Racket driving browser graphics"
+                 (p "Each demo shows Racket code compiled to WebAssembly and executed in the browser.")
+                 (p "If something breaks, try a different demo — support varies by feature."))))
+          #f
+          #f)
+        ,(section-block
+          "Step 5 — Peek at the Source"
+          #f
+          (list
+           `(p "Each demo has a Racket source file in the examples/ directory.")
+           `(p "Open one and notice:")
+           `(ul
+             (li "It looks like normal Racket")
+             (li "It uses browser features (DOM, canvas, terminal, etc.)")
+             (li "It is compiled to WebAssembly before running"
+                 (p "You don’t need to understand the compiler yet — just get a feel for how Racket "
+                    "maps to the browser."))))
+          #f
+          #f)
+        ,(section-block
+          "How to Think About WebRacket (Mental Model)"
+          #f
+          (list
+           `(p "At a high level:")
+           `(ul
+             (li "You write Racket")
+             (li "WebRacket compiles it to WebAssembly")
+             (li "The browser runs it like a native module")
+             (li "JavaScript is used only for interoperability with the web"
+                 (p "You’re still programming in Racket — just targeting the browser."))))
+          #f
+          #f)
+        ,(section-block
+          "If Something Doesn’t Work"
+          #f
+          (list
+           `(p "WebRacket is still evolving, and not all Racket features are implemented.")
+           `(p "If a demo fails:")
+           `(ul
+             (li "Try another example")
+             (li "Check the " (a (@ (href "implementation-status.html")) "Status Dashboard")
+                 " to see what’s implemented")
+             (li "Ask for help in the " (a (@ (href "community.html")) "Community") " page")))
+          #f
+          #f)
+        ,(section-block
+          "Where to Go Next"
+          #f
+          (list
+           `(p "Choose your next path:")
+           (card-grid
+            (list
+             (list `(h3 "▶ Explore more demos")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "examples.html"))
+                            "Go to Examples")))
+             (list `(h3 "▶ Learn how WebRacket works")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "documentation.html"))
+                            "Go to Documentation")))
+             (list `(h3 "▶ See what’s implemented")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "implementation-status.html"))
+                            "Go to the Status Dashboard")))
+             (list `(h3 "▶ Set up a full development environment")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "installation.html"))
+                            "Go to Installation")))
+             (list `(h3 "▶ Ask questions or share feedback")
+                   `(div (@ (class "doc-cta-group"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "community.html"))
+                            "Go to Community"))))))
+          #f
+          #f)
+        ,(section-block
+          "Optional: Your First Tiny Program"
+          #f
+          (list
+           `(p "If you want to try a minimal Racket program, create: " (code "hello.rkt"))
+           `(pre (code "#lang racket\n\n(displayln \"Hello from WebRacket!\")"))
+           `(p "Then compile it using the WebRacket toolchain (see "
+               (a (@ (href "documentation.html")) "Documentation")
+               " for details)."))
           #f
           #f)
         ,(footer-section)))
@@ -2552,6 +2713,7 @@ CSS
       [(implementation-status) (implementation-status-page)]
       [(documentation)         (documentation-page)]
       [(examples)              (examples-page)]
+      [(quick-start)           (quick-start-page)]
       [(installation)          (installation-page)]
       [(community)             (community-page)]
       [else                    (home-page)]))
