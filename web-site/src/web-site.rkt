@@ -308,15 +308,15 @@
 (define (current-page)
   (define path (js-ref (js-window-location) "pathname"))
   (cond
-    [(string-suffix? path "documentation.html") 'documentation]
-    [(string-suffix? path "installation.html") 'installation]
-    [(string-suffix? path "examples.html") 'examples]
+    [(string-suffix? path "documentation.html")         'documentation]
+    [(string-suffix? path "installation.html")          'installation]
+    [(string-suffix? path "examples.html")              'examples]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
-    [(string-suffix? path "community.html") 'community]
-    [(string-suffix? path "overview.html") 'overview]
-    [(string-suffix? path "roadmap.html") 'roadmap]
-    [(string-suffix? path "is-webracket-for-you.html") 'for-you]
-    [else 'home]))
+    [(string-suffix? path "community.html")             'community]
+    [(string-suffix? path "overview.html")              'overview]
+    [(string-suffix? path "roadmap.html")               'roadmap]
+    [(string-suffix? path "is-webracket-for-you.html")  'for-you]
+    [else                                               'home]))
 
 ;; nav-link : String String Symbol Symbol -> List
 ;;   Creates a nav link with active state styling.
@@ -341,11 +341,11 @@
              #;,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
              #;,(nav-link "Overview" "overview.html" 'overview active-page)
              #;,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
-             ,(nav-link "Status" "implementation-status.html" 'implementation-status active-page)
-             ,(nav-link "Documentation" "documentation.html" 'documentation active-page)
-             ,(nav-link "Installation" "installation.html" 'installation active-page)
-             ,(nav-link "Community" "community.html" 'community active-page)
-             ,(nav-link "Examples" "examples.html" 'examples active-page))))
+             ,(nav-link "Status"        "implementation-status.html" 'implementation-status active-page)
+             ,(nav-link "Documentation" "documentation.html"         'documentation         active-page)
+             ,(nav-link "Installation"  "installation.html"          'installation          active-page)
+             ,(nav-link "Community"     "community.html"             'community             active-page)
+             ,(nav-link "Examples"      "examples.html"              'examples              active-page))))
 
 ;; footer-section : -> List
 ;;   Shared footer for all pages.
@@ -2550,11 +2550,11 @@ CSS
   (define page-structure
     (case (current-page)
       [(implementation-status) (implementation-status-page)]
-      [(documentation) (documentation-page)]
-      [(examples) (examples-page)]
-      [(installation) (installation-page)]
-      [(community) (community-page)]
-      [else (home-page)]))
+      [(documentation)         (documentation-page)]
+      [(examples)              (examples-page)]
+      [(installation)          (installation-page)]
+      [(community)             (community-page)]
+      [else                    (home-page)]))
   
   (define page (sxml->dom page-structure))
   
