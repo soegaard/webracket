@@ -110,13 +110,13 @@
 (define (load-mathjax-script!)
   (define existing (js-get-element-by-id "mathjax-script"))
   (if existing
-      (begin
+      (let ()
         (define mathjax (js-ref (js-var "window") "MathJax"))
         (when mathjax
           (set! mathjax-loaded? #t)
           (render-mathjax-preview))
         (js-add-event-listener! existing "load" mathjax-loaded-handler))
-      (begin
+      (let ()
         (define head   (js-document-head))
         (define script (js-create-element "script"))
         (js-set-attribute! script "id" "mathjax-script")
