@@ -714,7 +714,7 @@
              (li "Open a Racket program running in the browser")
              (li "See where to go next (" (a (@ (href "examples.html")) "examples") ", "
                  (a (@ (href "documentation.html")) "docs") ", and "
-                 (a (@ (href "implementation-status.html")) "status") ")"))))
+                 (a (@ (href "implementation-status.html")) "status") ")")))
           #f
           #f)
         ,(section-block
