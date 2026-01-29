@@ -1550,6 +1550,9 @@ pre {
 .page--quick-start .section--quick-start-step .section-title {
   font-weight: 650;
 }
+.page--quick-start .section--quick-start-step .qs-step-title::after {
+  content: none;
+}
 .page--quick-start .section--quick-start-step .qs-step-header {
   flex-direction: row;
   align-items: flex-start;
