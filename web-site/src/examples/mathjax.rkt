@@ -28,7 +28,7 @@
                          "Type LaTeX on the left and watch the preview update instantly.")))
         ,(section-block
           "Live editor"
-          "Use standard LaTeX syntax to render math with MathJax 4."
+          "Write standard LaTeX and see MathJax 4 render it instantly."
           (list
            `(div (@ (class "mathjax-grid"))
                  (div (@ (class "mathjax-pane"))

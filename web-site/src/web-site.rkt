@@ -2900,16 +2900,29 @@ pre code {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding: 22px;
   text-align: center;
+  color: var(--text);
 }
 .mathjax-preview mjx-container {
-  font-size: 120%;
+  font-size: 150%;
+  margin: 0 auto;
+  max-width: 100%;
 }
 .mathjax-hint {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
+  color: rgba(182, 189, 221, 0.82);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.55;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(74, 108, 255, 0.28);
+  background: rgba(74, 108, 255, 0.08);
+}
+.mathjax-hint code {
+  font-style: normal;
+  color: rgba(235, 238, 255, 0.95);
 }
 .mathjax-details {
   display: flex;
