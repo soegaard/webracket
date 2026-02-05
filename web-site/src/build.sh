@@ -11,6 +11,7 @@ cp documentation.html ../public
 cp examples.html ../public
 cp implementation-status.html ../public
 cp mathjax.html ../public
+cp formula1.html ../public
 cp quick-start.html ../public
 
 echo "-- Done --"

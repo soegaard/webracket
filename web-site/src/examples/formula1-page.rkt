@@ -1,0 +1,313 @@
+;;;
+;;; Formula 1 next race demo (WebRacket site page)
+;;;
+
+;;------------------------------------------------------------------------------
+;; Program: Next F1 race finder (Better F1 Calendar)
+;;
+;; This page reuses the same parser and date logic as the tutorial file:
+;;   web-site/src/examples/formula1/formula1.rkt
+;;
+;; We intentionally keep the tutorial comments and structure so readers can
+;; follow the algorithm step-by-step and compare the standalone example with the
+;; website integration.
+;;
+;; WEBSITE INTEGRATION OVERVIEW:
+;; - Parse race events from the bundled ICS text.
+;; - Read current UTC time from the browser (`Date.toISOString()`).
+;; - Find the next race event.
+;; - Render a human-friendly countdown:
+;;   * before race day: show days remaining
+;;   * on race day: show hours remaining
+;;------------------------------------------------------------------------------
+
+(require (for-syntax racket/base racket/file))
+
+(define-syntax (get-f1-calendar-ics stx)
+  (datum->syntax #'here (file->string "examples/formula1/better-f1-calendar.ics")))
+
+;; event : structure
+;; Represents one calendar event we care about, with a summary and a DTSTART.
+(struct f1-event (summary start))
+
+;;;
+;;; DATES
+;;;
+
+;;------------------------------------------------------------------------------
+;; utc-date
+;;------------------------------------------------------------------------------
+
+(struct utc-date (year month day hour minute second))
+
+;;------------------------------------------------------------------------------
+;; ICS Parsing
+;;------------------------------------------------------------------------------
+
+;; parse-events : String -> (Listof f1-event)
+;; Parse an ICS calendar string into a list of race events.
+(define (parse-events text)
+  (define lines (string-split text "\n"))
+
+  ;; Same `for/fold` parser-state style as tutorial example.
+  (for/fold ([events '()]
+             [summary #f]
+             [start #f]
+             #:result (reverse events))
+            ([line lines])
+    (cond
+      ;; SUMMARY:...
+      [(string-prefix? line "SUMMARY:")
+       (values events (substring line 8) start)]
+
+      ;; DTSTART:...
+      [(string-prefix? line "DTSTART:")
+       (values events summary (substring line 8))]
+
+      ;; END:VEVENT => commit if complete + a race
+      [(string-prefix? line "END:VEVENT")
+       (if (and summary start
+                (string-contains? summary "Race"))
+           (values (cons (f1-event summary start) events) #f #f)
+           (values events #f #f))]
+
+      ;; otherwise: keep parser state
+      [else
+       (values events summary start)])))
+
+;;------------------------------------------------------------------------------
+;; UTC Parsing
+;;------------------------------------------------------------------------------
+
+;; digits-only : String -> String
+(define (digits-only s)
+  (list->string
+   (filter char-numeric?
+           (string->list s))))
+
+;; take-n : String Natural -> (values String String)
+(define (take-n s n)
+  (values (substring s 0 n)
+          (substring s n)))
+
+;; utc-string->utc-date : String -> utc-date
+;; Accepts:
+;;   "20260308T150000Z"          (ICS / iCalendar UTC)
+;;   "2026-03-08T15:00:00.000Z"  (JS Date.toISOString)
+(define (utc-string->utc-date s)
+  (define ds (digits-only s))
+
+  ;; We want at least YYYYMMDDHHMMSS = 14 digits.
+  (when (< (string-length ds) 14)
+    (error 'utc-string->utc-date
+           "expected at least 14 digits in UTC date-time, got: ~a"
+           s))
+
+  (define-values (yyyy rest0) (take-n ds 4))
+  (define-values (mm   rest1) (take-n rest0 2))
+  (define-values (dd   rest2) (take-n rest1 2))
+  (define-values (hh   rest3) (take-n rest2 2))
+  (define-values (mi   rest4) (take-n rest3 2))
+  (define-values (ss   _rest) (take-n rest4 2))
+
+  (utc-date (string->number yyyy)
+            (string->number mm)
+            (string->number dd)
+            (string->number hh)
+            (string->number mi)
+            (string->number ss)))
+
+;;------------------------------------------------------------------------------
+;; Ordering and calendar helpers
+;;------------------------------------------------------------------------------
+
+;; date< : utc-date utc-date -> Boolean
+(define (date< a b)
+  (cond
+    [(< (utc-date-year a)   (utc-date-year b))   #t]
+    [(> (utc-date-year a)   (utc-date-year b))   #f]
+    [(< (utc-date-month a)  (utc-date-month b))  #t]
+    [(> (utc-date-month a)  (utc-date-month b))  #f]
+    [(< (utc-date-day a)    (utc-date-day b))    #t]
+    [(> (utc-date-day a)    (utc-date-day b))    #f]
+    [(< (utc-date-hour a)   (utc-date-hour b))   #t]
+    [(> (utc-date-hour a)   (utc-date-hour b))   #f]
+    [(< (utc-date-minute a) (utc-date-minute b)) #t]
+    [(> (utc-date-minute a) (utc-date-minute b)) #f]
+    [(< (utc-date-second a) (utc-date-second b)) #t]
+    [else                                        #f]))
+
+;; same-day? : utc-date utc-date -> Boolean
+(define (same-day? a b)
+  (and (= (utc-date-year a)  (utc-date-year b))
+       (= (utc-date-month a) (utc-date-month b))
+       (= (utc-date-day a)   (utc-date-day b))))
+
+;; leap-year? : Integer -> Boolean
+(define (leap-year? y)
+  (or (and (= (remainder y 4) 0)
+           (not (= (remainder y 100) 0)))
+      (= (remainder y 400) 0)))
+
+;; days-before-month : Integer Integer -> Integer
+(define (days-before-month y m)
+  (define base (vector 0 31 59 90 120 151 181 212 243 273 304 334))
+  (define d (vector-ref base (- m 1)))
+  (if (and (> m 2) (leap-year? y)) (+ d 1) d))
+
+;; days-before-year : Integer -> Integer
+(define (days-before-year y)
+  (define y1 (- y 1))
+  (+ (* y1 365)
+     (quotient y1 4)
+     (- (quotient y1 100))
+     (quotient y1 400)))
+
+;; utc-date->unix-seconds : utc-date -> Integer
+;; Converts a UTC date to epoch seconds to make countdown arithmetic simple.
+(define (utc-date->unix-seconds d)
+  (define days (+ (days-before-year (utc-date-year d))
+                  (days-before-month (utc-date-year d) (utc-date-month d))
+                  (- (utc-date-day d) 1)))
+  (define days-1970 (days-before-year 1970))
+  (define days-since-epoch (- days days-1970))
+  (+ (* days-since-epoch 86400)
+     (* (utc-date-hour d) 3600)
+     (* (utc-date-minute d) 60)
+     (utc-date-second d)))
+
+;;------------------------------------------------------------------------------
+;; Current UTC date (browser / WebRacket)
+;;------------------------------------------------------------------------------
+
+;; current-utc-date : -> utc-date
+(define (current-utc-date)
+  (define iso-ext (js-eval "new Date().toISOString()"))
+  (define iso     (external-string->string iso-ext))
+  (utc-string->utc-date iso))
+
+;;------------------------------------------------------------------------------
+;; Race selection + countdown text
+;;------------------------------------------------------------------------------
+
+(define f1-ics-data (get-f1-calendar-ics))
+(define f1-events   (parse-events f1-ics-data))
+
+;; find-next-race : utc-date -> (U #f f1-event)
+(define (find-next-race now)
+  (define candidates
+    (filter
+     (lambda (ev)
+       (define start (utc-string->utc-date (f1-event-start ev)))
+       (or (date< now start)
+           (and (same-day? now start)
+                (not (date< start now)))))
+     f1-events))
+  (if (null? candidates)
+      #f
+      (car candidates)))
+
+;; pluralize : Integer String String -> String
+(define (pluralize n singular plural)
+  (if (= n 1) singular plural))
+
+;; race-countdown-line : utc-date f1-event -> String
+;; New website behavior:
+;; - If same day: report hours to race.
+;; - Otherwise: report days to race.
+(define (race-countdown-line now event)
+  (define start-date (utc-string->utc-date (f1-event-start event)))
+  (define diff-seconds
+    (- (utc-date->unix-seconds start-date)
+       (utc-date->unix-seconds now)))
+  (cond
+    [(<= diff-seconds 0)
+     "Race started just now."]
+    [(same-day? now start-date)
+     (define hours (max 1 (ceiling (/ diff-seconds 3600))))
+     (string-append (number->string hours)
+                    " "
+                    (pluralize hours "hour" "hours")
+                    " to lights out.")]
+    [else
+     (define days (max 1 (ceiling (/ diff-seconds 86400))))
+     (string-append (number->string days)
+                    " "
+                    (pluralize days "day" "days")
+                    " to the next race.")]))
+
+;;------------------------------------------------------------------------------
+;; DOM rendering for the website page
+;;------------------------------------------------------------------------------
+
+;; render-f1-countdown! : -> Void
+;; Pulls `now`, finds next race, then updates 3 nodes in the page.
+(define (render-f1-countdown!)
+  (define title-node     (js-get-element-by-id "f1-next-race-title"))
+  (define countdown-node (js-get-element-by-id "f1-next-race-countdown"))
+  (define now-node       (js-get-element-by-id "f1-now-utc"))
+
+  (define now       (current-utc-date))
+  (define next-race (find-next-race now))
+
+  (js-set! now-node
+           "textContent"
+           (string-append "Current UTC time: "
+                          (external-string->string
+                           (js-eval "new Date().toISOString()"))))
+
+  (if next-race
+      (begin
+        (js-set! title-node
+                 "textContent"
+                 (string-append "Next race: " (f1-event-summary next-race)))
+        (js-set! countdown-node
+                 "textContent"
+                 (race-countdown-line now next-race)))
+      (begin
+        (js-set! title-node "textContent" "No upcoming race found in the calendar.")
+        (js-set! countdown-node "textContent" ""))))
+
+;; formula1-page : -> List
+(define (formula1-page)
+  `(div (@ (class "page page--formula1"))
+        ,(navbar)
+        (section (@ (class "examples-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Formula 1")
+                           (span (@ (class "pill")) "ICS Calendar")
+                           (span (@ (class "pill")) "Date parsing"))
+                      (h1 (@ (class "hero-title")) "Formula 1 next race")
+                      (p (@ (class "hero-lead"))
+                         "Reads the Better F1 Calendar ICS feed and shows the next race countdown.")))
+
+        ,(section-block
+          "Live countdown"
+          "Shows days until the next race, and on race day it switches to hours."
+          (list
+           `(div (@ (class "card"))
+                 (h3 (@ (id "f1-next-race-title")) "Loading next race…")
+                 (p (@ (id "f1-next-race-countdown")) "")
+                 (p (@ (id "f1-now-utc") (class "hero-sublead")) "")))
+          #f
+          "section--examples")
+
+        ,(section-block
+          "Source"
+          "This page is derived from the Formula 1 parser tutorial source."
+          (list
+           `(div (@ (class "mathjax-actions"))
+                 ,(code-pill (gh-file "web-site/src/examples/formula1/formula1.rkt")
+                             "Original parser tutorial")
+                 ,(code-pill (gh-file "web-site/src/examples/formula1-page.rkt")
+                             "Website integration")))
+          #f
+          "section--examples")
+
+        ,(footer-section)))
+
+;; init-formula1-page! : -> Void
+(define (init-formula1-page!)
+  (js-set! (js-var "document") "title" "Formula 1 next race")
+  (render-f1-countdown!))
