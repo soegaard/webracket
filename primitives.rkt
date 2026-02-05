@@ -46,8 +46,10 @@
          struct-copy
          (for-syntax read-syntax/skip-first-line))
 
-(provide define-syntax define-for-syntax begin-for-syntax define-syntaxes)
-(provide (for-syntax define-syntax syntax-case ... #%app #%datum))
+(provide define-syntax define-for-syntax begin-for-syntax define-syntaxes
+         require for-syntax)
+(provide (for-syntax define-syntax syntax-case ... #%app #%datum #%top
+                     require for-syntax))
 
 (require (for-syntax
           (only-in racket/base

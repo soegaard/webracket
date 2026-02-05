@@ -21,10 +21,8 @@
 ;;   * on race day: show hours remaining
 ;;------------------------------------------------------------------------------
 
-(require (for-syntax racket/base racket/file))
+; (require (for-syntax racket/base racket/file))
 
-(define-syntax (get-f1-calendar-ics stx)
-  (datum->syntax #'here (file->string "examples/formula1/better-f1-calendar.ics")))
 
 ;; event : structure
 ;; Represents one calendar event we care about, with a summary and a DTSTART.
