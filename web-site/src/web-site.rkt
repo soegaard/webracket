@@ -163,6 +163,7 @@
 
 (include "completion.rkt")
 (include "examples/mathjax.rkt")
+(include "examples/formula1-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -182,6 +183,17 @@
                                           "DOM + JS FFI"
                                           "Input handling"
                                           "Editor state"))))
+   (make-hash (list (cons 'id "formula1")
+                    (cons 'title "Formula 1 Countdown")
+                    (cons 'path "examples/formula1")
+                    (cons 'entry "formula1.html")
+                    (cons 'demo-url "formula1.html")
+                    (cons 'source-path "web-site/src/examples/formula1-page.rkt")
+                    (cons 'tags (list 'dom))
+                    (cons 'summary "Reads an ICS calendar and shows the next Formula 1 race countdown.")
+                    (cons 'features (list "ICS parsing"
+                                          "Date/time calculations"
+                                          "Countdown in days/hours"))))
    (make-hash (list (cons 'id "matrix-rain")
                     (cons 'title "Matrix Rain")
                     (cons 'path "examples/matrix-rain")
@@ -241,6 +253,7 @@
 
 (define featured-example-ids
   (list "mathjax4"
+        "formula1"
         "minischeme"
         "space-invaders"
         "matrix-rain"))
@@ -348,6 +361,7 @@
     [(string-suffix? path "installation.html")          'installation]
     [(string-suffix? path "examples.html")              'examples]
     [(string-suffix? path "mathjax.html")               'mathjax]
+    [(string-suffix? path "formula1.html")              'formula1]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "community.html")             'community]
     [(string-suffix? path "overview.html")              'overview]
@@ -542,6 +556,9 @@
              (list `(h3 "MathJax 4 Editor")
                    `(p "Live formula preview with WebRacket + MathJax.")
                    `(a (@ (class "example-link") (href "mathjax.html")) "Open demo"))
+             (list `(h3 "Formula 1 Countdown")
+                   `(p "Next race from ICS, with days/hours countdown.")
+                   `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
              (list `(h3 "Matrix Rain")
                    `(p "Terminal-style animation powered by XtermJS.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
@@ -3024,6 +3041,7 @@ CSS
       [(installation)          (installation-page)]
       [(community)             (community-page)]
       [(mathjax)               (mathjax-page)]
+      [(formula1)              (formula1-page)]
       [else                    (home-page)]))
   
   (define page (sxml->dom page-structure))
@@ -3032,6 +3050,9 @@ CSS
 
   (when (eq? (current-page) 'mathjax)
     (init-mathjax-page!))
+
+  (when (eq? (current-page) 'formula1)
+    (init-formula1-page!))
 
   (when (eq? (current-page) 'implementation-status)
     (init-status-page-handlers!)))
