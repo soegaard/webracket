@@ -1667,20 +1667,12 @@
   
   (RawRequireSpec : * (RRS) -> RawRequireSpec ()
     (with-output-language (LFE RawRequireSpec)
-      (displayln (list 'RawRequireSpec-in RRS))
       (syntax-parse RRS #:literal-sets (kernel-literals)
         [(for-meta pl rrs ...)
-         #;(unless (or (exact-integer? (syntax-e #'pl))
-                       (eq? (syntax-e #'pl) #f))
-             ...error...)
-         (begin
-           (displayln 'RawRequireSpec)
-           (displayln 'the-for-meta-branch)
-           `(for-meta ,(PhaseLevel #'pl)
-                      ,(RawRequireSpec* #'(rrs ...)) ...))]
+         `(for-meta ,(PhaseLevel #'pl)
+                    ,(RawRequireSpec* #'(rrs ...)) ...)]
         [_
-         `,(PhaselessSpec RRS)
-         #;`,(RawRootModulePath RRS)])))  ; todo - temporary solution
+         `,(PhaselessSpec RRS)])))
 
   ;; (PhaseLevel (pl)
   ;;   (no-phase)   ; #f in concrete syntax
@@ -2425,9 +2417,7 @@
     [,sls `,(SpacelessSpec sls)])
 
   (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ()
-    [,x       (begin(displayln 'α-rename/pass-in)
-                    (displayln SS)
-                    `[,x ,(or (ρ x) x)])]))  ; <-- before and after renaming
+    [,x       `[,x ,(or (ρ x) x)]]))  ; <-- before and after renaming
 
 
 (define-pass α-rename/pass1 : LFE2 (T) -> LFE2 (ρ)
