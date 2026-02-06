@@ -1322,11 +1322,12 @@
 (define-language LFE    ; FE = Fully Expanded
   (entry TopLevelForm)
   (terminals   
-   ((variable    (x xd))    . => . unparse-variable)
-   ((datum       (d))       . => . unparse-datum)
-   ((modname     (mn))      . => . unparse-module-name)
-   ((modpath     (mp))      . => . unparse-module-path)
-   (syntax       (s)))
+   ((variable      (x xd))    . => . unparse-variable)
+   ((datum         (d))       . => . unparse-datum)
+   ((modname       (mn))      . => . unparse-module-name)
+   ((modpath       (mp))      . => . unparse-module-path)
+   (integer        (ei))
+   (syntax         (s)))
   (Formals (f)
     (formals (x ...))            => (x ...)
     (formals (x0 x1 ... . xd))   => (x0 x1 ... . xd)
@@ -1349,21 +1350,26 @@
     (define-syntaxes s (x ...) e)  => (define-syntaxes (x ...) e)
     (#%require s rrs ...)          => (#%require s rrs ...))
 
-  (RawRequireSpec     (rrs) rrmp) ; todo
-  ;(RawRequireSpec    (rrs) ps)   ; todo  <- the correct one
-
+  ; (RawRequireSpec     (rrs) rrmp) ; todo
+  (RawRequireSpec (rrs) ; todo: there are more types of require specs
+    (for-meta pl rrs ...) => (for-meta pl rrs ...)
+    ps) ; note: was rrmp 
+  (PhaseLevel (pl)
+    (no-phase)   ; #f in concrete syntax
+    ei)
+  (PhaselessSpec     (ps)  
+    #;(for-space  space sls ...)
+    #;(just-space space sls ...)
+    sls) ; spaceless-spec
+  (Space (space)
+    x   ; identifier
+    (no-space))  ; #f in concrete syntax
   (RawProvideSpec (rps) 
     #;(for-meta   phase-level ps ...)
     #;(for-syntax             ps ...)
     #;(for-label              ps ...)
     #;(protect                rps ...)
-    ps)
-
-  (PhaselessSpec     (ps)  
-    #;(for-space space sls ...)
-    #;(protect         ps ...)
-    sls) ; spaceless-spec
-
+    ps)  
   (SpacelessSpec (sls)
     #;(rename local-id export-id)
     #;(struct ...)
@@ -1377,10 +1383,6 @@
     #;(expand (id . datum))
     #;(expand (id . datum) orig-form)
     x) ; id
-
-  #;(Space (space)
-      x ; identifier
-      #f)
 
   
   ;(RawModulePath     (rmp) rrmp) ; todo
@@ -1658,20 +1660,71 @@
         ; `(define-syntaxes ,G (,(variable* #'(x ...)) ...) ,(Expr #'e))]
         
         [e                            `,(Expr #'e)])))
-  
+
+  ;; (RawRequireSpec (rrs) ; todo: there are more types of require specs
+  ;;   (for-meta pl rrs ...) => (for-meta pl rrs ...)
+  ;;   ps) ; note: was rrmp 
   
   (RawRequireSpec : * (RRS) -> RawRequireSpec ()
     (with-output-language (LFE RawRequireSpec)
-      ; (displayln (list 'in RRS))
-      `,(RawRootModulePath RRS))) ; TODO - temporary solution
+      (displayln (list 'RawRequireSpec-in RRS))
+      (syntax-parse RRS #:literal-sets (kernel-literals)
+        [(for-meta pl rrs ...)
+         #;(unless (or (exact-integer? (syntax-e #'pl))
+                       (eq? (syntax-e #'pl) #f))
+             ...error...)
+         (begin
+           (displayln 'RawRequireSpec)
+           (displayln 'the-for-meta-branch)
+           `(for-meta ,(PhaseLevel #'pl)
+                      ,(RawRequireSpec* #'(rrs ...)) ...))]
+        [_
+         `,(PhaselessSpec RRS)
+         #;`,(RawRootModulePath RRS)])))  ; todo - temporary solution
 
-  (RawRootModulePath : * (RRMP) -> RawRootModulePath ()
-    (with-output-language (LFE RawRootModulePath)
-      (syntax-parse RRMP #:literal-sets (kernel-literals)
-        [(quote x)      `(quote ,(variable #'x))]
-        [x              `,(variable #'x)])))
+  ;; (PhaseLevel (pl)
+  ;;   (no-phase)   ; #f in concrete syntax
+  ;;   ei)
 
-  ; (RawModulePath     (rmp) rrmp)
+  (PhaseLevel : * (PL) -> PhaseLevel ()
+    (with-output-language (LFE PhaseLevel)
+      (syntax-parse PL #:literal-sets (kernel-literals)
+        [pl:exact-integer
+         `,(syntax-e #'pl)]
+        [#f
+         `(no-phase)])))
+
+
+  ;; (PhaselessSpec     (ps)  
+  ;;   #;(for-space  space sls ...)
+  ;;   #;(just-space space sls ...)
+  ;;   sls) ; spaceless-spec
+
+  (PhaselessSpec : * (PS) -> PhaselessSpec ()
+    (with-output-language (LFE PhaselessSpec)
+      (syntax-parse PS #:literal-sets (kernel-literals)
+        #;[(for-space space sls ...) ...]
+        #;[(protect         ps ...)  ...]
+        [sls `,(SpacelessSpec #'sls)])))
+  
+  ;; (Space (space)
+  ;;   x   ; identifier
+  ;;   (no-space))  ; #f in concrete syntax
+
+  (Space : * (S) -> Space ()
+    (with-output-language (LFE Space)
+      (syntax-parse S #:literal-sets (kernel-literals)
+        [x:identifier
+         `,#'x]
+        [#f
+         `(no-space)])))
+  
+  ;; (RawProvideSpec (rps) 
+  ;;   #;(for-meta   phase-level ps ...)
+  ;;   #;(for-syntax             ps ...)
+  ;;   #;(for-label              ps ...)
+  ;;   #;(protect                rps ...)
+  ;;   ps)
 
   (RawProvideSpec : * (RPS) -> RawProvideSpec ()
     (with-output-language (LFE RawProvideSpec)
@@ -1681,13 +1734,20 @@
       #;(for-label              ps ...)
       #;(protect                rps ...)
       [ps  `,(PhaselessSpec #'ps)])))
-
-  (PhaselessSpec : * (PS) -> PhaselessSpec ()
-    (with-output-language (LFE PhaselessSpec)
-      (syntax-parse PS #:literal-sets (kernel-literals)
-        #;[(for-space space sls ...) ...]
-        #;[(protect         ps ...)  ...]
-        [sls `,(SpacelessSpec #'sls)])))
+  
+  ;; (SpacelessSpec (sls)
+  ;;   #;(rename local-id export-id)
+  ;;   #;(struct ...)
+  ;;   #;(all-from ...)
+  ;;   #;(all-from-except ...)
+  ;;   #;(all-defined)
+  ;;   #;(all-defined-except ...)
+  ;;   #;(prefix-all-defined prefix-id)
+  ;;   #;(prefix-all-defined-except ...)
+  ;;   #;(protect ...)
+  ;;   #;(expand (id . datum))
+  ;;   #;(expand (id . datum) orig-form)
+  ;;   x) ; id
 
   (SpacelessSpec : * (SLS) -> SpacelessSpec ()
     (with-output-language (LFE SpacelessSpec)
@@ -1704,6 +1764,20 @@
          #;(expand (id . datum))
          #;(expand (id . datum) orig-form)
          [x   `,(variable #'x)])))
+
+  
+  ;; (RawModulePath     (rmp) rrmp)
+  
+  (RawRootModulePath : * (RRMP) -> RawRootModulePath ()
+    (with-output-language (LFE RawRootModulePath)
+      (displayln (list 'RawRootModulePath-in RRMP))
+      (syntax-parse RRMP #:literal-sets (kernel-literals)
+        [(quote x)      `(quote ,(variable #'x))]
+        [x              `,(variable #'x)])))
+
+
+
+
 
   (Formals : * (F) -> Formals ()
            (with-output-language (LFE Formals)
@@ -2351,7 +2425,9 @@
     [,sls `,(SpacelessSpec sls)])
 
   (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ()
-    [,x  `[,x ,(ρ x)]]))  ; <-- before and after renaming
+    [,x       (begin(displayln 'α-rename/pass-in)
+                    (displayln SS)
+                    `[,x ,(or (ρ x) x)])]))  ; <-- before and after renaming
 
 
 (define-pass α-rename/pass1 : LFE2 (T) -> LFE2 (ρ)
@@ -3020,8 +3096,16 @@
   (define (RawRequireSpec RRS)
     (with-output-language (LANF RawRequireSpec)
       (nanopass-case (LFE3 RawRequireSpec) RRS
-        [,rrmp (RawRootModulePath rrmp)])))
+        [(for-meta ,pl ,rrs ...)  `(for-meta ,pl ,(map RawRequireSpec rrs) ...)] 
+        [,ps                      (PhaselessSpec ps)])))
 
+        ; [,rrmp                    (RawRootModulePath rrmp)]
+
+  ;; (RawRequireSpec (rrs) ; todo: there are more types of require specs
+  ;;   (for-meta pl rrs ...) => (for-meta pl rrs ...)
+  ;;   ps) ; note: was rrmp 
+
+  
   (define (RawRootModulePath RRMP)
     (with-output-language (LANF RawRootModulePath)
       (nanopass-case (LFE3 RawRootModulePath) RRMP
@@ -5283,7 +5367,7 @@
     [(λ ,s ,ar ,f ,e) (error 'fallthrough)])
   (GeneralTopLevelForm : GeneralTopLevelForm (g dd) -> * ()
     [,e                           (Expr e dd <stat>)]
-    [(#%require     ,s ,rrs ...)  `'"ignored #%require"]
+    [(#%require     ,s ,rrs ...)  `(block) ] ; #;`'"ignored #%require"
     [(define-values ,s (,x ...)   ,e)
      ; Note: Initializing the top-level variables x ... with ($Boxed undefined)
      ;       here is too late. If the variables appear as free variables
