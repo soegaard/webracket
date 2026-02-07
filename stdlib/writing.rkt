@@ -802,16 +802,16 @@
 
 
 (define error-print-width
-  (let ([value 1024])
+  (let ([value (box 1024)])
     (case-lambda
-      [() value]
+      [() (unbox value)]
       [(width)
        (unless (and (exact-integer? width) (>= width 3))
          (error 'error-print-width
                 "expected exact integer >= 3, got ~a"
                 width))
-       (set! value width)
-       value])))
+       (set-box! value width)
+       (unbox value)])))
 
 (define (default-error-value->string-handler value width)
   (define (truncate-to-width str width)
@@ -827,18 +827,18 @@
   (truncate-to-width (get-output-string port) width))
 
 (define error-value->string-handler
-  (let ([value (λ (value width)
-                 (default-error-value->string-handler value width))])
+  (let ([value (box (λ (value width)
+                      (default-error-value->string-handler value width)))])
     (case-lambda
-      [() value]
+      [() (unbox value)]
       [(handler)
        (unless (and (procedure? handler)
                     (procedure-arity-includes? handler 2))
          (error 'error-value->string-handler
                 "expected procedure of two arguments, got ~a"
                 handler))
-       (set! value handler)
-       value])))
+       (set-box! value handler)
+       (unbox value)])))
 
 ;;; NOTE
 ;; Making `fprintf` call `fprint*` is part of a workaround in
@@ -850,20 +850,24 @@
   (fprintf* out form vs))
   
 (define (fprintf* out form vs)
-  (unless (output-port? out)
-    (error 'fprintf "expected output port, got ~a" out))
-  (unless (string? form)
-    (error 'fprintf "expected format string, got ~a" form))
+  (define (raise-fprintf-error message)
+    (raise (make-exn:fail (string-append "fprintf: " message) #f)))
 
-  (define args vs)
+  (unless (output-port? out)
+    (raise-fprintf-error "expected output port"))
+  (unless (string? form)
+    (raise-fprintf-error "expected format string"))
+
+  (define args-box (box vs))
   (define len  (string-length form))
 
   (define (next-arg who)
+    (define args (unbox args-box))
     (if (pair? args)
         (let ([v (car args)])
-          (set! args (cdr args))
+          (set-box! args-box (cdr args))
           v)
-        (error 'fprintf "missing argument for ~a" who)))
+        (raise-fprintf-error (string-append "missing argument for " who))))
 
 
 
@@ -880,7 +884,7 @@
 
   (define (emit-number value base uppercase? who)
     (unless (and (number? value) (exact-integer? value))
-      (error 'fprintf "~a expects an exact integer, got ~a" who value))
+      (raise-fprintf-error (string-append who " expects an exact integer")))
     (define str (number->string value base))
     (emit-string (if uppercase? (string-upcase str) str)))
 
@@ -933,7 +937,7 @@
 
   (define (handle-format idx)
     (when (>= idx len)
-      (error 'fprintf "dangling ~a at end of format string" #\~))
+      (raise-fprintf-error "dangling ~ at end of format string"))
     (let ([marker (string-ref form idx)])
       (cond
         [(char=? marker #\~)
@@ -968,7 +972,8 @@
              [(or (char=? sub #\v) (char=? sub #\V))
               (emit-truncated (lambda (v port) (print v port))
                               (next-arg "~.v"))]
-             [else (error 'fprintf "unknown format directive ~a~a" #\~ sub)])
+             [else (raise-fprintf-error
+                    (string-append "unknown format directive " (string #\~ sub)))])
            (+ idx 2))]
         [(or (char=? marker #\e) (char=? marker #\E))
          (emit-error (next-arg "~e"))
@@ -976,7 +981,7 @@
         [(or (char=? marker #\c) (char=? marker #\C))
          (define value (next-arg "~c"))
          (unless (char? value)
-           (error 'fprintf "~a expects a character, got ~a" "~c" value))
+           (raise-fprintf-error "~c expects a character"))
          (emit-char value)
          (+ idx 1)]
         [(or (char=? marker #\b) (char=? marker #\B))
@@ -1003,13 +1008,14 @@
         [(char-whitespace? marker)
          (skip-whitespace idx)]
         [else
-         (error 'fprintf "unknown format directive ~a" marker)])))
+         (raise-fprintf-error
+          (string-append "unknown format directive " (string marker)))])))
 
   (let loop ([idx 0])
     (if (>= idx len)
         (begin
-          (when (pair? args)
-            (error 'fprintf "format string has unused arguments"))
+          (when (pair? (unbox args-box))
+            (raise-fprintf-error "format string has unused arguments"))
           (void))
         (let ([ch (string-ref form idx)])
           (if (char=? ch #\~)

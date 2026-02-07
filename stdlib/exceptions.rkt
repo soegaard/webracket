@@ -75,6 +75,11 @@
     
     (define primitive-realm 'racket/primitive)
     
+    (define (format-with-list fmt args)
+      (define out (open-output-string))
+      (fprintf* out fmt args)
+      (get-output-string out))
+
     (define error
       (procedure-rename
       (case-lambda
@@ -104,7 +109,7 @@
                          [(symbol? arg0)
                           ; Included for compatibility.
                           ; Use `raise-argument-error` instead. 
-                          (define who-sym arg0)
+                         (define who-sym arg0)
                           (unless (pair? args)
                             (error 'error "format string expected after who-symbol"))
                           (define format-str (car args))
@@ -115,12 +120,9 @@
                           ; (js-log (equal? format undefined))
                           ; (js-log (procedure? (#%top . format)))
 
-                          ; TODO - find out why `format` alone below doesn't work
-                          ;        [it ought to]
-                          (define message (apply #;format (#%top . format) ; todo <--
-                                                 (string-append "~s: " format-str)
-                                                 who-sym
-                                                 vs))
+                          (define message
+                            (format-with-list (string-append "~s: " format-str)
+                                              (cons who-sym vs)))
                           (raise (make-exn:fail message #f))]
                          [else
                           (error 'error "expected: (or/c symbol? string?)")])])
@@ -372,5 +374,3 @@
             error-message->adjusted-string
             error-value->string)
     ))
-
-
