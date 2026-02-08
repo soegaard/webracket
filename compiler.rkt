@@ -5357,7 +5357,8 @@
     [(λ ,s ,ar ,f ,e) (error 'fallthrough)])
   (GeneralTopLevelForm : GeneralTopLevelForm (g dd) -> * ()
     [,e                           (Expr e dd <stat>)]
-    [(#%require     ,s ,rrs ...)  `(block) ] ; #;`'"ignored #%require"
+    ; [(#%require     ,s ,rrs ...)  `(block) ] ; #;`'"ignored #%require"
+    [(#%require     ,s ,rrs ...)  `(global.set $result (global.get $void)) ] ; #;`'"ignored #%require"    
     [(define-values ,s (,x ...)   ,e)
      ; Note: Initializing the top-level variables x ... with ($Boxed undefined)
      ;       here is too late. If the variables appear as free variables
