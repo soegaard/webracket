@@ -476,7 +476,7 @@
                  (div (@ (class "f1-countdown-meta"))
                       (span (@ (id "f1-data-badge") (class "f1-data-badge is-loading") (aria-live "polite")) "Loading")
                       (p (@ (id "f1-countdown-status") (class "f1-countdown-status is-loading") (role "status") (aria-live "polite"))
-                    "Loading calendar…")))
+                    "Loading calendar…"))))
           #f
           "section--examples")
 
