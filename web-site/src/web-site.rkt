@@ -1120,9 +1120,14 @@ a.code-pill {
   transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 a.code-pill:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 12px rgba(101, 79, 240, 0.25);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.26), 0 0 12px rgba(101, 79, 240, 0.2);
+  transform: translateY(-1px);
+}
+a.code-pill:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.09);
 }
 a.code-pill:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.7);
@@ -1176,15 +1181,38 @@ a.code-pill:focus-visible {
   font-size: 0.95rem;
 }
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
   color: var(--text);
   opacity: 0.8;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease, opacity 120ms ease;
 }
 .nav-link:hover {
   opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+}
+.nav-link:focus-visible {
+  opacity: 1;
+  outline: 2px solid rgba(74, 108, 255, 0.62);
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.nav-link:active {
+  transform: translateY(0);
 }
 .nav-link--active {
   opacity: 1;
   font-weight: 600;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 .nav-link--active::after {
   content: "";
@@ -1298,6 +1326,129 @@ a.code-pill:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--muted);
   font-size: 0.85rem;
+}
+.page--formula1 .hero-panel {
+  background: linear-gradient(140deg, rgba(101, 79, 240, 0.16), rgba(74, 108, 255, 0.06));
+  border-color: rgba(101, 79, 240, 0.24);
+  padding: 29px;
+  gap: 14px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+}
+.page--formula1 .hero-lead {
+  margin-bottom: 16px;
+}
+.page--formula1 .f1-countdown-card {
+  position: relative;
+  overflow: hidden;
+}
+.f1-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+.f1-countdown-value {
+  font-size: clamp(2.3rem, 5.5vw, 3.2rem);
+  font-weight: 780;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+.f1-countdown-unit {
+  font-size: 1rem;
+  color: var(--muted);
+}
+.f1-countdown-label {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.f1-countdown-detail {
+  margin: 8px 0 0;
+  font-size: 0.83rem;
+  color: rgba(230, 232, 242, 0.6);
+}
+.f1-countdown-meta {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.f1-data-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+}
+.f1-data-badge.is-cached {
+  border-color: rgba(124, 142, 216, 0.35);
+}
+.f1-countdown-status {
+  margin: 0;
+  color: rgba(230, 232, 242, 0.65);
+  font-size: 0.83rem;
+}
+.f1-error-row {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(230, 119, 119, 0.38);
+  background: rgba(230, 119, 119, 0.08);
+  color: #f0c4c4;
+  font-size: 0.84rem;
+}
+.f1-retry-button {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.f1-retry-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
+  transform: translateY(-1px);
+}
+.f1-retry-button:active {
+  transform: translateY(0);
+}
+.f1-retry-button:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.7);
+  outline-offset: 2px;
+}
+.f1-loading-skeleton {
+  display: none;
+  margin-bottom: 8px;
+}
+.f1-skel-line {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: f1Skel 1.25s ease-in-out infinite;
+}
+.f1-skel-title { width: 58%; height: 14px; margin-bottom: 10px; }
+.f1-skel-countdown { width: 42%; height: 42px; margin-bottom: 8px; }
+.f1-skel-meta { width: 70%; height: 12px; }
+.f1-countdown-card.is-loading .f1-loading-skeleton {
+  display: block;
+}
+@keyframes f1Skel {
+  0% { background-position: 180% 0; }
+  100% { background-position: -20% 0; }
 }
 .install-hero {
   margin-top: 32px;
