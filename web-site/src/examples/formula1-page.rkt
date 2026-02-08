@@ -498,5 +498,5 @@
 (define (init-formula1-page!)
   (js-set! (js-var "document") "title" "Formula 1 next race")
   (define retry-button (js-get-element-by-id "f1-retry-button"))
-  (js-add-event-listener! retry-button "click" (lambda (_evt) (render-f1-countdown!)))
+  (js-add-event-listener! retry-button "click" (procedure->external (lambda (_evt) (render-f1-countdown!))))
   (render-f1-countdown!))
