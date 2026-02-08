@@ -51,6 +51,7 @@
 (define red    (make-color* 209 58 58))   ; #D13A3A
 (define gold   (make-color* 242 183 5))   ; #F2B705
 
+
 ;;;
 ;;; SXML Helpers
 ;;;
@@ -186,82 +187,82 @@
 
 (define examples
   (list
-   (make-hash (list (cons 'id "mathjax4")
-                    (cons 'title "MathJax 4 Editor")
-                    (cons 'path "examples/mathjax4")
-                    (cons 'entry "mathjax.html")
-                    (cons 'demo-url "mathjax.html")
+   (make-hash (list (cons 'id          "mathjax4")
+                    (cons 'title       "MathJax 4 Editor")
+                    (cons 'path        "examples/mathjax4")
+                    (cons 'entry       "mathjax.html")
+                    (cons 'demo-url    "mathjax.html")
                     (cons 'source-path "web-site/src/examples/mathjax.rkt")
-                    (cons 'tags (list 'dom 'mathjax))
-                    (cons 'summary "Live two-pane editor with instant MathJax 4 LaTeX preview.")
-                    (cons 'features (list "MathJax 4 interop"
-                                          "DOM + JS FFI"
-                                          "Input handling"
-                                          "Editor state"))))
-   (make-hash (list (cons 'id "formula1")
-                    (cons 'title "Formula 1 Countdown")
-                    (cons 'path "examples/formula1")
-                    (cons 'entry "formula1.html")
-                    (cons 'demo-url "formula1.html")
+                    (cons 'tags        (list 'dom 'mathjax))
+                    (cons 'summary     "Live two-pane editor with instant MathJax 4 LaTeX preview.")
+                    (cons 'features    (list "MathJax 4 interop"
+                                             "DOM + JS FFI"
+                                             "Input handling"
+                                             "Editor state"))))
+   (make-hash (list (cons 'id          "formula1")
+                    (cons 'title       "Formula 1 Countdown")
+                    (cons 'path        "examples/formula1")
+                    (cons 'entry       "formula1.html")
+                    (cons 'demo-url    "formula1.html")
                     (cons 'source-path "web-site/src/examples/formula1-page.rkt")
-                    (cons 'tags (list 'dom))
-                    (cons 'summary "Reads an ICS calendar and shows the next Formula 1 race countdown.")
-                    (cons 'features (list "ICS parsing"
-                                          "Date/time calculations"
-                                          "Countdown in days/hours"))))
-   (make-hash (list (cons 'id "matrix-rain")
-                    (cons 'title "Matrix Rain")
-                    (cons 'path "examples/matrix-rain")
-                    (cons 'entry "matrix-rain.html")
-                    (cons 'tags (list 'xterm 'dom))
-                    (cons 'summary "Matrix rain animation rendered in a browser terminal.")
+                    (cons 'tags        (list 'dom))
+                    (cons 'summary     "Reads an ICS calendar and shows the next Formula 1 race countdown.")
+                    (cons 'features    (list "ICS parsing"
+                                             "Date/time calculations"
+                                             "Countdown in days/hours"))))
+   (make-hash (list (cons 'id       "matrix-rain")
+                    (cons 'title    "Matrix Rain")
+                    (cons 'path     "examples/matrix-rain")
+                    (cons 'entry    "matrix-rain.html")
+                    (cons 'tags     (list 'xterm 'dom))
+                    (cons 'summary  "Matrix rain animation rendered in a browser terminal.")
                     (cons 'features (list "XtermJS integration"
                                           "DOM + JS FFI"
                                           "Timers / animation loop"))))
-   (make-hash (list (cons 'id "xtermjs-demo")
-                    (cons 'title "XtermJS Demo")
-                    (cons 'path "examples/xtermjs-demo")
-                    (cons 'entry "xtermjs-demo.html")
-                    (cons 'tags (list 'xterm 'dom))
-                    (cons 'summary "Interactive terminal with themed styling and built-in commands.")
+   (make-hash (list (cons 'id       "xtermjs-demo")
+                    (cons 'title    "XtermJS Demo")
+                    (cons 'path     "examples/xtermjs-demo")
+                    (cons 'entry    "xtermjs-demo.html")
+                    (cons 'tags     (list 'xterm 'dom))
+                    (cons 'summary  "Interactive terminal with themed styling and built-in commands.")
                     (cons 'features (list "XtermJS add-ons"
                                           "Input handling"
                                           "Command dispatch"))))
-   (make-hash (list (cons 'id "minischeme")
-                    (cons 'title "MiniScheme REPL")
-                    (cons 'path "examples/minischeme")
-                    (cons 'entry "minischeme.html")
-                    (cons 'tags (list 'repl 'xterm))
-                    (cons 'summary "Browser-based Scheme REPL with evaluator, editor, and output.")
+   (make-hash (list (cons 'id       "minischeme")
+                    (cons 'title    "MiniScheme REPL")
+                    (cons 'path     "examples/minischeme")
+                    (cons 'entry    "minischeme.html")
+                    (cons 'tags     (list 'repl 'xterm))
+                    (cons 'summary  "Browser-based Scheme REPL with evaluator, editor, and output.")
                     (cons 'features (list "XtermJS terminal"
                                           "Input handling + history"
                                           "Runtime evaluator"
                                           "Ports + printing"))))
-   (make-hash (list (cons 'id "space-invaders")
-                    (cons 'title "Space Invaders")
-                    (cons 'path "examples/space-invaders")
-                    (cons 'entry "space-invaders.html")
-                    (cons 'tags (list 'canvas 'dom))
-                    (cons 'summary "Arcade shooter on canvas with responsive keyboard controls.")
+   (make-hash (list (cons 'id       "space-invaders")
+                    (cons 'title    "Space Invaders")
+                    (cons 'path     "examples/space-invaders")
+                    (cons 'entry    "space-invaders.html")
+                    (cons 'tags     (list 'canvas 'dom))
+                    (cons 'summary  "Arcade shooter on canvas with responsive keyboard controls.")
                     (cons 'features (list "Canvas API via DOM + JS FFI"
                                           "Keyboard events"
                                           "Timers / animation loop"
                                           "Mutable game state"))))
-   (make-hash (list (cons 'id "pict")
-                    (cons 'title "Canvas + Pict")
-                    (cons 'path "examples/pict")
-                    (cons 'entry "pict.html")
-                    (cons 'tags (list 'canvas))
-                    (cons 'summary "Racket pict rendering pipeline compiled for the browser canvas.")
+   (make-hash (list (cons 'id       "pict")
+                    (cons 'title    "Canvas + Pict")
+                    (cons 'path     "examples/pict")
+                    (cons 'entry    "pict.html")
+                    (cons 'tags     (list 'canvas))
+                    (cons 'summary  "Racket pict rendering pipeline compiled for the browser canvas.")
                     (cons 'features (list "Canvas interop"
                                           "Graphics rendering pipeline"
                                           "Performance focus"))))
-   (make-hash (list (cons 'id "raco-tiles")
-                    (cons 'title "Raccoon Tiles")
-                    (cons 'path "examples/raco")
-                    (cons 'entry "tiles.html")
-                    (cons 'tags (list 'canvas))
-                    (cons 'summary "Pixel-art tile sheet drawn on canvas with a custom palette.")
+   (make-hash (list (cons 'id       "raco-tiles")
+                    (cons 'title    "Raccoon Tiles")
+                    (cons 'path     "examples/raco")
+                    (cons 'entry    "tiles.html")
+                    (cons 'tags     (list 'canvas))
+                    (cons 'summary  "Pixel-art tile sheet drawn on canvas with a custom palette.")
                     (cons 'features (list "Canvas interop"
                                           "Palette mapping"
                                           "Grid layout"))))))
@@ -300,22 +301,22 @@
 (define (example-kind-class tags)
   (cond
     [(member 'mathjax tags) "kind-mathjax"]
-    [(member 'xterm tags) "kind-xterm"]
-    [(member 'repl tags) "kind-repl"]
-    [(member 'canvas tags) "kind-canvas"]
-    [(member 'dom tags) "kind-dom"]
-    [else #f]))
+    [(member 'xterm tags)   "kind-xterm"]
+    [(member 'repl tags)    "kind-repl"]
+    [(member 'canvas tags)  "kind-canvas"]
+    [(member 'dom tags)     "kind-dom"]
+    [else                   #f]))
 
 ;; example-kind-label : (Listof Symbol) -> (U #f String)
 ;;   Labels the kind pill in example cards.
 (define (example-kind-label tags)
   (cond
     [(member 'mathjax tags) "MathJax"]
-    [(member 'xterm tags) "XtermJS"]
-    [(member 'repl tags) "REPL"]
-    [(member 'canvas tags) "Canvas"]
-    [(member 'dom tags) "DOM"]
-    [else #f]))
+    [(member 'xterm tags)   "XtermJS"]
+    [(member 'repl tags)    "REPL"]
+    [(member 'canvas tags)  "Canvas"]
+    [(member 'dom tags)     "DOM"]
+    [else                   #f]))
 
 ;; example-tags-string : (Listof Symbol) -> String
 ;;   Joins tags for data attributes.
@@ -1066,7 +1067,7 @@
 (define (init-dom)
   (define head (js-document-head))
   (define body (js-document-body))
-
+  
   (define style
     (sxml->dom
      `(style
@@ -3044,7 +3045,7 @@ pre code {
 }
 CSS
          purple blue red gold))))
-  
+
   (js-append-child! head style)
 
   (define page-structure
@@ -3058,9 +3059,9 @@ CSS
       [(mathjax)               (mathjax-page)]
       [(formula1)              (formula1-page)]
       [else                    (home-page)]))
-  
+
   (define page (sxml->dom page-structure))
-  
+
   (js-append-child! body page)
 
   (when (eq? (current-page) 'mathjax)
@@ -3075,5 +3076,6 @@ CSS
 ;;;
 ;;; Entry Point
 ;;;
+
 
 (init-dom)
