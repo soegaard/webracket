@@ -12,6 +12,7 @@ cp examples.html ../public
 cp implementation-status.html ../public
 cp mathjax.html ../public
 cp formula1.html ../public
+cp matrix-rain.html ../public
 cp quick-start.html ../public
 
 echo "-- Done --"

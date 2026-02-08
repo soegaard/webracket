@@ -180,6 +180,7 @@
 (include "completion.rkt")
 (include "examples/mathjax.rkt")
 (include "examples/formula1-page.rkt")
+(include "examples/matrix-rain-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -214,6 +215,8 @@
                     (cons 'title    "Matrix Rain")
                     (cons 'path     "examples/matrix-rain")
                     (cons 'entry    "matrix-rain.html")
+                    (cons 'demo-url "matrix-rain.html")
+                    (cons 'source-path "examples/matrix-rain/matrix-rain.rkt")
                     (cons 'tags     (list 'xterm 'dom))
                     (cons 'summary  "Matrix rain animation rendered in a browser terminal.")
                     (cons 'features (list "XtermJS integration"
@@ -378,6 +381,7 @@
     [(string-suffix? path "examples.html")              'examples]
     [(string-suffix? path "mathjax.html")               'mathjax]
     [(string-suffix? path "formula1.html")              'formula1]
+    [(string-suffix? path "matrix-rain.html")           'matrix-rain]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "community.html")             'community]
     [(string-suffix? path "overview.html")              'overview]
@@ -577,7 +581,7 @@
                    `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
              (list `(h3 "Matrix Rain")
                    `(p "Terminal-style animation powered by XtermJS.")
-                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+                   `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
              (list `(h3 "MiniScheme REPL")
                    `(p "Interactive Scheme session running in the browser.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
@@ -3209,6 +3213,7 @@ CSS
       [(community)             (community-page)]
       [(mathjax)               (mathjax-page)]
       [(formula1)              (formula1-page)]
+      [(matrix-rain)           (matrix-rain-page)]
       [else                    (home-page)]))
 
   (define page (sxml->dom page-structure))
@@ -3220,6 +3225,9 @@ CSS
 
   (when (eq? (current-page) 'formula1)
     (init-formula1-page!))
+
+  (when (eq? (current-page) 'matrix-rain)
+    (init-matrix-rain-page!))
 
   (when (eq? (current-page) 'implementation-status)
     (init-status-page-handlers!)))
