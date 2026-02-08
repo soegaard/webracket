@@ -211,17 +211,17 @@
                     (cons 'features    (list "ICS parsing"
                                              "Date/time calculations"
                                              "Countdown in days/hours"))))
-   (make-hash (list (cons 'id       "matrix-rain")
-                    (cons 'title    "Matrix Rain")
-                    (cons 'path     "examples/matrix-rain")
-                    (cons 'entry    "matrix-rain.html")
-                    (cons 'demo-url "matrix-rain.html")
+   (make-hash (list (cons 'id          "matrix-rain")
+                    (cons 'title       "Matrix Rain")
+                    (cons 'path        "examples/matrix-rain")
+                    (cons 'entry       "matrix-rain.html")
+                    (cons 'demo-url    "matrix-rain.html")
                     (cons 'source-path "examples/matrix-rain/matrix-rain.rkt")
-                    (cons 'tags     (list 'xterm 'dom))
-                    (cons 'summary  "Matrix rain animation rendered in a browser terminal.")
-                    (cons 'features (list "XtermJS integration"
-                                          "DOM + JS FFI"
-                                          "Timers / animation loop"))))
+                    (cons 'tags        (list 'xterm 'dom))
+                    (cons 'summary     "Matrix rain animation rendered in a browser terminal.")
+                    (cons 'features    (list "XtermJS integration"
+                                             "DOM + JS FFI"
+                                             "Timers / animation loop"))))
    (make-hash (list (cons 'id       "xtermjs-demo")
                     (cons 'title    "XtermJS Demo")
                     (cons 'path     "examples/xtermjs-demo")
