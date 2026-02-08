@@ -1,7 +1,8 @@
 #lang racket/base
 (provide topexpand)
 
-(require syntax/toplevel)
+(require syntax/toplevel
+         racket/pretty)
 
 (define (make-webracket-namespace)
   (define ns (make-base-empty-namespace))
@@ -13,6 +14,8 @@
 ;  Disabling `eval-jit-enabled` affects the expansion.
 ;  Unless disabled, `reverse` becomes `alt-reverse`.
 (define (topexpand top-level-form-stx)
+  #;(pretty-write (syntax->datum top-level-form-stx))
+  
   #;(unless (syntax? top-level-form-stx)
       (set! top-level-form-stx (datum->syntax #f top-level-form-stx)))
   
