@@ -200,6 +200,14 @@
        (= (utc-date-month a) (utc-date-month b))
        (= (utc-date-day a)   (utc-date-day b))))
 
+;; pad2 : Integer -> String
+;; Zero-pads a number to two digits for timestamps.
+(define (pad2 n)
+  (define s (number->string n))
+  (if (< (string-length s) 2)
+      (string-append "0" s)
+      s))
+
 ;; leap-year? : Integer -> Boolean
 (define (leap-year? y)
   (or (and (= (remainder y 4) 0)
@@ -232,6 +240,15 @@
      (* (exact->inexact (utc-date-hour d)) 3600.0)
      (* (exact->inexact (utc-date-minute d)) 60.0)
      (exact->inexact (utc-date-second d))))
+
+;; utc-date->stamp : utc-date -> String
+;; Formats as "YYYY-MM-DD HH:MM UTC" for status display.
+(define (utc-date->stamp d)
+  (string-append (number->string (utc-date-year d)) "-"
+                 (pad2 (utc-date-month d)) "-"
+                 (pad2 (utc-date-day d)) " "
+                 (pad2 (utc-date-hour d)) ":"
+                 (pad2 (utc-date-minute d)) " UTC"))
 
 ;;------------------------------------------------------------------------------
 ;; Current UTC date (browser / WebRacket)
@@ -326,6 +343,32 @@
                        (pluralize days "day" "days")
                        " to the next race.")])]))
 
+;; race-countdown-parts : utc-date f1-event -> (values String String String)
+;; Returns number, unit, and label for the headline countdown.
+(define (race-countdown-parts now event)
+  (define start-raw (f1-event-start event))
+  (define start-date (safe-utc-string->utc-date start-raw))
+  (cond
+    [(not start-date)
+     (values "—" "time" "Race time unavailable.")]
+    [else
+     (define start-seconds (utc-date->unix-seconds start-date))
+     (define now-seconds (utc-date->unix-seconds now))
+     (define diff-seconds (- start-seconds now-seconds))
+     (cond
+       [(<= diff-seconds 0)
+        (values "0" "hours" "Race started just now.")]
+       [(same-day? now start-date)
+        (define hours (max 1 (inexact->exact (ceiling (/ diff-seconds 3600)))))
+        (values (number->string hours)
+                (pluralize hours "hour" "hours")
+                "until lights out")]
+       [else
+        (define days (max 1 (inexact->exact (ceiling (/ diff-seconds 86400)))))
+        (values (number->string days)
+                (pluralize days "day" "days")
+                "until the next race")])]))
+
 ;;------------------------------------------------------------------------------
 ;; DOM rendering for the website page
 ;;------------------------------------------------------------------------------
@@ -334,13 +377,14 @@
 ;; Pulls `now`, finds next race, then updates 3 nodes in the page.
 (define (render-f1-countdown!)
   (define title-node     (js-get-element-by-id "f1-next-race-title"))
-  (define countdown-node (js-get-element-by-id "f1-next-race-countdown"))
-  (define now-node       (js-get-element-by-id "f1-now-utc"))
+  (define value-node     (js-get-element-by-id "f1-countdown-value"))
+  (define unit-node      (js-get-element-by-id "f1-countdown-unit"))
+  (define label-node     (js-get-element-by-id "f1-countdown-label"))
+  (define detail-node    (js-get-element-by-id "f1-next-race-detail"))
+  (define status-node    (js-get-element-by-id "f1-countdown-status"))
 
   (define now       (current-utc-date))
   (define next-race (find-next-race now))
-
-  (js-set! now-node "textContent" "")
 
   (if next-race
       (let ()
@@ -349,6 +393,8 @@
           (string-append "Next race weekend: " (weekend-key (f1-event-summary race))))
         (define race-line
           (string-append "Race: " (race-countdown-line now race)))
+        (define-values (countdown-value countdown-unit countdown-label)
+          (race-countdown-parts now race))
         (define sprint-line
           (if sprint
               (string-append "Sprint: " (race-countdown-line now sprint))
@@ -358,10 +404,22 @@
               (string-append sprint-line " • " race-line)
               race-line))
         (js-set! title-node "textContent" title)
-        (js-set! countdown-node "textContent" countdown-text))
+        (js-set! value-node "textContent" countdown-value)
+        (js-set! unit-node "textContent" countdown-unit)
+        (js-set! label-node "textContent" countdown-label)
+        (js-set! detail-node "textContent" countdown-text)
+        (js-set! status-node "className" "f1-countdown-status is-ready")
+        (js-set! status-node "textContent"
+                 (string-append "Updated " (utc-date->stamp now)
+                                " · Source: Better F1 Calendar (ICS snapshot)")))
       (begin
         (js-set! title-node "textContent" "No upcoming race found in the calendar.")
-        (js-set! countdown-node "textContent" ""))))
+        (js-set! value-node "textContent" "—")
+        (js-set! unit-node "textContent" "races")
+        (js-set! label-node "textContent" "Check back soon")
+        (js-set! detail-node "textContent" "")
+        (js-set! status-node "className" "f1-countdown-status is-error")
+        (js-set! status-node "textContent" "Could not load upcoming races from the calendar."))))
 
 ;; formula1-page : -> List
 (define (formula1-page)
@@ -381,10 +439,16 @@
           "Live countdown"
           "Shows days until the next race, and on race day it switches to hours."
           (list
-           `(div (@ (class "card"))
+           `(div (@ (class "card f1-countdown-card"))
                  (h3 (@ (id "f1-next-race-title")) "Loading next race…")
-                 (p (@ (id "f1-next-race-countdown")) "")
-                 (p (@ (id "f1-now-utc") (class "hero-sublead")) "")))
+                 (div (@ (class "f1-countdown") (aria-live "polite"))
+                      (span (@ (id "f1-countdown-value") (class "f1-countdown-value")) "—")
+                      (span (@ (id "f1-countdown-unit") (class "f1-countdown-unit")) "days"))
+                 (p (@ (id "f1-countdown-label") (class "f1-countdown-label"))
+                    "until the next race")
+                 (p (@ (id "f1-next-race-detail") (class "f1-countdown-detail")) "")
+                 (p (@ (id "f1-countdown-status") (class "f1-countdown-status is-loading") (role "status"))
+                    "Loading calendar…")))
           #f
           "section--examples")
 
