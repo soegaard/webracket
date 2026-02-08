@@ -240,12 +240,20 @@
     (js-window-request-animation-frame tick-external)
     (void)))
 
+(define (nullish? x)
+  (cond
+    [(not x) #t]
+    [else
+     (define s (js-value->string x))
+     (or (string=? s "null")
+         (string=? s "undefined"))]))
+
 (define (ensure-matrix-rain-assets!)
   (define head (js-document-head))
 
   (define style-id "matrix-rain-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
-  (when (not style-existing)
+  (when (nullish? style-existing)
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -255,7 +263,7 @@
   (define script-id "matrix-rain-xterm-js")
   (define script-existing (js-get-element-by-id script-id))
   (cond
-    [script-existing
+    [(not (nullish? script-existing))
      (if (js-ref (js-var "window") "Terminal")
          (matrix-rain-init-terminal)
          (js-add-event-listener! script-existing "load" (procedure->external (λ (_) (matrix-rain-init-terminal) (void)))))]
