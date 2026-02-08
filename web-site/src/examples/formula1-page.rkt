@@ -381,18 +381,17 @@
   (define value-node     (js-get-element-by-id "f1-countdown-value"))
   (define unit-node      (js-get-element-by-id "f1-countdown-unit"))
   (define label-node     (js-get-element-by-id "f1-countdown-label"))
-  (define detail-node    (js-get-element-by-id "f1-next-race-detail"))
   (define badge-node     (js-get-element-by-id "f1-data-badge"))
   (define status-node    (js-get-element-by-id "f1-countdown-status"))
-  (define error-row-node (js-get-element-by-id "f1-error-row"))
-  (define error-node     (js-get-element-by-id "f1-error-text"))
+  (define status-updated-node (js-get-element-by-id "f1-countdown-status-updated"))
+  (define status-source-node (js-get-element-by-id "f1-countdown-status-source"))
 
   (js-set! card-node "className" "card f1-countdown-card is-loading")
-  (js-set! error-row-node "hidden" #t)
   (js-set! badge-node "textContent" "Loading")
   (js-set! badge-node "className" "f1-data-badge is-loading")
   (js-set! status-node "className" "f1-countdown-status is-loading")
-  (js-set! status-node "textContent" "Loading calendar…")
+  (js-set! status-updated-node "textContent" "Loading calendar…")
+  (js-set! status-source-node "textContent" "")
 
   (define now       (current-utc-date))
   (define next-race (find-next-race now))
@@ -402,43 +401,30 @@
         (define-values (sprint race) (find-weekend-events next-race))
         (define title
           (string-append "Next race weekend: " (weekend-key (f1-event-summary race))))
-        (define race-line
-          (string-append "Race: " (race-countdown-line now race)))
         (define-values (countdown-value countdown-unit countdown-label)
           (race-countdown-parts now race))
-        (define sprint-line
-          (if sprint
-              (string-append "Sprint: " (race-countdown-line now sprint))
-              #f))
-        (define countdown-text
-          (if sprint-line
-              (string-append sprint-line " • " race-line)
-              race-line))
         (js-set! title-node "textContent" title)
         (js-set! value-node "textContent" countdown-value)
         (js-set! unit-node "textContent" countdown-unit)
         (js-set! label-node "textContent" countdown-label)
-        (js-set! detail-node "textContent" countdown-text)
         (js-set! badge-node "textContent" "Cached")
         (js-set! badge-node "className" "f1-data-badge is-cached")
         (js-set! card-node "className" "card f1-countdown-card is-ready")
         (js-set! status-node "className" "f1-countdown-status is-ready")
-        (js-set! status-node "textContent"
-                 (string-append "Updated just now (" (utc-date->stamp now)
-                                ") · Better F1 Calendar (ICS snapshot)")))
+        (js-set! status-updated-node "textContent"
+                 (string-append "Cached · Updated just now (" (utc-date->stamp now) ")"))
+        (js-set! status-source-node "textContent" "Source: Better F1 Calendar (ICS snapshot)"))
       (begin
         (js-set! title-node "textContent" "No upcoming race found in the calendar.")
         (js-set! value-node "textContent" "—")
         (js-set! unit-node "textContent" "races")
         (js-set! label-node "textContent" "Check back soon")
-        (js-set! detail-node "textContent" "")
         (js-set! badge-node "textContent" "Cached")
         (js-set! badge-node "className" "f1-data-badge is-cached")
         (js-set! card-node "className" "card f1-countdown-card is-error")
-        (js-set! error-row-node "hidden" #f)
-        (js-set! error-node "textContent" "Could not load upcoming races from the calendar.")
         (js-set! status-node "className" "f1-countdown-status is-error")
-        (js-set! status-node "textContent" "Updated never · Better F1 Calendar (ICS snapshot)"))))
+        (js-set! status-updated-node "textContent" "Cached · Updated never")
+        (js-set! status-source-node "textContent" "Source: Better F1 Calendar (ICS snapshot)"))))
 
 ;; formula1-page : -> List
 (define (formula1-page)
@@ -466,29 +452,28 @@
                  (h3 (@ (id "f1-next-race-title")) "Loading next race…")
                  (div (@ (class "f1-countdown") (aria-live "polite"))
                       (span (@ (id "f1-countdown-value") (class "f1-countdown-value")) "—")
+                      " "
                       (span (@ (id "f1-countdown-unit") (class "f1-countdown-unit")) "days"))
                  (p (@ (id "f1-countdown-label") (class "f1-countdown-label"))
                     "until the next race")
-                 (p (@ (id "f1-next-race-detail") (class "f1-countdown-detail is-muted")) "")
-                 (div (@ (id "f1-error-row") (class "f1-error-row") (role "alert") (aria-live "assertive") (hidden "hidden"))
-                      (span (@ (id "f1-error-text")) "")
-                      (button (@ (id "f1-retry-button") (type "button") (class "f1-retry-button")) "Retry"))
                  (div (@ (class "f1-countdown-meta"))
                       (span (@ (id "f1-data-badge") (class "f1-data-badge is-loading") (aria-live "polite")) "Loading")
                       (p (@ (id "f1-countdown-status") (class "f1-countdown-status is-loading") (role "status") (aria-live "polite"))
-                    "Loading calendar…"))))
+                         (span (@ (id "f1-countdown-status-updated")) "Loading calendar…")
+                         (br)
+                         (span (@ (id "f1-countdown-status-source")) "")))))
           #f
           "section--examples")
 
         ,(section-block
           "Source"
-          "This page is derived from the Formula 1 parser tutorial source."
+          "This example is based on the Formula 1 parser tutorial."
           (list
            `(div (@ (class "mathjax-actions"))
                  ,(code-pill (gh-file "web-site/src/examples/formula1/formula1.rkt")
-                             "Original parser tutorial")
+                             "Parser tutorial")
                  ,(code-pill (gh-file "web-site/src/examples/formula1-page.rkt")
-                             "Website integration")))
+                             "Website integration example")))
           #f
           "section--examples")
 
@@ -497,6 +482,4 @@
 ;; init-formula1-page! : -> Void
 (define (init-formula1-page!)
   (js-set! (js-var "document") "title" "Formula 1 next race")
-  (define retry-button (js-get-element-by-id "f1-retry-button"))
-  (js-add-event-listener! retry-button "click" (procedure->external (lambda (_evt) (render-f1-countdown!))))
   (render-f1-countdown!))
