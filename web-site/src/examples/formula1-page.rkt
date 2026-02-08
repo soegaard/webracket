@@ -387,12 +387,12 @@
   (define error-row-node (js-get-element-by-id "f1-error-row"))
   (define error-node     (js-get-element-by-id "f1-error-text"))
 
-  (js-set! card-node "className" "card f1-countdown-card is-loading")
-  (js-set! error-row-node "hidden" #t)
-  (js-set! badge-node "textContent" "Loading")
-  (js-set! badge-node "className" "f1-data-badge is-loading")
-  (js-set! status-node "className" "f1-countdown-status is-loading")
-  (js-set! status-node "textContent" "Loading calendar…")
+  (js-set! card-node      "className" "card f1-countdown-card is-loading")
+  (js-set! error-row-node "hidden"      #t)
+  (js-set! badge-node     "textContent" "Loading")
+  (js-set! badge-node     "className"   "f1-data-badge is-loading")
+  (js-set! status-node    "className"   "f1-countdown-status is-loading")
+  (js-set! status-node    "textContent" "Loading calendar…")
 
   (define now       (current-utc-date))
   (define next-race (find-next-race now))
@@ -400,10 +400,8 @@
   (if next-race
       (let ()
         (define-values (sprint race) (find-weekend-events next-race))
-        (define title
-          (string-append "Next race weekend: " (weekend-key (f1-event-summary race))))
-        (define race-line
-          (string-append "Race: " (race-countdown-line now race)))
+        (define title     (string-append "Next race weekend: " (weekend-key (f1-event-summary race))))
+        (define race-line (string-append "Race: "              (race-countdown-line now race)))
         (define-values (countdown-value countdown-unit countdown-label)
           (race-countdown-parts now race))
         (define sprint-line
@@ -414,30 +412,30 @@
           (if sprint-line
               (string-append sprint-line " • " race-line)
               race-line))
-        (js-set! title-node "textContent" title)
-        (js-set! value-node "textContent" countdown-value)
-        (js-set! unit-node "textContent" countdown-unit)
-        (js-set! label-node "textContent" countdown-label)
+        (js-set! title-node  "textContent" title)
+        (js-set! value-node  "textContent" countdown-value)
+        (js-set! unit-node   "textContent" countdown-unit)
+        (js-set! label-node  "textContent" countdown-label)
         (js-set! detail-node "textContent" countdown-text)
-        (js-set! badge-node "textContent" "Cached")
-        (js-set! badge-node "className" "f1-data-badge is-cached")
-        (js-set! card-node "className" "card f1-countdown-card is-ready")
-        (js-set! status-node "className" "f1-countdown-status is-ready")
-        (js-set! status-node "textContent"
-                 (string-append "Updated just now (" (utc-date->stamp now)
-                                ") · Better F1 Calendar (ICS snapshot)")))
+        (js-set! badge-node  "textContent" "Cached")
+        (js-set! badge-node  "className"   "f1-data-badge is-cached")
+        (js-set! card-node   "className"   "card f1-countdown-card is-ready")
+        (js-set! status-node "className"   "f1-countdown-status is-ready")
+        (js-set! status-node "textContent" (string-append
+                                            "Updated just now (" (utc-date->stamp now)
+                                            ") · Better F1 Calendar (ICS snapshot)")))
       (begin
-        (js-set! title-node "textContent" "No upcoming race found in the calendar.")
-        (js-set! value-node "textContent" "—")
-        (js-set! unit-node "textContent" "races")
-        (js-set! label-node "textContent" "Check back soon")
+        (js-set! title-node  "textContent" "No upcoming race found in the calendar.")
+        (js-set! value-node  "textContent" "—")
+        (js-set! unit-node   "textContent" "races")
+        (js-set! label-node  "textContent" "Check back soon")
         (js-set! detail-node "textContent" "")
-        (js-set! badge-node "textContent" "Cached")
-        (js-set! badge-node "className" "f1-data-badge is-cached")
-        (js-set! card-node "className" "card f1-countdown-card is-error")
-        (js-set! error-row-node "hidden" #f)
-        (js-set! error-node "textContent" "Could not load upcoming races from the calendar.")
-        (js-set! status-node "className" "f1-countdown-status is-error")
+        (js-set! badge-node  "textContent" "Cached")
+        (js-set! badge-node  "className"   "f1-data-badge is-cached")
+        (js-set! card-node   "className"   "card f1-countdown-card is-error")
+        (js-set! error-row-node "hidden"   #f)
+        (js-set! error-node  "textContent" "Could not load upcoming races from the calendar.")
+        (js-set! status-node "className"   "f1-countdown-status is-error")
         (js-set! status-node "textContent" "Updated never · Better F1 Calendar (ICS snapshot)"))))
 
 ;; formula1-page : -> List
@@ -450,13 +448,13 @@
                            (span (@ (class "pill")) "Formula 1")
                            (span (@ (class "pill")) "ICS Calendar")
                            (span (@ (class "pill")) "Date parsing"))
-                      (h1 (@ (class "hero-title")) "Formula 1 next race")
+                      (h1 (@ (class "hero-title")) "Formula 1 · Next Race")
                       (p (@ (class "hero-lead"))
-                         "Reads the Better F1 Calendar ICS feed and shows the next race countdown.")))
+                         "Uses the Better F1 Calendar ICS to show the next race countdown.")))
 
         ,(section-block
           "Live countdown"
-          "Shows days until the next race, and on race day it switches to hours."
+          "Shows days until the next race, switching to hours on race day."
           (list
            `(div (@ (id "f1-countdown-card") (class "card f1-countdown-card"))
                  (div (@ (class "f1-loading-skeleton") (aria-hidden "true"))
@@ -497,6 +495,6 @@
 ;; init-formula1-page! : -> Void
 (define (init-formula1-page!)
   (js-set! (js-var "document") "title" "Formula 1 next race")
-  (define retry-button (js-get-element-by-id "f1-retry-button"))
-  (js-add-event-listener! retry-button "click" (procedure->external (lambda (_evt) (render-f1-countdown!))))
+  #;(define retry-button (js-get-element-by-id "f1-retry-button"))
+  #;(js-add-event-listener! retry-button "click" (procedure->external (lambda (_evt) (render-f1-countdown!))))
   (render-f1-countdown!))
