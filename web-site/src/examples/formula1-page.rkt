@@ -77,6 +77,26 @@
                              (string-length " - Race")))]
     [else summary]))
 
+;; display-weekend-name : String -> String
+;; Converts ICS race summaries into a cleaner label for the UI card title.
+(define (display-weekend-name summary)
+  (define base (weekend-key summary))
+  (define no-f1
+    (if (string-prefix? base "F1 ")
+        (substring base 3)
+        base))
+  (define sponsor-prefixes
+    (list "Qatar Airways "
+          "Aramco "
+          "Lenovo "
+          "Pirelli "
+          "Aws "))
+  (for/fold ([clean no-f1])
+            ([prefix (in-list sponsor-prefixes)])
+    (if (string-prefix? clean prefix)
+        (substring clean (string-length prefix))
+        clean)))
+
 ;; parse-events : String -> (Listof f1-event)
 ;; Parse an ICS calendar string into a list of race events.
 (define (parse-events text)
@@ -400,7 +420,8 @@
       (let ()
         (define-values (sprint race) (find-weekend-events next-race))
         (define title
-          (string-append "Next race weekend: " (weekend-key (f1-event-summary race))))
+          (string-append "Next race weekend: "
+                         (display-weekend-name (f1-event-summary race))))
         (define-values (countdown-value countdown-unit countdown-label)
           (race-countdown-parts now race))
         (js-set! title-node "textContent" title)
