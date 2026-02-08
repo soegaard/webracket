@@ -376,12 +376,23 @@
 ;; render-f1-countdown! : -> Void
 ;; Pulls `now`, finds next race, then updates 3 nodes in the page.
 (define (render-f1-countdown!)
+  (define card-node      (js-get-element-by-id "f1-countdown-card"))
   (define title-node     (js-get-element-by-id "f1-next-race-title"))
   (define value-node     (js-get-element-by-id "f1-countdown-value"))
   (define unit-node      (js-get-element-by-id "f1-countdown-unit"))
   (define label-node     (js-get-element-by-id "f1-countdown-label"))
   (define detail-node    (js-get-element-by-id "f1-next-race-detail"))
+  (define badge-node     (js-get-element-by-id "f1-data-badge"))
   (define status-node    (js-get-element-by-id "f1-countdown-status"))
+  (define error-row-node (js-get-element-by-id "f1-error-row"))
+  (define error-node     (js-get-element-by-id "f1-error-text"))
+
+  (js-set! card-node "className" "card f1-countdown-card is-loading")
+  (js-set! error-row-node "hidden" #t)
+  (js-set! badge-node "textContent" "Loading")
+  (js-set! badge-node "className" "f1-data-badge is-loading")
+  (js-set! status-node "className" "f1-countdown-status is-loading")
+  (js-set! status-node "textContent" "Loading calendar…")
 
   (define now       (current-utc-date))
   (define next-race (find-next-race now))
@@ -408,18 +419,26 @@
         (js-set! unit-node "textContent" countdown-unit)
         (js-set! label-node "textContent" countdown-label)
         (js-set! detail-node "textContent" countdown-text)
+        (js-set! badge-node "textContent" "Cached")
+        (js-set! badge-node "className" "f1-data-badge is-cached")
+        (js-set! card-node "className" "card f1-countdown-card is-ready")
         (js-set! status-node "className" "f1-countdown-status is-ready")
         (js-set! status-node "textContent"
-                 (string-append "Updated " (utc-date->stamp now)
-                                " · Source: Better F1 Calendar (ICS snapshot)")))
+                 (string-append "Updated just now (" (utc-date->stamp now)
+                                ") · Better F1 Calendar (ICS snapshot)")))
       (begin
         (js-set! title-node "textContent" "No upcoming race found in the calendar.")
         (js-set! value-node "textContent" "—")
         (js-set! unit-node "textContent" "races")
         (js-set! label-node "textContent" "Check back soon")
         (js-set! detail-node "textContent" "")
+        (js-set! badge-node "textContent" "Cached")
+        (js-set! badge-node "className" "f1-data-badge is-cached")
+        (js-set! card-node "className" "card f1-countdown-card is-error")
+        (js-set! error-row-node "hidden" #f)
+        (js-set! error-node "textContent" "Could not load upcoming races from the calendar.")
         (js-set! status-node "className" "f1-countdown-status is-error")
-        (js-set! status-node "textContent" "Could not load upcoming races from the calendar."))))
+        (js-set! status-node "textContent" "Updated never · Better F1 Calendar (ICS snapshot)"))))
 
 ;; formula1-page : -> List
 (define (formula1-page)
@@ -439,15 +458,24 @@
           "Live countdown"
           "Shows days until the next race, and on race day it switches to hours."
           (list
-           `(div (@ (class "card f1-countdown-card"))
+           `(div (@ (id "f1-countdown-card") (class "card f1-countdown-card"))
+                 (div (@ (class "f1-loading-skeleton") (aria-hidden "true"))
+                      (span (@ (class "f1-skel-line f1-skel-title")) "")
+                      (span (@ (class "f1-skel-line f1-skel-countdown")) "")
+                      (span (@ (class "f1-skel-line f1-skel-meta")) ""))
                  (h3 (@ (id "f1-next-race-title")) "Loading next race…")
                  (div (@ (class "f1-countdown") (aria-live "polite"))
                       (span (@ (id "f1-countdown-value") (class "f1-countdown-value")) "—")
                       (span (@ (id "f1-countdown-unit") (class "f1-countdown-unit")) "days"))
                  (p (@ (id "f1-countdown-label") (class "f1-countdown-label"))
                     "until the next race")
-                 (p (@ (id "f1-next-race-detail") (class "f1-countdown-detail")) "")
-                 (p (@ (id "f1-countdown-status") (class "f1-countdown-status is-loading") (role "status"))
+                 (p (@ (id "f1-next-race-detail") (class "f1-countdown-detail is-muted")) "")
+                 (div (@ (id "f1-error-row") (class "f1-error-row") (role "alert") (aria-live "assertive") (hidden "hidden"))
+                      (span (@ (id "f1-error-text")) "")
+                      (button (@ (id "f1-retry-button") (type "button") (class "f1-retry-button")) "Retry"))
+                 (div (@ (class "f1-countdown-meta"))
+                      (span (@ (id "f1-data-badge") (class "f1-data-badge is-loading") (aria-live "polite")) "Loading")
+                      (p (@ (id "f1-countdown-status") (class "f1-countdown-status is-loading") (role "status") (aria-live "polite"))
                     "Loading calendar…")))
           #f
           "section--examples")
@@ -469,4 +497,6 @@
 ;; init-formula1-page! : -> Void
 (define (init-formula1-page!)
   (js-set! (js-var "document") "title" "Formula 1 next race")
+  (define retry-button (js-get-element-by-id "f1-retry-button"))
+  (js-add-event-listener! retry-button "click" (lambda (_evt) (render-f1-countdown!)))
   (render-f1-countdown!))
