@@ -181,6 +181,7 @@
 (include "examples/mathjax.rkt")
 (include "examples/formula1-page.rkt")
 (include "examples/matrix-rain-page.rkt")
+(include "examples/space-invaders-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -245,6 +246,8 @@
                     (cons 'title    "Space Invaders")
                     (cons 'path     "examples/space-invaders")
                     (cons 'entry    "space-invaders.html")
+                    (cons 'demo-url "space-invaders.html")
+                    (cons 'source-path "web-site/src/examples/space-invaders-page.rkt")
                     (cons 'tags     (list 'canvas 'dom))
                     (cons 'summary  "Arcade shooter on canvas with responsive keyboard controls.")
                     (cons 'features (list "Canvas API via DOM + JS FFI"
@@ -382,6 +385,7 @@
     [(string-suffix? path "mathjax.html")               'mathjax]
     [(string-suffix? path "formula1.html")              'formula1]
     [(string-suffix? path "matrix-rain.html")           'matrix-rain]
+    [(string-suffix? path "space-invaders.html")        'space-invaders]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "community.html")             'community]
     [(string-suffix? path "overview.html")              'overview]
@@ -585,8 +589,11 @@
              (list `(h3 "MiniScheme REPL")
                    `(p "Interactive Scheme session running in the browser.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             (list `(h3 "Space Invaders")
+                   `(p "Arcade shooter on canvas with responsive keyboard controls.")
+                   `(a (@ (class "example-link") (href "examples/space-invaders/space-invaders.html")) "Open demo"))
              (list `(h3 "Canvas + Pict")
-                   `(p "Space Invaders and Pict rendering showcase.")
+                   `(p "Racket pict rendering pipeline for the browser canvas.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
             "examples-grid"))
           "examples"
@@ -3214,6 +3221,7 @@ CSS
       [(mathjax)               (mathjax-page)]
       [(formula1)              (formula1-page)]
       [(matrix-rain)           (matrix-rain-page)]
+      [(space-invaders)        (space-invaders-page)]
       [else                    (home-page)]))
 
   (define page (sxml->dom page-structure))
@@ -3228,6 +3236,9 @@ CSS
 
   (when (eq? (current-page) 'matrix-rain)
     (init-matrix-rain-page!))
+
+  (when (eq? (current-page) 'space-invaders)
+    (init-space-invaders-page!))
 
   (when (eq? (current-page) 'implementation-status)
     (init-status-page-handlers!)))
