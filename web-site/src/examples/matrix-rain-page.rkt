@@ -200,7 +200,7 @@
       (define g (inexact->exact (round (+ 80. (* i 175.)))))
       (define r (inexact->exact (round (* i 40.))))
       (define b (inexact->exact (round (* i 70.))))
-      (values r g b))
+      (vector r g b))
 
     (define (render!)
       (define payload
@@ -216,7 +216,10 @@
                (define char  (vector-ref row-char col))
                (if (<= value 0.)
                    (write-char #\space out)
-                   (let-values ([(r g b) (intensity->rgb value)])
+                   (let* ([rgb (intensity->rgb value)]
+                          [r (vector-ref rgb 0)]
+                          [g (vector-ref rgb 1)]
+                          [b (vector-ref rgb 2)])
                      (fprintf out "\u001b[38;2;~a;~a;~am~a" r g b char))))
              (display "\u001b[0m" out)
              (when (< row (sub1 rows))
