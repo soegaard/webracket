@@ -8,6 +8,9 @@
 (define matrix-rain-xterm-js
   "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js")
 
+(define matrix-rain-xterm-fit-addon-js
+  "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js")
+
 (define (matrix-rain-page)
   `(div (@ (class "page page--matrix-rain"))
         ,(navbar)
@@ -42,9 +45,23 @@
     (set! matrix-rain-started? #t)
 
     (define container (js-get-element-by-id "matrix-root"))
-    (define terminal (xterm-terminal-new (void)))
+    (define terminal-options
+      (js-object
+       (vector
+        (vector "theme"
+                (js-object
+                 (vector (vector "background" "#000000")))))))
+    (define terminal (xterm-terminal-new terminal-options))
 
+    (define fit-addon
+      (let* ([win               (js-window-window)]
+             [addon-namespace   (js-ref/extern win "FitAddon")]
+             [addon-constructor (js-ref/extern addon-namespace "FitAddon")])
+        (js-new addon-constructor (vector))))
+
+    (xterm-terminal-load-addon terminal fit-addon)
     (xterm-terminal-open terminal container)
+    (xterm-fit-addon-fit fit-addon)
     (xterm-terminal-focus terminal)
     (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
 
@@ -251,6 +268,11 @@
 (define (ensure-matrix-rain-assets!)
   (define head (js-document-head))
 
+  (define (maybe-init-terminal)
+    (when (and (js-ref (js-var "window") "Terminal")
+               (js-ref (js-var "window") "FitAddon"))
+      (matrix-rain-init-terminal)))
+
   (define style-id "matrix-rain-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
   (when (nullish? style-existing)
@@ -262,17 +284,33 @@
 
   (define script-id "matrix-rain-xterm-js")
   (define script-existing (js-get-element-by-id script-id))
+  (define fit-script-id "matrix-rain-xterm-fit-addon-js")
+  (define fit-script-existing (js-get-element-by-id fit-script-id))
+
+  (define maybe-init-external
+    (procedure->external (λ (_) (maybe-init-terminal) (void))))
+
   (cond
     [(not (nullish? script-existing))
-     (if (js-ref (js-var "window") "Terminal")
-         (matrix-rain-init-terminal)
-         (js-add-event-listener! script-existing "load" (procedure->external (λ (_) (matrix-rain-init-terminal) (void)))))]
+     (js-add-event-listener! script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))
      (js-set-attribute! script "id" script-id)
      (js-set-attribute! script "src" matrix-rain-xterm-js)
-     (js-add-event-listener! script "load" (procedure->external (λ (_) (matrix-rain-init-terminal) (void))))
-     (js-append-child! head script)]))
+     (js-add-event-listener! script "load" maybe-init-external)
+     (js-append-child! head script)])
+
+  (cond
+    [(not (nullish? fit-script-existing))
+     (js-add-event-listener! fit-script-existing "load" maybe-init-external)]
+    [else
+     (define script (js-create-element "script"))
+     (js-set-attribute! script "id" fit-script-id)
+     (js-set-attribute! script "src" matrix-rain-xterm-fit-addon-js)
+     (js-add-event-listener! script "load" maybe-init-external)
+     (js-append-child! head script)])
+
+  (maybe-init-terminal))
 
 (define (init-matrix-rain-page!)
   (js-set! (js-var "document") "title" "Matrix Rain")
