@@ -266,22 +266,21 @@
                     (cons 'features (list "Canvas interop"
                                           "Graphics rendering pipeline"
                                           "Performance focus"))))
-   (make-hash (list (cons 'id       "raco-tiles")
-                    (cons 'title    "Raccoon Tiles")
-                    (cons 'path     "examples/raco")
-                    (cons 'entry    "tiles.html")
-                    (cons 'tags     (list 'canvas))
-                    (cons 'summary  "Pixel-art tile sheet drawn on canvas with a custom palette.")
-                    (cons 'features (list "Canvas interop"
-                                          "Palette mapping"
-                                          "Grid layout"))))))
+   #;(make-hash (list (cons 'id       "raco-tiles")
+                      (cons 'title    "Raccoon Tiles")
+                      (cons 'path     "examples/raco")
+                      (cons 'entry    "tiles.html")
+                      (cons 'tags     (list 'canvas))
+                      (cons 'summary  "Pixel-art tile sheet drawn on canvas with a custom palette.")
+                      (cons 'features (list "Canvas interop"
+                                            "Palette mapping"
+                                            "Grid layout"))))))
 
 (define featured-example-ids
   (list "mathjax4"
-        "formula1"
-        "minischeme"
+        "xtermjs-demo"
         "space-invaders"
-        "matrix-rain"))
+        "formula1"))
 
 ;; example-demo-url : Hash -> (U #f String)
 ;;   Builds the local demo URL when an entry HTML file is available.

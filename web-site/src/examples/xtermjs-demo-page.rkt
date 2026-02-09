@@ -45,7 +45,7 @@
                            (span (@ (class "pill")) "DOM + JS FFI"))
                       (h1 (@ (class "hero-title")) "Xterm.js Demo")
                       (p (@ (class "hero-lead"))
-                         "Interactive terminal showcasing theming, add-ons, and command handling.")))
+                         "A full-featured terminal driven by Racket, running entirely in the browser.")))
         (section (@ (class "section section--mathjax"))
                  (div (@ (class "section-content"))
                       (div (@ (class "xtermjs-demo-shell"))
