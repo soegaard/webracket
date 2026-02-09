@@ -19,8 +19,9 @@
                       (div (@ (class "space-invaders-frame"))
                            (p (@ (class "space-invaders-hint"))
                               "Use ←/→ or A/D to move, Space to shoot.")
-                           (div (@ (id "space-invaders-root")
-                                   (style "display: flex; justify-content: center;"))))))
+                           (div (@ (class "arcade-frame"))
+                                (div (@ (class "arcade-bezel"))
+                                     (div (@ (id "space-invaders-root"))))))))
         (section (@ (class "section section--mathjax-details"))
                  (div (@ (class "section-content"))
                       (div (@ (class "mathjax-details"))
@@ -111,6 +112,8 @@
        (play-tone 880. 0.12 "triangle" 0.16 0.24)]
       [(restart)
        (play-tone 520. 0.08 "square" 0.12)]
+      [(drop)
+       (play-tone 180. 0.08 "square" 0.12)]
       [else (void)])))
 
 ;;;
@@ -326,6 +329,7 @@
     (when drop?
       (set! enemies-dir (- enemies-dir))
       (set! dx (- dx))
+      (play-sfx 'drop)
       (for ([e (in-list enemies)])
         (set-enemy-y! e (+ (enemy-y e) enemy-drop))))
     (for ([e (in-list enemies)])
