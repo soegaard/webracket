@@ -58,12 +58,13 @@
 
 (define (audio-context-constructor)
   (define ctor (js-var "AudioContext"))
-  (if (string=? (js-typeof ctor) "undefined")
-      (let ([webkit (js-var "webkitAudioContext")])
-        (if (string=? (js-typeof webkit) "undefined")
-            #f
-            webkit))
-      ctor))
+  (cond
+    [(nullish? ctor)
+     (define webkit (js-var "webkitAudioContext"))
+     (if (nullish? webkit)
+         #f
+         webkit)]
+    [else ctor]))
 
 (define (ensure-audio!)
   (when (not audio-context)
@@ -77,21 +78,21 @@
 
 (define (play-tone freq dur type volume [delay 0.0])
   (when audio-context
-    (define osc  (js-send audio-context "createOscillator" (vector)))
-    (define gain (js-send audio-context "createGain" (vector)))
-    (define now  (js-ref audio-context "currentTime"))
-    (define start (+ (inexact now) (inexact delay)))
-    (define end   (+ start (inexact dur)))
+    (define osc      (js-send audio-context "createOscillator" (vector)))
+    (define gain     (js-send audio-context "createGain" (vector)))
+    (define now      (js-ref audio-context "currentTime"))
+    (define start    (+ (inexact now) (inexact delay)))
+    (define end      (+ start (inexact dur)))
     (define freq-obj (js-ref osc "frequency"))
     (define gain-obj (js-ref gain "gain"))
-    (js-set! osc "type" type)
+    (js-set! osc      "type" type)
     (js-set! freq-obj "value" (inexact freq))
     (js-send gain-obj "setValueAtTime" (vector (inexact volume) start))
     (js-send gain-obj "linearRampToValueAtTime" (vector 0.0 end))
-    (js-send osc "connect" (vector gain))
-    (js-send gain "connect" (vector (js-ref audio-context "destination")))
-    (js-send osc "start" (vector start))
-    (js-send osc "stop" (vector end))))
+    (js-send osc      "connect" (vector gain))
+    (js-send gain     "connect" (vector (js-ref audio-context "destination")))
+    (js-send osc      "start" (vector start))
+    (js-send osc      "stop" (vector end))))
 
 (define (play-sfx kind)
   (ensure-audio!)
@@ -227,40 +228,31 @@
   (define handled? #f)
   (when (string? key)
     (cond
-      [(restart-key? key)
-       (reset-game!)
-       (set! handled? #t)]
-      [(left-key? key)
-       (set! left-pressed? #t)
-       (set! handled? #t)]
-      [(right-key? key)
-       (set! right-pressed? #t)
-       (set! handled? #t)]
-      [(space-key? key)
-       (set! space-pressed? #t)
-       (set! handled? #t)
-       (fire!)]))
+      [(restart-key? key)  (reset-game!)
+                           (set! handled? #t)]
+      [(left-key? key)     (set! left-pressed? #t)
+                           (set! handled? #t)]
+      [(right-key? key)    (set! right-pressed? #t)
+                           (set! handled? #t)]
+      [(space-key? key)    (set! space-pressed? #t)
+                           (set! handled? #t)
+                           (fire!)]))
   (when handled?
-    (js-event-prevent-default evt))
-  (void))
+    (js-event-prevent-default evt)))
 
 (define (on-key-up evt)
   (define key      (js-ref evt "key"))
   (define handled? #f)
   (when (string? key)
     (cond
-      [(left-key? key)
-       (set! left-pressed? #f)
-       (set! handled? #t)]
-      [(right-key? key)
-       (set! right-pressed? #f)
-       (set! handled? #t)]
-      [(space-key? key)
-       (set! space-pressed? #f)
-       (set! handled? #t)]))
+      [(left-key? key)   (set! left-pressed? #f)
+                         (set! handled? #t)]
+      [(right-key? key)  (set! right-pressed? #f)
+                         (set! handled? #t)]
+      [(space-key? key)  (set! space-pressed? #f)
+                         (set! handled? #t)]))
   (when handled?
-    (js-event-prevent-default evt))
-  (void))
+    (js-event-prevent-default evt)))
 
 (define key-down-handler #f)
 (define key-up-handler   #f)
@@ -280,7 +272,6 @@
        (max half-player-width x)))
 
 (define (fire!)
-  #;(js-log (vector (player-x player-pos) (player-y player-pos)))
   (when (and (eq? status 'playing)
              (>= time-since-last-shot shoot-cooldown))
     (define new-bullet (bullet (player-x player-pos)
@@ -318,11 +309,10 @@
       [(<= (+ (bullet-y b) bullet-height) 0.) (void)]
       [else
        (define hit (find-hit-enemy b))
-       (if hit
-           (begin
-             (set! enemies (remove hit enemies eq?))
-             (play-sfx 'hit))
-           (set! new-bullets (cons b new-bullets)))]))
+       (cond
+         [hit   (set! enemies (remove hit enemies eq?))
+                (play-sfx 'hit)]
+         [else  (set! new-bullets (cons b new-bullets))])]))
   (set! bullets (reverse new-bullets)))
 
 (define (update-enemies dt)
@@ -428,13 +418,15 @@
 
 (define (draw-sprite! sprite x y scale color)
   (js-set-canvas2d-fill-style! ctx color)
-  (define x0 (inexact->exact (round x)))
-  (define y0 (inexact->exact (round y)))
-  (define s  (max 1 (inexact->exact (round scale))))
+
+  (define x0  (inexact->exact (round x)))
+  (define y0  (inexact->exact (round y)))
+  (define s   (max 1 (inexact->exact (round scale))))
   (define x0f (inexact x0))
   (define y0f (inexact y0))
   (define sf  (inexact s))
-  (for ([row (in-list sprite)]
+  
+  (for ([row     (in-list sprite)]
         [row-idx (in-naturals)])
     (for ([col-idx (in-range (string-length row))])
       (when (char=? (string-ref row col-idx) #\1)
@@ -451,9 +443,9 @@
     (js-canvas2d-fill-rect ctx 0. 0. (inexact width) (inexact height))
 
     ; Player (pixel ship)
-    (define ship-scale (ceiling (/ player-width (sprite-width ship-sprite))))
+    (define ship-scale      (ceiling (/ player-width (sprite-width ship-sprite))))
     (define ship-draw-width (* ship-scale (sprite-width ship-sprite)))
-    (define ship-left (- (player-x player-pos) (/ ship-draw-width 2.)))
+    (define ship-left       (- (player-x player-pos) (/ ship-draw-width 2.)))
     (draw-sprite! ship-sprite ship-left (player-y player-pos) ship-scale "#0ff")
 
     ; Bullets
@@ -511,20 +503,19 @@
 
 (define (reset-game!)
   (set! bullets '())
-  (set! enemies
-        (for*/list ([row (in-range enemy-rows)]
-                    [col (in-range enemy-cols)])
-          (enemy (+ enemy-start-x (* col enemy-spacing-x))
-                 (+ enemy-start-y (* row enemy-spacing-y)))))
-  (set! enemies-dir 1)
-  (set! status 'playing)
-  (set! left-pressed? #f)
-  (set! right-pressed? #f)
-  (set! space-pressed? #f)
+  (set! enemies (for*/list ([row (in-range enemy-rows)]
+                            [col (in-range enemy-cols)])
+                  (enemy (+ enemy-start-x (* col enemy-spacing-x))
+                         (+ enemy-start-y (* row enemy-spacing-y)))))
+  (set! enemies-dir          1)
+  (set! status               'playing)
+  (set! left-pressed?        #f)
+  (set! right-pressed?       #f)
+  (set! space-pressed?       #f)
   (set! time-since-last-shot shoot-cooldown)
-  (set! last-time #f)
-  (set! win-sound-played? #f)
-  (set! loss-sound-played? #f)
+  (set! last-time            #f)
+  (set! win-sound-played?    #f)
+  (set! loss-sound-played?   #f) 
   (set-player-x! player-pos (/ width 2.))
   (set-player-y! player-pos (- height (+ player-height 24.)))
   (play-sfx 'restart))
