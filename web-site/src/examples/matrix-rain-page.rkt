@@ -301,7 +301,7 @@
           (set! tick-external (procedure->external tick))
           (js-log "matrix-rain-init-terminal:13")
           (js-window-request-animation-frame tick-external)
-          (void))))
+          (void)])))
 
 (define (nullish? x)
   (js-log "nullish?")
