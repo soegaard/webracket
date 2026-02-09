@@ -27,7 +27,12 @@
         (section (@ (class "section section--mathjax"))
                  (div (@ (class "section-content"))
                       (div (@ (id "matrix-root")
-                              (style "width: 100%; height: 70vh; border-radius: 14px; overflow: hidden; border: 1px solid rgba(80, 110, 80, 0.5); background: radial-gradient(circle at center, #050 0%, #000 60%);")))))
+                              (style "width: 100%; "
+                                     "height: 70vh; "
+                                     "border-radius: 14px; "
+                                     "overflow: hidden; "
+                                     "border: 1px solid rgba(80, 110, 80, 0.5); "
+                                     "background: radial-gradient(circle at center, #050 0%, #000 60%);")))))
         (section (@ (class "section section--mathjax-details"))
                  (div (@ (class "section-content"))
                       (div (@ (class "mathjax-details"))
@@ -51,7 +56,7 @@
     (define dependencies-ready?
       (and (not (nullish? container))
            (not (string=? (js-typeof terminal-constructor) "undefined"))
-           (not (string=? (js-typeof fit-addon-global) "undefined"))))
+           (not (string=? (js-typeof fit-addon-global)     "undefined"))))
 
     (cond
       [(not dependencies-ready?)
