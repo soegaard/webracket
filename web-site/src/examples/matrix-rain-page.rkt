@@ -52,32 +52,37 @@
     (define terminal-theme
       (js-object '(("background" "#000000"))))
 
+    (js-log "matrix-rain-init-terminal:3")
+
     (define terminal-options
       (js-object
        (vector
         (vector "theme" terminal-theme))))
+
+    (js-log "matrix-rain-init-terminal:4")
+
     (define terminal (xterm-terminal-new terminal-options))
-    (js-log "matrix-rain-init-terminal:3")
+    (js-log "matrix-rain-init-terminal:5")
 
 
     (define fit-addon
       (let* ([win               (js-window-window)]
              [addon-namespace   (js-ref/extern win "FitAddon")]
              [addon-constructor (js-ref/extern addon-namespace "FitAddon")])
-        (js-log "matrix-rain-init-terminal:4")
+        (js-log "matrix-rain-init-terminal:6")
         (js-new addon-constructor (vector))))
 
-    (js-log "matrix-rain-init-terminal:5")
-    (xterm-terminal-load-addon terminal fit-addon)
-    (js-log "matrix-rain-init-terminal:6")
-    (xterm-terminal-open terminal container)
     (js-log "matrix-rain-init-terminal:7")
-    (xterm-fit-addon-fit fit-addon)
+    (xterm-terminal-load-addon terminal fit-addon)
     (js-log "matrix-rain-init-terminal:8")
-    (xterm-terminal-focus terminal)
+    (xterm-terminal-open terminal container)
     (js-log "matrix-rain-init-terminal:9")
-    (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
+    (xterm-fit-addon-fit fit-addon)
     (js-log "matrix-rain-init-terminal:10")
+    (xterm-terminal-focus terminal)
+    (js-log "matrix-rain-init-terminal:11")
+    (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
+    (js-log "matrix-rain-init-terminal:12")
 
     (define columns (inexact->exact (xterm-terminal-cols terminal)))
     (define rows    (inexact->exact (xterm-terminal-rows terminal)))
