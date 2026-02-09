@@ -181,6 +181,7 @@
 (include "examples/mathjax.rkt")
 (include "examples/formula1-page.rkt")
 (include "examples/matrix-rain-page.rkt")
+(include "examples/xtermjs-demo-page.rkt")
 (include "examples/space-invaders-page.rkt")
 
 ;;;
@@ -227,6 +228,8 @@
                     (cons 'title    "XtermJS Demo")
                     (cons 'path     "examples/xtermjs-demo")
                     (cons 'entry    "xtermjs-demo.html")
+                    (cons 'demo-url "xtermjs-demo.html")
+                    (cons 'source-path "examples/xtermjs-demo/xtermjs-demo.rkt")
                     (cons 'tags     (list 'xterm 'dom))
                     (cons 'summary  "Interactive terminal with themed styling and built-in commands.")
                     (cons 'features (list "XtermJS add-ons"
@@ -385,6 +388,7 @@
     [(string-suffix? path "mathjax.html")               'mathjax]
     [(string-suffix? path "formula1.html")              'formula1]
     [(string-suffix? path "matrix-rain.html")           'matrix-rain]
+    [(string-suffix? path "xtermjs-demo.html")          'xtermjs-demo]
     [(string-suffix? path "space-invaders.html")        'space-invaders]
     [(string-suffix? path "implementation-status.html") 'implementation-status]
     [(string-suffix? path "community.html")             'community]
@@ -3129,6 +3133,39 @@ pre code {
   flex-wrap: wrap;
   gap: 12px;
 }
+.arcade-frame {
+  display: flex;
+  justify-content: center;
+  padding: 18px 10px 12px;
+}
+.arcade-bezel {
+  --bezel-radius: 14px;
+  --bezel-pad: 14px;
+  --bezel-border: rgba(128, 118, 210, 0.28);
+  --bezel-shadow: rgba(7, 5, 20, 0.75);
+  --bezel-glow: rgba(120, 92, 210, 0.16);
+  padding: var(--bezel-pad);
+  border-radius: var(--bezel-radius);
+  border: 1.5px solid var(--bezel-border);
+  background: linear-gradient(160deg, rgba(22, 18, 48, 0.92), rgba(10, 8, 24, 0.96));
+  box-shadow:
+    0 18px 40px rgba(6, 4, 20, 0.55),
+    0 0 28px var(--bezel-glow);
+  position: relative;
+}
+.arcade-bezel::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: calc(var(--bezel-radius) - 6px);
+  box-shadow: inset 0 10px 22px var(--bezel-shadow);
+  pointer-events: none;
+}
+.arcade-bezel canvas {
+  display: block;
+  border-radius: calc(var(--bezel-radius) - 8px);
+  background: #000;
+}
 @media (min-width: 900px) {
   .examples-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3221,6 +3258,7 @@ CSS
       [(mathjax)               (mathjax-page)]
       [(formula1)              (formula1-page)]
       [(matrix-rain)           (matrix-rain-page)]
+      [(xtermjs-demo)          (xtermjs-demo-page)]
       [(space-invaders)        (space-invaders-page)]
       [else                    (home-page)]))
 
@@ -3236,6 +3274,9 @@ CSS
 
   (when (eq? (current-page) 'matrix-rain)
     (init-matrix-rain-page!))
+
+  (when (eq? (current-page) 'xtermjs-demo)
+    (init-xtermjs-demo-page!))
 
   (when (eq? (current-page) 'space-invaders)
     (init-space-invaders-page!))
