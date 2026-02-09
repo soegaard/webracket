@@ -162,6 +162,9 @@
   (define handled? #f)
   (when (string? key)
     (cond
+      [(restart-key? key)
+       (reset-game!)
+       (set! handled? #t)]
       [(left-key? key)
        (set! left-pressed? #t)
        (set! handled? #t)]
@@ -346,10 +349,10 @@
                           "The invaders landed!"))
       (js-canvas2d-fill-text ctx message (/ width 2.) (/ height 2.) (void))
       (js-set-canvas2d-font! ctx "18px sans-serif")
-      (js-canvas2d-fill-text ctx "Refresh the page to play again."
-                             (/ width 2.)
-                             (+ (/ height 2.) 36.)
-                             (void)))))
+    (js-canvas2d-fill-text ctx "Hit \"R\" to play again."
+                           (/ width 2.)
+                           (+ (/ height 2.) 36.)
+                           (void)))))
 
 ;;;
 ;;; Timer Events
@@ -364,6 +367,35 @@
   (update dt)
   (render!)
   (js-window-request-animation-frame tick-external))
+
+;;;
+;;; Reset / Restart
+;;;
+
+(define (reset-game!)
+  (set! bullets '())
+  (set! enemies
+        (for*/list ([row (in-range enemy-rows)]
+                    [col (in-range enemy-cols)])
+          (enemy (+ enemy-start-x (* col enemy-spacing-x))
+                 (+ enemy-start-y (* row enemy-spacing-y)))))
+  (set! enemies-dir 1)
+  (set! status 'playing)
+  (set! left-pressed? #f)
+  (set! right-pressed? #f)
+  (set! space-pressed? #f)
+  (set! time-since-last-shot shoot-cooldown)
+  (set! last-time #f)
+  (set-player-x! player-pos (/ width 2.))
+  (set-player-y! player-pos (- height (+ player-height 24.))))
+
+;;;
+;;; Restart Key
+;;;
+
+(define (restart-key? key)
+  (or (string=? key "r")
+      (string=? key "R")))
 
 (define (init-space-invaders-page!)
   (js-set! (js-var "document") "title" "Space Invaders")
