@@ -58,11 +58,12 @@
     (define terminal (xterm-terminal-new terminal-options))
     (js-log "matrix-rain-init-terminal:3")
 
+
     (define fit-addon
-      (js-log "matrix-rain-init-terminal:4")
       (let* ([win               (js-window-window)]
              [addon-namespace   (js-ref/extern win "FitAddon")]
              [addon-constructor (js-ref/extern addon-namespace "FitAddon")])
+        (js-log "matrix-rain-init-terminal:4")
         (js-new addon-constructor (vector))))
 
     (js-log "matrix-rain-init-terminal:5")
