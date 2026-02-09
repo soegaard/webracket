@@ -18,17 +18,18 @@
         (section (@ (class "mathjax-hero"))
                  (div (@ (class "hero-panel"))
                       (div (@ (class "pill-row"))
-                           (span (@ (class "pill")) "XtermJS")
+                           (span (@ (class "pill")) "xterm.js")
                            (span (@ (class "pill")) "Animation")
                            (span (@ (class "pill")) "DOM + JS FFI"))
                       (h1 (@ (class "hero-title")) "Matrix Rain")
                       (p (@ (class "hero-lead"))
-                         "A browser terminal rendering a digital-rain animation in real time.")))
+                         "A browser-based terminal rendering a real-time digital rain animation.")))
         (section (@ (class "section section--mathjax"))
                  (div (@ (class "section-content"))
+                      #;(p "Tip: Type in the terminal to trigger bursts.")
                       (div (@ (id "matrix-root")
-                              (style "width: 100%; "
-                                     "height: 70vh; "
+                              (style "width:  100%; "
+                                     "height: 90vh; "
                                      "border-radius: 14px; "
                                      "overflow: hidden; "
                                      "border: 1px solid rgba(80, 110, 80, 0.5); "
@@ -36,12 +37,12 @@
         (section (@ (class "section section--mathjax-details"))
                  (div (@ (class "section-content"))
                       (div (@ (class "mathjax-details"))
-                           (p "This page is adapted from the repository example in "
+                           (p "This example is adapted from "
                               (code "examples/matrix-rain/matrix-rain.rkt")
-                              ". Type in the terminal to trigger bursts in nearby columns.")
+                              ". ")
                            (div (@ (class "mathjax-actions"))
-                                ,(code-pill (gh-file "examples/matrix-rain/matrix-rain.rkt") "Example source")
-                                ,(code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt") "Page layout")))))
+                                ,(code-pill (gh-file "examples/matrix-rain/matrix-rain.rkt") "Example source code")
+                                ,(code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt") "Layout source")))))
         ,(footer-section)))
 
 (define matrix-rain-started? #f)
@@ -190,16 +191,20 @@
               (define row-char (vector-ref characters row))
               (for ([col (in-range columns)])
                 (define value (vector-ref row-int col))
-                (when (> value 0.)
-                  (define new-value (max 0. (- value decay)))
-                  (if (<= new-value 0.05)
-                      (begin
-                        (vector-set! row-int col 0.)
-                        (vector-set! row-char col #\space))
-                      (begin
-                        (vector-set! row-int col new-value)
-                        (when (< (randf) (* dt 0.08))
-                          (vector-set! row-char col (random-glyph)))))))))
+                (cond
+                  ((or (not (real? value)) (nan? value))
+                   (vector-set! row-int col 0.)
+                   (vector-set! row-char col #\space))
+                  ((> value 0.)
+                   (define new-value (max 0. (- value decay)))
+                   (if (<= new-value 0.05)
+                       (begin
+                         (vector-set! row-int col 0.)
+                         (vector-set! row-char col #\space))
+                       (begin
+                         (vector-set! row-int col new-value)
+                         (when (< (randf) (* dt 0.08))
+                           (vector-set! row-char col (random-glyph))))))))))
 
           (define (update-drops! dt)
             (js-log "update-drops!")
@@ -279,7 +284,7 @@
                    (for ([col (in-range columns)])
                      (define value (vector-ref row-int col))
                      (define char  (vector-ref row-char col))
-                     (if (<= value 0.)
+                     (if (or (not (real? value)) (nan? value) (<= value 0.))
                          (write-char #\space out)
                          (let* ([i (max 0. (min 1. value))]
                                 [g (inexact->exact (round (+ 80. (* i 175.))))]
@@ -330,7 +335,7 @@
               (void)))
 
           (set! on-resize-external (procedure->external handle-resize!))
-          (js-window-add-event-listener "resize" on-resize-external)
+          (js-add-event-listener! (js-window-window) "resize" on-resize-external)
 
           (js-log "matrix-rain-init-terminal:11")
           (js-send terminal "onData" (vector on-data-external))
