@@ -195,13 +195,6 @@
           (boost-column! col)
           (flare-column! col))))
 
-    (define (intensity->rgb intensity)
-      (define i (max 0. (min 1. intensity)))
-      (define g (inexact->exact (round (+ 80. (* i 175.)))))
-      (define r (inexact->exact (round (* i 40.))))
-      (define b (inexact->exact (round (* i 70.))))
-      (vector r g b))
-
     (define (render!)
       (define payload
         (call-with-output-string
@@ -216,10 +209,10 @@
                (define char  (vector-ref row-char col))
                (if (<= value 0.)
                    (write-char #\space out)
-                   (let* ([rgb (intensity->rgb value)]
-                          [r (vector-ref rgb 0)]
-                          [g (vector-ref rgb 1)]
-                          [b (vector-ref rgb 2)])
+                   (let* ([i (max 0. (min 1. value))]
+                          [g (inexact->exact (round (+ 80. (* i 175.))))]
+                          [r (inexact->exact (round (* i 40.)))]
+                          [b (inexact->exact (round (* i 70.)))])
                      (fprintf out "\u001b[38;2;~a;~a;~am~a" r g b char))))
              (display "\u001b[0m" out)
              (when (< row (sub1 rows))
