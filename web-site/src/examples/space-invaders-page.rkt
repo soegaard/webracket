@@ -51,6 +51,68 @@
          (string=? s "undefined"))]))
 
 ;;;
+;;; Audio (WebAudio, old-school bleeps)
+;;;
+
+(define audio-context #f)
+
+(define (audio-context-constructor)
+  (define ctor (js-var "AudioContext"))
+  (if (string=? (js-typeof ctor) "undefined")
+      (let ([webkit (js-var "webkitAudioContext")])
+        (if (string=? (js-typeof webkit) "undefined")
+            #f
+            webkit))
+      ctor))
+
+(define (ensure-audio!)
+  (when (not audio-context)
+    (define ctor (audio-context-constructor))
+    (when ctor
+      (set! audio-context (js-new ctor (vector)))))
+  (when audio-context
+    (define state (js-ref audio-context "state"))
+    (when (and (string? state) (string=? state "suspended"))
+      (js-send audio-context "resume" (vector)))))
+
+(define (play-tone freq dur type volume [delay 0.0])
+  (when audio-context
+    (define osc  (js-send audio-context "createOscillator" (vector)))
+    (define gain (js-send audio-context "createGain" (vector)))
+    (define now  (js-ref audio-context "currentTime"))
+    (define start (+ (inexact now) (inexact delay)))
+    (define end   (+ start (inexact dur)))
+    (define freq-obj (js-ref osc "frequency"))
+    (define gain-obj (js-ref gain "gain"))
+    (js-set! osc "type" type)
+    (js-set! freq-obj "value" (inexact freq))
+    (js-send gain-obj "setValueAtTime" (vector (inexact volume) start))
+    (js-send gain-obj "linearRampToValueAtTime" (vector 0.0 end))
+    (js-send osc "connect" (vector gain))
+    (js-send gain "connect" (vector (js-ref audio-context "destination")))
+    (js-send osc "start" (vector start))
+    (js-send osc "stop" (vector end))))
+
+(define (play-sfx kind)
+  (ensure-audio!)
+  (when audio-context
+    (case kind
+      [(shoot)
+       (play-tone 880. 0.07 "square" 0.14)]
+      [(hit)
+       (play-tone 220. 0.12 "sawtooth" 0.18)]
+      [(loss)
+       (play-tone 220. 0.18 "square" 0.2)
+       (play-tone 110. 0.24 "square" 0.18 0.12)]
+      [(win)
+       (play-tone 440. 0.1 "triangle" 0.16)
+       (play-tone 660. 0.1 "triangle" 0.16 0.12)
+       (play-tone 880. 0.12 "triangle" 0.16 0.24)]
+      [(restart)
+       (play-tone 520. 0.08 "square" 0.12)]
+      [else (void)])))
+
+;;;
 ;;; Game Area
 ;;;
 
@@ -111,6 +173,8 @@
 (define space-pressed?       #f)              ; ditto
 (define time-since-last-shot shoot-cooldown)  ; time passed since last shot
 (define last-time            #f)              ; timestamp from last tick
+(define win-sound-played?    #f)
+(define loss-sound-played?   #f)
 
 ;;;
 ;;; DOM
@@ -158,6 +222,7 @@
       (string=? key "spacebar")))
 
 (define (on-key-down evt)
+  (ensure-audio!)
   (define key      (js-ref evt "key"))
   (define handled? #f)
   (when (string? key)
@@ -221,7 +286,8 @@
     (define new-bullet (bullet (player-x player-pos)
                                (- (player-y player-pos) bullet-height)))
     (set! bullets (cons new-bullet bullets))
-    (set! time-since-last-shot 0.)))
+    (set! time-since-last-shot 0.)
+    (play-sfx 'shoot)))
 
 (define (bullet-hits-enemy? b e)
   (define b-left   (- (bullet-x b) bullet-half-width))
@@ -253,7 +319,9 @@
       [else
        (define hit (find-hit-enemy b))
        (if hit
-           (set! enemies (remove hit enemies eq?))
+           (begin
+             (set! enemies (remove hit enemies eq?))
+             (play-sfx 'hit))
            (set! new-bullets (cons b new-bullets)))]))
   (set! bullets (reverse new-bullets)))
 
@@ -293,14 +361,20 @@
     (update-bullets dt)
     (when (null? enemies)
       (set! status 'won))
+    (when (and (eq? status 'won) (not win-sound-played?))
+      (set! win-sound-played? #t)
+      (play-sfx 'win))
     (when (eq? status 'playing)
       (update-enemies dt)
       (when (enemy-reached-bottom?)
-        (set! status 'lost)))))
+        (set! status 'lost)))
+    (when (and (eq? status 'lost) (not loss-sound-played?))
+      (set! loss-sound-played? #t)
+      (play-sfx 'loss))))
 
 ;;;
 ;;; Render game state to canvas
-;;;
+;;; 
 
 (define instruction-text "←/→ or A/D to move, Space to shoot")
 
@@ -432,8 +506,11 @@
   (set! space-pressed? #f)
   (set! time-since-last-shot shoot-cooldown)
   (set! last-time #f)
+  (set! win-sound-played? #f)
+  (set! loss-sound-played? #f)
   (set-player-x! player-pos (/ width 2.))
-  (set-player-y! player-pos (- height (+ player-height 24.))))
+  (set-player-y! player-pos (- height (+ player-height 24.)))
+  (play-sfx 'restart))
 
 ;;;
 ;;; Restart Key
