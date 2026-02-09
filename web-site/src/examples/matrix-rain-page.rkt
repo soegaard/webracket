@@ -12,7 +12,6 @@
   "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js")
 
 (define (matrix-rain-page)
-  (js-log "matrix-rain-page")
   `(div (@ (class "page page--matrix-rain"))
         ,(navbar)
         (section (@ (class "mathjax-hero"))
@@ -42,15 +41,13 @@
                               ". ")
                            (div (@ (class "mathjax-actions"))
                                 ,(code-pill (gh-file "examples/matrix-rain/matrix-rain.rkt") "Example source code")
-                                ,(code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt") "Layout source")))))
+                                ,(code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt") "Web-site source")))))
         ,(footer-section)))
 
 (define matrix-rain-started? #f)
 
 (define (matrix-rain-init-terminal)
-  (js-log "matrix-rain-init-terminal")
   (when (not matrix-rain-started?)
-    (js-log "matrix-rain-init-terminal:1")
     (define container (js-get-element-by-id "matrix-root"))
     (define terminal-constructor (js-var "Terminal"))
     (define fit-addon-global (js-var "FitAddon"))
@@ -61,11 +58,10 @@
 
     (cond
       [(not dependencies-ready?)
-       (js-log "matrix-rain-init-terminal:missing-dependency")]
+       (void)]
       [else
        (set! matrix-rain-started? #t)
 
-          (js-log "matrix-rain-init-terminal:2")
           (define terminal-theme
             (js-object '(("background" "#000000"))))
 
@@ -74,7 +70,6 @@
              (vector
               (vector "theme" terminal-theme))))
           (define terminal (xterm-terminal-new terminal-options))
-          (js-log "matrix-rain-init-terminal:3")
 
           (define fit-addon
             (let* ([addon-namespace fit-addon-global]
@@ -83,20 +78,13 @@
                     (if (string=? (js-typeof addon-member) "undefined")
                         addon-namespace
                         (js-ref/extern addon-namespace "FitAddon"))])
-              (js-log "matrix-rain-init-terminal:4")
               (js-new addon-constructor (vector))))
 
-          (js-log "matrix-rain-init-terminal:5")
           (xterm-terminal-load-addon terminal fit-addon)
-          (js-log "matrix-rain-init-terminal:6")
           (xterm-terminal-open terminal container)
-          (js-log "matrix-rain-init-terminal:7")
           (xterm-fit-addon-fit fit-addon)
-          (js-log "matrix-rain-init-terminal:8")
           (xterm-terminal-focus terminal)
-          (js-log "matrix-rain-init-terminal:9")
           (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
-          (js-log "matrix-rain-init-terminal:10")
 
           (define columns (max 1 (inexact->exact (xterm-terminal-cols terminal))))
           (define rows    (max 1 (inexact->exact (xterm-terminal-rows terminal))))
@@ -104,22 +92,18 @@
           (struct drop (position speed trail last-row) #:mutable)
 
           (define (->f x)
-            (js-log "->f")
             (if (exact? x) (exact->inexact x) x))
 
           (define glyphs
             "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛ")
           (define glyph-count (string-length glyphs))
           (define (random-glyph)
-            (js-log "random-glyph")
             (string-ref glyphs (random glyph-count)))
 
           (define (randf)
-            (js-log "randf")
             (->f (random)))
 
           (define (random-between low high)
-            (js-log "random-between")
             (+ low (* (randf) (- high low))))
 
           (define fade-rate 2.6)
@@ -138,7 +122,6 @@
           (define column-drops #f)
 
           (define (reset-grid-state!)
-            (js-log "reset-grid-state!")
             (set! intensities (make-vector rows #f))
             (set! characters (make-vector rows #f))
             (for ([row (in-range rows)])
@@ -147,7 +130,6 @@
             (set! column-drops (make-vector columns #f)))
 
           (define (sync-terminal-size!)
-            (js-log "sync-terminal-size!")
             (define next-columns (max 1 (inexact->exact (xterm-terminal-cols terminal))))
             (define next-rows (max 1 (inexact->exact (xterm-terminal-rows terminal))))
             (when (or (not (= next-columns columns))
@@ -159,7 +141,6 @@
           (reset-grid-state!)
 
           (define (boost-intensity! row col target)
-            (js-log "boost-intensity!")
             (when (and (>= row 0) (< row rows))
               (define row-int (vector-ref intensities row))
               (define current (vector-ref row-int col))
@@ -167,7 +148,6 @@
                 (vector-set! row-int col (min 1. target)))))
 
           (define (set-cell! row col intensity char [head? #f])
-            (js-log "set-cell!")
             (when (and (>= row 0) (< row rows))
               (define row-int (vector-ref intensities row))
               (define row-char (vector-ref characters row))
@@ -179,12 +159,10 @@
           (define (spawn-drop! col [position (- (random-between 0. rows))]
                                [speed    (random-between min-speed max-speed)]
                                [trail    (random-between min-trail max-trail)])
-            (js-log "spawn-drop!")
             (vector-set! column-drops col
                          (drop position speed trail (inexact->exact (floor position)))))
 
           (define (fade-grid! dt)
-            (js-log "fade-grid!")
             (define decay (* dt fade-rate))
             (for ([row (in-range rows)])
               (define row-int (vector-ref intensities row))
@@ -207,7 +185,6 @@
                            (vector-set! row-char col (random-glyph))))))))))
 
           (define (update-drops! dt)
-            (js-log "update-drops!")
             (for ([col (in-range columns)])
               (define current-drop (vector-ref column-drops col))
               (when current-drop
@@ -226,7 +203,6 @@
                   (vector-set! column-drops col #f)))))
 
           (define (maybe-spawn-drops! dt)
-            (js-log "maybe-spawn-drops!")
             (define active-columns
               (for/sum ([col (in-range columns)])
                 (if (vector-ref column-drops col) 1 0)))
@@ -242,7 +218,6 @@
                   (spawn-drop! col)))))
 
           (define (boost-column! col)
-            (js-log "boost-column!")
             (for ([row (in-range rows)])
               (define row-int (vector-ref intensities row))
               (define value (vector-ref row-int col))
@@ -250,12 +225,10 @@
                 (vector-set! row-int col (min 1. (+ value 0.3))))))
 
           (define (flare-column! col)
-            (js-log "flare-column!")
             (for ([row (in-range (min rows 4))])
               (set-cell! row col (+ 0.5 (* (randf) 0.5)) (random-glyph))))
 
           (define (disturb! data)
-            (js-log "disturb!")
             (when (> columns 0)
               (define center
                 (modulo
@@ -272,7 +245,6 @@
                 (flare-column! col))))
 
           (define (render!)
-            (js-log "render!")
             (define payload
               (call-with-output-string
                (λ (out)
@@ -301,34 +273,27 @@
           (define on-resize-external #f)
 
           (define (update! dt)
-            (js-log "update!")
             (fade-grid! dt)
             (update-drops! dt)
             (maybe-spawn-drops! dt))
 
           (define (tick timestamp)
-            (js-log "tick")
             (define delta (if last-time (- timestamp last-time) 16.))
             (define dt (min 0.1 (* 0.001 delta)))
             (set! last-time timestamp)
-            (js-log "tick:1")
             (update! dt)
-            (js-log "tick:2")
             (render!)
-            (js-log "tick:3")
             (js-window-request-animation-frame tick-external))
 
           (define on-data-external
             (procedure->external
              (λ (data)
-               (js-log "on-data-external")
                (when (string? data)
                  (disturb! data))
                (void))))
 
           (define handle-resize!
             (λ (_)
-              (js-log "handle-resize!")
               (xterm-fit-addon-fit fit-addon)
               (sync-terminal-size!)
               (render!)
@@ -337,7 +302,6 @@
           (set! on-resize-external (procedure->external handle-resize!))
           (js-add-event-listener! (js-window-window) "resize" on-resize-external)
 
-          (js-log "matrix-rain-init-terminal:11")
           (js-send terminal "onData" (vector on-data-external))
 
           (for ([col (in-range columns)])
@@ -345,14 +309,11 @@
               (spawn-drop! col (random-between (- rows) 0.))))
 
           (render!)
-          (js-log "matrix-rain-init-terminal:12")
           (set! tick-external (procedure->external tick))
-          (js-log "matrix-rain-init-terminal:13")
           (js-window-request-animation-frame tick-external)
           (void)])))
 
 (define (nullish? x)
-  (js-log "nullish?")
   (cond
     [(not x) #t]
     [else
@@ -361,15 +322,12 @@
          (string=? s "undefined"))]))
 
 (define (ensure-matrix-rain-assets!)
-  (js-log "ensure-matrix-rain-assets!")
   (define head (js-document-head))
 
   (define (maybe-init-terminal)
-    (js-log "maybe-init-terminal")
     (when (and (not matrix-rain-started?)
                (not (string=? (js-typeof (js-var "Terminal")) "undefined"))
                (not (string=? (js-typeof (js-var "FitAddon")) "undefined")))
-      (js-log "maybe-init-terminal:1")
       (matrix-rain-init-terminal)))
 
   (define style-id "matrix-rain-xterm-css")
@@ -388,7 +346,6 @@
 
   (define maybe-init-external
     (procedure->external (λ (_)
-                          (js-log "maybe-init-external")
                           (maybe-init-terminal)
                           (void))))
 
@@ -415,6 +372,5 @@
   (maybe-init-terminal))
 
 (define (init-matrix-rain-page!)
-  (js-log "init-matrix-rain-page!")
   (js-set! (js-var "document") "title" "Matrix Rain")
   (ensure-matrix-rain-assets!))
