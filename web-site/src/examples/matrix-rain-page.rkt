@@ -97,8 +97,8 @@
           (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
           (js-log "matrix-rain-init-terminal:10")
 
-          (define columns (inexact->exact (xterm-terminal-cols terminal)))
-          (define rows    (inexact->exact (xterm-terminal-rows terminal)))
+          (define columns (max 1 (inexact->exact (xterm-terminal-cols terminal))))
+          (define rows    (max 1 (inexact->exact (xterm-terminal-rows terminal))))
 
           (struct drop (position speed trail last-row) #:mutable)
 
@@ -122,7 +122,7 @@
             (+ low (* (randf) (- high low))))
 
           (define fade-rate 2.6)
-          (define base-spawn-rate 0.32)
+          (define base-spawn-rate 0.68)
           (define min-speed 14.)
           (define max-speed 32.)
           (define min-trail 8.)
@@ -132,13 +132,30 @@
           (define burst-trail-min 14.)
           (define burst-trail-max 26.)
 
-          (define intensities (make-vector rows #f))
-          (define characters (make-vector rows #f))
-          (for ([row (in-range rows)])
-            (vector-set! intensities row (make-vector columns 0.0))
-            (vector-set! characters row (make-vector columns #\space)))
+          (define intensities #f)
+          (define characters #f)
+          (define column-drops #f)
 
-          (define column-drops (make-vector columns #f))
+          (define (reset-grid-state!)
+            (js-log "reset-grid-state!")
+            (set! intensities (make-vector rows #f))
+            (set! characters (make-vector rows #f))
+            (for ([row (in-range rows)])
+              (vector-set! intensities row (make-vector columns 0.0))
+              (vector-set! characters row (make-vector columns #\space)))
+            (set! column-drops (make-vector columns #f)))
+
+          (define (sync-terminal-size!)
+            (js-log "sync-terminal-size!")
+            (define next-columns (max 1 (inexact->exact (xterm-terminal-cols terminal))))
+            (define next-rows (max 1 (inexact->exact (xterm-terminal-rows terminal))))
+            (when (or (not (= next-columns columns))
+                      (not (= next-rows rows)))
+              (set! columns next-columns)
+              (set! rows next-rows)
+              (reset-grid-state!)))
+
+          (reset-grid-state!)
 
           (define (boost-intensity! row col target)
             (js-log "boost-intensity!")
@@ -205,9 +222,18 @@
 
           (define (maybe-spawn-drops! dt)
             (js-log "maybe-spawn-drops!")
+            (define active-columns
+              (for/sum ([col (in-range columns)])
+                (if (vector-ref column-drops col) 1 0)))
+            (define desired-active-columns (max 1 (inexact->exact (ceiling (* columns 0.3)))))
+            (define need-more? (< active-columns desired-active-columns))
             (for ([col (in-range columns)])
               (when (not (vector-ref column-drops col))
-                (when (< (randf) (* base-spawn-rate dt))
+                (define spawn-rate
+                  (if need-more?
+                      (* base-spawn-rate 2.4)
+                      base-spawn-rate))
+                (when (< (randf) (* spawn-rate dt))
                   (spawn-drop! col)))))
 
           (define (boost-column! col)
@@ -267,6 +293,7 @@
 
           (define last-time #f)
           (define tick-external #f)
+          (define on-resize-external #f)
 
           (define (update! dt)
             (js-log "update!")
@@ -294,11 +321,22 @@
                  (disturb! data))
                (void))))
 
+          (define handle-resize!
+            (λ (_)
+              (js-log "handle-resize!")
+              (xterm-fit-addon-fit fit-addon)
+              (sync-terminal-size!)
+              (render!)
+              (void)))
+
+          (set! on-resize-external (procedure->external handle-resize!))
+          (js-window-add-event-listener "resize" on-resize-external)
+
           (js-log "matrix-rain-init-terminal:11")
           (js-send terminal "onData" (vector on-data-external))
 
           (for ([col (in-range columns)])
-            (when (< (randf) 0.6)
+            (when (< (randf) 0.85)
               (spawn-drop! col (random-between (- rows) 0.))))
 
           (render!)
