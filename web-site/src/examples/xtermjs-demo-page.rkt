@@ -52,16 +52,26 @@
                            (div (@ (id "xtermjs-demo-root"))))))
         (section (@ (class "section section--mathjax-details"))
                  (div (@ (class "section-content"))
-                      (div (@ (class "mathjax-details"))
-                           (p "This example is adapted from "
-                              (code "examples/xtermjs-demo/xtermjs-demo.rkt")
-                              ".")
-                           (div (@ (class "mathjax-actions"))
-                                ,(code-pill (gh-file "examples/xtermjs-demo/xtermjs-demo.rkt")
-                                            "Example source code")
-                                ,(code-pill (gh-file "web-site/src/examples/xtermjs-demo-page.rkt")
-                                            "Web-site source")))))
-        ,(footer-section)))
+                      (div (@ (class "mathjax-details xtermjs-demo-notes"))
+                           (div (@ (class "demo-note"))
+                                (p (@ (class "demo-note-label")) "What is xterm.js?")
+                                (p "A JavaScript terminal emulator that renders in the browser."))
+                           (div (@ (class "demo-note"))
+                                (p (@ (class "demo-note-label")) "What does this demo show?")
+                                (p "A WebRacket-driven terminal: ANSI handling, theming, input forwarding, and add-ons "
+                                   "running in the browser."))
+                           (div (@ (class "demo-note demo-note--source"))
+                                (p (@ (class "demo-note-label")) "Source")
+                                (p (@ (class "demo-note-muted"))
+                                   "Adapted from "
+                                   (code "examples/xtermjs-demo/xtermjs-demo.rkt")
+                                   ".")
+                                (div (@ (class "mathjax-actions demo-note-actions"))
+                                     ,(code-pill (gh-file "examples/xtermjs-demo/xtermjs-demo.rkt")
+                                                 "Example source code")
+                                     ,(code-pill (gh-file "web-site/src/examples/xtermjs-demo-page.rkt")
+                                                 "Web-site source")))))
+        ,(footer-section))))
 
 
 ;;;
@@ -149,21 +159,27 @@
           (js-set! style "textContent"
                    (string-append
                     ".xtermjs-demo-shell {"
+                    "  --terminal-panel-bg: #111427;"
+                    "  --terminal-panel-border: rgba(76, 98, 170, 0.18);"
+                    "  --terminal-panel-shadow: 0 4px 12px rgba(72, 96, 180, 0.12);"
+                    "  --terminal-panel-glow: 0 22px 60px rgba(44, 62, 130, 0.18);"
                     "  padding: 28px;"
                     "  border-radius: 22px;"
-                    "  background: radial-gradient(circle at top, #3c3d39 0%, #1e1f1d 55%, #161715 100%);"
-                    "  border: 1px solid rgba(128, 128, 128, 0.22);"
-                    "  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);"
+                    "  background: var(--terminal-panel-bg);"
+                    "  border: 1px solid var(--terminal-panel-border);"
+                    "  box-shadow:"
+                    "    var(--terminal-panel-shadow),"
+                    "    var(--terminal-panel-glow);"
                     "}\n"
                     ".xtermjs-demo { width: 100%; padding: 24px; box-sizing: border-box; }\n"
                     ".xtermjs-demo .inner { "
                     "   position: relative; margin: 0 auto; max-width: 860px;"
-                    "   background: rgba(27, 28, 26, 0.9); border-radius: 16px;"
-                    "   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);"
+                    "   background: rgba(11, 13, 24, 0.96); border-radius: 16px;"
+                    "   box-shadow: 0 18px 48px rgba(12, 16, 40, 0.55);"
                     "   padding: 32px; transition: background 220ms ease, box-shadow 220ms ease; }\n"
                     ".xtermjs-demo .inner.other-theme { "
-                    "   background: rgba(32, 32, 45, 0.92);"
-                    "   box-shadow: 0 32px 72px rgba(8, 12, 32, 0.55); }\n"
+                    "   background: rgba(15, 18, 36, 0.96);"
+                    "   box-shadow: 0 28px 64px rgba(12, 16, 44, 0.6); }\n"
                     ".xtermjs-demo .terminal-container {\n"
                     "   height: 480px; display: flex; justify-content: center; align-items: center;\n"
                     " }\n"
@@ -185,7 +201,33 @@
                     "   position: absolute; right: 16px; top: -28px; padding: 4px 10px;"
                     "   border-radius: 999px; background: rgba(0, 0, 0, 0.65); color: #f8f8f8;"
                     "   font-size: 12px; letter-spacing: 0.08em; pointer-events: none;"
-                    "   text-transform: uppercase; }"))
+                    "   text-transform: uppercase; }\n"
+                    ".xtermjs-demo-notes {"
+                    "  --demo-divider: rgba(120, 140, 220, 0.2);"
+                    "  --demo-muted: rgba(170, 180, 225, 0.7);"
+                    "  --demo-bg: rgba(16, 18, 34, 0.35);"
+                    "  border-top: 1px solid var(--demo-divider);"
+                    "  padding: 14px 16px 0;"
+                    "  background: var(--demo-bg);"
+                    "  border-radius: 12px;"
+                    "}\n"
+                    ".xtermjs-demo-notes .demo-note {"
+                    "  display: flex; flex-direction: column; gap: 6px;"
+                    "}\n"
+                    ".xtermjs-demo-notes .demo-note + .demo-note {"
+                    "  margin-top: 10px;"
+                    "}\n"
+                    ".xtermjs-demo-notes .demo-note-label {"
+                    "  margin: 0; font-size: 0.78rem; letter-spacing: 0.08em;"
+                    "  text-transform: uppercase; color: rgba(210, 220, 255, 0.82);"
+                    "}\n"
+                    ".xtermjs-demo-notes p { margin: 0; }\n"
+                    ".xtermjs-demo-notes .demo-note-muted {"
+                    "  font-size: 0.86rem; color: var(--demo-muted);"
+                    "}\n"
+                    ".xtermjs-demo-notes .demo-note-actions {"
+                    "  margin-top: 6px;"
+                    "}"))
           (js-append-child! head style))
 
         (js-set! container "innerHTML" "")
