@@ -304,18 +304,66 @@
 
 (define instruction-text "←/→ or A/D to move, Space to shoot")
 
+;;;
+;;; Pixel sprites (classic Space Invaders style)
+;;;
+
+(define ship-sprite
+  (list
+   "0010000100"
+   "0011111100"
+   "0111111110"
+   "1111111111"
+   "1111111111"
+   "1011111101"
+   "0010000100"))
+
+(define alien-sprite
+  (list
+   "00100100"
+   "01011010"
+   "11111111"
+   "10111101"
+   "11111111"
+   "01000010"
+   "10100101"
+   "01000010"))
+
+(define (sprite-width sprite)
+  (string-length (car sprite)))
+
+(define (sprite-height sprite)
+  (length sprite))
+
+(define (draw-sprite! sprite x y scale color)
+  (js-set-canvas2d-fill-style! ctx color)
+  (define x0 (inexact->exact (round x)))
+  (define y0 (inexact->exact (round y)))
+  (define s  (max 1 (inexact->exact (round scale))))
+  (define x0f (inexact x0))
+  (define y0f (inexact y0))
+  (define sf  (inexact s))
+  (for ([row (in-list sprite)]
+        [row-idx (in-naturals)])
+    (for ([col-idx (in-range (string-length row))])
+      (when (char=? (string-ref row col-idx) #\1)
+        (js-canvas2d-fill-rect ctx
+                               (+ x0f (* col-idx sf))
+                               (+ y0f (* row-idx sf))
+                               sf
+                               sf)))))
+
 (define (render!)
   (when ctx
     ; Background
     (js-set-canvas2d-fill-style! ctx "#000")
     (js-canvas2d-fill-rect ctx 0. 0. (inexact width) (inexact height))
 
-    ; Player
-    (js-set-canvas2d-fill-style! ctx "#0ff")
-    (define player-left (- (player-x player-pos) half-player-width))
-    (js-canvas2d-fill-rect ctx
-                           (inexact player-left)  (inexact (player-y player-pos))
-                           (inexact player-width) (inexact player-height))
+    ; Player (pixel ship)
+    (define ship-scale (ceiling (/ player-width (sprite-width ship-sprite))))
+    (define ship-draw-width (* ship-scale (sprite-width ship-sprite)))
+    (define ship-left (- (player-x player-pos) (/ ship-draw-width 2.)))
+    (draw-sprite! ship-sprite ship-left (player-y player-pos) ship-scale "#0ff")
 
     ; Bullets
     (js-set-canvas2d-fill-style! ctx "#ff0")
@@ -326,12 +374,10 @@
                              (inexact bullet-width)
                              (inexact bullet-height)))
 
-    ; Enemies
-    (js-set-canvas2d-fill-style! ctx "#f66")
+    ; Enemies (pixel aliens)
+    (define alien-scale (ceiling (/ enemy-width (sprite-width alien-sprite))))
     (for ([e (in-list enemies)])
-      (js-canvas2d-fill-rect ctx
-                             (inexact (enemy-x e)) (inexact (enemy-y e))
-                             (inexact enemy-width) (inexact enemy-height)))
+      (draw-sprite! alien-sprite (enemy-x e) (enemy-y e) alien-scale "#f66"))
 
     ; Instruction Text
     (js-set-canvas2d-fill-style!    ctx "#fff")
@@ -349,10 +395,10 @@
                           "The invaders landed!"))
       (js-canvas2d-fill-text ctx message (/ width 2.) (/ height 2.) (void))
       (js-set-canvas2d-font! ctx "18px sans-serif")
-    (js-canvas2d-fill-text ctx "Hit \"R\" to play again."
-                           (/ width 2.)
-                           (+ (/ height 2.) 36.)
-                           (void)))))
+      (js-canvas2d-fill-text ctx "Hit \"R\" to play again."
+                             (/ width 2.)
+                             (+ (/ height 2.) 36.)
+                             (void)))))
 
 ;;;
 ;;; Timer Events
