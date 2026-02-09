@@ -49,12 +49,13 @@
     (js-log "matrix-rain-init-terminal:1")
     (define container (js-get-element-by-id "matrix-root"))
     (js-log "matrix-rain-init-terminal:2")
+    (define terminal-theme
+      (js-object '(("background" "#000000"))))
+
     (define terminal-options
       (js-object
        (vector
-        (vector "theme"
-                (js-object
-                 (vector (vector "background" "#000000")))))))
+        (vector "theme" terminal-theme))))
     (define terminal (xterm-terminal-new terminal-options))
     (js-log "matrix-rain-init-terminal:3")
 
