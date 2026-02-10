@@ -164,6 +164,28 @@
             (div (@ (class "qs-step-body"))
                  ,@content)))
 
+;; sanitize-sxml : Any -> Any
+;;   Defensive sanitizer to avoid unsupported SXML shapes.
+(define (sanitize-sxml exp)
+  (cond
+    [(string? exp) exp]
+    [(list? exp)
+     (match exp
+       [(list (? symbol? tag) (list '@ attrs ...) children ...)
+        (define clean-attrs
+          (for/list ([attr (in-list attrs)]
+                     #:when (and (list? attr) (= (length attr) 2)))
+            (define name (first attr))
+            (define value (second attr))
+            (list name (if (string? value) value (format "~a" value)))))
+        (list* tag (list* '@ clean-attrs) (map sanitize-sxml children))]
+       [(list (? symbol? tag) children ...)
+        (list* tag (map sanitize-sxml children))]
+       [_
+        (format "~a" exp)])]
+    [else
+     (format "~a" exp)]))
+
 ;; card-grid : (Listof (Listof List)) (U #f String) -> List
 ;;   Wraps card content lists into a grid container.
 (define (card-grid cards [class-name #f])
@@ -202,6 +224,29 @@
                                              "DOM + JS FFI"
                                              "Input handling"
                                              "Editor state"))))
+   (make-hash (list (cons 'id       "xtermjs-demo")
+                    (cons 'title    "XtermJS Demo")
+                    (cons 'path     "examples/xtermjs-demo")
+                    (cons 'entry    "xtermjs-demo.html")
+                    (cons 'demo-url "xtermjs-demo.html")
+                    (cons 'source-path "examples/xtermjs-demo/xtermjs-demo.rkt")
+                    (cons 'tags     (list 'xterm 'dom))
+                    (cons 'summary  "Interactive terminal with themed styling and built-in commands.")
+                    (cons 'features (list "XtermJS add-ons"
+                                          "Input handling"
+                                          "Command dispatch"))))
+   (make-hash (list (cons 'id       "space-invaders")
+                    (cons 'title    "Space Invaders")
+                    (cons 'path     "examples/space-invaders")
+                    (cons 'entry    "space-invaders.html")
+                    (cons 'demo-url "space-invaders.html")
+                    (cons 'source-path "web-site/src/examples/space-invaders-page.rkt")
+                    (cons 'tags     (list 'canvas 'dom))
+                    (cons 'summary  "Arcade shooter on canvas with responsive keyboard controls.")
+                    (cons 'features (list "Canvas API via DOM + JS FFI"
+                                          "Keyboard events"
+                                          "Timers / animation loop"
+                                          "Mutable game state"))))
    (make-hash (list (cons 'id          "formula1")
                     (cons 'title       "Formula 1 Countdown")
                     (cons 'path        "examples/formula1")
@@ -224,17 +269,7 @@
                     (cons 'features    (list "XtermJS integration"
                                              "DOM + JS FFI"
                                              "Timers / animation loop"))))
-   (make-hash (list (cons 'id       "xtermjs-demo")
-                    (cons 'title    "XtermJS Demo")
-                    (cons 'path     "examples/xtermjs-demo")
-                    (cons 'entry    "xtermjs-demo.html")
-                    (cons 'demo-url "xtermjs-demo.html")
-                    (cons 'source-path "examples/xtermjs-demo/xtermjs-demo.rkt")
-                    (cons 'tags     (list 'xterm 'dom))
-                    (cons 'summary  "Interactive terminal with themed styling and built-in commands.")
-                    (cons 'features (list "XtermJS add-ons"
-                                          "Input handling"
-                                          "Command dispatch"))))
+   
    (make-hash (list (cons 'id       "minischeme")
                     (cons 'title    "MiniScheme REPL")
                     (cons 'path     "examples/minischeme")
@@ -245,18 +280,7 @@
                                           "Input handling + history"
                                           "Runtime evaluator"
                                           "Ports + printing"))))
-   (make-hash (list (cons 'id       "space-invaders")
-                    (cons 'title    "Space Invaders")
-                    (cons 'path     "examples/space-invaders")
-                    (cons 'entry    "space-invaders.html")
-                    (cons 'demo-url "space-invaders.html")
-                    (cons 'source-path "web-site/src/examples/space-invaders-page.rkt")
-                    (cons 'tags     (list 'canvas 'dom))
-                    (cons 'summary  "Arcade shooter on canvas with responsive keyboard controls.")
-                    (cons 'features (list "Canvas API via DOM + JS FFI"
-                                          "Keyboard events"
-                                          "Timers / animation loop"
-                                          "Mutable game state"))))
+   
    (make-hash (list (cons 'id       "pict")
                     (cons 'title    "Canvas + Pict")
                     (cons 'path     "examples/pict")
@@ -381,6 +405,9 @@
   (define path (js-ref (js-window-location) "pathname"))
   (cond
     [(string-suffix? path "documentation.html")         'documentation]
+    [(string-suffix? path "documentation-compiler-overview.html")
+     'doc-compiler-overview]
+    [(string-suffix? path "documentation-js-ffi.html")  'doc-js-ffi]
     [(string-suffix? path "quick-start.html")           'quick-start]
     [(string-suffix? path "installation.html")          'installation]
     [(string-suffix? path "examples.html")              'examples]
@@ -396,6 +423,14 @@
     [(string-suffix? path "is-webracket-for-you.html")  'for-you]
     [else                                               'home]))
 
+;; nav-active-page : -> Symbol
+;;   Maps doc subpages to the Documentation tab for the navbar.
+(define (nav-active-page)
+  (define page (current-page))
+  (if (memq page '(doc-compiler-overview doc-js-ffi))
+      'documentation
+      page))
+
 ;; nav-link : String String Symbol Symbol -> List
 ;;   Creates a nav link with active state styling.
 (define (nav-link label href page-id active-page)
@@ -407,7 +442,7 @@
 ;; navbar : -> List
 ;;   Shared navigation header for all pages.
 (define (navbar)
-  (define active-page (current-page))
+  (define active-page (nav-active-page))
   `(nav (@ (class "navbar"))
         (div (@ (class "nav-left"))
              (a (@ (class "nav-home") (href "index.html"))
@@ -583,19 +618,23 @@
              (list `(h3 "MathJax 4 Editor")
                    `(p "Live formula preview with WebRacket + MathJax.")
                    `(a (@ (class "example-link") (href "mathjax.html")) "Open demo"))
-             (list `(h3 "Formula 1 Countdown")
-                   `(p "Next race from ICS, with days/hours countdown.")
-                   `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
-             (list `(h3 "Matrix Rain")
-                   `(p "Terminal-style animation powered by XtermJS.")
-                   `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
-             (list `(h3 "MiniScheme REPL")
-                   `(p "Interactive Scheme session running in the browser.")
-                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
              (list `(h3 "Space Invaders")
                    `(p "Arcade shooter on canvas with responsive keyboard controls.")
                    `(a (@ (class "example-link") (href "examples/space-invaders/space-invaders.html")) "Open demo"))
-             (list `(h3 "Canvas + Pict")
+             (list `(h3 "Formula 1 Countdown")
+                   `(p "Next race from ICS, with days/hours countdown.")
+                   `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
+             (list `(h3 "XtermJS Demo")
+                   `(p "Interactive terminal with themed styling and built-in commands.")
+                   `(a (@ (class "example-link") (href "xtermjs-demo.html")) "Open demo"))
+             (list `(h3 "Matrix Rain")
+                   `(p "Terminal-style animation powered by XtermJS.")
+                   `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
+             #;(list `(h3 "MiniScheme REPL")
+                   `(p "Interactive Scheme session running in the browser.")
+                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             
+             #;(list `(h3 "Canvas + Pict")
                    `(p "Racket pict rendering pipeline for the browser canvas.")
                    `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
             "examples-grid"))
@@ -676,6 +715,44 @@
                       (h1 (@ (class "hero-title")) "Documentation")
                       (p (@ (class "hero-lead"))
                          "Reference notes for WebRacket’s compiler and runtime.")))
+        ,(section-block
+          "Documentation Topics"
+          "Pick a focused topic for deeper details."
+          (list
+           (card-grid
+            (list
+             (list `(h3 "Short Compiler Overview")
+                   `(p "A high-level look at the compiler pipeline, passes, and runtime layout.")
+                   `(a (@ (class "doc-cta doc-cta--primary")
+                          (href "documentation-compiler-overview.html"))
+                       "Read overview"))
+             (list `(h3 "Guide to the JavaScript FFI")
+                   `(p "How WebRacket crosses the boundary to JavaScript and the browser.")
+                   `(a (@ (class "doc-cta doc-cta--primary")
+                          (href "documentation-js-ffi.html"))
+                       "Open guide"))))
+           )
+          #f
+          "section--docs-topics")
+        ,(footer-section)))
+
+;; doc-compiler-overview-page : -> List
+;;   Documentation subpage: Short Compiler Overview.
+(define (doc-compiler-overview-page)
+  `(div (@ (class "page page--docs"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Compiler")
+                           (span (@ (class "pill")) "Passes")
+                           (span (@ (class "pill")) "Wasm"))
+                      (p (@ (class "hero-sublead"))
+                         (a (@ (href "documentation.html")) "Documentation")
+                         " / Short Compiler Overview")
+                      (h1 (@ (class "hero-title")) "Short Compiler Overview")
+                      (p (@ (class "hero-lead"))
+                         "A quick, high-level guide to the WebRacket compiler pipeline.")))
         ,(section-block
           "Short Compiler Overview"
           #f
@@ -773,6 +850,435 @@
           #f
           #f)
         ,(footer-section)))
+
+;; doc-js-ffi-page : -> List
+;;   Documentation subpage: Guide to the JavaScript FFI.
+(define (doc-js-ffi-page)
+  `(div (@ (class "page page--docs"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "FFI")
+                           (span (@ (class "pill")) "JavaScript")
+                           (span (@ (class "pill")) "Browser"))
+                      (p (@ (class "hero-sublead"))
+                         (a (@ (href "documentation.html")) "Documentation")
+                         " / Guide to the JavaScript FFI")
+                      (h1 (@ (class "hero-title")) "Guide to the JavaScript FFI")
+                      (p (@ (class "hero-lead"))
+                         "How WebRacket crosses the boundary to JavaScript.")))
+        (div (@ (class "docs-layout"))
+             (div (@ (class "docs-article"))
+                  (div (@ (class "toc-mobile") (id "doc-toc-mobile")))
+                  (section (@ (class "section section--doc-body"))
+                           (div (@ (class "doc-content doc-prose"))
+                                (h2 "1. Purpose and scope")
+                                (p "The JavaScript FFI is the bridge between WebRacket and the host JavaScript runtime. "
+                                   "It lets you call JavaScript APIs from WebRacket, access browser objects (DOM, Canvas, "
+                                   "Audio, etc.), and pass data back and forth. The FFI is intentionally thin: it mirrors "
+                                   "the host APIs with minimal translation so that MDN and library docs stay relevant.")
+                                (p "The FFI focuses on browser and JavaScript interop, not on replacing Racket’s full "
+                                   "foreign-interface system. Expect simple value conversions, explicit extern objects, "
+                                   "and predictable mappings rather than automatic lifting of complex data structures.")
+                                (h2 "2. How bindings are declared")
+                                (p "Bindings live in the files under " (code "ffi/") " and are defined with "
+                                   (code "define-foreign") ". Each binding names a Racket-level procedure, the JavaScript "
+                                   "module it lives in, the host name, and a compact type signature.")
+                                (p "Example (simplified):")
+                                (pre (code "(define-foreign js-ref
+  #:module "standard"
+  #:name   "ref/value"
+  (-> (extern string) (value)))"))
+                                (p "At compile time, WebRacket reads these " (code ".ffi") " files, validates them, and "
+                                   "generates the WebAssembly imports that call into JavaScript.")
+                                (h2 "3. FFI type language (argument + result types)")
+                                (p "The type language is intentionally small. Here are the core types and what they mean:")
+                                (div (@ (class "ffi-table"))
+                                     (table (@ (class "ffi-type-table") (aria-label "FFI core types"))
+                                            (caption "FFI core types")
+                                            (thead
+                                             (tr
+                                              (th (@ (scope "col")) "Type")
+                                              (th (@ (scope "col")) "Meaning / mapping")
+                                              (th (@ (scope "col")) "Notes")))
+                                            (tbody
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "string"))
+                                              (td "A WebRacket string marshaled to JS.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "string/symbol"))
+                                              (td "Accepts either a string or symbol; marshaled as a string.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "value"))
+                                              (td "Any WebRacket value; marshaled through the FASL encoder.")
+                                              (td (@ (class "ffi-note-cell")) "Marshaled via FASL."))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "extern"))
+                                              (td "An external JavaScript object (externref wrapper).")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "i32"))
+                                              (td "Fixnum to signed 32-bit integer.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "u32"))
+                                              (td "Fixnum to unsigned 32-bit integer.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "f64"))
+                                              (td "Flonum to JavaScript number.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "boolean"))
+                                              (td "#f/#t to 0/1.")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                             (tr
+                                              (td (@ (class "ffi-type-cell")) (code "void"))
+                                              (td "No result (equivalent to an empty result list).")
+                                              (td (@ (class "ffi-note-cell is-empty")) "—"))))))
+                                (p "For optional arguments, many bindings accept " (code "value") " and treat "
+                                   (code "(void)") " as JavaScript " (code "undefined") ".")
+                                (h2 "4. Crossing the boundary: argument conversion")
+                                (p "WebRacket and JavaScript do not share a data representation, so arguments are "
+                                   "converted before a host call. The conversion is driven by the type signature in "
+                                   (code "define-foreign") ".")
+                                (p "For simple, direct types, the values are unboxed and passed to the JavaScript import:")
+                                (ul
+                                 (li (code "i32") " / " (code "u32") ": a fixnum becomes a signed/unsigned 32-bit integer.")
+                                 (li (code "f64") ": a flonum becomes a JavaScript number.")
+                                 (li (code "boolean") ": any non-false value becomes " (code "1") "; " (code "#f") " becomes " (code "0") ".")
+                                 (li (code "extern") ": no conversion is performed; the WebRacket value is an external wrapper "
+                                     "that refers to the original JavaScript object."))
+                                (p "For " (code "string") ", " (code "string/symbol") ", and " (code "value") ", the compiler "
+                                   "uses FASL to move data through linear memory. The runtime encodes the argument "
+                                   "to FASL bytes, copies those bytes into linear memory, and passes the start index to "
+                                   "JavaScript. The JavaScript side then decodes the bytes via "
+                                   (code "fasl_to_js_value") " in " (code "assembler.rkt") ".")
+                                (p "The rules in " (code "define-foreign.rkt") " enforce which types are legal: "
+                                   (code "string/symbol") " is only allowed for arguments, and " (code "void") " is "
+                                   "a synonym for an empty result list.")
+                                (h2 "5. Return values and conversion back to WebRacket")
+                                (p "After the host call returns, the result is converted back to a WebRacket value using "
+                                   "the declared result type.")
+                                (ul
+                                 (li (code "i32") " / " (code "u32") ": JavaScript numbers are re-tagged as fixnums.")
+                                 (li (code "f64") ": JavaScript numbers are boxed as flonums.")
+                                 (li (code "boolean") ": " (code "0") " becomes " (code "#f") "; any nonzero becomes " (code "#t") ".")
+                                 (li (code "string") " / " (code "value") ": JavaScript returns a FASL-encoded payload, "
+                                     "which is decoded by " (code "$linear-memory->string") " or "
+                                     (code "$linear-memory->value") ".")
+                                 (li (code "extern") ": the externref is wrapped back into a WebRacket external object." ))
+                                (p "On the JavaScript side, " (code "js_value_to_fasl") " mirrors the decoder: numbers, "
+                                   "booleans, strings, symbols, vectors/arrays, and pairs are encoded explicitly; "
+                                   "anything else falls back to an external reference. That fallback is exactly how "
+                                   (code "extern") " values are kept on the JavaScript side while still being usable from "
+                                   "WebRacket.")
+                                (div (@ (class "roadmap") (id "roadmap"))
+                                     (details (@ (class "roadmap-panel") (open "open"))
+                                              (summary (@ (class "roadmap-summary"))
+                                                       (span "Roadmap")
+                                                       (span (@ (class "roadmap-kicker"))
+                                                             "Planned sections"))
+                                              (div (@ (class "roadmap-list"))
+                                                   (div (@ (class "roadmap-item") (data-target "value-marshaling-model-fasl"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Value marshaling model (FASL)"))
+                                                   (div (@ (class "roadmap-item") (data-target "mapping-table-racket-js-values"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Mapping table: Racket <-> JS values"))
+                                                   (div (@ (class "roadmap-item") (data-target "external-values-and-host-objects"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "External values and host objects"))
+                                                   (div (@ (class "roadmap-item") (data-target "optional-arguments-and-undefined"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Optional arguments and undefined"))
+                                                   (div (@ (class "roadmap-item") (data-target "core-js-interop-primitives"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Core JS interop primitives"))
+                                                   (div (@ (class "roadmap-item") (data-target "arrays-and-collections"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Arrays and collections"))
+                                                   (div (@ (class "roadmap-item") (data-target "callbacks-from-js-into-webracket"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Callbacks from JS into WebRacket"))
+                                                   (div (@ (class "roadmap-item") (data-target "ffi-modules-overview"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "FFI modules overview"))
+                                                   (div (@ (class "roadmap-item") (data-target "dom-manipulation-patterns"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "DOM manipulation patterns"))
+                                                   (div (@ (class "roadmap-item") (data-target "canvas-2d-patterns"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Canvas 2D patterns"))
+                                                   (div (@ (class "roadmap-item") (data-target "timers-and-events"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Timers and events"))
+                                                   (div (@ (class "roadmap-item") (data-target "async-and-promises"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Async and promises"))
+                                                   (div (@ (class "roadmap-item") (data-target "audio-and-browser-apis"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Audio and browser APIs"))
+                                                   (div (@ (class "roadmap-item") (data-target "troubleshooting-and-limitations"))
+                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                                        (a (@ (class "roadmap-link")) "Troubleshooting and limitations")))))))
+             (aside (@ (class "docs-toc"))
+                    (div (@ (class "toc-card"))
+                         (div (@ (class "toc-title")) "On this page")
+                         (nav (@ (class "toc-nav") (id "doc-toc") (aria-label "On this page"))))))
+        (div (@ (class "copy-toast") (id "copy-toast") (role "status") (aria-live "polite")) "")
+        ,(footer-section)))
+
+;; init-doc-js-ffi-page! : -> Void
+;;   Enhances the JS FFI doc page with TOC, anchors, code tools, and roadmap links.
+(define (init-doc-js-ffi-page!)
+  (js-eval
+   #<<JS
+(() => {
+  const docRoot = document.querySelector('.docs-article');
+  const content = docRoot?.querySelector('.doc-prose, .doc-content');
+  if (!docRoot || !content) return;
+
+  if (!document.body.dataset.codeLines) {
+    document.body.dataset.codeLines = 'false';
+  }
+
+  const toast = document.getElementById('copy-toast');
+  let toastTimer = null;
+  const showToast = (msg) => {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('is-visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 1600);
+  };
+
+  const copyText = async (text) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (err) {}
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'absolute';
+    helper.style.left = '-9999px';
+    document.body.appendChild(helper);
+    helper.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(helper);
+    return ok;
+  };
+
+  const slugCounts = Object.create(null);
+  const slugify = (text) => {
+    const base = text
+      .toLowerCase()
+      .trim()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    let slug = base || 'section';
+    if (slugCounts[slug]) {
+      slugCounts[slug] += 1;
+      slug = `${slug}-${slugCounts[slug]}`;
+    } else {
+      slugCounts[slug] = 1;
+    }
+    return slug;
+  };
+
+  const headings = Array.from(content.querySelectorAll('h2, h3'));
+  const tocItems = [];
+  headings.forEach((heading) => {
+    const text = heading.textContent.trim();
+    if (!text) return;
+    if (!heading.id) {
+      heading.id = slugify(text);
+    }
+    const anchor = document.createElement('button');
+    anchor.type = 'button';
+    anchor.className = 'heading-anchor';
+    anchor.setAttribute('aria-label', `Copy link to ${text}`);
+    anchor.setAttribute('title', 'Copy link');
+    anchor.textContent = '#';
+    anchor.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const url = `${location.origin}${location.pathname}#${heading.id}`;
+      const ok = await copyText(url);
+      history.replaceState(null, '', `#${heading.id}`);
+      showToast(ok ? 'Link copied' : 'Copy failed');
+    });
+    heading.appendChild(anchor);
+    tocItems.push({
+      id: heading.id,
+      text,
+      level: heading.tagName === 'H2' ? 2 : 3
+    });
+  });
+
+  const buildToc = (container) => {
+    if (!container) return null;
+    container.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'toc-list';
+    tocItems.forEach((item) => {
+      const link = document.createElement('a');
+      link.className = item.level === 3 ? 'toc-link toc-link--sub' : 'toc-link';
+      link.href = `#${item.id}`;
+      link.dataset.tocLink = item.id;
+      link.textContent = item.text;
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const target = document.getElementById(item.id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.replaceState(null, '', `#${item.id}`);
+        }
+      });
+      list.appendChild(link);
+    });
+    container.appendChild(list);
+    return list;
+  };
+
+  const tocNav = document.getElementById('doc-toc');
+  buildToc(tocNav);
+
+  const tocMobile = document.getElementById('doc-toc-mobile');
+  if (tocMobile) {
+    const details = document.createElement('details');
+    details.className = 'toc-accordion';
+    const summary = document.createElement('summary');
+    summary.textContent = 'On this page';
+    details.appendChild(summary);
+    const holder = document.createElement('div');
+    details.appendChild(holder);
+    buildToc(holder);
+    tocMobile.appendChild(details);
+  }
+
+  const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+  const linkById = new Map();
+  tocLinks.forEach((link) => {
+    const id = link.dataset.tocLink;
+    if (!linkById.has(id)) linkById.set(id, []);
+    linkById.get(id).push(link);
+  });
+  let currentActive = null;
+  const setActive = (id) => {
+    if (!id || id === currentActive) return;
+    if (currentActive && linkById.has(currentActive)) {
+      linkById.get(currentActive).forEach((link) => {
+        link.classList.remove('is-active');
+        link.removeAttribute('aria-current');
+      });
+    }
+    if (linkById.has(id)) {
+      linkById.get(id).forEach((link) => {
+        link.classList.add('is-active');
+        link.setAttribute('aria-current', 'true');
+      });
+      currentActive = id;
+    }
+  };
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-30% 0px -60% 0px', threshold: [0, 1] }
+    );
+    headings.forEach((heading) => observer.observe(heading));
+  } else if (tocItems.length) {
+    setActive(tocItems[0].id);
+  }
+  if (location.hash) {
+    const hashId = location.hash.slice(1);
+    if (hashId) setActive(hashId);
+  }
+
+  const escapeHtml = (value) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+  const enableLineNumbers = document.body.dataset.codeLines === 'true';
+  const codeBlocks = Array.from(content.querySelectorAll('pre > code'));
+  codeBlocks.forEach((code) => {
+    const pre = code.parentElement;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'code-toolbar';
+    const label = document.createElement('div');
+    label.className = 'code-toolbar-label';
+    label.textContent = 'Code';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'code-copy';
+    button.textContent = 'Copy';
+    button.setAttribute('aria-label', 'Copy code to clipboard');
+    toolbar.appendChild(label);
+    toolbar.appendChild(button);
+    wrapper.insertBefore(toolbar, pre);
+
+    const rawText = code.textContent.replace(/\n$/, '');
+    code.dataset.raw = rawText;
+    button.addEventListener('click', async () => {
+      const ok = await copyText(rawText);
+      showToast(ok ? 'Copied to clipboard' : 'Copy failed');
+    });
+
+    if (enableLineNumbers) {
+      const lines = rawText.split('\n').map((line) => `<span class="code-line">${escapeHtml(line)}</span>`);
+      code.innerHTML = lines.join('\n');
+      wrapper.dataset.lineNumbers = 'true';
+    }
+  });
+
+  const roadmapItems = Array.from(document.querySelectorAll('.roadmap-item[data-target]'));
+  roadmapItems.forEach((item) => {
+    const target = item.dataset.target;
+    const link = item.querySelector('.roadmap-link');
+    if (!link) return;
+    if (target && document.getElementById(target)) {
+      link.setAttribute('href', `#${target}`);
+      link.classList.remove('is-disabled');
+      link.setAttribute('aria-disabled', 'false');
+      link.removeAttribute('tabindex');
+    } else {
+      link.classList.add('is-disabled');
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('href', `#roadmap`);
+      link.removeAttribute('tabindex');
+      link.addEventListener('click', (event) => event.preventDefault());
+    }
+  });
+})();
+JS
+   ))
 
 ;; quick-start-page : -> List
 ;;   Quick Start page layout.
@@ -1707,6 +2213,477 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+.docs-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 28px;
+  align-items: start;
+}
+.docs-article {
+  min-width: 0;
+}
+.doc-prose {
+  width: 100%;
+}
+.doc-prose > p,
+.doc-prose > ul,
+.doc-prose > ol,
+.doc-prose > h2,
+.doc-prose > h3,
+.doc-prose > h4 {
+  max-width: 72ch;
+}
+.doc-prose > p,
+.doc-prose > li {
+  color: #ECEFFA;
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+.doc-prose code {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 8px;
+  color: #F4F6FF;
+  font-size: 0.95em;
+}
+.doc-prose ul li code,
+.doc-prose p code {
+  white-space: nowrap;
+}
+.section--doc-body {
+  margin-top: 44px;
+  padding: 24px 22px 28px;
+}
+.doc-prose > p {
+  margin: 0 0 12px;
+}
+.doc-prose > p + p {
+  margin-top: 8px;
+}
+.doc-prose > ul,
+.doc-prose > ol {
+  padding-left: 20px;
+  margin: 0 0 12px;
+}
+.doc-prose > ul li,
+.doc-prose > ol li {
+  margin: 0 0 6px;
+  line-height: 1.7;
+  color: #E6EBFF;
+}
+.doc-prose .ffi-table {
+  max-width: 72ch;
+  margin: 16px 0 18px;
+}
+.ffi-table {
+  overflow-x: auto;
+  position: relative;
+  padding-bottom: 4px;
+  scrollbar-gutter: stable both-edges;
+  border-radius: 18px;
+}
+.ffi-table::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  top: 0;
+  display: block;
+  width: 32px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(12, 14, 28, 0), rgba(12, 14, 28, 0.85));
+  opacity: 0.8;
+}
+.ffi-type-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(12, 14, 28, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  font-size: 0.98rem;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+.ffi-type-table caption {
+  caption-side: top;
+  text-align: left;
+  padding: 12px 14px 8px;
+  color: #C4CDEE;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ffi-type-table thead th {
+  text-align: left;
+  font-weight: 700;
+  color: #F1F4FF;
+  padding: 14px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(18, 22, 45, 0.82);
+}
+.ffi-type-table tbody td {
+  padding: 12px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #E9EEFF;
+}
+.ffi-type-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+.ffi-type-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.ffi-type-table th:first-child,
+.ffi-type-table td:first-child {
+  width: 140px;
+}
+.ffi-type-table td:last-child {
+  color: #AEB9E2;
+  font-size: 0.92rem;
+}
+.ffi-type-table .ffi-type-cell {
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+.ffi-type-table .ffi-type-cell code {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #F5F7FF;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.ffi-type-table tbody tr:nth-child(even) .ffi-type-cell {
+  background: rgba(255, 255, 255, 0.03);
+}
+.ffi-type-table tbody tr:nth-child(odd) .ffi-type-cell {
+  background: rgba(12, 14, 28, 0.86);
+}
+.ffi-type-table .ffi-note-cell {
+  color: #BBC6EA;
+}
+.ffi-type-table .ffi-note-cell.is-empty {
+  color: #8B96BF;
+}
+.doc-prose > h2,
+.doc-prose > h3 {
+  margin: 28px 0 10px;
+  letter-spacing: -0.01em;
+  color: #F4F6FF;
+}
+.doc-prose > h2:not(:first-child) {
+  margin-top: 44px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.doc-prose > h2::before {
+  content: "";
+  display: block;
+  height: 1px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(101, 79, 240, 0.35), rgba(101, 79, 240, 0));
+  opacity: 0.6;
+}
+.doc-prose > h2:first-child::before {
+  display: none;
+}
+.doc-prose > h2 {
+  font-size: 1.4rem;
+}
+.doc-prose > h3 {
+  font-size: 1.18rem;
+}
+.doc-prose > h2:first-child {
+  margin-top: 0;
+}
+.doc-prose pre {
+  margin: 14px 0 18px;
+}
+.toc-mobile {
+  display: none;
+  margin-top: 12px;
+}
+.toc-accordion {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 20, 40, 0.82);
+  padding: 10px 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+.toc-accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: #E9EEFF;
+}
+.toc-accordion summary::-webkit-details-marker {
+  display: none;
+}
+.toc-accordion .toc-list {
+  margin-top: 10px;
+}
+.docs-toc {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+.toc-card {
+  background: rgba(18, 20, 40, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+}
+.toc-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #B9C3E8;
+  margin-bottom: 10px;
+}
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.toc-link {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: #C9D3F3;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  transition: background 0.2s ease, color 0.2s ease;
+  word-break: break-word;
+}
+.toc-link.toc-link--sub {
+  padding-left: 18px;
+  font-size: 0.88rem;
+  color: #AAB6DF;
+}
+.toc-link.is-active {
+  background: rgba(74, 108, 255, 0.2);
+  color: #E9EEFF;
+}
+.toc-link:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+}
+.heading-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 18, 36, 0.7);
+  color: #C7D2FF;
+  font-size: 0.85rem;
+  opacity: 0;
+  transform: translateY(-1px);
+  transition: opacity 0.2s ease, transform 0.2s ease, border 0.2s ease;
+}
+.doc-prose h2:hover .heading-anchor,
+.doc-prose h3:hover .heading-anchor,
+.doc-prose h2:focus-within .heading-anchor,
+.doc-prose h3:focus-within .heading-anchor {
+  opacity: 1;
+  transform: translateY(0);
+}
+.heading-anchor:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+  opacity: 1;
+}
+.doc-prose h2,
+.doc-prose h3 {
+  scroll-margin-top: 96px;
+}
+.code-block {
+  position: relative;
+  background: #0B0D1D;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px 12px 14px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 12px 26px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.code-block::after {
+  content: "";
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 48px;
+  height: calc(100% - 40px);
+  background: linear-gradient(90deg, rgba(11, 13, 29, 0) 0%, rgba(11, 13, 29, 0.9) 100%);
+  pointer-events: none;
+}
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 8px 10px;
+  color: #9FB0E6;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.code-toolbar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.code-copy {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(20, 24, 52, 0.7);
+  color: #E9EDFF;
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, border 0.2s ease;
+}
+.code-copy:hover {
+  background: rgba(74, 108, 255, 0.2);
+  border-color: rgba(74, 108, 255, 0.45);
+}
+.code-copy:focus-visible {
+  outline: 2px solid rgba(74, 108, 255, 0.6);
+  outline-offset: 2px;
+}
+.code-block pre {
+  margin: 0;
+  padding: 0 8px 6px;
+  background: transparent;
+  border: none;
+  color: #F5F7FF;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  white-space: pre;
+  word-break: normal;
+  overflow: auto;
+}
+.code-block pre code {
+  white-space: pre;
+}
+.code-block[data-line-numbers="true"] pre {
+  counter-reset: code-line;
+}
+.code-block[data-line-numbers="true"] .code-line {
+  display: block;
+  padding-left: 2.8rem;
+  position: relative;
+}
+.code-block[data-line-numbers="true"] .code-line::before {
+  counter-increment: code-line;
+  content: counter(code-line);
+  position: absolute;
+  left: 0;
+  width: 2.2rem;
+  text-align: right;
+  color: rgba(160, 172, 210, 0.65);
+}
+.copy-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(20, 24, 52, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #E9EEFF;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  z-index: 40;
+}
+.copy-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.roadmap {
+  margin-top: 26px;
+}
+.roadmap-panel {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 20, 40, 0.62);
+  padding: 8px 12px 12px;
+}
+.roadmap-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  color: #E9EEFF;
+  font-weight: 600;
+}
+.roadmap-summary::-webkit-details-marker {
+  display: none;
+}
+.roadmap-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9FB0E6;
+}
+.roadmap-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.roadmap-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(12, 14, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border 0.2s ease, background 0.2s ease;
+}
+.roadmap-item:focus-within {
+  border-color: rgba(74, 108, 255, 0.4);
+  background: rgba(16, 20, 40, 0.85);
+}
+.roadmap-badge {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.roadmap-badge--planned {
+  background: rgba(74, 108, 255, 0.18);
+  color: #C8D4FF;
+  border-color: rgba(74, 108, 255, 0.4);
+}
+.roadmap-link {
+  color: #E4EAFF;
+  text-decoration: none;
+}
+.roadmap-link.is-disabled {
+  color: #9CA7CF;
+  cursor: default;
 }
 .page--docs .doc-spacer-top {
   margin-top: 18px;
@@ -3237,9 +4214,19 @@ pre code {
   .section { margin-top: 56px; padding: 24px 18px; }
   .card-grid { grid-template-columns: 1fr; gap: 20px; }
   .mathjax-grid { grid-template-columns: 1fr; }
+  .docs-layout { grid-template-columns: 1fr; }
+  .docs-toc { display: none; }
+  .toc-mobile { display: block; }
 }
 @media (min-width: 720px) and (max-width: 900px) {
   .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .toc-card {
+    padding: 14px 14px 12px;
+  }
+  .doc-prose > h2 { font-size: 1.3rem; }
+  .doc-prose > h3 { font-size: 1.12rem; }
 }
 CSS
          purple blue red gold))))
@@ -3250,6 +4237,8 @@ CSS
     (case (current-page)
       [(implementation-status) (implementation-status-page)]
       [(documentation)         (documentation-page)]
+      [(doc-compiler-overview) (doc-compiler-overview-page)]
+      [(doc-js-ffi)            (doc-js-ffi-page)]
       [(examples)              (examples-page)]
       [(quick-start)           (quick-start-page)]
       [(installation)          (installation-page)]
@@ -3261,7 +4250,12 @@ CSS
       [(space-invaders)        (space-invaders-page)]
       [else                    (home-page)]))
 
-  (define page (sxml->dom page-structure))
+  (define safe-structure
+    (if (eq? (current-page) 'doc-js-ffi)
+        (sanitize-sxml page-structure)
+        page-structure))
+
+  (define page (sxml->dom safe-structure))
 
   (js-append-child! body page)
 
@@ -3279,6 +4273,9 @@ CSS
 
   (when (eq? (current-page) 'space-invaders)
     (init-space-invaders-page!))
+
+  (when (eq? (current-page) 'doc-js-ffi)
+    (init-doc-js-ffi-page!))
 
   (when (eq? (current-page) 'implementation-status)
     (init-status-page-handlers!)))

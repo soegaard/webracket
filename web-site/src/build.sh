@@ -10,6 +10,8 @@ cp web-site.html ../public/index.html
 cp installation.html ../public
 cp community.html ../public
 cp documentation.html ../public
+cp documentation-compiler-overview.html ../public
+cp documentation-js-ffi.html ../public
 cp examples.html ../public
 cp implementation-status.html ../public
 cp mathjax.html ../public
