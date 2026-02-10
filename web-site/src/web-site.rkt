@@ -12,7 +12,7 @@
 ;;     ./build.sh
 
 ;;;
-;;;
+;;; 
 ;;;
 
 (require (for-syntax racket/base)
@@ -58,7 +58,7 @@
 
 ;; GitHub base URLs for linking source files.
 (define gh-base-file "https://github.com/soegaard/webracket/blob/main/")
-(define gh-base-dir "https://github.com/soegaard/webracket/tree/main/")
+(define gh-base-dir  "https://github.com/soegaard/webracket/tree/main/")
 
 ;; gh-file : String -> String
 ;;   Builds a GitHub blob URL for a file path.
@@ -194,6 +194,94 @@
                          "card-grid"))
   `(div (@ (class ,base-class))
         ,@(map (λ (card) `(div (@ (class "card")) ,@card)) cards)))
+
+;; trim-hyphens : String -> String
+;;   Removes leading/trailing hyphens from a slug.
+(define (trim-hyphens s)
+  (define len (string-length s))
+  (define start
+    (let loop ([i 0])
+      (cond
+        [(>= i len) len]
+        [(char=? (string-ref s i) #\-) (loop (add1 i))]
+        [else i])))
+  (define end
+    (let loop ([i (sub1 len)])
+      (cond
+        [(< i start) (sub1 start)]
+        [(char=? (string-ref s i) #\-) (loop (sub1 i))]
+        [else i])))
+  (if (> start end)
+      ""
+      (substring s start (add1 end))))
+
+;; doc-toc-list : (Listof (List Integer String String)) -> List
+;;   Builds the TOC list from recorded heading data.
+(define (doc-toc-list toc-items)
+  `(div (@ (class "toc-list"))
+        ,@(for/list ([item (in-list toc-items)])
+            (define level (car item))
+            (define id (cadr item))
+            (define text (caddr item))
+            `(a (@ (class ,(if (= level 3) "toc-link toc-link--sub" "toc-link"))
+                   (href ,(string-append "#" id))
+                   (data-toc-link ,id))
+                ,text))))
+
+;; doc-ffi runtime helpers
+(define doc-js-ffi-handler-store '())
+
+;; remember-doc-js-ffi-handler!: procedure? -> void?
+;;   Store event handlers so they stay reachable.
+(define (remember-doc-js-ffi-handler! handler)
+  (set! doc-js-ffi-handler-store (cons handler doc-js-ffi-handler-store)))
+
+;; node-list->list: any/c -> list?
+;;   Convert a DOM NodeList into a Racket list.
+(define (node-list->list node-list)
+  (define len   (js-ref node-list "length"))
+  (define count (if (number? len) (inexact->exact len) 0))
+  (let loop ([idx 0]
+             [acc '()])
+    (if (>= idx count)
+        (reverse acc)
+        (loop (add1 idx)
+              (cons (js-send node-list "item" (vector idx)) acc)))))
+
+;; element-text: any/c -> string?
+;;   Extract trimmed textContent from an element.
+(define (element-text element)
+  (define content (and element (js-ref element "textContent")))
+  (if (string? content)
+      (string-trim content)
+      ""))
+
+;; classlist-add!: any/c string? -> void?
+(define (classlist-add! element class-name)
+  (define class-list (and element (js-ref element "classList")))
+  (when class-list
+    (js-send class-list "add" (vector class-name))))
+
+;; classlist-remove!: any/c string? -> void?
+(define (classlist-remove! element class-name)
+  (define class-list (and element (js-ref element "classList")))
+  (when class-list
+    (js-send class-list "remove" (vector class-name))))
+
+;; trim-trailing-newline : String -> String
+;;   Removes a single trailing newline if present.
+(define (trim-trailing-newline s)
+  (define len (string-length s))
+  (if (and (> len 0) (char=? (string-ref s (sub1 len)) #\newline))
+      (substring s 0 (sub1 len))
+      s))
+
+;; escape-html : String -> String
+;;   Escapes HTML entities for safe innerHTML.
+(define (escape-html value)
+  (define with-amp (string-replace value "&" "&amp;"))
+  (define with-lt (string-replace with-amp "<" "&lt;"))
+  (string-replace with-lt ">" "&gt;"))
 
 ;;;
 ;;; Page Layout
@@ -399,29 +487,32 @@
   `(div (@ (class ,base-class))
         ,@(map example-card cards)))
 
+;;;
+;;; PAGES
+;;;
+
 ;; current-page : -> Symbol
 ;;   Determines which page to render based on the URL path.
 (define (current-page)
   (define path (js-ref (js-window-location) "pathname"))
   (cond
-    [(string-suffix? path "documentation.html")         'documentation]
-    [(string-suffix? path "documentation-compiler-overview.html")
-     'doc-compiler-overview]
-    [(string-suffix? path "documentation-js-ffi.html")  'doc-js-ffi]
-    [(string-suffix? path "quick-start.html")           'quick-start]
-    [(string-suffix? path "installation.html")          'installation]
-    [(string-suffix? path "examples.html")              'examples]
-    [(string-suffix? path "mathjax.html")               'mathjax]
-    [(string-suffix? path "formula1.html")              'formula1]
-    [(string-suffix? path "matrix-rain.html")           'matrix-rain]
-    [(string-suffix? path "xtermjs-demo.html")          'xtermjs-demo]
-    [(string-suffix? path "space-invaders.html")        'space-invaders]
-    [(string-suffix? path "implementation-status.html") 'implementation-status]
-    [(string-suffix? path "community.html")             'community]
-    [(string-suffix? path "overview.html")              'overview]
-    [(string-suffix? path "roadmap.html")               'roadmap]
-    [(string-suffix? path "is-webracket-for-you.html")  'for-you]
-    [else                                               'home]))
+    [(string-suffix? path "documentation.html")                   'documentation]
+    [(string-suffix? path "documentation-compiler-overview.html") 'doc-compiler-overview]
+    [(string-suffix? path "documentation-js-ffi.html")            'doc-js-ffi]
+    [(string-suffix? path "quick-start.html")                     'quick-start]
+    [(string-suffix? path "installation.html")                    'installation]
+    [(string-suffix? path "examples.html")                        'examples]
+    [(string-suffix? path "mathjax.html")                         'mathjax]
+    [(string-suffix? path "formula1.html")                        'formula1]
+    [(string-suffix? path "matrix-rain.html")                     'matrix-rain]
+    [(string-suffix? path "xtermjs-demo.html")                    'xtermjs-demo]
+    [(string-suffix? path "space-invaders.html")                  'space-invaders]
+    [(string-suffix? path "implementation-status.html")           'implementation-status]
+    [(string-suffix? path "community.html")                       'community]
+    [(string-suffix? path "overview.html")                        'overview]
+    [(string-suffix? path "roadmap.html")                         'roadmap]
+    [(string-suffix? path "is-webracket-for-you.html")            'for-you]
+    [else                                                         'home]))
 
 ;; nav-active-page : -> Symbol
 ;;   Maps doc subpages to the Documentation tab for the navbar.
@@ -467,6 +558,10 @@
   `(footer (@ (class "footer"))
            (span "WebRacket — Racket for the browser.")
            (span "Made for the Racket community.")))
+
+;;;
+;;; HOME PAGE
+;;;
 
 ;; home-page : -> List
 ;;   Homepage layout.
@@ -642,6 +737,10 @@
           "section--examples")
         ,(footer-section)))
 
+;;;
+;;; EXAMPLES PAGE
+;;;
+
 ;; examples-page : -> List
 ;;   Examples page layout.
 (define (examples-page)
@@ -701,6 +800,10 @@
           "section--examples section-next-steps")
         ,(footer-section)))
 
+;;;
+;;; DOCUMENTATION PAGE
+;;;
+
 ;; documentation-page : -> List
 ;;   Documentation page layout.
 (define (documentation-page)
@@ -735,6 +838,10 @@
           #f
           "section--docs-topics")
         ,(footer-section)))
+
+;;;
+;;; Short Compiler Overview
+;;;
 
 ;; doc-compiler-overview-page : -> List
 ;;   Documentation subpage: Short Compiler Overview.
@@ -851,9 +958,208 @@
           #f)
         ,(footer-section)))
 
+;;;
+;;; Guide to the JavaScript FFI
+;;;
+
+
 ;; doc-js-ffi-page : -> List
 ;;   Documentation subpage: Guide to the JavaScript FFI.
 (define (doc-js-ffi-page)
+  (define toc-items '())
+  (define slug-counts (make-hash))
+  ;; doc-slugify : String -> String
+  ;;   Generates a stable, URL-safe slug for headings.
+  (define (doc-slugify text)
+    (define raw (string-downcase text))
+    (define parts
+      (let loop ([i 0] [current '()] [acc '()])
+        (cond
+          [(= i (string-length raw))
+           (define part (list->string (reverse current)))
+           (define next-acc (if (string=? part "") acc (cons part acc)))
+           (reverse next-acc)]
+          [else
+           (define ch (string-ref raw i))
+           (define ok?
+             (or (and (char>=? ch #\a) (char<=? ch #\z))
+                 (and (char>=? ch #\0) (char<=? ch #\9))))
+           (if ok?
+               (loop (add1 i) (cons ch current) acc)
+               (let ([part (list->string (reverse current))])
+                 (loop (add1 i) '() (if (string=? part "") acc (cons part acc)))))])))
+    (define hyphenated
+      (if (null? parts) "" (string-join parts "-")))
+    (define trimmed (trim-hyphens hyphenated))
+    (define base (if (string=? trimmed "") "section" trimmed))
+    (define n (hash-ref slug-counts base 0))
+    (hash-set! slug-counts base (add1 n))
+    (if (= n 0)
+        base
+        (format "~a-~a" base (add1 n))))
+  ;; doc-heading : Integer String -> List
+  ;;   Creates an h2/h3 heading with a slug id and records it for the TOC.
+  (define (doc-heading level text)
+    (define tag (if (= level 2) 'h2 'h3))
+    (define id (doc-slugify text))
+    (set! toc-items (cons (list level id text) toc-items))
+    `(,tag (@ (id ,id)) ,text))
+  (define doc-body
+    `(section (@ (class "section section--doc-body"))
+              (div (@ (class "doc-content doc-prose"))
+                   ,(doc-heading 2 "1. Purpose and scope")
+                     (p "The JavaScript FFI is the bridge between WebRacket and the host JavaScript runtime. "
+                        "It lets you call JavaScript APIs from WebRacket, access browser objects (DOM, Canvas, "
+                        "Audio, etc.), and pass data back and forth. The FFI is intentionally thin: it mirrors "
+                        "the host APIs with minimal translation so that MDN and library docs stay relevant.")
+                     (p "The FFI focuses on browser and JavaScript interop, not on replacing Racket’s full "
+                        "foreign-interface system. Expect simple value conversions, explicit extern objects, "
+                        "and predictable mappings rather than automatic lifting of complex data structures.")
+                     ,(doc-heading 2 "2. How bindings are declared")
+                     (p "Bindings live in the files under " (code "ffi/") " and are defined with "
+                        (code "define-foreign") ". Each binding names a Racket-level procedure, the JavaScript "
+                        "module it lives in, the host name, and a compact type signature.")
+                     (p "Example (simplified):")
+                     (pre (code "(define-foreign js-ref
+  #:module "standard"
+  #:name   "ref/value"
+  (-> (extern string) (value)))"))
+                     (p "At compile time, WebRacket reads these " (code ".ffi") " files, validates them, and "
+                        "generates the WebAssembly imports that call into JavaScript.")
+                     ,(doc-heading 2 "3. FFI type language (argument + result types)")
+                     (p "The type language is intentionally small. Here are the core types and what they mean:")
+                     (div (@ (class "ffi-table"))
+                          (table (@ (class "ffi-type-table") (aria-label "FFI core types"))
+                                 (caption "FFI core types")
+                                 (thead
+                                  (tr
+                                   (th (@ (scope "col")) "Type")
+                                   (th (@ (scope "col")) "Meaning / mapping")
+                                   (th (@ (scope "col")) "Notes")))
+                                 (tbody
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "string"))
+                                   (td "A WebRacket string marshaled to JS.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "string/symbol"))
+                                   (td "Accepts either a string or symbol; marshaled as a string.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "value"))
+                                   (td "Any WebRacket value; marshaled through the FASL encoder.")
+                                   (td (@ (class "ffi-note-cell")) "Marshaled via FASL."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern"))
+                                   (td "An external JavaScript object (externref wrapper).")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "i32"))
+                                   (td "Fixnum to signed 32-bit integer.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "u32"))
+                                   (td "Fixnum to unsigned 32-bit integer.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "f64"))
+                                   (td "Flonum to JavaScript number.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "boolean"))
+                                   (td "#f/#t to 0/1.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "void"))
+                                   (td "No result (equivalent to an empty result list).")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))))))
+                     (p "For optional arguments, many bindings accept " (code "value") " and treat "
+                        (code "(void)") " as JavaScript " (code "undefined") ".")
+                     ,(doc-heading 2 "4. Crossing the boundary: argument conversion")
+                     (p "WebRacket and JavaScript do not share a data representation, so arguments are "
+                        "converted before a host call. The conversion is driven by the type signature in "
+                        (code "define-foreign") ".")
+                     (p "For simple, direct types, the values are unboxed and passed to the JavaScript import:")
+                     (ul
+                      (li (code "i32") " / " (code "u32") ": a fixnum becomes a signed/unsigned 32-bit integer.")
+                      (li (code "f64") ": a flonum becomes a JavaScript number.")
+                      (li (code "boolean") ": any non-false value becomes " (code "1") "; " (code "#f") " becomes " (code "0") ".")
+                      (li (code "extern") ": no conversion is performed; the WebRacket value is an external wrapper "
+                          "that refers to the original JavaScript object."))
+                     (p "For " (code "string") ", " (code "string/symbol") ", and " (code "value") ", the compiler "
+                        "uses FASL to move data through linear memory. The runtime encodes the argument "
+                        "to FASL bytes, copies those bytes into linear memory, and passes the start index to "
+                        "JavaScript. The JavaScript side then decodes the bytes via "
+                        (code "fasl_to_js_value") " in " (code "assembler.rkt") ".")
+                     (p "The rules in " (code "define-foreign.rkt") " enforce which types are legal: "
+                        (code "string/symbol") " is only allowed for arguments, and " (code "void") " is "
+                        "a synonym for an empty result list.")
+                     ,(doc-heading 2 "5. Return values and conversion back to WebRacket")
+                     (p "After the host call returns, the result is converted back to a WebRacket value using "
+                        "the declared result type.")
+                     (ul
+                      (li (code "i32") " / " (code "u32") ": JavaScript numbers are re-tagged as fixnums.")
+                      (li (code "f64") ": JavaScript numbers are boxed as flonums.")
+                      (li (code "boolean") ": " (code "0") " becomes " (code "#f") "; any nonzero becomes " (code "#t") ".")
+                      (li (code "string") " / " (code "value") ": JavaScript returns a FASL-encoded payload, "
+                          "which is decoded by " (code "$linear-memory->string") " or "
+                          (code "$linear-memory->value") ".")
+                      (li (code "extern") ": the externref is wrapped back into a WebRacket external object." ))
+                     (p "On the JavaScript side, " (code "js_value_to_fasl") " mirrors the decoder: numbers, "
+                        "booleans, strings, symbols, vectors/arrays, and pairs are encoded explicitly; "
+                        "anything else falls back to an external reference. That fallback is exactly how "
+                        (code "extern") " values are kept on the JavaScript side while still being usable from "
+                        "WebRacket.")
+                     (div (@ (class "roadmap") (id "roadmap"))
+                          (details (@ (class "roadmap-panel") (open "open"))
+                                   (summary (@ (class "roadmap-summary"))
+                                            (span "Roadmap")
+                                            (span (@ (class "roadmap-kicker"))
+                                                  "Planned sections"))
+                                   (div (@ (class "roadmap-list"))
+                                        (div (@ (class "roadmap-item") (data-target "value-marshaling-model-fasl"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Value marshaling model (FASL)"))
+                                        (div (@ (class "roadmap-item") (data-target "mapping-table-racket-js-values"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Mapping table: Racket <-> JS values"))
+                                        (div (@ (class "roadmap-item") (data-target "external-values-and-host-objects"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "External values and host objects"))
+                                        (div (@ (class "roadmap-item") (data-target "optional-arguments-and-undefined"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Optional arguments and undefined"))
+                                        (div (@ (class "roadmap-item") (data-target "core-js-interop-primitives"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Core JS interop primitives"))
+                                        (div (@ (class "roadmap-item") (data-target "arrays-and-collections"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Arrays and collections"))
+                                        (div (@ (class "roadmap-item") (data-target "callbacks-from-js-into-webracket"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Callbacks from JS into WebRacket"))
+                                        (div (@ (class "roadmap-item") (data-target "ffi-modules-overview"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "FFI modules overview"))
+                                        (div (@ (class "roadmap-item") (data-target "dom-manipulation-patterns"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "DOM manipulation patterns"))
+                                        (div (@ (class "roadmap-item") (data-target "canvas-2d-patterns"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Canvas 2D patterns"))
+                                        (div (@ (class "roadmap-item") (data-target "timers-and-events"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Timers and events"))
+                                        (div (@ (class "roadmap-item") (data-target "async-and-promises"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Async and promises"))
+                                        (div (@ (class "roadmap-item") (data-target "audio-and-browser-apis"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Audio and browser APIs"))
+                                        (div (@ (class "roadmap-item") (data-target "troubleshooting-and-limitations"))
+                                             (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
+                                             (a (@ (class "roadmap-link")) "Troubleshooting and limitations")))))))
+  (set! toc-items (reverse toc-items))
   `(div (@ (class "page page--docs"))
         ,(navbar)
         (section (@ (class "docs-hero"))
@@ -870,415 +1176,285 @@
                          "How WebRacket crosses the boundary to JavaScript.")))
         (div (@ (class "docs-layout"))
              (div (@ (class "docs-article"))
-                  (div (@ (class "toc-mobile") (id "doc-toc-mobile")))
-                  (section (@ (class "section section--doc-body"))
-                           (div (@ (class "doc-content doc-prose"))
-                                (h2 "1. Purpose and scope")
-                                (p "The JavaScript FFI is the bridge between WebRacket and the host JavaScript runtime. "
-                                   "It lets you call JavaScript APIs from WebRacket, access browser objects (DOM, Canvas, "
-                                   "Audio, etc.), and pass data back and forth. The FFI is intentionally thin: it mirrors "
-                                   "the host APIs with minimal translation so that MDN and library docs stay relevant.")
-                                (p "The FFI focuses on browser and JavaScript interop, not on replacing Racket’s full "
-                                   "foreign-interface system. Expect simple value conversions, explicit extern objects, "
-                                   "and predictable mappings rather than automatic lifting of complex data structures.")
-                                (h2 "2. How bindings are declared")
-                                (p "Bindings live in the files under " (code "ffi/") " and are defined with "
-                                   (code "define-foreign") ". Each binding names a Racket-level procedure, the JavaScript "
-                                   "module it lives in, the host name, and a compact type signature.")
-                                (p "Example (simplified):")
-                                (pre (code "(define-foreign js-ref
-  #:module "standard"
-  #:name   "ref/value"
-  (-> (extern string) (value)))"))
-                                (p "At compile time, WebRacket reads these " (code ".ffi") " files, validates them, and "
-                                   "generates the WebAssembly imports that call into JavaScript.")
-                                (h2 "3. FFI type language (argument + result types)")
-                                (p "The type language is intentionally small. Here are the core types and what they mean:")
-                                (div (@ (class "ffi-table"))
-                                     (table (@ (class "ffi-type-table") (aria-label "FFI core types"))
-                                            (caption "FFI core types")
-                                            (thead
-                                             (tr
-                                              (th (@ (scope "col")) "Type")
-                                              (th (@ (scope "col")) "Meaning / mapping")
-                                              (th (@ (scope "col")) "Notes")))
-                                            (tbody
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "string"))
-                                              (td "A WebRacket string marshaled to JS.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "string/symbol"))
-                                              (td "Accepts either a string or symbol; marshaled as a string.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "value"))
-                                              (td "Any WebRacket value; marshaled through the FASL encoder.")
-                                              (td (@ (class "ffi-note-cell")) "Marshaled via FASL."))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "extern"))
-                                              (td "An external JavaScript object (externref wrapper).")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "i32"))
-                                              (td "Fixnum to signed 32-bit integer.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "u32"))
-                                              (td "Fixnum to unsigned 32-bit integer.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "f64"))
-                                              (td "Flonum to JavaScript number.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "boolean"))
-                                              (td "#f/#t to 0/1.")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))
-                                             (tr
-                                              (td (@ (class "ffi-type-cell")) (code "void"))
-                                              (td "No result (equivalent to an empty result list).")
-                                              (td (@ (class "ffi-note-cell is-empty")) "—"))))))
-                                (p "For optional arguments, many bindings accept " (code "value") " and treat "
-                                   (code "(void)") " as JavaScript " (code "undefined") ".")
-                                (h2 "4. Crossing the boundary: argument conversion")
-                                (p "WebRacket and JavaScript do not share a data representation, so arguments are "
-                                   "converted before a host call. The conversion is driven by the type signature in "
-                                   (code "define-foreign") ".")
-                                (p "For simple, direct types, the values are unboxed and passed to the JavaScript import:")
-                                (ul
-                                 (li (code "i32") " / " (code "u32") ": a fixnum becomes a signed/unsigned 32-bit integer.")
-                                 (li (code "f64") ": a flonum becomes a JavaScript number.")
-                                 (li (code "boolean") ": any non-false value becomes " (code "1") "; " (code "#f") " becomes " (code "0") ".")
-                                 (li (code "extern") ": no conversion is performed; the WebRacket value is an external wrapper "
-                                     "that refers to the original JavaScript object."))
-                                (p "For " (code "string") ", " (code "string/symbol") ", and " (code "value") ", the compiler "
-                                   "uses FASL to move data through linear memory. The runtime encodes the argument "
-                                   "to FASL bytes, copies those bytes into linear memory, and passes the start index to "
-                                   "JavaScript. The JavaScript side then decodes the bytes via "
-                                   (code "fasl_to_js_value") " in " (code "assembler.rkt") ".")
-                                (p "The rules in " (code "define-foreign.rkt") " enforce which types are legal: "
-                                   (code "string/symbol") " is only allowed for arguments, and " (code "void") " is "
-                                   "a synonym for an empty result list.")
-                                (h2 "5. Return values and conversion back to WebRacket")
-                                (p "After the host call returns, the result is converted back to a WebRacket value using "
-                                   "the declared result type.")
-                                (ul
-                                 (li (code "i32") " / " (code "u32") ": JavaScript numbers are re-tagged as fixnums.")
-                                 (li (code "f64") ": JavaScript numbers are boxed as flonums.")
-                                 (li (code "boolean") ": " (code "0") " becomes " (code "#f") "; any nonzero becomes " (code "#t") ".")
-                                 (li (code "string") " / " (code "value") ": JavaScript returns a FASL-encoded payload, "
-                                     "which is decoded by " (code "$linear-memory->string") " or "
-                                     (code "$linear-memory->value") ".")
-                                 (li (code "extern") ": the externref is wrapped back into a WebRacket external object." ))
-                                (p "On the JavaScript side, " (code "js_value_to_fasl") " mirrors the decoder: numbers, "
-                                   "booleans, strings, symbols, vectors/arrays, and pairs are encoded explicitly; "
-                                   "anything else falls back to an external reference. That fallback is exactly how "
-                                   (code "extern") " values are kept on the JavaScript side while still being usable from "
-                                   "WebRacket.")
-                                (div (@ (class "roadmap") (id "roadmap"))
-                                     (details (@ (class "roadmap-panel") (open "open"))
-                                              (summary (@ (class "roadmap-summary"))
-                                                       (span "Roadmap")
-                                                       (span (@ (class "roadmap-kicker"))
-                                                             "Planned sections"))
-                                              (div (@ (class "roadmap-list"))
-                                                   (div (@ (class "roadmap-item") (data-target "value-marshaling-model-fasl"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Value marshaling model (FASL)"))
-                                                   (div (@ (class "roadmap-item") (data-target "mapping-table-racket-js-values"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Mapping table: Racket <-> JS values"))
-                                                   (div (@ (class "roadmap-item") (data-target "external-values-and-host-objects"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "External values and host objects"))
-                                                   (div (@ (class "roadmap-item") (data-target "optional-arguments-and-undefined"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Optional arguments and undefined"))
-                                                   (div (@ (class "roadmap-item") (data-target "core-js-interop-primitives"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Core JS interop primitives"))
-                                                   (div (@ (class "roadmap-item") (data-target "arrays-and-collections"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Arrays and collections"))
-                                                   (div (@ (class "roadmap-item") (data-target "callbacks-from-js-into-webracket"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Callbacks from JS into WebRacket"))
-                                                   (div (@ (class "roadmap-item") (data-target "ffi-modules-overview"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "FFI modules overview"))
-                                                   (div (@ (class "roadmap-item") (data-target "dom-manipulation-patterns"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "DOM manipulation patterns"))
-                                                   (div (@ (class "roadmap-item") (data-target "canvas-2d-patterns"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Canvas 2D patterns"))
-                                                   (div (@ (class "roadmap-item") (data-target "timers-and-events"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Timers and events"))
-                                                   (div (@ (class "roadmap-item") (data-target "async-and-promises"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Async and promises"))
-                                                   (div (@ (class "roadmap-item") (data-target "audio-and-browser-apis"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Audio and browser APIs"))
-                                                   (div (@ (class "roadmap-item") (data-target "troubleshooting-and-limitations"))
-                                                        (span (@ (class "roadmap-badge roadmap-badge--planned")) "Planned")
-                                                        (a (@ (class "roadmap-link")) "Troubleshooting and limitations")))))))
+                  (div (@ (class "toc-mobile") (id "doc-toc-mobile"))
+                       (details (@ (class "toc-accordion"))
+                                (summary "On this page")
+                                (div ,(doc-toc-list toc-items))))
+                  ,doc-body)
              (aside (@ (class "docs-toc"))
                     (div (@ (class "toc-card"))
                          (div (@ (class "toc-title")) "On this page")
-                         (nav (@ (class "toc-nav") (id "doc-toc") (aria-label "On this page"))))))
+                         (nav (@ (class "toc-nav") (id "doc-toc") (aria-label "On this page"))
+                              ,(doc-toc-list toc-items)))))
         (div (@ (class "copy-toast") (id "copy-toast") (role "status") (aria-live "polite")) "")
         ,(footer-section)))
 
+
+
+
 ;; init-doc-js-ffi-page! : -> Void
-;;   Enhances the JS FFI doc page with TOC, anchors, code tools, and roadmap links.
+;;   Enhances the JS FFI doc page using WebRacket DOM helpers.
 (define (init-doc-js-ffi-page!)
-  (js-eval
-   #<<JS
-(() => {
-  const docRoot = document.querySelector('.docs-article');
-  const content = docRoot?.querySelector('.doc-prose, .doc-content');
-  if (!docRoot || !content) return;
+  (define doc-root (js-query-selector ".docs-article"))
+  (define content (and doc-root (js-element-query-selector doc-root ".doc-prose, .doc-content")))
+  (when (and doc-root content)
+    (define body        (js-document-body))
+    (define toast       (js-get-element-by-id "copy-toast"))
+    (define toast-timer #f)
+    
+    (define (show-toast msg)
+      ;; toast = a brief UI notification element
+      ;; Typical characteristics of a toast:
+      ;;  - Non-blocking (doesn’t stop interaction) 
+      ;;  - Auto-dismisses after a short time
+      ;; Used for confirmation or status (“Saved”, “Copied”, “Sent”)
+      (when toast
+        (js-set! toast "textContent" msg)
+        (classlist-add! toast "is-visible")
+        (when toast-timer
+          (js-window-clear-timeout toast-timer))
+        (define hide-handler
+          (procedure->external
+           (lambda _
+             (classlist-remove! toast "is-visible"))))
+        (remember-doc-js-ffi-handler! hide-handler)
+        (set! toast-timer (js-window-set-timeout/delay hide-handler 1600.))))
 
-  if (!document.body.dataset.codeLines) {
-    document.body.dataset.codeLines = 'false';
-  }
+    (define (copy-text text)
+      (define helper (js-create-element "textarea"))
+      (js-set! helper "value" text)
+      (js-set-attribute! helper "readonly" "")
+      (define style (js-ref helper "style"))
+      (when style
+        (js-set! style "position" "absolute")
+        (js-set! style "left" "-9999px"))
+      (js-append-child! body helper)
+      (js-send helper "select" (vector))
+      (define ok (js-send (js-document) "execCommand" (vector "copy")))
+      (js-remove! helper)
+      (and ok (not (and (number? ok) (zero? ok)))))
 
-  const toast = document.getElementById('copy-toast');
-  let toastTimer = null;
-  const showToast = (msg) => {
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.classList.add('is-visible');
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 1600);
-  };
+    (define headings
+      (node-list->list (js-element-query-selector-all content "h2, h3")))
 
-  const copyText = async (text) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        return true;
-      }
-    } catch (err) {}
-    const helper = document.createElement('textarea');
-    helper.value = text;
-    helper.setAttribute('readonly', '');
-    helper.style.position = 'absolute';
-    helper.style.left = '-9999px';
-    document.body.appendChild(helper);
-    helper.select();
-    let ok = false;
-    try {
-      ok = document.execCommand('copy');
-    } catch (err) {
-      ok = false;
-    }
-    document.body.removeChild(helper);
-    return ok;
-  };
+    (for ([heading (in-list headings)])
+      (define text (element-text heading))
+      (define id (and heading (js-ref heading "id")))
+      (when (and (string? text) (string? id) (not (string=? id "")))
+        (define anchor (js-create-element "button"))
+        (js-set-attribute! anchor "type" "button")
+        (js-set-attribute! anchor "class" "heading-anchor")
+        (js-set-attribute! anchor "aria-label" (string-append "Copy link to " text))
+        (js-set-attribute! anchor "title" "Copy link")
+        (js-set! anchor "textContent" "#")
+        (define anchor-handler
+          (procedure->external
+           (lambda (evt)
+             (js-event-prevent-default evt)
+             (js-event-stop-propagation evt)
+             (define loc (js-window-location))
+             (define origin (and loc (js-ref loc "origin")))
+             (define pathname (and loc (js-ref loc "pathname")))
+             (define url
+               (cond
+                 [(and (string? origin) (string? pathname))
+                  (string-append origin pathname "#" id)]
+                 [else (string-append "#" id)]))
+             (define ok (copy-text url))
+             (js-send (js-window-history) "replaceState"
+                      (vector (js-null) "" (string-append "#" id)))
+             (show-toast (if ok "Link copied" "Copy failed")))))
+        (remember-doc-js-ffi-handler! anchor-handler)
+        (js-add-event-listener! anchor "click" anchor-handler)
+        (js-append-child! heading anchor)))
 
-  const slugCounts = Object.create(null);
-  const slugify = (text) => {
-    const base = text
-      .toLowerCase()
-      .trim()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    let slug = base || 'section';
-    if (slugCounts[slug]) {
-      slugCounts[slug] += 1;
-      slug = `${slug}-${slugCounts[slug]}`;
-    } else {
-      slugCounts[slug] = 1;
-    }
-    return slug;
-  };
+    (define toc-links
+      (node-list->list (js-query-selector-all "[data-toc-link]")))
+    (define link-by-id (make-hash))
+    (for ([link (in-list toc-links)])
+      (define id (js-get-attribute link "data-toc-link"))
+      (when (string? id)
+        (define current (hash-ref link-by-id id '()))
+        (hash-set! link-by-id id (cons link current))))
 
-  const headings = Array.from(content.querySelectorAll('h2, h3'));
-  const tocItems = [];
-  headings.forEach((heading) => {
-    const text = heading.textContent.trim();
-    if (!text) return;
-    if (!heading.id) {
-      heading.id = slugify(text);
-    }
-    const anchor = document.createElement('button');
-    anchor.type = 'button';
-    anchor.className = 'heading-anchor';
-    anchor.setAttribute('aria-label', `Copy link to ${text}`);
-    anchor.setAttribute('title', 'Copy link');
-    anchor.textContent = '#';
-    anchor.addEventListener('click', async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const url = `${location.origin}${location.pathname}#${heading.id}`;
-      const ok = await copyText(url);
-      history.replaceState(null, '', `#${heading.id}`);
-      showToast(ok ? 'Link copied' : 'Copy failed');
-    });
-    heading.appendChild(anchor);
-    tocItems.push({
-      id: heading.id,
-      text,
-      level: heading.tagName === 'H2' ? 2 : 3
-    });
-  });
+    (define current-active #f)
+    (define (set-active! id)
+      (when (and (string? id) (not (equal? id current-active)))
+        (when (and current-active (hash-has-key? link-by-id current-active))
+          (for ([link (in-list (hash-ref link-by-id current-active))])
+            (classlist-remove! link "is-active")
+            (js-remove-attribute! link "aria-current")))
+        (when (hash-has-key? link-by-id id)
+          (for ([link (in-list (hash-ref link-by-id id))])
+            (classlist-add! link "is-active")
+            (js-set-attribute! link "aria-current" "true"))
+          (set! current-active id))))
 
-  const buildToc = (container) => {
-    if (!container) return null;
-    container.innerHTML = '';
-    const list = document.createElement('div');
-    list.className = 'toc-list';
-    tocItems.forEach((item) => {
-      const link = document.createElement('a');
-      link.className = item.level === 3 ? 'toc-link toc-link--sub' : 'toc-link';
-      link.href = `#${item.id}`;
-      link.dataset.tocLink = item.id;
-      link.textContent = item.text;
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
-        const target = document.getElementById(item.id);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          history.replaceState(null, '', `#${item.id}`);
-        }
-      });
-      list.appendChild(link);
-    });
-    container.appendChild(list);
-    return list;
-  };
+    (define (smooth-scroll-to! target)
+      (when target
+        (js-send target "scrollIntoView"
+                 (vector (js-object (vector (vector "behavior" "smooth")
+                                            (vector "block" "start")))))))
 
-  const tocNav = document.getElementById('doc-toc');
-  buildToc(tocNav);
+    (for ([link (in-list toc-links)])
+      (define id (js-get-attribute link "data-toc-link"))
+      (when (string? id)
+        (define link-handler
+          (procedure->external
+           (lambda (evt)
+             (js-event-prevent-default evt)
+             (define target (js-get-element-by-id id))
+             (when target
+               (smooth-scroll-to! target)
+               (js-send (js-window-history) "replaceState"
+                        (vector (js-null) "" (string-append "#" id)))))))
+        (remember-doc-js-ffi-handler! link-handler)
+        (js-add-event-listener! link "click" link-handler)))
 
-  const tocMobile = document.getElementById('doc-toc-mobile');
-  if (tocMobile) {
-    const details = document.createElement('details');
-    details.className = 'toc-accordion';
-    const summary = document.createElement('summary');
-    summary.textContent = 'On this page';
-    details.appendChild(summary);
-    const holder = document.createElement('div');
-    details.appendChild(holder);
-    buildToc(holder);
-    tocMobile.appendChild(details);
-  }
+    (define (active-from-scroll!)
+      (define threshold (* 0.35 (js-window-inner-height)))
+      (define candidate #f)
+      (for ([heading (in-list headings)])
+        (define id (js-ref heading "id"))
+        (when (and (string? id) (hash-has-key? link-by-id id))
+          (define rect (js-get-bounding-client-rect heading))
+          (define top (and rect (js-ref rect "top")))
+          (when (and (number? top) (<= top threshold))
+            (set! candidate id))))
+      (when (not candidate)
+        (define first-id
+          (for/first ([heading (in-list headings)]
+                      #:when (let ([id (js-ref heading "id")])
+                               (and (string? id) (hash-has-key? link-by-id id))))
+            (js-ref heading "id")))
+        (set! candidate first-id))
+      (when (string? candidate)
+        (set-active! candidate)))
 
-  const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
-  const linkById = new Map();
-  tocLinks.forEach((link) => {
-    const id = link.dataset.tocLink;
-    if (!linkById.has(id)) linkById.set(id, []);
-    linkById.get(id).push(link);
-  });
-  let currentActive = null;
-  const setActive = (id) => {
-    if (!id || id === currentActive) return;
-    if (currentActive && linkById.has(currentActive)) {
-      linkById.get(currentActive).forEach((link) => {
-        link.classList.remove('is-active');
-        link.removeAttribute('aria-current');
-      });
-    }
-    if (linkById.has(id)) {
-      linkById.get(id).forEach((link) => {
-        link.classList.add('is-active');
-        link.setAttribute('aria-current', 'true');
-      });
-      currentActive = id;
-    }
-  };
+    (define (active-at-bottom!)
+      (define inner (js-window-inner-height))
+      (define scroll-y (js-window-scroll-y))
+      (define height (and body (js-ref body "offsetHeight")))
+      (and (number? inner) (number? scroll-y) (number? height)
+           (>= (+ inner scroll-y) (- height 2))))
 
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: '-30% 0px -60% 0px', threshold: [0, 1] }
-    );
-    headings.forEach((heading) => observer.observe(heading));
-  } else if (tocItems.length) {
-    setActive(tocItems[0].id);
-  }
-  if (location.hash) {
-    const hashId = location.hash.slice(1);
-    if (hashId) setActive(hashId);
-  }
+    (define (select-last-heading!)
+      (define last-id
+        (for/first ([heading (in-list (reverse headings))]
+                    #:when (let ([id (js-ref heading "id")])
+                             (and (string? id) (hash-has-key? link-by-id id))))
+          (js-ref heading "id")))
+      (when (string? last-id)
+        (set-active! last-id)))
 
-  const escapeHtml = (value) =>
-    value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    (define scroll-tick #f)
+    (define raf-handler
+      (procedure->external
+       (lambda (_)
+         (set! scroll-tick #f)
+         (if (active-at-bottom!)
+             (select-last-heading!)
+             (active-from-scroll!)))))
+    (remember-doc-js-ffi-handler! raf-handler)
 
-  const enableLineNumbers = document.body.dataset.codeLines === 'true';
-  const codeBlocks = Array.from(content.querySelectorAll('pre > code'));
-  codeBlocks.forEach((code) => {
-    const pre = code.parentElement;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'code-block';
-    pre.parentNode.insertBefore(wrapper, pre);
-    wrapper.appendChild(pre);
+    (define scroll-handler
+      (procedure->external
+       (lambda (_)
+         (when (not scroll-tick)
+           (set! scroll-tick (js-window-request-animation-frame raf-handler))))))
+    (remember-doc-js-ffi-handler! scroll-handler)
+    (js-add-event-listener! (js-window-window) "scroll" scroll-handler)
 
-    const toolbar = document.createElement('div');
-    toolbar.className = 'code-toolbar';
-    const label = document.createElement('div');
-    label.className = 'code-toolbar-label';
-    label.textContent = 'Code';
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'code-copy';
-    button.textContent = 'Copy';
-    button.setAttribute('aria-label', 'Copy code to clipboard');
-    toolbar.appendChild(label);
-    toolbar.appendChild(button);
-    wrapper.insertBefore(toolbar, pre);
+    (define resize-handler
+      (procedure->external
+       (lambda (_)
+         (active-from-scroll!))))
+    (remember-doc-js-ffi-handler! resize-handler)
+    (js-add-event-listener! (js-window-window) "resize" resize-handler)
 
-    const rawText = code.textContent.replace(/\n$/, '');
-    code.dataset.raw = rawText;
-    button.addEventListener('click', async () => {
-      const ok = await copyText(rawText);
-      showToast(ok ? 'Copied to clipboard' : 'Copy failed');
-    });
+    (active-from-scroll!)
+    (define hash (js-ref (js-window-location) "hash"))
+    (when (and (string? hash) (> (string-length hash) 1))
+      (set-active! (substring hash 1)))
 
-    if (enableLineNumbers) {
-      const lines = rawText.split('\n').map((line) => `<span class="code-line">${escapeHtml(line)}</span>`);
-      code.innerHTML = lines.join('\n');
-      wrapper.dataset.lineNumbers = 'true';
-    }
-  });
+    ;; Code block toolbar + copy
+    (define code-blocks
+      (node-list->list (js-element-query-selector-all content "pre > code")))
+    (define enable-line-numbers
+      (let* ([dataset (and body (js-ref body "dataset"))]
+             [flag (and dataset (js-ref dataset "codeLines"))])
+        (and (string? flag) (string=? flag "true"))))
 
-  const roadmapItems = Array.from(document.querySelectorAll('.roadmap-item[data-target]'));
-  roadmapItems.forEach((item) => {
-    const target = item.dataset.target;
-    const link = item.querySelector('.roadmap-link');
-    if (!link) return;
-    if (target && document.getElementById(target)) {
-      link.setAttribute('href', `#${target}`);
-      link.classList.remove('is-disabled');
-      link.setAttribute('aria-disabled', 'false');
-      link.removeAttribute('tabindex');
-    } else {
-      link.classList.add('is-disabled');
-      link.setAttribute('aria-disabled', 'true');
-      link.setAttribute('href', `#roadmap`);
-      link.removeAttribute('tabindex');
-      link.addEventListener('click', (event) => event.preventDefault());
-    }
-  });
-})();
-JS
-   ))
+    (for ([code (in-list code-blocks)])
+      (define pre (js-ref code "parentElement"))
+      (define parent (and pre (js-ref pre "parentNode")))
+      (when (and pre parent)
+        (define wrapper (js-create-element "div"))
+        (js-set-attribute! wrapper "class" "code-block")
+        (js-send parent "insertBefore" (vector wrapper pre))
+        (js-append-child! wrapper pre)
+
+        (define toolbar (js-create-element "div"))
+        (js-set-attribute! toolbar "class" "code-toolbar")
+        (define label (js-create-element "div"))
+        (js-set-attribute! label "class" "code-toolbar-label")
+        (js-set! label "textContent" "Code")
+        (define button (js-create-element "button"))
+        (js-set-attribute! button "type" "button")
+        (js-set-attribute! button "class" "code-copy")
+        (js-set-attribute! button "aria-label" "Copy code to clipboard")
+        (js-set! button "textContent" "Copy")
+        (js-append-child! toolbar label)
+        (js-append-child! toolbar button)
+        (js-send wrapper "insertBefore" (vector toolbar pre))
+
+        (define raw (let ([text (js-ref code "textContent")])
+                      (if (string? text) (trim-trailing-newline text) "")))
+        (js-set-attribute! code "data-raw" raw)
+        (define copy-handler
+          (procedure->external
+           (lambda (_)
+             (define ok (copy-text raw))
+             (show-toast (if ok "Copied to clipboard" "Copy failed")))))
+        (remember-doc-js-ffi-handler! copy-handler)
+        (js-add-event-listener! button "click" copy-handler)
+
+        (when enable-line-numbers
+          (define lines (string-split raw "\n"))
+          (define html
+            (string-join
+             (for/list ([line (in-list lines)])
+               (string-append "<span class=\"code-line\">"
+                              (escape-html line)
+                              "</span>"))
+             "\n"))
+          (js-set! code "innerHTML" html)
+          (js-set-attribute! wrapper "data-line-numbers" "true"))))
+
+    ;; Roadmap links
+    (define roadmap-items
+      (node-list->list (js-query-selector-all ".roadmap-item[data-target]")))
+    (for ([item (in-list roadmap-items)])
+      (define target (js-get-attribute item "data-target"))
+      (define link (js-element-query-selector item ".roadmap-link"))
+      (when link
+        (cond
+          [(and (string? target) (js-get-element-by-id target))
+           (js-set-attribute! link "href" (string-append "#" target))
+           (classlist-remove! link "is-disabled")
+           (js-set-attribute! link "aria-disabled" "false")
+           (js-remove-attribute! link "tabindex")]
+          [else
+           (classlist-add! link "is-disabled")
+           (js-set-attribute! link "aria-disabled" "true")
+           (js-set-attribute! link "href" "#roadmap")
+           (js-remove-attribute! link "tabindex")
+           (define disable-handler
+             (procedure->external
+              (lambda (evt)
+                (js-event-prevent-default evt))))
+           (remember-doc-js-ffi-handler! disable-handler)
+           (js-add-event-listener! link "click" disable-handler)])))))
 
 ;; quick-start-page : -> List
 ;;   Quick Start page layout.
@@ -2435,6 +2611,7 @@ pre {
   position: sticky;
   top: 24px;
   align-self: start;
+  margin-top: 44px;
 }
 .toc-card {
   background: rgba(18, 20, 40, 0.82);
