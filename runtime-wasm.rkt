@@ -5,7 +5,8 @@
          "wasm-utils.rkt"
          "immediates.rkt"
          "priminfo.rkt"
-         "parameters.rkt")
+         "parameters.rkt"
+         "structs.rkt")
 
 ; See the end of `generate-code` in `compiler.rkt` for an
 ; explanation of the arguments.
@@ -83,6 +84,11 @@
       (for/list ([pr (sort primitives symbol<?)]
                  #:do [(define desc (primitive->description pr))]
                  #:when desc)
+        `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
+
+    (define (declare-ffi-primitives-as-globals)
+      (for/list ([f (in-list (current-ffi-foreigns))])
+        (define pr (foreign-racket-name f))
         `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
 
 
@@ -778,6 +784,23 @@
                             #;(arity->internal-representation
                                (primitive-description-result-arity desc)))))))
 
+    (define (initialize-ffi-primitives-as-globals)
+      (for/list ([f (in-list (current-ffi-foreigns))])
+        (define pr    (foreign-racket-name f))
+        (define ar    (length (foreign-argument-types f)))
+        (define shape (arity->shape ar))
+        (define $name ($ (string->symbol (~a "symbol:" pr))))
+        `(global.set ,($ (prim: pr))
+                     (struct.new $PrimitiveProcedure
+                      ; for $Procedure
+                      (i32.const 0)                               ; hash
+                      (global.get ,$name)                         ; name  (used by object-name)
+                      ,(Imm (arity->internal-representation ar))  ; arity
+                      (global.get $the-racket/primitive-realm)    ; realm
+                      (ref.func ,($ (shape->invoker shape)))
+                      (ref.func ,($ pr))
+                      ,(Imm #f)))))
+
     ;; String constants used in the runtime
     ;;  `string-constants holds the constants passed by `generate-code` in `compiler.rkt`
     (define runtime-string-constants string-constants)
@@ -882,6 +905,12 @@
     (for ([pr (in-list (sort (remove* todo-handle-later primitives) symbol<?))])
       (when (primitive->description pr)
         (add-runtime-symbol-constant pr)))
+
+    (define (add-ffi-symbol-constants)
+      (for ([f (in-list (current-ffi-foreigns))])
+        (add-runtime-symbol-constant (foreign-racket-name f))))
+
+    (add-ffi-symbol-constants)
 
     (let ()
       ; TODO: remove primitives from this list
@@ -1202,9 +1231,10 @@
                                                 "(or/c exact-positive-integer? #f) "
                                                 "(or/c exact-nonnegative-integer? #f)))"))
 
-    (add-runtime-string-constant  'arity-error:start         "arity error: ")
-    (add-runtime-string-constant  'arity-error:received      "received: ")
-    (add-runtime-string-constant  'arity-error:expected      "expected: ")
+    (add-runtime-string-constant  'arity-error:start
+                                  ": arity mismatch;\n the expected number of arguments does not match the given number\n  expected: ")
+    (add-runtime-string-constant  'arity-error:given         "\n  given: ")
+    (add-runtime-string-constant  'arity-error:at-least      "at least ")
     (add-runtime-string-constant  'fx-overflow:middle        ": fixnum overflow with arguments ")
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
@@ -2219,6 +2249,7 @@
 
          ;; Primitives (as values)
          ,@(declare-primitives-as-globals)
+         ,@(declare-ffi-primitives-as-globals)
 
          ;; Closures
 
@@ -2267,9 +2298,9 @@
                    (then
                     (drop (call $js-log (global.get $string:arity-error:start)))
                     (drop (call $js-log (call $format/display (local.get $proc))))
-                    (drop (call $js-log (global.get $string:arity-error:received)))
+                    (drop (call $js-log (global.get $string:arity-error:given)))
                     (drop (call $js-log (call $i32->string    (local.get $arg-count))))
-                    (drop (call $js-log (global.get $string:arity-error:expected)))
+                    (drop (call $js-log (global.get $string:arity-error:start)))
                     (drop (call $js-log (call $i32->string    (local.get $arity-i32))))                    
                     (call $raise-arity-mismatch)))
                ;; Step 5: repack arguments (if variadic)
@@ -2321,6 +2352,44 @@
               (param $pproc (ref $PrimitiveProcedure))
               (param $argc  i32)
               (result       (ref eq))
+              (local $name         (ref eq))
+              (local $expected-str (ref $String))
+              (local $received-str (ref $String))
+              (local $arity/tag    i32)
+              (local $arity        i32)
+              (local $out          (ref $GrowableArray))
+              (local $message      (ref $String))
+
+              (local.set $name
+                         (struct.get $Procedure $name (local.get $pproc)))
+
+              (local.set $arity/tag
+                         (i31.get_s
+                          (ref.cast (ref i31)
+                                    (struct.get $Procedure $arity (local.get $pproc)))))
+              (local.set $arity
+                         (i32.shr_s (local.get $arity/tag) (i32.const 1)))
+
+              (local.set $expected-str
+                         (call $arity-i32->string (local.get $arity)))
+              (local.set $received-str
+                         (call $i32->string (local.get $argc)))
+
+              (local.set $out
+                         (call $make-growable-array (i32.const 5)))
+              (call $growable-array-add! (local.get $out) (call $format/display (local.get $name)))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:start))
+              (call $growable-array-add! (local.get $out) (local.get $expected-str))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:given))
+              (call $growable-array-add! (local.get $out) (local.get $received-str))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract:arity/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
               (unreachable))
         
         ;; Shape codes:
@@ -11596,12 +11665,30 @@
                                 (call $codepoint->string (i32.const 48)))) ;; '0'
                    (else (local.get $s))))
 
-         (func $i32->string
-               (param $n   i32)
-               (result     (ref $String))
-               (call $i32array->string
-                     (call $i32->codepoints
-                           (local.get $n))))
+        (func $i32->string
+              (param $n   i32)
+              (result     (ref $String))
+              (call $i32array->string
+                    (call $i32->codepoints
+                          (local.get $n))))
+
+         (func $arity-i32->string
+               (param $arity i32)
+               (result (ref $String))
+
+               (local $n i32)
+
+               (if (result (ref $String))
+                   (i32.ge_s (local.get $arity) (i32.const 0))
+                   (then
+                    (call $i32->string (local.get $arity)))
+                   (else
+                    (local.set $n
+                               (i32.sub (i32.const -1) (local.get $arity)))
+                    (call $string-append/2
+                          (global.get $string:arity-error:at-least)
+                          (call $i32->string (local.get $n)))))
+               )
          
          (func $i32->codepoints
                (param $n   i32)
@@ -41605,7 +41692,8 @@
                      (global.set $the-racket/primitive-realm (global.get $symbol:racket/primitive))
                      
                      ;; Initialize variables holding primitives
-                     ,@(initialize-primitives-as-globals)
+                    ,@(initialize-primitives-as-globals)
+                    ,@(initialize-ffi-primitives-as-globals)
                      
                      ;; Initialize top-level variables.
                      ;; These are all "boxed".

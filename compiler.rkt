@@ -464,11 +464,17 @@
 
 (define primitive-arity-cache (make-hasheq))
 
+(define (ffi-primitive-arity sym)
+  (and (ffi-primitive? sym)
+       (let ([f (ffi-foreign-by-name sym)])
+         (and f (length (foreign-argument-types f))))))
+
 (define (primitive-arity sym)
   (hash-ref! primitive-arity-cache sym
              (λ ()
-               (define desc (primitive->description sym))
-               (and desc (primitive-description-arity desc)))))
+               (or (ffi-primitive-arity sym)
+                   (let ([desc (primitive->description sym)])
+                     (and desc (primitive-description-arity desc)))))))
 
 (define (arity-accepts? arity n)
   (cond
@@ -1220,6 +1226,14 @@
 
 (define ffi-primitives '()) ; list of symbols
 
+(define (ffi-primitive? sym)
+  (and (memq sym ffi-primitives) #t))
+
+(define (ffi-foreign-by-name sym)
+  (for/first ([ff (in-list (current-ffi-foreigns))]
+              #:when (eq? (foreign-racket-name ff) sym))
+    ff))
+
 (define (define-ffi-primitive name)
   ; 1. There is no `var:name` since `var:name` is only used
   ;    in "compiler.rkt" to generate code.
@@ -1233,6 +1247,7 @@
 
 (define (reset-ffi-primitives)
   ; called by `parse` before parsing begins
+  (hash-clear! primitive-arity-cache)
   (define-ffi-primitives (foreigns->primitive-names (current-ffi-foreigns))))
 
 #; (require (for-syntax (only-in urlang urmodule-name->exports)))
@@ -4886,6 +4901,14 @@
                                                ,$a)))]
          
          [else
+          (define (primapp-arity-error sym aes)
+            `(block (result (ref eq))
+                    ,@(for/list ([ae aes]) `(drop ,ae))
+                    (call $primitive-invoke:raise-arity-error
+                          (ref.cast (ref $PrimitiveProcedure)
+                                    (global.get ,($ (prim: sym))))
+                          (i32.const ,(length aes)))))
+
           (match (length ae1)
             [0 (case sym
                  [(-)        '(global.get $zero)]
@@ -4893,7 +4916,9 @@
                  [(fl+ fl-)  '(global.get $flzero)]
                  [(fx*)      '(global.get $one)]
                  [(fl*)      '(global.get $flone)]
-                 [else       `(call ,(Prim pr))])]
+                 [else       (if (primitive-arity-accepts? sym 0)
+                                 `(call ,(Prim pr))
+                                 (primapp-arity-error sym '()))])]
             [1 (case sym
                  [(fx+ fx*)  (AExpr (first ae1))]
                  [(fl+ fl*)  (AExpr (first ae1))]
@@ -4901,7 +4926,10 @@
                  [(fl-)      `(call ,(Prim pr) (global.get $flzero) ,(AExpr (first ae1)))]
                  [(fx/)      `(call ,(Prim pr) (global.get $one)    ,(AExpr (first ae1)))]
                  [(fl/)      `(call ,(Prim pr) (global.get $flone)  ,(AExpr (first ae1)))]
-                 [else       `(call ,(Prim pr)                      ,(AExpr (first ae1)))])]
+                 [else       (let ([aes (AExpr* ae1)])
+                               (if (primitive-arity-accepts? sym 1)
+                                   `(call ,(Prim pr) ,@aes)
+                                   (primapp-arity-error sym aes)))])]
             [2 (case sym
                  [(-)           `(call ,(Prim pr)
                                        ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
@@ -4910,8 +4938,10 @@
                  [(fl+ fl- fl*) `(call ,(Prim pr)
                                        ,(AExpr (first ae1)) ,(AExpr (second ae1)))]
                  ; / needs to signal an Racket error if denominator is zero
-                 [else   `(call ,(Prim pr)
-                                ,(AExpr (first ae1)) ,(AExpr (second ae1)))])]
+                 [else   (let ([aes (AExpr* ae1)])
+                           (if (primitive-arity-accepts? sym 2)
+                               `(call ,(Prim pr) ,@aes)
+                               (primapp-arity-error sym aes)))])]
             [_ (case sym
                  [(fx+ fl+
                      fx* fl*
@@ -4944,15 +4974,6 @@
                   ;;     `(call ,(Prim pr) ,@(AExpr* ae1))
                   ;; But this gives a compile time error from the web assembly compiler,
                   ;; due to too many or too few arguments on the stack.
-
-                  (define (primapp-arity-error sym aes)
-                    `(block (result (ref eq))
-                            ,@(for/list ([ae aes]) `(drop ,ae))
-                            (call $primitive-invoke:raise-arity-error
-                                  (ref.cast (ref $PrimitiveProcedure)
-                                            (global.get ,($ (prim: sym))))
-                                  (i32.const ,(length aes)))))
-
                   (let* ([aes (AExpr* ae1)]
                          [n   (length aes)])
                     (if (primitive-arity-accepts? sym n)
