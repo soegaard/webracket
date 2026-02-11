@@ -2363,6 +2363,34 @@
                     (global.get $true))
               (unreachable))
 
+        (func $raise-apply-final-arg-not-list
+              (param $v (ref eq))
+              (local $out     (ref $GrowableArray))
+              (local $message (ref $String))
+
+              ;; TODO: include "argument position: last" and "other arguments..." block like Racket.
+              (local.set $out
+                         (call $make-growable-array (i32.const 5)))
+              (call $growable-array-add! (local.get $out)
+                    (call $format/display (global.get $symbol:apply)))
+              (call $growable-array-add! (local.get $out)
+                    (global.get $string:contract-violation:prefix))
+              (call $growable-array-add! (local.get $out)
+                    (global.get $string:list?))
+              (call $growable-array-add! (local.get $out)
+                    (global.get $string:arity-error:given))
+              (call $growable-array-add! (local.get $out)
+                    (call $format/display (local.get $v)))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
+              (unreachable))
+
         (func $raise-struct-type-property-accessor-contract
               (param $prop (ref $StructTypeProperty))
               (param $v    (ref eq))
@@ -34705,6 +34733,9 @@
                (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
 
                ;; Step 2: convert arguments list into arrays for indexed access
+               (if (ref.eq (call $list? (local.get $args-list)) (global.get $false))
+                   (then (call $raise-apply-final-arg-not-list (local.get $args-list))
+                         (unreachable)))
                (local.set $args-array  (call $list->array (local.get $args-list)))
                (local.set $total-count (array.len (local.get $args-array)))
                ;; The final element of $args-array is the list of trailing arguments.
@@ -34712,6 +34743,9 @@
                           (array.get $Array
                                      (local.get $args-array)
                                      (i32.sub (local.get $total-count) (i32.const 1))))
+               (if (ref.eq (call $list? (local.get $final-list)) (global.get $false))
+                   (then (call $raise-apply-final-arg-not-list (local.get $final-list))
+                         (unreachable)))
                (local.set $final-array (call $list->array (local.get $final-list)))
                (local.set $final-count (array.len (local.get $final-array)))
                (local.set $direct-count (i32.sub (local.get $total-count) (i32.const 1)))
