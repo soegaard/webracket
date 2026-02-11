@@ -1233,8 +1233,17 @@
 
     (add-runtime-string-constant  'arity-error:start
                                   ": arity mismatch;\n the expected number of arguments does not match the given number\n  expected: ")
+    (add-runtime-string-constant  'arity-error:start/no-expected
+                                  ": arity mismatch;\n the expected number of arguments does not match the given number\n  given: ")
     (add-runtime-string-constant  'arity-error:given         "\n  given: ")
     (add-runtime-string-constant  'arity-error:at-least      "at least ")
+    (add-runtime-string-constant  'arity-error:or            " or ")
+    (add-runtime-string-constant  'contract-violation:prefix
+                                  ": contract violation\n  expected: ")
+    (add-runtime-string-constant  'application:not-procedure
+                                  "application: not a procedure;\n expected a procedure that can be applied to arguments\n  given: ")
+    (add-runtime-string-constant  'question           "?")
+    (add-runtime-string-constant  'accessor-suffix    "-accessor")
     (add-runtime-string-constant  'fx-overflow:middle        ": fixnum overflow with arguments ")
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
@@ -2263,7 +2272,135 @@
                        (param $args (ref $Args))      ; an array of (ref eq)
                        (result (ref eq))))
 
-         (func $raise-arity-mismatch (unreachable))
+        (func $raise-arity-mismatch (unreachable))
+
+        (func $raise-arity-mismatch/proc
+              (param $proc (ref $Procedure))
+              (param $argc i32)
+              (local $name         (ref eq))
+              (local $expected-str (ref $String))
+              (local $received-str (ref $String))
+              (local $arity/tag    i32)
+              (local $arity        i32)
+              (local $out          (ref $GrowableArray))
+              (local $message      (ref $String))
+
+              (local.set $name
+                         (struct.get $Procedure $name (local.get $proc)))
+
+              (local.set $arity/tag
+                         (i31.get_s
+                          (ref.cast (ref i31)
+                                    (struct.get $Procedure $arity (local.get $proc)))))
+              (local.set $arity
+                         (i32.shr_s (local.get $arity/tag) (i32.const 1)))
+
+              (local.set $expected-str
+                         (call $arity-i32->string (local.get $arity)))
+              (local.set $received-str
+                         (call $i32->string (local.get $argc)))
+
+              (local.set $out
+                         (call $make-growable-array (i32.const 5)))
+              (call $growable-array-add! (local.get $out) (call $format/display (local.get $name)))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:start))
+              (call $growable-array-add! (local.get $out) (local.get $expected-str))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:given))
+              (call $growable-array-add! (local.get $out) (local.get $received-str))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract:arity/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
+              (unreachable))
+
+        (func $raise-arity-mismatch/name+given
+              (param $name (ref eq))
+              (param $argc i32)
+              (local $received-str (ref $String))
+              (local $out          (ref $GrowableArray))
+              (local $message      (ref $String))
+
+              ;; TODO: include "arguments..." block like Racket.
+              (local.set $received-str
+                         (call $i32->string (local.get $argc)))
+              (local.set $out
+                         (call $make-growable-array (i32.const 3)))
+              (call $growable-array-add! (local.get $out) (call $format/display (local.get $name)))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:start/no-expected))
+              (call $growable-array-add! (local.get $out) (local.get $received-str))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract:arity/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
+              (unreachable))
+
+        (func $raise-application-not-procedure
+              (param $v (ref eq))
+              (local $out     (ref $GrowableArray))
+              (local $message (ref $String))
+
+              (local.set $out
+                         (call $make-growable-array (i32.const 2)))
+              (call $growable-array-add! (local.get $out)
+                    (global.get $string:application:not-procedure))
+              (call $growable-array-add! (local.get $out)
+                    (call $format/display (local.get $v)))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
+              (unreachable))
+
+        (func $raise-struct-type-property-accessor-contract
+              (param $prop (ref $StructTypeProperty))
+              (param $v    (ref eq))
+              (local $accessor-name     (ref $String))
+              (local $prop-name-str     (ref $String))
+              (local $expected-str      (ref $String))
+              (local $out               (ref $GrowableArray))
+              (local $message           (ref $String))
+
+              (local.set $prop-name-str
+                         (ref.cast (ref $String)
+                                   (call $symbol->string
+                                         (struct.get $StructTypeProperty $name (local.get $prop)))))
+              (local.set $accessor-name
+                         (call $string-append/2
+                               (local.get $prop-name-str)
+                               (global.get $string:accessor-suffix)))
+              (local.set $expected-str
+                         (call $string-append/2
+                               (local.get $prop-name-str)
+                               (global.get $string:question)))
+
+              (local.set $out
+                         (call $make-growable-array (i32.const 5)))
+              (call $growable-array-add! (local.get $out) (local.get $accessor-name))
+              (call $growable-array-add! (local.get $out) (global.get $string:contract-violation:prefix))
+              (call $growable-array-add! (local.get $out) (local.get $expected-str))
+              (call $growable-array-add! (local.get $out) (global.get $string:arity-error:given))
+              (call $growable-array-add! (local.get $out) (call $format/display (local.get $v)))
+              (local.set $message
+                         (call $growable-array-of-strings->string (local.get $out)))
+
+              (call $raise
+                    (call $exn:fail:contract/make
+                          (local.get $message)
+                          (call $current-continuation-marks (global.get $missing)))
+                    (global.get $true))
+              (unreachable))
 
          (func $invoke-closure
                (type $ProcedureInvoker)
@@ -2296,13 +2433,7 @@
                           (local.get $clos)
                           (local.get $arg-count)))
                    (then
-                    (drop (call $js-log (global.get $string:arity-error:start)))
-                    (drop (call $js-log (call $format/display (local.get $proc))))
-                    (drop (call $js-log (global.get $string:arity-error:given)))
-                    (drop (call $js-log (call $i32->string    (local.get $arg-count))))
-                    (drop (call $js-log (global.get $string:arity-error:start)))
-                    (drop (call $js-log (call $i32->string    (local.get $arity-i32))))                    
-                    (call $raise-arity-mismatch)))
+                    (call $raise-arity-mismatch/proc (local.get $clos) (local.get $arg-count))))
                ;; Step 5: repack arguments (if variadic)
                (local.set $args-repacked
                           (call $repack-arguments
@@ -2820,7 +2951,61 @@
          ;; $Free payload captured by the dispatcher closure:
          ;;   index 0 : (ref $I32Array)  ; arities per arm
          ;;   index 1 : (ref $Array)     ; arm closures (source order)
-         (func $raise-arity-error/case-lambda/arities (unreachable))
+         (func $raise-arity-error/case-lambda/arities
+               (param $proc    (ref $Procedure))
+               (param $argc    i32)
+               (param $arities (ref $I32Array))
+               (result (ref eq))
+
+               (local $name         (ref eq))
+               (local $expected-str (ref $String))
+               (local $received-str (ref $String))
+               (local $i            i32)
+               (local $n            i32)
+               (local $m            i32)
+               (local $ga           (ref $GrowableArray))
+               (local $out          (ref $GrowableArray))
+               (local $message      (ref $String))
+
+               (local.set $name
+                          (struct.get $Procedure $name (local.get $proc)))
+               (local.set $received-str
+                          (call $i32->string (local.get $argc)))
+
+               (local.set $n (array.len (local.get $arities)))
+               (local.set $ga (call $make-growable-array (local.get $n)))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (local.set $m (array.get $I32Array (local.get $arities) (local.get $i)))
+                            (call $growable-array-add! (local.get $ga)
+                                  (call $arity-i32->string (local.get $m)))
+                            (if (i32.lt_u (i32.add (local.get $i) (i32.const 1)) (local.get $n))
+                                (then (call $growable-array-add! (local.get $ga)
+                                              (global.get $string:arity-error:or))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+
+               (local.set $expected-str
+                          (call $growable-array-of-strings->string (local.get $ga)))
+
+               (local.set $out
+                          (call $make-growable-array (i32.const 5)))
+               (call $growable-array-add! (local.get $out) (call $format/display (local.get $name)))
+               (call $growable-array-add! (local.get $out) (global.get $string:arity-error:start))
+               (call $growable-array-add! (local.get $out) (local.get $expected-str))
+               (call $growable-array-add! (local.get $out) (global.get $string:arity-error:given))
+               (call $growable-array-add! (local.get $out) (local.get $received-str))
+               (local.set $message
+                          (call $growable-array-of-strings->string (local.get $out)))
+
+               (call $raise
+                     (call $exn:fail:contract:arity/make
+                           (local.get $message)
+                           (call $current-continuation-marks (global.get $missing)))
+                     (global.get $true))
+               (unreachable))
          ;; Dispatcher uses typed $CaseClosure fields: $arities and $arms.
          (func $code:case-lambda-dispatch (type $ClosureCode)
                (param $clos (ref $Closure))
@@ -2849,7 +3034,7 @@
                      (if (i32.ge_u (local.get $i) (array.len (local.get $arms)))
                          (then (drop (call $js-log (call $format/display (local.get $clos))))
                                (call $raise-arity-error/case-lambda/arities
-                                     (local.get $argc) (local.get $arities))
+                                     (local.get $clos) (local.get $argc) (local.get $arities))
                                (unreachable)))
                      (local.set $m
                                 (array.get $I32Array (local.get $arities) (local.get $i)))
@@ -2899,15 +3084,18 @@
                (local $argc         i32)
                (local $packed-args  (ref $Args))
                (local $i            i32)
+               (local $struct-name  (ref eq))
 
                ;; Validate and cast the incoming procedure reference.
                (if (i32.eqz (ref.test (ref $Struct) (local.get $proc)))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-application-not-procedure (local.get $proc))
                          (unreachable)))
                (local.set $struct (ref.cast (ref $Struct) (local.get $proc)))
+               (local.set $argc (array.len (local.get $args)))
 
                ;; Look up the prop:procedure association for the structure type.
                (local.set $type (struct.get $Struct $type (local.get $struct)))
+               (local.set $struct-name (struct.get $StructType $name (local.get $type)))
                (local.set $prop-desc
                           (ref.cast (ref $StructTypeProperty)
                                     (global.get $prop:procedure)))
@@ -2920,7 +3108,7 @@
 
                ;; Abort when the structure type is not applicable.
                (if (ref.eq (local.get $prop-val) (local.get $sentinel))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-application-not-procedure (ref.cast (ref eq) (local.get $struct)))
                          (unreachable)))
 
                ;; Case 1: property designates a structure field containing a procedure.
@@ -2939,7 +3127,9 @@
                     (local.set $abs-index (i32.add (local.get $super-count) (local.get $idx)))
                     (local.set $target (array.get $Array (local.get $fields) (local.get $abs-index)))
                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $target)))
-                        (then (call $raise-arity-mismatch)
+                        (then (call $raise-arity-mismatch/name+given
+                                    (local.get $struct-name)
+                                    (local.get $argc))
                               (unreachable)))
                     (local.set $delegate (ref.cast (ref $Procedure) (local.get $target)))
                     (local.set $delegate-inv (struct.get $Procedure $invoke (local.get $delegate)))
@@ -2950,11 +3140,12 @@
 
                ;; Case 2: property supplies a procedure to receive the structure + arguments.
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $prop-val)))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-arity-mismatch/name+given
+                               (local.get $struct-name)
+                               (local.get $argc))
                          (unreachable)))
                (local.set $delegate (ref.cast (ref $Procedure) (local.get $prop-val)))
                (local.set $delegate-inv (struct.get $Procedure $invoke (local.get $delegate)))
-               (local.set $argc (array.len (local.get $args)))
                (local.set $packed-args
                           (array.new $Args (global.get $null)
                                      (i32.add (local.get $argc) (i32.const 1))))
@@ -2973,6 +3164,7 @@
                                 (local.get $packed-args)
                                 (local.get $delegate-inv)))
 
+         ;; Unused stubs kept for now; safe to remove later.
          (func $raise-arity-error:exactly  (unreachable))
          (func $raise-arity-error:at-least (unreachable))
          
@@ -6557,7 +6749,7 @@
 
                (local.set $argc (array.len (local.get $args)))
                (if (i32.ne (local.get $argc) (i32.const 2))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-arity-mismatch/proc (local.get $clos) (local.get $argc))
                          (unreachable)))
 
                (local.set $a (array.get $Args (local.get $args) (i32.const 0)))
@@ -6575,7 +6767,7 @@
 
                (local.set $argc (array.len (local.get $args)))
                (if (i32.ne (local.get $argc) (i32.const 2))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-arity-mismatch/proc (local.get $clos) (local.get $argc))
                          (unreachable)))
 
                (local.set $a (array.get $Args (local.get $args) (i32.const 0)))
@@ -6592,7 +6784,7 @@
 
                (local.set $argc (array.len (local.get $args)))
                (if (i32.ne (local.get $argc) (i32.const 1))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-arity-mismatch/proc (local.get $clos) (local.get $argc))
                          (unreachable)))
 
                (local.set $v (array.get $Args (local.get $args) (i32.const 0)))
@@ -19837,7 +20029,11 @@
 
                ;; Racket's map requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:map))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -19956,7 +20152,11 @@
 
                ;; Racket's andmap requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:andmap))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -20058,7 +20258,11 @@
 
                ;; Racket's ormap requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:ormap))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -20240,7 +20444,11 @@
 
                ;; Racket's append-map requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:append-map))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -20389,7 +20597,11 @@
 
                ;; Racket's count requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:count))
+                               (i32.const 1))
+                         (unreachable))
                    (else))
 
                ;; Fast path when exactly one list is supplied
@@ -20514,7 +20726,11 @@
 
                ;; Racket's for-each requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:for-each))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -20613,7 +20829,11 @@
 
                ;; Racket's foldl requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:foldl))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; Dispatch based on number of lists
                (if (i32.eq (local.get $nlists) (i32.const 1))
@@ -20757,7 +20977,11 @@
 
                ;; Racket's foldl requires at least one list argument
                (if (i32.eq (local.get $nlists) (i32.const 0))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:foldl))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; Allocate arrays for list cursors and call arguments (extra slot for accumulator)
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
@@ -21054,7 +21278,11 @@
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
                (if (ref.eq (local.get $xss) (global.get $null))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:foldr))
+                               (i32.const 1))
+                         (unreachable)))
 
                ;; Count lists
                (local.set $nlists (i32.const 0))
@@ -28942,7 +29170,11 @@
                             (local.set $args  (struct.get $Pair $d (local.get $node)))
                             (local.set $count (i32.add (local.get $count) (i32.const 1)))
                             (if (i32.gt_u (local.get $count) (i32.const 6))
-                                (then (call $raise-arity-mismatch) (unreachable)))
+                                (then (call $primitive-invoke:raise-arity-error
+                                            (ref.cast (ref $PrimitiveProcedure)
+                                                      (global.get $prim:make-input-port))
+                                            (local.get $count))
+                                      (unreachable)))
                             (if (i32.eq (local.get $count) (i32.const 1))
                                 (then (local.set $progress-evt (local.get $arg)))
                                 (else
@@ -30427,7 +30659,11 @@
                             (local.set $args (struct.get $Pair $d (local.get $node)))
                             (local.set $count (i32.add (local.get $count) (i32.const 1)))
                             (if (i32.gt_u (local.get $count) (i32.const 5))
-                                (then (call $raise-arity-mismatch) (unreachable)))
+                                (then (call $primitive-invoke:raise-arity-error
+                                            (ref.cast (ref $PrimitiveProcedure)
+                                                      (global.get $prim:peek-bytes-avail!))
+                                            (local.get $count))
+                                      (unreachable)))
                             (if (i32.eq (local.get $count) (i32.const 1))
                                 (then (local.set $skip (local.get $arg)))
                                 (else
@@ -30444,7 +30680,11 @@
 
                ;; Require the skip argument
                (if (ref.eq (local.get $skip) (global.get $missing))
-                   (then (call $raise-arity-mismatch) (unreachable)))
+                   (then (call $primitive-invoke:raise-arity-error
+                               (ref.cast (ref $PrimitiveProcedure)
+                                         (global.get $prim:peek-bytes-avail!))
+                               (local.get $count))
+                         (unreachable)))
 
                ;; Progress defaults to #f and must be #f
                (if (ref.eq (local.get $progress) (global.get $missing))
@@ -33503,6 +33743,7 @@
                (local $rest     (ref eq))
                (local $rest-pair (ref $Pair))
                (local $rest-tail (ref eq))
+               (local $given-count i32)
 
                (local.set $free (struct.get $Closure $free (local.get $clos)))
                (local.set $prop
@@ -33511,7 +33752,7 @@
 
                (local.set $argc (array.len (local.get $args)))
                (if (i32.eqz (i32.ge_u (local.get $argc) (i32.const 1)))
-                   (then (call $raise-arity-mismatch)
+                   (then (call $raise-arity-mismatch/proc (local.get $clos) (local.get $argc))
                          (unreachable)))
 
                (local.set $target (array.get $Args (local.get $args) (i32.const 0)))
@@ -33532,7 +33773,10 @@
                     (local.set $fallback (struct.get $Pair $a (local.get $rest-pair)))
                     (local.set $rest-tail (struct.get $Pair $d (local.get $rest-pair)))
                     (if (i32.eqz (ref.eq (local.get $rest-tail) (global.get $null)))
-                        (then (call $raise-arity-mismatch)
+                        (then (local.set $given-count
+                                         (i32.add (i32.const 1)
+                                                  (call $length/i32 (local.get $rest))))
+                              (call $raise-arity-mismatch/proc (local.get $clos) (local.get $given-count))
                               (unreachable)))))
 
                (local.set $std (ref.null $StructType))
@@ -33543,7 +33787,9 @@
                     (if (ref.test (ref $Struct) (local.get $target))
                         (then (local.set $struct (ref.cast (ref $Struct) (local.get $target)))
                               (local.set $std (struct.get $Struct $type (local.get $struct))))
-                        (else (call $raise-argument-error (local.get $target))
+                        (else (call $raise-struct-type-property-accessor-contract
+                                    (local.get $prop)
+                                    (local.get $target))
                               (unreachable)))))
 
                (local.set $sentinel (call $cons (global.get $false) (global.get $false)))
@@ -33556,7 +33802,9 @@
                (if (ref.eq (local.get $val) (local.get $sentinel))
                    (then
                     (if (ref.eq (local.get $fallback) (global.get $missing))
-                        (then (call $raise-argument-error (local.get $target))
+                        (then (call $raise-struct-type-property-accessor-contract
+                                    (local.get $prop)
+                                    (local.get $target))
                               (unreachable))
                         (else
                          (local.set $fallback-proc?
@@ -34214,7 +34462,11 @@
                (local.set $accessor-name (global.get $false))
                (local.set $contract-str  (global.get $false))
                (local.set $realm         (global.get $symbol:racket))
-               (local.set $closure-name  (global.get $false))
+               (local.set $closure-name
+                          (call $string->symbol/checked
+                                (call $string-append/2
+                                      (local.get $name-string)
+                                      (global.get $string:accessor-suffix))))
 
                ;; Guard: allow #f, a procedure, or the symbol 'can-impersonate.
                (if (ref.eq (local.get $guard-info) (global.get $missing))
@@ -34306,18 +34558,21 @@
                                                    (ref.cast (ref $String)
                                                              (call $symbol->immutable-string
                                                                    (ref.cast (ref $Symbol)
-                                                                             (local.get $accessor-name-info)))))))
+                                                                             (local.get $accessor-name-info))))))
+                              (local.set $closure-name (local.get $accessor-name-info)))
                              (else
                               (if (ref.test (ref $String) (local.get $accessor-name-info))
                                   (then (local.set $accessor-name
                                                    (ref.cast (ref eq)
                                                              (ref.cast (ref $String)
-                                                                       (local.get $accessor-name-info)))))
+                                                                       (local.get $accessor-name-info))))
+                                        (local.set $closure-name
+                                                   (ref.cast (ref eq)
+                                                             (call $string->symbol/checked
+                                                                   (ref.cast (ref $String)
+                                                                             (local.get $accessor-name-info))))))
                                   (else (call $raise-argument-error (local.get $accessor-name-info))
                                         (unreachable)))))))))
-               (if (ref.eq (local.get $accessor-name) (global.get $false))
-                   (then (local.set $closure-name (global.get $false)))
-                   (else (local.set $closure-name (local.get $accessor-name))))
 
                ;; Contract string: allow #f, string, or symbol (converted to string).
                (if (ref.eq (local.get $contract-info) (global.get $missing))

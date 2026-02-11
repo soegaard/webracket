@@ -5007,6 +5007,10 @@
      (define proc-var (new-var '$app-proc))
      (define proc (syntax-e (variable-id proc-var)))
      (emit-local proc '(ref $Procedure) '(global.get $dummy-closure)) ; really $dummy-procedure
+     ;; Hold the callee as a raw value for validation.
+     (define proc-raw-var (new-var '$app-proc-raw))
+     (define proc-raw (syntax-e (variable-id proc-raw-var)))
+     (emit-local proc-raw '(ref eq) '(global.get $false))
 
      ;; The dynamic invoker for the procedure
      (define inv `(struct.get $Procedure $invoke (local.get ,proc)))
@@ -5017,25 +5021,30 @@
            `(return_call_ref $ProcedureInvoker (local.get ,proc) ,args ,inv)
            `(call_ref        $ProcedureInvoker (local.get ,proc) ,args ,inv)))
 
-     ;; Cast helper (add checks later if you want nice errors)
-     (define (cast w) `(ref.cast (ref $Procedure) ,w))
+     ;; Validate callee before casting to procedure.
+     (define (set-proc w)
+       `((local.set ,proc-raw ,w)
+         (if (i32.eqz (ref.test (ref $Procedure) (local.get ,proc-raw)))
+             (then (call $raise-application-not-procedure (local.get ,proc-raw))
+                   (unreachable)))
+         (local.set ,proc (ref.cast (ref $Procedure) (local.get ,proc-raw)))))
 
      (match dd
        ['<effect>
-        (match cd
-          ['<expr> `(block (local.set ,proc ,(cast (AExpr ae))) ,work)]
-          ['<stat> `(block (local.set ,proc ,(cast (AExpr ae))) (drop ,work))]
+       (match cd
+          ['<expr> `(block ,@(set-proc (AExpr ae)) ,work)]
+          ['<stat> `(block ,@(set-proc (AExpr ae)) (drop ,work))]
           [_ (error 'internal-app0 "combination impossible")])]
-       ['<value>
+      ['<value>
         (match cd
           ['<return> `(block (result (ref eq))
-                             (local.set ,proc ,(cast (AExpr ae)))
+                             ,@(set-proc (AExpr ae))
                              ,(if tc work `(return ,work)))]
           ['<expr>   `(block (result (ref eq))
-                             (local.set ,proc ,(cast (AExpr ae)))
+                             ,@(set-proc (AExpr ae))
                              ,work)]
           [_ (error 'internal-app1 "not impossible?!")])]
-       [x `(block (local.set ,proc ,(cast (AExpr ae)))
+       [x `(block ,@(set-proc (AExpr ae))
                   ,(Store! x work))])]
 
     
@@ -5325,14 +5334,18 @@
                                              [(>= ar 0) 
                                               `(if (i32.eqz (i32.eq (array.len (local.get $args))
                                                                     (i32.const ,ar)))
-                                                   (then (call $raise-arity-error:exactly)
+                                                   (then (call $raise-arity-mismatch/proc
+                                                               (local.get $clos)
+                                                               (array.len (local.get $args)))
                                                          (unreachable)))]
                                              [else
                                               ; at least n expected
                                               (define n (- (- ar) 1))
                                               `(if (i32.lt_u (array.len (local.get $args))
                                                              (i32.const ,n))
-                                                   (then (call $raise-arity-error:at-least)
+                                                   (then (call $raise-arity-mismatch/proc
+                                                               (local.get $clos)
+                                                               (array.len (local.get $args)))
                                                          (unreachable)))])
                                            
                                            `(local.set $free (struct.get $Closure $free (local.get $clos))))
