@@ -233,9 +233,10 @@
 
   (parameterize ([current-load-relative-directory dir]
                  [current-write-relative-directory dir])
+    (define program (read-lang-file src-path))
+    #;(pretty-write program (current-error-port))
     (pretty-write (syntax->datum
-                   (topexpand
-                    (read-lang-file src-path)))
+                   (topexpand program))
                    out))
   
   (close-output-port out)
