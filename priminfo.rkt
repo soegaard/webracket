@@ -76,6 +76,13 @@
     ;; check-naturals
     ))
 
+;; Arity overrides for primitives where Racket's reflected arity
+;; does not match WebRacket's documented behavior.
+;; Example: vector-member gained an optional comparator in Racket 8.15.0.1,
+;; but older Rackets report arity 2 while docs show (2 3).
+(define arity-overrides
+  (hash 'vector-member '(2 3)))
+
 
 (require "parameters.rkt"
          "define-foreign.rkt")
@@ -123,22 +130,27 @@
 (define (exception-constructor->primitive sym)
   (eval sym ns))
 
-(define (primitive->description sym-or-primitive)      
+(define (primitive->description sym-or-primitive)
   (cond
     [(exception-constructor? sym-or-primitive)
      (define pr (exception-constructor->primitive sym-or-primitive))
      (define x pr)
      (define-values (required accepted) (procedure-keywords x))
-     (primitive-description (object-name x)
-                            (procedure-arity x)                         
-                            (if (primitive? x)
-                                (primitive-result-arity x)
-                                (procedure-result-arity x))
-                            required
-                            accepted
-                            (primitive? x)
-                            (primitive-closure? x)
-                            (procedure-realm x))]    
+     (define desc
+       (primitive-description (object-name x)
+                              (procedure-arity x)
+                              (if (primitive? x)
+                                  (primitive-result-arity x)
+                                  (procedure-result-arity x))
+                              required
+                              accepted
+                              (primitive? x)
+                              (primitive-closure? x)
+                              (procedure-realm x)))
+     (if (and (symbol? sym-or-primitive) (hash-has-key? arity-overrides sym-or-primitive))
+         (struct-copy primitive-description desc
+                      [arity (hash-ref arity-overrides sym-or-primitive)])
+         desc)]
     [(and (symbol? sym-or-primitive)
           (or (member sym-or-primitive not-primitives-in-racket)
               (member sym-or-primitive (ffi-primitives))))
@@ -158,13 +170,18 @@
 
      (define-values (required accepted) (procedure-keywords x))
 
-     (primitive-description (object-name x)
-                            (procedure-arity x)                         
-                            (if (primitive? x)
-                                (primitive-result-arity x)
-                                (procedure-result-arity x))
-                            required
-                            accepted
-                            (primitive? x)
-                            (primitive-closure? x)
-                            (procedure-realm x))]))
+     (define desc
+       (primitive-description (object-name x)
+                              (procedure-arity x)
+                              (if (primitive? x)
+                                  (primitive-result-arity x)
+                                  (procedure-result-arity x))
+                              required
+                              accepted
+                              (primitive? x)
+                              (primitive-closure? x)
+                              (procedure-realm x)))
+     (if (and (symbol? sym-or-primitive) (hash-has-key? arity-overrides sym-or-primitive))
+         (struct-copy primitive-description desc
+                      [arity (hash-ref arity-overrides sym-or-primitive)])
+         desc)]))

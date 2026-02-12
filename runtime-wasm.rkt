@@ -23820,7 +23820,7 @@
                      (struct.get $Vector $arr (local.get $src))  (local.get $ss) (local.get $se))
                (global.get $void))
 
-         (func $vector-copy (type $Prim3)
+         (func $vector-copy (type $Prim13)
                (param $v     (ref eq))
                (param $start (ref eq))   ;; fixnum or $missing, default: 0
                (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)
