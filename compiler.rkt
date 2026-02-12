@@ -4512,6 +4512,8 @@
           (inline-prim/variadic sym ae1 1)]
          [(string=?)
           (inline-prim/variadic sym ae1 1)]
+         [(string<? string<=? string>? string>=?)
+          (inline-prim/variadic sym ae1 1)]
          [(string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)
           (inline-prim/variadic sym ae1 1)]
          
@@ -4634,12 +4636,12 @@
          [(log)                        (inline-prim/optional sym ae1 1 2)]
          [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
          ; Todo: map and for-each needs to check that the first argument is a procedure
-         [(map)                        (inline-prim/variadic sym ae1 2 1)]
-         [(andmap)                     (inline-prim/variadic sym ae1 2 1)]
-         [(ormap)                      (inline-prim/variadic sym ae1 2 1)]
-         [(append-map)                 (inline-prim/variadic sym ae1 2 1)]
-         [(count)                      (inline-prim/variadic sym ae1 2 1)]
-         [(for-each)                   (inline-prim/variadic sym ae1 2 1)]
+        [(map)                        (inline-prim/variadic sym ae1 2 2)]
+        [(andmap)                     (inline-prim/variadic sym ae1 2 2)]
+        [(ormap)                      (inline-prim/variadic sym ae1 2 2)]
+        [(append-map)                 (inline-prim/variadic sym ae1 2 2)]
+        [(count)                      (inline-prim/variadic sym ae1 2 2)]
+        [(for-each)                   (inline-prim/variadic sym ae1 2 2)]
          [(foldl foldr)                (inline-prim/variadic sym ae1 3)]
          [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
          [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]

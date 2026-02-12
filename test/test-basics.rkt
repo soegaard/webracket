@@ -1010,24 +1010,36 @@
                          (equal? (string=? "A" "A" "B") #f)))
 
               (list "string<?"
-                    (and (equal? (string<? "" "") #f)
+                    (and (equal? (string<? "A") #t)
+                         (equal? (string<? "" "") #f)
                          (equal? (string<? "A" "B") #t)
-                         (equal? (string<? "AB" "A") #f)))
+                         (equal? (string<? "AB" "A") #f)
+                         (equal? (string<? "A" "B" "C") #t)
+                         (equal? (string<? "A" "C" "B") #f)))
 
               (list "string>?"
-                    (and (equal? (string>? "" "") #f)
+                    (and (equal? (string>? "A") #t)
+                         (equal? (string>? "" "") #f)
                          (equal? (string>? "B" "A") #t)
-                         (equal? (string>? "A" "AB") #f)))
+                         (equal? (string>? "A" "AB") #f)
+                         (equal? (string>? "C" "B" "A") #t)
+                         (equal? (string>? "C" "A" "B") #f)))
 
               (list "string<=?"
-                    (and (equal? (string<=? "" "") #t)
+                    (and (equal? (string<=? "A") #t)
+                         (equal? (string<=? "" "") #t)
                          (equal? (string<=? "A" "B") #t)
-                         (equal? (string<=? "AB" "A") #f)))
+                         (equal? (string<=? "AB" "A") #f)
+                         (equal? (string<=? "A" "B" "B") #t)
+                         (equal? (string<=? "A" "B" "A") #f)))
 
               (list "string>=?"
-                    (and (equal? (string>=? "" "") #t)
+                    (and (equal? (string>=? "A") #t)
+                         (equal? (string>=? "" "") #t)
                          (equal? (string>=? "B" "A") #t)
-                         (equal? (string>=? "A" "AB") #f)))
+                         (equal? (string>=? "A" "AB") #f)
+                         (equal? (string>=? "B" "B" "A") #t)
+                         (equal? (string>=? "B" "A" "B") #f)))
               
               (list "string-ci=?"
                     (and (equal? (string-ci=? "A") #t)

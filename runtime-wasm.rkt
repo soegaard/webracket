@@ -15093,35 +15093,207 @@
                             (struct.get $String $codepoints (local.get $a))
                             (struct.get $String $codepoints (local.get $b))))
 
-         (func $string<? (type $Prim2)
+         (func $string<?/2
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq)) (call $string</i32 (local.get $a) (local.get $b))
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $string<=? (type $Prim2)
+         ;; string<? : string? string? ... -> boolean? (at least 1)
+         (func $string<? (type $Prim>=1)
+               (param $a    (ref eq))   ;; string?
+               (param $rest (ref eq))   ;; list of string?
+               (result      (ref eq))
+
+               (local $prev     (ref $String))
+               (local $curr     (ref $String))
+               (local $restlist (ref eq))
+               (local $pair     (ref $Pair))
+               (local $next     (ref eq))
+
+               ;; Type check first argument
+               (if (i32.eqz (ref.test (ref $String) (local.get $a)))
+                   (then (call $raise-argument-error:string-expected (local.get $a))
+                         (unreachable)))
+               (local.set $prev (ref.cast (ref $String) (local.get $a)))
+               (local.set $restlist (local.get $rest))
+
+               ;; Single argument => #t
+               (if (ref.eq (local.get $restlist) (global.get $null))
+                   (then (return (global.get $true))))
+
+               (loop $loop
+                     (if (ref.eq (local.get $restlist) (global.get $null))
+                         (then (return (global.get $true))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $restlist)))
+                         (then (call $raise-pair-expected (local.get $restlist))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $restlist)))
+                     (local.set $next (struct.get $Pair $a (local.get $pair)))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $next)))
+                         (then (call $raise-argument-error:string-expected (local.get $next))
+                               (unreachable)))
+                     (local.set $curr (ref.cast (ref $String) (local.get $next)))
+                     (if (i32.eqz (call $string</i32/checked (local.get $prev) (local.get $curr)))
+                         (then (return (global.get $false))))
+                     (local.set $prev (local.get $curr))
+                     (local.set $restlist (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
+
+         (func $string<=?/2
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq))
-                   (ref.eq (call $string<? (local.get $a) (local.get $b))
-                           (global.get $true))
+                   (i32.or (call $string</i32 (local.get $a) (local.get $b))
+                           (call $string=?/i32 (local.get $a) (local.get $b)))
                    (then (global.get $true))
-                   (else (call $string=?/2 (local.get $a) (local.get $b)))))
+                   (else (global.get $false))))
 
-         (func $string>? (type $Prim2)
+         ;; string<=? : string? string? ... -> boolean? (at least 1)
+         (func $string<=? (type $Prim>=1)
+               (param $a    (ref eq))   ;; string?
+               (param $rest (ref eq))   ;; list of string?
+               (result      (ref eq))
+
+               (local $prev     (ref $String))
+               (local $curr     (ref $String))
+               (local $restlist (ref eq))
+               (local $pair     (ref $Pair))
+               (local $next     (ref eq))
+
+               ;; Type check first argument
+               (if (i32.eqz (ref.test (ref $String) (local.get $a)))
+                   (then (call $raise-argument-error:string-expected (local.get $a))
+                         (unreachable)))
+               (local.set $prev (ref.cast (ref $String) (local.get $a)))
+               (local.set $restlist (local.get $rest))
+
+               ;; Single argument => #t
+               (if (ref.eq (local.get $restlist) (global.get $null))
+                   (then (return (global.get $true))))
+
+               (loop $loop
+                     (if (ref.eq (local.get $restlist) (global.get $null))
+                         (then (return (global.get $true))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $restlist)))
+                         (then (call $raise-pair-expected (local.get $restlist))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $restlist)))
+                     (local.set $next (struct.get $Pair $a (local.get $pair)))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $next)))
+                         (then (call $raise-argument-error:string-expected (local.get $next))
+                               (unreachable)))
+                     (local.set $curr (ref.cast (ref $String) (local.get $next)))
+                     ;; Fail if current < previous
+                     (if (i32.ne (call $string</i32/checked (local.get $curr) (local.get $prev)) (i32.const 0))
+                         (then (return (global.get $false))))
+                     (local.set $prev (local.get $curr))
+                     (local.set $restlist (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
+
+         (func $string>?/2
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
-               (call $string<? (local.get $b) (local.get $a)))
+               (if (result (ref eq)) (call $string</i32 (local.get $b) (local.get $a))
+                   (then (global.get $true))
+                   (else (global.get $false))))
 
-         (func $string>=? (type $Prim2)
+         ;; string>? : string? string? ... -> boolean? (at least 1)
+         (func $string>? (type $Prim>=1)
+               (param $a    (ref eq))   ;; string?
+               (param $rest (ref eq))   ;; list of string?
+               (result      (ref eq))
+
+               (local $prev     (ref $String))
+               (local $curr     (ref $String))
+               (local $restlist (ref eq))
+               (local $pair     (ref $Pair))
+               (local $next     (ref eq))
+
+               ;; Type check first argument
+               (if (i32.eqz (ref.test (ref $String) (local.get $a)))
+                   (then (call $raise-argument-error:string-expected (local.get $a))
+                         (unreachable)))
+               (local.set $prev (ref.cast (ref $String) (local.get $a)))
+               (local.set $restlist (local.get $rest))
+
+               ;; Single argument => #t
+               (if (ref.eq (local.get $restlist) (global.get $null))
+                   (then (return (global.get $true))))
+
+               (loop $loop
+                     (if (ref.eq (local.get $restlist) (global.get $null))
+                         (then (return (global.get $true))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $restlist)))
+                         (then (call $raise-pair-expected (local.get $restlist))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $restlist)))
+                     (local.set $next (struct.get $Pair $a (local.get $pair)))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $next)))
+                         (then (call $raise-argument-error:string-expected (local.get $next))
+                               (unreachable)))
+                     (local.set $curr (ref.cast (ref $String) (local.get $next)))
+                     (if (i32.eqz (call $string</i32/checked (local.get $curr) (local.get $prev)))
+                         (then (return (global.get $false))))
+                     (local.set $prev (local.get $curr))
+                     (local.set $restlist (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
+
+         (func $string>=?/2
                (param $a (ref eq)) (param $b (ref eq))
                (result (ref eq))
                (if (result (ref eq))
-                   (ref.eq (call $string<? (local.get $b) (local.get $a))
-                           (global.get $true))
+                   (i32.or (call $string</i32 (local.get $b) (local.get $a))
+                           (call $string=?/i32 (local.get $a) (local.get $b)))
                    (then (global.get $true))
-                   (else (call $string=?/2 (local.get $a) (local.get $b)))))
+                   (else (global.get $false))))
+
+         ;; string>=? : string? string? ... -> boolean? (at least 1)
+         (func $string>=? (type $Prim>=1)
+               (param $a    (ref eq))   ;; string?
+               (param $rest (ref eq))   ;; list of string?
+               (result      (ref eq))
+
+               (local $prev     (ref $String))
+               (local $curr     (ref $String))
+               (local $restlist (ref eq))
+               (local $pair     (ref $Pair))
+               (local $next     (ref eq))
+
+               ;; Type check first argument
+               (if (i32.eqz (ref.test (ref $String) (local.get $a)))
+                   (then (call $raise-argument-error:string-expected (local.get $a))
+                         (unreachable)))
+               (local.set $prev (ref.cast (ref $String) (local.get $a)))
+               (local.set $restlist (local.get $rest))
+
+               ;; Single argument => #t
+               (if (ref.eq (local.get $restlist) (global.get $null))
+                   (then (return (global.get $true))))
+
+               (loop $loop
+                     (if (ref.eq (local.get $restlist) (global.get $null))
+                         (then (return (global.get $true))))
+                     (if (i32.eqz (ref.test (ref $Pair) (local.get $restlist)))
+                         (then (call $raise-pair-expected (local.get $restlist))
+                               (unreachable)))
+                     (local.set $pair (ref.cast (ref $Pair) (local.get $restlist)))
+                     (local.set $next (struct.get $Pair $a (local.get $pair)))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $next)))
+                         (then (call $raise-argument-error:string-expected (local.get $next))
+                               (unreachable)))
+                     (local.set $curr (ref.cast (ref $String) (local.get $next)))
+                     ;; Fail if previous < current
+                     (if (i32.ne (call $string</i32/checked (local.get $prev) (local.get $curr)) (i32.const 0))
+                         (then (return (global.get $false))))
+                     (local.set $prev (local.get $curr))
+                     (local.set $restlist (struct.get $Pair $d (local.get $pair)))
+                     (br $loop))
+               (unreachable))
 
          (func $string</i32
                (param $a-raw (ref eq)) (param $b-raw (ref eq))
@@ -17362,7 +17534,7 @@
                      (local.set $curr-str
                                 (struct.get $Symbol $name
                                             (ref.cast (ref $Symbol) (local.get $next))))
-                     (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
+                    (if (ref.eq (call $string<?/2 (local.get $prev-str) (local.get $curr-str))
                                  (global.get $false))
                          (then (return (global.get $false))))
                      (local.set $prev-str (local.get $curr-str))
@@ -17589,7 +17761,7 @@
                      (local.set $curr-str
                                 (struct.get $Keyword $str
                                             (ref.cast (ref $Keyword) (local.get $next))))
-                     (if (ref.eq (call $string<? (local.get $prev-str) (local.get $curr-str))
+                    (if (ref.eq (call $string<?/2 (local.get $prev-str) (local.get $curr-str))
                                  (global.get $false))
                          (then (return (global.get $false))))
                      (local.set $prev-str (local.get $curr-str))
@@ -20198,15 +20370,17 @@
                             (br $loop)))
                (local.get $lst))
 
-         (func $map (type $Prim>=1)
+         (func $map (type $Prim>=2)
                (param $proc   (ref eq))   ;; procedure
-               (param $xss    (ref eq))   ;; list of lists
+               (param $xs0    (ref eq))   ;; list?
+               (param $rest   (ref eq))   ;; list of lists
                (result        (ref eq))
                
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $pair   (ref $Pair))
                (local $nlists i32)
+               (local $xss    (ref eq))
                
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20225,7 +20399,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
                
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                         (global.get $symbol:map)
                                         (local.get $xss)))
@@ -20238,12 +20418,12 @@
                                (i32.const 1))
                          (unreachable)))
 
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 4) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
                (call $seed-list-args (local.get $xss) (local.get $lists))
 
-               ;; 4) Main loop: stop at the shortest list
+               ;; 5) Main loop: stop at the shortest list
                (local.set $acc (global.get $null))
 
                (loop $loop
@@ -20324,15 +20504,17 @@
 
 
 
-         (func $andmap (type $Prim>=1)
+         (func $andmap (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
+               (param $xs0  (ref eq))   ;; list?
+               (param $rest (ref eq))   ;; list of lists
                (result      (ref eq))
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $pair   (ref $Pair))
                (local $nlists i32)
+               (local $xss    (ref eq))
 
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20348,7 +20530,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                         (global.get $symbol:andmap)
                                         (local.get $xss)))
@@ -20361,13 +20549,13 @@
                                (i32.const 1))
                          (unreachable)))
 
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 4) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
                (call $seed-list-args (local.get $xss) (local.get $lists))
 
-               ;; 4) Main loop: stop at the shortest list or when f returns #f
+               ;; 5) Main loop: stop at the shortest list or when f returns #f
                (loop $loop
                      ;; (a) Check state of all lists; determine if we stop (empty)
                      (local.set $stop (i32.const 0))
@@ -20430,15 +20618,17 @@
                (unreachable))
 
 
-         (func $ormap (type $Prim>=1)
+         (func $ormap (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
+               (param $xs0  (ref eq))   ;; list?
+               (param $rest (ref eq))   ;; list of lists
                (result      (ref eq))
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $pair   (ref $Pair))
                (local $nlists i32)
+               (local $xss    (ref eq))
 
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20454,7 +20644,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                         (global.get $symbol:ormap)
                                         (local.get $xss)))
@@ -20467,13 +20663,13 @@
                                (i32.const 1))
                          (unreachable)))
 
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 4) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
                (call $seed-list-args (local.get $xss) (local.get $lists))
 
-               ;; 4) Main loop: stop at the shortest list or when f returns truthy
+               ;; 5) Main loop: stop at the shortest list or when f returns truthy
                (loop $loop
                      ;; (a) Check state of all lists; determine if we stop
                      (local.set $stop (i32.const 0))
@@ -20608,14 +20804,16 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $seed))))
 
-        (func $append-map (type $Prim>=1)
+        (func $append-map (type $Prim>=2)
               (param $proc (ref eq))   ;; procedure
-              (param $xss  (ref eq))   ;; list of lists
+              (param $xs0  (ref eq))   ;; list?
+              (param $rest (ref eq))   ;; list of lists
               (result      (ref eq))
               (local $f      (ref $Procedure))
               (local $finv   (ref $ProcedureInvoker))
               (local $pair   (ref $Pair))
               (local $nlists i32)
+              (local $xss    (ref eq))
 
               (local $lists  (ref $Args))  ;; cursors for each list
               (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20640,7 +20838,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                          (global.get $symbol:append-map)
                                          (local.get $xss)))
@@ -20653,13 +20857,13 @@
                                (i32.const 1))
                          (unreachable)))
 
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 4) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
 
                (call $seed-list-args (local.get $xss) (local.get $lists))
 
-               ;; 4) Main loop: stop at the shortest list
+               ;; 5) Main loop: stop at the shortest list
                (local.set $res (global.get $null))
 
                (loop $loop
@@ -20768,15 +20972,17 @@
                (unreachable))
         
 
-         (func $count (type $Prim>=1)
+         (func $count (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
+               (param $xs0  (ref eq))   ;; list?
+               (param $rest (ref eq))   ;; list of lists
                (result      (ref eq))
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $pair   (ref $Pair))
                (local $nlists i32)
+               (local $xss    (ref eq))
 
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20793,7 +20999,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                         (global.get $symbol:count)
                                         (local.get $xss)))
@@ -20899,15 +21111,17 @@
                (unreachable))
 
 
-         (func $for-each (type $Prim>=1)
+         (func $for-each (type $Prim>=2)
                (param $proc (ref eq))   ;; procedure
-               (param $xss  (ref eq))   ;; list of lists
+               (param $xs0  (ref eq))   ;; list?
+               (param $rest (ref eq))   ;; list of lists
                (result      (ref eq))
 
                (local $f      (ref $Procedure))
                (local $finv   (ref $ProcedureInvoker))
                (local $pair   (ref $Pair))
                (local $nlists i32)
+               (local $xss    (ref eq))
 
                (local $lists  (ref $Args))  ;; cursors for each list
                (local $call   (ref $Args))  ;; args for f (length = nlists)
@@ -20922,7 +21136,13 @@
                (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
 
-               ;; 2) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
+               ;; 2) Build list-of-lists from first list and rest
+               (local.set $xss (struct.new $Pair
+                                           (i32.const 0)
+                                           (local.get $xs0)
+                                           (local.get $rest)))
+
+               ;; 3) Walk outer list xss to count #lists; ensure xss is proper and each element is a list head
                (local.set $nlists (call $validate-list-args
                                         (global.get $symbol:for-each)
                                         (local.get $xss)))
@@ -20935,12 +21155,12 @@
                                (i32.const 1))
                          (unreachable)))
 
-               ;; 3) Allocate arrays for list cursors and call arguments; seed list cursors from xss
+               ;; 4) Allocate arrays for list cursors and call arguments; seed list cursors from xss
                (local.set $lists (array.new $Args (global.get $null) (local.get $nlists)))
                (local.set $call  (array.new $Args (global.get $null) (local.get $nlists)))
                (call $seed-list-args (local.get $xss) (local.get $lists))
 
-               ;; 4) Main loop: stop at the shortest list
+               ;; 5) Main loop: stop at the shortest list
                (loop $loop
                      ;; (a) Check state of all lists; determine if we stop
                      (local.set $stop (i32.const 0))
