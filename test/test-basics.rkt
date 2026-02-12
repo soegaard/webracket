@@ -2456,7 +2456,9 @@
               (list "vector-copy"
                     (and (equal? (vector-copy '#(1 2 3 4))     '#(1 2 3 4))
                          (equal? (vector-copy '#(1 2 3 4) 3)   '#(4))
-                         (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))))
+                         (equal? (vector-copy '#(1 2 3 4) 2 3) '#(3))
+                         (equal? (vector-copy '#(1 2 3 4) 0 0) '#())
+                         (equal? (vector-copy '#(1 2 3 4) 1 4) '#(2 3 4))))
 
               (list "vector-set/copy"
                     (let* ([v (vector 1 2 3)]
@@ -2582,6 +2584,9 @@
                              (vector-sort! v <)
                              (equal? v '#(1 2 3 4 5)))
                            (let ([v (vector 4 3 2 1 0)])
+                             (vector-sort! v < 2)
+                             (equal? v '#(4 3 0 1 2)))
+                           (let ([v (vector 4 3 2 1 0)])
                              (vector-sort! v < 1 4)
                              (equal? v '#(4 1 2 3 0))))))
 
@@ -2589,6 +2594,8 @@
                     (let ([< (λ (x y) (< x y))])
                       (and (equal? (vector-sort '#(3 1 2 5 4) <)
                                    '#(1 2 3 4 5))
+                           (equal? (vector-sort '#(4 3 2 1 0) < 2)
+                                   '#(0 1 2))
                            (equal? (vector-sort '#(4 3 2 1 0) < 1 4)
                                    '#(1 2 3)))))
               ))

@@ -25070,7 +25070,7 @@
                                      (local.set $hi (local.get $p))
                                      (br $loop))))))
 
-        (func $vector-sort! (type $Prim4)
+        (func $vector-sort! (type $Prim24)
               (param $v     (ref eq))   ;; vector
               (param $proc  (ref eq))   ;; less-than procedure
               (param $start (ref eq))   ;; fixnum or $missing, default: 0
@@ -25147,7 +25147,7 @@
               (local.get $vec))
 
 
-        (func $vector-sort (type $Prim4)
+        (func $vector-sort (type $Prim24)
               (param $v     (ref eq))   ;; vector
               (param $proc  (ref eq))   ;; less-than procedure
               (param $start (ref eq))   ;; fixnum or $missing, default: 0
