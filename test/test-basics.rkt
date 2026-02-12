@@ -1814,7 +1814,9 @@
                                  '((a . x) (b . y) (c . z)))))
               (list "filter"
                     (and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
-                           (equal? (filter positive? '()) '()))
+                           (equal? (filter positive? '()) '())
+                           (with-handlers ([exn:fail:contract:arity? (λ _ #t)])
+                             (filter positive?) #f))
                     (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                          (equal? (filter (λ (x) (positive? x)) '()) '())))
               (list "filter-map"
@@ -1833,7 +1835,10 @@
 
               (list "filter-not"
                     (and (equal? (filter-not (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(-2 -5))
-                         (equal? (filter-not (λ (x) (positive? x)) '()) '())))
+                         (equal? (filter-not (λ (x) (positive? x)) '())
+                                '())
+                         (with-handlers ([exn:fail:contract:arity? (λ _ #t)])
+                           (filter-not positive?) #f)))
 
               (list "shuffle"
                     (let ([l '(1 2 3 4 5 6)])
