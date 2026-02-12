@@ -23895,7 +23895,7 @@
                                       (i32.const 0)
                                       (array.len (struct.get $Vector $arr (local.get $vec))))))))
          
-         (func $vector->values (type $Prim3)
+         (func $vector->values (type $Prim13)
                (param $v     (ref eq))
                (param $start (ref eq))   ;; fixnum or $missing, default: 0
                (param $end   (ref eq))   ;; fixnum or $missing, default: (vector-length v)

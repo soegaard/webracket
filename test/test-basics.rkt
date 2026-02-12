@@ -2434,7 +2434,10 @@
                          (let-values ([(a b c) (vector->values '#(a b c))])
                            (and (eq? a 'a) (eq? b 'b) (eq? c 'c)))
                          (let-values ([(b c) (vector->values '#(a b c d) 1 3)])
-                           (and (eq? b 'b) (eq? c 'c)))))
+                           (and (eq? b 'b) (eq? c 'c)))
+                         (let-values ([(b c d) (vector->values '#(a b c d) 1)])
+                           (and (eq? b 'b) (eq? c 'c) (eq? d 'd)))
+                         (let-values ([() (vector->values '#(a b c) 0 0)]) #t)))
 
               (list "vector->immutable-vector"
                     (and (let* ([v (vector 1 2)]
