@@ -4564,6 +4564,7 @@
          [(open-input-bytes)           (inline-prim/optional sym ae1 1 2)]
          [(get-output-bytes
            get-output-string)          (inline-prim/fixed sym ae1 1)]
+         [(open-output-bytes)          (inline-prim/optional sym ae1 0 1)]
          [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
          [(call-with-output-string)    (inline-prim/fixed sym ae1 1)]
          [(make-input-port)            (inline-prim/optional-rest sym ae1 4 10 4)]

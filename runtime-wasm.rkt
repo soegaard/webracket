@@ -29350,7 +29350,7 @@
                                 (struct.get $Location $pos  (local.get $loc))))
 
 
-         (func $open-input-bytes (type $Prim2)
+         (func $open-input-bytes (type $Prim12)
                (param $bstr-raw (ref eq)) ;; bytes?
                (param $name     (ref eq)) ;; optional any/c, default = 'string
                (result          (ref eq))
@@ -29407,7 +29407,7 @@
                            (i32.const 0)         ;; $utf8-left
                            (i32.const 0)))       ;; $utf8-bytes
 
-         (func $open-input-string (type $Prim2)
+         (func $open-input-string (type $Prim12)
                (param $str-raw (ref eq)) ;; string?
                (param $name    (ref eq)) ;; optional any/c, default = 'string
                (result         (ref eq))
@@ -29453,11 +29453,14 @@
                            (i32.const 0)))        ;; $utf8-bytes
 
          
-         (func $open-output-bytes (type $Prim0)
+         (func $open-output-bytes (type $Prim01)
+               (param $name (ref eq)) ;; optional any/c, default = 'string
                (result (ref eq))
 
-               (local $bs  (ref $Bytes))
-               (local $loc (ref $Location))
+               (local $bs       (ref $Bytes))
+               (local $loc      (ref $Location))
+               (local $name-val (ref eq))
+               (local $port     (ref $OutputStringPort))
                ;; Step 1: Allocate the backing I8Array with capacity 32 and fill with 0
                (local.set $bs
                           (struct.new $Bytes
@@ -29466,19 +29469,27 @@
                             (call $i8make-array (i32.const 32) (i32.const 0)))) ;; backing array
                ;; Step 2: Make initial location: (line 1, col 0, pos 1)
                (local.set $loc (ref.cast (ref $Location) (call $make-initial-location)))
-               ;; Step 3: Construct and return the StringPort
-               (struct.new $OutputStringPort
-                           (i32.const 0)                 ;; $hash
-                           (global.get $false)           ;; $name  : (ref eq)
-                           (local.get $bs)               ;; $bytes : (ref $Bytes)
-                           (i32.const 32)                ;; $len   : i32
-                           (i32.const 0)                 ;; $idx   : i32
-                           (local.get $loc)              ;; $loc   : (ref $Location)
-                           (i32.const 0)                 ;; $utf8-len
-                           (i32.const 0)                 ;; $utf8-left
-                           (i32.const 0)))               ;; $utf8-bytes
+               ;; Step 3: Determine the port name, defaulting to 'string
+               (local.set $name-val
+                          (if (result (ref eq))
+                              (ref.eq (local.get $name) (global.get $missing))
+                              (then (global.get $symbol:string))
+                              (else (local.get $name))))
+               ;; Step 4: Construct and return the StringPort
+               (local.set $port
+                          (struct.new $OutputStringPort
+                                      (i32.const 0)                 ;; $hash
+                                      (local.get $name-val)         ;; $name  : (ref eq)
+                                      (local.get $bs)               ;; $bytes : (ref $Bytes)
+                                      (i32.const 32)                ;; $len   : i32
+                                      (i32.const 0)                 ;; $idx   : i32
+                                      (local.get $loc)              ;; $loc   : (ref $Location)
+                                      (i32.const 0)                 ;; $utf8-len
+                                      (i32.const 0)                 ;; $utf8-left
+                                      (i32.const 0)))               ;; $utf8-bytes
+               (local.get $port))
 
-         (func $open-output-string (type $Prim1)
+         (func $open-output-string (type $Prim01)
                (param $name (ref eq)) ;; optional any/c, default = 'string
                (result (ref eq))
 
@@ -29492,7 +29503,7 @@
                               (else (local.get $name))))
                ;; Reuse the byte-backed string port and update its name field
                (local.set $port (ref.cast (ref $OutputStringPort)
-                                          (call $open-output-bytes)))
+                                          (call $open-output-bytes (global.get $missing))))
                (struct.set $OutputStringPort $name (local.get $port) (local.get $name-val))
                (local.get $port))
 
@@ -30925,7 +30936,7 @@
 
          ;; NOTE: The optional input-port argument currently needs to be
          ;;       supplied explicitly until (current-input-port) exists.
-         (func $peek-bytes! (type $Prim15)
+         (func $peek-bytes! (type $Prim25)
                (param $bstr  (ref eq)) ;; bytes?
                (param $skip  (ref eq)) ;; exact-nonnegative-integer?
                (param $in    (ref eq)) ;; input-port?               (optional, default = (current-input-port))
@@ -31139,7 +31150,7 @@
 
          ;; NOTE: The optional input-port argument currently needs to be
          ;;       supplied explicitly until (current-input-port) exists.
-         (func $peek-string! (type $Prim15)
+         (func $peek-string! (type $Prim25)
                (param $str   (ref eq)) ;; string?
                (param $skip  (ref eq)) ;; exact-nonnegative-integer?
                (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
@@ -31565,7 +31576,7 @@
 
          ;; Like Racket's peek-bytes, but currently only string ports are supported.
          ;; The optional skip argument defaults to 0.
-         (func $peek-bytes (type $Prim13)
+         (func $peek-bytes (type $Prim23)
                (param $amt  (ref eq)) ;; exact-nonnegative-integer?
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
                (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
@@ -31663,7 +31674,7 @@
 
          ;; Like Racket's peek-string, but currently only string ports are supported.
          ;; The optional skip argument defaults to 0.
-         (func $peek-string (type $Prim13)
+         (func $peek-string (type $Prim23)
                (param $amt  (ref eq)) ;; exact-nonnegative-integer?
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
                (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
@@ -35895,7 +35906,7 @@
                (if (result (ref eq))
                    (ref.eq (local.get $out) (global.get $false))
                    (then
-                    (local.set $port (call $open-output-bytes))
+                    (local.set $port (call $open-output-bytes (global.get $missing)))
                     (call $fasl:s-exp->fasl (local.get $v) (local.get $port))
                     (local.set $res (call $get-output-bytes (local.get $port)))
                     (local.get $res))

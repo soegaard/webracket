@@ -3885,6 +3885,13 @@
               (list "open-output-string custom name"
                     (string-port? (open-output-string 'sink)))
 
+              (list "open-output-bytes default"
+                    (let ([port (open-output-bytes)])
+                      (and (string-port? port)
+                           (equal? (get-output-bytes port) (bytes)))))
+
+              (list "open-output-bytes custom name"
+                    (string-port? (open-output-bytes 'sink)))
 
               (list "get-output-string"
                     (let* ([port (open-output-bytes)]
@@ -4279,9 +4286,13 @@
 
                 (list "object-name/string-port"
                       (let* ([default-port (open-output-string)]
-                             [named-port   (open-output-string 'custom-port)])
+                             [named-port   (open-output-string 'custom-port)]
+                             [bytes-port   (open-output-bytes)]
+                             [bytes-named  (open-output-bytes 'custom-bytes)])
                         (and (equal? (object-name default-port) 'string)
-                             (equal? (object-name named-port) 'custom-port))))
+                             (equal? (object-name named-port) 'custom-port)
+                             (equal? (object-name bytes-port) 'string)
+                             (equal? (object-name bytes-named) 'custom-bytes))))
 
                 (list "object-name/fallback"
                       (equal? (object-name 42) #f))
