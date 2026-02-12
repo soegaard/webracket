@@ -1536,14 +1536,14 @@
       [else
        (syntax-case stx ()
          [() stx]
-         [(a . d)
+        [(a . d)
           (with-syntax ([a* (walk #'a)]
                         [d* (walk #'d)])
-            #'(a* . d*))]
-         [#(ele ...)
+            (syntax/loc stx (a* . d*)))]
+        [#(ele ...)
           (with-syntax ([(ele* ...) (map walk (syntax->list #'(ele ...)))])
-            #'#(ele* ...))]
-         [_ stx])]))
+            (syntax/loc stx #(ele* ...)))]
+        [_ stx])]))
 
   (walk stx))
 
@@ -4339,14 +4339,27 @@
 
     ;; Inline Primitives. Inlining.
     [(primapp ,s ,pr ,ae1 ...)
+     (define (primapp-loc s)
+       (and (syntax? s)
+            (let* ([src (syntax-source s)]
+                   [src (cond [(path? src)   (path->string src)]
+                              [(symbol? src) (symbol->string src)]
+                              [else          src])]
+                   [line (syntax-line s)]
+                   [col  (syntax-column s)])
+              (and src line col (format "~a:~a:~a" src line col)))))
+
+     (define (primapp-arity-msg base s)
+       (define loc (primapp-loc s))
+       (if loc (format "~a at ~a" base loc) base))
 
      ;; Inlines a call to a primitive with
      ;;   a fixed number of arguments.
      (define (inline-prim/fixed sym ae1 arg-count)
        (define aes (AExpr* ae1))
        (define n   (length aes))
-       (when (> n arg-count) (raise-syntax-error 'primapp "too many arguments" s))
-       (when (< n arg-count) (error 'primapp "too few arguments: ~a"  sym))
+       (when (> n arg-count) (raise-syntax-error 'primapp (primapp-arity-msg "too many arguments" s) s))
+       (when (< n arg-count) (raise-syntax-error 'primapp (primapp-arity-msg (format "too few arguments: ~a" sym) s) s))
        `(call ,($ sym) ,@aes))
 
      ;; Inlines a call to a primitive with
@@ -4492,6 +4505,14 @@
             [else (inline-prim/variadic-args sym ae1 1)])]
 
          [(symbol<?) ; variadic, at least one argument
+          (inline-prim/variadic sym ae1 1)]
+         [(symbol=?) ; exact arity 2
+          (inline-prim/fixed sym ae1 2)]
+         [(keyword<?) ; variadic, at least one argument
+          (inline-prim/variadic sym ae1 1)]
+         [(string=?)
+          (inline-prim/variadic sym ae1 1)]
+         [(string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)
           (inline-prim/variadic sym ae1 1)]
          
         ;;; Standard Inlining

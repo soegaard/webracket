@@ -4,14 +4,14 @@
 ;; So avoid use --stdlib when compiling this test.
 
 (list
- #;(list "3. Syntactic Forms"       
+ (list "3. Syntactic Forms"       
        (list "3.8 Procedure Expressions: lambda and case-lambda"
              (list
               (list "lambda"
                     (and (equal? (procedure? (lambda (x) (* x x))) #t)
                          (equal? (procedure? '(lambda (x) (* x x))) #f)
                          (equal? (apply (lambda (a b) (+ a b)) (list 3 4)) 7)
-                         #;(let ([compose (lambda (f g) (lambda args (f (apply g args))))])
+                         (let ([compose (lambda (f g) (lambda args (f (apply g args))))])
                              (equal? ((compose sqrt *) 12 75) 30)) ; todo : improve *
                          (let ([compose (lambda (f g) (lambda args (f (apply g args))))])
                            (equal? ((compose sqrt (λ (x y) (* x y))) 12 75) 30))
@@ -57,7 +57,7 @@
                         (equal? (eqv? '() '()) #t)
                         (equal? (eqv? '10000 '10000) #t)
                         (equal? (eqv? 10000000000000000000 10000000000000000000) #t)
-                        #;(equal? (eqv? 10000000000000000000 10000000000000000001) #f) ; todo - needs bignums
+                        (equal? (eqv? 10000000000000000000 10000000000000000001) #f) ; todo - needs bignums
                         (equal? (eqv? 10000000000000000000 20000000000000000000) #f)
                         (equal? (eqv? (cons 1 2) (cons 1 2)) #f)
                         (equal? (eqv? (lambda () 1) (lambda () 2)) #f)
@@ -415,7 +415,7 @@
                                (let-values ([(q r) (quotient/remainder 10.0 -3)])
                                  (and (equal? q -3.0) (equal? r 1.0)))))))
 
-             #;(list "4.3.2.2 Number Comparison"
+             (list "4.3.2.2 Number Comparison"
                      (list
                       (list "="
                             (and (equal? (= 5) #t)
@@ -898,9 +898,9 @@
                          (equal? (procedure-arity string?) 1)))
 
               (list "make-string"
-                    (and #;(equal? (string-length (make-string 3)) 3)
+                    (and (equal? (string-length (make-string 3)) 3)
                          (equal? (make-string 0) "")
-                         #;(equal? (procedure-arity make-string) '(1 2)) ; todo - improve arities
+                         (equal? (procedure-arity make-string) '(1 2)) ; todo - improve arities
                          ))
 
               (list "string-set!"
@@ -929,14 +929,14 @@
                          (equal? (substring "ab" 1 2) "b")
                          (equal? (substring "ab" 1)   "b")
                          (equal? (substring "ab" 2)   "")
-                         #;(equal? (procedure-arity substring) '(2 3)))) ; todo - improve arities
+                         (equal? (procedure-arity substring) '(2 3)))) ; todo - improve arities
 
               (list "string-append"
                     (and (equal? (string-append) "")
                          (equal? (string-append "A") "A")
                          (equal? (string-append "A" "B") "AB")
                          (equal? (string-append "A" "B" "C") "ABC")
-                         #; (equal? (procedure-arity string-append) (arity-at-least 0)) ; todo
+                          #;(equal? (procedure-arity string-append) (arity-at-least 0)) ; todo
                          ))
 
               (list "string-append-immutable"
@@ -994,7 +994,7 @@
                     (let ([s (make-string 10 #\x)])
                       (string-copy! s 0 "hello")
                       (list (equal? s "helloxxxxx")
-                            #;(list (procedure-arity string-copy!) '(3 4 5))))) ; todo - got #f - improve arities
+                            (list (procedure-arity string-copy!) '(3 4 5))))) ; todo - got #f - improve arities
 
               (list "string->immutable-string"
                     (and (equal? (string->immutable-string "hi") "hi")
@@ -1002,11 +1002,12 @@
                          (equal? (procedure-arity string->immutable-string) 1)))
 
               (list "string=?"
-                    '(todo 'string=? "make it variadic")
-                    (and #;(equal? (string=? "") #t)     ; todo - make string=? variadic
+                    (and (equal? (string=? "") #t)
                          (equal? (string=? "A" "A") #t)
                          (equal? (string=? "A" "B") #f)
-                         (equal? (string=? "A" "AB") #f)))
+                         (equal? (string=? "A" "AB") #f)
+                         (equal? (string=? "A" "A" "A") #t)
+                         (equal? (string=? "A" "A" "B") #f)))
 
               (list "string<?"
                     (and (equal? (string<? "" "") #f)
@@ -1029,10 +1030,37 @@
                          (equal? (string>=? "A" "AB") #f)))
               
               (list "string-ci=?"
-                    (and (equal? (string-ci=? "A" "a") #t)
+                    (and (equal? (string-ci=? "A") #t)
+                         (equal? (string-ci=? "A" "a") #t)
                          (equal? (string-ci=? "Hello" "hELLo") #t)
                          (equal? (string-ci=? "A" "B") #f)
-                         (equal? (string-ci=? "A" "AB") #f)))
+                         (equal? (string-ci=? "A" "AB") #f)
+                         (equal? (string-ci=? "A" "a" "A") #t)
+                         (equal? (string-ci=? "A" "a" "B") #f)))
+             (list "string-ci<?"
+                   (and (equal? (string-ci<? "A") #t)
+                        (equal? (string-ci<? "A" "b") #t)
+                        (equal? (string-ci<? "a" "A") #f)
+                        (equal? (string-ci<? "A" "B" "c") #t)
+                        (equal? (string-ci<? "A" "c" "B") #f)))
+             (list "string-ci<=?"
+                   (and (equal? (string-ci<=? "A") #t)
+                        (equal? (string-ci<=? "A" "a") #t)
+                        (equal? (string-ci<=? "A" "b") #t)
+                        (equal? (string-ci<=? "A" "b" "b") #t)
+                        (equal? (string-ci<=? "A" "b" "a") #f)))
+             (list "string-ci>?"
+                   (and (equal? (string-ci>? "A") #t)
+                        (equal? (string-ci>? "b" "A") #t)
+                        (equal? (string-ci>? "A" "a") #f)
+                        (equal? (string-ci>? "c" "B" "a") #t)
+                        (equal? (string-ci>? "c" "a" "B") #f)))
+             (list "string-ci>=?"
+                   (and (equal? (string-ci>=? "A") #t)
+                        (equal? (string-ci>=? "A" "a") #t)
+                        (equal? (string-ci>=? "b" "A") #t)
+                        (equal? (string-ci>=? "b" "a" "a") #t)
+                        (equal? (string-ci>=? "b" "a" "c") #f)))
 
               (list "string-ci<?"
                     (and (equal? (string-ci<? "A" "b") #t)
@@ -1429,7 +1457,7 @@
                                 (eq? h2 #f)
                                 (eq? h3 #f)))
                          ; TODO - this provokes an error - why ?!
-                         #;(equal? (procedure-arity char-grapheme-step) 2)))
+                         (equal? (procedure-arity char-grapheme-step) 2)))
 
               (list "char-general-category"
                     (and (equal? (char-general-category #\A) 'lu)
@@ -1515,7 +1543,7 @@
                 ;; (js-log y)
                 ;; (js-log x)
                 ;; (js-log (symbol->string y))
-                (let ([and list] #;[equal? list])
+                (let ([and list] [equal? list])
                 (list "symbol/string interop"
                       (and (equal? x "cb")
                            (equal? (symbol->string y) "ab")
@@ -1544,8 +1572,7 @@
                            (equal? (symbol=? 'a 'b) #f)
                            (equal? (symbol=? a b)   #f)
                            (equal? (eq? a b)        #f)
-                           #;(equal? (symbol=? 'x 'x 'x) #t)    ; todo - make symbol=? variadic
-                           #;(equal? (symbol=? 'x 'x 'y) #f))))
+                           )))
 
               (let ([s1 (string->uninterned-symbol "apple")]
                     [s2 (string->uninterned-symbol "apple")])
@@ -1568,7 +1595,7 @@
                          ;(equal? (symbol<? 'a 'c 'b) #f)
                          (equal? (symbol<? 'a 'aa)   #t)
                          (equal? (symbol<? 'aa 'a)   #f)
-                         #;(equal? (procedure-arity symbol<?) 1)))
+                         (equal? (procedure-arity symbol<?) 1)))
 
               (list "gensym"
                     (let* ([s0 (gensym)]
@@ -1591,21 +1618,21 @@
                          (equal? (string->keyword "apple") '#:apple)
                          (equal? (keyword->string '#:apple) "apple")
                          ;; keyword->string returns fresh strings (not eq?)
-                         #;(equal? (eq? (keyword->string '#:apple)
+                         (equal? (eq? (keyword->string '#:apple)
                                         (keyword->string '#:apple))
                                    #f)
                          (equal? (keyword->immutable-string '#:apple) "apple")
                          (equal? (immutable? (keyword->immutable-string '#:apple)) #t)
 
-                         #;(equal? (procedure-arity keyword?) 1)))
+                         (equal? (procedure-arity keyword?) 1)))
               (list "keyword<?"
-                    (and #;(equal? (keyword<? '#:a) #t)
+                    (and (equal? (keyword<? '#:a) #t)
                          (equal? (keyword<? '#:a '#:b) #t)
                          (equal? (keyword<? '#:b '#:b) #f)
                          (equal? (keyword<? '#:b '#:bb) #t)
                          (equal? (keyword<? '#:b '#:) #f)
-                         #;(equal? (keyword<? '#:b '#:c '#:d) #t)
-                         #;(equal? (keyword<? '#:b '#:c '#:c) #f)
+                         (equal? (keyword<? '#:b '#:c '#:d) #t)
+                         (equal? (keyword<? '#:b '#:c '#:c) #f)
                          (equal? (keyword<? (string->keyword "a")
                                             (string->keyword "\uA0")) #t)
                          (equal? (keyword<? (string->keyword "a")
@@ -1774,7 +1801,7 @@
                                         '(a b c) '(x y z))
                                  '((a . x) (b . y) (c . z)))))
               (list "filter"
-                    #;(and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
+                    (and (equal? (filter positive? '(1 -2 3 4 -5)) '(1 3 4))
                            (equal? (filter positive? '()) '()))
                     (and (equal? (filter (λ (x) (positive? x)) '(1 -2 3 4 -5)) '(1 3 4))
                          (equal? (filter (λ (x) (positive? x)) '()) '())))
@@ -1926,14 +1953,14 @@
                          (equal? (member 2 '(3 4 5 6) (λ (x y) (= x y)))  #f)
                          (equal? (member #"b" '(#"a" #"b" #"c") (λ (x y) (bytes=? x y))) '(#"b" #"c"))
                          ; (procedure-arity member) ; returns #f   TODO
-                         #;(equal? (procedure-arity member) '(2 3)))) ; fails, TODO
+                         (equal? (procedure-arity member) '(2 3)))) ; fails, TODO
               (list "memq"
                     (and (equal? (memq 'a '(a b c))   '(a b c))
                          (equal? (memq 'b '(a b c))   '(b c))
                          (equal? (memq 'b '(a b . c)) '(b . c))
                          (equal? (memq 'a '(b c d))   #f)
-                         #;(equal? (memq  "apple" '( "apple"))         '("apple"))   ; todo - intern literals
-                         #;(equal? (memq #"apple" '(#"apple"))         '(#"apple"))  ; todo - intern literals
+                         (equal? (memq  "apple" '( "apple"))         '("apple"))   ; todo - intern literals
+                         (equal? (memq #"apple" '(#"apple"))         '(#"apple"))  ; todo - intern literals
                          (equal? (memq (list->string (string->list "apple"))
                                        '("apple"))
                                  #f)
@@ -1989,7 +2016,7 @@
                            (equal? (assw 'd '((a 1) (b 2))) #f)
                            (equal? (assw b2 (list (cons b1 1) (cons b2 2))) (cons b2 2))
                            (equal? (procedure-arity assw) 2))))
-              #;(list "assoc"
+              (list "assoc"
                     (and (equal? (assoc '(b) '(((a)) ((b) 1) ((c)))) '((b) 1))
                          (equal? (assoc 'd '((a 1) (b 2))) #f)
                          (equal? (assoc "B" '(("a" 1) ("b" 2)) string-ci=?) '("b" 2))))
@@ -2009,7 +2036,7 @@
                     (and (equal? (group-by (λ (x) (modulo x 3))
                                            '(1 2 1 2 54 2 5 43 7 2 643 1 2 0))
                                  '((1 1 43 7 643 1) (2 2 2 5 2 2) (54 0)))
-                         #;(list (group-by (λ (x) x) '("A" "a" "b" "B")
+                         (list (group-by (λ (x) x) '("A" "a" "b" "B")
                                            (λ (a b) (equal? (string-downcase a) (string-downcase b))))
                                  '(("B" "b") ("a" "A")))))
               (list "cartesian-product"
@@ -2256,7 +2283,7 @@
 
 
               ; The test of map need to test all shapes (see $primitive-invoke)
-              #;(list "map"
+              (list "map"
                       (and
                        ; fixed 1
                        (equal? (map add1 '(1 2 3))
@@ -2265,20 +2292,20 @@
                        (equal? (map cons '(1 2) '(3 4))
                                '((1 . 3) (2 . 4)))
                        ; 2 or 3, has default
-                       #;(equal? (map substring
+                       (equal? (map substring
                                       '("hello" "world")
                                       '(0 1)
                                       '(5 3))
                                  '("hello" "or"))
                        ; 3 or 4, has default
-                       #;(equal? (map string-replace
+                       (equal? (map string-replace
                                       '("aba" "hello")
                                       '("a" "l")
                                       '("x" "L")
                                       '(#t #f))
                                  '("xbx" "heLlo"))
                        ; 1 to 5 arguments
-                       #;(equal? (map string-trim
+                       (equal? (map string-trim
                                       '("  hi  " "--wow--")
                                       '(" " "-")
                                       '(#t #f)
@@ -2291,17 +2318,17 @@
                                     '(4 5 6))
                                '((1 4) (2 5) (3 6)))
                        ; 1 or more
-                       #;(equal? (map - '(1 2 3))
+                       (equal? (map - '(1 2 3))
                                  '(-1 -2 -3))
                        ; 2 or more
-                       #;(equal? (map filter-map
+                       (equal? (map filter-map
                                       (list (lambda (x) (and (positive? x) x))
                                             (lambda (x) (and (negative? x) x)))
                                       (list '(1 -2 3)
                                             '(-1 -2 5)))
                                  '((1 3) (-1 -2)))
                        ; 3 or more
-                       #;(equal? (map foldl
+                       (equal? (map foldl
                                       (list + *)
                                       (list 0 1)
                                       (list '(1 2 3)
@@ -2886,30 +2913,30 @@
 
        (list "4.20.2 Reflecting on Procedures"
              (list
-              (list "arity-at-least? from procedure-arity"
-                    (let ([arity (procedure-arity list)])
-                      (and (equal? (arity-at-least? arity) #t)
-                           (equal? (arity-at-least-value arity) 0))))
+              #;(list "arity-at-least? from procedure-arity"
+                      (let ([arity (procedure-arity list)])
+                        (and (equal? (arity-at-least? arity) #t)
+                             (equal? (arity-at-least-value arity) 0))))
 
-              (list "arity-at-least-value for rest lambda"
-                    (let ([arity (procedure-arity (lambda (x . rest) x))])
-                      (and (arity-at-least? arity)
-                           (equal? (arity-at-least-value arity) 1))))
+              #;(list "arity-at-least-value for rest lambda"
+                      (let ([arity (procedure-arity (lambda (x . rest) x))])
+                        (and (arity-at-least? arity)
+                             (equal? (arity-at-least-value arity) 1))))
 
-              (list "procedure-arity case-lambda mix"
-                    (let ([arity (procedure-arity
-                                   (case-lambda
-                                     [(x) x]
-                                     [(x y . rest) y]))])
-                      (and (pair? arity)
-                           (equal? (car arity) 1)
-                           (let ([second (cadr arity)])
-                             (and (arity-at-least? second)
-                                  (equal? (arity-at-least-value second) 2))))))))
+              #;(list "procedure-arity case-lambda mix"
+                      (let ([arity (procedure-arity
+                                     (case-lambda
+                                       [(x) x]
+                                       [(x y . rest) y]))])
+                        (and (pair? arity)
+                             (equal? (car arity) 1)
+                             (let ([second (cadr arity)])
+                               (and (arity-at-least? second)
+                                    (equal? (arity-at-least-value second) 2))))))))
        
        ) ; ends "4. Datatypes"
 
- #;(list "5. Structures"
+ (list "5. Structures"
        (list "5.1 Structure Type Properties"
              (list
               (list "make-struct-type-property/basic"
@@ -3876,29 +3903,29 @@
                            (equal? (port-next-location 42) #f))))))
        )
 
- #;(list "10.2 Exceptions"
-             (list
-              (list "unquoted-printing-string basics"
-                    (let* ([s "hello"]
-                           [ups (unquoted-printing-string s)])
-                      (and (equal? (unquoted-printing-string? ups)      #t)
-                           (equal? (unquoted-printing-string? s)        #f)
-                           (equal? (unquoted-printing-string-value ups) s))))
+             (list "10.2 Exceptions"
+                   (list
+                    (list "unquoted-printing-string basics"
+                          (let* ([s "hello"]
+                                 [ups (unquoted-printing-string s)])
+                            (and (equal? (unquoted-printing-string? ups)      #t)
+                                 (equal? (unquoted-printing-string? s)        #f)
+                                 (equal? (unquoted-printing-string-value ups) s))))
 
-              ; Note: display and write are in stdlib, so they
-              ;       are not available here.
-              #;(list "unquoted-printing-string display/write"
-                    (let* ([ups (unquoted-printing-string "x\ny")]
-                           [displayed (call-with-output-string
-                                       (lambda (p)
-                                         (display ups p)))]
-                           [written (call-with-output-string
-                                      (lambda (p)
-                                        (write ups p)))])
-                      (and (equal? displayed "x\ny")
-                           (equal? written "x\ny"))))))
+                    ; Note: display and write are in stdlib, so they
+                    ;       are not available here.
+                    #;(list "unquoted-printing-string display/write"
+                            (let* ([ups (unquoted-printing-string "x\ny")]
+                                   [displayed (call-with-output-string
+                                               (lambda (p)
+                                                 (display ups p)))]
+                                   [written (call-with-output-string
+                                              (lambda (p)
+                                                (write ups p)))])
+                              (and (equal? displayed "x\ny")
+                                   (equal? written "x\ny"))))))
 
- #;(list "10.2 Exceptions"
+ (list "10.2 Exceptions"
        (list
         (list "srcloc basics"
               (let () 
@@ -3983,7 +4010,7 @@
                 (and (equal? basic (list "message" '("src:3:4")))
                      (equal? with-extra '(src extra)))))
 
-        #;(list "raise-read-eof-error"
+        (list "raise-read-eof-error"
               (let* ([captured
                       (with-handlers ([exn:fail:read:eof?
                                        (λ (exn)
@@ -4105,7 +4132,7 @@
                      (equal? (exn-message unbound) "unbound"))))))
  
 
- #;(list "12. Macros"
+ (list "12. Macros"
        (list "12.2 Syntax Object Content"
              (list
               (list "datum->syntax/basic"
@@ -4192,7 +4219,7 @@
 
  (list "14. Reflection and Security"
        
-       #;(list "14.9 Structure Inspectors"
+       (list "14.9 Structure Inspectors"
                (list
                 (list "object-name/procedure"
                       (let* ([anon      (lambda (x) x)]
@@ -4264,7 +4291,7 @@
                             (let ([vec-result (cadr converted)])
                               (list (equal? (vector? vec-result) #t)
                                     ; Full Racket doesn't recur through vectors
-                                    #;(equal? (vector-ref vec-result 0) 'x)
+                                    (equal? (vector-ref vec-result 0) 'x)
                                     (vector-ref vec-result 0)
                                     (equal? (correlated? (vector-ref vec-result 0)) #t)
                                     (list (vector-ref vec-result 1) 'y))))))
@@ -4390,7 +4417,7 @@
 
 
  
- #;(list "15. Operating System"
+ (list "15. Operating System"
        (list "15. Paths"
              (list
               (list "bytes->path"
@@ -4425,7 +4452,7 @@
                          (equal? (path-string? 'a)             #f)
                          (equal? (path-string? (bytes 1 2 3))  #f))))))
        
- #;(list "Checkers"
+ (list "Checkers"
        (list
         (list "check-list"          (equal? (begin (check-list '(1 2 3)) 'ok)            'ok))
         (list "check-mlist"         (equal? (begin (check-mlist '()) 'ok)                'ok))
@@ -4433,11 +4460,11 @@
         (list "check-range-generic" (equal? (begin (check-range-generic 'who 0 1 1) 'ok) 'ok))
         (list "check-naturals"      (equal? (begin (check-naturals 5) 'ok)               'ok))))
 
- #;(list "FFI"
-         (list
-          (list "external-number->flonum"
-                (let ([e (js-eval "new Number(42)")])
-                  (equal? (external-number->flonum e) 42.0))))
-         )
+(list "FFI"
+        (list
+         #;(list "external-number->flonum"
+                 (let ([e (js-eval "new Number(42)")])
+                   (equal? (external-number->flonum e) 42.0))))
+        )
 
  )
