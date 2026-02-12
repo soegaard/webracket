@@ -21749,7 +21749,7 @@
 
          
                
-         (func $filter (type $Prim>=1)
+         (func $filter (type $Prim2)
                (param $proc (ref eq))  ;; predicate
                (param $xs   (ref eq))  ;; list
                (result      (ref eq))
@@ -21967,7 +21967,7 @@
                (unreachable))
 
          ;; Like filter, but keeps elements for which the predicate returns false
-         (func $filter-not (type $Prim>=1)
+         (func $filter-not (type $Prim2)
                (param $proc (ref eq))  ;; predicate
                (param $xs   (ref eq))  ;; list
                (result      (ref eq))
