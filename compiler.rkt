@@ -46,6 +46,7 @@
          "runtime-wasm.rkt"   ;
          "define-foreign.rkt"
          "parameters.rkt"
+         "timings.rkt"
          ; "wasm-data.rkt"
          nanopass/base
          racket/match
@@ -5770,6 +5771,7 @@
            (read))))]))
 
 (define debug:print-passes? #f)
+(define current-pass-timings? (make-parameter #f))
 
 (define (comp+ stx)
   (run (comp stx)))
@@ -5777,34 +5779,54 @@
 (define (comp stx)
   (reset-counter!)
   (reset-label-map!)
-  (strip
-   (generate-code
-    (let ([s (flatten-begin
-              (closure-conversion
-               (anormalize
-                (categorize-applications
-                 (let ([a (assignment-conversion
-                           (α-rename
-                            (explicit-case-lambda
-                             (explicit-begin
-                              (convert-quotations
-                               (infer-names
-                                (flatten-topbegin
-                                 (parse
-                                  (unexpand
-                                   (let ([t (topexpand stx)])
-                                     (when debug:print-passes?
-                                       (displayln "--- topexpand ---")
-                                       (displayln (pretty-print (syntax->datum t)) (current-error-port)))
-                                     t))))))))))])
-                   (when debug:print-passes?
-                     (displayln "--- assignment conversion ---")
-                     (displayln (pretty-print a) (current-error-port)))
-                   a)))))])
-      (when debug:print-passes?
-        (displayln "--- compiled ---")
-        (displayln (pretty-print s) (current-error-port)))
-      s))))
+  (define pass-times '())
+  (define (time-pass label thunk)
+    (if (current-pass-timings?)
+        (let-values ([(v ms) (with-timing thunk)])
+          (set! pass-times (cons (list label ms) pass-times))
+          v)
+        (thunk)))
+
+  (define t
+    (time-pass "topexpand"
+      (λ ()
+        (define t (topexpand stx))
+        (when debug:print-passes?
+          (displayln "--- topexpand ---")
+          (displayln (pretty-print (syntax->datum t)) (current-error-port)))
+        t)))
+
+  (define u   (time-pass "unexpand"             (λ () (unexpand t))))
+  (define p   (time-pass "parse"                (λ () (parse u))))
+  (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p))))
+  (define in  (time-pass "infer-names"          (λ () (infer-names ft))))
+  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in))))
+  (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq))))
+  (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb))))
+  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))))
+
+  (define ac
+    (time-pass "assignment-conversion"
+      (λ ()
+        (define a (assignment-conversion ar))
+        (when debug:print-passes?
+          (displayln "--- assignment conversion ---")
+          (displayln (pretty-print a) (current-error-port)))
+        a)))
+
+  (define ca  (time-pass "categorize-applications" (λ () (categorize-applications ac))))
+  (define an  (time-pass "anormalize"            (λ () (anormalize ca))))
+  (define cc  (time-pass "closure-conversion"    (λ () (closure-conversion an))))
+  (define fb  (time-pass "flatten-begin"         (λ () (flatten-begin cc))))
+  (define gen (time-pass "generate-code"         (λ () (generate-code fb))))
+
+  (define result (strip gen))
+  (when debug:print-passes?
+    (displayln "--- compiled ---")
+    (displayln (pretty-print result) (current-error-port)))
+  (when (current-pass-timings?)
+    (displayln (format-timing-table (reverse pass-times))))
+  result)
 
 
 (define (comp- stx)

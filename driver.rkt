@@ -118,6 +118,7 @@
 
   ; 4. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
+  (current-pass-timings? timings?)
   (define t-compile-start (now-ms))
   (define wat
     (with-handlers (#;[exn:fail? (λ (e)
