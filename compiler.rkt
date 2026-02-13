@@ -4549,7 +4549,7 @@
         [(call-with-exception-handler)      (inline-prim/fixed sym ae1 2)]
         [(raise)      (inline-prim/optional/default sym ae1 1 2 (Imm #t))]
         [(raise-read-error)            (inline-prim/optional sym ae1 6 7)]
-        [(raise-read-eof-error)        (inline-prim/fixed    sym ae1 6)]
+        [(raise-read-eof-error)        (inline-prim/optional sym ae1 6 7)]
         [(current-continuation-marks)  (inline-prim/optional sym ae1 0 1)]
 
         [(gensym)                     (inline-prim/optional sym ae1 0 1)]

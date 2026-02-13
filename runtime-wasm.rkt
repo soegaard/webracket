@@ -6326,14 +6326,15 @@
          ;;                         (or/c exact-nonnegative-integer? #f)
          ;;                         (or/c exact-positive-integer? #f)
          ;;                         (or/c exact-nonnegative-integer? #f)
-         ;;                         -> none
-         (func $raise-read-eof-error (type $Prim6)
+         ;;                         [#:extra-srclocs (listof srcloc?)] -> none
+         (func $raise-read-eof-error (type $Prim67)
                (param $message  (ref eq)) ; string
                (param $source   (ref eq)) ; (or/c path-string? symbol? #f)
                (param $line     (ref eq)) ; (or/c exact-positive-integer? #f)
                (param $column   (ref eq)) ; (or/c exact-nonnegative-integer? #f)
                (param $position (ref eq)) ; (or/c exact-positive-integer? #f)
                (param $span     (ref eq)) ; (or/c exact-nonnegative-integer? #f)
+               (param $extra    (ref eq)) ; optional (listof srcloc?), default = '()
                (result (ref eq))
 
                (local $who              (ref eq))
@@ -6342,6 +6343,7 @@
                (local $column-checked   (ref eq))
                (local $position-checked (ref eq))
                (local $span-checked     (ref eq))
+               (local $extra-checked    (ref eq))
                (local $srclocs          (ref eq))
 
                (local.set $who (global.get $symbol:raise-read-eof-error))
@@ -6355,16 +6357,22 @@
                           (call $srcloc-check-positive (local.get $who) (local.get $position)))
                (local.set $span-checked
                           (call $srcloc-check-nonnegative (local.get $who) (local.get $span)))
-               
+               (local.set $extra-checked
+                          (if (result (ref eq))
+                              (ref.eq (local.get $extra) (global.get $missing))
+                              (then (global.get $null))
+                              (else (call $exn:fail:read-ensure-srclocs
+                                          (local.get $who)
+                                          (local.get $extra)))))
                (local.set $srclocs
                           (call $cons 
                                 (call $srcloc
                                       (local.get $source)
-                                      (local.get $line)
-                                      (local.get $column)
-                                      (local.get $position)
-                                      (local.get $span))
-                                (global.get $null)))
+                                      (local.get $line-checked)
+                                      (local.get $column-checked)
+                                      (local.get $position-checked)
+                                      (local.get $span-checked))
+                                (local.get $extra-checked)))
                (call $raise
                      (call $exn:fail:read:eof
                            (local.get $message-checked)
@@ -12270,7 +12278,7 @@
         ;; defaults to 0 when omitted, and a provided destination must be a
         ;; mutable byte string of sufficient length. The big-endian? argument
         ;; defaults to #f.
-        (func $real->floating-point-bytes (type $Prim5)
+        (func $real->floating-point-bytes (type $Prim25)
               (param $x         (ref eq))  ; real?
               (param $size-raw  (ref eq))  ; (or/c 4 8)
               (param $big-raw   (ref eq))  ; any/c, defaults to (system-big-endian?) = #f
@@ -19853,7 +19861,7 @@
                (result       (ref eq))
                (call $range (local.get $start) (local.get $end) (local.get $step)))
 
-        (func $range (type $Prim3)
+        (func $range (type $Prim13)
               (param $start-raw (ref eq))
               (param $end-raw   (ref eq))
               (param $step-raw  (ref eq)) ;; $missing for defaults 0/1
@@ -29708,7 +29716,7 @@
          ;;;
 
          ;; NOTE: WebRacket currently lacks progress events, so report #f.
-         (func $progress-evt? (type $Prim2)
+         (func $progress-evt? (type $Prim12)
                (param $v  (ref eq)) ;; any/c
                (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
                (result    (ref eq))
