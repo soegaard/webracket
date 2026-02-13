@@ -50,6 +50,7 @@
          #:wat-filename  wat-filename
          #:wasm-filename wasm-filename
          #:host-filename host-filename ; default: "runtime.js"
+         #:label-map-forms? label-map-forms?
          #:verbose?      verbose?
          #:browser?      browser?
          #:node?         node?
@@ -112,6 +113,7 @@
       [else stx]))
 
   ; 4. Compile the syntax object.
+  (label-map-include-form? label-map-forms?)
   (define wat
     (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
@@ -128,6 +130,12 @@
                                (error 'drive-compilation
                                       (~a "wat->wasm failed: " (exn-message e))))])
     (wat->wasm wat #:wat out-wat #:wasm out-wasm))
+
+  ; 6b. Write label map sidecar
+  (define out-map (path-replace-extension out-wasm ".wasm.map.sexp"))
+  (with-output-to-file out-map
+    (λ () (pretty-write (label-map->sexp)))
+    #:exists 'replace)
 
   ; 7. Write the host file (default: "runtime.js")
   (define out-host (or host-filename

@@ -18,6 +18,7 @@
 (define wat-filename    (make-parameter #f))
 (define wasm-filename   (make-parameter #f))
 (define host-filename   (make-parameter #f))
+(define label-map-forms (make-parameter #t))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -44,6 +45,10 @@
                              (wasm-filename filename)]
    [("--host-file") filename "Filename for the host file"
                              (host-filename filename)]
+   [("--label-map-forms") "Include (form ...) entries in .wasm.map.sexp"
+                          (label-map-forms #t)]
+   [("--no-label-map-forms") "Omit (form ...) entries in .wasm.map.sexp"
+                             (label-map-forms #f)]
    [("--stdlib")             "Include the standard library"
                              (stdlib? #t)]
    
@@ -75,6 +80,7 @@
                    #:wat-filename  (wat-filename)
                    #:wasm-filename (wasm-filename)
                    #:host-filename (host-filename)
+                   #:label-map-forms? (label-map-forms)
                    #:verbose?      (verbose-mode)
                    #:browser?      (browser)
                    #:node?         (nodejs)

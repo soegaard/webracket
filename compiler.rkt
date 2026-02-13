@@ -3067,7 +3067,12 @@
   ; (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   ; (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
   (define (id x) x)
-  (define h #'an)
+  (define (with-source src stx)
+    (syntax-property stx 'source-stx src))
+  (define (make-h s)
+    (if (syntax? s)
+        (with-source s #'an)
+        #'an))
   
   (define (TopLevelForm*    ts)   (map TopLevelForm    ts))
   (define (ModuleLevelForm* mfs)  (map ModuleLevelForm mfs))
@@ -3091,8 +3096,8 @@
     (with-output-language (LANF GeneralTopLevelForm)
       (nanopass-case (LFE3 GeneralTopLevelForm) G
         [,e                                (Expr e id)]
-        [(define-values   ,s (,x ...) ,e)  `(define-values   ,s (,x ...) ,(RHS e id))]
-        [(define-syntaxes ,s (,x ...) ,e)  `(define-syntaxes ,s (,x ...) ,(RHS e id))]
+        [(define-values   ,s (,x ...) ,e)  `(define-values   ,s (,x ...) ,(RHS s e id))]
+        [(define-syntaxes ,s (,x ...) ,e)  `(define-syntaxes ,s (,x ...) ,(RHS s e id))]
         [(#%require       ,s ,rrs ...)     `(#%require ,s ,(map RawRequireSpec rrs) ...)]
         [else (error 'anormalize-GeneralTopLevelForm
                      "expected general top-level form, got ~a"
@@ -3159,17 +3164,18 @@
         [(list* x0 x1 ... xd) `(formals (,x0 ,x1 ... . ,xd))]
         [x                    `(formals ,x)])))
   
-  (define (RHS E k)
+  (define (RHS s E k)
     (nanopass-case (LFE3 Expr) E
       [,ab  (Abstraction ab k)]
       [else (Expr (with-output-language (LFE3 Expr)
-                    `(closedapp ,h (λ ,h ,(LFE3-Formals '()) ,E))) k)]))
+                    (let ([h (make-h s)])
+                      `(closedapp ,h (λ ,h ,(LFE3-Formals '()) ,E)))) k)]))
   
-  (define (RHS* es k)
+  (define (RHS* s es k)
     (cond
       [(null? es)  (k '())]
-      [else        (RHS (first es)
-                     (λ (e0) (RHS* (cdr es)
+      [else        (RHS s (first es)
+                     (λ (e0) (RHS* s (cdr es)
                                (λ (es) (k (cons e0 es))))))]))
   
   (define (Expr E k)
@@ -3177,22 +3183,22 @@
     (with-output-language (LANF CExpr)
       (nanopass-case (LFE3 Expr) E
         [(if ,s ,e0 ,e1 ,e2)
-         (Expr/name e0 (λ (ae0) (k `(if ,s ,ae0 ,(Expr e1 id) ,(Expr e2 id)))))]
+         (Expr/name s e0 (λ (ae0) (k `(if ,s ,ae0 ,(Expr e1 id) ,(Expr e2 id)))))]
         [(set! ,s ,x ,e)
-         (Expr/name e (λ (ae) (k `(set! ,s ,x ,ae))))]
+         (Expr/name s e (λ (ae) (k `(set! ,s ,x ,ae))))]
         [(let-values ,s ([(,x ...) ,e] ...) ,e0)
          ; ad 1) don't name e ... 
-         (RHS* e (λ (ce) (with-output-language (LANF Expr)
+         (RHS* s e (λ (ce) (with-output-language (LANF Expr)
                            `(let-values    ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
-         (RHS* e (λ (ce) (with-output-language (LANF Expr)
+         (RHS* s e (λ (ce) (with-output-language (LANF Expr)
                            `(letrec-values ,s ([(,x ...) ,ce] ...) ,(Expr e0 k)))))]
         [(primapp   ,s ,pr ,e1 ...)
          (Expr*/names e1 (λ (ae1) (k `(primapp   ,s ,pr ,ae1 ...))))]
         [(closedapp ,s ,ab ,e1 ...)
          (Expr*/names e1 (λ (ae1) (k `(closedapp ,s ,(Abstraction ab id) ,ae1 ...))))]
         [(app       ,s ,e0 ,e1 ...)
-         (Expr/name e0 (λ (ae0) (Expr*/names e1 (λ (ae1) (k `(app ,s ,ae0 ,ae1 ...))))))]
+         (Expr/name s e0 (λ (ae0) (Expr*/names e1 (λ (ae1) (k `(app ,s ,ae0 ,ae1 ...))))))]
         ; Atomic expressions
         [,x                           (k x)]
         [,ab                          (Abstraction ab k)]
@@ -3218,16 +3224,16 @@
            (k (with-output-language (LANF Expr)
                 `(begin0 ,s ,e0 ,e1 ...))))]
         [(wcm ,s ,e0 ,e1 ,e2)
-         (Expr/name e0
-           (λ (ae0) (Expr/name e1
+         (Expr/name s e0
+           (λ (ae0) (Expr/name s e1
                       (λ (ae1)
                         (k `(wcm ,s ,ae0 ,ae1 ,(Expr e2 id)))))))]
         [else
          (displayln (list 'anormalize-Expr "got" E))
          (error 'anormalize-Expr "internal error")])))
 
-  ; Expr/name : Expr (AExpr -> Expr) -> Expr
-  (define (Expr/name e k)
+  ; Expr/name : syntax Expr (AExpr -> Expr) -> Expr
+  (define (Expr/name s e k)
     ;(displayln (list 'anormalize-Expr/name e)) (newline)
     ; Transform e, then name it (unless it is an atomic expression),
     ; then call k with the name or the atomic expression
@@ -3236,14 +3242,14 @@
                 [,ae   (k ae)]               ; ad 3) don't name atomic expressions
                 [else  (let ([t (new-var)])
                          (with-output-language (LANF Expr)
-                           `(let-values ,h ([(,t) ,e])
+                           `(let-values ,(make-h s) ([(,t) ,e])
                               ,(k t))))]))))
 
   (define (Expr*/names es k)
     (cond
       [(null? es)  (k '())]
-      [else        (Expr/name (car es)
-                     (λ (t) (Expr*/names (cdr es) 
+      [else        (Expr/name #f (car es)
+                     (λ (t) (Expr*/names (cdr es)
                               (λ (ts) (k (cons t ts))))))]))
   (TopLevelForm T))
 
@@ -3539,6 +3545,7 @@
                      [(formals (,x0 ,x1 ... . ,xd)) (- (+ 2 (length x1)))]
                      [(formals ,x)                  -1]))
     (define (lift! s label formals body)       
+      (record-label-map! label s)
       (define cab
         (with-output-language (LANF+closure ConvertedAbstraction)
           `(λ ,s ,(formals->arity formals) ,formals ,body)))
@@ -3968,6 +3975,64 @@
   (reset-string-constants)
   (reset-bytes-constants)
   (reset-symbol-constants))
+
+(define current-label-map (make-parameter '()))
+(define current-label-form-ht (make-parameter (make-hash)))
+(define current-label-map-include-form? (make-parameter #t))
+(define (reset-label-map!)
+  (current-label-map '())
+  (current-label-form-ht (make-hash))
+  (current-label-map-include-form? #t))
+
+(define (label-map-include-form? v)
+  (current-label-map-include-form? (and v #t)))
+
+(define (source-stx s)
+  (if (and (syntax? s) (syntax-property s 'source-stx))
+      (syntax-property s 'source-stx)
+      s))
+
+(define (record-label-map! l stx)
+  (define id (unparse-variable l))
+  (define s (source-stx stx))
+  (define src (and (syntax? s) (syntax-source s)))
+  (define line (and (syntax? s) (syntax-line s)))
+  (define col (and (syntax? s) (syntax-column s)))
+  (define span (and (syntax? s) (syntax-span s)))
+  (define form-str
+    (and (current-label-map-include-form?)
+         (syntax? s)
+         (format "~s" (syntax->datum s))))
+  (define entry
+    (let ([base `(label ,(format "~a" id)
+                        (src ,(or src 'unknown)
+                             ,(or line 0)
+                             ,(or col 0)
+                             ,(or span 0)))])
+      (cond
+        [(not form-str) base]
+        [else
+         (let* ([key (list src line col span form-str)]
+                [seen (hash-ref (current-label-form-ht) key #f)])
+           (if seen
+               `(label ,(format "~a" id)
+                       (src ,(or src 'unknown)
+                            ,(or line 0)
+                            ,(or col 0)
+                            ,(or span 0))
+                       (same-as ,seen))
+               (begin
+                 (hash-set! (current-label-form-ht) key (format "~a" id))
+                 `(label ,(format "~a" id)
+                         (src ,(or src 'unknown)
+                              ,(or line 0)
+                              ,(or col 0)
+                              ,(or span 0))
+                         (form ,form-str)))))])))
+  (current-label-map (cons entry (current-label-map))))
+
+(define (label-map->sexp)
+  `(wasm-label-map ,@(reverse (current-label-map))))
   
 
 (define-pass generate-code : LANF+closure (T) -> * ()
@@ -5711,6 +5776,7 @@
 
 (define (comp stx)
   (reset-counter!)
+  (reset-label-map!)
   (strip
    (generate-code
     (let ([s (flatten-begin
