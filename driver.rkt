@@ -36,6 +36,7 @@
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat)
+         (only-in "timings.rkt"     now-ms format-timing-table)
          racket/runtime-path
          racket/syntax
          "compiler.rkt"
@@ -51,6 +52,7 @@
          #:wasm-filename wasm-filename
          #:host-filename host-filename ; default: "runtime.js"
          #:label-map-forms? label-map-forms?
+         #:timings?     timings?
          #:verbose?      verbose?
          #:browser?      browser?
          #:node?         node?
@@ -112,40 +114,68 @@
            #,stx)] ; stx is a begin form      
       [else stx]))
 
+  (define t0 (now-ms))
+
   ; 4. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
+  (define t-compile-start (now-ms))
   (define wat
     (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "compile failed: " (exn-message e))))])
       (comp stx-with-stdlib)))
+  (define t-compile-end (now-ms))
 
   ; 5. Save the resulting WAT module.
   (define out-wat (or wat-filename (path-replace-extension filename ".wat")))
+  (define t-write-wat-start (now-ms))
   (write-wat-to-file out-wat wat)
+  (define t-write-wat-end (now-ms))
 
   ; 6. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
   (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
+  (define t-assemble-start (now-ms))
   (with-handlers ([exn:fail? (λ (e)
                                (error 'drive-compilation
                                       (~a "wat->wasm failed: " (exn-message e))))])
     (wat->wasm wat #:wat out-wat #:wasm out-wasm))
+  (define t-assemble-end (now-ms))
 
   ; 6b. Write label map sidecar
   (define out-map (path-replace-extension out-wasm ".wasm.map.sexp"))
+  (define t-write-map-start (now-ms))
   (with-output-to-file out-map
     (λ () (pretty-write (label-map->sexp)))
     #:exists 'replace)
+  (define t-write-map-end (now-ms))
 
   ; 7. Write the host file (default: "runtime.js")
   (define out-host (or host-filename
                        (if node?
                            (path-replace-extension filename ".js")
                            (path-replace-extension filename ".html"))))
+  (define t-write-host-start (now-ms))
   (with-output-to-file out-host
     (λ () (displayln
            (runtime #:out out-wasm #:host (if node? 'node 'browser))))
     #:exists 'replace)
+  (define t-write-host-end (now-ms))
+
+  (when timings?
+    (define compile-ms (- t-compile-end t-compile-start))
+    (define write-wat-ms (- t-write-wat-end t-write-wat-start))
+    (define assemble-ms (- t-assemble-end t-assemble-start))
+    (define write-map-ms (- t-write-map-end t-write-map-start))
+    (define write-host-ms (- t-write-host-end t-write-host-start))
+    (define total-ms (- t-write-host-end t0))
+    (displayln
+     (format-timing-table
+      (list (list "compile" compile-ms)
+            (list "write-wat" write-wat-ms)
+            (list "assemble" assemble-ms)
+            (list "write-map" write-map-ms)
+            (list "write-host" write-host-ms)
+            (list "total" total-ms)))))
 
   ; 8. Optionally run the program via Node.js.
   (when (and node? run-after?)

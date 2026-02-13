@@ -19,6 +19,7 @@
 (define wasm-filename   (make-parameter #f))
 (define host-filename   (make-parameter #f))
 (define label-map-forms (make-parameter #t))
+(define timings?        (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -49,6 +50,8 @@
                           (label-map-forms #t)]
    [("--no-label-map-forms") "Omit (form ...) entries in .wasm.map.sexp"
                              (label-map-forms #f)]
+   [("--timings") "Print timing breakdown for compilation steps"
+                  (timings? #t)]
    [("--stdlib")             "Include the standard library"
                              (stdlib? #t)]
    
@@ -81,6 +84,7 @@
                    #:wasm-filename (wasm-filename)
                    #:host-filename (host-filename)
                    #:label-map-forms? (label-map-forms)
+                   #:timings?     (timings?)
                    #:verbose?      (verbose-mode)
                    #:browser?      (browser)
                    #:node?         (nodejs)
