@@ -660,6 +660,12 @@
                             (and (eq? res dest)
                                  (bytes=? dest
                                           #"\x00\x00\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
+                    (list "real->floating-point-bytes dest"
+                          (let* ([dest (make-bytes 8)]
+                                 [res  (real->floating-point-bytes 1.0 8 #f dest)])
+                            (and (eq? res dest)
+                                 (bytes=? dest
+                                          #"\x00\x00\x00\x00\x00\x00\xf0\x3f"))))
                     (list "floating-point-bytes->real"
                           (and (= (floating-point-bytes->real (bytes 0 0 128 63)) 1.0)
                                (= (floating-point-bytes->real (bytes 63 240 0 0 0 0 0 0) #t 0 8) 1.0)))
@@ -3482,6 +3488,13 @@
                            (equal? (read-char port) #\x)
                            (equal? (char-ready? port) #f))))
 
+              (list "progress-evt?/one-arg"
+                    (equal? (progress-evt? #f) #f))
+
+              (list "progress-evt?/two-arg"
+                    (let ([port (open-input-string "ok")])
+                      (equal? (progress-evt? #f port) #f)))
+
               (list "read-line/basic"
                     (let* ([port   (open-input-string "alpha\nbeta\n")]
                            [first  (read-line port)]
@@ -4045,17 +4058,24 @@
                      (equal? with-extra '(src extra)))))
 
         (list "raise-read-eof-error"
-              (let* ([captured
+              (let* ([basic
                       (with-handlers ([exn:fail:read:eof?
                                        (λ (exn)
                                          (list (exn-message exn)
                                                (map srcloc->string
                                                     (exn:fail:read-srclocs exn))))])
                         (raise-read-eof-error "EOF" 'src 5 6 7 8))]
-                     [msg  (car captured)]
-                     [locs (cadr captured)])
-                (and (equal? msg "EOF")
-                     (equal? locs '("src:5:6")))))
+                     [with-extra
+                      (with-handlers ([exn:fail:read:eof?
+                                       (λ (exn)
+                                         (map srcloc-source
+                                              (exn:fail:read-srclocs exn)))])
+                        (raise-read-eof-error
+                         "extra"
+                         'src 1 2 3 4
+                         (list (make-srcloc 'extra 9 8 7 6))))])
+                (and (equal? basic (list "EOF" '("src:5:6")))
+                     (equal? with-extra '(src extra)))))
         
         (list "exn constructors"
               (let* ([base (exn "message" #f)]
