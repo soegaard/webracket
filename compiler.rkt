@@ -52,16 +52,28 @@
          racket/match
          racket/port
          racket/pretty
+         (only-in syntax/id-set
+                  immutable-free-id-set
+                  free-id-set-add
+                  free-id-set-member?
+                  free-id-set-remove
+                  free-id-set-union
+                  free-id-set-intersect
+                  free-id-set-subtract
+                  free-id-set-empty?)
          (only-in racket/string string-prefix? string-replace)
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
                   index-where append-map make-list rest take drop
                   takef dropf drop-right
                   group-by)         
-         (only-in racket/set  list->set))
+         (only-in racket/set  list->set set->list set-intersect))
 (require
   ; (prefix-in ur- urlang)
- (for-syntax nanopass/base syntax/parse racket/syntax racket/base)
+ (for-syntax nanopass/base
+             syntax/parse
+             racket/syntax
+             racket/base)
  
   syntax/kerncase ; for kernel-form-identifier-list
   syntax/stx
@@ -70,6 +82,19 @@
   ; (rename-in racket/match [match Match])
   ; (only-in srfi/1 list-index)
   '#%paramz) ; contains the identifier parameterization-key
+
+(define (count-sexp x)
+  (cond
+    [(pair? x)
+     (+ 1 (count-sexp (car x)) (count-sexp (cdr x)))]
+    [(vector? x)
+     (+ 1 (for/sum ([e (in-vector x)]) (count-sexp e)))]
+    [(box? x)
+     (+ 1 (count-sexp (unbox x)))]
+    [else 1]))
+
+(define (count-unparsed unparse-fn x)
+  (count-sexp (unparse-all (unparse-fn x))))
 
 
 ;;; todo - just for testing FFI
@@ -317,20 +342,57 @@
 (define (unparse-variable x)
   (syntax->datum (variable-id x)))
 
-;;; Quick and dirty sets of variables represented as lists
-(define (variable=? x y)         (free-identifier=? (variable-id x) (variable-id y)))
-(define (ids->id-set xs)         (for/fold ([s '()]) ([x xs]) (set-add s x)))
-(define (make-id-set . xs)       (ids->id-set xs))
-(define empty-set                (make-id-set))
-(define (set-in? x s)            (member x s variable=?))  
-(define (set-add s x)            (if (set-in? x s) s (cons x s)))
-(define (set-union s1 s2)        (for/fold ([s s1]) ([x s2]) (set-add s x)))
-(define (set-union* ss)          (for/fold ([u empty-set]) ([s ss]) (set-union u s)))
-(define (set-remove s x)         (remove x s variable=?))
-(define (set-difference s1 s2)   (for/fold ([s s1]) ([x s2]) (set-remove s x)))
-(define (set-intersection s1 s2) (for/list ([x s1] #:when (set-in? x s2)) x))
-(define (set-empty? s)           (equal? s '()))
-(define (set-disjoint? s1 s2)    (set-empty? (set-intersection s1 s2)))
+;;; Sets of variables using free-identifier=? keys
+(struct id-set (list ids) #:transparent)
+
+(define (variable=? x y) (free-identifier=? (variable-id x) (variable-id y)))
+(define empty-set (id-set '() (immutable-free-id-set)))
+
+(define (ids->id-set xs)   (for/fold ([s empty-set]) ([x xs]) (set-add s x)))
+(define (make-id-set . xs) (ids->id-set xs))
+(define (id-set->list s)   (id-set-list s))
+(define (set-in? x s)      (free-id-set-member? (id-set-ids s) (variable-id x)))
+
+(define (set-add s x)
+  (if (set-in? x s)
+      s
+      (id-set (cons x (id-set-list s))
+              (free-id-set-add (id-set-ids s) (variable-id x)))))
+
+(define (set-union s1 s2)
+  (define ids2 (id-set-ids s2))
+  (define add-list
+    (for/list ([x (in-list (id-set-list s2))]
+               #:unless (free-id-set-member? (id-set-ids s1) (variable-id x)))
+      x))
+  (id-set (append (id-set-list s1) add-list)
+          (free-id-set-union (id-set-ids s1) ids2)))
+
+(define (set-union* ss)
+  (for/fold ([u empty-set]) ([s ss]) (set-union u s)))
+
+(define (set-remove s x)
+  (if (set-in? x s)
+      (id-set (remove x (id-set-list s) variable=?)
+              (free-id-set-remove (id-set-ids s) (variable-id x)))
+      s))
+
+(define (set-difference s1 s2)
+  (for/fold ([s s1]) ([x (in-list (id-set-list s2))]) (set-remove s x)))
+
+(define (set-intersection s1 s2)
+  (define ids (free-id-set-intersect (id-set-ids s1) (id-set-ids s2)))
+  (define xs
+    (for/list ([x (in-list (id-set-list s1))]
+               #:when (free-id-set-member? ids (variable-id x)))
+      x))
+  (id-set xs ids))
+
+(define (set-empty? s)
+  (free-id-set-empty? (id-set-ids s)))
+
+(define (set-disjoint? s1 s2)
+  (free-id-set-empty? (free-id-set-intersect (id-set-ids s1) (id-set-ids s2))))
 
 
 ;;;
@@ -2691,7 +2753,7 @@
     [,e                                 (Expr e xs)]
     ; until we implement namespace, top-level variables are boxed
     [(define-values   ,s (,x ...) ,e)   (if assignment-convertsion-for-top-level-vars?
-                                            (Expr e (append x xs))
+                                            (Expr e (set-union (ids->id-set x) xs))
                                             (Expr e xs))]
     [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
     [(#%require       ,s ,rrs ...)      empty-set])
@@ -2738,14 +2800,14 @@
     [(begin0 ,s ,e0 ,e1 ...)                    (Expr* (cons e0 e1) xs)]
     [(let-values    ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
     [(letrec-values ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
-    [(set! ,s ,x ,e)                            (cons x (Expr e xs))]    
+    [(set! ,s ,x ,e)                            (set-add (Expr e xs) x)]    
     [(top ,s ,x)                                xs]
     [(variable-reference ,s ,vrx)               xs]
     [(quote ,s ,d)                              xs]
     [(quote-syntax ,s ,d)                       xs]
     [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
     [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
-  (apply make-id-set (TopLevelForm T '())))
+  (TopLevelForm T empty-set))
 
 (define-pass box-mutables : LFE2+ (T ms) -> LFE2+ ()
   ;; Assumption: α-conversion has been done
@@ -2783,7 +2845,7 @@
         (define (Begin es)  (match es [(list e0 e1 ...) `(begin ,h ,e0 ,e1 ...)]))
         (match (set-disjoint? fs ms) 
           [#t `,e]
-          [_ (Begin (append (for/list ([a (set-intersection fs ms)])
+          [_ (Begin (append (for/list ([a (in-list (id-set->list (set-intersection fs ms)))])
                               `(set! ,h ,a ,(Boxed a)))
                             (list e)))])))
     (define (RHS xs e) ; rewrite right hand side of binding clause
@@ -2809,7 +2871,7 @@
     [(define-values   ,s (,x ...) ,[e]) `(define-values   ,s (,x ...) ,(RHS x e))]
     [(define-syntaxes ,s (,x ...) ,[e]) `(define-syntaxes ,s (,x ...) ,(RHS x e))])
   (Abstraction : Abstraction (AB) -> Abstraction ()
-    [(λ ,s ,[f] ,[e])   (let ([lb (LambdaBody s f (formal-variables f) e)])
+    [(λ ,s ,[f] ,[e])   (let ([lb (LambdaBody s f (ids->id-set (formal-variables f)) e)])
                           `(λ ,s ,f ,lb))])
   (Expr : Expr (E) -> Expr ()
     ; variable reference, set! and all binding forms must be rewritten
@@ -3524,11 +3586,12 @@
   (ModuleLevelForm (mf)
     (+ (define-label l cab))))
 
+
 (define-pass finish-closure-conversion : LANF (T free-ht labels-ht) -> LANF+closure ()
   (definitions
     (define h #'fcc)
     (define (label-of ab) (hash-ref labels-ht ab))
-    (define (free-of ab)  (hash-ref   free-ht ab))
+    (define (free-of ab)  (id-set->list (hash-ref free-ht ab)))
     (define (index-of x free)
       (define (x? y) (id=? x y))
       (index-where free x?))
@@ -3568,7 +3631,7 @@
          (eq? (syntax-e #'inferred-name?) 'inferred-name)
          (syntax-e #'x)]
         [_ #f]))
-    (define current-free (make-parameter empty-set)))
+    (define current-free (make-parameter '())))
   (TopLevelForm    : TopLevelForm    (T) -> TopLevelForm      ())
   (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm   ())
   (Expr            : Expr            (E) -> Expr              ())
@@ -4038,9 +4101,21 @@
 
 (define-pass generate-code : LANF+closure (T) -> * ()
   (definitions
+    (define gen-times '())
+    (define (time-gen label thunk)
+      (if (current-pass-timings?)
+          (let-values ([(vals ms)
+                        (with-timing
+                          (λ ()
+                            (call-with-values thunk list)))])
+            (set! gen-times (cons (list label ms) gen-times))
+            (apply values vals))
+          (thunk)))
     ;; 1. Classify variables
     (define-values (top-vars module-vars local-vars provides)
-      (classify-variables T))
+      (time-gen "classify-variables"
+        (λ ()
+          (classify-variables T))))
     ;; (displayln "-- Provides --"           (current-error-port))
     ;; (displayln provides                   (current-error-port))
     ;; (displayln "-- Top-vars --"           (current-error-port))
@@ -4048,12 +4123,9 @@
     ;;                  symbol<?)
     ;;            (current-error-port))
 
-    (define (literal=? x y) (eq? (syntax->datum (variable-id x))
-                                 (syntax->datum (variable-id y))))
-
-    (define (top-variable? v)    (member v top-vars literal=?))   ; literal comparison
-    (define (module-variable? v) (set-in? v module-vars))         ; free-identifier=?
-    (define (local-variable? v)  (set-in? v local-vars))          ; free-identifier=?
+    (define (top-variable? v)    (set-in? v top-vars))   ; free-identifier=?
+    (define (module-variable? v) (set-in? v module-vars)) ; free-identifier=?
+    (define (local-variable? v)  (set-in? v local-vars))  ; free-identifier=?
     (define (ffi-variable? v)    (memq (if (symbol? v) v (syntax-e (variable-id v)))
                                        ffi-primitives))
     #;(displayln (list 'top? (top-variable? (variable #'sxml->dom))) (current-error-port))
@@ -5609,45 +5681,59 @@
 
   
   (define (generate-global-declarations-for-top-level-variables)
-    (for/list ([x top-vars])
+    (for/list ([x (in-list (id-set->list top-vars))])
       `(global ,(Var x) (mut (ref eq)) ,(Undefined))))
   
   (define result #'$result) ; holds result in $entry
 
-  (define-values (dls tms entry-body) (TopLevelForm T result))
+  (define-values (dls tms entry-body)
+    (time-gen "top-level-forms"
+      (λ ()
+        (TopLevelForm T result))))
   (define top-level-variable-declarations
-    (generate-global-declarations-for-top-level-variables))
+    (time-gen "top-level-globals"
+      (λ ()
+        (generate-global-declarations-for-top-level-variables))))
 
   ; variables bound by let-values and others at the top-level
   ; are represented in the runtime as local variables of a function `entry`.
   (define entry-locals (*locals*))
 
   (define primitives-also-declared-as-variables-at-top-level
-    (sort (set->list
-           (set-intersect (list->set (map syntax-e (map variable-id top-vars)))
-                          (list->set primitives)))
-          symbol<?))
+    (time-gen "top-level-prim-vars"
+      (λ ()
+        (sort (set->list
+               (set-intersect (list->set (map syntax-e (map variable-id (id-set->list top-vars))))
+                              (list->set primitives)))
+              symbol<?))))
   
   ;; (displayln "-- variables declared at top-level --")
   ;; (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
   ;; (displayln "-- primitives also declared as variables at top-level --")
   ;; (displayln primitives-also-declared-as-variables-at-top-level)
   
-  (generate-runtime
-   dls                              ; define-labels
-   tms                              ; top modules
-   entry-body                       ; expressions and general top-level forms
-   result                           ; variable that holds the result (in $entry)
-   ; program specific
-   top-vars                         ; top level variables (list of variables)
-   top-level-variable-declarations  ; wasm code for declaring top-level variables
-   entry-locals                     ; variables that are local to $entry
-   ; general
-   primitives                       ; primitives (list of symbols)
-   string-constants                 ; (list (list name string) ...)
-   bytes-constants                  ; (list (list name bytes) ...)
-   symbol-constants                 ; (list (list name symbol) ...)
-   )
+  (define gen
+    (time-gen "generate-runtime"
+      (λ ()
+        (generate-runtime
+         dls                              ; define-labels
+         tms                              ; top modules
+         entry-body                       ; expressions and general top-level forms
+         result                           ; variable that holds the result (in $entry)
+         ; program specific
+         (id-set->list top-vars)          ; top level variables (list of variables)
+         top-level-variable-declarations  ; wasm code for declaring top-level variables
+         entry-locals                     ; variables that are local to $entry
+         ; general
+         primitives                       ; primitives (list of symbols)
+         string-constants                 ; (list (list name string) ...)
+         bytes-constants                  ; (list (list name bytes) ...)
+         symbol-constants                 ; (list (list name symbol) ...)
+         ))))
+  (when (current-pass-timings?)
+    (current-gen-timing-table
+     (format-timing-table (reverse gen-times))))
+  gen
   )
 
 ;; > (pretty-print (language->s-expression LANF+closure))
@@ -5772,6 +5858,8 @@
 
 (define debug:print-passes? #f)
 (define current-pass-timings? (make-parameter #f))
+(define current-pass-timing-table (make-parameter #f))
+(define current-gen-timing-table (make-parameter #f))
 
 (define (comp+ stx)
   (run (comp stx)))
@@ -5779,11 +5867,14 @@
 (define (comp stx)
   (reset-counter!)
   (reset-label-map!)
+  (current-pass-timing-table #f)
+  (current-gen-timing-table #f)
   (define pass-times '())
-  (define (time-pass label thunk)
+  (define (time-pass label thunk [size-fn #f])
     (if (current-pass-timings?)
         (let-values ([(v ms) (with-timing thunk)])
-          (set! pass-times (cons (list label ms) pass-times))
+          (define size (and size-fn (size-fn v)))
+          (set! pass-times (cons (list label ms size) pass-times))
           v)
         (thunk)))
 
@@ -5797,13 +5888,13 @@
         t)))
 
   (define u   (time-pass "unexpand"             (λ () (unexpand t))))
-  (define p   (time-pass "parse"                (λ () (parse u))))
-  (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p))))
-  (define in  (time-pass "infer-names"          (λ () (infer-names ft))))
-  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in))))
-  (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq))))
-  (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb))))
-  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))))
+  (define p   (time-pass "parse"                (λ () (parse u)) (λ (v) (count-unparsed unparse-LFE v))))
+  (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p)) (λ (v) (count-unparsed unparse-LFE v))))
+  (define in  (time-pass "infer-names"          (λ () (infer-names ft)) (λ (v) (count-unparsed unparse-LFE v))))
+  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in)) (λ (v) (count-unparsed unparse-LFE v))))
+  (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq)) (λ (v) (count-unparsed unparse-LFE1 v))))
+  (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb)) (λ (v) (count-unparsed unparse-LFE2 v))))
+  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl)) (λ (v) (count-unparsed unparse-LFE2+ v))))
 
   (define ac
     (time-pass "assignment-conversion"
@@ -5812,20 +5903,23 @@
         (when debug:print-passes?
           (displayln "--- assignment conversion ---")
           (displayln (pretty-print a) (current-error-port)))
-        a)))
+        a)
+      (λ (v) (count-unparsed unparse-LFE2+ v))))
 
-  (define ca  (time-pass "categorize-applications" (λ () (categorize-applications ac))))
-  (define an  (time-pass "anormalize"            (λ () (anormalize ca))))
-  (define cc  (time-pass "closure-conversion"    (λ () (closure-conversion an))))
-  (define fb  (time-pass "flatten-begin"         (λ () (flatten-begin cc))))
-  (define gen (time-pass "generate-code"         (λ () (generate-code fb))))
+  (define ca  (time-pass "categorize-applications" (λ () (categorize-applications ac)) (λ (v) (count-unparsed unparse-LFE3 v))))
+  (define an  (time-pass "anormalize"            (λ () (anormalize ca)) (λ (v) (count-unparsed unparse-LANF v))))
+  (define cc  (time-pass "closure-conversion"    (λ () (closure-conversion an)) (λ (v) (count-unparsed unparse-LANF+closure v))))
+  (define fb  (time-pass "flatten-begin"         (λ () (flatten-begin cc)) (λ (v) (count-unparsed unparse-LANF+closure v))))
+  (define gen (time-pass "generate-code"         (λ () (generate-code fb))
+                         (λ (_) (count-unparsed unparse-LANF+closure fb))))
 
   (define result (strip gen))
   (when debug:print-passes?
     (displayln "--- compiled ---")
     (displayln (pretty-print result) (current-error-port)))
   (when (current-pass-timings?)
-    (displayln (format-timing-table (reverse pass-times))))
+    (current-pass-timing-table
+     (format-timing-table/size (reverse pass-times))))
   result)
 
 
