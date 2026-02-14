@@ -169,14 +169,24 @@
     (define write-map-ms (- t-write-map-end t-write-map-start))
     (define write-host-ms (- t-write-host-end t-write-host-start))
     (define total-ms (- t-write-host-end t0))
-    (displayln
-     (format-timing-table
-      (list (list "compile" compile-ms)
-            (list "write-wat" write-wat-ms)
-            (list "assemble" assemble-ms)
-            (list "write-map" write-map-ms)
-            (list "write-host" write-host-ms)
-            (list "total" total-ms)))))
+    (define overall-table
+      (format-timing-table
+       (list (list "compile" compile-ms)
+             (list "write-wat" write-wat-ms)
+             (list "assemble" assemble-ms)
+             (list "write-map" write-map-ms)
+             (list "write-host" write-host-ms)
+             (list "total" total-ms))))
+    (displayln "=== Overall Compile ===")
+    (displayln overall-table)
+    (define pass-table (current-pass-timing-table))
+    (when pass-table
+      (displayln "=== Pass Timings ===")
+      (displayln pass-table))
+    (define gen-table (current-gen-timing-table))
+    (when gen-table
+      (displayln "=== Generate-Code Phases ===")
+      (displayln gen-table)))
 
   ; 8. Optionally run the program via Node.js.
   (when (and node? run-after?)

@@ -498,9 +498,10 @@
     struct:exn:fail:syntax:missing-module
     struct:exn:fail:syntax:unbound
     ))
+(define non-literal-constants-set (list->seteq non-literal-constants))
 
 (define (non-literal-constant? x)
-  (and (memq x non-literal-constants) #t))
+  (set-member? non-literal-constants-set x))
 
 
 
@@ -512,6 +513,7 @@
 ;; variable reference to the primitive.
 
 (define primitives '())  ; includes the ffi-primitives
+(define primitives-set (mutable-seteq))
 
 (define primitive-arity-cache (make-hasheq))
 
@@ -555,6 +557,7 @@
          (begin
            ; add the primitive (as a symbol) to the primitives list
            (set! primitives (cons 'name primitives))
+           (set-add! primitives-set 'name)
            (define (var:name) (variable #'name)))))]))
 
 (define-syntax (define-primitives stx)
@@ -1276,9 +1279,10 @@
 ;; An FFI Primitive is a primitive that is defined in an .ffi file.
 
 (define ffi-primitives '()) ; list of symbols
+(define ffi-primitives-set (mutable-seteq))
 
 (define (ffi-primitive? sym)
-  (and (memq sym ffi-primitives) #t))
+  (set-member? ffi-primitives-set sym))
 
 (define (ffi-foreign-by-name sym)
   (for/first ([ff (in-list (current-ffi-foreigns))]
@@ -1289,7 +1293,9 @@
   ; 1. There is no `var:name` since `var:name` is only used
   ;    in "compiler.rkt" to generate code.
   (set!     primitives (cons name     primitives))
-  (set! ffi-primitives (cons name ffi-primitives)))
+  (set-add! primitives-set name)
+  (set! ffi-primitives (cons name ffi-primitives))
+  (set-add! ffi-primitives-set name))
 
 ;; Primitives declared using ffi-files.
 
@@ -1299,6 +1305,7 @@
 (define (reset-ffi-primitives)
   ; called by `parse` before parsing begins
   (hash-clear! primitive-arity-cache)
+  (set-clear! ffi-primitives-set)
   (define-ffi-primitives (foreigns->primitive-names (current-ffi-foreigns))))
 
 #; (require (for-syntax (only-in urlang urmodule-name->exports)))
@@ -1333,7 +1340,7 @@
 (define (primitive? v)
   (and (or (and (syntax? v)   (primitive? (syntax-e v)))
            (and (variable? v) (primitive? (variable-id v)))
-           (member v primitives))
+           (set-member? primitives-set v))
        #t))
 
 ; A few primitives need access to _tc and are therefore wrapped in a closure.
@@ -2385,7 +2392,8 @@
 ;;; collect-top-level-bindings
 ;;;
 
-;; Collect top-level bindings (for seeding α-rename). This is not integrated yet.
+;; Collect top-level bindings (for seeding α-rename).
+;; This allows forward references at the top-level.
 
 (define-pass collect-top-level-bindings : LFE2 (T) -> * ()
   (definitions
@@ -2398,12 +2406,12 @@
     [(topbegin ,s ,t ...)           (TopLevelForm* t)]
     [(#%expression ,s ,e)           (void)]
     [(topmodule ,s ,mn ,mp ,mf ...) (void)]
-    [(define-label ,l ,cab)         (void)]
     [,g                             (GeneralTopLevelForm g)])
 
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> * ()
     [(define-values   ,s (,x ...) ,e) (top!* x)]
     [(define-syntaxes ,s (,x ...) ,e) (top!* x)]
+    [(#%require       ,s ,rrs ...)    (void)]
     [,e                               (void)])
 
   (TopLevelForm T)
@@ -2481,7 +2489,8 @@
 
 ; α-rename : LFE2 -> LFE2+
 (define (α-rename T)
-  (letv ((T ρ) (α-rename/pass1 T))
+  (define top-bindings (collect-top-level-bindings T))
+  (letv ((T ρ) (α-rename/pass1 T top-bindings))
     ; pass 2 patches the `provide` form to hold both variables
     ; before and after renaming.
     (α-rename/pass2 T ρ)))
@@ -2511,7 +2520,7 @@
     [,x       `[,x ,(or (ρ x) x)]]))  ; <-- before and after renaming
 
 
-(define-pass α-rename/pass1 : LFE2 (T) -> LFE2 (ρ)
+(define-pass α-rename/pass1 : LFE2 (T top-bindings) -> LFE2 (ρ)
   (definitions
     (define (reserved-target-language-keyword? id)
       ; Any reserved keywords in the target language that needs renaming.
@@ -2697,8 +2706,9 @@
     [(top ,s ,x)                              (values `(top ,s ,x) ρ)]
     [(variable-reference ,s ,vrx)             (values E ρ)])
   
-  (letv ((T ρ) (TopLevelForm T initial-ρ))
-        (values T ρ)))
+  (let ([ρ0 (extend-map-to-self* initial-ρ top-bindings)])
+    (letv ((T ρ) (TopLevelForm T ρ0))
+      (values T ρ))))
 
   ;; (VariableReferenceId (vrx)
   ;;    x                                            
@@ -4130,24 +4140,6 @@
       (time-gen "classify-variables"
         (λ ()
           (classify-variables T))))
-    (when (current-pass-timings?)
-      (define format-var (variable #'format))
-      (define (set-has-name? s sym)
-        (for/or ([v (in-list (id-set->list s))])
-          (eq? (syntax-e (variable-id v)) sym)))
-      (define format-class
-        (cond
-          [(set-in? format-var top-vars) 'top]
-          [(set-in? format-var module-vars) 'module]
-          [(set-in? format-var local-vars) 'local]
-          [else #f]))
-      (displayln (format "classify-variables: format => ~a" format-class)
-                 (current-error-port))
-      (displayln (format "classify-variables: format in top/mod/loc by name => ~a / ~a / ~a"
-                         (set-has-name? top-vars 'format)
-                         (set-has-name? module-vars 'format)
-                         (set-has-name? local-vars 'format))
-                 (current-error-port)))
     ;; (displayln "-- Provides --"           (current-error-port))
     ;; (displayln provides                   (current-error-port))
     ;; (displayln "-- Top-vars --"           (current-error-port))
@@ -4155,16 +4147,20 @@
     ;;                  symbol<?)
     ;;            (current-error-port))
 
-    (define (top-variable? v)    (set-in? v top-vars))   ; free-identifier=?
+    (define top-names
+      (for/seteq ([x (in-list (id-set->list top-vars))])
+        (syntax-e (variable-id x))))
+    (define (top-variable? v)
+      (set-member? top-names (syntax-e (variable-id v))))   ; top-level: match by symbol name
     (define (module-variable? v) (set-in? v module-vars)) ; free-identifier=?
     (define (local-variable? v)  (set-in? v local-vars))  ; free-identifier=?
-    (define (ffi-variable? v)    (memq (if (symbol? v) v (syntax-e (variable-id v)))
-                                       ffi-primitives))
+    (define (ffi-variable? v)    (set-member? ffi-primitives-set
+                                              (if (symbol? v) v (syntax-e (variable-id v)))))
     #;(displayln (list 'top? (top-variable? (variable #'sxml->dom))) (current-error-port))
     
     (define (global-variable? v)
       ; a global (wasm) varible is unboxed
-      (non-literal-constant? (variable-id v)))
+      (non-literal-constant? (syntax-e (variable-id v))))
     (define (classify v)
       #;(displayln (list 'clas v))
       #;(when (symbol? v) (error 'classify "got: ~a" v))
