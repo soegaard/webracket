@@ -1,7 +1,8 @@
 #lang racket/base
 (module+ test (require rackunit))
 (provide (all-defined-out))
-  (require racket/set)
+(require racket/set
+         syntax/id-set)
 
 ;;; The following primitives are needed for regular expressions.
 ;;; When they are implemented, reneable "regexp.rkt" in "stdlib.rkt".
@@ -52,15 +53,6 @@
          racket/match
          racket/port
          racket/pretty
-         (only-in syntax/id-set
-                  immutable-free-id-set
-                  free-id-set-add
-                  free-id-set-member?
-                  free-id-set-remove
-                  free-id-set-union
-                  free-id-set-intersect
-                  free-id-set-subtract
-                  free-id-set-empty?)
          (only-in racket/string string-prefix? string-replace)
          (only-in racket/format ~a)
          (only-in racket/list partition append* first second third last
@@ -342,57 +334,53 @@
 (define (unparse-variable x)
   (syntax->datum (variable-id x)))
 
-;;; Sets of variables using free-identifier=? keys
-(struct id-set (list ids) #:transparent)
-
+;;; Quick and dirty sets of variables represented as free-id sets
 (define (variable=? x y) (free-identifier=? (variable-id x) (variable-id y)))
-(define empty-set (id-set '() (immutable-free-id-set)))
 
-(define (ids->id-set xs)   (for/fold ([s empty-set]) ([x xs]) (set-add s x)))
-(define (make-id-set . xs) (ids->id-set xs))
-(define (id-set->list s)   (id-set-list s))
-(define (set-in? x s)      (free-id-set-member? (id-set-ids s) (variable-id x)))
+(struct id-set (ids entries) #:transparent)
+
+(define empty-set (id-set '() (immutable-free-id-set)))
+(define (id-set->list s) (id-set-ids s))
+
+(define (set-in? x s)
+  (free-id-set-member? (id-set-entries s) (variable-id x)))
 
 (define (set-add s x)
   (if (set-in? x s)
       s
-      (id-set (cons x (id-set-list s))
-              (free-id-set-add (id-set-ids s) (variable-id x)))))
+      (id-set (cons x (id-set-ids s))
+              (free-id-set-add (id-set-entries s) (variable-id x)))))
+
+(define (ids->id-set xs)
+  (for/fold ([s empty-set]) ([x xs]) (set-add s x)))
+
+(define (make-id-set . xs)
+  (ids->id-set xs))
 
 (define (set-union s1 s2)
-  (define ids2 (id-set-ids s2))
-  (define add-list
-    (for/list ([x (in-list (id-set-list s2))]
-               #:unless (free-id-set-member? (id-set-ids s1) (variable-id x)))
-      x))
-  (id-set (append (id-set-list s1) add-list)
-          (free-id-set-union (id-set-ids s1) ids2)))
+  (for/fold ([s s1]) ([x (in-list (id-set-ids s2))]) (set-add s x)))
 
 (define (set-union* ss)
   (for/fold ([u empty-set]) ([s ss]) (set-union u s)))
 
 (define (set-remove s x)
   (if (set-in? x s)
-      (id-set (remove x (id-set-list s) variable=?)
-              (free-id-set-remove (id-set-ids s) (variable-id x)))
+      (id-set (remove x (id-set-ids s) variable=?)
+              (free-id-set-remove (id-set-entries s) (variable-id x)))
       s))
 
 (define (set-difference s1 s2)
-  (for/fold ([s s1]) ([x (in-list (id-set-list s2))]) (set-remove s x)))
+  (for/fold ([s s1]) ([x (in-list (id-set-ids s2))]) (set-remove s x)))
 
 (define (set-intersection s1 s2)
-  (define ids (free-id-set-intersect (id-set-ids s1) (id-set-ids s2)))
-  (define xs
-    (for/list ([x (in-list (id-set-list s1))]
-               #:when (free-id-set-member? ids (variable-id x)))
-      x))
-  (id-set xs ids))
+  (for/fold ([s empty-set]) ([x (in-list (id-set-ids s1))] #:when (set-in? x s2))
+    (set-add s x)))
 
 (define (set-empty? s)
-  (free-id-set-empty? (id-set-ids s)))
+  (null? (id-set-ids s)))
 
 (define (set-disjoint? s1 s2)
-  (free-id-set-empty? (free-id-set-intersect (id-set-ids s1) (id-set-ids s2))))
+  (set-empty? (set-intersection s1 s2)))
 
 
 ;;;
@@ -512,7 +500,7 @@
     ))
 
 (define (non-literal-constant? x)
-  (and (memq x non-literal-constants)) #t)
+  (and (memq x non-literal-constants) #t))
 
 
 
@@ -2364,9 +2352,6 @@
      (let ([s* (map (λ(_) s) f)])
        `(case-lambda ,s (λ ,s* ,f ,e) ...))]))
 
-
-
-
 ;;;
 ;;; Remove begin0
 ;;;
@@ -2395,6 +2380,34 @@
 ;       (let ([t0 (new-var 't0)])
 ;         `(let-values ,s ([(,t0) ,e0]) ,`(begin ,h ,t0 ,e1 ... ,t0)))]))
 
+
+;;;
+;;; collect-top-level-bindings
+;;;
+
+;; Collect top-level bindings (for seeding α-rename). This is not integrated yet.
+
+(define-pass collect-top-level-bindings : LFE2 (T) -> * ()
+  (definitions
+    (define top                '())
+    (define (top! x)           (set! top (cons x top)))
+    (define (top!* xs)         (for-each top! xs))
+    (define (TopLevelForm* Ts) (for-each TopLevelForm Ts)))
+
+  (TopLevelForm : TopLevelForm (T) -> * ()
+    [(topbegin ,s ,t ...)           (TopLevelForm* t)]
+    [(#%expression ,s ,e)           (void)]
+    [(topmodule ,s ,mn ,mp ,mf ...) (void)]
+    [(define-label ,l ,cab)         (void)]
+    [,g                             (GeneralTopLevelForm g)])
+
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> * ()
+    [(define-values   ,s (,x ...) ,e) (top!* x)]
+    [(define-syntaxes ,s (,x ...) ,e) (top!* x)]
+    [,e                               (void)])
+
+  (TopLevelForm T)
+  top)
 
 
 ;;;
@@ -2685,7 +2698,8 @@
     [(variable-reference ,s ,vrx)             (values E ρ)])
   
   (letv ((T ρ) (TopLevelForm T initial-ρ))
-    (values T ρ)))
+        (values T ρ)))
+
   ;; (VariableReferenceId (vrx)
   ;;    x                                            
   ;;    (anonymous s)                                => ()
@@ -4116,10 +4130,28 @@
       (time-gen "classify-variables"
         (λ ()
           (classify-variables T))))
+    (when (current-pass-timings?)
+      (define format-var (variable #'format))
+      (define (set-has-name? s sym)
+        (for/or ([v (in-list (id-set->list s))])
+          (eq? (syntax-e (variable-id v)) sym)))
+      (define format-class
+        (cond
+          [(set-in? format-var top-vars) 'top]
+          [(set-in? format-var module-vars) 'module]
+          [(set-in? format-var local-vars) 'local]
+          [else #f]))
+      (displayln (format "classify-variables: format => ~a" format-class)
+                 (current-error-port))
+      (displayln (format "classify-variables: format in top/mod/loc by name => ~a / ~a / ~a"
+                         (set-has-name? top-vars 'format)
+                         (set-has-name? module-vars 'format)
+                         (set-has-name? local-vars 'format))
+                 (current-error-port)))
     ;; (displayln "-- Provides --"           (current-error-port))
     ;; (displayln provides                   (current-error-port))
     ;; (displayln "-- Top-vars --"           (current-error-port))
-    ;; (displayln (sort (map syntax->datum (map variable-id top-vars))
+    ;; (displayln (sort (map syntax->datum (map variable-id (id-set->list top-vars)))
     ;;                  symbol<?)
     ;;            (current-error-port))
 
@@ -4148,7 +4180,7 @@
         [(ffi-variable?    v) 'ffi]
         [(global-variable? v) 'global]
         [else
-         ;; (displayln (list 'top (map unparse-variable top-vars)))
+         ;; (displayln (list 'top (map unparse-variable (id-set->list top-vars))))
          ;; (displayln (list 'mod (map unparse-variable module-vars)))
          ;; (displayln (list 'loc (map unparse-variable local-vars)))
          (error 'classify "got: ~a" v)]))
@@ -5708,7 +5740,7 @@
               symbol<?))))
   
   ;; (displayln "-- variables declared at top-level --")
-  ;; (displayln (sort (map syntax-e (map variable-id top-vars)) symbol<?))
+  ;; (displayln (sort (map syntax-e (map variable-id (id-set->list top-vars))) symbol<?))
   ;; (displayln "-- primitives also declared as variables at top-level --")
   ;; (displayln primitives-also-declared-as-variables-at-top-level)
   
