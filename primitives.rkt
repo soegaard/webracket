@@ -25,7 +25,13 @@
          ; racket/namespace
          (prefix-in readerr: syntax/readerr)
          
-         math/flonum
+         (rename-in math/flonum
+                    [flsinh math:flsinh]
+                    [flcosh math:flcosh]
+                    [fltanh math:fltanh]
+                    [flasinh math:flasinh]
+                    [flacosh math:flacosh]
+                    [flatanh math:flatanh])
          (only-in math/base
                   asinh acosh atanh
                   float-complex?)
@@ -436,6 +442,12 @@
  flasin
  flacos
  flatan
+ flsinh
+ flcosh
+ fltanh
+ flasinh
+ flacosh
+ flatanh
  flround
  flfloor
  flceiling
@@ -968,7 +980,9 @@
 
  unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
  unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
- unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
+ unsafe-flacos unsafe-flatan
+ unsafe-flsinh unsafe-flcosh unsafe-fltanh unsafe-flasinh unsafe-flacosh unsafe-flatanh
+ unsafe-fllog unsafe-flexp unsafe-flsqrt
  unsafe-flmin unsafe-flmax unsafe-flexpt
  unsafe-flrandom 
  unsafe-car unsafe-cdr
@@ -1091,6 +1105,16 @@
 (define (namespace-variable-value-simple ns sym)
   (namespace-variable-value sym #t #f ns))
 
+;; Bind hyperbolic flonum operations as plain procedures in this module.
+;; In host Racket these names can be syntax bindings, but WebRacket's
+;; primitive reflection expects variable bindings.
+(define (flsinh x)  (math:flsinh x))
+(define (flcosh x)  (math:flcosh x))
+(define (fltanh x)  (math:fltanh x))
+(define (flasinh x) (math:flasinh x))
+(define (flacosh x) (math:flacosh x))
+(define (flatanh x) (math:flatanh x))
+
 ;; The inverse hyperbolic functions are from
 ;;   math/private/base/base-functions.rkt
 
@@ -1114,6 +1138,15 @@
         [(real? x)  (flatanh (fl x))]
         [(float-complex? x)  (* 0.5 (- (log (+ 1.0 x)) (log (- 1.0 x))))]
         [else  (* 1/2 (- (log (+ 1 x)) (log (- 1 x))))]))
+
+;; Full Racket does not expose unsafe hyperbolic flonum operations,
+;; but WebRacket does. Keep host-mode behaviour aligned.
+(define (unsafe-flsinh x)  (flsinh x))
+(define (unsafe-flcosh x)  (flcosh x))
+(define (unsafe-fltanh x)  (fltanh x))
+(define (unsafe-flasinh x) (flasinh x))
+(define (unsafe-flacosh x) (flacosh x))
+(define (unsafe-flatanh x) (flatanh x))
 
 
 ;; (require (for-syntax racket/base))  ; for version-case
