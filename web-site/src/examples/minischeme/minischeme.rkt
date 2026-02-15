@@ -259,21 +259,17 @@
         [else
          (error 'minischeme "application of non-procedure: ~a" value)]))
 
-    (define (desugar-let bindings body)
-      (define vars '())
-      (define vals '())
-      (for-each
-       (λ (binding)
-         (unless (and (pair? binding)
-                      (symbol? (car binding))
-                      (pair? (cdr binding))
-                      (null? (cddr binding)))
-           (error 'minischeme "malformed let binding: ~s" binding))
-         (set! vars (cons (car binding) vars))
-         (set! vals (cons (cadr binding) vals)))
-       bindings)
-      (cons (cons 'lambda (cons (reverse vars) body))
-            (reverse vals)))
+    (define (validate-binding binding who)
+      (unless (and (pair? binding)
+                   (symbol? (car binding))
+                   (pair? (cdr binding))
+                   (null? (cddr binding)))
+        (error 'minischeme "~a binding malformed: ~s" who binding)))
+
+    (define (validate-bindings bindings who)
+      (unless (list? bindings)
+        (error 'minischeme "~a malformed: bindings must be a list: ~s" who bindings))
+      (for-each (λ (b) (validate-binding b who)) bindings))
 
     (define (expand-body forms)
       (cond
@@ -298,12 +294,6 @@
          (define tmp (gensym 'or-tmp))
          (list 'let (list (list tmp (expand-expr (car forms))))
                (list 'if tmp tmp (expand-or (cdr forms))))]))
-
-    (define (desugar-let* bindings body)
-      (if (null? bindings)
-          (expand-body body)
-          (list 'let (list (car bindings))
-                (desugar-let* (cdr bindings) body))))
 
     (define (desugar-cond clauses)
       (cond
@@ -407,17 +397,18 @@
            [(eq? head 'let*)
             (unless (pair? tail)
               (error 'minischeme "malformed let*: ~s" expr))
-            (desugar-let* (car tail) (cdr tail))]
+            (cons 'let* (cons (map expand-binding (car tail))
+                              (map expand-expr (cdr tail))))]
            [(eq? head 'letrec)
             (unless (pair? tail)
               (error 'minischeme "malformed letrec: ~s" expr))
-            (list 'letrec (map expand-binding (car tail))
-                  (expand-body (cdr tail)))]
+            (cons 'letrec (cons (map expand-binding (car tail))
+                                (map expand-expr (cdr tail))))]
            [(eq? head 'let)
             (unless (pair? tail)
               (error 'minischeme "malformed let: ~s" expr))
-            (list 'let (map expand-binding (car tail))
-                  (expand-body (cdr tail)))]
+            (cons 'let (cons (map expand-binding (car tail))
+                             (map expand-expr (cdr tail))))]
            [(eq? head 'lambda)
             (if (and (pair? tail) (pair? (cdr tail)))
                 (cons 'lambda (cons (car tail) (map expand-expr (cdr tail))))
@@ -635,16 +626,35 @@
                 (if (and (pair? rest))
                     (let ([bindings (car rest)]
                           [body (cdr rest)])
-                      (continue 'eval (desugar-let bindings body)
-                                current-env kont))
+                      (validate-bindings bindings 'let)
+                      (define new-env (make-env current-env))
+                      (for-each
+                       (λ (binding)
+                         (env-define! new-env (car binding)
+                                      (eval-now (cadr binding) current-env)))
+                       bindings)
+                      (eval-sequence body new-env kont))
                     (error 'minischeme "malformed let: ~s" control)))]
+             [(and (pair? control) (eq? (car control) 'let*))
+              (let ([rest (cdr control)])
+                (if (and (pair? rest))
+                    (let ([bindings (car rest)]
+                          [body (cdr rest)])
+                      (validate-bindings bindings 'let*)
+                      (define new-env (make-env current-env))
+                      (for-each
+                       (λ (binding)
+                         (env-define! new-env (car binding)
+                                      (eval-now (cadr binding) new-env)))
+                       bindings)
+                      (eval-sequence body new-env kont))
+                    (error 'minischeme "malformed let*: ~s" control)))]
              [(and (pair? control) (eq? (car control) 'letrec))
               (let ([rest (cdr control)])
                 (if (and (pair? rest))
                     (let ([bindings (car rest)]
                           [body (cdr rest)])
-                      (unless (list? bindings)
-                        (error 'minischeme "malformed letrec: ~s" control))
+                      (validate-bindings bindings 'letrec)
                       (define new-env (make-env current-env))
                       (define cells '())
                       (define rhss '())
