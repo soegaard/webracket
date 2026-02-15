@@ -236,7 +236,10 @@
 
    (test-case "reverse"
      (reset!)
-     (check-equal? (run "(reverse '(1 2 3 4))") "=> (4 3 2 1)")
+     (check-equal? (run "(reverse '(1 2 3 4))") "=> (4 3 2 1)"))
+
+   (test-case "reverse empty"
+     (reset!)
      (check-equal? (run "(reverse '())") "=> ()"))
 
    (test-case "length"
@@ -246,6 +249,62 @@
    (test-case "list-ref"
      (reset!)
      (check-equal? (run "(list-ref '(10 20 30) 1)") "=> 20"))
+
+   (test-case "list-tail"
+     (reset!)
+     (check-equal? (run "(list-tail '(10 20 30) 1)") "=> (20 30)"))
+
+   (test-case "list-tail at end"
+     (reset!)
+     (check-equal? (run "(list-tail '(10 20 30) 3)") "=> ()"))
+
+   (test-case "memq"
+     (reset!)
+     (check-equal? (run "(memq 'b '(a b c))") "=> (b c)"))
+
+   (test-case "memv"
+     (reset!)
+     (check-equal? (run "(memv 2 '(1 2 3))") "=> (2 3)"))
+
+   (test-case "member"
+     (reset!)
+     (check-equal? (run "(member '(2) '((1) (2) (3)))") "=> ((2) (3))"))
+
+   (test-case "member no match"
+     (reset!)
+     (check-equal? (run "(member 'x '(a b c))") "=> #f"))
+
+   (test-case "assq"
+     (reset!)
+     (check-equal? (run "(assq 'b '((a . 1) (b . 2) (c . 3)))") "=> (b . 2)"))
+
+   (test-case "assv"
+     (reset!)
+     (check-equal? (run "(assv 2 '((1 . one) (2 . two)))") "=> (2 . two)"))
+
+   (test-case "assoc"
+     (reset!)
+     (check-equal? (run "(assoc '(2) '(((1) . one) ((2) . two)))") "=> ((2) . two)"))
+
+   (test-case "assq no match"
+     (reset!)
+     (check-equal? (run "(assq 'z '((a . 1) (b . 2)))") "=> #f"))
+
+   (test-case "cadr"
+     (reset!)
+     (check-equal? (run "(cadr '(a b c))") "=> b"))
+
+   (test-case "caddr"
+     (reset!)
+     (check-equal? (run "(caddr '(a b c d))") "=> c"))
+
+   (test-case "cadddr"
+     (reset!)
+     (check-equal? (run "(cadddr '(a b c d))") "=> d"))
+
+   (test-case "caadr"
+     (reset!)
+     (check-equal? (run "(caadr '((a) (b c) (d)))") "=> b"))
 
    (test-case "number helpers"
      (reset!)

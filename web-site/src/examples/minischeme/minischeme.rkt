@@ -150,6 +150,52 @@
         (env-define! base-env name value)
         (set! all-constants (cons name all-constants)))
 
+      (define (list-tail* who lst idx)
+        (unless (exact-nonnegative-integer? idx)
+          (error 'minischeme "~a expects a nonnegative exact integer index, got ~a" who idx))
+        (let loop ([xs lst] [n idx])
+          (if (= n 0)
+              xs
+              (begin
+                (unless (pair? xs)
+                  (error 'minischeme "~a: index out of bounds for list-like value" who))
+                (loop (cdr xs) (sub1 n))))))
+
+      (define (mem* who cmp key lst)
+        (let loop ([xs lst])
+          (cond
+            [(null? xs) #f]
+            [(pair? xs)
+             (if (cmp key (car xs))
+                 xs
+                 (loop (cdr xs)))]
+            [else
+             (error 'minischeme "~a expects a proper list, got ~a" who lst)])))
+
+      (define (assoc* who cmp key alist)
+        (let loop ([xs alist])
+          (cond
+            [(null? xs) #f]
+            [(pair? xs)
+             (define entry (car xs))
+             (unless (pair? entry)
+               (error 'minischeme "~a expects an association list of pairs, got entry ~a" who entry))
+             (if (cmp key (car entry))
+                 entry
+                 (loop (cdr xs)))]
+            [else
+             (error 'minischeme "~a expects a proper association list, got ~a" who alist)])))
+
+      (define (selector-apply who v middle)
+        (let loop ([x v] [ops (reverse (string->list middle))])
+          (if (null? ops)
+              x
+              (begin
+                (unless (pair? x)
+                  (error 'minischeme "~a expects a pair while traversing, got ~a" who x))
+                (loop (if (char=? (car ops) #\a) (car x) (cdr x))
+                      (cdr ops))))))
+
       (constant 'null  '())
       (constant 'empty '())
       (constant 'true  #t)
@@ -248,6 +294,38 @@
                            (unless (exact-nonnegative-integer? idx)
                              (error 'minischeme "list-ref expects a nonnegative exact integer index, got ~a" idx))
                            (list-ref lst idx)))
+      (install 'list-tail (λ (args)
+                            (check-arg-count 'list-tail args 2)
+                            (list-tail* 'list-tail (car args) (cadr args))))
+      (install 'memq (λ (args)
+                       (check-arg-count 'memq args 2)
+                       (mem* 'memq eq? (car args) (cadr args))))
+      (install 'memv (λ (args)
+                       (check-arg-count 'memv args 2)
+                       (mem* 'memv eqv? (car args) (cadr args))))
+      (install 'member (λ (args)
+                         (check-arg-count 'member args 2)
+                         (mem* 'member equal? (car args) (cadr args))))
+      (install 'assq (λ (args)
+                       (check-arg-count 'assq args 2)
+                       (assoc* 'assq eq? (car args) (cadr args))))
+      (install 'assv (λ (args)
+                       (check-arg-count 'assv args 2)
+                       (assoc* 'assv eqv? (car args) (cadr args))))
+      (install 'assoc (λ (args)
+                        (check-arg-count 'assoc args 2)
+                        (assoc* 'assoc equal? (car args) (cadr args))))
+      (for-each
+       (λ (name)
+         (define name-str (symbol->string name))
+         (define middle (substring name-str 1 (sub1 (string-length name-str))))
+         (install name (λ (args)
+                         (check-arg-count name args 1)
+                         (selector-apply name (car args) middle))))
+       '(caar cadr cdar cddr
+         caaar caadr cadar caddr cdaar cdadr cddar cdddr
+         caaaar caaadr caadar caaddr cadaar cadadr caddar cadddr
+         cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr))
       (install 'zero? (λ (args)
                         (check-arg-count 'zero? args 1)
                         (unless (number? (car args))
