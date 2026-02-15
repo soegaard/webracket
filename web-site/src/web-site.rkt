@@ -320,6 +320,7 @@
 (include "examples/matrix-rain-page.rkt")
 (include "examples/xtermjs-demo-page.rkt")
 (include "examples/space-invaders-page.rkt")
+(include "examples/minischeme-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -389,12 +390,14 @@
                     (cons 'title    "MiniScheme REPL")
                     (cons 'path     "examples/minischeme")
                     (cons 'entry    "minischeme.html")
-                    (cons 'tags     (list 'repl 'xterm))
-                    (cons 'summary  "Browser-based Scheme REPL with evaluator, editor, and output.")
-                    (cons 'features (list "XtermJS terminal"
-                                          "Input handling + history"
-                                          "Runtime evaluator"
-                                          "Ports + printing"))))
+                    (cons 'demo-url "minischeme.html")
+                    (cons 'source-path "web-site/src/examples/minischeme-page.rkt")
+                    (cons 'tags     (list 'repl 'dom))
+                    (cons 'summary  "Small Scheme interpreter running directly in the browser.")
+                    (cons 'features (list "MiniScheme evaluator"
+                                          "Persistent REPL state"
+                                          "Reset + sample program"
+                                          "DOM event handling"))))
    
    (make-hash (list (cons 'id       "pict")
                     (cons 'title    "Canvas + Pict")
@@ -534,6 +537,7 @@
     [(string-suffix? path "matrix-rain.html")                     'matrix-rain]
     [(string-suffix? path "xtermjs-demo.html")                    'xtermjs-demo]
     [(string-suffix? path "space-invaders.html")                  'space-invaders]
+    [(string-suffix? path "minischeme.html")                      'minischeme]
     [(string-suffix? path "implementation-status.html")           'implementation-status]
     [(string-suffix? path "community.html")                       'community]
     [(string-suffix? path "overview.html")                        'overview]
@@ -752,9 +756,9 @@
              (list `(h3 "Matrix Rain")
                    `(p "Terminal-style animation powered by XtermJS.")
                    `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
-             #;(list `(h3 "MiniScheme REPL")
-                   `(p "Interactive Scheme session running in the browser.")
-                   `(a (@ (class "example-link") (href "examples.html")) "Open demo"))
+             (list `(h3 "MiniScheme REPL")
+                   `(p "Tiny Scheme interpreter with persistent browser-side state.")
+                   `(a (@ (class "example-link") (href "minischeme.html")) "Open demo"))
              
              #;(list `(h3 "Canvas + Pict")
                    `(p "Racket pict rendering pipeline for the browser canvas.")
@@ -3499,6 +3503,7 @@ CSS
       [(matrix-rain)           (matrix-rain-page)]
       [(xtermjs-demo)          (xtermjs-demo-page)]
       [(space-invaders)        (space-invaders-page)]
+      [(minischeme)            (minischeme-page)]
       [else                    (home-page)]))
 
   (define safe-structure
@@ -3524,6 +3529,9 @@ CSS
 
   (when (eq? (current-page) 'space-invaders)
     (init-space-invaders-page!))
+
+  (when (eq? (current-page) 'minischeme)
+    (init-minischeme-page!))
 
   (when (eq? (current-page) 'doc-js-ffi)
     (init-doc-js-ffi-page!))
