@@ -757,8 +757,22 @@
            [(eq? head 'let)
             (unless (pair? tail)
               (error 'minischeme "malformed let: ~s" expr))
-            (cons 'let (cons (map expand-binding (car tail))
-                             (map expand-expr (cdr tail))))]
+            (if (symbol? (car tail))
+                (let* ([name (car tail)]
+                       [named-tail (cdr tail)])
+                  (unless (pair? named-tail)
+                    (error 'minischeme "malformed named let: ~s" expr))
+                  (define bindings (car named-tail))
+                  (define body (cdr named-tail))
+                  (validate-bindings bindings 'let)
+                  (define params (map car bindings))
+                  (define args (map cadr bindings))
+                  (expand-expr
+                   (list 'letrec
+                         (list (list name (cons 'lambda (cons params body))))
+                         (cons name args))))
+                (cons 'let (cons (map expand-binding (car tail))
+                                 (map expand-expr (cdr tail)))))]
            [(eq? head 'lambda)
             (if (and (pair? tail) (pair? (cdr tail)))
                 (cons 'lambda (cons (car tail) (map expand-expr (cdr tail))))

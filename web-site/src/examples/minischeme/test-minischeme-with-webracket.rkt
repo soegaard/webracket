@@ -131,6 +131,12 @@
    (test-equal "let parallel binding (inits in outer env)"
                "(define x 10)\n(let ((x 1) (y x)) y)"
                "=> 10")
+   (test-equal "named let factorial"
+               "(let fact-loop ((n 6) (acc 1)) (if (= n 0) acc (fact-loop (- n 1) (* acc n))))"
+               "=> 720")
+   (test-equal "named let captures outer binding in init expressions"
+               "(define x 10)\n(let loop ((x 1) (y x)) (if (= x 1) y 0))"
+               "=> 10")
    (test-equal "cond basic and else"
                "(cond ((> 1 2) 'nope) ((< 1 2) 'ok) (else 'bad))"
                "=> ok")

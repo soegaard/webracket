@@ -200,6 +200,18 @@
       (run "(define x 10)\n(let ((x 1) (y x)) y)")
       "=> 10"))
 
+   (test-case "named let factorial"
+     (reset!)
+     (check-equal?
+      (run "(let fact-loop ((n 6) (acc 1)) (if (= n 0) acc (fact-loop (- n 1) (* acc n))))")
+      "=> 720"))
+
+   (test-case "named let captures outer binding in init expressions"
+     (reset!)
+     (check-equal?
+      (run "(define x 10)\n(let loop ((x 1) (y x)) (if (= x 1) y 0))")
+      "=> 10"))
+
    (test-case "cond basic and else"
      (reset!)
      (check-equal?
