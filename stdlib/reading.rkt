@@ -266,24 +266,45 @@
                [else (write-char (read-char in) out) (loop)])))
          (cond
            [(char-ci=? ch #\x)
-            (read-char in)
-            (define out 0)
-            (let hex-loop ()
-              (define c (peek-char in))
-              (cond
-                [(eof-object? c) (void)]
-                [(delimiter-char? c) (void)]
-                [else
-                 (define v (hex-digit->val c))
-                 (unless v (raise-read-error
-                            'scan-char "invalid hex in #\\x..."
-                            (make-srcloc (lx-source L) sl sc sp 1)))
-                 (read-char in)
-                 (set! out (+ (* out 16) v))
-                 (hex-loop)]))
-            (define the (integer->char out))
-           (token 'char the (format "#\\x~x" (char->integer the))
-                   (make-srcloc-from-port in (lx-source L) sl sc sp))]
+            ;; `#\x` is the character x/X.
+            ;; `#\xNN...` is a hex codepoint literal.
+            (define s2x (peek-string 2 0 in))
+            (if (and (string? s2x)
+                     (= (string-length s2x) 2)
+                     (hex-digit->val (string-ref s2x 1)))
+                (begin
+                  (read-char in)
+                  (let ([out 0])
+                    (let hex-loop ()
+                      (define c (peek-char in))
+                      (cond
+                        [(eof-object? c) (void)]
+                        [(delimiter-char? c) (void)]
+                        [else
+                         (define v (hex-digit->val c))
+                         (unless v (raise-read-error
+                                    'scan-char "invalid hex in #\\x..."
+                                    (make-srcloc (lx-source L) sl sc sp 1)))
+                         (read-char in)
+                         (set! out (+ (* out 16) v))
+                         (hex-loop)]))
+                    (define the (integer->char out))
+                    (token 'char the (format "#\\x~x" (char->integer the))
+                           (make-srcloc-from-port in (lx-source L) sl sc sp))))
+                (let* ([raw-name (read-name)]
+                       [name (string-downcase raw-name)]
+                       [the
+                        (cond [(string=? name "space") #\space]
+                              [(string=? name "newline") #\newline]
+                              [(string=? name "tab") #\tab]
+                              [(string=? name "return") #\return]
+                              [(= (string-length raw-name) 1) (string-ref raw-name 0)]
+                              [else
+                               (raise-read-error 'scan-char
+                                                 (format "unknown character name ~a" name)
+                                                 (make-srcloc (lx-source L) sl sc sp 1))])])
+                  (token 'char the (string-append "#\\" raw-name)
+                         (make-srcloc-from-port in (lx-source L) sl sc sp))))]
            [else
             (define raw-name (read-name))
             (define name (string-downcase raw-name))
