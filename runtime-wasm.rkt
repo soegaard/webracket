@@ -14896,11 +14896,10 @@
 
          
          ;; 4.4.3 String Conversions
-         ;; Note: string-foldcase currently delegates to upcase.
          ,@(for/list ([name+imp
                        (in-list '(($string-upcase    $char-upcase/ucs)
                                   ($string-downcase  $char-downcase/ucs)                                  
-                                  ($string-foldcase  $char-upcase/ucs)))])
+                                  ($string-foldcase  $char-foldcase/ucs)))])
              (define name (car  name+imp))
              (define imp  (cadr name+imp))
              `(func ,name (type $Prim1) (param $s (ref eq)) (result (ref eq))
