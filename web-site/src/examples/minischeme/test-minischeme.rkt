@@ -234,6 +234,11 @@
      (reset!)
      (check-equal? (run "(append '(1 2) '(3 4) '())") "=> (1 2 3 4)"))
 
+   (test-case "reverse"
+     (reset!)
+     (check-equal? (run "(reverse '(1 2 3 4))") "=> (4 3 2 1)")
+     (check-equal? (run "(reverse '())") "=> ()"))
+
    (test-case "length"
      (reset!)
      (check-equal? (run "(length '(a b c d))") "=> 4"))
@@ -269,6 +274,133 @@
      (check-equal?
       (run "(define x 0)\n(for-each (lambda (n) (set! x (+ x n))) '(1 2 3 4))\nx")
       "=> 10"))
+
+   (test-case "call-with-values: multiple to list"
+     (reset!)
+     (check-equal?
+      (run "(call-with-values (lambda () (values 1 2 3)) list)")
+      "=> (1 2 3)"))
+
+   (test-case "call-with-values: single value producer"
+     (reset!)
+     (check-equal?
+      (run "(call-with-values (lambda () 41) (lambda (x) (+ x 1)))")
+      "=> 42"))
+
+   (test-case "call-with-values: zero values"
+     (reset!)
+     (check-equal?
+      (run "(call-with-values (lambda () (values)) (lambda xs (length xs)))")
+      "=> 0"))
+
+   (test-case "values in single-value context errors"
+     (reset!)
+     (check-eval-error-match #rx"expected 1 value, got 2" "(+ (values 1 2) 3)"))
+
+   (test-case "top-level multiple values print all values"
+     (reset!)
+     (check-equal? (run "(values 1 2)") "=> 1\n=> 2"))
+
+   (test-case "call-with-values consumer arity mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"arity mismatch: expected 1 arguments, got 2"
+      "(call-with-values (lambda () (values 1 2)) (lambda (x) x))"))
+
+   (test-case "call/cc basic escape"
+     (reset!)
+     (check-equal?
+      (run "(+ 1 (call/cc (lambda (k) (k 41))))")
+      "=> 42"))
+
+   (test-case "call-with-current-continuation alias"
+     (reset!)
+     (check-equal?
+      (run "(call-with-current-continuation (lambda (k) (k 7)))")
+      "=> 7"))
+
+   (test-case "call/cc no escape returns body value"
+     (reset!)
+     (check-equal?
+      (run "(call/cc (lambda (k) 9))")
+      "=> 9"))
+
+   (test-case "call/cc escapes out of list context"
+     (reset!)
+     (check-equal?
+      (run "(call/cc (lambda (k) (list 1 (k 2) 3)))")
+      "=> 2"))
+
+   (test-case "call/cc continuation stored and reused"
+     (reset!)
+     (check-equal?
+      (run "(define saved #f)\n(+ 1 (call/cc (lambda (k) (set! saved k) 10)))")
+      "=> 11")
+     (check-equal?
+      (run "(saved 50)")
+      "=> 51"))
+
+   (test-case "call/cc arity mismatch"
+     (reset!)
+     (check-eval-error-match #rx"call/cc expects 1 argument" "(call/cc)"))
+
+   (test-case "continuation application arity mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"continuation expects 1 argument"
+      "(call/cc (lambda (k) (k 1 2)))"))
+
+   (test-case "dynamic-wind returns thunk value"
+     (reset!)
+     (check-equal?
+      (run "(dynamic-wind (lambda () 1) (lambda () 42) (lambda () 3))")
+      "=> 42"))
+
+   (test-case "dynamic-wind normal before/thunk/after ordering"
+     (reset!)
+     (check-equal?
+      (run "(define log '())\n(dynamic-wind (lambda () (set! log (cons 'before log))) (lambda () (set! log (cons 'thunk log)) 'ok) (lambda () (set! log (cons 'after log))))\nlog")
+      "=> (after thunk before)"))
+
+   (test-case "dynamic-wind runs after on call/cc escape"
+     (reset!)
+     (check-equal?
+      (run "(define log '())\n(+ 1 (dynamic-wind (lambda () (set! log (cons 'before log))) (lambda () (call/cc (lambda (k) (set! log (cons 'thunk log)) (k 41)))) (lambda () (set! log (cons 'after log)))))\nlog")
+      "=> (after thunk before)"))
+
+   (test-case "dynamic-wind arity mismatch"
+     (reset!)
+     (check-eval-error-match #rx"dynamic-wind expects 3 arguments" "(dynamic-wind (lambda () 1) (lambda () 2))"))
+
+   (test-case "dynamic-wind type checks"
+     (reset!)
+     (check-eval-error-match #rx"dynamic-wind: before must be a procedure" "(dynamic-wind 1 (lambda () 2) (lambda () 3))"))
+
+   (test-case "unwind-protect with call/cc escape updates captured state"
+     (reset!)
+     (check-equal?
+      (run "((call/cc\n   (let ([x 'a])\n     (lambda (k)\n       (unwind-protect\n         (k (lambda () x))\n         (set! x 'b))))))")
+      "=> b"))
+
+   ;; This test follows the historical Scheme letrec probe (Al Petrofsky).
+   ;; Note: full Racket evaluates the same program to 1.
+   (test-case "call/cc + letrec probe (Scheme semantics)"
+     (reset!)
+     (check-equal?
+      (run "(let ((cont #f))\n   (letrec ((x (call-with-current-continuation (lambda (c) (set! cont c) 0)))\n            (y (call-with-current-continuation (lambda (c) (set! cont c) 0))))\n     (if cont\n         (let ((c cont))\n           (set! cont #f)\n           (set! x 1)\n           (set! y 1)\n           (c 0))\n         (+ x y))))")
+      "=> 0"))
+
+   (test-case "dynamic-wind basic path"
+     (reset!)
+     (check-equal?
+      (run "(let* ((path '())\n           (add (lambda (s) (set! path (cons s path)))))\n      (dynamic-wind (lambda () (add 'a)) (lambda () (add 'b)) (lambda () (add 'c)))\n      (reverse path))")
+      "=> (a b c)"))
+
+   (test-case "dynamic-wind continuation re-entry path"
+     (reset!)
+     (check-equal?
+      (run "(let ((path '())\n          (c #f))\n      (let ((add (lambda (s)\n                   (set! path (cons s path)))))\n        (dynamic-wind\n            (lambda () (add 'connect))\n            (lambda ()\n              (add (call-with-current-continuation\n                    (lambda (c0)\n                      (set! c c0)\n                      'talk1))))\n            (lambda () (add 'disconnect)))\n        (if (< (length path) 4)\n            (c 'talk2)\n            (reverse path))))")
+      "=> (connect talk1 disconnect connect talk2 disconnect)"))
 
    (test-case "multiline program with blank lines"
      (reset!)

@@ -34,19 +34,20 @@ MiniScheme Roadmap
 - Add `apply` to improve functional expressiveness.
 - Keep primitive set explicitly listed and tested.
 
-6. Reader/evaluator integration hardening
+6. Reader/evaluator integration hardening (done)
 - Keep MiniScheme using `read`.
 - Add tests with multiline programs, comments, quote forms, and dotted pairs through full `process-input`.
 
-7. Error model and diagnostics
+7. Error model and diagnostics (done)
 - Standardize error prefixes (`=> read error:` vs eval errors).
 - Include offending form/operator in messages where possible.
 - Add malformed-form test matrix for each special form.
 
-8. Optional advanced features (later)
-- Multiple values (`values`, `call-with-values`) support.
+8. Optional advanced features (later, in progress)
+- Multiple values (`values`, `call-with-values`) support. (done)
 - Lightweight module-like loading for scripts.
 - Better REPL UX features (history helpers, pretty printing).
+- Integration/stability validation after multiple-values changes: tests + website rebuild. (done)
 
 Suggested execution order
 1. Variadic lambdas
