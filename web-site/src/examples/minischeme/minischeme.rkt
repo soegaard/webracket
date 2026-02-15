@@ -868,17 +868,28 @@
     (define (process-input s)
       (unless global-env
         (reset-state!))
+      (define (format-read-error e)
+        (string-append "=> read error: " (exn-message e)))
+      (define (format-eval-error e)
+        (define msg (exn-message e))
+        (define prefix "minischeme: ")
+        (define normalized
+          (if (and (>= (string-length msg) (string-length prefix))
+                   (string=? (substring msg 0 (string-length prefix)) prefix))
+              (substring msg (string-length prefix))
+              msg))
+        (string-append "=> eval error: " normalized))
       (define-values (exprs read-error)
         (with-handlers
           ([exn:fail:read?
-            (λ (e) (values #f (string-append "=> read error: " (exn-message e))))]
+            (λ (e) (values #f (format-read-error e)))]
            [(λ _ #t)
-            (λ (e) (values #f (string-append "=> read error: " (exn-message e))))])
+            (λ (e) (values #f (format-read-error e)))])
           (values (parse-program/read s) #f)))
       (if read-error
           read-error
           (with-handlers
-            ([exn:fail? (λ (e) (string-append "=> " (exn-message e)))])
+            ([exn:fail? (λ (e) (format-eval-error e))])
             (define expanded (expand-program exprs))
             (if (null? expanded)
                 "=> ; no input"

@@ -16,6 +16,11 @@
 (define (check-error-match rx src)
   (check-true (regexp-match? rx (run src))))
 
+(define (check-eval-error-match rx src)
+  (define out (run src))
+  (check-true (regexp-match? #rx"^=> eval error: " out))
+  (check-true (regexp-match? rx out)))
+
 (define minischeme-tests
   (test-suite
    "MiniScheme CEK Interpreter"
@@ -332,27 +337,75 @@
 
    (test-case "unbound identifier error"
      (reset!)
-     (check-error-match #rx"unbound identifier x" "x"))
+     (check-eval-error-match #rx"unbound identifier x" "x"))
 
    (test-case "malformed if error includes pattern"
      (reset!)
-     (check-error-match #rx"malformed if" "(if 1)"))
+     (check-eval-error-match #rx"malformed if" "(if 1)"))
 
    (test-case "malformed lambda error includes pattern"
      (reset!)
-     (check-error-match #rx"malformed lambda" "(lambda)"))
+     (check-eval-error-match #rx"malformed lambda" "(lambda)"))
 
    (test-case "malformed set! error includes pattern"
      (reset!)
-     (check-error-match #rx"malformed set!" "(set! x)"))
+     (check-eval-error-match #rx"malformed set!" "(set! x)"))
 
    (test-case "malformed define error includes pattern"
      (reset!)
-     (check-error-match #rx"malformed define" "(define x 1 2)"))
+     (check-eval-error-match #rx"malformed define" "(define x 1 2)"))
 
    (test-case "malformed let error includes pattern"
      (reset!)
-     (check-error-match #rx"malformed let" "(let)"))))
+     (check-eval-error-match #rx"malformed let" "(let)"))
+
+   (test-case "eval error prefix contract: non-procedure application"
+     (reset!)
+     (check-eval-error-match #rx"application of non-procedure" "(0 1 2)"))
+
+   (test-case "malformed form matrix: quote"
+     (reset!)
+     (check-eval-error-match #rx"malformed quote" "(quote 1 2)"))
+
+   (test-case "malformed form matrix: quasiquote"
+     (reset!)
+     (check-eval-error-match #rx"quasiquote: malformed form" "(quasiquote 1 2)"))
+
+   (test-case "malformed form matrix: set!"
+     (reset!)
+     (check-eval-error-match #rx"malformed set!" "(set! 1 2)"))
+
+   (test-case "malformed form matrix: define"
+     (reset!)
+     (check-eval-error-match #rx"malformed define" "(define x)"))
+
+   (test-case "malformed form matrix: let"
+     (reset!)
+     (check-eval-error-match #rx"let malformed|malformed let|malformed binding" "(let (x 1) x)"))
+
+   (test-case "malformed form matrix: let*"
+     (reset!)
+     (check-eval-error-match #rx"let\\* malformed|malformed let\\*|malformed binding" "(let* (x 1) x)"))
+
+   (test-case "malformed form matrix: letrec"
+     (reset!)
+     (check-eval-error-match #rx"letrec malformed|malformed letrec|malformed binding" "(letrec (x 1) x)"))
+
+   (test-case "malformed form matrix: cond clause"
+     (reset!)
+     (check-eval-error-match #rx"malformed cond clause" "(cond 1)"))
+
+   (test-case "malformed form matrix: case clause"
+     (reset!)
+     (check-eval-error-match #rx"malformed case clause" "(case 1 2)"))
+
+   (test-case "malformed form matrix: when"
+     (reset!)
+     (check-eval-error-match #rx"malformed when" "(when)"))
+
+   (test-case "malformed form matrix: unless"
+     (reset!)
+     (check-eval-error-match #rx"malformed unless" "(unless)"))))
 
 (module+ main
   (define failures (run-tests minischeme-tests))
