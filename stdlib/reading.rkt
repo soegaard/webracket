@@ -282,21 +282,24 @@
                  (set! out (+ (* out 16) v))
                  (hex-loop)]))
             (define the (integer->char out))
-            (token 'char the (format "#\\x~x" (char->integer the))
+           (token 'char the (format "#\\x~x" (char->integer the))
                    (make-srcloc-from-port in (lx-source L) sl sc sp))]
            [else
-            (define name (string-downcase (read-name)))
+            (define raw-name (read-name))
+            (define name (string-downcase raw-name))
             (define the
               (cond [(string=? name "space") #\space]
                     [(string=? name "newline") #\newline]
                     [(string=? name "tab") #\tab]
                     [(string=? name "return") #\return]
-                    [(= (string-length name) 1) (string-ref name 0)]
+                    ;; Preserve case for single-character literals:
+                    ;; `#\\A` must read as #\\A (not downcased to #\\a).
+                    [(= (string-length raw-name) 1) (string-ref raw-name 0)]
                     [else
                      (raise-read-error 'scan-char
                                        (format "unknown character name ~a" name)
                                        (make-srcloc (lx-source L) sl sc sp 1))]))
-            (token 'char the (string-append "#\\" name)
+            (token 'char the (string-append "#\\" raw-name)
                    (make-srcloc-from-port in (lx-source L) sl sc sp))])]))
 
     ;; --------------------------- Sharp-dispatch -----------------------------
