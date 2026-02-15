@@ -559,17 +559,13 @@
     (define (parse-list L opener)
       (define opener-type (token-type opener))
       (define expected    (closer-for opener-type))
-      (define elems       '())
-      (define seen-dot?   #f)
-      (define dot-tail    #f)
-      
-      (let loop ()
+      (let loop ([elems '()] [seen-dot? #f] [dot-tail #f])
         (define t  (lexer-next L))
         (define ty (token-type t))
         (case ty
           [(datum-comment)
            (define-values (_1 _2 _3) (parse-datum L 'list))
-           (loop)]
+           (loop elems seen-dot? dot-tail)]
           [(eof)
            (raise-read-error 'read
                              (format "unexpected EOF: expected `~a` to close `~a`"
@@ -588,9 +584,7 @@
               (when (eof-object? tail)
                 (raise-read-error 'read "unexpected EOF after `.`"
                                   (token-loc t)))
-              (set! seen-dot? #t)
-              (set! dot-tail tail)
-              (loop)])]
+              (loop elems #t tail)])]
           [(rparen rbracket rbrace)
            (if (eq? ty expected)
                (let ([result (if seen-dot?
@@ -602,14 +596,12 @@
                (raise-mismatched t expected opener))]
           [else
            (lexer-unread L t)
-           (when seen-dot?
+            (when seen-dot?
              (raise-read-error 'read "unexpected datum after `.`" (token-loc t)))
            (define-values (datum _ds _de) (parse-datum L 'list))
-           (set! elems (cons datum elems))
-           (loop)])))
+           (loop (cons datum elems) seen-dot? dot-tail)])))
 
     (define (parse-vector L start-token)
-      (define elems '())
       (define start-lexeme (token-lexeme start-token))
       (define expected-type
         (cond [(string=? start-lexeme "#(") 'rparen]
@@ -621,13 +613,13 @@
               [(eq? expected-type 'rbracket) "]"]
               [(eq? expected-type 'rbrace)   "}"]
               [else ")"]))
-      (let loop ()
+      (let loop ([elems '()])
         (define t  (lexer-next L))
         (define ty (token-type t))
         (case ty
           [(datum-comment)
            (define-values (_1 _2 _3) (parse-datum L 'vector))
-           (loop)]
+           (loop elems)]
           [(eof)
            (raise-read-error 'read
                              (string-append "unexpected EOF: expected `"
@@ -655,8 +647,7 @@
           [else
            (lexer-unread L t)
            (define-values (datum _ds _de) (parse-datum L 'vector))
-           (set! elems (cons datum elems))
-           (loop)])))
+           (loop (cons datum elems))])))
 
     (define (parse-datum L context)
       (let loop ()
@@ -994,4 +985,3 @@
                     (list (string->keyword "foo")
                           (string->keyword "bar baz")))))
  )
-
