@@ -1,9 +1,9 @@
 #lang webracket
 (include/reader "qq-and-or.rkt"   read-syntax/skip-first-line)
 (include/reader "parameters.rkt"  read-syntax/skip-first-line)
+(include/reader "ports.rkt"       read-syntax/skip-first-line)
 (include/reader "exceptions.rkt"  read-syntax/skip-first-line)
 (include/reader "writing.rkt"     read-syntax/skip-first-line)
-(include/reader "ports.rkt"       read-syntax/skip-first-line)
 (include/reader "reading.rkt"     read-syntax/skip-first-line)
 (include/reader "evaluation.rkt"  read-syntax/skip-first-line)
 (include/reader "hash-code.rkt"   read-syntax/skip-first-line)

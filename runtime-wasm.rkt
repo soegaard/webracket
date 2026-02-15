@@ -42509,20 +42509,7 @@
                          (define (Init* xs) (map Init xs))
                          (Init* entry-locals))
 
-
-                     (block $entry-body:done
-                            (block $entry-body:handler
-                                   (try_table
-                                    (catch_all $entry-body:handler)
-                                    
-                                    ,entry-body    ; <<==  main body
-                                    
-                                    (br $entry-body:done)))
-                            ;; If any wasm exception reaches here, crash so the host prints a stack trace.
-                            #;(call $entry-uncaught-exception2 (local.get 0))
-                            #;(call $entry-uncaught-exception1 (local.get 0))
-                            (call $entry-uncaught-exception)
-                            (unreachable))
+                     ,entry-body
                      
                      ; Return the result
                      (global.set $result-bytes
