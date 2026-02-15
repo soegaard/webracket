@@ -547,8 +547,6 @@
 
     (define (parse-quote-like L tok context)
       (define sym (quote-token->sym (token-type tok)))
-      (when (and (eq? sym 'unquote-splicing) (not (eq? context 'list)))
-        (raise-read-error 'read "unquote-splicing outside list" (token-loc tok)))
       (define-values (datum _start end) (parse-datum L 'datum))
       (when (eof-object? datum)
         (raise-read-error 'read
@@ -653,11 +651,6 @@
       (let loop ()
         (define tok (lexer-next L))
         (define ty  (token-type tok))
-        (displayln "-- token --")
-        (displayln tok)
-        (displayln "-- token type --")
-        (write ty) (newline)
-        
         (case ty
           [(datum-comment)
            (define-values (_1 _2 _3) (parse-datum L context))
