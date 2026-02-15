@@ -11006,12 +11006,18 @@
                        (flceiling  (f64.ceil (local.get $a/f64)))
                        (fltruncate (f64.trunc (local.get $a/f64)))
                        (flsingle   (f64.promote_f32 (f32.demote_f64 (local.get $a/f64))))
-                       (flsin      (call $js-math-sin  (local.get $a/f64)))
-                       (flcos      (call $js-math-cos  (local.get $a/f64)))
-                       (fltan      (call $js-math-tan  (local.get $a/f64)))
-                       (flasin     (call $js-math-asin (local.get $a/f64)))
-                       (flacos     (call $js-math-acos (local.get $a/f64)))
-                       (flatan     (call $js-math-atan (local.get $a/f64)))
+                       (flsin      (call $js-math-sin   (local.get $a/f64)))
+                       (flcos      (call $js-math-cos   (local.get $a/f64)))
+                       (fltan      (call $js-math-tan   (local.get $a/f64)))
+                       (flasin     (call $js-math-asin  (local.get $a/f64)))
+                       (flacos     (call $js-math-acos  (local.get $a/f64)))
+                       (flatan     (call $js-math-atan  (local.get $a/f64)))
+                       (flsinh     (call $js-math-sinh  (local.get $a/f64)))
+                       (flcosh     (call $js-math-cosh  (local.get $a/f64)))
+                       (fltanh     (call $js-math-tanh  (local.get $a/f64)))
+                       (flasinh    (call $js-math-asinh (local.get $a/f64)))
+                       (flacosh    (call $js-math-acosh (local.get $a/f64)))
+                       (flatanh    (call $js-math-atanh (local.get $a/f64)))
                        (fllog      (call $js-math-log  (local.get $a/f64)))
                        (flexp      (call $js-math-exp  (local.get $a/f64)))
                        (flsqrt     (call $js-math-sqrt (local.get $a/f64))))])
@@ -21324,8 +21330,10 @@
                (local $ys    (ref eq))
                (local $outer (ref null $Pair))
                
-               ;; combine first list with the rest
-               (local.set $xss (call $list* (local.get $xs) (local.get $rest)))
+               ;; Combine first list with remaining lists.
+               ;; Use cons here: $rest is already the list of remaining list-arguments.
+               ;; Calling list* here would treat the last list argument as final tail.
+               (local.set $xss (call $cons (local.get $xs) (local.get $rest)))
                (local.set $ys  (global.get $null))
 
                ;; Walk outer list xss to count #lists; capture second list
@@ -21581,8 +21589,9 @@
               (local $rest2 (ref eq))
               (local $xss   (ref eq))
 
-              ;; Combine first list with remaining lists for n-ary case
-              (local.set $xss (call $list* (local.get $xs) (local.get $rest)))
+              ;; Combine first list with remaining lists for n-ary case.
+              ;; Use cons for the same reason as in foldl.
+              (local.set $xss (call $cons (local.get $xs) (local.get $rest)))
 
               ;; Single list case
               (if (ref.eq (local.get $rest) (global.get $null))

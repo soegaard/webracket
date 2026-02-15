@@ -806,6 +806,18 @@
                           (fl= (flacos 1.0) 0.0))
                     (list "flatan"
                           (fl= (flatan 0.0) 0.0))
+                    (list "flsinh"
+                          (fl= (flsinh 0.0) 0.0))
+                    (list "flcosh"
+                          (fl= (flcosh 0.0) 1.0))
+                    (list "fltanh"
+                          (fl= (fltanh 0.0) 0.0))
+                    (list "flasinh"
+                          (fl= (flasinh 0.0) 0.0))
+                    (list "flacosh"
+                          (fl= (flacosh 1.0) 0.0))
+                    (list "flatanh"
+                          (fl= (flatanh 0.0) 0.0))
                     (list "fllog"
                           (fl= (fllog 1.0) 0.0))
                     (list "flexp"

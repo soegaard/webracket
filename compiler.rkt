@@ -936,6 +936,7 @@
   flabs flround flfloor flceiling fltruncate flsingle
   fllog flexp flsqrt 
   flsin flcos fltan flasin flacos flatan
+  flsinh flcosh fltanh flasinh flacosh flatanh
   flmin flmax flexpt ->fl fl->exact-integer
   flrandom
   flbit-field
@@ -1231,7 +1232,9 @@
   
   unsafe-flabs unsafe-flround unsafe-flfloor unsafe-flceiling unsafe-fltruncate
   unsafe-flsingle unsafe-flsin unsafe-flcos unsafe-fltan unsafe-flasin
-  unsafe-flacos unsafe-flatan unsafe-fllog unsafe-flexp unsafe-flsqrt
+  unsafe-flacos unsafe-flatan
+  unsafe-flsinh unsafe-flcosh unsafe-fltanh unsafe-flasinh unsafe-flacosh unsafe-flatanh
+  unsafe-fllog unsafe-flexp unsafe-flsqrt
   unsafe-flmin unsafe-flmax unsafe-flexpt
   unsafe-flrandom
 
@@ -4690,11 +4693,9 @@
          [(list) 
           (build-rest-args (AExpr* ae1))]
          [(list*)
-          (let loop ([aes (AExpr* ae1)])
-            (match aes
-              [(list v)            v]
-              [(list v1 v2)       `(call $list* ,v1 ,v2)]
-              [(list* v0 v1 vs)   `(call $list* ,v0 ,(loop (cons v1 vs))) ]))]
+          ;; list* is a variadic primitive with ABI (x rest-list).
+          ;; Do not nest direct calls with raw values as tail.
+          (inline-prim/variadic sym ae1 1)]
          [(values) ; variadic
           (define n   (length ae1))
           (define aes (AExpr* ae1))
