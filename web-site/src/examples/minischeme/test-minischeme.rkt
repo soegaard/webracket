@@ -461,6 +461,45 @@
      (reset!)
      (check-equal? (run "(caadr '((a) (b c) (d)))") "=> b"))
 
+   (test-case "cdddar composite"
+     (reset!)
+     (check-equal? (run "(cdddar '((x 1 2 3) (y 4 5 6)))") "=> (3)"))
+
+   (test-case "procedure? on primitive and closure"
+     (reset!)
+     (check-equal? (run "(list (procedure? +) (procedure? (lambda (x) x)) (procedure? 42))")
+                   "=> (#t #t #f)"))
+
+   (test-case "display/write/newline output and result"
+     (reset!)
+     (check-equal? (run "(begin (display \"a\") (display 1) (newline) 42)")
+                   "a1\n=> 42"))
+
+   (test-case "write differs from display on strings"
+     (reset!)
+     (check-equal? (run "(begin (display \"x\") (write \"x\") (newline) 'ok)")
+                   "x\"x\"\n=> ok"))
+
+   (test-case "display output without newline is separated from result"
+     (reset!)
+     (check-equal? (run "(begin (display 42) (display 43) (display 44) 45)")
+                   "424344\n=> 45"))
+
+   (test-case "displayln appends newline"
+     (reset!)
+     (check-equal? (run "(begin (displayln \"a\") (displayln 42) 'ok)")
+                   "a\n42\n=> ok"))
+
+   (test-case "writeln appends newline with write formatting"
+     (reset!)
+     (check-equal? (run "(begin (writeln \"a\") (writeln '(1 2)) 'ok)")
+                   "\"a\"\n(1 2)\n=> ok"))
+
+   (test-case "write-char outputs a character"
+     (reset!)
+     (check-equal? (run "(begin (write-char #\\A) (write-char #\\newline) 'ok)")
+                   "A\n=> ok"))
+
    (test-case "eq?/eqv?"
      (reset!)
      (check-equal?

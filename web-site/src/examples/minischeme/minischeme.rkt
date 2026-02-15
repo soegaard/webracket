@@ -645,6 +645,9 @@
       (install 'symbol? (λ (args)
                           (check-arg-count 'symbol? args 1)
                           (symbol? (car args))))
+      (install 'procedure? (λ (args)
+                             (check-arg-count 'procedure? args 1)
+                             (procedure-value? (car args))))
       (install 'symbol->string (λ (args)
                                  (check-arg-count 'symbol->string args 1)
                                  (define s (car args))
@@ -951,6 +954,35 @@
                                (error 'minischeme "internal error: dynamic-wind should be handled by evaluator")))
       (install 'force (λ (_args)
                         (error 'minischeme "internal error: force should be handled by evaluator")))
+      (install 'display (λ (args)
+                          (check-arg-count 'display args 1)
+                          (write-string (display-value->string (car args)) current-output)
+                          (void)))
+      (install 'displayln (λ (args)
+                            (check-arg-count 'displayln args 1)
+                            (write-string (display-value->string (car args)) current-output)
+                            (write-string "\n" current-output)
+                            (void)))
+      (install 'write (λ (args)
+                        (check-arg-count 'write args 1)
+                        (write-string (value->string (car args)) current-output)
+                        (void)))
+      (install 'writeln (λ (args)
+                          (check-arg-count 'writeln args 1)
+                          (write-string (value->string (car args)) current-output)
+                          (write-string "\n" current-output)
+                          (void)))
+      (install 'write-char (λ (args)
+                             (check-arg-count 'write-char args 1)
+                             (define c (car args))
+                             (unless (char? c)
+                               (error 'minischeme "write-char expects a character, got ~a" c))
+                             (write-string (string c) current-output)
+                             (void)))
+      (install 'newline (λ (args)
+                          (check-arg-count 'newline args 0)
+                          (write-string "\n" current-output)
+                          (void)))
       (install 'promise? (λ (args)
                            (check-arg-count 'promise? args 1)
                            (promise? (car args))))
@@ -973,9 +1005,19 @@
       base-env)
 
     (define global-env #f)
+    (define current-output #f)
 
     (define (reset-state!)
-      (set! global-env (create-initial-state)))
+      (set! global-env (create-initial-state))
+      (set! current-output (open-output-string)))
+
+    (define (reset-output!)
+      (set! current-output (open-output-string)))
+
+    (define (get-output!)
+      (if current-output
+          (get-output-string current-output)
+          ""))
 
     ;; Parse via WebRacket's `read`.
     (define (parse-program/read s)
@@ -993,6 +1035,14 @@
         [(captured-kont? v) "#<continuation>"]
         [(void? v)    "#<void>"]
         [else         (format "~s" v)]))
+
+    (define (display-value->string v)
+      (cond
+        [(closure? v) "#<closure>"]
+        [(prim? v)    (format "#<primitive ~a>" (prim-name v))]
+        [(captured-kont? v) "#<continuation>"]
+        [(void? v)    "#<void>"]
+        [else         (format "~a" v)]))
 
     (define (top-level-value->string v)
       (if (mvals? v)
@@ -1796,8 +1846,17 @@
     (define (process-input s)
       (unless global-env
         (reset-state!))
+      (reset-output!)
+      (define (prepend-output result)
+        (define out (get-output!))
+        (if (string=? out "")
+            result
+            (if (and (> (string-length out) 0)
+                     (char=? (string-ref out (sub1 (string-length out))) #\newline))
+                (string-append out result)
+                (string-append out "\n" result))))
       (define (format-read-error e)
-        (string-append "=> read error: " (exn-message e)))
+        (prepend-output (string-append "=> read error: " (exn-message e))))
       (define (format-eval-error e)
         (define msg (exn-message e))
         (define prefix "minischeme: ")
@@ -1806,7 +1865,7 @@
                    (string=? (substring msg 0 (string-length prefix)) prefix))
               (substring msg (string-length prefix))
               msg))
-        (string-append "=> eval error: " normalized))
+        (prepend-output (string-append "=> eval error: " normalized)))
       (define-values (exprs read-error)
         (with-handlers
           ([exn:fail:read?
@@ -1820,9 +1879,9 @@
             ([exn:fail? (λ (e) (format-eval-error e))])
             (define expanded (expand-program exprs))
             (if (null? expanded)
-                "=> ; no input"
+                (prepend-output "=> ; no input")
                 (let ([value (evaluate-program expanded)])
-                  (top-level-value->string value))))))
+                  (prepend-output (top-level-value->string value)))))))
 
     (reset-state!)
     (values reset-state! process-input)))

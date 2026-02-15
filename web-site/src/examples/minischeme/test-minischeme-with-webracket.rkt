@@ -283,6 +283,30 @@
    (test-equal "caadr"
                "(caadr '((a) (b c) (d)))"
                "=> b")
+   (test-equal "cdddar composite"
+               "(cdddar '((x 1 2 3) (y 4 5 6)))"
+               "=> (3)")
+   (test-equal "procedure? on primitive and closure"
+               "(list (procedure? +) (procedure? (lambda (x) x)) (procedure? 42))"
+               "=> (#t #t #f)")
+   (test-equal "display/write/newline output and result"
+               "(begin (display \"a\") (display 1) (newline) 42)"
+               "a1\n=> 42")
+   (test-equal "write differs from display on strings"
+               "(begin (display \"x\") (write \"x\") (newline) 'ok)"
+               "x\"x\"\n=> ok")
+   (test-equal "display output without newline is separated from result"
+               "(begin (display 42) (display 43) (display 44) 45)"
+               "424344\n=> 45")
+   (test-equal "displayln appends newline"
+               "(begin (displayln \"a\") (displayln 42) 'ok)"
+               "a\n42\n=> ok")
+   (test-equal "writeln appends newline with write formatting"
+               "(begin (writeln \"a\") (writeln '(1 2)) 'ok)"
+               "\"a\"\n(1 2)\n=> ok")
+   (test-equal "write-char outputs a character"
+               "(begin (write-char #\\A) (write-char #\\newline) 'ok)"
+               "A\n=> ok")
    (test-equal "eq?/eqv?"
                "(let ((x '(a))) (list (eq? 'a 'a) (eq? x x) (eqv? 2 2) (eqv? 2 2.0)))"
                "=> (#t #t #t #f)")
