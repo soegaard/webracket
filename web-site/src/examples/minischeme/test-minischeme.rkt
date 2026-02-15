@@ -312,6 +312,61 @@
       (run "(list (zero? 0) (add1 4) (sub1 4) (abs -7) (positive? 3) (negative? -2) (even? 10) (odd? 11))")
       "=> (#t 5 3 7 #t #t #t #t)"))
 
+   (test-case "numeric type predicates"
+     (reset!)
+     (check-equal? (run "(list (real? 1) (rational? 0.5) (integer? 2) (exact? 2) (inexact? 2.0))")
+                   "=> (#t #t #t #t #t)"))
+
+   (test-case "quotient/remainder/modulo"
+     (reset!)
+     (check-equal? (run "(list (quotient 10 3) (remainder 10 3) (modulo 10 3))")
+                   "=> (3 1 1)"))
+
+   (test-case "gcd/lcm"
+     (reset!)
+     (check-equal? (run "(list (gcd 12 18) (lcm 12 18))")
+                   "=> (6 36)"))
+
+   (test-case "numerator/denominator"
+     (reset!)
+     (check-equal? (run "(list (numerator 6) (denominator 6))")
+                   "=> (6 1)"))
+
+   (test-case "floor/ceiling/truncate/round"
+     (reset!)
+     (check-equal? (run "(list (= (floor 2.7) 2.0) (= (ceiling 2.1) 3.0) (= (truncate -2.7) -2.0) (= (round 3.5) 4.0))")
+                   "=> (#t #t #t #t)"))
+
+   (test-case "rationalize"
+     (reset!)
+     (check-equal? (run "(rational? (rationalize 0.3 0.1))")
+                   "=> #t"))
+
+   (test-case "max/min"
+     (reset!)
+     (check-equal? (run "(list (max 3 7 5) (min 3 7 5))")
+                   "=> (7 3)"))
+
+   (test-case "exp/log/sin/cos/tan/asin/acos/atan"
+     (reset!)
+     (check-equal? (run "(list (number? (exp 1)) (number? (log 10)) (number? (sin 1)) (number? (cos 1)) (number? (tan 1)) (number? (asin 0.5)) (number? (acos 0.5)) (number? (atan 0 1)))")
+                   "=> (#t #t #t #t #t #t #t #t)"))
+
+   (test-case "sqrt/expt"
+     (reset!)
+     (check-equal? (run "(list (sqrt 9) (expt 2 5))")
+                   "=> (3 32)"))
+
+   (test-case "exact<->inexact"
+     (reset!)
+     (check-equal? (run "(list (exact->inexact 3) (inexact->exact 3.0))")
+                   "=> (3.0 3)"))
+
+   (test-case "number->string/string->number"
+     (reset!)
+     (check-equal? (run "(list (number->string 255) (string->number \"255\"))")
+                   "=> (\"255\" 255)"))
+
    (test-case "apply with primitive"
      (reset!)
      (check-equal? (run "(apply + 1 2 '(3 4))") "=> 10"))

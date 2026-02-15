@@ -194,6 +194,39 @@
    (test-equal "number helpers"
                "(list (zero? 0) (add1 4) (sub1 4) (abs -7) (positive? 3) (negative? -2) (even? 10) (odd? 11))"
                "=> (#t 5 3 7 #t #t #t #t)")
+   (test-equal "numeric type predicates"
+               "(list (real? 1) (rational? 0.5) (integer? 2) (exact? 2) (inexact? 2.0))"
+               "=> (#t #t #t #t #t)")
+   (test-equal "quotient/remainder/modulo"
+               "(list (quotient 10 3) (remainder 10 3) (modulo 10 3))"
+               "=> (3 1 1)")
+   (test-equal "gcd/lcm"
+               "(list (gcd 12 18) (lcm 12 18))"
+               "=> (6 36)")
+   (test-equal "numerator/denominator"
+               "(list (numerator 6) (denominator 6))"
+               "=> (6 1)")
+   (test-equal "floor/ceiling/truncate/round"
+               "(list (= (floor 2.7) 2.0) (= (ceiling 2.1) 3.0) (= (truncate -2.7) -2.0) (= (round 3.5) 4.0))"
+               "=> (#t #t #t #t)")
+   (test-equal "rationalize"
+               "(rational? (rationalize 0.3 0.1))"
+               "=> #t")
+   (test-equal "max/min"
+               "(list (max 3 7 5) (min 3 7 5))"
+               "=> (7 3)")
+   (test-equal "exp/log/sin/cos/tan/asin/acos/atan"
+               "(list (number? (exp 1)) (number? (log 10)) (number? (sin 1)) (number? (cos 1)) (number? (tan 1)) (number? (asin 0.5)) (number? (acos 0.5)) (number? (atan 0 1)))"
+               "=> (#t #t #t #t #t #t #t #t)")
+   (test-equal "sqrt/expt"
+               "(list (sqrt 9) (expt 2 5))"
+               "=> (3 32)")
+   (test-equal "exact<->inexact"
+               "(list (exact->inexact 3) (inexact->exact 3.0))"
+               "=> (3.0 3)")
+   (test-equal "number->string/string->number"
+               "(list (number->string 255) (string->number \"255\"))"
+               "=> (\"255\" 255)")
    (test-equal "apply with primitive" "(apply + 1 2 '(3 4))" "=> 10")
    (test-equal "apply with closure" "(apply (lambda (x y z) (+ x (* y z))) '(2 3 4))" "=> 14")
    (test-equal "map over list" "(map (lambda (x) (+ x 10)) '(1 2 3))" "=> (11 12 13)")
