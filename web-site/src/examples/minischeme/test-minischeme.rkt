@@ -5,7 +5,7 @@
          racket/string)
 
 ;; Reuse the page-shared MiniScheme interpreter implementation.
-(include "../../web-site/src/examples/minischeme/minischeme.rkt")
+(include "minischeme.rkt")
 
 (define (run src)
   (minischeme-process-input src))
@@ -224,6 +224,46 @@
      (check-error-match
       #rx"accessing uninitialized binding"
       "(letrec ((x x)) x)"))
+
+   (test-case "append"
+     (reset!)
+     (check-equal? (run "(append '(1 2) '(3 4) '())") "=> (1 2 3 4)"))
+
+   (test-case "length"
+     (reset!)
+     (check-equal? (run "(length '(a b c d))") "=> 4"))
+
+   (test-case "list-ref"
+     (reset!)
+     (check-equal? (run "(list-ref '(10 20 30) 1)") "=> 20"))
+
+   (test-case "number helpers"
+     (reset!)
+     (check-equal?
+      (run "(list (zero? 0) (add1 4) (sub1 4) (abs -7) (positive? 3) (negative? -2) (even? 10) (odd? 11))")
+      "=> (#t 5 3 7 #t #t #t #t)"))
+
+   (test-case "apply with primitive"
+     (reset!)
+     (check-equal? (run "(apply + 1 2 '(3 4))") "=> 10"))
+
+   (test-case "apply with closure"
+     (reset!)
+     (check-equal? (run "(apply (lambda (x y z) (+ x (* y z))) '(2 3 4))") "=> 14"))
+
+   (test-case "map over list"
+     (reset!)
+     (check-equal? (run "(map (lambda (x) (+ x 10)) '(1 2 3))") "=> (11 12 13)"))
+
+   (test-case "filter over list"
+     (reset!)
+     (check-equal? (run "(filter (lambda (x) (odd? x)) '(1 2 3 4 5 6))") "=> (1 3 5)"))
+
+   (test-case "for-each returns void and runs effects"
+     (reset!)
+     (check-equal?
+      (run "(define x 0)\n(for-each (lambda (n) (set! x (+ x n))) '(1 2 3 4))\nx")
+      "=> 10"))
 
    (test-case "read error"
      (reset!)
