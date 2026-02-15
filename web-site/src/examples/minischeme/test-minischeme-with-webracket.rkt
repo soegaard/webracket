@@ -217,6 +217,27 @@
    (test-equal "vector-fill!"
                "(define v (vector 1 2 3))\n(vector-fill! v 7)\nv"
                "=> #(7 7 7)")
+   (test-equal "char basics"
+               "(list (char? #\\a) (char->integer #\\A) (integer->char 66))"
+               "=> (#t 65 #\\B)")
+   (test-equal "char comparisons"
+               "(list (char<? #\\a #\\b) (char-ci=? #\\A #\\a) (char-ci<? #\\a #\\B))"
+               "=> (#t #t #t)")
+   (test-equal "string constructor/predicate/length"
+               "(list (string? (string #\\a #\\b)) (string-length \"abc\") (make-string 3 #\\x))"
+               "=> (#t 3 \"xxx\")")
+   (test-equal "string-ref substring string-append"
+               "(list (string-ref \"abc\" 1) (substring \"abcdef\" 2 5) (string-append \"ab\" \"cd\"))"
+               "=> (#\\b \"cde\" \"abcd\")")
+   (test-equal "string mutation"
+               "(define s (string-copy \"abc\"))\n(string-set! s 1 #\\x)\n(string-fill! s #\\q)\ns"
+               "=> \"qqq\"")
+   (test-equal "string/list conversion"
+               "(list (string->list \"ab\") (list->string '(#\\c #\\d)))"
+               "=> ((#\\a #\\b) \"cd\")")
+   (test-equal "string comparisons"
+               "(list (string=? \"a\" \"a\") (string<? \"a\" \"b\") (string-ci=? \"Ab\" \"aB\"))"
+               "=> (#t #t #t)")
    (test-equal "length" "(length '(a b c d))" "=> 4")
    (test-equal "list-ref" "(list-ref '(10 20 30) 1)" "=> 20")
    (test-equal "list-tail"
@@ -419,6 +440,7 @@
    (test-eval-contains "malformed form matrix: do" "(do ((x 1 2 3)) ((= x 0) x))" "do binding malformed")
    (test-eval-contains "malformed form matrix: delay" "(delay)" "malformed delay")
    (test-eval-contains "vector primitive contract: vector-ref type" "(vector-ref 1 0)" "vector-ref expects a vector")
+   (test-eval-contains "string primitive contract: string-ref type" "(string-ref 1 0)" "string-ref expects a string")
    (test-eval-contains "malformed form matrix: cond clause" "(cond 1)" "malformed cond clause")
    (test-eval-contains "malformed form matrix: cond => clause" "(cond ((+ 1 2) =>) (else 0))" "malformed cond => clause")
    (test-eval-contains "malformed form matrix: case clause" "(case 1 2)" "malformed case clause")

@@ -351,6 +351,48 @@
       (run "(define v (vector 1 2 3))\n(vector-fill! v 7)\nv")
       "=> #(7 7 7)"))
 
+   (test-case "char basics"
+     (reset!)
+     (check-equal?
+      (run "(list (char? #\\a) (char->integer #\\A) (integer->char 66))")
+      "=> (#t 65 #\\B)"))
+
+   (test-case "char comparisons"
+     (reset!)
+     (check-equal?
+      (run "(list (char<? #\\a #\\b) (char-ci=? #\\A #\\a) (char-ci<? #\\a #\\B))")
+      "=> (#t #t #t)"))
+
+   (test-case "string constructor/predicate/length"
+     (reset!)
+     (check-equal?
+      (run "(list (string? (string #\\a #\\b)) (string-length \"abc\") (make-string 3 #\\x))")
+      "=> (#t 3 \"xxx\")"))
+
+   (test-case "string-ref substring string-append"
+     (reset!)
+     (check-equal?
+      (run "(list (string-ref \"abc\" 1) (substring \"abcdef\" 2 5) (string-append \"ab\" \"cd\"))")
+      "=> (#\\b \"cde\" \"abcd\")"))
+
+   (test-case "string mutation"
+     (reset!)
+     (check-equal?
+      (run "(define s (string-copy \"abc\"))\n(string-set! s 1 #\\x)\n(string-fill! s #\\q)\ns")
+      "=> \"qqq\""))
+
+   (test-case "string/list conversion"
+     (reset!)
+     (check-equal?
+      (run "(list (string->list \"ab\") (list->string '(#\\c #\\d)))")
+      "=> ((#\\a #\\b) \"cd\")"))
+
+   (test-case "string comparisons"
+     (reset!)
+     (check-equal?
+      (run "(list (string=? \"a\" \"a\") (string<? \"a\" \"b\") (string-ci=? \"Ab\" \"aB\"))")
+      "=> (#t #t #t)"))
+
    (test-case "length"
      (reset!)
      (check-equal? (run "(length '(a b c d))") "=> 4"))
@@ -766,6 +808,10 @@
    (test-case "vector primitive contract: vector-ref type"
      (reset!)
      (check-eval-error-match #rx"vector-ref expects a vector" "(vector-ref 1 0)"))
+
+   (test-case "string primitive contract: string-ref type"
+     (reset!)
+     (check-eval-error-match #rx"string-ref expects a string" "(string-ref 1 0)"))
 
    (test-case "malformed form matrix: cond clause"
      (reset!)
