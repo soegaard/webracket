@@ -525,6 +525,12 @@
      (check-equal? (run "(list (number? (exp 1)) (number? (log 10)) (number? (sin 1)) (number? (cos 1)) (number? (tan 1)) (number? (asin 0.5)) (number? (acos 0.5)) (number? (atan 0 1)))")
                    "=> (#t #t #t #t #t #t #t #t)"))
 
+   (test-case "sinh/cosh/tanh/asinh/acosh/atanh"
+     (reset!)
+     (check-equal?
+      (run "(list (number? (sinh 1)) (number? (cosh 1)) (number? (tanh 1)) (number? (asinh 1)) (number? (acosh 2)) (number? (atanh 0.5)))")
+      "=> (#t #t #t #t #t #t)"))
+
    (test-case "sqrt/expt"
      (reset!)
      (check-equal? (run "(list (sqrt 9) (expt 2 5))")
