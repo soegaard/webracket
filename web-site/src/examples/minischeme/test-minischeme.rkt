@@ -230,6 +230,41 @@
       (run "(do ((i 0 (+ i 1)) (xs '() (cons i xs))) ((= i 4) (reverse xs)))")
       "=> (0 1 2 3)"))
 
+   (test-case "promise? and force basic"
+     (reset!)
+     (check-equal?
+      (run "(list (promise? (delay (+ 1 2))) (force (delay (+ 1 2))))")
+      "=> (#t 3)"))
+
+   (test-case "force on non-promise is identity"
+     (reset!)
+     (check-equal? (run "(force 42)") "=> 42"))
+
+   (test-case "promise memoizes successful result"
+     (reset!)
+     (check-equal?
+      (run "(define n 0)\n(define p (delay (begin (set! n (+ n 1)) n)))\n(list (promise-forced? p) (force p) (promise-forced? p) (force p) n)")
+      "=> (#f 1 #t 1 1)"))
+
+   (test-case "promise-running? is true during thunk evaluation"
+     (reset!)
+     (check-equal?
+      (run "(define p #f)\n(set! p (delay (promise-running? p)))\n(force p)")
+      "=> #t"))
+
+   (test-case "force reentrant promise reports error"
+     (reset!)
+     (check-eval-error-match #rx"reentrant force on running promise"
+                             "(define p #f)\n(set! p (delay (force p)))\n(force p)"))
+
+   (test-case "promise failure is memoized"
+     (reset!)
+     (void (run "(define n 0)\n(define p (delay (begin (set! n (+ n 1)) (car 1))))"))
+     (check-eval-error-match #rx"car expects a non-empty pair" "(force p)")
+     (check-equal? (run "n") "=> 1")
+     (check-eval-error-match #rx"car expects a non-empty pair" "(force p)")
+     (check-equal? (run "n") "=> 1"))
+
    (test-case "cond basic and else"
      (reset!)
      (check-equal?
@@ -640,6 +675,10 @@
      (check-eval-error-match #rx"malformed do|do binding malformed|do malformed"
                              "(do (x 0) ((= 1 1) 0))"))
 
+   (test-case "malformed delay error includes pattern"
+     (reset!)
+     (check-eval-error-match #rx"malformed delay" "(delay 1 2)"))
+
    (test-case "eval error prefix contract: non-procedure application"
      (reset!)
      (check-eval-error-match #rx"application of non-procedure" "(0 1 2)"))
@@ -675,6 +714,10 @@
    (test-case "malformed form matrix: do"
      (reset!)
      (check-eval-error-match #rx"malformed do|do binding malformed|do malformed" "(do ((x 1 2 3)) ((= x 0) x))"))
+
+   (test-case "malformed form matrix: delay"
+     (reset!)
+     (check-eval-error-match #rx"malformed delay" "(delay)"))
 
    (test-case "malformed form matrix: cond clause"
      (reset!)

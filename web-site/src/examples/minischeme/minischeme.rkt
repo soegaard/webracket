@@ -11,6 +11,7 @@
     (struct closure   (params body env))
     (struct prim      (name proc))
     (struct mvals     (vals))
+    (struct promise   (state thunk value) #:mutable)
     (struct captured-kont (kont env winds))
     (struct wind      (before after))
     (struct k-apply   (args env))
@@ -19,6 +20,7 @@
     (struct k-begin   (rest env))
     (struct k-set!    (cell name))
     (struct k-define  (cell name))
+    (struct k-force   (promise))
     (struct k-dw-enter (wf thunk env winds-before))
     (struct k-dw-exit (after env winds-before))
     (struct k-dw-return (produced env winds-before))
@@ -537,6 +539,24 @@
                                                  (error 'minischeme "internal error: call-with-current-continuation should be handled by evaluator")))
       (install 'dynamic-wind (λ (_args)
                                (error 'minischeme "internal error: dynamic-wind should be handled by evaluator")))
+      (install 'force (λ (_args)
+                        (error 'minischeme "internal error: force should be handled by evaluator")))
+      (install 'promise? (λ (args)
+                           (check-arg-count 'promise? args 1)
+                           (promise? (car args))))
+      (install 'promise-forced? (λ (args)
+                                  (check-arg-count 'promise-forced? args 1)
+                                  (define v (car args))
+                                  (unless (promise? v)
+                                    (error 'minischeme "promise-forced?: expected a promise, got ~a" v))
+                                  (or (eq? (promise-state v) 'forced)
+                                      (eq? (promise-state v) 'failed))))
+      (install 'promise-running? (λ (args)
+                                   (check-arg-count 'promise-running? args 1)
+                                   (define v (car args))
+                                   (unless (promise? v)
+                                     (error 'minischeme "promise-running?: expected a promise, got ~a" v))
+                                   (eq? (promise-state v) 'running)))
       (constant 'primitives (sort all-primitives (λ (x y) (symbol<? x y))))
       (constant 'constants  (sort all-constants  (λ (x y) (symbol<? x y))))
       (constant 'keywords   (sort all-keywords   (λ (x y) (symbol<? x y))))
@@ -816,6 +836,10 @@
                 (cons 'let (cons (map expand-binding (car tail))
                                  (map expand-expr (cdr tail)))))]
            [(eq? head 'do) (desugar-do tail expr)]
+           [(eq? head 'delay)
+            (if (and (pair? tail) (null? (cdr tail)))
+                (list 'delay (expand-expr (car tail)))
+                (error 'minischeme "malformed delay: ~s" expr))]
            [(eq? head 'lambda)
             (if (and (pair? tail) (pair? (cdr tail)))
                 (cons 'lambda (cons (car tail) (map expand-expr (cdr tail))))
@@ -964,6 +988,34 @@
                   (apply-now before '() env
                             (cons (k-dw-enter wf thunk env winds) kont)
                             winds)]
+                 [(eq? pname 'force)
+                  (check-arg-count 'force args 1)
+                  (define v (car args))
+                  (if (promise? v)
+                      (let ([state (promise-state v)])
+                        (cond
+                          [(eq? state 'forced)
+                           (continue 'value (promise-value v) env kont winds)]
+                          [(eq? state 'failed)
+                           (raise (promise-value v))]
+                          [(eq? state 'running)
+                           (error 'minischeme "force: reentrant force on running promise")]
+                          [(eq? state 'pending)
+                           (define thunk (promise-thunk v))
+                           (unless (procedure-value? thunk)
+                             (error 'minischeme "force: invalid promise thunk ~a" thunk))
+                           (set-promise-state! v 'running)
+                           (with-handlers
+                             ([(λ (_e) #t)
+                               (λ (e)
+                                 (set-promise-state! v 'failed)
+                                 (set-promise-value! v e)
+                                 (set-promise-thunk! v #f)
+                                 (raise e))])
+                             (apply-now thunk '() env (cons (k-force v) kont) winds))]
+                          [else
+                           (error 'minischeme "force: invalid promise state ~a" state)]))
+                      (continue 'value v env kont winds))]
                  [(eq? pname 'map)
                   (check-arg-count 'map args 2)
                   (define f (car args))
@@ -1095,6 +1147,16 @@
                                                 body current-env)
                                 current-env kont))
                     (error 'minischeme "malformed lambda: ~s" control)))]
+             [(and (pair? control) (eq? (car control) 'delay))
+              (let ([rest (cdr control)])
+                (if (and (pair? rest) (null? (cdr rest)))
+                    (continue 'value
+                              (promise 'pending
+                                       (closure '() (list (car rest)) current-env)
+                                       #f)
+                              current-env
+                              kont)
+                    (error 'minischeme "malformed delay: ~s" control)))]
              [(and (pair? control) (eq? (car control) 'if))
               (let* ([rest (cdr control)]
                      [len (length rest)])
@@ -1268,8 +1330,14 @@
                     (set-box! (k-set!-cell frame) (single-value (k-set!-name frame) control))
                     (continue 'value control current-env rest)]
                    [(k-define? frame)
-                    (set-box! (k-define-cell frame) (single-value (k-define-name frame) control))
-                    (continue 'value (k-define-name frame) current-env rest)]
+                   (set-box! (k-define-cell frame) (single-value (k-define-name frame) control))
+                   (continue 'value (k-define-name frame) current-env rest)]
+                   [(k-force? frame)
+                    (define p (k-force-promise frame))
+                    (set-promise-state! p 'forced)
+                    (set-promise-value! p control)
+                    (set-promise-thunk! p #f)
+                    (continue 'value control current-env rest)]
                    [(k-dw-enter? frame)
                     (define wf (k-dw-enter-wf frame))
                     (define thunk (k-dw-enter-thunk frame))

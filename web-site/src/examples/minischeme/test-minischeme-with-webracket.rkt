@@ -146,6 +146,34 @@
    (test-equal "do with commands"
                "(do ((i 0 (+ i 1)) (xs '() (cons i xs))) ((= i 4) (reverse xs)))"
                "=> (0 1 2 3)")
+   (test-equal "promise? and force basic"
+               "(list (promise? (delay (+ 1 2))) (force (delay (+ 1 2))))"
+               "=> (#t 3)")
+   (test-equal "force on non-promise is identity"
+               "(force 42)"
+               "=> 42")
+   (test-equal "promise memoizes successful result"
+               "(define n 0)\n(define p (delay (begin (set! n (+ n 1)) n)))\n(list (promise-forced? p) (force p) (promise-forced? p) (force p) n)"
+               "=> (#f 1 #t 1 1)")
+   (test-equal "promise-running? is true during thunk evaluation"
+               "(define p #f)\n(set! p (delay (promise-running? p)))\n(force p)"
+               "=> #t")
+   (test-eval-contains "force reentrant promise reports error"
+                       "(define p #f)\n(set! p (delay (force p)))\n(force p)"
+                       "reentrant force on running promise")
+   (let ()
+     (reset!)
+     (run "(define n 0)\n(define p (delay (begin (set! n (+ n 1)) (car 1))))")
+     (define e1 (run "(force p)"))
+     (define n1 (run "n"))
+     (define e2 (run "(force p)"))
+     (define n2 (run "n"))
+     (expect-equal "promise failure is memoized"
+                   (list (not (false? (string-contains? e1 "car expects a non-empty pair")))
+                         n1
+                         (not (false? (string-contains? e2 "car expects a non-empty pair")))
+                         n2)
+                   (list #t "=> 1" #t "=> 1")))
    (test-equal "cond basic and else"
                "(cond ((> 1 2) 'nope) ((< 1 2) 'ok) (else 'bad))"
                "=> ok")
@@ -352,6 +380,7 @@
    (test-eval-contains "malformed define error includes pattern" "(define x 1 2)" "malformed define")
    (test-eval-contains "malformed let error includes pattern" "(let)" "malformed let")
    (test-eval-contains "malformed do error includes pattern" "(do (x 0) ((= 1 1) 0))" "do binding malformed")
+   (test-eval-contains "malformed delay error includes pattern" "(delay 1 2)" "malformed delay")
    (test-eval-contains "eval error prefix contract: non-procedure application" "(0 1 2)" "application of non-procedure")
    (test-eval-contains "malformed form matrix: quote" "(quote 1 2)" "malformed quote")
    (test-eval-contains "malformed form matrix: quasiquote" "(quasiquote 1 2)" "quasiquote: malformed form")
@@ -361,6 +390,7 @@
    (test-eval-contains "malformed form matrix: let*" "(let* (x 1) x)" "malformed binding")
    (test-eval-contains "malformed form matrix: letrec" "(letrec (x 1) x)" "malformed binding")
    (test-eval-contains "malformed form matrix: do" "(do ((x 1 2 3)) ((= x 0) x))" "do binding malformed")
+   (test-eval-contains "malformed form matrix: delay" "(delay)" "malformed delay")
    (test-eval-contains "malformed form matrix: cond clause" "(cond 1)" "malformed cond clause")
    (test-eval-contains "malformed form matrix: case clause" "(case 1 2)" "malformed case clause")
    (test-eval-contains "malformed form matrix: when" "(when)" "malformed when")
