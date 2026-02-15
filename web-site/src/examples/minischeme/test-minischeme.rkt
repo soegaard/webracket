@@ -265,6 +265,67 @@
       (run "(define x 0)\n(for-each (lambda (n) (set! x (+ x n))) '(1 2 3 4))\nx")
       "=> 10"))
 
+   (test-case "multiline program with blank lines"
+     (reset!)
+     (check-equal?
+      (run "(define x 10)\n\n(define y 5)\n(+ x y)")
+      "=> 15"))
+
+   (test-case "line comments are ignored by reader"
+     (reset!)
+     (check-equal?
+      (run "; initialize x\n(define x 7) ; trailing comment\n; compute answer\n(+ x 5)")
+      "=> 12"))
+
+   (test-case "block comments are ignored by reader"
+     (reset!)
+     (check-equal?
+      (run "#| block\ncomment spanning\nlines |#\n(define x 9)\n(+ x 1)")
+      "=> 10"))
+
+   (test-case "datum comments are ignored by reader"
+     (reset!)
+     (check-equal?
+      (run "#;(define x 100)\n(define x 4)\n#;(+ x 99)\n(+ x 6)")
+      "=> 10"))
+
+   (test-case "quote sugar through process-input"
+     (reset!)
+     (check-equal?
+      (run "(define q '(a b c))\nq")
+      "=> (a b c)"))
+
+   (test-case "quasiquote/unquote sugar through process-input"
+     (reset!)
+     (check-equal?
+      (run "(define x 3)\n`(1 ,x 5)")
+      "=> (1 3 5)"))
+
+   (test-case "dotted pair through process-input"
+     (reset!)
+     (check-equal? (run "'(a . b)") "=> (a . b)"))
+
+   (test-case "dotted list through process-input"
+     (reset!)
+     (check-equal? (run "'(1 2 . 3)") "=> (1 2 . 3)"))
+
+   (test-case "dotted pair car/cdr behavior"
+     (reset!)
+     (check-equal?
+      (run "(define p '(a . b))\n(list (car p) (cdr p))")
+      "=> (a b)"))
+
+   (test-case "invalid dotted pair read error"
+     (reset!)
+     (check-true
+      (string-prefix? (run "'(a . b c)") "=> read error:")))
+
+   (test-case "mixed integration: multiline + comments + quote + dotted"
+     (reset!)
+     (check-equal?
+      (run "; keep this ignored\n(define p '(x . y))\n#| comment |#\n(define q '(1 2 3))\n(list (car p) (cdr p) q)")
+      "=> (x y (1 2 3))"))
+
    (test-case "read error"
      (reset!)
      (check-true (string-prefix? (run "(") "=> read error:")))
