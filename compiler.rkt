@@ -4273,6 +4273,46 @@
          (set! quoted-symbol-counter (+ quoted-symbol-counter 1))         
          (add-symbol-constant name symbol)
          name]))
+    (define (canonicalize-arity-markers markers)
+      (define (dedup xs)
+        (reverse
+         (for/fold ([acc '()]) ([x (in-list xs)])
+           (if (member x acc) acc (cons x acc)))))
+      (define exacts
+        (for/list ([m (in-list markers)]
+                   #:when (>= m 0))
+          m))
+      (define at-least-starts
+        (for/list ([m (in-list markers)]
+                   #:when (< m 0))
+          (- (- m) 1)))
+      (define min-at-least
+        (and (pair? at-least-starts)
+             (apply min at-least-starts)))
+      (define exacts-dedup (dedup exacts))
+      (define exacts-usable
+        (if min-at-least
+            (filter (λ (n) (< n min-at-least)) exacts-dedup)
+            exacts-dedup))
+      (define exacts-sorted (sort exacts-usable <))
+      (cond
+        [min-at-least
+         (define m (- (- min-at-least) 1))
+         (if (null? exacts-sorted)
+             (list m)
+             (append exacts-sorted (list m)))]
+        [else exacts-sorted]))
+
+    (define (arity-markers->eq-expr markers)
+      (match markers
+        ['()       `(ref.cast (ref eq) (array.new_fixed $I32Array 0))]
+        [(list m)  (Imm m)]
+        [_
+         `(ref.cast (ref eq)
+                    (array.new_fixed $I32Array
+                                     ,(length markers)
+                                     ,@(for/list ([m (in-list markers)])
+                                         `(i32.const ,m))))]))
     )
 
   (ClosureAllocation : ClosureAllocation (ca dd) -> * ()
@@ -4369,6 +4409,8 @@
             [ars-init `(array.new $I32Array (i32.const 0)      (i32.const ,n))]
             [$as      (emit-fresh-local 'case-arms    '(ref $Array)    as-init)]
             [$ars     (emit-fresh-local 'case-arities '(ref $I32Array) ars-init)]
+            [ar*      (canonicalize-arity-markers ar)]
+            [arity-expr (arity-markers->eq-expr ar*)]
             ;; fill both arrays in lockstep
             [fills    (for/list ([m ar] [c ca] [i (in-naturals)])
                         (define arm (ClosureAllocation c #f)) ; => (ref $Closure)
@@ -4389,9 +4431,7 @@
                (struct.new $CaseClosure
                            (i32.const 0)                                 ;; $hash
                            ,name-expr                                    ;; $name
-                           ,(if (= (length ar) 1)
-                                (Imm (car ar))
-                                `(ref.cast (ref eq) ,(Reference $ars)))  ;; $arity  = precise set
+                           ,arity-expr                                    ;; $arity  = normalized set
                            (global.get $false)                           ;; $realm
                            (ref.func $invoke-case-closure)               ;; $invoke
                            (ref.func $code:case-lambda-dispatch)         ;; $code (dispatcher)
@@ -5257,14 +5297,52 @@
      (let (#;[ae2 (AExpr* ae2)]) ; for effect
        (nanopass-case (LANF+closure ClosureAllocation) ca
          [(closure ,s ,in ,l ,ar ,ae1 ...)
-          (define tc (eq? cd '<return>))
-          (define tc-flag (if tc (Imm #t) (Imm #f)))
+         (define tc (eq? cd '<return>))
+         (define tc-flag (if tc (Imm #t) (Imm #f)))
 
           ; Package arguments in an $Args array.
           (define args
             `(array.new_fixed $Args ,(length ae2)
                               ,@(for/list ([ae ae2])
                                   (AExpr3 ae <value>))))
+
+          ;; For variadic closures, argument repacking is handled by
+          ;; `$invoke-closure` via `$repack-arguments`. A direct label call
+          ;; bypasses repacking and breaks `(lambda x ...)` / rest bindings.
+          (define proc-closedapp
+            `(ref.cast (ref $Procedure) (global.get $closedapp-clos)))
+
+          (define invoke-via-procedure
+            (if tc
+                `(return_call_ref $ProcedureInvoker
+                                  ,proc-closedapp
+                                  ,args
+                                  (struct.get $Procedure $invoke ,proc-closedapp))
+                (cond
+                  [(eq? dd <effect>)
+                   `(drop (call_ref $ProcedureInvoker
+                                    ,proc-closedapp
+                                    ,args
+                                    (struct.get $Procedure $invoke ,proc-closedapp)))]
+                  [else
+                   `(call_ref $ProcedureInvoker
+                              ,proc-closedapp
+                              ,args
+                              (struct.get $Procedure $invoke ,proc-closedapp))])))
+
+          (define invoke-direct
+            (if tc
+                `(return_call ,(Label l) (global.get $closedapp-clos) ,args)
+                (cond
+                  [(eq? dd <value>)        `(call ,(Label l) (global.get $closedapp-clos) ,args)]
+                  [(eq? dd <effect>) `(drop (call ,(Label l) (global.get $closedapp-clos) ,args))]
+                  ; otherwise, the data destination is a variable
+                  [else                    `(call ,(Label l) (global.get $closedapp-clos) ,args)])))
+
+          (define invoke
+            (if (and (integer? ar) (< ar 0))
+                invoke-via-procedure
+                invoke-direct))
           
           (define work            
             `(block ,@(cond
@@ -5274,14 +5352,8 @@
                         [else              (list `(result (ref eq)))])  ; <--
               ; 1. Allocate closure and store it in $closedapp-clos
               ,(ClosureAllocation ca #'$closedapp-clos)
-              ; 2. Call it. Some day we might need to pass `tc-flag` as well.
-              ,(if tc
-                   `(return_call ,(Label l) (global.get $closedapp-clos) ,args)
-                   (cond
-                     [(eq? dd <value>)        `(call ,(Label l) (global.get $closedapp-clos) ,args)]
-                     [(eq? dd <effect>) `(drop (call ,(Label l) (global.get $closedapp-clos) ,args))]
-                     ; otherwise, the data destination is a variable
-                     [else                    `(call ,(Label l) (global.get $closedapp-clos) ,args)]))))
+              ; 2. Call it.
+              ,invoke))
 
           #;(define work
             (match ae1

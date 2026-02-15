@@ -128,6 +128,68 @@
         [_                  (error
                              'arity->internal-representation "got: ~a" a)]))
 
+    (define (arity-entry->marker a)
+      (match a
+        [(? exact-nonnegative-integer? n) n]
+        [(arity-at-least n)               (- (- n) 1)]
+        [_                                #f]))
+
+    (define (canonicalize-arity-markers markers)
+      (define (dedup xs)
+        (reverse
+         (for/fold ([acc '()]) ([x (in-list xs)])
+           (if (member x acc) acc (cons x acc)))))
+      (define exacts
+        (for/list ([m (in-list markers)]
+                   #:when (>= m 0))
+          m))
+      (define at-least-starts
+        (for/list ([m (in-list markers)]
+                   #:when (< m 0))
+          (- (- m) 1)))
+      (define min-at-least
+        (and (pair? at-least-starts)
+             (apply min at-least-starts)))
+      (define exacts-dedup (dedup exacts))
+      (define exacts-usable
+        (if min-at-least
+            (filter (λ (n) (< n min-at-least)) exacts-dedup)
+            exacts-dedup))
+      (define exacts-sorted (sort exacts-usable <))
+      (cond
+        [min-at-least
+         (define m (- (- min-at-least) 1))
+         (if (null? exacts-sorted)
+             (list m)
+             (append exacts-sorted (list m)))]
+        [else exacts-sorted]))
+
+    (define (arity->markers a)
+      (match a
+        [(? exact-nonnegative-integer? n)
+         (list n)]
+        [(arity-at-least n)
+         (list (- (- n) 1))]
+        [(? list? as)
+         (define ms (for/list ([x (in-list as)]) (arity-entry->marker x)))
+         (and (andmap integer? ms)
+              (canonicalize-arity-markers ms))]
+        [#f #f]
+        [_ #f]))
+
+    (define (arity->procedure-field-expr a)
+      (define ms (arity->markers a))
+      (cond
+        [(not ms)         (Imm #f)]
+        [(null? ms)       `(ref.cast (ref eq) (array.new_fixed $I32Array 0))]
+        [(null? (cdr ms)) (Imm (car ms))]
+        [else
+         `(ref.cast (ref eq)
+                    (array.new_fixed $I32Array
+                                     ,(length ms)
+                                     ,@(for/list ([m (in-list ms)])
+                                         `(i32.const ,m))))]))
+
     ;; See $primitive-invoke for an explanation of shapes.
     
     (define (arity->shape a)
@@ -693,8 +755,6 @@
              (local $pproc (ref $PrimitiveProcedure))
              (local $code  (ref null func))
 
-             (local $arity/tag i32)
-             (local $arity     i32)
              (local $argc      i32)
 
              (local $a0 (ref eq))
@@ -725,14 +785,6 @@
                  (then (return (call $raise-no-code (local.get $pproc)))))
 
              (local.set $argc (array.len (local.get $args)))
-
-             (local.set $arity/tag
-                        (i31.get_s
-                         (ref.cast (ref i31)
-                                   (struct.get $Procedure $arity (local.get $pproc)))))
-
-             (local.set $arity
-                        (i32.shr_s (local.get $arity/tag) (i32.const 1)))
 
              (if (i32.gt_u (local.get $argc) (i32.const 0))
                  (then
@@ -775,7 +827,7 @@
                       ; for $Procedure
                       (i32.const 0)                               ; hash
                       (global.get ,$name)                         ; name  (used by object-name)
-                      ,(Imm (arity->internal-representation ar))  ; arity
+                      ,(arity->procedure-field-expr ar)           ; arity
                       (global.get $the-racket/primitive-realm)    ; realm
                       #;(ref.func $primitive-invoke)
                       (ref.func ,($ (shape->invoker shape)))
@@ -795,7 +847,7 @@
                       ; for $Procedure
                       (i32.const 0)                               ; hash
                       (global.get ,$name)                         ; name  (used by object-name)
-                      ,(Imm (arity->internal-representation ar))  ; arity
+                      ,(arity->procedure-field-expr ar)           ; arity
                       (global.get $the-racket/primitive-realm)    ; realm
                       (ref.func ,($ (shape->invoker shape)))
                       (ref.func ,($ pr))
@@ -2275,29 +2327,38 @@
 
         (func $raise-arity-mismatch (unreachable))
 
+        (func $procedure-arity->expected-string
+              (param $proc (ref $Procedure))
+              (result (ref $String))
+              (local $a         (ref eq))
+              (local $arity/tag i32)
+              (local $arity     i32)
+
+              (local.set $a (struct.get $Procedure $arity (local.get $proc)))
+
+              (if (ref.test (ref i31) (local.get $a))
+                  (then
+                   (local.set $arity/tag (i31.get_s (ref.cast (ref i31) (local.get $a))))
+                   (local.set $arity (i32.shr_s (local.get $arity/tag) (i32.const 1)))
+                   (return (call $arity-i32->string (local.get $arity)))))
+
+              (ref.cast (ref $String)
+                        (call $format/display (call $procedure-arity (local.get $proc)))))
+
         (func $raise-arity-mismatch/proc
               (param $proc (ref $Procedure))
               (param $argc i32)
               (local $name         (ref eq))
               (local $expected-str (ref $String))
               (local $received-str (ref $String))
-              (local $arity/tag    i32)
-              (local $arity        i32)
               (local $out          (ref $GrowableArray))
               (local $message      (ref $String))
 
               (local.set $name
                          (struct.get $Procedure $name (local.get $proc)))
 
-              (local.set $arity/tag
-                         (i31.get_s
-                          (ref.cast (ref i31)
-                                    (struct.get $Procedure $arity (local.get $proc)))))
-              (local.set $arity
-                         (i32.shr_s (local.get $arity/tag) (i32.const 1)))
-
               (local.set $expected-str
-                         (call $arity-i32->string (local.get $arity)))
+                         (call $procedure-arity->expected-string (local.get $proc)))
               (local.set $received-str
                          (call $i32->string (local.get $argc)))
 
@@ -2515,23 +2576,14 @@
               (local $name         (ref eq))
               (local $expected-str (ref $String))
               (local $received-str (ref $String))
-              (local $arity/tag    i32)
-              (local $arity        i32)
               (local $out          (ref $GrowableArray))
               (local $message      (ref $String))
 
               (local.set $name
                          (struct.get $Procedure $name (local.get $pproc)))
 
-              (local.set $arity/tag
-                         (i31.get_s
-                          (ref.cast (ref i31)
-                                    (struct.get $Procedure $arity (local.get $pproc)))))
-              (local.set $arity
-                         (i32.shr_s (local.get $arity/tag) (i32.const 1)))
-
               (local.set $expected-str
-                         (call $arity-i32->string (local.get $arity)))
+                         (call $procedure-arity->expected-string (local.get $pproc)))
               (local.set $received-str
                          (call $i32->string (local.get $argc)))
 
@@ -35479,28 +35531,17 @@
                (result (ref eq))
 
                (local $p     (ref null $Procedure))
-               (local $arity i32)
                (local $mask  i32)
 
                ;; Step 1: type check and cast
                (if (ref.test (ref $Procedure) (local.get $proc))
                    (then (local.set $p (ref.cast (ref $Procedure) (local.get $proc))))
-                   (else (call $raise-argument-error:procedure-expected) (unreachable)))
-               ;; Step 2: get i32 arity (decode from fixnum)
-               (local.set $arity
-                          (i32.shr_s
-                           (i31.get_s
-                            (ref.cast (ref i31) (struct.get $Procedure $arity (local.get $p))))
-                           (i32.const 1)))
-               ;; Step 3: compute mask
+                   (else (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               ;; Step 2: compute mask in checked helper
                (local.set $mask
-                          (if (result i32)
-                              (i32.ge_s (local.get $arity) (i32.const 0))
-                              ;; If arity ≥ 0, mask = 1 << arity
-                              (then (i32.shl (i32.const 1) (local.get $arity)))
-                              ;; If arity < 0, mask = -1 << (-1 - arity)
-                              (else (i32.shl (i32.const -1)
-                                             (i32.sub (i32.const -1) (local.get $arity))))))
+                          (call $procedure-arity-mask/checked/i32
+                                (ref.cast (ref $Procedure) (local.get $p))))
                ;; Step 4: return as fixnum
                (ref.i31 (i32.shl (local.get $mask) (i32.const 1))))
 
@@ -35510,25 +35551,61 @@
                (param $proc (ref $Procedure))
                (result      i32)
 
+               (local $a     (ref eq))
+               (local $arr   (ref $I32Array))
+               (local $i     i32)
+               (local $n     i32)
+               (local $m     i32)
                (local $arity i32)
                (local $mask  i32)
+               (local $start i32)
 
-               ;; Step 1: get i32 arity (decode from fixnum)
-               (local.set $arity (i32.shr_s
-                                  (i31.get_s
-                                   (ref.cast (ref i31)
-                                             (struct.get $Procedure $arity (local.get $proc))))
-                                  (i32.const 1)))
-               ;; Step 3: compute mask
-               (local.set $mask
-                          (if (result i32)
-                              (i32.ge_s (local.get $arity) (i32.const 0))
-                              ;; If arity ≥ 0, mask = 1 << arity
-                              (then (i32.shl (i32.const 1) (local.get $arity)))
-                              ;; If arity < 0, mask = -1 << (-1 - arity)
-                              (else (i32.shl (i32.const -1)
-                                             (i32.sub (i32.const -1) (local.get $arity))))))
-               ;; Step 4: return as i32
+               ;; Step 1: inspect the procedure arity representation
+               (local.set $a (struct.get $Procedure $arity (local.get $proc)))
+
+               ;; Step 2: single arity marker stored as fixnum
+               (if (ref.test (ref i31) (local.get $a))
+                   (then
+                    (local.set $arity (i32.shr_s
+                                       (i31.get_s
+                                        (ref.cast (ref i31) (local.get $a)))
+                                       (i32.const 1)))
+                    (local.set $mask
+                               (if (result i32)
+                                   (i32.ge_s (local.get $arity) (i32.const 0))
+                                   ;; If arity ≥ 0, mask = 1 << arity
+                                   (then (i32.shl (i32.const 1) (local.get $arity)))
+                                   ;; If arity < 0, mask = -1 << (-1 - arity)
+                                   (else (i32.shl (i32.const -1)
+                                                  (i32.sub (i32.const -1) (local.get $arity))))))
+                    (return (local.get $mask))))
+
+               ;; Step 3: arity set stored as $I32Array of markers
+               (local.set $arr (ref.cast (ref $I32Array) (local.get $a)))
+               (local.set $n   (array.len (local.get $arr)))
+               (local.set $i   (i32.const 0))
+               (local.set $mask (i32.const 0))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (local.set $m
+                                       (array.get $I32Array (local.get $arr) (local.get $i)))
+                            (if (i32.ge_s (local.get $m) (i32.const 0))
+                                (then
+                                 (local.set $mask
+                                            (i32.or
+                                             (local.get $mask)
+                                             (i32.shl (i32.const 1) (local.get $m)))))
+                                (else
+                                 (local.set $start
+                                            (i32.sub (i32.const -1) (local.get $m)))
+                                 (local.set $mask
+                                            (i32.or
+                                             (local.get $mask)
+                                             (i32.shl (i32.const -1) (local.get $start))))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
                (local.get $mask))
 
 
@@ -39301,7 +39378,6 @@
 
                (local $p          (ref $PrimitiveProcedure))
                (local $name       (ref eq))         ;; $false or $Symbol
-               (local $arity-fx   (ref eq))         ;; fixnum (i31)
                (local $arity-str  (ref $String))
                (local $mask       i32)
                (local $mask-str   (ref $String))
@@ -39313,11 +39389,8 @@
                (local.set $p (ref.cast (ref $PrimitiveProcedure) (local.get $v)))
                ;; Step 2: extract fields
                (local.set $name      (struct.get $PrimitiveProcedure $name  (local.get $p)))
-               (local.set $arity-fx  (struct.get $PrimitiveProcedure $arity (local.get $p)))
                ;; Step 3: convert arity to string
-               (local.set $arity-str (ref.cast (ref $String)
-                                               (call $number->string
-                                                     (local.get $arity-fx) (global.get $false))))
+               (local.set $arity-str (call $procedure-arity->expected-string (local.get $p)))
                ;; Step 4: get mask and convert to string
                (local.set $mask      (call $procedure-arity-mask/checked/i32 (local.get $p)))
                (local.set $mask-str  (call $i32->string                      (local.get $mask)))
