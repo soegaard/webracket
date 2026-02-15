@@ -9,8 +9,6 @@
 ;; - none currently (tracked arity mismatches are fixed)
 ;;
 ;; Other:
-;; - string-foldcase: (string-foldcase "ABC!") expected "abc!"
-;;   at test/test-basics.rkt:1120
 ;; - char-foldcase: (char-foldcase #\u03c2) expected #\u03c3
 ;;   at test/test-basics.rkt:1524
 ;; - make-struct-type-property/basic: accessor-procedure? checks expected #t
@@ -1407,7 +1405,9 @@
 
               (list "char<?"
                     (and (equal? (char<? #\A #\B) #t)
-                         (equal? (char<? #\b #\A) #f)))
+                         (equal? (char<? #\b #\A) #f)
+                         ;; regression: variadic char<? via apply must dispatch correctly
+                         (equal? (apply char<? (list #\a #\b)) #t)))
 
               (list "char<=?"
                     (and (equal? (char<=? #\A #\B) #t)
