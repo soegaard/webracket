@@ -311,6 +311,10 @@
      (reset!)
      (check-equal? (run "(append '(1 2) '(3 4) '())") "=> (1 2 3 4)"))
 
+   (test-case "list*"
+     (reset!)
+     (check-equal? (run "(list* 1 2 '(3 4))") "=> (1 2 3 4)"))
+
    (test-case "reverse"
      (reset!)
      (check-equal? (run "(reverse '(1 2 3 4))") "=> (4 3 2 1)"))
@@ -456,6 +460,24 @@
    (test-case "caadr"
      (reset!)
      (check-equal? (run "(caadr '((a) (b c) (d)))") "=> b"))
+
+   (test-case "eq?/eqv?"
+     (reset!)
+     (check-equal?
+      (run "(let ((x '(a))) (list (eq? 'a 'a) (eq? x x) (eqv? 2 2) (eqv? 2 2.0)))")
+      "=> (#t #t #t #f)"))
+
+   (test-case "symbol<->string"
+     (reset!)
+     (check-equal?
+      (run "(list (symbol->string 'apple) (string->symbol \"banana\") (symbol? (string->symbol \"x\")))")
+      "=> (\"apple\" banana #t)"))
+
+   (test-case "char classification and case conversion"
+     (reset!)
+     (check-equal?
+      (run "(list (char-alphabetic? #\\A) (char-numeric? #\\7) (char-whitespace? #\\space) (char-lower-case? #\\a) (char-upper-case? #\\A) (char-upcase #\\a) (char-downcase #\\A))")
+      "=> (#t #t #t #t #t #\\A #\\a)"))
 
    (test-case "number helpers"
      (reset!)

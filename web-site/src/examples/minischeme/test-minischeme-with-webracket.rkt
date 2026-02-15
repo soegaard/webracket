@@ -194,6 +194,7 @@
                "=> #t")
    (test-eval-contains "letrec uninitialized reference error" "(letrec ((x x)) x)" "accessing uninitialized binding")
    (test-equal "append" "(append '(1 2) '(3 4) '())" "=> (1 2 3 4)")
+   (test-equal "list*" "(list* 1 2 '(3 4))" "=> (1 2 3 4)")
    (test-equal "reverse" "(reverse '(1 2 3 4))" "=> (4 3 2 1)")
    (test-equal "reverse empty" "(reverse '())" "=> ()")
    (test-equal "vector constructor and predicate"
@@ -282,6 +283,15 @@
    (test-equal "caadr"
                "(caadr '((a) (b c) (d)))"
                "=> b")
+   (test-equal "eq?/eqv?"
+               "(let ((x '(a))) (list (eq? 'a 'a) (eq? x x) (eqv? 2 2) (eqv? 2 2.0)))"
+               "=> (#t #t #t #f)")
+   (test-equal "symbol<->string"
+               "(list (symbol->string 'apple) (string->symbol \"banana\") (symbol? (string->symbol \"x\")))"
+               "=> (\"apple\" banana #t)")
+   (test-equal "char classification and case conversion"
+               "(list (char-alphabetic? #\\A) (char-numeric? #\\7) (char-whitespace? #\\space) (char-lower-case? #\\a) (char-upper-case? #\\A) (char-upcase #\\a) (char-downcase #\\A))"
+               "=> (#t #t #t #t #t #\\A #\\a)")
    (test-equal "number helpers"
                "(list (zero? 0) (add1 4) (sub1 4) (abs -7) (positive? 3) (negative? -2) (even? 10) (odd? 11))"
                "=> (#t 5 3 7 #t #t #t #t)")
