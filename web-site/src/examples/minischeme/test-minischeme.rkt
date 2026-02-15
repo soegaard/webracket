@@ -319,6 +319,38 @@
      (reset!)
      (check-equal? (run "(reverse '())") "=> ()"))
 
+   (test-case "vector constructor and predicate"
+     (reset!)
+     (check-equal? (run "(vector? (vector 1 2 3))") "=> #t"))
+
+   (test-case "make-vector and vector-length"
+     (reset!)
+     (check-equal? (run "(vector-length (make-vector 4 'x))") "=> 4"))
+
+   (test-case "vector-ref"
+     (reset!)
+     (check-equal? (run "(vector-ref (vector 10 20 30) 1)") "=> 20"))
+
+   (test-case "vector-set!"
+     (reset!)
+     (check-equal?
+      (run "(define v (vector 1 2 3))\n(vector-set! v 1 99)\n(vector-ref v 1)")
+      "=> 99"))
+
+   (test-case "vector->list"
+     (reset!)
+     (check-equal? (run "(vector->list (vector 1 2 3))") "=> (1 2 3)"))
+
+   (test-case "list->vector"
+     (reset!)
+     (check-equal? (run "(list->vector '(a b c))") "=> #(a b c)"))
+
+   (test-case "vector-fill!"
+     (reset!)
+     (check-equal?
+      (run "(define v (vector 1 2 3))\n(vector-fill! v 7)\nv")
+      "=> #(7 7 7)"))
+
    (test-case "length"
      (reset!)
      (check-equal? (run "(length '(a b c d))") "=> 4"))
@@ -730,6 +762,10 @@
    (test-case "malformed form matrix: delay"
      (reset!)
      (check-eval-error-match #rx"malformed delay" "(delay)"))
+
+   (test-case "vector primitive contract: vector-ref type"
+     (reset!)
+     (check-eval-error-match #rx"vector-ref expects a vector" "(vector-ref 1 0)"))
 
    (test-case "malformed form matrix: cond clause"
      (reset!)

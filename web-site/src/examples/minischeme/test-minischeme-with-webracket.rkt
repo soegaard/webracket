@@ -196,6 +196,27 @@
    (test-equal "append" "(append '(1 2) '(3 4) '())" "=> (1 2 3 4)")
    (test-equal "reverse" "(reverse '(1 2 3 4))" "=> (4 3 2 1)")
    (test-equal "reverse empty" "(reverse '())" "=> ()")
+   (test-equal "vector constructor and predicate"
+               "(vector? (vector 1 2 3))"
+               "=> #t")
+   (test-equal "make-vector and vector-length"
+               "(vector-length (make-vector 4 'x))"
+               "=> 4")
+   (test-equal "vector-ref"
+               "(vector-ref (vector 10 20 30) 1)"
+               "=> 20")
+   (test-equal "vector-set!"
+               "(define v (vector 1 2 3))\n(vector-set! v 1 99)\n(vector-ref v 1)"
+               "=> 99")
+   (test-equal "vector->list"
+               "(vector->list (vector 1 2 3))"
+               "=> (1 2 3)")
+   (test-equal "list->vector"
+               "(list->vector '(a b c))"
+               "=> #(a b c)")
+   (test-equal "vector-fill!"
+               "(define v (vector 1 2 3))\n(vector-fill! v 7)\nv"
+               "=> #(7 7 7)")
    (test-equal "length" "(length '(a b c d))" "=> 4")
    (test-equal "list-ref" "(list-ref '(10 20 30) 1)" "=> 20")
    (test-equal "list-tail"
@@ -397,6 +418,7 @@
    (test-eval-contains "malformed form matrix: letrec" "(letrec (x 1) x)" "malformed binding")
    (test-eval-contains "malformed form matrix: do" "(do ((x 1 2 3)) ((= x 0) x))" "do binding malformed")
    (test-eval-contains "malformed form matrix: delay" "(delay)" "malformed delay")
+   (test-eval-contains "vector primitive contract: vector-ref type" "(vector-ref 1 0)" "vector-ref expects a vector")
    (test-eval-contains "malformed form matrix: cond clause" "(cond 1)" "malformed cond clause")
    (test-eval-contains "malformed form matrix: cond => clause" "(cond ((+ 1 2) =>) (else 0))" "malformed cond => clause")
    (test-eval-contains "malformed form matrix: case clause" "(case 1 2)" "malformed case clause")
