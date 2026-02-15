@@ -177,6 +177,12 @@
    (test-equal "cond basic and else"
                "(cond ((> 1 2) 'nope) ((< 1 2) 'ok) (else 'bad))"
                "=> ok")
+   (test-equal "cond => recipient gets test value"
+               "(cond ((+ 1 2) => (lambda (x) (+ x 10))) (else 0))"
+               "=> 13")
+   (test-equal "cond => falls through on #f"
+               "(cond ((member 'z '(a b)) => car) (else 'no))"
+               "=> no")
    (test-equal "case basic and else"
                "(case 3 ((1 2) 'small) ((3 4) 'mid) (else 'other))"
                "=> mid")
@@ -392,6 +398,7 @@
    (test-eval-contains "malformed form matrix: do" "(do ((x 1 2 3)) ((= x 0) x))" "do binding malformed")
    (test-eval-contains "malformed form matrix: delay" "(delay)" "malformed delay")
    (test-eval-contains "malformed form matrix: cond clause" "(cond 1)" "malformed cond clause")
+   (test-eval-contains "malformed form matrix: cond => clause" "(cond ((+ 1 2) =>) (else 0))" "malformed cond => clause")
    (test-eval-contains "malformed form matrix: case clause" "(case 1 2)" "malformed case clause")
    (test-eval-contains "malformed form matrix: when" "(when)" "malformed when")
    (test-eval-contains "malformed form matrix: unless" "(unless)" "malformed unless")))

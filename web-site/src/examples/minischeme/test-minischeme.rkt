@@ -271,6 +271,18 @@
       (run "(cond ((> 1 2) 'nope) ((< 1 2) 'ok) (else 'bad))")
       "=> ok"))
 
+   (test-case "cond => recipient gets test value"
+     (reset!)
+     (check-equal?
+      (run "(cond ((+ 1 2) => (lambda (x) (+ x 10))) (else 0))")
+      "=> 13"))
+
+   (test-case "cond => falls through on #f"
+     (reset!)
+     (check-equal?
+      (run "(cond ((member 'z '(a b)) => car) (else 'no))")
+      "=> no"))
+
    (test-case "case basic and else"
      (reset!)
      (check-equal?
@@ -722,6 +734,10 @@
    (test-case "malformed form matrix: cond clause"
      (reset!)
      (check-eval-error-match #rx"malformed cond clause" "(cond 1)"))
+
+   (test-case "malformed form matrix: cond => clause"
+     (reset!)
+     (check-eval-error-match #rx"malformed cond => clause" "(cond ((+ 1 2) =>) (else 0))"))
 
    (test-case "malformed form matrix: case clause"
      (reset!)

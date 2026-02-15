@@ -680,7 +680,14 @@
               (error 'minischeme "cond: else clause must be last: ~s" clauses))
             (expand-body body)]
            [(and (pair? body) (eq? (car body) '=>))
-            (error 'minischeme "cond => clauses not supported: ~s" clause)]
+            (unless (and (pair? (cdr body)) (null? (cddr body)))
+              (error 'minischeme "malformed cond => clause: ~s" clause))
+            (define tmp (gensym 'cond-tmp))
+            (define recipient (cadr body))
+            (list 'let (list (list tmp (expand-expr test)))
+                  (list 'if tmp
+                        (list (expand-expr recipient) tmp)
+                        (desugar-cond (cdr clauses))))]
            [(null? body)
             (define tmp (gensym 'cond-tmp))
             (list 'let (list (list tmp (expand-expr test)))
