@@ -16765,7 +16765,7 @@
         ,@(for/list ([$cmp   (in-list '($char=?   $char<?   $char<=?   $char>?   $char>=?))]
                      [$cmp/2 (in-list '($char=?/2 $char<?/2 $char<=?/2 $char>?/2 $char>=?/2))])
             ; variadic version
-            `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
+            `(func ,$cmp (type $Prim>=1) (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
                    (local $node  (ref $Pair))
                    (local $ch    (ref eq))
                    ;; Validate the first argument
@@ -16821,7 +16821,7 @@
         ,@(for/list ([$cmp   (in-list '($char-ci=?   $char-ci<?   $char-ci<=?   $char-ci>?   $char-ci>=?))]
                      [$cmp/2 (in-list '($char-ci=?/2 $char-ci<?/2 $char-ci<=?/2 $char-ci>?/2 $char-ci>=?/2))])
             ; variadic case-insensitive version
-            `(func ,$cmp (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
+            `(func ,$cmp (type $Prim>=1) (param $c0 (ref eq)) (param $cs (ref eq)) (result (ref eq))
                    (local $node  (ref $Pair))
                    (local $ch    (ref eq))
                    ;; Validate the first argument
