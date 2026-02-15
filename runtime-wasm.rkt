@@ -17873,7 +17873,38 @@
                (struct.new $Pair (i32.const 0) (local.get $a) (local.get $d)))
 
          (func $list* (type $Prim>=1) (param $a (ref eq)) (param $tail (ref eq)) (result (ref eq))
-               (struct.new $Pair (i32.const 0) (local.get $a) (local.get $tail)))
+               (local $head (ref $Pair))
+               (local $prev (ref $Pair))
+               (local $next (ref eq))
+               (local $rest (ref eq))
+               (local $node (ref $Pair))
+               (local $newp (ref $Pair))
+               ;; (list* x) => x
+               (if (ref.eq (local.get $tail) (global.get $null))
+                   (then (return (local.get $a))))
+               ;; Build prefix pairs, and use the last argument as final tail.
+               (local.set $head (struct.new $Pair (i32.const 0) (local.get $a) (global.get $null)))
+               (local.set $prev (local.get $head))
+               (local.set $rest (local.get $tail))
+               (block $done
+                      (loop $loop
+                            (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                            (local.set $next (struct.get $Pair $d (local.get $node)))
+                            (if (ref.eq (local.get $next) (global.get $null))
+                                (then
+                                 (struct.set $Pair $d (local.get $prev)
+                                             (struct.get $Pair $a (local.get $node)))
+                                 (return (local.get $head))))
+                            (local.set $newp
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (struct.get $Pair $a (local.get $node))
+                                                   (global.get $null)))
+                            (struct.set $Pair $d (local.get $prev) (local.get $newp))
+                            (local.set $prev (local.get $newp))
+                            (local.set $rest (local.get $next))
+                            (br $loop)))
+               (local.get $head))
 
          (func $car (type $Prim1) (param $v (ref eq)) (result (ref eq))
                (if (result (ref eq)) (ref.test (ref $Pair) (local.get $v))
