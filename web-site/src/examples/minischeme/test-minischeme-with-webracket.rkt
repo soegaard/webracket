@@ -137,6 +137,15 @@
    (test-equal "named let captures outer binding in init expressions"
                "(define x 10)\n(let loop ((x 1) (y x)) (if (= x 1) y 0))"
                "=> 10")
+   (test-equal "do basic accumulation"
+               "(do ((i 0 (+ i 1)) (s 0 (+ s i))) ((> i 5) s))"
+               "=> 15")
+   (test-equal "do with omitted step"
+               "(do ((i 0 (+ i 1)) (x 10)) ((= i 3) x))"
+               "=> 10")
+   (test-equal "do with commands"
+               "(do ((i 0 (+ i 1)) (xs '() (cons i xs))) ((= i 4) (reverse xs)))"
+               "=> (0 1 2 3)")
    (test-equal "cond basic and else"
                "(cond ((> 1 2) 'nope) ((< 1 2) 'ok) (else 'bad))"
                "=> ok")
@@ -342,6 +351,7 @@
    (test-eval-contains "malformed set! error includes pattern" "(set! x)" "malformed set!")
    (test-eval-contains "malformed define error includes pattern" "(define x 1 2)" "malformed define")
    (test-eval-contains "malformed let error includes pattern" "(let)" "malformed let")
+   (test-eval-contains "malformed do error includes pattern" "(do (x 0) ((= 1 1) 0))" "do binding malformed")
    (test-eval-contains "eval error prefix contract: non-procedure application" "(0 1 2)" "application of non-procedure")
    (test-eval-contains "malformed form matrix: quote" "(quote 1 2)" "malformed quote")
    (test-eval-contains "malformed form matrix: quasiquote" "(quasiquote 1 2)" "quasiquote: malformed form")
@@ -350,6 +360,7 @@
    (test-eval-contains "malformed form matrix: let" "(let (x 1) x)" "malformed binding")
    (test-eval-contains "malformed form matrix: let*" "(let* (x 1) x)" "malformed binding")
    (test-eval-contains "malformed form matrix: letrec" "(letrec (x 1) x)" "malformed binding")
+   (test-eval-contains "malformed form matrix: do" "(do ((x 1 2 3)) ((= x 0) x))" "do binding malformed")
    (test-eval-contains "malformed form matrix: cond clause" "(cond 1)" "malformed cond clause")
    (test-eval-contains "malformed form matrix: case clause" "(case 1 2)" "malformed case clause")
    (test-eval-contains "malformed form matrix: when" "(when)" "malformed when")

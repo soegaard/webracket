@@ -707,6 +707,48 @@
         (error 'minischeme "malformed binding: ~s" b))
       (list (car b) (expand-expr (cadr b))))
 
+    (define (desugar-do tail expr)
+      (unless (pair? tail)
+        (error 'minischeme "malformed do: ~s" expr))
+      (define bindings (car tail))
+      (define rest (cdr tail))
+      (unless (pair? rest)
+        (error 'minischeme "malformed do: ~s" expr))
+      (define test-clause (car rest))
+      (define commands (cdr rest))
+      (unless (list? bindings)
+        (error 'minischeme "do malformed: bindings must be a list: ~s" bindings))
+      (unless (and (pair? test-clause) (list? test-clause))
+        (error 'minischeme "malformed do test clause: ~s" test-clause))
+      (define inits '())
+      (define steps '())
+      (for-each
+       (λ (binding)
+         (unless (and (pair? binding) (symbol? (car binding)))
+           (error 'minischeme "do binding malformed: ~s" binding))
+         (define var (car binding))
+         (define spec (cdr binding))
+         (unless (or (and (pair? spec) (null? (cdr spec)))
+                     (and (pair? spec) (pair? (cdr spec)) (null? (cddr spec))))
+           (error 'minischeme "do binding malformed: ~s" binding))
+         (define init (car spec))
+         (define step (if (null? (cdr spec)) var (cadr spec)))
+         (set! inits (cons (list var init) inits))
+         (set! steps (cons step steps)))
+       bindings)
+      (define test (car test-clause))
+      (define results (cdr test-clause))
+      (define loop-name (gensym 'do-loop))
+      (expand-expr
+       (list 'let loop-name (reverse inits)
+             (list 'if test
+                   (if (null? results)
+                       '(begin)
+                       (cons 'begin results))
+                   (cons 'begin
+                         (append commands
+                                 (list (cons loop-name (reverse steps)))))))))
+
     (define (expand-expr expr)
       (cond
         [(or (symbol? expr)
@@ -773,6 +815,7 @@
                          (cons name args))))
                 (cons 'let (cons (map expand-binding (car tail))
                                  (map expand-expr (cdr tail)))))]
+           [(eq? head 'do) (desugar-do tail expr)]
            [(eq? head 'lambda)
             (if (and (pair? tail) (pair? (cdr tail)))
                 (cons 'lambda (cons (car tail) (map expand-expr (cdr tail))))

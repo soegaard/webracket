@@ -212,6 +212,24 @@
       (run "(define x 10)\n(let loop ((x 1) (y x)) (if (= x 1) y 0))")
       "=> 10"))
 
+   (test-case "do basic accumulation"
+     (reset!)
+     (check-equal?
+      (run "(do ((i 0 (+ i 1)) (s 0 (+ s i))) ((> i 5) s))")
+      "=> 15"))
+
+   (test-case "do with omitted step"
+     (reset!)
+     (check-equal?
+      (run "(do ((i 0 (+ i 1)) (x 10)) ((= i 3) x))")
+      "=> 10"))
+
+   (test-case "do with commands"
+     (reset!)
+     (check-equal?
+      (run "(do ((i 0 (+ i 1)) (xs '() (cons i xs))) ((= i 4) (reverse xs)))")
+      "=> (0 1 2 3)"))
+
    (test-case "cond basic and else"
      (reset!)
      (check-equal?
@@ -617,6 +635,11 @@
      (reset!)
      (check-eval-error-match #rx"malformed let" "(let)"))
 
+   (test-case "malformed do error includes pattern"
+     (reset!)
+     (check-eval-error-match #rx"malformed do|do binding malformed|do malformed"
+                             "(do (x 0) ((= 1 1) 0))"))
+
    (test-case "eval error prefix contract: non-procedure application"
      (reset!)
      (check-eval-error-match #rx"application of non-procedure" "(0 1 2)"))
@@ -648,6 +671,10 @@
    (test-case "malformed form matrix: letrec"
      (reset!)
      (check-eval-error-match #rx"letrec malformed|malformed letrec|malformed binding" "(letrec (x 1) x)"))
+
+   (test-case "malformed form matrix: do"
+     (reset!)
+     (check-eval-error-match #rx"malformed do|do binding malformed|do malformed" "(do ((x 1 2 3)) ((= x 0) x))"))
 
    (test-case "malformed form matrix: cond clause"
      (reset!)
