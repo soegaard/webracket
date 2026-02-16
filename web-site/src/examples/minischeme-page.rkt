@@ -111,6 +111,23 @@
      (or (string=? s "null")
          (string=? s "undefined"))]))
 
+(define (js-true? v)
+  (cond
+    [(boolean? v) v]
+    [(not v) #f]
+    [(external? v)
+     (with-handlers ([exn:fail? (λ (_) #f)])
+       (string=? (js-value->string v) "true"))]
+    [else #t]))
+
+(define (js-number-value v [default 0.0])
+  (cond
+    [(number? v) v]
+    [(external? v)
+     (with-handlers ([exn:fail? (λ (_) default)])
+       (external-number->flonum v))]
+    [else default]))
+
 (include "minischeme/minischeme.rkt")
 
 (define minischeme-page-started? #f)
@@ -121,6 +138,8 @@
 (define minischeme-editor-key-handler #f)
 (define minischeme-editor-change-handler #f)
 (define minischeme-editor #f)
+(define minischeme-keyword-table (make-hasheq))
+(define minischeme-primitive-table (make-hasheq))
 
 (define (minischeme-codemirror-ready?)
   (not (string=? (js-typeof (js-var "CodeMirror")) "undefined")))
@@ -179,9 +198,234 @@
       (js-set! input-node "value" source))
   (minischeme-save-source source))
 
+(define (minischeme-refresh-highlight-tables!)
+  (set! minischeme-keyword-table (make-hasheq))
+  (set! minischeme-primitive-table (make-hasheq))
+  (for-each (λ (name) (hash-set! minischeme-keyword-table name #t))
+            (minischeme-keywords))
+  (for-each (λ (name) (hash-set! minischeme-primitive-table name #t))
+            (minischeme-primitives)))
+
+(define (minischeme-js-string-escape s)
+  (define s1 (string-replace s "\\" "\\\\"))
+  (define s2 (string-replace s1 "\"" "\\\""))
+  (define s3 (string-replace s2 "\n" "\\n"))
+  (define s4 (string-replace s3 "\r" "\\r"))
+  (string-replace s4 "\t" "\\t"))
+
+(define (minischeme-symbols->js-array syms)
+  (string-append
+   "["
+   (string-join
+    (map (λ (sym)
+           (string-append "\"" (minischeme-js-string-escape (symbol->string sym)) "\""))
+         syms)
+    ",")
+   "]"))
+
+(define (minischeme-build-js-overlay!)
+  ;; Ensure keyword/primitive caches are initialized before generating JS sets.
+  (when (and (null? (minischeme-keywords))
+             (null? (minischeme-primitives)))
+    (minischeme-reset-state!))
+  (define forms-js (minischeme-symbols->js-array (minischeme-keywords)))
+  (define prims-js (minischeme-symbols->js-array (minischeme-primitives)))
+  (define js-source
+    (string-append
+     "(function(){"
+     "const formSet = new Set(" forms-js ");"
+     "const primSet = new Set(" prims-js ");"
+     "const stringRe = /\\\"(?:[^\\\"\\\\\\\\]|\\\\\\\\.)*\\\"?/;"
+     "const symbolRe = /[^\\\\s()\\\\[\\\\]{}\\\"';`,.]+/;"
+     "let logged = false;"
+     "window.__minischemeOverlay = {"
+     " token: function(stream){"
+     "   if (stream.eatSpace()) return null;"
+     "   if (stream.match(';', false, false)) { stream.skipToEnd(); return null; }"
+     "   if (stream.match(stringRe, true, false)) return null;"
+     "   if (stream.match(symbolRe, true, false)) {"
+     "     const tok = stream.current();"
+     "     if (!logged) { logged = true; console.log('[minischeme] overlay active'); }"
+     "     if (formSet.has(tok)) return 'keyword';"
+     "     if (primSet.has(tok)) return 'builtin';"
+     "     return null;"
+     "   }"
+     "   stream.next();"
+     "   return null;"
+     " }"
+     "};"
+     "})();"))
+  (js-eval js-source)
+  (js-ref (js-var "window") "__minischemeOverlay"))
+
+(define (minischeme-token-style token)
+  (with-handlers ([exn:fail? (λ (_) #f)])
+    (define sym (string->symbol token))
+    (cond
+      [(hash-has-key? minischeme-keyword-table sym) "ms-form"]
+      [(hash-has-key? minischeme-primitive-table sym) "ms-builtin"]
+      [else #f])))
+
+(define (minischeme-overlay-delimiter? c)
+  (or (char-whitespace? c)
+      (char=? c #\()
+      (char=? c #\))
+      (char=? c #\[)
+      (char=? c #\])
+      (char=? c #\{)
+      (char=? c #\})
+      (char=? c #\")
+      (char=? c #\')
+      (char=? c #\`)
+      (char=? c #\,)
+      (char=? c #\;)
+      (char=? c #\.)))
+
+(define (minischeme-stream-peek-char stream)
+  (define raw (js-send stream "peek" (vector)))
+  (if (nullish? raw)
+      #f
+      (with-handlers ([exn:fail? (λ (_) #f)])
+        (define s (js-value->string raw))
+        (if (= (string-length s) 0)
+            #f
+            (string-ref s 0)))))
+
+(define (minischeme-stream-next-char stream)
+  (define raw (js-send stream "next" (vector)))
+  (if (nullish? raw)
+      #f
+      (with-handlers ([exn:fail? (λ (_) #f)])
+        (define s (js-value->string raw))
+        (if (= (string-length s) 0)
+            #f
+            (string-ref s 0)))))
+
+(define (make-minischeme-overlay-token-handler)
+  (procedure->external
+   (let ([tokenize
+          (λ (stream)
+            (define start-pos (js-number-value (js-ref stream "pos")))
+            (define result
+              (with-handlers ([exn:fail? (λ (_) #f)])
+                (cond
+                  [(js-true? (js-send stream "eatSpace" (vector))) #f]
+                  [(js-true? (js-send stream "eol" (vector))) #f]
+                  [else
+                   (define ch (minischeme-stream-next-char stream))
+                   (cond
+                     [(not ch) #f]
+                     [(char=? ch #\;)
+                      (js-send stream "skipToEnd" (vector))
+                      #f]
+                     [(char=? ch #\")
+                      (let loop ([escaped? #f])
+                        (define c (minischeme-stream-next-char stream))
+                        (cond
+                          [(not c) (void)]
+                          [escaped? (loop #f)]
+                          [(char=? c #\\) (loop #t)]
+                          [(char=? c #\") (void)]
+                          [else (loop #f)]))
+                      #f]
+                     [(minischeme-overlay-delimiter? ch)
+                      #f]
+                     [else
+                      (let loop ()
+                        (define c (minischeme-stream-peek-char stream))
+                        (when (and c (not (minischeme-overlay-delimiter? c)))
+                          (minischeme-stream-next-char stream)
+                          (loop)))
+                      (minischeme-token-style
+                       (js-value->string (js-send stream "current" (vector))))])])))
+            ;; Instrumentation + guard: ensure we always advance.
+            (define end-pos (js-number-value (js-ref stream "pos")))
+            (when (and (= start-pos end-pos)
+                       (not (js-true? (js-send stream "eol" (vector)))))
+              (js-log (format "[minischeme/overlay] non-advance start=~a end=~a" start-pos end-pos))
+              (js-send stream "next" (vector)))
+            result)])
+     (case-lambda
+       [(stream) (tokenize stream)]
+       [(stream _state) (tokenize stream)]))))
+
+(define (minischeme-expected-closer prefix)
+  ;; Returns the closer that matches the most recent unmatched opener.
+  (define n (string-length prefix))
+  (let loop ([i 0] [stack '()] [in-string? #f] [escaped? #f] [in-comment? #f])
+    (if (= i n)
+        (if (null? stack) #f (car stack))
+        (let ([ch (string-ref prefix i)])
+          (cond
+            [in-comment?
+             (if (or (char=? ch #\newline) (char=? ch #\return))
+                 (loop (+ i 1) stack in-string? escaped? #f)
+                 (loop (+ i 1) stack in-string? escaped? #t))]
+            [in-string?
+             (cond
+               [escaped?
+                (loop (+ i 1) stack #t #f #f)]
+               [(char=? ch #\\)
+                (loop (+ i 1) stack #t #t #f)]
+               [(char=? ch #\")
+                (loop (+ i 1) stack #f #f #f)]
+               [else
+                (loop (+ i 1) stack #t #f #f)])]
+            [else
+             (cond
+               [(char=? ch #\;)
+                (loop (+ i 1) stack #f #f #t)]
+               [(char=? ch #\")
+                (loop (+ i 1) stack #t #f #f)]
+               [(char=? ch #\()
+                (loop (+ i 1) (cons #\) stack) #f #f #f)]
+               [(char=? ch #\[)
+                (loop (+ i 1) (cons #\] stack) #f #f #f)]
+               [(char=? ch #\{)
+                (loop (+ i 1) (cons #\} stack) #f #f #f)]
+               [(and (pair? stack) (char=? ch (car stack)))
+                (loop (+ i 1) (cdr stack) #f #f #f)]
+               [else
+                (loop (+ i 1) stack #f #f #f)])])))))
+
 (define (minischeme-init-codemirror! input-node on-run!)
   (when (and (not minischeme-editor) (minischeme-codemirror-ready?))
     (define codemirror (js-var "CodeMirror"))
+    ;; Use a full WebRacket callback for token classification.
+    (minischeme-refresh-highlight-tables!)
+    (define overlay
+      (js-object
+       (vector
+        (vector "name" "minischeme-overlay-webracket")
+        (vector "token" (make-minischeme-overlay-token-handler)))))
+    (define universal-close-handler
+      (procedure->external
+       (λ (cm)
+         (define cursor (js-send cm "getCursor" (vector)))
+         (define line (js-ref cursor "line"))
+         (define ch (js-ref cursor "ch"))
+         (define start-pos (js-object (vector (vector "line" 0) (vector "ch" 0))))
+         (define prefix (js-value->string (js-send cm "getRange" (vector start-pos cursor))))
+         (define expected (minischeme-expected-closer prefix))
+         (define closer (if expected expected #\]))
+         (define closer-text (string closer))
+         (define next-pos (js-object (vector (vector "line" line) (vector "ch" (+ ch 1)))))
+         (define next-char (js-value->string (js-send cm "getRange" (vector cursor next-pos))))
+         (if (string=? next-char closer-text)
+             (js-send cm "setCursor" (vector next-pos))
+             (js-send cm "replaceSelection" (vector closer-text)))
+         (void))))
+    (define run-shortcut-handler
+      (procedure->external
+       (λ (_cm)
+         (on-run!)
+         (void))))
+    (define extra-keys
+      (js-object
+       (vector
+        (vector "]" universal-close-handler)
+        (vector "Ctrl-Enter" run-shortcut-handler)
+        (vector "Cmd-Enter" run-shortcut-handler))))
     (define options
       (js-object
        (vector
@@ -192,23 +436,13 @@
         (vector "tabSize" 2)
         (vector "indentWithTabs" #f)
         (vector "matchBrackets" #t)
-        (vector "autoCloseBrackets" #t))))
+        (vector "autoCloseBrackets" #t)
+        (vector "extraKeys" extra-keys))))
     (set! minischeme-editor
           (js-send codemirror "fromTextArea" (vector input-node options)))
+    (js-send minischeme-editor "addOverlay" (vector overlay))
     (js-send minischeme-editor "setSize" (vector "100%" "320px"))
     (js-send minischeme-editor "refresh" (vector))
-    (define wrapper (js-send minischeme-editor "getWrapperElement" (vector)))
-    (set! minischeme-editor-key-handler
-          (procedure->external
-           (λ (event)
-             (define key (js-value->string (js-ref event "key")))
-             (when (and (string=? key "Enter")
-                        (or (js-ref event "ctrlKey")
-                            (js-ref event "metaKey")))
-               (js-send event "preventDefault" (vector))
-               (on-run!))
-             (void))))
-    (js-add-event-listener! wrapper "keydown" minischeme-editor-key-handler)
     (set! minischeme-editor-change-handler
           (procedure->external
            (λ (_cm _change)
@@ -259,16 +493,18 @@
               "}\n"
               ".CodeMirror-linenumber { color: #8FA0D8; }\n"
               ".CodeMirror-cursor { border-left: 1px solid #EAF0FF !important; }\n"
-              ".cm-s-default .cm-comment { color: #8B96C7; }\n"
-              ".cm-s-default .cm-keyword { color: #8ab4ff; }\n"
+              ".cm-s-default .cm-comment { color: #7382B0; }\n"
+              ".cm-s-default .cm-keyword { color: #44D5FF; font-weight: 700; }\n"
               ".cm-s-default .cm-number { color: #FFD166; }\n"
               ".cm-s-default .cm-string { color: #8fdb9f; }\n"
               ".cm-s-default .cm-atom { color: #F29F97; }\n"
-              ".cm-s-default .cm-variable { color: #EAF0FF; }\n"
-              ".cm-s-default .cm-def { color: #8AB4FF; }\n"
-              ".cm-s-default .cm-builtin { color: #B6BDD6; }\n"
+              ".cm-s-default .cm-variable { color: #F6F8FF; }\n"
+              ".cm-s-default .cm-def { color: #6EE7FF; font-weight: 700; }\n"
+              ".cm-s-default .cm-builtin { color: #FF7AF6; font-weight: 700; }\n"
               ".cm-s-default .cm-bracket { color: #B6BDD6; }\n"
-              ".cm-s-default .cm-paren { color: #B6BDD6; }\n"))
+              ".cm-s-default .cm-paren { color: #B6BDD6; }\n"
+              ".cm-s-default .cm-ms-form { color: #44D5FF; font-weight: 700; }\n"
+              ".cm-s-default .cm-ms-builtin { color: #FF7AF6; font-weight: 700; }\n"))
     (js-append-child! head style))
 
   (define script-loaded-attr "data-minischeme-loaded")
@@ -381,18 +617,6 @@
     (js-add-event-listener! run-button    "click" minischeme-run-handler)
     (js-add-event-listener! reset-button  "click" minischeme-reset-handler)
     (js-add-event-listener! sample-button "click" minischeme-load-handler)
-
-    (set! minischeme-editor-key-handler
-          (procedure->external
-           (λ (event)
-             (define key (js-value->string (js-ref event "key")))
-             (when (and (string=? key "Enter")
-                        (or (js-ref event "ctrlKey")
-                            (js-ref event "metaKey")))
-               (js-send event "preventDefault" (vector))
-               (run!))
-             (void))))
-    (js-add-event-listener! input-node "keydown" minischeme-editor-key-handler)
 
     (ensure-minischeme-codemirror-assets! input-node run!)
 
