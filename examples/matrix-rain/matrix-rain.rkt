@@ -1,4 +1,67 @@
-(define head (js-document-head))
+;;;
+;;; MATRIX RAIN
+;;;
+
+;; An attempt to recreate the famous screen saver from the Matrix movies.
+;; This doubles as an example of how to use xtermjs.
+
+;; Compile this demo with:
+
+;;    racket -t ../../webracket.rkt -- --ffi xtermjs --ffi dom --ffi standard --stdlib -b matrix-rain.rkt
+
+;;;
+;;; Utilities
+;;;
+
+; Ensure inexactness
+(define (inexact x)
+  (if (exact? x) (exact->inexact x) x))
+
+(define (exact x)
+  (if (inexact? x) (inexact->exact x) x))
+
+(define (randf)
+  (inexact (random)))
+
+(define (random-between low high)
+  (+ low (* (randf) (- high low))))
+
+;;;
+;;; Glyphs
+;;;
+
+(define glyphs (string-append "0123456789"
+                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "abcdefghijklmnopqrstuvwxyz"
+                              "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛ"))  
+(define glyph-count (string-length glyphs))
+
+(define (random-glyph) (string-ref glyphs (random glyph-count)))
+
+
+;; We need to load external scripts first (here xterm from cdn).
+;; Then we can begin the actual program.
+;; Using the `load` event listener, we get alerted when the external
+;; scripts are loaded.
+
+(define (load-and-start)
+  ; - load the style sheet in parallel to the script
+  ; - don't wait for the style sheet to load
+
+  (define head (js-document-head))
+  
+  ;; Use the xtermjs stylesheet
+  (define link (js-create-element "link"))
+  (js-set-attribute! link "rel" "stylesheet")
+  (js-set-attribute! link "href" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css")
+  (js-append-child! head link)
+
+  ;; Load xtermjs from cdn
+  (define script (js-create-element "script"))
+  (js-set-attribute!      script "src" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js")
+  (js-add-event-listener! script "load" (procedure->external init-terminal))
+  (js-append-child! head  script))
+
 
 (define (init-terminal . _)
   (define body (js-document-body))
@@ -16,60 +79,58 @@
                       "align-items: center; justify-content: center; "
                       "background: radial-gradient(circle at center, #050 0%, #000 60%);"))
   (js-append-child! body container)
-
-  ;; Use the Xtermjs stylesheet
-  (define link (js-create-element "link"))
-  (js-set-attribute! link "rel" "stylesheet")
-  (js-set-attribute! link "href" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css")
-  (js-append-child! head link)
-
+  
+  ;;;
+  ;;; SETUP TERMINAL
+  ;;;
   (define terminal (xterm-terminal-new (void)))
-  (xterm-terminal-open terminal container)
+  (xterm-terminal-open  terminal container)
   (xterm-terminal-focus terminal)
+  ; erase display and hide cursor
   (xterm-terminal-write terminal "\u001b[2J\u001b[?25l" (void))
 
-  (define columns (inexact->exact (xterm-terminal-cols terminal)))
-  (define rows    (inexact->exact (xterm-terminal-rows terminal)))
+  (define columns (exact (xterm-terminal-cols terminal)))
+  (define rows    (exact (xterm-terminal-rows terminal)))
 
-  #;(when (or (zero? columns) (zero? rows))
-    (error 'matrix "terminal has zero-sized viewport"))
-
-  (struct drop (position speed trail last-row) #:mutable)
-
-  (define (->f x)
-    (if (exact? x) (exact->inexact x) x))
-
-  (define glyphs
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛ")
-  (define glyph-count (string-length glyphs))
-  (define (random-glyph)
-    (string-ref glyphs (random glyph-count)))
-
-  (define (randf)
-    (->f (random)))
-
-  (define (random-between low high)
-    (+ low (* (randf) (- high low))))
-
-  (define fade-rate 2.6)
-  (define base-spawn-rate 0.32)
-  (define min-speed 14.)
-  (define max-speed 32.)
-  (define min-trail 8.)
-  (define max-trail 22.)
+  ;;;
+  ;;; CONFIGURATION
+  ;;;
+  
+  (define fade-rate        2.6)
+  (define base-spawn-rate  0.32)
+  (define min-speed       14.)
+  (define max-speed       32.)
+  (define min-trail        8.)
+  (define max-trail       22.)
   (define burst-speed-min 32.)
   (define burst-speed-max 48.)
   (define burst-trail-min 14.)
   (define burst-trail-max 26.)
+  
+  ;;;
+  ;;; SCREEN
+  ;;;
 
+  ;; The screen is modelled as an 2d array of characters
+  ;; and intensities.
+
+  ;; Clear screen
   (define intensities (make-vector rows #f))
-  (define characters (make-vector rows #f))
+  (define characters  (make-vector rows #f))
   (for ([row (in-range rows)])
     (vector-set! intensities row (make-vector columns 0.0))
-    (vector-set! characters row (make-vector columns #\space)))
+    (vector-set! characters  row (make-vector columns #\space)))
 
+  ;;;
+  ;;; TRAILS
+  ;;;
+
+  ; A `drop` represents the leading, falling character in a trail.
+  
+  (struct drop (position speed trail last-row) #:mutable)  
   (define column-drops (make-vector columns #f))
 
+  
   (define (boost-intensity! row col target)
     (when (and (>= row 0) (< row rows))
       (define row-int (vector-ref intensities row))
@@ -79,34 +140,35 @@
 
   (define (set-cell! row col intensity char [head? #f])
     (when (and (>= row 0) (< row rows))
-      (define row-int (vector-ref intensities row))
-      (define row-char (vector-ref characters row))
-      (vector-set! row-int col (min 1. intensity))
+      (define row-int  (vector-ref intensities row))
+      (define row-char (vector-ref characters  row))
+      (vector-set! row-int  col (min 1. intensity))
       (vector-set! row-char col char)
       (when head?
         (boost-intensity! (sub1 row) col 0.65))))
 
-  (define (spawn-drop! col [position (- (random-between 0. rows))]
+  (define (spawn-drop! col
+                       [position (- (random-between 0. rows))]
                        [speed    (random-between min-speed max-speed)]
                        [trail    (random-between min-trail max-trail)])
     (vector-set! column-drops col
-                 (drop position speed trail (inexact->exact (floor position)))))
+                 (drop position speed trail (exact (floor position)))))
 
   (define (fade-grid! dt)
     (define decay (* dt fade-rate))
     (for ([row (in-range rows)])
-      (define row-int (vector-ref intensities row))
-      (define row-char (vector-ref characters row))
+      (define row-int  (vector-ref intensities row))
+      (define row-char (vector-ref characters  row))
       (for ([col (in-range columns)])
         (define value (vector-ref row-int col))
         (when (> value 0.)
           (define new-value (max 0. (- value decay)))
           (if (<= new-value 0.05)
               (begin
-                (vector-set! row-int col 0.)
+                (vector-set! row-int  col 0.)
                 (vector-set! row-char col #\space))
               (begin
-                (vector-set! row-int col new-value)
+                (vector-set! row-int  col new-value)
                 (when (< (randf) (* dt 0.08))
                   (vector-set! row-char col (random-glyph)))))))))
 
@@ -117,7 +179,7 @@
         (define new-pos (+ (drop-position current-drop)
                            (* (drop-speed current-drop) dt)))
         (set-drop-position! current-drop new-pos)
-        (define head-row (inexact->exact (floor new-pos)))
+        (define head-row (exact (floor new-pos)))
         (define last-row (drop-last-row current-drop))
         (when (> head-row last-row)
           (for ([row (in-range (add1 last-row) (add1 head-row))])
@@ -163,9 +225,9 @@
 
   (define (intensity->rgb intensity)
     (define i (max 0. (min 1. intensity)))
-    (define g (inexact->exact (round (+ 80. (* i 175.)))))
-    (define r (inexact->exact (round (* i 40.))))
-    (define b (inexact->exact (round (* i 70.))))
+    (define g (exact (round (+ 80. (* i 175.)))))
+    (define r (exact (round (* i 40.))))
+    (define b (exact (round (* i 70.))))
     (values r g b))
 
   (define (render!)
@@ -223,7 +285,10 @@
   (js-window-request-animation-frame tick-external)
   (void))
 
-(define script (js-create-element "script"))
-(js-set-attribute!      script "src" "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js")
-(js-add-event-listener! script "load" (procedure->external init-terminal))
-(js-append-child! head  script)
+
+;;;
+;;; Run
+;;;
+
+(load-and-start)
+
