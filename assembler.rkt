@@ -732,7 +732,32 @@ var imports = {
       'index':                     ((obj, prop) => to_fasl( obj[ from_fasl(prop) ] ) ),
       'assign':                    ((name, val) => (globalThis[from_fasl(name)] = from_fasl(val))),
       'new':                       ((ctor, args) => new ctor(...(from_fasl(args) || []))),
+      // Send variants:
+      // - send/extern  => raw JS result
+      // - send/value   => JS result converted via FASL
+      // - send/boolean => strict boolean result; throws on non-boolean
+      // - send/truthy  => JS truthiness to 0/1
+      // Current default `send` is kept as raw extern during migration.
       'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
+      'send/extern':               ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
+      'send/value':                ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []));
+                                    return to_fasl(x);
+                                   }),
+      'send/boolean':              ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []));
+                                    if (typeof x === 'boolean') {
+                                      return x ? 1 : 0;
+                                    }
+                                    if ((typeof x === 'object') && (x instanceof Boolean)) {
+                                      return x.valueOf() ? 1 : 0;
+                                    }
+                                    throw new TypeError(`js-send/boolean: expected boolean result, got ${typeof x}`);
+                                   }),
+      'send/truthy':               ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []));
+                                    return x ? 1 : 0;
+                                   }),
       'send/flonum':               ((obj, name, args) => {
                                     const x = obj[from_fasl(name)](...(from_fasl(args) || []))
                                     return (( (typeof x === "object") && (x instanceof Number) ) ? x.valueOf() : x)

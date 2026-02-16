@@ -136,6 +136,32 @@
   ;; Pass arguments as vector.
   (-> (extern string/symbol value) (extern)))
 
+(define-foreign js-send/extern
+  #:module "standard"
+  #:name   "send/extern"
+  ;; Pass arguments as vector.
+  (-> (extern string/symbol value) (extern)))
+
+(define-foreign js-send/value
+  #:module "standard"
+  #:name   "send/value"
+  ;; Pass arguments as vector.
+  (-> (extern string/symbol value) (value)))
+
+(define-foreign js-send/boolean
+  #:module "standard"
+  #:name   "send/boolean"
+  ;; Pass arguments as vector.
+  ;; Raises when the JS result is not a boolean.
+  (-> (extern string/symbol value) (boolean)))
+
+(define-foreign js-send/truthy
+  #:module "standard"
+  #:name   "send/truthy"
+  ;; Pass arguments as vector.
+  ;; Converts JS truthiness to boolean.
+  (-> (extern string/symbol value) (boolean)))
+
 (define-foreign js-send/flonum
   #:module "standard"
   #:name   "send/flonum"
@@ -716,4 +742,3 @@
   #:module "standard"
   #:name   "Intl.Segmenter"
   (-> () (extern)))
-
