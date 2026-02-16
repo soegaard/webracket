@@ -246,7 +246,7 @@
     (if (>= idx count)
         (reverse acc)
         (loop (add1 idx)
-              (cons (js-send node-list "item" (vector idx)) acc)))))
+              (cons (js-send/extern node-list "item" (vector idx)) acc)))))
 
 ;; element-text: any/c -> string?
 ;;   Extract trimmed textContent from an element.

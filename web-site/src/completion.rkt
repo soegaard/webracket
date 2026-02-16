@@ -3106,7 +3106,7 @@
     (if (>= idx count)
         (reverse acc)
         (loop (add1 idx)
-              (cons (js-send node-list "item" (vector idx)) acc)))))
+              (cons (js-send/extern node-list "item" (vector idx)) acc)))))
 
 (define status-handler-store '())
 
@@ -3464,7 +3464,7 @@
     (define handler
       (procedure->external
        (lambda (_evt)
-         (define details (js-send button "closest" (vector "details")))
+         (define details (js-send/extern button "closest" (vector "details")))
          (when details
            (js-remove-attribute! details "open")))))
     (remember-status-handler! handler)

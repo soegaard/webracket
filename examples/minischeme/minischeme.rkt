@@ -1487,7 +1487,7 @@
   (define screen        (js-query-selector ".xterm-screen"))
   (define cols          (and term (xterm-terminal-cols term)))
   (define rows          (and term (xterm-terminal-rows term)))
-  (define rect          (and screen (js-send screen "getBoundingClientRect" (vector))))
+  (define rect          (and screen (js-send/extern screen "getBoundingClientRect" (vector))))
   (define total-width   (and rect (js-ref rect "width")))
   (define total-height  (and rect (js-ref rect "height")))
   (define valid-cols?   (and (number? cols) (> cols 0)))
@@ -1502,7 +1502,7 @@
   (define target (or (js-ref event "currentTarget") (js-ref event "target")))
   (define-values (cell-width cell-height) (terminal-cell-dimensions))
   (if (and target cell-width cell-height)
-      (let* ([rect      (js-send target "getBoundingClientRect" (vector))]
+      (let* ([rect      (js-send/extern target "getBoundingClientRect" (vector))]
              [left      (and rect (js-ref rect "left"))]
              [top       (and rect (js-ref rect "top"))]
              [client-x  (js-ref event "clientX")]
@@ -1656,7 +1656,7 @@
   ;;             (xterm-terminal-write term data (void)))]))
   ;;      (void))))
 
-  ;; (js-send term "onData" (vector on-data))
+  ;; (js-send/extern term "onData" (vector on-data))
   ;; (show-prompt)
   ;; (void))
 

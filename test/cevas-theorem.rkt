@@ -191,7 +191,7 @@
                     (attributes 'boundingbox     #[-5 5 5 -5]
                                 'axis            #t
                                 'keepaspectratio #t)))
-  (js-send JSXGraph "initBoard" (vector container-id attrs)))
+  (js-send/extern JSXGraph "initBoard" (vector container-id attrs)))
 
 
 ;; Element Constructors
@@ -199,7 +199,7 @@
 
 (define (board-create board element-type parents [attributes #f])
   (define attrs (or attributes '#[])) ; optional
-  (js-send board "create" (vector element-type parents attrs)))
+  (js-send/extern board "create" (vector element-type parents attrs)))
 
 (define (create-point board parents [attributes #f])
   (board-create board "point" parents attributes))

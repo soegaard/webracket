@@ -77,8 +77,39 @@
               (string? (external-string->string (js-new (js-Date) (vector)))))
         (list "js-send"
               (let ([arr (js-array/extern (vector 1 2 3))])
-                (equal? (external-string->string
-                         (js-send arr "join" (vector "-")))   "1-2-3")))
+                (equal? (js-send arr "join" (vector "-")) "1-2-3")))
+        (list "js-send/extern"
+              (let* ([arr (js-array/extern (vector 1 2 3))]
+                     [res (js-send/extern arr "join" (vector "-"))])
+                (and (external? res)
+                     (equal? (external-string->string res) "1-2-3"))))
+        (list "js-send/value primitive result"
+              (let ([arr (js-array/extern (vector 1 2 3))])
+                (equal? (js-send/value arr "join" (vector "-"))
+                        "1-2-3")))
+        (list "js-send/value array result"
+              (let* ([arr (js-array/extern (vector 10 20 30))]
+                     [res (js-send/value arr "slice" (vector 1))])
+                (and (vector? res)
+                     (equal? res #(20 30)))))
+        (list "js-send/boolean"
+              (let ([arr (js-array/extern (vector 1 2 3))])
+                (and (equal? (js-send/boolean arr "includes" (vector 2)) #t)
+                     (equal? (js-send/boolean arr "includes" (vector 9)) #f))))
+        (list "js-send/boolean accepts Boolean object"
+              (let ([obj (js-eval "({ f: function(){ return new Boolean(false); } })")])
+                (equal? (js-send/boolean obj "f" (vector)) #f)))
+        #;(list "js-send/boolean non-boolean result raises"
+              ;; NOTE: currently throws a host JS TypeError that escapes the
+              ;; wasm run loop, so it cannot be caught with with-handlers yet.
+              (with-handlers ([exn? (λ (_) #t)])
+                (js-send/boolean (js-Math) "abs" (vector -1.0))
+                #f))
+        (list "js-send/truthy"
+              (let ([obj (js-eval "({ z: function(){ return 0; }, n: function(){ return 42; }, e: function(){ return ''; } })")])
+                (and (equal? (js-send/truthy obj "z" (vector)) #f)
+                     (equal? (js-send/truthy obj "n" (vector)) #t)
+                     (equal? (js-send/truthy obj "e" (vector)) #f))))
         (list "js-send/flonum"
               (equal? (js-send/flonum (js-Math) "abs" (vector -1.0)) 1.0))
         (list "js-operator"
@@ -100,27 +131,27 @@
         (list "procedure->external/call basic"
               (let* ([f   (procedure->external (λ (a b) (+ a b)))]
                      [res (js-send f "call" (vector (js-global-this) 10 20))])
-                (= (external-number->flonum res) 30.0)))
+                (equal? res 30)))
         (list "procedure->external/undefined arg maps to void"
               (let* ([f   (procedure->external (λ (_a b) (void? b)))]
                      [res (js-send f "call" (vector (js-global-this) 1 (js-undefined)))])
-                (string=? (js-value->string res) "true")))
+                (equal? res #t)))
         (list "procedure->external/js-send inside callback"
               (let* ([obj (js-eval "({ next: function(){ return 'x'; } })")]
                      [f   (procedure->external
                            (λ (stream _state)
                              (define v (js-send stream "next" (vector)))
-                             (string-length (js-value->string v))))]
+                             (string-length v)))]
                      [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
-                (= (external-number->flonum res) 1.0)))
+                (equal? res 1)))
         (list "procedure->external/js-send undefined return"
               (let* ([obj (js-eval "({ next: function(){ return undefined; } })")]
                      [f   (procedure->external
                            (λ (stream _state)
                              (define v (js-send stream "next" (vector)))
-                             (string=? (js-typeof v) "undefined")))]
+                             (void? v)))]
                      [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
-                (string=? (js-value->string res) "true")))))
+                (equal? res #t)))))
 
  (list "Fundamental objects"
        (list

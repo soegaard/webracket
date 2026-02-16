@@ -1,3 +1,4 @@
+
 (define canvas (js-create-element "canvas"))
 (js-set-canvas-width!  canvas 300)
 (js-set-canvas-height! canvas 300)
@@ -25,6 +26,6 @@
     (set! rot (+ rot step)))
   (js-canvas2d-close-path ctx)
   (js-canvas2d-fill ctx (void) "nonzero") ; path, fill=rule  ; void becomes undefined
-  (js-canvas2d-stroke ctx))
+  (js-canvas2d-stroke ctx (void)))
 
 (draw-star ctx 150. 150. 5 100. 40.)

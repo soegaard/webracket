@@ -737,8 +737,11 @@ var imports = {
       // - send/value   => JS result converted via FASL
       // - send/boolean => strict boolean result; throws on non-boolean
       // - send/truthy  => JS truthiness to 0/1
-      // Current default `send` is kept as raw extern during migration.
-      'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
+      // Default `send` mirrors `send/value`.
+      'send':                      ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []));
+                                    return to_fasl(x);
+                                   }),
       'send/extern':               ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
       'send/value':                ((obj, name, args) => {
                                     const x = obj[from_fasl(name)](...(from_fasl(args) || []));

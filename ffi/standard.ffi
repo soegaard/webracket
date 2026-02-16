@@ -134,7 +134,8 @@
   #:module "standard"
   #:name   "send"
   ;; Pass arguments as vector.
-  (-> (extern string/symbol value) (extern)))
+  ;; Default value-converting variant (same semantics as `send/value`).
+  (-> (extern string/symbol value) (value)))
 
 (define-foreign js-send/extern
   #:module "standard"
