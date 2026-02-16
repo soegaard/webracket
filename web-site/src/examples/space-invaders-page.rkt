@@ -43,14 +43,6 @@
 (define (inexact x)
   (if (exact? x) (exact->inexact x) x))
 
-(define (nullish? x)
-  (cond
-    [(not x) #t]
-    [else
-     (define s (js-value->string x))
-     (or (string=? s "null")
-         (string=? s "undefined"))]))
-
 ;;;
 ;;; Audio (WebAudio, old-school bleeps)
 ;;;
@@ -60,9 +52,9 @@
 (define (audio-context-constructor)
   (define ctor (js-var "AudioContext"))
   (cond
-    [(nullish? ctor)
+    [(js-nullish? ctor)
      (define webkit (js-var "webkitAudioContext"))
-     (if (nullish? webkit)
+     (if (js-nullish? webkit)
          #f
          webkit)]
     [else ctor]))
@@ -189,7 +181,7 @@
 
 (define (init-space-invaders-canvas!)
   (define root (js-get-element-by-id "space-invaders-root"))
-  (when (nullish? root)
+  (when (js-nullish? root)
     (error 'space-invaders "missing #space-invaders-root container"))
   (set! canvas (js-create-element "canvas"))
   (js-set-canvas-width!  canvas canvas-width)

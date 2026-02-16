@@ -126,14 +126,6 @@
             i
             (loop (add1 i))))))
 
-(define (nullish? x)
-  (cond
-    [(not x) #t]
-    [else
-     (define s (js-value->string x))
-     (or (string=? s "null")
-         (string=? s "undefined"))]))
-
 (define xtermjs-demo-started? #f)
 
 
@@ -148,12 +140,12 @@
 
         (define head (js-document-head))
         (define container (js-get-element-by-id "xtermjs-demo-root"))
-        (when (nullish? container)
+        (when (js-nullish? container)
           (error 'xtermjs-demo "missing #xtermjs-demo-root container"))
 
         (define style-id "xtermjs-demo-style")
         (define style-existing (js-get-element-by-id style-id))
-        (when (nullish? style-existing)
+        (when (js-nullish? style-existing)
           (define style (js-create-element "style"))
           (js-set-attribute! style "id" style-id)
           (js-set! style "textContent"
@@ -323,9 +315,9 @@
   ; Use webgl addon (needed for the powerline glyps to render correctly)
   (define win             (js-window-window))
   (define webgl-namespace (js-ref/extern win "WebglAddon"))
-  (when (not (nullish? webgl-namespace))
+  (when (not (js-nullish? webgl-namespace))
     (define webgl-constructor (js-ref/extern webgl-namespace "WebglAddon"))
-    (when (not (nullish? webgl-constructor))
+    (when (not (js-nullish? webgl-constructor))
       (define webgl (js-new webgl-constructor (vector)))
       (xterm-terminal-load-addon term webgl)))
 
@@ -744,13 +736,13 @@
 
   (define (maybe-init-demo)
     (when (and (not xtermjs-demo-started?)
-               (not (string=? (js-typeof (js-var "Terminal")) "undefined"))
-               (not (string=? (js-typeof (js-var "WebglAddon")) "undefined")))
+               (not (js-nullish? (js-var "Terminal")))
+               (not (js-nullish? (js-var "WebglAddon"))))
       (start-demo)))
 
   (define style-id "xtermjs-demo-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
-  (when (nullish? style-existing)
+  (when (js-nullish? style-existing)
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -768,7 +760,7 @@
                           (void))))
 
   (cond
-    [(not (nullish? script-existing))
+    [(not (js-nullish? script-existing))
      (js-add-event-listener! script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))
@@ -778,7 +770,7 @@
      (js-append-child! head script)])
 
   (cond
-    [(not (nullish? webgl-script-existing))
+    [(not (js-nullish? webgl-script-existing))
      (js-add-event-listener! webgl-script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))

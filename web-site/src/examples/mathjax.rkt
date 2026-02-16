@@ -108,18 +108,6 @@
   (when mathjax-textarea
     (js-add-event-listener! mathjax-textarea "input" mathjax-input-handler)))
 
-
-; js-nullish? : extern -> boolean
-;  checks whether an external value is null or undefined
-(define (js-nullish? x)
-  (cond
-    [(not x) #t] ; in case some call really returns #f
-    [else
-     (define s (js-value->string x))
-     (or (string=? s "null")
-         (string=? s "undefined"))]))
-
-
 (define (load-mathjax-script!)  
   (define existing (js-get-element-by-id "mathjax-script"))
 

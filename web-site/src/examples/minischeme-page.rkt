@@ -103,14 +103,6 @@
                                             "Page shell")))))
         ,(footer-section)))
 
-(define (nullish? x)
-  (cond
-    [(not x) #t]
-    [else
-     (define s (js-value->string x))
-     (or (string=? s "null")
-         (string=? s "undefined"))]))
-
 (define (js-true? v)
   (cond
     [(boolean? v) v]
@@ -142,25 +134,23 @@
 (define minischeme-primitive-table (make-hasheq))
 
 (define (minischeme-codemirror-ready?)
-  (not (string=? (js-typeof (js-var "CodeMirror")) "undefined")))
+  (not (js-nullish? (js-var "CodeMirror"))))
 
 (define (minischeme-codemirror-scheme-mode-ready?)
   (and (minischeme-codemirror-ready?)
        (let* ([codemirror (js-var "CodeMirror")]
               [modes (js-ref codemirror "modes")]
-              [scheme-mode (and (not (nullish? modes))
+              [scheme-mode (and (not (js-nullish? modes))
                                 (js-ref modes "scheme"))])
-         (and (not (nullish? scheme-mode))
-              (not (string=? (js-typeof scheme-mode) "undefined"))))))
+         (not (js-nullish? scheme-mode)))))
 
 (define (minischeme-codemirror-option-handler-ready? option-name)
   (and (minischeme-codemirror-ready?)
        (let* ([codemirror (js-var "CodeMirror")]
               [handlers (js-ref codemirror "optionHandlers")]
-              [handler (and (not (nullish? handlers))
+              [handler (and (not (js-nullish? handlers))
                             (js-ref handlers option-name))])
-         (and (not (nullish? handler))
-              (not (string=? (js-typeof handler) "undefined"))))))
+         (not (js-nullish? handler)))))
 
 (define (minischeme-codemirror-matchbrackets-ready?)
   (minischeme-codemirror-option-handler-ready? "matchBrackets"))
@@ -170,16 +160,16 @@
 
 (define (minischeme-load-saved-source)
   (define storage (js-ref (js-var "window") "localStorage"))
-  (if (nullish? storage)
+  (if (js-nullish? storage)
       #f
       (let ([saved (js-send/extern storage "getItem" (vector minischeme-storage-key))])
-        (if (nullish? saved)
+        (if (js-nullish? saved)
             #f
             (js-value->string saved)))))
 
 (define (minischeme-save-source source)
   (define storage (js-ref (js-var "window") "localStorage"))
-  (unless (nullish? storage)
+  (unless (js-nullish? storage)
     (js-send storage "setItem" (vector minischeme-storage-key source))))
 
 (define (minischeme-restore-source! input-node)
@@ -283,7 +273,7 @@
 
 (define (minischeme-stream-peek-char stream)
   (define raw (js-send/extern stream "peek" (vector)))
-  (if (nullish? raw)
+  (if (js-nullish? raw)
       #f
       (with-handlers ([exn:fail? (λ (_) #f)])
         (define s (js-value->string raw))
@@ -293,7 +283,7 @@
 
 (define (minischeme-stream-next-char stream)
   (define raw (js-send/extern stream "next" (vector)))
-  (if (nullish? raw)
+  (if (js-nullish? raw)
       #f
       (with-handlers ([exn:fail? (λ (_) #f)])
         (define s (js-value->string raw))
@@ -461,7 +451,7 @@
 
   (define cm-style-id "minischeme-codemirror-css")
   (define cm-style-existing (js-get-element-by-id cm-style-id))
-  (when (nullish? cm-style-existing)
+  (when (js-nullish? cm-style-existing)
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" cm-style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -470,7 +460,7 @@
 
   (define cm-ui-style-id "minischeme-codemirror-ui-style")
   (define cm-ui-style-existing (js-get-element-by-id cm-ui-style-id))
-  (when (nullish? cm-ui-style-existing)
+  (when (js-nullish? cm-ui-style-existing)
     (define style (js-create-element "style"))
     (js-set-attribute! style "id" cm-ui-style-id)
     (js-set! style "textContent"
@@ -511,7 +501,7 @@
 
   (define (script-marked-loaded? script)
     (define raw (js-get-attribute script script-loaded-attr))
-    (and (not (nullish? raw))
+    (and (not (js-nullish? raw))
          (string=? (js-value->string raw) "1")))
 
   (define (mark-script-loaded! script)
@@ -522,13 +512,13 @@
       (procedure->external
        (λ (_)
          (define loaded-script (js-get-element-by-id script-id))
-         (when (not (nullish? loaded-script))
+         (when (not (js-nullish? loaded-script))
            (mark-script-loaded! loaded-script))
          (on-ready!)
          (void))))
     (define existing (js-get-element-by-id script-id))
     (cond
-      [(not (nullish? existing))
+      [(not (js-nullish? existing))
        (cond
          [(or (script-marked-loaded? existing) (ready?))
           (mark-script-loaded! existing)
@@ -576,11 +566,11 @@
     (define reset-button     (js-get-element-by-id "minischeme-reset"))
     (define sample-button    (js-get-element-by-id "minischeme-load-sample"))
 
-    (when (or (nullish? input-node)
-              (nullish? output-node)
-              (nullish? run-button)
-              (nullish? reset-button)
-              (nullish? sample-button))
+    (when (or (js-nullish? input-node)
+              (js-nullish? output-node)
+              (js-nullish? run-button)
+              (js-nullish? reset-button)
+              (js-nullish? sample-button))
       (error 'minischeme-page "missing expected DOM nodes for MiniScheme page"))
 
     (minischeme-restore-source! input-node)

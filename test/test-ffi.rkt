@@ -28,7 +28,11 @@
         (list "js-nan"
               (equal? (js-is-nan (js-nan)) 1))
         (list "js-undefined"
-              (equal? (js-typeof (js-undefined)) "undefined"))))
+              (equal? (js-typeof (js-undefined)) "undefined"))
+        (list "js-nullish?"
+              (and (equal? (js-nullish? (js-null)) #t)
+                   (equal? (js-nullish? (js-undefined)) #t)
+                   (equal? (js-nullish? (js-global-this)) #f)))))
  (list "Function properties"
        (list
         (list "js-is-finite"

@@ -764,6 +764,7 @@ var imports = {
       'infinity':                  (() => Infinity),
       'nan':                       (() => NaN),
       'undefined':                 (() => undefined),
+      'nullish?':                  ((v) => ((v === null) || (v === undefined)) ? 1 : 0),
       'eval':                      ((code) => eval(from_fasl(code))),
       'is-finite':                 ((x) => isFinite(x) ? 1 : 0),
       'is-nan':                    ((x) => isNaN(x) ? 1 : 0),

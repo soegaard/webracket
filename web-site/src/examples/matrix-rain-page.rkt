@@ -52,9 +52,9 @@
     (define terminal-constructor (js-var "Terminal"))
     (define fit-addon-global (js-var "FitAddon"))
     (define dependencies-ready?
-      (and (not (nullish? container))
-           (not (string=? (js-typeof terminal-constructor) "undefined"))
-           (not (string=? (js-typeof fit-addon-global)     "undefined"))))
+      (and (not (js-nullish? container))
+           (not (js-nullish? terminal-constructor))
+           (not (js-nullish? fit-addon-global))))
 
     (cond
       [(not dependencies-ready?)
@@ -75,7 +75,7 @@
             (let* ([addon-namespace fit-addon-global]
                    [addon-member (js-ref addon-namespace "FitAddon")]
                    [addon-constructor
-                    (if (string=? (js-typeof addon-member) "undefined")
+                    (if (js-nullish? addon-member)
                         addon-namespace
                         (js-ref/extern addon-namespace "FitAddon"))])
               (js-new addon-constructor (vector))))
@@ -313,26 +313,18 @@
           (js-window-request-animation-frame tick-external)
           (void)])))
 
-(define (nullish? x)
-  (cond
-    [(not x) #t]
-    [else
-     (define s (js-value->string x))
-     (or (string=? s "null")
-         (string=? s "undefined"))]))
-
 (define (ensure-matrix-rain-assets!)
   (define head (js-document-head))
 
   (define (maybe-init-terminal)
     (when (and (not matrix-rain-started?)
-               (not (string=? (js-typeof (js-var "Terminal")) "undefined"))
-               (not (string=? (js-typeof (js-var "FitAddon")) "undefined")))
+               (not (js-nullish? (js-var "Terminal")))
+               (not (js-nullish? (js-var "FitAddon"))))
       (matrix-rain-init-terminal)))
 
   (define style-id "matrix-rain-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
-  (when (nullish? style-existing)
+  (when (js-nullish? style-existing)
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -350,7 +342,7 @@
                           (void))))
 
   (cond
-    [(not (nullish? script-existing))
+    [(not (js-nullish? script-existing))
      (js-add-event-listener! script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))
@@ -360,7 +352,7 @@
      (js-append-child! head script)])
 
   (cond
-    [(not (nullish? fit-script-existing))
+    [(not (js-nullish? fit-script-existing))
      (js-add-event-listener! fit-script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))

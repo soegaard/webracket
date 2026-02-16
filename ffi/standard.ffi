@@ -31,6 +31,12 @@
   #:name   "undefined"
   (-> () (extern)))
 
+;; JS nullish test (`null` or `undefined`).
+(define-foreign js-nullish?
+  #:module "standard"
+  #:name   "nullish?"
+  (-> (extern) (boolean)))
+
 ;;;
 ;;; Function properties
 ;;;
