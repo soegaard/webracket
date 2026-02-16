@@ -602,59 +602,116 @@
   (define box-syms        (set-union import-box-syms
                                      (apply seteq (map caar export-box-bindings))))
   (define (desugar e)
+    (displayln e)
     (cond
-     [(correlated? e)
-      (correlate e (desugar (correlated-e e)))]
-     [(symbol? e) (if (set-member? box-syms e)
-                      (if (set-member? import-box-syms e)
-                          `(unbox ,e)
-                          `(check-not-undefined (unbox ,e) ',e))
-                      e)]
-     [(pair? e)
-      (case (correlated-e (car e))
-        [(quote) e]
-        [(set!)
-         (define-correlated-match m e '(set! var rhs))
-         (if (set-member? box-syms (correlated-e (m 'var)))
-             `(set-box! ,(m 'var) ,(desugar (m 'rhs)))
-             `(set!     ,(m 'var) ,(desugar (m 'rhs))))]
-        [(define-values)
-         (define-correlated-match m e '(define-values (id ...) rhs))
-         (define ids  (m 'id))
-         (define tmps (map gensym (map correlated-e ids)))
-         `(define-values ,(for/list ([id (in-list ids)]
-                                     #:when (not (set-member? box-syms (correlated-e id))))
-                            id)
-           (let-values ([,tmps (let-values ([,ids ,(desugar (m 'rhs))])
-                                 (values ,@ids))])
-             (begin
-               ,@(for/list ([id (in-list ids)]
-                            [tmp (in-list tmps)]
-                            #:when (set-member? box-syms (correlated-e id)))
-                   `(set-box! ,id ,tmp))
-               (values ,@(for/list ([id (in-list ids)]
-                                    [tmp (in-list tmps)]
-                                    #:when (not (set-member? box-syms (correlated-e id))))
-                           tmp)))))]
-        [(lambda)
-         (define-correlated-match m e '(lambda formals body))
-         `(lambda ,(m 'formals) ,(desugar (m 'body)))]
-        [(case-lambda)
-         (define-correlated-match m e '(case-lambda [formals body] ...))
-         `(case-lambda ,@(for/list ([formals (in-list (m 'formals))]
-                                    [body (in-list (m 'body))])
-                           `[,formals ,(desugar body)]))]
-        [(#%variable-reference)
-         (if (and (pair? (correlated-e (cdr (correlated-e e))))
-                  (set-member? box-syms (correlated-e (correlated-cadr e))))
-             ;; Using a plain `#%variable-reference` (for now) means
-             ;; that all imported and exported variables count as
-             ;; mutable:
-             '(variable-reference self-inst (#%variable-reference))
-             ;; Preserve info about a local identifier:
-             `(variable-reference self-inst ,e))]
-        [else (map desugar (correlated->list e))])]
-     [else e]))
+      [(symbol? e) (if (set-member? box-syms e)
+                       (if (set-member? import-box-syms e)
+                           `(unbox ,e)
+                           `(check-not-undefined (unbox ,e) ',e))
+                       e)]
+      [(pair? e)
+       (case (car e)
+         [(quote) e]
+         [(set!)
+          (match e
+            [(list 'set! var rhs)
+             (if (set-member? box-syms var)
+                 `(set-box! ,var ,(desugar rhs))
+                 `(set!     ,var ,(desugar rhs)))])]
+         [(define-values)
+          (match e
+            [(list 'define-values (list ids ...) rhs)
+             (define tmps (map gensym ids))
+             `(define-values ,(for/list ([id (in-list ids)]
+                                         #:when (not (set-member? box-syms id)))
+                                id)
+             (let-values ([,tmps (let-values ([,ids ,(desugar rhs)])
+                                   (values ,@ids))])
+               (begin
+                 ,@(for/list ([id  (in-list ids)]
+                              [tmp (in-list tmps)]
+                              #:when (set-member? box-syms id))
+                     `(set-box! ,id ,tmp))
+                 (values ,@(for/list ([id  (in-list ids)]
+                                      [tmp (in-list tmps)]
+                                      #:when (not (set-member? box-syms id)))
+                             tmp)))))])]
+         [(lambda)
+          (match e
+            [(list 'lambda formals body)
+             `(lambda ,formals ,(desugar body))])]
+         [(case-lambda)
+          (match e
+            [(list 'case-lambda [list formals body] ...)
+             `(case-lambda ,@(for/list ([formals (in-list formals)]
+                                        [body    (in-list body)])
+                               `[,formals ,(desugar body)]))])]
+         [(#%variable-reference)
+          (if (and (pair? (cdr e))
+                   (set-member? box-syms (cadr e)))
+              ;; Using a plain `#%variable-reference` (for now) means
+              ;; that all imported and exported variables count as
+              ;; mutable:
+              '(variable-reference self-inst (#%variable-reference))
+              ;; Preserve info about a local identifier:
+              `(variable-reference self-inst ,e))]
+         [else (map desugar e)])]
+      [else e]))
+  #;(define (desugar e)
+    (displayln e)
+    (cond
+      [(correlated? e)
+       (correlate e (desugar (correlated-e e)))]
+      [(symbol? e) (if (set-member? box-syms e)
+                       (if (set-member? import-box-syms e)
+                           `(unbox ,e)
+                           `(check-not-undefined (unbox ,e) ',e))
+                       e)]
+      [(pair? e)
+       (case (let ([a (car e)]) (if (correlated? a) (correlated-e a) a))
+         [(quote) e]
+         [(set!)
+          (define-correlated-match m e '(set! var rhs))
+          (if (set-member? box-syms (correlated-e (m 'var)))
+              `(set-box! ,(m 'var) ,(desugar (m 'rhs)))
+              `(set!     ,(m 'var) ,(desugar (m 'rhs))))]
+         [(define-values)
+          (define-correlated-match m e '(define-values (id ...) rhs))
+          (define ids  (m 'id))
+          (define tmps (map gensym (map correlated-e ids)))
+          `(define-values ,(for/list ([id (in-list ids)]
+                                      #:when (not (set-member? box-syms (correlated-e id))))
+                             id)
+             (let-values ([,tmps (let-values ([,ids ,(desugar (m 'rhs))])
+                                   (values ,@ids))])
+               (begin
+                 ,@(for/list ([id (in-list ids)]
+                              [tmp (in-list tmps)]
+                              #:when (set-member? box-syms (correlated-e id)))
+                     `(set-box! ,id ,tmp))
+                 (values ,@(for/list ([id (in-list ids)]
+                                      [tmp (in-list tmps)]
+                                      #:when (not (set-member? box-syms (correlated-e id))))
+                             tmp)))))]
+         [(lambda)
+          (define-correlated-match m e '(lambda formals body))
+          `(lambda ,(m 'formals) ,(desugar (m 'body)))]
+         [(case-lambda)
+          (define-correlated-match m e '(case-lambda [formals body] ...))
+          `(case-lambda ,@(for/list ([formals (in-list (m 'formals))]
+                                     [body (in-list (m 'body))])
+                            `[,formals ,(desugar body)]))]
+         [(#%variable-reference)
+          (if (and (pair? (correlated-e (cdr (correlated-e e))))
+                   (set-member? box-syms (correlated-e (correlated-cadr e))))
+              ;; Using a plain `#%variable-reference` (for now) means
+              ;; that all imported and exported variables count as
+              ;; mutable:
+              '(variable-reference self-inst (#%variable-reference))
+              ;; Preserve info about a local identifier:
+              `(variable-reference self-inst ,e))]
+         [else (map desugar (correlated->list e))])]
+      [else e]))
   (define (last-is-definition? bodys)
     (define p (car (reverse bodys)))
     (and (pair? p) (eq? (correlated-e (car p)) 'define-values)))
@@ -885,6 +942,7 @@
        (instantiate-linklet linklet import-instances i use-prompt?)
        i)]))
 
+
 (module+ test
   (require rackunit)
 
@@ -946,3 +1004,33 @@
     (define target (make-instance 'target-instance))
     (check-equal? (instantiate-linklet target-linklet '() target) 'target-result)
     (check-equal? (instance-variable-value target 'v) 'target)))
+
+
+;;;
+;;; Tests from Pycket
+;;; 
+
+;; l0 = make_linklet("(linklet () () (define-values (x) 4))")
+;; l1 = make_linklet("(linklet () (x) (define-values (x) 4))")
+;; l2 = make_linklet("(linklet () () (define-values (x) 4) (set! x 5))")
+;; l3 = make_linklet("(linklet () (x) (define-values (x) 4) (set! x 5))")
+;; l4 = make_linklet("(linklet () (x) (define-values (x) 4) (set! x 5) (+ x x))")
+;; l5 = make_linklet("(linklet () (x) (set! x 5))")
+;; l6 = make_linklet("(linklet ((a)) (g) (define-values (x) a) (define-values (g) (lambda (y) x)))") # reason for mutated pass
+;; l7 = make_linklet("(linklet () (x) (define-values (x) (make-vector 20 0)))")
+;; l8 = make_linklet("(linklet () (x) (define-values (x) (make-vector 20 0)) (define-values (g) (lambda (y) (vector-set! x 0 y))))")
+;; l9 = make_linklet("(linklet () (x g) (define-values (x) (make-vector 20 0)) (define-values (g) (lambda (y) (vector-set! x 0 y))))")
+;; l10 = make_linklet("(linklet (((y2 y))) ((x x2)) (define-values (x) y))")
+;; l11 = make_linklet("(linklet () (g) (define-values (y) 4) (define-values (g) (lambda (x) y)) (set! y 10))")
+;; l12 = make_linklet("(linklet () (y g) (define-values (y) 4) (define-values (g) (lambda (x) y)) (set! y 10))")
+
+(define l0 '(linklet () () (define-values (x) 4)))
+; (desugar-linklet (datum->correlated l0))
+(desugar-linklet l0)
+; '(lambda (self-inst) (let-values () (begin (define-values (x) 4))))
+
+(define l1 '(linklet () (x) (define-values (x) 4)))
+; (desugar-linklet (datum->correlated l1))
+; '(lambda (self-inst) (let-values (((x) (instance-variable-box self-inst 'x #t))) (begin (define-values ((check-not-undefined (unbox x) 'x)) 4))))
+
+
