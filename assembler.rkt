@@ -579,6 +579,53 @@ function to_string(v) {
   return to_fasl(v);
 }
 
+if (typeof WebAssembly.Tag === 'undefined' || typeof WebAssembly.Exception === 'undefined') {
+  throw new Error('WebRacket requires WebAssembly exception handling (Tag + Exception).');
+}
+
+const foreign_error_tag = new WebAssembly.Tag({ parameters: ['externref'] });
+
+function wrap_ffi_host_exceptions(fn) {
+  return (...args) => {
+    try {
+      return fn(...args);
+    } catch (err) {
+      if (err instanceof WebAssembly.Exception) {
+        throw err;
+      }
+      throw new WebAssembly.Exception(foreign_error_tag, [err]);
+    }
+  };
+}
+
+function install_ffi_exception_bridge(imports) {
+  // IMPORTANT:
+  // Wrap only user FFI modules here (the modules loaded from `.ffi` files).
+  // Do *not* wrap core runtime modules:
+  // - env: memory import table, not foreign procedure calls
+  // - primitives/math/char: internal runtime imports used all over the VM
+  //
+  // Reason: only calls produced via define-foreign are wrapped in wasm
+  // with a `(catch $ffi-host-exn ...)` path. If we also wrapped core modules,
+  // internal runtime errors would be rethrown as foreign-call exceptions and
+  // could bypass the intended internal error handling/debug flow.
+  const skipModules = new Set(['env', 'primitives', 'math', 'char']);
+  for (const [moduleName, table] of Object.entries(imports)) {
+    if (skipModules.has(moduleName)) {
+      continue;
+    }
+    if (!table || typeof table !== 'object') {
+      continue;
+    }
+    for (const key of Object.keys(table)) {
+      const value = table[key];
+      if (typeof value === 'function') {
+        table[key] = wrap_ffi_host_exceptions(value);
+      }
+    }
+  }
+}
+
 var imports = {
     'env': {
         'memory': memory
@@ -586,6 +633,7 @@ var imports = {
     'primitives': {
       'console_log': ((x)   => console.log(x)),
       'add':         ((x,y) => x+y),
+      'foreign_error_tag': foreign_error_tag,
       'make_callback': make_callback,
       'js_output':   ((x)   => output_string.push(x)),
       'js_print_fasl': ((start, len) => {
@@ -2130,6 +2178,8 @@ var imports = {
         'update-transform!'()           { throw new Error('DOM not available in this environment'); }
     }
 };
+
+install_ffi_exception_bridge(imports);
 
 const wasmModule
       = await WebAssembly

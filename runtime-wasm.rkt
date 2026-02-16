@@ -2152,7 +2152,14 @@
 
         (func $js-external-string->string
               (import "primitives" "external_string_to_string")
-              (param (ref extern)) (result i32))
+              (param externref) (result i32))
+
+        ;; FFI host exception tag imported from the host runtime.
+        ;; Foreign imports can throw this tag to communicate host-language
+        ;; errors that must become ordinary WebRacket exceptions.
+        (tag $ffi-host-exn
+             (import "primitives" "foreign_error_tag")
+             (param externref))
 
         ;; FFI related imports
         ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
@@ -2168,6 +2175,24 @@
          (func $raise-expected-string                 (unreachable))
          (func $raise-unexpected-argument             (unreachable))
          (func $raise-wrong-number-of-values-received (unreachable))
+
+         ;; Convert a host exception caught at an FFI boundary into a
+         ;; regular WebRacket exn:fail so `with-handlers` can catch it.
+         (func $raise-ffi-host-exception
+               (param $host externref)
+               (local $message (ref eq))
+
+               (local.set $message
+                          (call $linear-memory->string
+                                (call $js-external-string->string
+                                      (local.get $host))))
+               (drop (call $raise
+                           (call $make-exn:fail
+                                 (local.get $message)
+                                 (call $current-continuation-marks
+                                       (global.get $missing)))
+                           (global.get $true)))
+               (unreachable))
          
          (func $raise-argument-error1
                (param $who      (ref eq))      ;; symbol

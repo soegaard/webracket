@@ -316,6 +316,8 @@
                 [(list t)
                  `((local $results ,(argument-type->wasm-import-parameter t)))]
                 [_ '()])
+            ;; - a local to hold host exceptions caught from foreign imports
+            (local $ffi-host externref)
             
             ;; 0. Type check - fail early
             ,@(for/list ([t argument-types] [i (in-naturals)])
@@ -429,13 +431,35 @@
             
             ;; 3) call the host function
             ,(case (length result-types)
-               [(0)   `(call ,$racket-name/imported
-                             ,@(for/list ([i (in-range (length argument-types))])
-                                 `(local.get ,(import-index i))))]
-               [else `(local.set $results
-                                 (call ,$racket-name/imported
-                                       ,@(for/list ([i (in-range (length argument-types))])
-                                           `(local.get ,(import-index i)))))])
+               [(0)
+                `(block $ffi-call-ok
+                        (local.set $ffi-host
+                                   (block $ffi-call-catch (result externref)
+                                          (try_table
+                                           (result externref)
+                                           (catch $ffi-host-exn $ffi-call-catch)
+                                           (call ,$racket-name/imported
+                                                 ,@(for/list ([i (in-range (length argument-types))])
+                                                     `(local.get ,(import-index i))))
+                                           (br $ffi-call-ok))))
+                        (call $raise-ffi-host-exception
+                              (local.get $ffi-host))
+                        (unreachable))]
+               [else
+                `(block $ffi-call-ok
+                        (local.set $ffi-host
+                                   (block $ffi-call-catch (result externref)
+                                          (try_table
+                                           (result externref)
+                                           (catch $ffi-host-exn $ffi-call-catch)
+                                           (local.set $results
+                                                      (call ,$racket-name/imported
+                                                            ,@(for/list ([i (in-range (length argument-types))])
+                                                                `(local.get ,(import-index i)))))
+                                           (br $ffi-call-ok))))
+                        (call $raise-ffi-host-exception
+                              (local.get $ffi-host))
+                        (unreachable))])
                      
             ;; 4) Convert the result
             ,(match result-types

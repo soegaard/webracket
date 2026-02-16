@@ -99,11 +99,13 @@
         (list "js-send/boolean accepts Boolean object"
               (let ([obj (js-eval "({ f: function(){ return new Boolean(false); } })")])
                 (equal? (js-send/boolean obj "f" (vector)) #f)))
-        #;(list "js-send/boolean non-boolean result raises"
-              ;; NOTE: currently throws a host JS TypeError that escapes the
-              ;; wasm run loop, so it cannot be caught with with-handlers yet.
+        (list "js-send/boolean non-boolean result raises"
               (with-handlers ([exn? (λ (_) #t)])
                 (js-send/boolean (js-Math) "abs" (vector -1.0))
+                #f))
+        (list "js-send/extern host exception is catchable"
+              (with-handlers ([exn? (λ (_) #t)])
+                (js-send/extern (js-array/extern (vector 1 2 3)) "notAMethod" (vector))
                 #f))
         (list "js-send/truthy"
               (let ([obj (js-eval "({ z: function(){ return 0; }, n: function(){ return 42; }, e: function(){ return ''; } })")])
