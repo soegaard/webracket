@@ -95,6 +95,33 @@
                  (equal? (js-this) (js-global-this)))
          ))
 
+ (list "Callback bridge"
+       (list
+        (list "procedure->external/call basic"
+              (let* ([f   (procedure->external (λ (a b) (+ a b)))]
+                     [res (js-send f "call" (vector (js-global-this) 10 20))])
+                (= (external-number->flonum res) 30.0)))
+        (list "procedure->external/undefined arg maps to void"
+              (let* ([f   (procedure->external (λ (_a b) (void? b)))]
+                     [res (js-send f "call" (vector (js-global-this) 1 (js-undefined)))])
+                (string=? (js-value->string res) "true")))
+        (list "procedure->external/js-send inside callback"
+              (let* ([obj (js-eval "({ next: function(){ return 'x'; } })")]
+                     [f   (procedure->external
+                           (λ (stream _state)
+                             (define v (js-send stream "next" (vector)))
+                             (string-length (js-value->string v))))]
+                     [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
+                (= (external-number->flonum res) 1.0)))
+        (list "procedure->external/js-send undefined return"
+              (let* ([obj (js-eval "({ next: function(){ return undefined; } })")]
+                     [f   (procedure->external
+                           (λ (stream _state)
+                             (define v (js-send stream "next" (vector)))
+                             (string=? (js-typeof v) "undefined")))]
+                     [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
+                (string=? (js-value->string res) "true")))))
+
  (list "Fundamental objects"
        (list
         (list "js-Object"
