@@ -32464,6 +32464,48 @@
                                 (i32.const 0)))
                (local.get $len))
 
+         ;; callback-accepts-argc : callback-id argc -> boolean
+         ;; Returns 1 when the callback procedure accepts argc arguments, else 0.
+         (func $callback-accepts-argc (export "callback-accepts-argc")
+               (param $id   i32)
+               (param $argc i32)
+               (result      i32)
+
+               (local $proc (ref $Procedure))
+
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (call $growable-array-ref
+                                          (global.get $callback-registry)
+                                          (local.get $id))))
+               (call $procedure-arity-includes?/checked/i32
+                     (local.get $proc)
+                     (local.get $argc)))
+
+         ;; callback-expected-arity : callback-id -> fasl-string-byte-length
+         ;; Encodes the callback's expected-arity string in linear memory at 0.
+         (func $callback-expected-arity (export "callback-expected-arity")
+               (param $id i32)
+               (result i32)
+
+               (local $proc (ref $Procedure))
+               (local $len  i32)
+
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (call $growable-array-ref
+                                          (global.get $callback-registry)
+                                          (local.get $id))))
+               (global.set $result-bytes
+                           (call $s-exp->fasl
+                                 (call $procedure-arity->expected-string (local.get $proc))
+                                 (global.get $false)))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+               (local.get $len))
+
          (func $procedure->external (export "procedure->external")
                (param $proc (ref eq))
                (result (ref eq))
