@@ -39,7 +39,7 @@
 
 
 ;;;
-;;; Utitilies
+;;; Utilities
 ;;;
 
 (define (exact x)
