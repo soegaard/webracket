@@ -79,8 +79,8 @@
 
 (define (play-tone freq dur type volume [delay 0.0])
   (when audio-context
-    (define osc      (js-send audio-context "createOscillator" (vector)))
-    (define gain     (js-send audio-context "createGain" (vector)))
+    (define osc      (js-send/extern audio-context "createOscillator" (vector)))
+    (define gain     (js-send/extern audio-context "createGain" (vector)))
     (define now      (js-ref audio-context "currentTime"))
     (define start    (+ (inexact now) (inexact delay)))
     (define end      (+ start (inexact dur)))

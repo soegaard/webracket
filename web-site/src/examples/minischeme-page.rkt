@@ -172,7 +172,7 @@
   (define storage (js-ref (js-var "window") "localStorage"))
   (if (nullish? storage)
       #f
-      (let ([saved (js-send storage "getItem" (vector minischeme-storage-key))])
+      (let ([saved (js-send/extern storage "getItem" (vector minischeme-storage-key))])
         (if (nullish? saved)
             #f
             (js-value->string saved)))))
@@ -189,7 +189,7 @@
 
 (define (minischeme-editor-get-source input-node)
   (if minischeme-editor
-      (js-value->string (js-send minischeme-editor "getValue" (vector)))
+      (js-value->string (js-send/extern minischeme-editor "getValue" (vector)))
       (js-value->string (js-ref input-node "value"))))
 
 (define (minischeme-editor-set-source! input-node source)
@@ -282,7 +282,7 @@
       (char=? c #\.)))
 
 (define (minischeme-stream-peek-char stream)
-  (define raw (js-send stream "peek" (vector)))
+  (define raw (js-send/extern stream "peek" (vector)))
   (if (nullish? raw)
       #f
       (with-handlers ([exn:fail? (λ (_) #f)])
@@ -292,7 +292,7 @@
             (string-ref s 0)))))
 
 (define (minischeme-stream-next-char stream)
-  (define raw (js-send stream "next" (vector)))
+  (define raw (js-send/extern stream "next" (vector)))
   (if (nullish? raw)
       #f
       (with-handlers ([exn:fail? (λ (_) #f)])
@@ -309,8 +309,8 @@
             (define result
               (with-handlers ([exn:fail? (λ (_) #f)])
                 (cond
-                  [(js-true? (js-send stream "eatSpace" (vector))) #f]
-                  [(js-true? (js-send stream "eol" (vector))) #f]
+                  [(js-send/truthy stream "eatSpace" (vector)) #f]
+                  [(js-send/truthy stream "eol" (vector)) #f]
                   [else
                    (define ch (minischeme-stream-next-char stream))
                    (cond
@@ -337,11 +337,11 @@
                           (minischeme-stream-next-char stream)
                           (loop)))
                       (minischeme-token-style
-                       (js-value->string (js-send stream "current" (vector))))])])))
+                       (js-value->string (js-send/extern stream "current" (vector))))])])))
             ;; Instrumentation + guard: ensure we always advance.
             (define end-pos (js-number-value (js-ref stream "pos")))
             (when (and (= start-pos end-pos)
-                       (not (js-true? (js-send stream "eol" (vector)))))
+                       (not (js-send/truthy stream "eol" (vector))))
               (js-log (format "[minischeme/overlay] non-advance start=~a end=~a" start-pos end-pos))
               (js-send stream "next" (vector)))
             result)])
@@ -401,16 +401,16 @@
     (define universal-close-handler
       (procedure->external
        (λ (cm)
-         (define cursor (js-send cm "getCursor" (vector)))
+         (define cursor (js-send/extern cm "getCursor" (vector)))
          (define line (js-ref cursor "line"))
          (define ch (js-ref cursor "ch"))
          (define start-pos (js-object (vector (vector "line" 0) (vector "ch" 0))))
-         (define prefix (js-value->string (js-send cm "getRange" (vector start-pos cursor))))
+         (define prefix (js-value->string (js-send/extern cm "getRange" (vector start-pos cursor))))
          (define expected (minischeme-expected-closer prefix))
          (define closer (if expected expected #\]))
          (define closer-text (string closer))
          (define next-pos (js-object (vector (vector "line" line) (vector "ch" (+ ch 1)))))
-         (define next-char (js-value->string (js-send cm "getRange" (vector cursor next-pos))))
+         (define next-char (js-value->string (js-send/extern cm "getRange" (vector cursor next-pos))))
          (if (string=? next-char closer-text)
              (js-send cm "setCursor" (vector next-pos))
              (js-send cm "replaceSelection" (vector closer-text)))
@@ -439,7 +439,7 @@
         (vector "autoCloseBrackets" #t)
         (vector "extraKeys" extra-keys))))
     (set! minischeme-editor
-          (js-send codemirror "fromTextArea" (vector input-node options)))
+          (js-send/extern codemirror "fromTextArea" (vector input-node options)))
     (js-send minischeme-editor "addOverlay" (vector overlay))
     (js-send minischeme-editor "setSize" (vector "100%" "320px"))
     (js-send minischeme-editor "refresh" (vector))
@@ -447,7 +447,7 @@
           (procedure->external
            (λ (_cm _change)
              (minischeme-save-source
-              (js-value->string (js-send minischeme-editor "getValue" (vector))))
+              (js-value->string (js-send/extern minischeme-editor "getValue" (vector))))
              (void))))
     (js-send minischeme-editor "on" (vector "change" minischeme-editor-change-handler))
     (js-send minischeme-editor "focus" (vector))
