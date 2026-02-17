@@ -482,6 +482,15 @@
        (λ (_cm)
          (on-run!)
          (void))))
+    (define tab-indent-handler
+      (procedure->external
+       (λ (cm)
+         (if (js-send/truthy cm "somethingSelected" (vector))
+             (js-send cm "indentSelection" (vector "smart"))
+             (let* ([cursor (js-send/extern cm "getCursor" (vector))]
+                    [line (js-ref cursor "line")])
+               (js-send cm "indentLine" (vector line "smart"))))
+         (void))))
     (define alt-right-paren-handler
       (procedure->external
        (λ (cm)
@@ -522,6 +531,7 @@
       (js-object
        (vector
         (vector "]" universal-close-handler)
+        (vector "Tab" tab-indent-handler)
         (vector "Alt-Right" alt-right-paren-handler)
         (vector "Alt-Left" alt-left-paren-handler)
         (vector "Ctrl-Enter" run-shortcut-handler)
