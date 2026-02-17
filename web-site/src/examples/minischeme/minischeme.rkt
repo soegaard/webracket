@@ -735,7 +735,10 @@
                        (check-arg-count 'eqv? args 2)
                        (eqv? (car args) (cadr args))))
       (install 'append (λ (args)
-                         (for-each (λ (v) (ensure-list 'append v)) args)
+                         (let loop-append-check ([xs args])
+                           (unless (or (null? xs) (null? (cdr xs)))
+                             (ensure-list 'append (car xs))
+                             (loop-append-check (cdr xs))))
                          (apply append args)))
       (install 'reverse (λ (args)
                           (check-arg-count 'reverse args 1)
@@ -1530,22 +1533,37 @@
                            (error 'minischeme "force: invalid promise state ~a" state)]))
                       (continue 'value v env kont winds))]
                  [(eq? pname 'map)
-                  (check-arg-count 'map args 2)
+                  (check-at-least 'map args 2)
                   (define f (car args))
-                  (define lst (cadr args))
-                  (ensure-list 'map lst)
-                  (continue 'value
-                            (map (λ (x) (apply-single f (list x) 'map)) lst)
-                            env
-                            kont
-                            winds)]
+                  (define lists (cdr args))
+                  (for-each (λ (lst) (ensure-list 'map lst)) lists)
+                  (let loop-map ([xss lists] [acc '()])
+                    (cond
+                      [(andmap null? xss)
+                       (continue 'value (reverse acc) env kont winds)]
+                      [(ormap null? xss)
+                       (error 'minischeme "map expects lists of the same length")]
+                      [else
+                       (define step-args (map car xss))
+                       (define next-xss (map cdr xss))
+                       (define mapped (apply-single f step-args 'map))
+                       (loop-map next-xss (cons mapped acc))]))]
                  [(eq? pname 'for-each)
-                  (check-arg-count 'for-each args 2)
+                  (check-at-least 'for-each args 2)
                   (define f (car args))
-                  (define lst (cadr args))
-                  (ensure-list 'for-each lst)
-                  (for-each (λ (x) (apply-single f (list x) 'for-each)) lst)
-                  (continue 'value (void) env kont winds)]
+                  (define lists (cdr args))
+                  (for-each (λ (lst) (ensure-list 'for-each lst)) lists)
+                  (let loop-for-each ([xss lists])
+                    (cond
+                      [(andmap null? xss)
+                       (continue 'value (void) env kont winds)]
+                      [(ormap null? xss)
+                       (error 'minischeme "for-each expects lists of the same length")]
+                      [else
+                       (define step-args (map car xss))
+                       (define next-xss (map cdr xss))
+                       (apply-single f step-args 'for-each)
+                       (loop-for-each next-xss)]))]
                  [(eq? pname 'filter)
                   (check-arg-count 'filter args 2)
                   (define pred (car args))

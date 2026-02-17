@@ -194,6 +194,11 @@
                "=> #t")
    (test-eval-contains "letrec uninitialized reference error" "(letrec ((x x)) x)" "accessing uninitialized binding")
    (test-equal "append" "(append '(1 2) '(3 4) '())" "=> (1 2 3 4)")
+   (test-equal "append allows non-list tail" "(append '(1 2) 3)" "=> (1 2 . 3)")
+   (test-equal "append single non-list argument" "(append 3)" "=> 3")
+   (test-eval-contains "append rejects non-list before tail"
+                       "(append 1 '(2 3))"
+                       "append expects a list")
    (test-equal "list*" "(list* 1 2 '(3 4))" "=> (1 2 3 4)")
    (test-equal "reverse" "(reverse '(1 2 3 4))" "=> (4 3 2 1)")
    (test-equal "reverse empty" "(reverse '())" "=> ()")
@@ -358,10 +363,20 @@
    (test-equal "apply with primitive" "(apply + 1 2 '(3 4))" "=> 10")
    (test-equal "apply with closure" "(apply (lambda (x y z) (+ x (* y z))) '(2 3 4))" "=> 14")
    (test-equal "map over list" "(map (lambda (x) (+ x 10)) '(1 2 3))" "=> (11 12 13)")
+   (test-equal "map over multiple lists" "(map + '(1 2 3) '(10 20 30))" "=> (11 22 33)")
+   (test-eval-contains "map over multiple lists length mismatch"
+                       "(map + '(1 2) '(10))"
+                       "map expects lists of the same length")
    (test-equal "filter over list" "(filter (lambda (x) (odd? x)) '(1 2 3 4 5 6))" "=> (1 3 5)")
    (test-equal "for-each returns void and runs effects"
                "(define x 0)\n(for-each (lambda (n) (set! x (+ x n))) '(1 2 3 4))\nx"
                "=> 10")
+   (test-equal "for-each over multiple lists"
+               "(define x 0)\n(for-each (lambda (a b) (set! x (+ x (* a b)))) '(1 2 3) '(10 20 30))\nx"
+               "=> 140")
+   (test-eval-contains "for-each multiple lists length mismatch"
+                       "(for-each + '(1 2) '(10))"
+                       "for-each expects lists of the same length")
    (test-equal "call-with-values: multiple to list"
                "(call-with-values (lambda () (values 1 2 3)) list)"
                "=> (1 2 3)")

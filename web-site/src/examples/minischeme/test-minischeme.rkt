@@ -311,6 +311,18 @@
      (reset!)
      (check-equal? (run "(append '(1 2) '(3 4) '())") "=> (1 2 3 4)"))
 
+   (test-case "append allows non-list tail"
+     (reset!)
+     (check-equal? (run "(append '(1 2) 3)") "=> (1 2 . 3)"))
+
+   (test-case "append single non-list argument"
+     (reset!)
+     (check-equal? (run "(append 3)") "=> 3"))
+
+   (test-case "append rejects non-list before tail"
+     (reset!)
+     (check-eval-error-match #rx"append expects a list" "(append 1 '(2 3))"))
+
    (test-case "list*"
      (reset!)
      (check-equal? (run "(list* 1 2 '(3 4))") "=> (1 2 3 4)"))
@@ -597,6 +609,16 @@
      (reset!)
      (check-equal? (run "(map (lambda (x) (+ x 10)) '(1 2 3))") "=> (11 12 13)"))
 
+   (test-case "map over multiple lists"
+     (reset!)
+     (check-equal? (run "(map + '(1 2 3) '(10 20 30))") "=> (11 22 33)"))
+
+   (test-case "map over multiple lists length mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"map expects lists of the same length"
+      "(map + '(1 2) '(10))"))
+
    (test-case "filter over list"
      (reset!)
      (check-equal? (run "(filter (lambda (x) (odd? x)) '(1 2 3 4 5 6))") "=> (1 3 5)"))
@@ -606,6 +628,18 @@
      (check-equal?
       (run "(define x 0)\n(for-each (lambda (n) (set! x (+ x n))) '(1 2 3 4))\nx")
       "=> 10"))
+
+   (test-case "for-each over multiple lists"
+     (reset!)
+     (check-equal?
+      (run "(define x 0)\n(for-each (lambda (a b) (set! x (+ x (* a b)))) '(1 2 3) '(10 20 30))\nx")
+      "=> 140"))
+
+   (test-case "for-each multiple lists length mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"for-each expects lists of the same length"
+      "(for-each + '(1 2) '(10))"))
 
    (test-case "call-with-values: multiple to list"
      (reset!)
