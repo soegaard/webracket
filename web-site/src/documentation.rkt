@@ -395,8 +395,15 @@
                        '()
                        (list
                         `(aside (@ (class "docs-toc"))
-                                (div (@ (class "toc-card"))
-                                     (div (@ (class "toc-title")) "On this page")
+                                (div (@ (class "toc-card") (id "doc-toc-card"))
+                                     (div (@ (class "toc-header"))
+                                          (div (@ (class "toc-title")) "On this page")
+                                          (button (@ (class "toc-toggle")
+                                                     (id "doc-toc-toggle")
+                                                     (type "button")
+                                                     (aria-expanded "true")
+                                                     (aria-controls "doc-toc"))
+                                                  "Collapse"))
                                      (nav (@ (class "toc-nav") (id "doc-toc")
                                              (aria-label "Table of contents"))
                                           ,(doc-toc-list toc-items))))))))
@@ -783,6 +790,7 @@
 (define (init-doc-js-ffi-page!)
   (define doc-root (js-query-selector ".docs-article"))
   (define content (and doc-root (js-element-query-selector doc-root ".doc-prose, .doc-content")))
+  (define docs-layout (js-query-selector ".docs-layout"))
   (when (and doc-root content)
     (let* ([body (js-document-body)]
            [page-root (js-query-selector ".page")]
@@ -792,6 +800,9 @@
                  (for/or ([tok (in-list (string-split page-class-names))])
                    (string=? tok "page--ffi-reference")))]
            [toc-nav (js-get-element-by-id "doc-toc")]
+           [toc-card (js-get-element-by-id "doc-toc-card")]
+           [toc-toggle (js-get-element-by-id "doc-toc-toggle")]
+           [toc-collapsed? #f]
            [toast (js-get-element-by-id "copy-toast")]
            [toast-timer #f]
            [debug-toc? #f]
@@ -1218,6 +1229,28 @@
 
           (js-add-event-listener! (js-window-window) "scroll" scroll-handler)
           (js-add-event-listener! (js-window-window) "resize" resize-handler)
+
+          (when (and toc-card toc-toggle toc-nav)
+            (define (sync-toc-toggle!)
+              (if toc-collapsed?
+                  (begin
+                    (when docs-layout (classlist-add! docs-layout "is-toc-collapsed"))
+                    (classlist-add! toc-card "is-collapsed")
+                    (js-set! toc-toggle "textContent" "Restore")
+                    (js-set-attribute! toc-toggle "aria-expanded" "false"))
+                  (begin
+                    (when docs-layout (classlist-remove! docs-layout "is-toc-collapsed"))
+                    (classlist-remove! toc-card "is-collapsed")
+                    (js-set! toc-toggle "textContent" "Collapse")
+                    (js-set-attribute! toc-toggle "aria-expanded" "true"))))
+            (sync-toc-toggle!)
+            (define toc-toggle-handler
+              (procedure->external
+               (lambda (_evt)
+                 (set! toc-collapsed? (not toc-collapsed?))
+                 (sync-toc-toggle!))))
+            (remember-doc-js-ffi-handler! toc-toggle-handler)
+            (js-add-event-listener! toc-toggle "click" toc-toggle-handler))
 
           (active-from-scroll!)
           (define hash (js-ref (js-window-location) "hash"))
