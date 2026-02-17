@@ -18,6 +18,9 @@
 (require (for-syntax racket/base)
          (for-syntax racket/file))
 
+(include "generated/ffi-doc-pages.inc.rkt")
+(include "generated/ffi-doc-pages-structured.inc.rkt")
+
 (define-syntax (compile-time-file-to-string stx)
   (syntax-case stx ()
     [(_ file-name)
@@ -217,16 +220,47 @@
 
 ;; doc-toc-list : (Listof (List Integer String String)) -> List
 ;;   Builds the TOC list from recorded heading data.
+(define (toc-number+title text)
+  (define parts (string-split (string-trim text) " "))
+  (define token (if (pair? parts) (car parts) ""))
+  (define segments (if (string=? token "") '() (string-split token ".")))
+  (define numeric-prefix?
+    (and (>= (length segments) 2)
+         (for/and ([seg (in-list segments)])
+           (and (not (string=? seg ""))
+                (for/and ([ch (in-string seg)])
+                  (char-numeric? ch))))))
+  (if numeric-prefix?
+      (values token (string-trim (substring (string-trim text) (string-length token))))
+      (values #f text)))
+
+(define (toc-kind level text)
+  (cond
+    [(string-prefix? (string-trim text) "Chapter ") "chapter"]
+    [(= level 3) "section"]
+    [(let-values ([(num _) (toc-number+title text)]) (and num #t)) "section"]
+    [else "chapter"]))
+
 (define (doc-toc-list toc-items)
   `(div (@ (class "toc-list"))
         ,@(for/list ([item (in-list toc-items)])
             (define level (car item))
             (define id (cadr item))
             (define text (caddr item))
-            `(a (@ (class ,(if (= level 3) "toc-link toc-link--sub" "toc-link"))
-                   (href ,(string-append "#" id))
-                   (data-toc-link ,id))
-                ,text))))
+            (define kind (toc-kind level text))
+            (define-values (num label) (toc-number+title text))
+            `(div (@ (class ,(string-append "toc-entry toc-entry--" kind))
+                     (data-toc-kind ,kind))
+                  (a (@ (class ,(if (string=? kind "section")
+                                    "toc-link toc-link--sub toc-link--section"
+                                    "toc-link toc-link--chapter"))
+                        (href ,(string-append "#" id))
+                        (data-toc-link ,id)
+                        (data-toc-kind ,kind))
+                     ,@(if num
+                           (list `(span (@ (class "toc-num")) ,num)
+                                 `(span (@ (class "toc-title")) ,label))
+                           (list `(span (@ (class "toc-title")) ,text))))))))
 
 ;; doc-ffi runtime helpers
 (define doc-js-ffi-handler-store '())
@@ -529,6 +563,12 @@
     [(string-suffix? path "documentation.html")                   'documentation]
     [(string-suffix? path "documentation-compiler-overview.html") 'doc-compiler-overview]
     [(string-suffix? path "documentation-js-ffi.html")            'doc-js-ffi]
+    [(string-suffix? path "documentation-ffi-standard.html")      'doc-ffi-standard]
+    [(string-suffix? path "documentation-ffi-dom.html")           'doc-ffi-dom]
+    [(string-suffix? path "documentation-ffi-js.html")            'doc-ffi-js]
+    [(string-suffix? path "documentation-ffi-math.html")          'doc-ffi-math]
+    [(string-suffix? path "documentation-ffi-jsxgraph.html")      'doc-ffi-jsxgraph]
+    [(string-suffix? path "documentation-ffi-xtermjs.html")       'doc-ffi-xtermjs]
     [(string-suffix? path "quick-start.html")                     'quick-start]
     [(string-suffix? path "installation.html")                    'installation]
     [(string-suffix? path "examples.html")                        'examples]
@@ -549,7 +589,9 @@
 ;;   Maps doc subpages to the Documentation tab for the navbar.
 (define (nav-active-page)
   (define page (current-page))
-  (if (memq page '(doc-compiler-overview doc-js-ffi))
+  (if (memq page '(doc-compiler-overview doc-js-ffi
+                 doc-ffi-standard doc-ffi-dom doc-ffi-js
+                 doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs))
       'documentation
       page))
 
@@ -914,6 +956,9 @@ a.code-pill:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+.page--ffi-reference {
+  width: min(1560px, 98vw);
 }
 .navbar {
   display: flex;
@@ -1474,6 +1519,16 @@ pre {
   gap: 28px;
   align-items: start;
 }
+.page--ffi-reference .docs-layout {
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
+}
+.page--ffi-reference .section--doc-body {
+  padding-right: 8px;
+}
+.page--ffi-reference .docs-toc {
+  margin-right: -6px;
+}
 .docs-article {
   min-width: 0;
 }
@@ -1531,6 +1586,13 @@ pre {
   max-width: 72ch;
   margin: 16px 0 18px;
 }
+.page--ffi-reference .doc-prose .ffi-table {
+  max-width: none;
+  width: 100%;
+}
+.doc-prose table th {
+  text-align: left;
+}
 .ffi-table {
   overflow-x: auto;
   position: relative;
@@ -1575,15 +1637,18 @@ pre {
   text-align: left;
   font-weight: 700;
   color: #F1F4FF;
-  padding: 14px 14px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(18, 22, 45, 0.82);
 }
 .ffi-type-table tbody td {
-  padding: 12px 14px;
+  padding: 12px 16px;
   vertical-align: top;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #E9EEFF;
+}
+.ffi-type-table thead tr {
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
 }
 .ffi-type-table tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.03);
@@ -1598,6 +1663,22 @@ pre {
 .ffi-type-table td:last-child {
   color: #AEB9E2;
   font-size: 0.92rem;
+}
+.ffi-type-table th.ffi-use-when-col {
+  color: #D9E2FF;
+}
+.ffi-type-table td.ffi-use-when-col {
+  color: #9BA8D4;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.ffi-type-table th.ffi-function-col,
+.ffi-type-table td.ffi-function-col,
+.ffi-type-table td.ffi-function-col a,
+.ffi-type-table td.ffi-function-col code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 .ffi-type-table .ffi-type-cell {
   position: sticky;
@@ -1659,6 +1740,54 @@ pre {
 .doc-prose pre {
   margin: 14px 0 18px;
 }
+.page--ffi-reference .doc-prose .ffi-chapter-title {
+  position: relative;
+  margin: 62px 0 14px;
+  padding: 14px 16px 14px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 22, 45, 0.52);
+}
+.page--ffi-reference .doc-prose > .ffi-chapter-title::before {
+  display: none;
+}
+.page--ffi-reference .doc-prose .ffi-chapter-title::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(182, 197, 238, 0.32);
+}
+.page--ffi-reference .doc-prose > .ffi-chapter-title:not(:first-child) {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 14px;
+}
+.page--ffi-reference .doc-prose .ffi-chapter-lead {
+  margin: 6px 0 24px;
+  color: rgba(200, 210, 240, 0.86);
+  font-size: 0.98rem;
+  line-height: 1.62;
+  font-style: italic;
+}
+.page--ffi-reference .doc-prose > h3 {
+  margin-top: 1.3em;
+  margin-bottom: 0.42em;
+}
+.page--ffi-reference .doc-prose .ffi-type-table {
+  background: rgba(12, 14, 28, 0.8);
+}
+.page--ffi-reference .doc-prose .ffi-type-table thead th {
+  background: rgba(18, 22, 45, 0.74);
+}
+.page--ffi-reference .doc-prose .ffi-table {
+  margin: 16px 0 28px;
+}
+.page--ffi-reference .doc-prose pre {
+  margin: 14px 0 24px;
+}
 .toc-mobile {
   display: none;
   margin-top: 12px;
@@ -1698,6 +1827,9 @@ pre {
   padding: 16px 16px 14px;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(12px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
 }
 .toc-title {
   font-size: 0.85rem;
@@ -1710,6 +1842,11 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.toc-nav {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 .toc-link {
   display: block;
@@ -1733,6 +1870,114 @@ pre {
 .toc-link:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.6);
   outline-offset: 2px;
+}
+.page--ffi-reference .toc-list {
+  gap: 4px;
+}
+.page--ffi-reference .docs-toc .toc-list {
+  gap: 0;
+}
+.page--ffi-reference .toc-entry--chapter {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.page--ffi-reference .toc-entry--chapter:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.page--ffi-reference .toc-link {
+  line-height: 1.35;
+}
+.page--ffi-reference .toc-link--chapter {
+  font-size: 0.99rem;
+  font-weight: 650;
+  padding: 7px 10px;
+  color: #DCE6FF;
+}
+.page--ffi-reference .toc-link--section {
+  font-size: 0.9rem;
+  font-weight: 460;
+  line-height: 1.25;
+  padding: 4px 10px 4px 20px;
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  color: #B8C5EC;
+}
+.page--ffi-reference .docs-toc .toc-link--section {
+  line-height: 1.15;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.page--ffi-reference .toc-link .toc-title {
+  flex: 1 1 auto;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.page--ffi-reference .toc-link .toc-num {
+  display: inline-block;
+  font-size: 0.84em;
+  opacity: 0.62;
+  font-variant-numeric: tabular-nums;
+}
+.page--ffi-reference .toc-link--section .toc-num {
+  flex: 0 0 2.9em;
+}
+.page--ffi-reference .toc-link:hover {
+  background: rgba(74, 108, 255, 0.14);
+  color: #EEF3FF;
+}
+.page--ffi-reference .toc-link.is-active {
+  background: rgba(74, 108, 255, 0.22);
+  color: #F2F6FF;
+  box-shadow: inset 3px 0 0 rgba(122, 151, 255, 0.95);
+}
+.page--ffi-reference .toc-link.is-active-parent {
+  background: rgba(74, 108, 255, 0.1);
+  color: #E7EEFF;
+}
+.page--ffi-reference .toc-link:focus-visible {
+  outline: 2px solid rgba(120, 150, 255, 0.75);
+  outline-offset: 1px;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-list {
+  list-style: none;
+  margin: 6px 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-entry {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-entry--chapter {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-entry--chapter:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-list .toc-link {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-list .toc-link--section {
+  line-height: 1.2;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.page--ffi-reference .doc-prose .ffi-main-toc-list .toc-link--chapter .toc-num {
+  opacity: 0.82;
 }
 .heading-anchor {
   display: inline-flex;
@@ -3494,6 +3739,12 @@ CSS
       [(documentation)         (documentation-page)]
       [(doc-compiler-overview) (doc-compiler-overview-page)]
       [(doc-js-ffi)            (doc-js-ffi-page)]
+      [(doc-ffi-standard)      (doc-ffi-standard-page)]
+      [(doc-ffi-dom)           (doc-ffi-dom-page)]
+      [(doc-ffi-js)            (doc-ffi-js-page)]
+      [(doc-ffi-math)          (doc-ffi-math-page)]
+      [(doc-ffi-jsxgraph)      (doc-ffi-jsxgraph-page)]
+      [(doc-ffi-xtermjs)       (doc-ffi-xtermjs-page)]
       [(examples)              (examples-page)]
       [(quick-start)           (quick-start-page)]
       [(installation)          (installation-page)]
@@ -3533,7 +3784,10 @@ CSS
   (when (eq? (current-page) 'minischeme)
     (init-minischeme-page!))
 
-  (when (eq? (current-page) 'doc-js-ffi)
+  (when (memq (current-page)
+              '(doc-js-ffi
+                doc-ffi-standard doc-ffi-dom doc-ffi-js
+                doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs))
     (init-doc-js-ffi-page!))
 
   (when (eq? (current-page) 'implementation-status)
