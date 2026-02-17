@@ -378,6 +378,78 @@
                [else
                 (loop (+ i 1) stack #f #f #f)])])))))
 
+(define (minischeme-open-paren? ch)
+  (or (char=? ch #\()
+      (char=? ch #\[)
+      (char=? ch #\{)))
+
+(define (minischeme-close-paren? ch)
+  (or (char=? ch #\))
+      (char=? ch #\])
+      (char=? ch #\})))
+
+(define (minischeme-matching-close ch)
+  (cond
+    [(char=? ch #\() #\)]
+    [(char=? ch #\[) #\]]
+    [(char=? ch #\{) #\}]
+    [else #f]))
+
+(define (minischeme-matching-open ch)
+  (cond
+    [(char=? ch #\)) #\(]
+    [(char=? ch #\]) #\[]
+    [(char=? ch #\}) #\{]
+    [else #f]))
+
+(define (minischeme-find-matching-right text open-index open-ch)
+  (define close-ch (minischeme-matching-close open-ch))
+  (if (not close-ch)
+      #f
+      (let loop ([i (+ open-index 1)] [depth 1])
+        (cond
+          [(>= i (string-length text)) #f]
+          [else
+           (define ch (string-ref text i))
+           (cond
+             [(char=? ch open-ch) (loop (+ i 1) (+ depth 1))]
+             [(char=? ch close-ch)
+              (if (= depth 1)
+                  i
+                  (loop (+ i 1) (- depth 1)))]
+             [else (loop (+ i 1) depth)])]))))
+
+(define (minischeme-find-matching-left text close-index close-ch)
+  (define open-ch (minischeme-matching-open close-ch))
+  (if (not open-ch)
+      #f
+      (let loop ([i (- close-index 1)] [depth 1])
+        (cond
+          [(< i 0) #f]
+          [else
+           (define ch (string-ref text i))
+           (cond
+             [(char=? ch close-ch) (loop (- i 1) (+ depth 1))]
+             [(char=? ch open-ch)
+              (if (= depth 1)
+                  i
+                  (loop (- i 1) (- depth 1)))]
+             [else (loop (- i 1) depth)])]))))
+
+(define (minischeme-next-non-whitespace-index text start-index)
+  (let loop ([i start-index])
+    (cond
+      [(>= i (string-length text)) #f]
+      [(char-whitespace? (string-ref text i)) (loop (+ i 1))]
+      [else i])))
+
+(define (minischeme-prev-non-whitespace-index text start-index)
+  (let loop ([i start-index])
+    (cond
+      [(< i 0) #f]
+      [(char-whitespace? (string-ref text i)) (loop (- i 1))]
+      [else i])))
+
 (define (minischeme-init-codemirror! input-node on-run!)
   (when (and (not minischeme-editor) (minischeme-codemirror-ready?))
     (define codemirror (js-var "CodeMirror"))
@@ -410,10 +482,48 @@
        (λ (_cm)
          (on-run!)
          (void))))
+    (define alt-right-paren-handler
+      (procedure->external
+       (λ (cm)
+         (define cursor (js-send/extern cm "getCursor" (vector)))
+         (define index (inexact->exact
+                        (round (js-number-value
+                                (js-send/extern cm "indexFromPos" (vector cursor))))))
+         (define text (js-value->string (js-send/extern cm "getValue" (vector))))
+         (define open-index (minischeme-next-non-whitespace-index text index))
+         (when open-index
+           (define ch (string-ref text open-index))
+           (when (minischeme-open-paren? ch)
+             (define match-index (minischeme-find-matching-right text open-index ch))
+             (when match-index
+               (define target-pos
+                 (js-send/extern cm "posFromIndex" (vector (+ match-index 1))))
+               (js-send cm "setCursor" (vector target-pos)))))
+         (void))))
+    (define alt-left-paren-handler
+      (procedure->external
+       (λ (cm)
+         (define cursor (js-send/extern cm "getCursor" (vector)))
+         (define index (inexact->exact
+                        (round (js-number-value
+                                (js-send/extern cm "indexFromPos" (vector cursor))))))
+         (define text (js-value->string (js-send/extern cm "getValue" (vector))))
+         (define close-index (minischeme-prev-non-whitespace-index text (- index 1)))
+         (when close-index
+           (define ch (string-ref text close-index))
+           (when (minischeme-close-paren? ch)
+             (define match-index (minischeme-find-matching-left text close-index ch))
+             (when match-index
+               (define target-pos
+                 (js-send/extern cm "posFromIndex" (vector match-index)))
+               (js-send cm "setCursor" (vector target-pos)))))
+         (void))))
     (define extra-keys
       (js-object
        (vector
         (vector "]" universal-close-handler)
+        (vector "Alt-Right" alt-right-paren-handler)
+        (vector "Alt-Left" alt-left-paren-handler)
         (vector "Ctrl-Enter" run-shortcut-handler)
         (vector "Cmd-Enter" run-shortcut-handler))))
     (define options

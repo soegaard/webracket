@@ -657,6 +657,12 @@
       (run "(call/cc (lambda (k) 9))")
       "=> 9"))
 
+   (test-case "call/cc identity let/procedure? regression"
+     (reset!)
+     (check-equal?
+      (run "(define identity (lambda (x) x))\n(let ((x #f))\n  (let ((value (call/cc identity)))\n    (if (procedure? value)\n        (value #t)\n        (equal? value #t))))")
+      "=> #t"))
+
    (test-case "call/cc escapes out of list context"
      (reset!)
      (check-equal?
@@ -671,6 +677,18 @@
      (check-equal?
       (run "(saved 50)")
       "=> 51"))
+
+   (test-case "call/cc make-range continuation loop regression"
+     (reset!)
+     (check-equal?
+      (run "(define (make-range from to)\n  (call/cc\n   (lambda (return)\n     (let ((result '()))\n       (let ((loop (call/cc (lambda (k) k))))\n         (set! result (cons (call/cc\n                             (lambda (append)\n                               (if (< from to)\n                                   (append from)\n                                   (return (reverse result)))))\n                            result))\n         (set! from (+ from 1))\n         (loop loop))))))\n(make-range 0 10)")
+      "=> (0 1 2 3 4 5 6 7 8 9)"))
+
+   (test-case "call/cc make-range letrec continuation loop regression"
+     (reset!)
+     (check-equal?
+      (run "(define (make-range from to)\n  (call/cc\n   (lambda (return)\n     (letrec ((result '()))\n       (letrec ((loop (call/cc (lambda (k) k))))\n         (set! result (cons (call/cc\n                             (lambda (append)\n                               (if (< from to)\n                                   (append from)\n                                   (return (reverse result)))))\n                            result))\n         (set! from (+ from 1))\n         (loop loop))))))\n(make-range 0 10)")
+      "=> (0 1 2 3 4 5 6 7 8 9)"))
 
    (test-case "call/cc arity mismatch"
      (reset!)

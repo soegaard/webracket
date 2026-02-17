@@ -27,6 +27,9 @@
     (struct k-args    (proc rest env values))
     (struct k-if      (then else env))
     (struct k-begin   (rest env))
+    (struct k-let     (vars rest-rhss values body env))
+    (struct k-let*    (name rest-bindings body env))
+    (struct k-letrec1 (cell body env))
     (struct k-set!    (cell name))
     (struct k-define  (cell name))
     (struct k-force   (promise))
@@ -36,6 +39,25 @@
 
     (define uninitialized (gensym 'uninitialized))
     (define no-else       (gensym 'no-else))
+
+    ;; Keep MiniScheme diagnostics stable even if the surrounding program has
+    ;; rebound top-level `error` (observed in website builds).
+    (define (local-error who . args)
+      (define msg
+        (cond
+          [(and (symbol? who) (pair? args) (string? (car args)))
+           (apply format (string-append (symbol->string who) ": " (car args))
+                  (cdr args))]
+          [(string? who)
+           (if (null? args)
+               who
+               (apply format who args))]
+          [(symbol? who)
+           (string-append "error: " (symbol->string who))]
+          [else
+           (format "~a" who)]))
+      (raise (make-exn:fail msg (current-continuation-marks))))
+    (define error local-error)
 
     (define (make-env parent)
       (env (make-hasheq) parent))
@@ -1715,14 +1737,14 @@
                     (let ([bindings (car rest)]
                           [body (cdr rest)])
                       (validate-bindings bindings 'let)
-                      (define new-env (make-env current-env))
-                      (for-each
-                       (λ (binding)
-                         (env-define! new-env (car binding)
-                                      (single-value 'let-binding
-                                                    (eval-now (cadr binding) current-env))))
-                       bindings)
-                      (eval-sequence body new-env kont))
+                      (define vars (map car bindings))
+                      (define rhss (map cadr bindings))
+                      (if (null? rhss)
+                          (let ([new-env (make-env current-env)])
+                            (eval-sequence body new-env kont))
+                          (continue 'eval (car rhss) current-env
+                                    (cons (k-let vars (cdr rhss) '() body current-env)
+                                          kont))))
                     (error 'minischeme "malformed let: ~s" control)))]
              [(and (pair? control) (eq? (car control) 'let*))
               (let ([rest (cdr control)])
@@ -1730,14 +1752,13 @@
                     (let ([bindings (car rest)]
                           [body (cdr rest)])
                       (validate-bindings bindings 'let*)
-                      (define new-env (make-env current-env))
-                      (for-each
-                       (λ (binding)
-                         (env-define! new-env (car binding)
-                                      (single-value 'let*-binding
-                                                    (eval-now (cadr binding) new-env))))
-                       bindings)
-                      (eval-sequence body new-env kont))
+                      (define base-env (make-env current-env))
+                      (if (null? bindings)
+                          (eval-sequence body base-env kont)
+                          (let ([b (car bindings)])
+                            (continue 'eval (cadr b) base-env
+                                      (cons (k-let* (car b) (cdr bindings) body base-env)
+                                            kont)))))
                     (error 'minischeme "malformed let*: ~s" control)))]
              [(and (pair? control) (eq? (car control) 'letrec))
               (let ([rest (cdr control)])
@@ -1745,27 +1766,41 @@
                     (let ([bindings (car rest)]
                           [body (cdr rest)])
                       (validate-bindings bindings 'letrec)
-                      (define new-env (make-env current-env))
-                      (define cells '())
-                      (define rhss '())
-                      (for-each
-                       (λ (binding)
-                         (unless (and (pair? binding)
-                                      (symbol? (car binding))
-                                      (pair? (cdr binding))
-                                      (null? (cddr binding)))
-                           (error 'minischeme "malformed letrec binding: ~s" binding))
-                         (define cell (box uninitialized))
-                         (env-define-cell! new-env (car binding) cell)
-                         (set! cells (cons cell cells))
-                         (set! rhss (cons (cadr binding) rhss)))
-                       bindings)
-                      (let loopr ([cs (reverse cells)] [es (reverse rhss)])
-                        (unless (null? cs)
-                          (set-box! (car cs) (single-value 'letrec-binding
-                                                           (eval-now (car es) new-env)))
-                          (loopr (cdr cs) (cdr es))))
-                      (eval-sequence body new-env kont))
+                      (if (and (pair? bindings) (null? (cdr bindings)))
+                          (let* ([binding (car bindings)])
+                            (unless (and (pair? binding)
+                                         (symbol? (car binding))
+                                         (pair? (cdr binding))
+                                         (null? (cddr binding)))
+                              (error 'minischeme "malformed letrec binding: ~s" binding))
+                            (define new-env (make-env current-env))
+                            (define cell (box uninitialized))
+                            (env-define-cell! new-env (car binding) cell)
+                            (continue 'eval (cadr binding) new-env
+                                      (cons (k-letrec1 cell body new-env) kont)))
+                          (let ([new-env (make-env current-env)])
+                            ;; Keep historical MiniScheme/Scheme behavior for
+                            ;; multi-binding letrec (regression-locked test).
+                            (define cells '())
+                            (define rhss '())
+                            (for-each
+                             (λ (binding)
+                               (unless (and (pair? binding)
+                                            (symbol? (car binding))
+                                            (pair? (cdr binding))
+                                            (null? (cddr binding)))
+                                 (error 'minischeme "malformed letrec binding: ~s" binding))
+                               (define cell (box uninitialized))
+                               (env-define-cell! new-env (car binding) cell)
+                               (set! cells (cons cell cells))
+                               (set! rhss (cons (cadr binding) rhss)))
+                             bindings)
+                            (let loopr ([cs (reverse cells)] [es (reverse rhss)])
+                              (unless (null? cs)
+                                (set-box! (car cs) (single-value 'letrec-binding
+                                                                 (eval-now (car es) new-env)))
+                                (loopr (cdr cs) (cdr es))))
+                            (eval-sequence body new-env kont))))
                     (error 'minischeme "malformed letrec: ~s" control)))]
              [(pair? control)
               (define op (car control))
@@ -1817,6 +1852,43 @@
                         (continue 'value control begin-env rest)
                         (continue 'eval (car rest-forms) begin-env
                                   (cons (k-begin (cdr rest-forms) begin-env) rest)))]
+                   [(k-let? frame)
+                    (define value (single-value 'let-binding control))
+                    (define vars (k-let-vars frame))
+                    (define rest-rhss (k-let-rest-rhss frame))
+                    (define values (cons value (k-let-values frame)))
+                    (define let-env (k-let-env frame))
+                    (define body (k-let-body frame))
+                    (if (null? rest-rhss)
+                        (let ([new-env (make-env let-env)])
+                          (let bind-loop ([vs vars] [vals (reverse values)])
+                            (unless (null? vs)
+                              (env-define! new-env (car vs) (car vals))
+                              (bind-loop (cdr vs) (cdr vals))))
+                          (eval-sequence body new-env rest))
+                        (continue 'eval (car rest-rhss) let-env
+                                  (cons (k-let vars (cdr rest-rhss) values body let-env)
+                                        rest)))]
+                   [(k-let*? frame)
+                    (define value (single-value 'let*-binding control))
+                    (define name (k-let*-name frame))
+                    (define rest-bindings (k-let*-rest-bindings frame))
+                    (define body (k-let*-body frame))
+                    (define let*-env (k-let*-env frame))
+                    (define new-env (make-env let*-env))
+                    (env-define! new-env name value)
+                    (if (null? rest-bindings)
+                        (eval-sequence body new-env rest)
+                        (let ([b (car rest-bindings)])
+                          (continue 'eval (cadr b) new-env
+                                    (cons (k-let* (car b) (cdr rest-bindings) body new-env)
+                                          rest))))]
+                   [(k-letrec1? frame)
+                    (set-box! (k-letrec1-cell frame)
+                              (single-value 'letrec-binding control))
+                    (eval-sequence (k-letrec1-body frame)
+                                   (k-letrec1-env frame)
+                                   rest)]
                    [(k-set!? frame)
                     (set-box! (k-set!-cell frame) (single-value (k-set!-name frame) control))
                     (continue 'value control current-env rest)]

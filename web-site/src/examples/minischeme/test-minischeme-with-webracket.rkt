@@ -389,12 +389,21 @@
    (test-equal "call/cc no escape returns body value"
                "(call/cc (lambda (k) 9))"
                "=> 9")
+   (test-equal "call/cc identity let/procedure? regression"
+               "(define identity (lambda (x) x))\n(let ((x #f))\n  (let ((value (call/cc identity)))\n    (if (procedure? value)\n        (value #t)\n        (equal? value #t))))"
+               "=> #t")
    (test-equal "call/cc escapes out of list context"
                "(call/cc (lambda (k) (list 1 (k 2) 3)))"
                "=> 2")
    (test-equal "call/cc continuation stored and reused"
                "(define saved #f)\n(+ 1 (call/cc (lambda (k) (set! saved k) 10)))\n(saved 50)"
                "=> 51")
+   (test-equal "call/cc make-range continuation loop regression"
+               "(define (make-range from to)\n  (call/cc\n   (lambda (return)\n     (let ((result '()))\n       (let ((loop (call/cc (lambda (k) k))))\n         (set! result (cons (call/cc\n                             (lambda (append)\n                               (if (< from to)\n                                   (append from)\n                                   (return (reverse result)))))\n                            result))\n         (set! from (+ from 1))\n         (loop loop))))))\n(make-range 0 10)"
+               "=> (0 1 2 3 4 5 6 7 8 9)")
+   (test-equal "call/cc make-range letrec continuation loop regression"
+               "(define (make-range from to)\n  (call/cc\n   (lambda (return)\n     (letrec ((result '()))\n       (letrec ((loop (call/cc (lambda (k) k))))\n         (set! result (cons (call/cc\n                             (lambda (append)\n                               (if (< from to)\n                                   (append from)\n                                   (return (reverse result)))))\n                            result))\n         (set! from (+ from 1))\n         (loop loop))))))\n(make-range 0 10)"
+               "=> (0 1 2 3 4 5 6 7 8 9)")
    (test-eval-contains "call/cc arity mismatch"
                        "(call/cc)"
                        "call/cc expects 1 argument")
