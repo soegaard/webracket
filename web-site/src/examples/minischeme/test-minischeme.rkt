@@ -641,6 +641,66 @@
       #rx"for-each expects lists of the same length"
       "(for-each + '(1 2) '(10))"))
 
+   (test-case "interaction-environment with eval reads global binding"
+     (reset!)
+     (check-equal?
+      (run "(define x 10)\n(eval '(+ x 5) (interaction-environment))")
+      "=> 15"))
+
+   (test-case "interaction-environment with eval mutates global binding"
+     (reset!)
+     (check-equal?
+      (run "(define x 1)\n(eval '(set! x 9) (interaction-environment))\nx")
+      "=> 9"))
+
+   (test-case "scheme-report-environment is isolated from interaction environment"
+     (reset!)
+     (check-equal?
+      (run "(define x 99)\n(define se (scheme-report-environment 5))\n(eval '(define x 1) se)\n(list (eval 'x se) x)")
+      "=> (1 99)"))
+
+   (test-case "null-environment supports core syntax forms"
+     (reset!)
+     (check-equal?
+      (run "(eval '(if #t 1 2) (null-environment 5))")
+      "=> 1"))
+
+   (test-case "null-environment has no primitive variable bindings"
+     (reset!)
+     (check-eval-error-match
+      #rx"unbound identifier \\+"
+      "(eval '(+ 1 2) (null-environment 5))"))
+
+   (test-case "eval requires environment as second argument"
+     (reset!)
+     (check-eval-error-match
+      #rx"eval expects an environment"
+      "(eval '(+ 1 2) 42)"))
+
+   (test-case "eval arity mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"eval expects 2 arguments"
+      "(eval '(+ 1 2))"))
+
+   (test-case "interaction-environment arity mismatch"
+     (reset!)
+     (check-eval-error-match
+      #rx"interaction-environment expects 0 arguments"
+      "(interaction-environment 1)"))
+
+   (test-case "scheme-report-environment version check"
+     (reset!)
+     (check-eval-error-match
+      #rx"scheme-report-environment supports only version 5"
+      "(scheme-report-environment 4)"))
+
+   (test-case "null-environment version type check"
+     (reset!)
+     (check-eval-error-match
+      #rx"null-environment expects an exact integer version"
+      "(null-environment 'five)"))
+
    (test-case "call-with-values: multiple to list"
      (reset!)
      (check-equal?

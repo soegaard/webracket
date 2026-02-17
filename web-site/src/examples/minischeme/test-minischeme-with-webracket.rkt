@@ -377,6 +377,36 @@
    (test-eval-contains "for-each multiple lists length mismatch"
                        "(for-each + '(1 2) '(10))"
                        "for-each expects lists of the same length")
+   (test-equal "interaction-environment with eval reads global binding"
+               "(define x 10)\n(eval '(+ x 5) (interaction-environment))"
+               "=> 15")
+   (test-equal "interaction-environment with eval mutates global binding"
+               "(define x 1)\n(eval '(set! x 9) (interaction-environment))\nx"
+               "=> 9")
+   (test-equal "scheme-report-environment is isolated from interaction environment"
+               "(define x 99)\n(define se (scheme-report-environment 5))\n(eval '(define x 1) se)\n(list (eval 'x se) x)"
+               "=> (1 99)")
+   (test-equal "null-environment supports core syntax forms"
+               "(eval '(if #t 1 2) (null-environment 5))"
+               "=> 1")
+   (test-eval-contains "null-environment has no primitive variable bindings"
+                       "(eval '(+ 1 2) (null-environment 5))"
+                       "unbound identifier +")
+   (test-eval-contains "eval requires environment as second argument"
+                       "(eval '(+ 1 2) 42)"
+                       "eval expects an environment")
+   (test-eval-contains "eval arity mismatch"
+                       "(eval '(+ 1 2))"
+                       "eval expects 2 arguments")
+   (test-eval-contains "interaction-environment arity mismatch"
+                       "(interaction-environment 1)"
+                       "interaction-environment expects 0 arguments")
+   (test-eval-contains "scheme-report-environment version check"
+                       "(scheme-report-environment 4)"
+                       "scheme-report-environment supports only version 5")
+   (test-eval-contains "null-environment version type check"
+                       "(null-environment 'five)"
+                       "null-environment expects an exact integer version")
    (test-equal "call-with-values: multiple to list"
                "(call-with-values (lambda () (values 1 2 3)) list)"
                "=> (1 2 3)")

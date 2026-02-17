@@ -20,6 +20,7 @@
     (struct closure   (params body env))
     (struct prim      (name proc))
     (struct mvals     (vals))
+    (struct environment-value (env))
     (struct promise   (state thunk value) #:mutable)
     (struct captured-kont (kont env winds))
     (struct wind      (before after))
@@ -155,6 +156,19 @@
       (unless (>= (length args) expected)
         (error 'minischeme "~a expects at least ~a argument~a"
                name expected (if (= expected 1) "" "s"))))
+
+    (define (check-r5rs-version name args)
+      (check-arg-count name args 1)
+      (define v (car args))
+      (unless (exact-integer? v)
+        (error 'minischeme "~a expects an exact integer version, got ~a" name v))
+      (unless (= v 5)
+        (error 'minischeme "~a supports only version 5, got ~a" name v)))
+
+    (define (environment-value-env/checked who v)
+      (unless (environment-value? v)
+        (error 'minischeme "~a expects an environment, got ~a" who v))
+      (environment-value-env v))
 
     (define (value->values-list v)
       (if (mvals? v) (mvals-vals v) (list v)))
@@ -996,6 +1010,14 @@
                                (error 'minischeme "internal error: dynamic-wind should be handled by evaluator")))
       (install 'force (λ (_args)
                         (error 'minischeme "internal error: force should be handled by evaluator")))
+      (install 'eval (λ (_args)
+                       (error 'minischeme "internal error: eval should be handled by evaluator")))
+      (install 'interaction-environment (λ (_args)
+                                          (error 'minischeme "internal error: interaction-environment should be handled by evaluator")))
+      (install 'scheme-report-environment (λ (_args)
+                                            (error 'minischeme "internal error: scheme-report-environment should be handled by evaluator")))
+      (install 'null-environment (λ (_args)
+                                   (error 'minischeme "internal error: null-environment should be handled by evaluator")))
       (install 'display (λ (args)
                           (check-arg-count 'display args 1)
                           (write-string (display-value->string (car args)) current-output)
@@ -1082,6 +1104,7 @@
         [(closure? v) "#<closure>"]
         [(prim? v)    (format "#<primitive ~a>" (prim-name v))]
         [(captured-kont? v) "#<continuation>"]
+        [(environment-value? v) "#<environment>"]
         [(void? v)    "#<void>"]
         [else         (format "~s" v)]))
 
@@ -1090,6 +1113,7 @@
         [(closure? v) "#<closure>"]
         [(prim? v)    (format "#<primitive ~a>" (prim-name v))]
         [(captured-kont? v) "#<continuation>"]
+        [(environment-value? v) "#<environment>"]
         [(void? v)    "#<void>"]
         [else         (format "~a" v)]))
 
@@ -1532,6 +1556,29 @@
                           [else
                            (error 'minischeme "force: invalid promise state ~a" state)]))
                       (continue 'value v env kont winds))]
+                 [(eq? pname 'eval)
+                  (check-arg-count 'eval args 2)
+                  (define expr (car args))
+                  (define env-value (cadr args))
+                  (define target-env (environment-value-env/checked 'eval env-value))
+                  (continue 'eval (expand-expr expr) target-env kont winds)]
+                 [(eq? pname 'interaction-environment)
+                  (check-arg-count 'interaction-environment args 0)
+                  (continue 'value (environment-value global-env) env kont winds)]
+                 [(eq? pname 'scheme-report-environment)
+                  (check-r5rs-version 'scheme-report-environment args)
+                  (continue 'value
+                            (environment-value (create-initial-state))
+                            env
+                            kont
+                            winds)]
+                 [(eq? pname 'null-environment)
+                  (check-r5rs-version 'null-environment args)
+                  (continue 'value
+                            (environment-value (make-env #f))
+                            env
+                            kont
+                            winds)]
                  [(eq? pname 'map)
                   (check-at-least 'map args 2)
                   (define f (car args))
