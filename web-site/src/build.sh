@@ -17,6 +17,7 @@ perl -0777 -i -pe "s/web-site\\.wasm\"/web-site.wasm?v=${STAMP}\"/g" web-site.ht
 ROUTE_ALIASES=(
   community
   documentation
+  documentation-webracket-glance
   documentation-compiler-overview
   documentation-js-ffi
   documentation-ffi-standard

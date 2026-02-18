@@ -636,7 +636,11 @@
 ;;   Shared footer for all pages.
 (define (footer-section)
   `(footer (@ (class "footer"))
-           (span "WebRacket — Racket for the browser.")
+           (span "WebRacket — Racket for the browser.")           
+           (address (@ (class "footer-contact"))
+                    (p "Jens Axel Søgaard")
+                    (p (a (@ (href "mailto:jensaxel@soegaard.net"))
+                          "jensaxel@soegaard.net")))
            (span "Made for the Racket community.")))
 
 ;;;
@@ -2441,6 +2445,45 @@ pre {
 .card-grid--quick-start .card .doc-cta-group {
   margin-top: auto;
 }
+/* Glance page: stronger H2 anchors (no separator lines) */
+.page--glance .doc-content > h2 {
+  font-size: 1.55rem;
+  margin: 40px 0 12px;
+  padding-top: 0;
+  letter-spacing: -0.012em;
+  color: #F6F7FF;
+  border-top: none;
+}
+.page--glance .doc-content > h2::before {
+  content: none;
+  display: none;
+}
+.page--glance .doc-content > h2 {
+  font-size: 1.55rem;
+  margin: 56px 0 12px;   /* spacing creates rhythm */
+  padding-top: 0;
+  letter-spacing: -0.012em;
+  color: #F6F7FF;
+  border-top: none;
+}
+/* Single subtle gradient separator before each section (except first) */
+.page--glance .doc-content > h2:not(:first-of-type)::before {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-bottom: 18px;
+  opacity: 0.6;
+  background: linear-gradient(
+    90deg,
+    rgba(74, 108, 255, 0.45),
+    rgba(101, 79, 240, 0.18),
+    rgba(101, 79, 240, 0)
+  );
+}
+/* No separator before the first heading */
+.page--glance .doc-content > h2:first-of-type::before {
+  display: none;
+}
 .page--status {
   --status-card-padding: 10px;
   --status-card-gap: 5.2px;
@@ -3754,6 +3797,14 @@ pre code {
   color: var(--muted);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 20px;
+  align-items: center;
+}
+.footer address {
+  font-style: normal;
+}
+.footer-contact p {
+  margin: 0;
+  text-align: center;
 }
 .highlight { color: var(--gold); font-weight: 600; }
 .accent    { color: var(--blue); }

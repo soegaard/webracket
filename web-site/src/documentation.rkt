@@ -432,7 +432,7 @@
 ;; doc-webracket-at-a-glance-page : -> List
 ;;   Documentation subpage: WebRacket at a Glance
 (define (doc-webracket-at-a-glance-page)
-  `(div (@ (class "page page--docs"))
+  `(div (@ (class "page page--docs page--glance"))
         ,(navbar)
         (section (@ (class "docs-hero"))
                  (div (@ (class "hero-panel"))
@@ -445,8 +445,8 @@
                          " / WebRacket at a Glance")
                       (h1 (@ (class "hero-title")) "WebRacket at a Glance")
                       (p (@ (class "hero-lead"))
-                         "A conceptual overview of what WebRacket is, what it "
-                         "targets, and how the main pieces fit together.")))
+                         "A high-level overview of what WebRacket is, what it targets, "
+                         "and how the main pieces fit together.")))
         ,(section-block
           "WebRacket at a Glance"
           #f
@@ -455,9 +455,8 @@
                  (p "WebRacket is a " (strong "Racket to WebAssembly compiler")
                     " designed to run practical Racket programs directly in "
                     "modern web browsers.")
-                 (p "This page is the short, high-level map: it sets expectations, "
-                    "explains the execution model, and points to deeper docs.")
-
+                 (p "This page is a short, high-level map. It sets expectations, "
+                    "explains the execution model, and points to deeper documentation.")
                  ,(callout
                    'note
                    "Who is this page for?"
@@ -467,8 +466,8 @@
 
                  (h2 "What WebRacket is")
                  (p "WebRacket compiles a substantial, practical subset of Racket into WebAssembly. "
-                    "WebAssembly is a portable, low-level code format designed for safe, efficient "
-                    "execution inside modern web browsers. You can think of WebAssembly as a kind of "
+                    "WebAssembly is a portable, low-level code format designed for safe and efficient "
+                    "execution in modern web browsers. You can think of WebAssembly as a kind of "
                     "portable machine code for the browser.")
                  (p "WebAssembly code runs in a virtual machine that is separate from the JavaScript "
                     "virtual machine. This separation means that a foreign-function interface (FFI) is "
@@ -483,7 +482,7 @@
                  (h2 "What WebRacket is not")
                  (p "WebRacket is not a drop-in replacement for Racket-on-VM. "
                     "Some features are intentionally missing or behave differently "
-                    "due to browser and Wasm constraints.")
+                    "due to browser and WebAssembly constraints.")
                  ,(callout
                    'note
                    "Compatibility"

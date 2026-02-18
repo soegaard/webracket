@@ -16,27 +16,28 @@
 
 (define-values (minischeme-reset-state! minischeme-process-input)
   (let ()
-    (struct env       (table parent))
-    (struct closure   (params body env))
-    (struct prim      (name proc))
-    (struct mvals     (vals))
+    (struct env               (table parent))
+    (struct closure           (params body env))
+    (struct prim              (name proc))
+    (struct mvals             (vals))
     (struct environment-value (env))
-    (struct promise   (state thunk value) #:mutable)
-    (struct captured-kont (kont env winds))
-    (struct wind      (before after))
-    (struct k-apply   (args env))
-    (struct k-args    (proc rest env values))
-    (struct k-if      (then else env))
-    (struct k-begin   (rest env))
-    (struct k-let     (vars rest-rhss values body env))
-    (struct k-let*    (name rest-bindings body env))
-    (struct k-letrec1 (cell body env))
-    (struct k-set!    (cell name))
-    (struct k-define  (cell name))
-    (struct k-force   (promise))
-    (struct k-dw-enter (wf thunk env winds-before))
-    (struct k-dw-exit (after env winds-before))
-    (struct k-dw-return (produced env winds-before))
+    (struct promise           (state thunk value) #:mutable)
+    (struct captured-kont     (kont env winds))
+    (struct wind              (before after))
+
+    (struct k-apply           (args env))
+    (struct k-args            (proc rest env values))
+    (struct k-if              (then else env))
+    (struct k-begin           (rest env))
+    (struct k-let             (vars rest-rhss values body env))
+    (struct k-let*            (name rest-bindings body env))
+    (struct k-letrec1         (cell body env))
+    (struct k-set!            (cell name))
+    (struct k-define          (cell name))
+    (struct k-force           (promise))
+    (struct k-dw-enter        (wf thunk env winds-before))
+    (struct k-dw-exit         (after env winds-before))
+    (struct k-dw-return       (produced env winds-before))
 
     (define uninitialized (gensym 'uninitialized))
     (define no-else       (gensym 'no-else))
@@ -106,28 +107,27 @@
         (error 'minischeme "invalid parameter list ~a" params))
       (cond
         [(symbol? params) params]
-        [(null? params) params]
-        [(pair? params)
+        [(null?   params) params]
+        [(pair?   params)
          (let loop ([ps params])
            (cond
-             [(null? ps) params]
-             [(pair? ps)
-              (unless (symbol? (car ps)) (bad))
-              (loop (cdr ps))]
+             [(null? ps)   params]
+             [(pair? ps)   (unless (symbol? (car ps)) (bad))
+                           (loop (cdr ps))]
              [(symbol? ps) params]
-             [else (bad)]))]
+             [else         (bad)]))]
         [else (bad)]))
 
     (define (split-formals params)
       (cond
         [(symbol? params) (values '() params)]
-        [(null? params) (values '() #f)]
+        [(null?   params) (values '() #f)]
         [else
          (let loop ([ps params] [required '()])
            (cond
              [(null? ps) (values (reverse required) #f)]
              [(pair? ps) (loop (cdr ps) (cons (car ps) required))]
-             [else (values (reverse required) ps)]))]))
+             [else       (values (reverse required) ps)]))]))
 
     (define (check-numbers name args)
       (for-each (λ (v)
@@ -271,10 +271,10 @@
                 (loop (if (char=? (car ops) #\a) (car x) (cdr x))
                       (cdr ops))))))
 
-      (constant 'null  '())
-      (constant 'empty '())
-      (constant 'true  #t)
-      (constant 'false #f)
+      (constant 'null     '())
+      (constant 'empty    '())
+      (constant 'true     #t)
+      (constant 'false    #f)
       (constant 'build-id minischeme-build-id)
 
       (numeric '+ +)
@@ -1068,14 +1068,14 @@
       (define sorted-keywords   (sort all-keywords   (λ (x y) (symbol<? x y))))
 
       (set! minischeme-primitives-cache sorted-primitives)
-      (set! minischeme-keywords-cache sorted-keywords)
+      (set! minischeme-keywords-cache   sorted-keywords)
 
       (constant 'primitives sorted-primitives)
       (constant 'constants  sorted-constants)
       (constant 'keywords   sorted-keywords)
       base-env)
 
-    (define global-env #f)
+    (define global-env     #f)
     (define current-output #f)
 
     (define (reset-state!)
@@ -1101,21 +1101,21 @@
 
     (define (value->string v)
       (cond
-        [(closure? v) "#<closure>"]
-        [(prim? v)    (format "#<primitive ~a>" (prim-name v))]
-        [(captured-kont? v) "#<continuation>"]
+        [(closure? v)           "#<closure>"]
+        [(prim? v)              (format "#<primitive ~a>" (prim-name v))]
+        [(captured-kont? v)     "#<continuation>"]
         [(environment-value? v) "#<environment>"]
-        [(void? v)    "#<void>"]
-        [else         (format "~s" v)]))
+        [(void? v)              "#<void>"]
+        [else                   (format "~s" v)]))
 
     (define (display-value->string v)
       (cond
-        [(closure? v) "#<closure>"]
-        [(prim? v)    (format "#<primitive ~a>" (prim-name v))]
-        [(captured-kont? v) "#<continuation>"]
+        [(closure? v)           "#<closure>"]
+        [(prim? v)              (format "#<primitive ~a>" (prim-name v))]
+        [(captured-kont? v)     "#<continuation>"]
         [(environment-value? v) "#<environment>"]
-        [(void? v)    "#<void>"]
-        [else         (format "~a" v)]))
+        [(void? v)              "#<void>"]
+        [else                   (format "~a" v)]))
 
     (define (top-level-value->string v)
       (if (mvals? v)
@@ -1131,7 +1131,7 @@
     (define (apply-procedure value args caller-env kont loop)
       (cond
         [(closure? value)
-         (define params (closure-params value))
+         (define params    (closure-params value))
          (define-values (required rest-id) (split-formals params))
          (define req-count (length required))
          (define arg-count (length args))
@@ -1153,8 +1153,8 @@
            (env-define! new-env rest-id (list-tail args req-count)))
          (define body (closure-body value))
          (if (null? body)
-             (loop 'value (void) caller-env kont)
-             (loop 'eval (car body) new-env
+             (loop 'value (void)     caller-env kont)
+             (loop 'eval  (car body) new-env
                    (cons (k-begin (cdr body) new-env) kont)))]
         [(prim? value)
          (define result ((prim-proc value) args))
@@ -1163,10 +1163,10 @@
          (error 'minischeme "application of non-procedure: ~a" value)]))
 
     (define (validate-binding binding who)
-      (unless (and (pair? binding)
+      (unless (and (pair?   binding)
                    (symbol? (car binding))
-                   (pair? (cdr binding))
-                   (null? (cddr binding)))
+                   (pair?   (cdr binding))
+                   (null?   (cddr binding)))
         (error 'minischeme "~a binding malformed: ~s" who binding)))
 
     (define (validate-bindings bindings who)
@@ -1176,13 +1176,13 @@
 
     (define (expand-body forms)
       (cond
-        [(null? forms) '(begin)]
+        [(null? forms)       '(begin)]
         [(null? (cdr forms)) (expand-expr (car forms))]
-        [else (cons 'begin (map expand-expr forms))]))
+        [else                (cons 'begin (map expand-expr forms))]))
 
     (define (expand-and forms)
       (cond
-        [(null? forms) #t]
+        [(null? forms)       #t]
         [(null? (cdr forms)) (expand-expr (car forms))]
         [else
          (list 'if (expand-expr (car forms))
@@ -1191,7 +1191,7 @@
 
     (define (expand-or forms)
       (cond
-        [(null? forms) #f]
+        [(null? forms)       #f]
         [(null? (cdr forms)) (expand-expr (car forms))]
         [else
          (define tmp (gensym 'or-tmp))
@@ -1215,7 +1215,7 @@
            [(and (pair? body) (eq? (car body) '=>))
             (unless (and (pair? (cdr body)) (null? (cddr body)))
               (error 'minischeme "malformed cond => clause: ~s" clause))
-            (define tmp (gensym 'cond-tmp))
+            (define tmp       (gensym 'cond-tmp))
             (define recipient (cadr body))
             (list 'let (list (list tmp (expand-expr test)))
                   (list 'if tmp
@@ -1271,11 +1271,11 @@
       (unless (pair? tail)
         (error 'minischeme "malformed do: ~s" expr))
       (define bindings (car tail))
-      (define rest (cdr tail))
+      (define rest     (cdr tail))
       (unless (pair? rest)
         (error 'minischeme "malformed do: ~s" expr))
       (define test-clause (car rest))
-      (define commands (cdr rest))
+      (define commands    (cdr rest))
       (unless (list? bindings)
         (error 'minischeme "do malformed: bindings must be a list: ~s" bindings))
       (unless (and (pair? test-clause) (list? test-clause))
@@ -1286,7 +1286,7 @@
        (λ (binding)
          (unless (and (pair? binding) (symbol? (car binding)))
            (error 'minischeme "do binding malformed: ~s" binding))
-         (define var (car binding))
+         (define var  (car binding))
          (define spec (cdr binding))
          (unless (or (and (pair? spec) (null? (cdr spec)))
                      (and (pair? spec) (pair? (cdr spec)) (null? (cddr spec))))
@@ -1296,8 +1296,8 @@
          (set! inits (cons (list var init) inits))
          (set! steps (cons step steps)))
        bindings)
-      (define test (car test-clause))
-      (define results (cdr test-clause))
+      (define test      (car test-clause))
+      (define results   (cdr test-clause))
       (define loop-name (gensym 'do-loop))
       (expand-expr
        (list 'let loop-name (reverse inits)
@@ -1323,12 +1323,12 @@
          (define head (car expr))
          (define tail (cdr expr))
          (cond
-           [(eq? head 'quote) expr]
-           [(eq? head 'quasiquote) expr]
-           [(eq? head 'unquote) expr]
+           [(eq? head 'quote)            expr]
+           [(eq? head 'quasiquote)       expr]
+           [(eq? head 'unquote)          expr]
            [(eq? head 'unquote-splicing) expr]
-           [(eq? head 'and) (expand-and tail)]
-           [(eq? head 'or) (expand-or tail)]
+           [(eq? head 'and)              (expand-and tail)]
+           [(eq? head 'or)               (expand-or tail)]
            [(eq? head 'when)
             (unless (pair? tail)
               (error 'minischeme "malformed when: ~s" expr))
@@ -1431,10 +1431,10 @@
       (car rest))
 
     (define (cek-evaluate expr env [initial-kont '()] [initial-winds '()])
-      (let loop ([mode         'eval]
-                 [control      expr]
-                 [current-env  env]
-                 [kont         initial-kont]
+      (let loop ([mode          'eval]
+                 [control       expr]
+                 [current-env   env]
+                 [kont          initial-kont]
                  [current-winds initial-winds])
         (define (continue mode control env kont [winds current-winds])
           (loop mode control env kont winds))
@@ -1445,7 +1445,7 @@
         (define (apply-now proc args env kont [winds current-winds])
           (define (apply-result proc args [winds* winds])
             (define tmp-env (make-env env))
-            (define f-id (gensym 'apply-f))
+            (define f-id    (gensym 'apply-f))
             (env-define! tmp-env f-id proc)
             (define arg-ids
               (let loop-args ([xs args] [acc '()])
@@ -1465,15 +1465,15 @@
                   n
                   (loop-prefix (cdr xs) (cdr ys) (add1 n)))))
           (define (invoke-captured-cont k arg)
-            (define target-kont (captured-kont-kont k))
-            (define target-env (captured-kont-env k))
+            (define target-kont  (captured-kont-kont k))
+            (define target-env   (captured-kont-env k))
             (define target-winds (captured-kont-winds k))
-            (define current-out (reverse winds))
-            (define target-out (reverse target-winds))
-            (define common (common-prefix-length current-out target-out))
-            (define after-count (- (length winds) common))
-            (define before-out (drop target-out common))
-            (define run-winds winds)
+            (define current-out  (reverse winds))
+            (define target-out   (reverse target-winds))
+            (define common       (common-prefix-length current-out target-out))
+            (define after-count  (- (length winds) common))
+            (define before-out   (drop target-out common))
+            (define run-winds    winds)
             (for-each
              (λ (wf)
                (void (apply-result (wind-after wf) '() run-winds))
@@ -1505,19 +1505,19 @@
                   (check-arg-count 'call-with-values args 2)
                   (define producer (car args))
                   (define consumer (cadr args))
-                   (define produced (apply-result producer '()))
+                  (define produced (apply-result producer '()))
                   (apply-now consumer (value->values-list produced) env kont winds)]
                  [(or (eq? pname 'call/cc)
                       (eq? pname 'call-with-current-continuation))
                   (check-arg-count pname args 1)
                   (define proc-arg (car args))
-                  (define k-proc (captured-kont kont env winds))
+                  (define k-proc   (captured-kont kont env winds))
                   (apply-now proc-arg (list k-proc) env kont winds)]
                  [(eq? pname 'dynamic-wind)
                   (check-arg-count 'dynamic-wind args 3)
-                  (define before (car args))
-                  (define thunk (cadr args))
-                  (define after (caddr args))
+                  (define before (car   args))
+                  (define thunk  (cadr  args))
+                  (define after  (caddr args))
                   (unless (procedure-value? before)
                     (error 'minischeme "dynamic-wind: before must be a procedure, got ~a" before))
                   (unless (procedure-value? thunk)
@@ -1558,8 +1558,8 @@
                       (continue 'value v env kont winds))]
                  [(eq? pname 'eval)
                   (check-arg-count 'eval args 2)
-                  (define expr (car args))
-                  (define env-value (cadr args))
+                  (define expr       (car  args))
+                  (define env-value  (cadr args))
                   (define target-env (environment-value-env/checked 'eval env-value))
                   (continue 'eval (expand-expr expr) target-env kont winds)]
                  [(eq? pname 'interaction-environment)
@@ -1581,7 +1581,7 @@
                             winds)]
                  [(eq? pname 'map)
                   (check-at-least 'map args 2)
-                  (define f (car args))
+                  (define f     (car args))
                   (define lists (cdr args))
                   (for-each (λ (lst) (ensure-list 'map lst)) lists)
                   (let loop-map ([xss lists] [acc '()])
@@ -1597,7 +1597,7 @@
                        (loop-map next-xss (cons mapped acc))]))]
                  [(eq? pname 'for-each)
                   (check-at-least 'for-each args 2)
-                  (define f (car args))
+                  (define f     (car args))
                   (define lists (cdr args))
                   (for-each (λ (lst) (ensure-list 'for-each lst)) lists)
                   (let loop-for-each ([xss lists])
@@ -1614,7 +1614,7 @@
                  [(eq? pname 'filter)
                   (check-arg-count 'filter args 2)
                   (define pred (car args))
-                  (define lst (cadr args))
+                  (define lst  (cadr args))
                   (ensure-list 'filter lst)
                   (let loop-filter ([xs lst] [acc '()])
                     (if (null? xs)
@@ -1630,8 +1630,8 @@
              (apply-procedure proc args env kont continue*)]))
         (define (eval-sequence forms env kont)
           (if (null? forms)
-              (continue 'value (void) env kont)
-              (continue 'eval (car forms) env
+              (continue 'value (void)      env kont)
+              (continue 'eval  (car forms) env
                         (cons (k-begin (cdr forms) env) kont))))
 
         (define (qq-general datum depth)
@@ -1660,9 +1660,9 @@
              datum]))
 
         (define (qq-item datum depth)
-          (if (and (pair? datum)
+          (if (and (pair?   datum)
                    (symbol? (car datum))
-                   (eq? (car datum) 'unquote-splicing))
+                   (eq?     (car datum) 'unquote-splicing))
               (let ([arg (single-arg 'unquote-splicing datum)])
                 (if (= depth 1)
                     (values #t (eval-now arg current-env))
@@ -1720,7 +1720,7 @@
               (let ([rest (cdr control)])
                 (if (and (pair? rest))
                     (let ([params (car rest)]
-                          [body (cdr rest)])
+                          [body   (cdr rest)])
                       (continue 'value (closure (ensure-parameters params)
                                                 body current-env)
                                 current-env kont))
@@ -1737,13 +1737,13 @@
                     (error 'minischeme "malformed delay: ~s" control)))]
              [(and (pair? control) (eq? (car control) 'if))
               (let* ([rest (cdr control)]
-                     [len (length rest)])
+                     [len  (length rest)])
                 (cond
                   [(or (< len 2) (> len 3))
                    (error 'minischeme "malformed if: ~s" control)]
                   [else
-                   (define test (car rest))
-                   (define then (cadr rest))
+                   (define test      (car rest))
+                   (define then      (cadr rest))
                    (define else-expr (if (= len 3) (caddr rest) no-else))
                    (continue 'eval test current-env
                              (cons (k-if then else-expr current-env) kont))]))]
@@ -1753,10 +1753,10 @@
               (let ([rest (cdr control)])
                 (if (and (pair? rest)
                          (symbol? (car rest))
-                         (pair? (cdr rest))
-                         (null? (cddr rest)))
+                         (pair?   (cdr rest))
+                         (null?   (cddr rest)))
                     (let ([name (car rest)]
-                          [rhs (cadr rest)])
+                          [rhs  (cadr rest)])
                       (define cell (env-lookup-cell current-env name))
                       (continue 'eval rhs current-env
                                 (cons (k-set! cell name) kont)))
@@ -1781,10 +1781,10 @@
                   [(and (pair? rest)
                         (pair? (car rest))
                         (symbol? (caar rest)))
-                   (let* ([head (car rest)]
-                          [name (car head)]
+                   (let* ([head   (car rest)]
+                          [name   (car head)]
                           [params (cdr head)]
-                          [body (cdr rest)])
+                          [body   (cdr rest)])
                      (define cell
                        (if (env-bound-current? current-env name)
                            (hash-ref (env-table current-env) name)
@@ -1800,7 +1800,7 @@
               (let ([rest (cdr control)])
                 (if (and (pair? rest))
                     (let ([bindings (car rest)]
-                          [body (cdr rest)])
+                          [body     (cdr rest)])
                       (validate-bindings bindings 'let)
                       (define vars (map car bindings))
                       (define rhss (map cadr bindings))
@@ -1815,7 +1815,7 @@
               (let ([rest (cdr control)])
                 (if (and (pair? rest))
                     (let ([bindings (car rest)]
-                          [body (cdr rest)])
+                          [body     (cdr rest)])
                       (validate-bindings bindings 'let*)
                       (define base-env (make-env current-env))
                       (if (null? bindings)
@@ -1829,17 +1829,17 @@
               (let ([rest (cdr control)])
                 (if (and (pair? rest))
                     (let ([bindings (car rest)]
-                          [body (cdr rest)])
+                          [body     (cdr rest)])
                       (validate-bindings bindings 'letrec)
                       (if (and (pair? bindings) (null? (cdr bindings)))
                           (let* ([binding (car bindings)])
-                            (unless (and (pair? binding)
+                            (unless (and (pair?   binding)
                                          (symbol? (car binding))
-                                         (pair? (cdr binding))
-                                         (null? (cddr binding)))
+                                         (pair?   (cdr binding))
+                                         (null?   (cddr binding)))
                               (error 'minischeme "malformed letrec binding: ~s" binding))
                             (define new-env (make-env current-env))
-                            (define cell (box uninitialized))
+                            (define cell    (box uninitialized))
                             (env-define-cell! new-env (car binding) cell)
                             (continue 'eval (cadr binding) new-env
                                       (cons (k-letrec1 cell body new-env) kont)))
@@ -1847,13 +1847,13 @@
                             ;; Keep historical MiniScheme/Scheme behavior for
                             ;; multi-binding letrec (regression-locked test).
                             (define cells '())
-                            (define rhss '())
+                            (define rhss  '())
                             (for-each
                              (λ (binding)
-                               (unless (and (pair? binding)
+                               (unless (and (pair?   binding)
                                             (symbol? (car binding))
-                                            (pair? (cdr binding))
-                                            (null? (cddr binding)))
+                                            (pair?   (cdr binding))
+                                            (null?   (cddr binding)))
                                  (error 'minischeme "malformed letrec binding: ~s" binding))
                                (define cell (box uninitialized))
                                (env-define-cell! new-env (car binding) cell)
@@ -1868,7 +1868,7 @@
                             (eval-sequence body new-env kont))))
                     (error 'minischeme "malformed letrec: ~s" control)))]
              [(pair? control)
-              (define op (car control))
+              (define op   (car control))
               (define args (cdr control))
               (continue 'eval op current-env
                         (cons (k-apply args current-env) kont))]
@@ -1878,22 +1878,22 @@
            (if (null? kont)
                (values control current-env current-winds)
                (let* ([frame (car kont)]
-                      [rest (cdr kont)])
+                      [rest  (cdr kont)])
                  (cond
                    [(k-apply? frame)
-                    (define args (k-apply-args frame))
+                    (define args     (k-apply-args frame))
                     (define call-env (k-apply-env frame))
-                    (define op (single-value 'application control))
+                    (define op       (single-value 'application control))
                     (if (null? args)
                         (apply-now op '() call-env rest)
                         (continue 'eval (car args) call-env
                                   (cons (k-args op (cdr args) call-env '())
                                         rest)))]
                    [(k-args? frame)
-                    (define proc (k-args-proc frame))
+                    (define proc      (k-args-proc frame))
                     (define rest-args (k-args-rest frame))
-                    (define call-env (k-args-env frame))
-                    (define arg (single-value 'application-argument control))
+                    (define call-env  (k-args-env frame))
+                    (define arg       (single-value 'application-argument control))
                     (define collected (cons arg (k-args-values frame)))
                     (if (null? rest-args)
                         (apply-now proc (reverse collected) call-env rest)
@@ -1901,29 +1901,29 @@
                                   (cons (k-args proc (cdr rest-args)
                                                 call-env collected) rest)))]
                    [(k-if? frame)
-                   (define branch-env (k-if-env frame))
-                   (define then (k-if-then frame))
-                   (define else-expr (k-if-else frame))
-                    (define test-v (single-value 'if-test control))
+                    (define branch-env (k-if-env frame))
+                    (define then       (k-if-then frame))
+                    (define else-expr  (k-if-else frame))
+                    (define test-v    (single-value 'if-test control))
                     (if (false? test-v)
                         (if (eq? else-expr no-else)
                             (continue 'value (void) branch-env rest)
                             (continue 'eval else-expr branch-env rest))
                         (continue 'eval then branch-env rest))]
                    [(k-begin? frame)
-                    (define begin-env (k-begin-env frame))
+                    (define begin-env  (k-begin-env frame))
                     (define rest-forms (k-begin-rest frame))
                     (if (null? rest-forms)
                         (continue 'value control begin-env rest)
                         (continue 'eval (car rest-forms) begin-env
                                   (cons (k-begin (cdr rest-forms) begin-env) rest)))]
                    [(k-let? frame)
-                    (define value (single-value 'let-binding control))
-                    (define vars (k-let-vars frame))
+                    (define value     (single-value 'let-binding control))
+                    (define vars      (k-let-vars frame))
                     (define rest-rhss (k-let-rest-rhss frame))
-                    (define values (cons value (k-let-values frame)))
-                    (define let-env (k-let-env frame))
-                    (define body (k-let-body frame))
+                    (define values    (cons value (k-let-values frame)))
+                    (define let-env   (k-let-env frame))
+                    (define body      (k-let-body frame))
                     (if (null? rest-rhss)
                         (let ([new-env (make-env let-env)])
                           (let bind-loop ([vs vars] [vals (reverse values)])
@@ -1935,12 +1935,12 @@
                                   (cons (k-let vars (cdr rest-rhss) values body let-env)
                                         rest)))]
                    [(k-let*? frame)
-                    (define value (single-value 'let*-binding control))
-                    (define name (k-let*-name frame))
+                    (define value         (single-value 'let*-binding control))
+                    (define name          (k-let*-name frame))
                     (define rest-bindings (k-let*-rest-bindings frame))
-                    (define body (k-let*-body frame))
-                    (define let*-env (k-let*-env frame))
-                    (define new-env (make-env let*-env))
+                    (define body          (k-let*-body frame))
+                    (define let*-env      (k-let*-env frame))
+                    (define new-env       (make-env let*-env))
                     (env-define! new-env name value)
                     (if (null? rest-bindings)
                         (eval-sequence body new-env rest)
@@ -1967,18 +1967,18 @@
                     (set-promise-thunk! p #f)
                     (continue 'value control current-env rest)]
                    [(k-dw-enter? frame)
-                    (define wf (k-dw-enter-wf frame))
-                    (define thunk (k-dw-enter-thunk frame))
-                    (define dyn-env (k-dw-enter-env frame))
-                    (define winds-before (k-dw-enter-winds-before frame))
+                    (define wf            (k-dw-enter-wf frame))
+                    (define thunk         (k-dw-enter-thunk frame))
+                    (define dyn-env       (k-dw-enter-env frame))
+                    (define winds-before  (k-dw-enter-winds-before frame))
                     (define entered-winds (cons wf winds-before))
                     (apply-now thunk '() dyn-env
                               (cons (k-dw-exit (wind-after wf) dyn-env winds-before) rest)
                               entered-winds)]
                    [(k-dw-exit? frame)
-                    (define produced control)
-                    (define after (k-dw-exit-after frame))
-                    (define dyn-env (k-dw-exit-env frame))
+                    (define produced     control)
+                    (define after        (k-dw-exit-after frame))
+                    (define dyn-env      (k-dw-exit-env frame))
                     (define winds-before (k-dw-exit-winds-before frame))
                     (apply-now after '() dyn-env
                               (cons (k-dw-return produced dyn-env winds-before) rest)
@@ -1995,7 +1995,7 @@
            (error 'minischeme "invalid evaluation mode" mode)])))
 
     (define (evaluate-program exprs)
-      (let loop ([forms exprs]
+      (let loop ([forms      exprs]
                  [last-value (void)])
         (if (null? forms)
             last-value
@@ -2019,7 +2019,7 @@
       (define (format-read-error e)
         (prepend-output (string-append "=> read error: " (exn-message e))))
       (define (format-eval-error e)
-        (define msg (exn-message e))
+        (define msg    (exn-message e))
         (define prefix "minischeme: ")
         (define normalized
           (if (and (>= (string-length msg) (string-length prefix))
