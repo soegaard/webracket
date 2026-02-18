@@ -26,21 +26,28 @@
           (list
            (card-grid
             (list
-             (list `(h3 "Short Compiler Overview")
-                   `(p "A high-level look at the compiler pipeline, passes, and runtime layout.")
+             (list `(h3 "WebRacket at a Glance")
+                   `(p "A conceptual overview of what WebRacket is, what it targets, "
+                       "and how the main pieces fit together.")
+                   `(p "This is the first thing new readers should read.")
                    `(a (@ (class "doc-cta doc-cta--primary")
-                          (href "documentation-compiler-overview.html"))
+                          (href "documentation-webracket-glance.html"))
                        "Read overview"))
              (list `(h3 "Guide to the JavaScript FFI")
-                   `(p "How WebRacket crosses the boundary to JavaScript and the browser.")
+                   `(p "How WebRacket interacts with JavaScript and the browser.")
                    `(a (@ (class "doc-cta doc-cta--primary")
                           (href "documentation-js-ffi.html"))
                        "Open guide"))
              (list `(h3 "FFI Reference Docs")
-                   `(p "Generated reference pages from the `DOCS-*.md` files in the repository.")
+                   `(p "Reference pages for the builtin bindings.")
                    `(a (@ (class "doc-cta doc-cta--primary")
                           (href "documentation-ffi-standard.html"))
-                       "Browse references"))))
+                       "Browse references"))
+             (list `(h3 "Short Compiler Overview")
+                   `(p "A high-level look at the compiler pipeline, passes, and runtime layout.")
+                   `(a (@ (class "doc-cta doc-cta--primary")
+                          (href "documentation-compiler-overview.html"))
+                       "Read overview"))))
            )
           #f
           "section--docs-topics")
@@ -51,7 +58,7 @@
            (card-grid
             (map
              (lambda (entry)
-               (define title (cdr (assoc 'title entry)))
+               (define title  (cdr (assoc 'title  entry)))
                (define output (cdr (assoc 'output entry)))
                (define source (cdr (assoc 'source entry)))
                (list `(h3 ,title)
@@ -412,11 +419,196 @@
         ,(footer-section)))
 
 (define (doc-ffi-standard-page) (doc-ffi-page "ffi-standard"))
-(define (doc-ffi-dom-page) (doc-ffi-page "ffi-dom"))
-(define (doc-ffi-js-page) (doc-ffi-page "ffi-js"))
-(define (doc-ffi-math-page) (doc-ffi-page "ffi-math"))
+(define (doc-ffi-dom-page)      (doc-ffi-page "ffi-dom"))
+(define (doc-ffi-js-page)       (doc-ffi-page "ffi-js"))
+(define (doc-ffi-math-page)     (doc-ffi-page "ffi-math"))
 (define (doc-ffi-jsxgraph-page) (doc-ffi-page "ffi-jsxgraph"))
-(define (doc-ffi-xtermjs-page) (doc-ffi-page "ffi-xtermjs"))
+(define (doc-ffi-xtermjs-page)  (doc-ffi-page "ffi-xtermjs"))
+
+;;;
+;;; WebRacket at a Glance
+;;;
+
+;; doc-webracket-at-a-glance-page : -> List
+;;   Documentation subpage: WebRacket at a Glance
+(define (doc-webracket-at-a-glance-page)
+  `(div (@ (class "page page--docs"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Overview")
+                           (span (@ (class "pill")) "Runtime")
+                           (span (@ (class "pill")) "FFI"))
+                      (p (@ (class "hero-sublead"))
+                         (a (@ (href "documentation.html")) "Documentation")
+                         " / WebRacket at a Glance")
+                      (h1 (@ (class "hero-title")) "WebRacket at a Glance")
+                      (p (@ (class "hero-lead"))
+                         "A conceptual overview of what WebRacket is, what it "
+                         "targets, and how the main pieces fit together.")))
+        ,(section-block
+          "WebRacket at a Glance"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
+                 (p "WebRacket is a " (strong "Racket to WebAssembly compiler")
+                    " designed to run practical Racket programs directly in "
+                    "modern web browsers.")
+                 (p "This page is the short, high-level map: it sets expectations, "
+                    "explains the execution model, and points to deeper docs.")
+
+                 ,(callout
+                   'note
+                   "Who is this page for?"
+                   '(p "This page is the recommended entry point for understanding WebRacket. "
+                       "It is intended for readers who are new to the system and want a high-level "
+                       "orientation before exploring the rest of the documentation. "))
+
+                 (h2 "What WebRacket is")
+                 (p "WebRacket compiles a substantial, practical subset of Racket into WebAssembly. "
+                    "WebAssembly is a portable, low-level code format designed for safe, efficient "
+                    "execution inside modern web browsers. You can think of WebAssembly as a kind of "
+                    "portable machine code for the browser.")
+                 (p "WebAssembly code runs in a virtual machine that is separate from the JavaScript "
+                    "virtual machine. This separation means that a foreign-function interface (FFI) is "
+                    "required whenever WebAssembly code needs to call JavaScript in order to access "
+                    "browser-provided functionality such as the DOM, timers, or graphics APIs.")
+                 (p "In practice, this means that WebRacket:"
+                    (ul
+                     (li "Targets modern browsers (Chrome, Firefox, Safari).")
+                     (li "Uses a custom runtime designed for WebAssembly.")
+                     (li "Keeps the boundary to JavaScript explicit via the FFI.")))
+
+                 (h2 "What WebRacket is not")
+                 (p "WebRacket is not a drop-in replacement for Racket-on-VM. "
+                    "Some features are intentionally missing or behave differently "
+                    "due to browser and Wasm constraints.")
+                 ,(callout
+                   'note
+                   "Compatibility"
+                   `(p "WebRacket aims for a useful and predictable subset of Racket, rather than complete "
+                       "compatibility. Differences from Racket-on-VM are currently intentional and reflect "
+                       "explicit design choices, but the goal is to reduce these differences over time."))
+
+                 (h2 "Execution model")
+                 (p "WebRacket programs execute as single-threaded WebAssembly modules embedded in a "
+                    "browser environment. This model determines how computation, memory management, "
+                    "and interaction with the host are structured.")
+                 (ul
+                  (li (strong "Single-threaded execution") ": no parallel threads or shared-memory "
+                      "concurrency.")
+                  (li (strong "Custom runtime") ": implements core Racket value representations and "
+                      "primitive operations.")
+                  (li (strong "WebAssembly GC types") ": uses Wasm GC for heap-allocated values where "
+                      "available."))
+                 
+
+                 (h2 "Language coverage")
+                 (p "WebRacket focuses on practical web programs. Support includes many core forms "
+                    "and data structures, with some areas still in progress. WebRacket currently "
+                    "implements over 800 primitive procedures; see the "
+                    (a (@ (href "implementation-status.html")) "status page")
+                    " for a detailed and up-to-date overview.")
+
+                 (h3 "Supported areas")
+                 (ul
+                  (li "Fixnums and flonums.")
+                  (li "Strings and byte strings.")
+                  (li "Symbols.")
+                  (li "Keywords (as values and syntax).")
+                  (li "Pairs, vectors, boxes, and mutable hash tables.")
+                  (li "Standard expander, including " (code "for") " and " (code "match") ".")
+                  (li "Tail calls, multiple values, and upward exceptions.")
+                  (li "Structures with super-structures and properties.")
+                  (li "Applicable structures.")
+                  (li "Large parts of " (code "racket/base") "."))
+
+                 (h3 "Current limitations")
+                 (ul
+                  (li "Single-threaded execution only.")
+                  (li "Modules are work in progress (use " (code "include") " for now).")
+                  (li "Procedures do not yet support keyword arguments.")
+                  (li "Some numeric and control features are not yet implemented."))
+                 ,(callout
+                   'info
+                   "Where to look next"
+                   `(p "For a detailed list, see the Language Coverage section on "
+                       "the front page and the dedicated reference pages in "
+                       (a (@ (href "documentation.html")) "Documentation") "."))
+
+                 (h2 "JavaScript FFI")
+                 (p "WebRacket integrates with the browser through an explicit "
+                    "JavaScript FFI. This is how WebRacket programs use the DOM, "
+                    "Canvas, and libraries like MathJax, Xterm.js, and JSXGraph.")
+                 (p "The FFI is designed to make conversions and effects explicit, "
+                    "so boundary behavior stays predictable and debuggable.")
+                 (div (@ (class "doc-cta-card"))
+                      ,(callout
+                        'info
+                        "FFI docs"
+                        `(p "Start with the FFI guide, then use the generated "
+                            "references when you need exact APIs.")
+                        `(div (@ (class "doc-cta-group"))
+                              (a (@ (class "doc-cta doc-cta--primary")
+                                    (href "docs-ffi-guide.html"))
+                                 "Open FFI guide")
+                              (a (@ (class "doc-cta")
+                                    (href "docs-ffi-reference.html"))
+                                 "Browse FFI references"))))
+
+                 (h2 "Very Short Compiler Overview")
+                 (p "WebRacket uses a direct-style compiler that translates expanded Racket programs "
+                    "into WebAssembly through a sequence of small, focused transformations. This "
+                    "structure keeps the compiler pipeline easy to follow and makes it "
+                    "straightforward to relate generated code back to the original source program.")
+                 (p "For a pass-by-pass description of the compiler pipeline and pointers into the "
+                    "implementation, see the "
+                    (a (@ (href "documentation-compiler-overview.html")) "Short Compiler Overview")
+                    ".")
+
+
+                 (h2 "Toolchain essentials")
+                 (p "A small set of tools powers the workflow from source to the "
+                    "browser:")
+                 (ul
+                  (li (code "wasm-tools") " to validate and inspect Wasm output.")
+                  (li "Node.js to run compiled programs in the terminal.")
+                  (li (code "raco static-web") " to serve artifacts locally."))
+
+                 (h2 "What to read next")
+                 (div (@ (class "doc-grid doc-grid--3"))
+                      (div (@ (class "doc-card"))
+                           (h3 "Using WebRacket")
+                           (ul
+                            (li (a (@ (href "quick-start.html")) "Quick Start"))
+                            (li (a (@ (href "examples.html")) "Examples"))))
+                      (div (@ (class "doc-card"))
+                           (h3 "Understanding WebRacket")
+                           (ul
+                            (li (a (@ (href "docs-compiler-overview.html"))
+                                   "Compiler overview"))
+                            (li (a (@ (href "docs-runtime.html"))
+                                   "Runtime notes"))))
+                      (div (@ (class "doc-card"))
+                           (h3 "Extending WebRacket")
+                           (ul
+                            (li (a (@ (href "docs-compiler-passes.html"))
+                                   "Compiler passes"))
+                            (li (a (@ (href "docs-ffi-reference.html"))
+                                   "FFI reference docs")))))
+
+                 #;,(callout
+                     'note
+                     "Design goal"
+                     `(p "A recurring goal is to avoid relying on host-provided "
+                         "features when possible, while still integrating cleanly "
+                         "with the browser through the JavaScript boundary."))))
+          #f
+          #f)
+        ,(footer-section)))
+                      
+
 
 ;;;
 ;;; Short Compiler Overview

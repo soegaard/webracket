@@ -561,6 +561,7 @@
   (define path (js-ref (js-window-location) "pathname"))
   (cond
     [(string-suffix? path "documentation.html")                   'documentation]
+    [(string-suffix? path "documentation-webracket-glance.html")  'doc-webracket-glance]
     [(string-suffix? path "documentation-compiler-overview.html") 'doc-compiler-overview]
     [(string-suffix? path "documentation-js-ffi.html")            'doc-js-ffi]
     [(string-suffix? path "documentation-ffi-standard.html")      'doc-ffi-standard]
@@ -589,9 +590,15 @@
 ;;   Maps doc subpages to the Documentation tab for the navbar.
 (define (nav-active-page)
   (define page (current-page))
-  (if (memq page '(doc-compiler-overview doc-js-ffi
-                 doc-ffi-standard doc-ffi-dom doc-ffi-js
-                 doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs))
+  (if (memq page '(doc-webracket-glance
+                   doc-compiler-overview
+                   doc-js-ffi
+                   doc-ffi-standard
+                   doc-ffi-dom
+                   doc-ffi-js
+                   doc-ffi-math
+                   doc-ffi-jsxgraph
+                   doc-ffi-xtermjs))
       'documentation
       page))
 
@@ -661,26 +668,30 @@
                                 (span (@ (class "highlight")) "Live demos"))
                            (div (@ (class "carousel-frame"))
                                 (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/mathjax4.png")
+                                        (src   "assets/examples/screenshots/mathjax4-new.png")
                                         (alt   "MathJax 4 editor")
                                         (style "animation-delay: 0s;")))
                                 (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/matrix-rain.png")
-                                        (alt   "Matrix digital rain demo")
-                                        (style "animation-delay: 5s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/xtermjs.png")
-                                        (alt   "XtermJS terminal demo")
-                                        (style "animation-delay: 10s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/minischeme.png")
-                                        (alt   "MiniScheme browser REPL")
-                                        (style "animation-delay: 15s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/space-invaders.png")
+                                        (src   "assets/examples/screenshots/space-invaders-new.png")
                                         (alt   "Space Invaders canvas game")
                                         (style "animation-delay: 20s;")))
                                 (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/matrix-rain-new.png")
+                                        (alt   "Matrix digital rain demo")
+                                        (style "animation-delay: 5s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/formula1-new.png")
+                                        (alt   "Next Formula 1 Race")
+                                        (style "animation-delay: 5s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/xtermjs-new.png")
+                                        (alt   "XtermJS terminal demo")
+                                        (style "animation-delay: 10s;")))
+                                (img (@ (class "carousel-shot")
+                                        (src   "assets/examples/screenshots/minischeme-new.png")
+                                        (alt   "MiniScheme browser REPL")
+                                        (style "animation-delay: 15s;")))                                
+                                #;(img (@ (class "carousel-shot")
                                         (src   "assets/examples/screenshots/pict.png")
                                         (alt   "Pict rendering demo")
                                         (style "animation-delay: 25s;")))))))
@@ -3796,6 +3807,7 @@ CSS
     (case (current-page)
       [(implementation-status) (implementation-status-page)]
       [(documentation)         (documentation-page)]
+      [(doc-webracket-glance)  (doc-webracket-at-a-glance-page)]
       [(doc-compiler-overview) (doc-compiler-overview-page)]
       [(doc-js-ffi)            (doc-js-ffi-page)]
       [(doc-ffi-standard)      (doc-ffi-standard-page)]
