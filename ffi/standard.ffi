@@ -37,6 +37,24 @@
   #:name   "nullish?"
   (-> (extern) (boolean)))
 
+;; JS strict null test.
+(define-foreign js-null?
+  #:module "standard"
+  #:name   "null?"
+  (-> (extern) (boolean)))
+
+;; JS strict undefined test.
+(define-foreign js-undefined?
+  #:module "standard"
+  #:name   "undefined?"
+  (-> (extern) (boolean)))
+
+;; JS truthiness test (same coercion as JS conditionals).
+(define-foreign js-truthy?
+  #:module "standard"
+  #:name   "truthy?"
+  (-> (extern) (boolean)))
+
 ;;;
 ;;; Function properties
 ;;;
@@ -51,10 +69,22 @@
   #:name   "is-finite"
   (-> (f64) (i32)))
 
+;; JS `isFinite` with boolean result.
+(define-foreign js-finite?
+  #:module "standard"
+  #:name   "finite?"
+  (-> (f64) (boolean)))
+
 (define-foreign js-is-nan
   #:module "standard"
   #:name   "is-nan"
   (-> (f64) (i32)))
+
+;; JS `isNaN` with boolean result.
+(define-foreign js-nan?
+  #:module "standard"
+  #:name   "nan?"
+  (-> (f64) (boolean)))
 
 (define-foreign js-parse-float
   #:module "standard"

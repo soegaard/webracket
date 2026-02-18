@@ -32,15 +32,36 @@
         (list "js-nullish?"
               (and (equal? (js-nullish? (js-null)) #t)
                    (equal? (js-nullish? (js-undefined)) #t)
-                   (equal? (js-nullish? (js-global-this)) #f)))))
+                   (equal? (js-nullish? (js-global-this)) #f)))
+        (list "js-null?"
+              (and (equal? (js-null? (js-null)) #t)
+                   (equal? (js-null? (js-undefined)) #f)
+                   (equal? (js-null? (js-global-this)) #f)))
+        (list "js-undefined?"
+              (and (equal? (js-undefined? (js-undefined)) #t)
+                   (equal? (js-undefined? (js-null)) #f)
+                   (equal? (js-undefined? (js-global-this)) #f)))
+        (list "js-truthy?"
+              (and (equal? (js-truthy? (js-undefined)) #f)
+                   (equal? (js-truthy? (js-null)) #f)
+                   (equal? (js-truthy? (js-eval "0")) #f)
+                   (equal? (js-truthy? (js-eval "''")) #f)
+                   (equal? (js-truthy? (js-eval "'hello'")) #t)
+                   (equal? (js-truthy? (js-eval "({})")) #t)))))
  (list "Function properties"
        (list
         (list "js-is-finite"
               (and (equal? (js-is-finite 1.0) 1)
                    (equal? (js-is-finite +inf.0) 0)))
+        (list "js-finite?"
+              (and (equal? (js-finite? 1.0) #t)
+                   (equal? (js-finite? +inf.0) #f)))
         (list "js-is-nan"
               (and (equal? (js-is-nan +nan.0) 1)
                    (equal? (js-is-nan 1.0) 0)))
+        (list "js-nan?"
+              (and (equal? (js-nan? +nan.0) #t)
+                   (equal? (js-nan? 1.0) #f)))
         (list "js-parse-float"
               (and (equal? (js-parse-float "42.5abc") 42.5)
                    (equal? (js-parse-float "   -17") -17.0)))
