@@ -1,4 +1,4 @@
-# `xtermjs.ffi` Reference
+# Reference: `xtermjs.ffi` 
 
 ## Chapter 1 — Introduction
 
@@ -30,7 +30,6 @@ All function names are linked to xterm.js API documentation.
 - [Attach and Use FitAddon](#attach-and-use-fitaddon)
 - [Resize and Scroll Control](#resize-and-scroll-control)
 - [Chapter 9 — Coverage Checklist](#chapter-9--coverage-checklist)
-- [Chapter 10 — Alphabetized Index](#chapter-10--alphabetized-index)
 
 ## Chapter 2 — Conventions
 
@@ -216,67 +215,3 @@ xterm.js FitAddon API: [FitAddon](https://xtermjs.org/docs/api/addons/addon-fit/
 - `fit addon lifecycle`: 2 functions
 - `fit addon behavior`: 2 functions
 
-## Chapter 10 — Alphabetized Index
-
-- [`xterm-fit-addon-activate`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/)
-- [`xterm-fit-addon-dispose`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/)
-- [`xterm-fit-addon-fit`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/)
-- [`xterm-fit-addon-new`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/)
-- [`xterm-fit-addon-propose-dimensions`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/)
-- [`xterm-set-terminal-options!`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-attach-custom-key-event-handler`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-attach-custom-wheel-event-handler`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-blur`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-buffer`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-clear`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-clear-selection`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-clear-texture-atlas`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-cols`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-deregister-character-joiner`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-dispose`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-element`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-focus`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-get-selection`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-get-selection-position`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-has-selection`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-input`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-load-addon`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-markers`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-modes`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-new`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-bell`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-binary`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-cursor-move`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-data`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-key`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-line-feed`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-render`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-resize`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-scroll`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-selection-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-title-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-on-write-parsed`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-open`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-options`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-parser`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-paste`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-refresh`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-register-character-joiner`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-register-decoration`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-register-link-provider`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-register-marker`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-reset`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-resize`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-rows`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-scroll-lines`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-scroll-pages`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-scroll-to-bottom`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-scroll-to-line`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-scroll-to-top`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-select`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-select-all`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-select-lines`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-textarea`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-unicode`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-write`](https://xtermjs.org/docs/api/terminal/classes/terminal/)
-- [`xterm-terminal-writeln`](https://xtermjs.org/docs/api/terminal/classes/terminal/)

@@ -1,4 +1,4 @@
-# `jsxgraph.ffi` Reference
+# Reference: `jsxgraph.ffi` 
 
 ## Chapter 1 — Introduction
 
@@ -31,7 +31,6 @@ All function names are linked to JSXGraph Point API documentation.
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Chapter 8 — Coverage Checklist](#chapter-8--coverage-checklist)
-- [Chapter 9 — Alphabetized Index](#chapter-9--alphabetized-index)
 
 ## Chapter 2 — Conventions
 
@@ -171,50 +170,3 @@ Reference root: [JXG.Point](https://jsxgraph.org/docs/symbols/JXG.Point.html)
 - `point setters`: 17 functions
 - `point methods`: 8 functions
 
-## Chapter 9 — Alphabetized Index
-
-- [`jsx-point-attractor-distance`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-attractor-unit`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-attract-to-grid`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-attractors`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-face`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-has-point`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-ignored-snap-to-points`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-infobox-digits`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-is-on`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-make-intersection!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-normalize-face`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-set-style!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-show-infobox`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-size`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-size-unit`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-snap-size-x`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-snap-size-y`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-snap-to-grid`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-snap-to-points`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-snatch-distance`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-style`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-update!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-update-renderer!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-update-transform!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-x`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-y`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point-zoom`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-point?`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-attractor-distance!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-attractor-unit!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-attract-to-grid!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-attractors!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-face!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-ignored-snap-to-points!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-infobox-digits!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-show-infobox!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-size!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-size-unit!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-snap-size-x!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-snap-size-y!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-snap-to-grid!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-snap-to-points!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-snatch-distance!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-style!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
-- [`jsx-set-point-zoom!`](https://jsxgraph.org/docs/symbols/JXG.Point.html)
