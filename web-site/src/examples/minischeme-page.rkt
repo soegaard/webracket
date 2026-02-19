@@ -103,15 +103,6 @@
                                             "Page shell")))))
         ,(footer-section)))
 
-(define (js-true? v)
-  (cond
-    [(boolean? v) v]
-    [(not v) #f]
-    [(external? v)
-     (with-handlers ([exn:fail? (λ (_) #f)])
-       (string=? (js-value->string v) "true"))]
-    [else #t]))
-
 (define (js-number-value v [default 0.0])
   (cond
     [(number? v) v]
@@ -436,6 +427,73 @@
                   (loop (- i 1) (- depth 1)))]
              [else (loop (- i 1) depth)])]))))
 
+(define (minischeme-find-string-end text open-index)
+  (if (or (< open-index 0)
+          (>= open-index (string-length text))
+          (not (char=? (string-ref text open-index) #\")))
+      #f
+      (let loop ([i (+ open-index 1)] [escaped? #f])
+        (cond
+          [(>= i (string-length text)) #f]
+          [else
+           (define ch (string-ref text i))
+           (cond
+             [escaped? (loop (+ i 1) #f)]
+             [(char=? ch #\\) (loop (+ i 1) #t)]
+             [(char=? ch #\") i]
+             [else (loop (+ i 1) #f)])]))))
+
+(define (minischeme-find-string-start text close-index)
+  (if (or (< close-index 0)
+          (>= close-index (string-length text))
+          (not (char=? (string-ref text close-index) #\")))
+      #f
+      (let loop ([i 0] [in-string? #f] [escaped? #f] [in-comment? #f] [start-index #f])
+        (cond
+          [(> i close-index) #f]
+          [in-comment?
+           (if (or (char=? (string-ref text i) #\newline)
+                   (char=? (string-ref text i) #\return))
+               (loop (+ i 1) #f #f #f #f)
+               (loop (+ i 1) #f #f #t #f))]
+          [in-string?
+           (define ch (string-ref text i))
+           (cond
+             [escaped? (loop (+ i 1) #t #f #f start-index)]
+             [(char=? ch #\\) (loop (+ i 1) #t #t #f start-index)]
+             [(char=? ch #\")
+              (if (= i close-index)
+                  start-index
+                  (loop (+ i 1) #f #f #f #f))]
+             [else (loop (+ i 1) #t #f #f start-index)])]
+          [else
+           (define ch (string-ref text i))
+           (cond
+             [(char=? ch #\;) (loop (+ i 1) #f #f #t #f)]
+             [(char=? ch #\") (loop (+ i 1) #t #f #f i)]
+             [else (loop (+ i 1) #f #f #f #f)])]))))
+
+(define (minischeme-token-delimiter? ch)
+  (or (char-whitespace? ch)
+      (minischeme-open-paren? ch)
+      (minischeme-close-paren? ch)
+      (char=? ch #\")
+      (char=? ch #\;)))
+
+(define (minischeme-find-token-end text start-index)
+  (let loop ([i start-index])
+    (cond
+      [(>= i (string-length text)) i]
+      [(minischeme-token-delimiter? (string-ref text i)) i]
+      [else (loop (+ i 1))])))
+
+(define (minischeme-find-token-start text end-index)
+  (let loop ([i end-index])
+    (cond
+      [(< i 0) 0]
+      [(minischeme-token-delimiter? (string-ref text i)) (+ i 1)]
+      [else (loop (- i 1))])))
+
 (define (minischeme-next-non-whitespace-index text start-index)
   (let loop ([i start-index])
     (cond
@@ -491,7 +549,14 @@
                     [line (js-ref cursor "line")])
                (js-send cm "indentLine" (vector line "smart"))))
          (void))))
-    (define alt-right-paren-handler
+    (define (minischeme-move-or-select! cm target-pos selecting?)
+      (if selecting?
+          (begin
+            (js-send cm "setExtending" (vector #t))
+            (js-send cm "setCursor" (vector target-pos))
+            (js-send cm "setExtending" (vector #f)))
+          (js-send cm "setCursor" (vector target-pos))))
+    (define (make-alt-right-handler selecting?)
       (procedure->external
        (λ (cm)
          (define cursor (js-send/extern cm "getCursor" (vector)))
@@ -502,14 +567,31 @@
          (define open-index (minischeme-next-non-whitespace-index text index))
          (when open-index
            (define ch (string-ref text open-index))
-           (when (minischeme-open-paren? ch)
-             (define match-index (minischeme-find-matching-right text open-index ch))
-             (when match-index
-               (define target-pos
-                 (js-send/extern cm "posFromIndex" (vector (+ match-index 1))))
-               (js-send cm "setCursor" (vector target-pos)))))
+           (cond
+             [(minischeme-open-paren? ch)
+              (define match-index (minischeme-find-matching-right text open-index ch))
+              (when match-index
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector (+ match-index 1))))
+                (minischeme-move-or-select! cm target-pos selecting?))]
+             [(char=? ch #\")
+              (define match-index (minischeme-find-string-end text open-index))
+              (when match-index
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector (+ match-index 1))))
+                (minischeme-move-or-select! cm target-pos selecting?))]
+             [(minischeme-close-paren? ch)
+              (define target-pos
+                (js-send/extern cm "posFromIndex" (vector open-index)))
+              (minischeme-move-or-select! cm target-pos selecting?)]
+             [else
+              (define end-index (minischeme-find-token-end text open-index))
+              (when (> end-index index)
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector end-index)))
+                (minischeme-move-or-select! cm target-pos selecting?))]))
          (void))))
-    (define alt-left-paren-handler
+    (define (make-alt-left-handler selecting?)
       (procedure->external
        (λ (cm)
          (define cursor (js-send/extern cm "getCursor" (vector)))
@@ -520,13 +602,34 @@
          (define close-index (minischeme-prev-non-whitespace-index text (- index 1)))
          (when close-index
            (define ch (string-ref text close-index))
-           (when (minischeme-close-paren? ch)
-             (define match-index (minischeme-find-matching-left text close-index ch))
-             (when match-index
-               (define target-pos
-                 (js-send/extern cm "posFromIndex" (vector match-index)))
-               (js-send cm "setCursor" (vector target-pos)))))
+           (cond
+             [(minischeme-close-paren? ch)
+              (define match-index (minischeme-find-matching-left text close-index ch))
+              (when match-index
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector match-index)))
+                (minischeme-move-or-select! cm target-pos selecting?))]
+             [(char=? ch #\")
+              (define match-index (minischeme-find-string-start text close-index))
+              (when match-index
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector match-index)))
+                (minischeme-move-or-select! cm target-pos selecting?))]
+             [(minischeme-open-paren? ch)
+              (define target-pos
+                (js-send/extern cm "posFromIndex" (vector (+ close-index 1))))
+              (minischeme-move-or-select! cm target-pos selecting?)]
+             [else
+              (define start-index (minischeme-find-token-start text close-index))
+              (when (< start-index index)
+                (define target-pos
+                  (js-send/extern cm "posFromIndex" (vector start-index)))
+                (minischeme-move-or-select! cm target-pos selecting?))]))
          (void))))
+    (define alt-right-paren-handler (make-alt-right-handler #f))
+    (define alt-left-paren-handler  (make-alt-left-handler #f))
+    (define shift-alt-right-handler (make-alt-right-handler #t))
+    (define shift-alt-left-handler  (make-alt-left-handler #t))
     (define extra-keys
       (js-object
        (vector
@@ -534,6 +637,8 @@
         (vector "Tab" tab-indent-handler)
         (vector "Alt-Right" alt-right-paren-handler)
         (vector "Alt-Left" alt-left-paren-handler)
+        (vector "Shift-Alt-Right" shift-alt-right-handler)
+        (vector "Shift-Alt-Left" shift-alt-left-handler)
         (vector "Ctrl-Enter" run-shortcut-handler)
         (vector "Cmd-Enter" run-shortcut-handler))))
     (define options
