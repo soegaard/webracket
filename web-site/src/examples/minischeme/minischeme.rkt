@@ -14,7 +14,16 @@
 (define (minischeme-primitives)
   minischeme-primitives-cache)
 
-(define-values (minischeme-reset-state! minischeme-process-input)
+;; Exported evaluator API:
+;; - `minischeme-process-input` is the synchronous, run-to-completion entry point.
+;; - `minischeme-start-job!` / `minischeme-job-step!` / `minischeme-job-stop!`
+;;   / `minischeme-job-active?` provide cooperative execution for UI loops.
+(define-values (minischeme-reset-state!
+                minischeme-process-input
+                minischeme-start-job!
+                minischeme-job-step!
+                minischeme-job-stop!
+                minischeme-job-active?)
   (let ()
     (struct env               (table parent))
     (struct closure           (params body env))
@@ -38,6 +47,12 @@
     (struct k-dw-enter        (wf thunk env winds-before))
     (struct k-dw-exit         (after env winds-before))
     (struct k-dw-return       (produced env winds-before))
+
+    (struct cek-state         (mode control env kont winds))
+    (struct run-controller    (step-limit step-count stop?) #:mutable)
+    (struct eval-job          (remaining current-state last-value stop?) #:mutable)
+    (struct exn:fail:minischeme-yield exn:fail (state) #:transparent)
+    (struct exn:fail:minischeme-stop  exn:fail ()      #:transparent)
 
     (define uninitialized (gensym 'uninitialized))
     (define no-else       (gensym 'no-else))
@@ -1077,10 +1092,12 @@
 
     (define global-env     #f)
     (define current-output #f)
+    (define current-job    #f)
 
     (define (reset-state!)
       (set! global-env (create-initial-state))
-      (set! current-output (open-output-string)))
+      (set! current-output (open-output-string))
+      (set! current-job #f))
 
     (define (reset-output!)
       (set! current-output (open-output-string)))
@@ -1421,17 +1438,48 @@
         (error 'minischeme "~a: malformed form: ~s" who form))
       (car rest))
 
-    (define (cek-evaluate expr env [initial-kont '()] [initial-winds '()])
-      (let loop ([mode          'eval]
-                 [control       expr]
-                 [current-env   env]
-                 [kont          initial-kont]
-                 [current-winds initial-winds])
+    (define (cek-evaluate expr
+                          env
+                          [initial-kont '()]
+                          [initial-winds '()]
+                          [controller #f]
+                          [allow-yield? #t]
+                          [resume-state #f])
+      (define start-mode
+        (if resume-state (cek-state-mode resume-state) 'eval))
+      (define start-control
+        (if resume-state (cek-state-control resume-state) expr))
+      (define start-env
+        (if resume-state (cek-state-env resume-state) env))
+      (define start-kont
+        (if resume-state (cek-state-kont resume-state) initial-kont))
+      (define start-winds
+        (if resume-state (cek-state-winds resume-state) initial-winds))
+      (let loop ([mode          start-mode]
+                 [control       start-control]
+                 [current-env   start-env]
+                 [kont          start-kont]
+                 [current-winds start-winds])
+        (when controller
+          (when ((run-controller-stop? controller))
+            (raise
+             (exn:fail:minischeme-stop
+              "MiniScheme evaluation stopped"
+              (current-continuation-marks))))
+          (define next-count (+ 1 (run-controller-step-count controller)))
+          (set-run-controller-step-count! controller next-count)
+          (when (and allow-yield?
+                     (>= next-count (run-controller-step-limit controller)))
+            (raise
+             (exn:fail:minischeme-yield
+              "MiniScheme evaluation yielded"
+              (current-continuation-marks)
+              (cek-state mode control current-env kont current-winds)))))
         (define (continue mode control env kont [winds current-winds])
           (loop mode control env kont winds))
         (define (eval-now e env [winds current-winds])
           (call-with-values
-           (λ () (cek-evaluate e env '() winds))
+           (λ () (cek-evaluate e env '() winds controller #f #f))
            (λ (v _env _winds) v)))
         (define (apply-now proc args env kont [winds current-winds])
           (define (apply-result proc args [winds* winds])
@@ -1995,45 +2043,166 @@
              (λ (value _env _winds)
                (loop (cdr forms) value))))))
 
+    (define (prepend-output result)
+      (define out (get-output!))
+      (if (string=? out "")
+          result
+          (if (and (> (string-length out) 0)
+                   (char=? (string-ref out (sub1 (string-length out))) #\newline))
+              (string-append out result)
+              (string-append out "\n" result))))
+
+    (define (format-read-error e)
+      (prepend-output (string-append "=> read error: " (exn-message e))))
+
+    (define (format-eval-error e)
+      (define msg    (exn-message e))
+      (define prefix "minischeme: ")
+      (define normalized
+        (if (and (>= (string-length msg) (string-length prefix))
+                 (string=? (substring msg 0 (string-length prefix)) prefix))
+            (substring msg (string-length prefix))
+            msg))
+      (prepend-output (string-append "=> eval error: " normalized)))
+
+    (define (parse-and-expand-program s)
+      (with-handlers
+        ([exn:fail:read?
+          (λ (e) (values #f (format-read-error e)))]
+         [exn:fail?
+          (λ (e) (values #f (format-eval-error e)))]
+         [(λ _ #t)
+          (λ (e) (values #f (format-read-error e)))])
+        (values (expand-program (parse-program/read s)) #f)))
+
+    ;; start-job! : string -> (values symbol string)
+    ;; Initializes a new cooperative evaluation job from source text.
+    ;; Status symbols:
+    ;; - 'ready : accepted and ready for stepping
+    ;; - 'done  : immediate completion (for empty input)
+    ;; - 'error : parse/expand failure, message already formatted
+    ;;
+    ;; Side effects:
+    ;; - clears any previous job
+    ;; - resets output buffer for the new run
+    (define (start-job! s)
+      (unless global-env
+        (reset-state!))
+      (set! current-job #f)
+      (reset-output!)
+      (define-values (expanded read-error)
+        (parse-and-expand-program s))
+      (cond
+        [read-error
+         (values 'error read-error)]
+        [(null? expanded)
+         (values 'done (prepend-output "=> ; no input"))]
+        [else
+         (set! current-job (eval-job expanded #f (void) #f))
+         (values 'ready "")]))
+
+    ;; job-active? : -> boolean
+    ;; Returns #t iff a job object is currently active (running or paused by caller).
+    (define (job-active?)
+      (and current-job #t))
+
+    ;; job-stop! : -> void
+    ;; Requests cooperative stop by setting the job stop-flag.
+    ;; The stop takes effect on the next `job-step!`.
+    (define (job-stop!)
+      (when current-job
+        (set-eval-job-stop?! current-job #t))
+      (void))
+
+    (define (job-running-output)
+      (get-output!))
+
+    ;; job-step! : [exact-positive-integer] -> (values symbol string)
+    ;; Executes up to `step-limit` CEK transitions in the current job.
+    ;; If omitted or invalid, `step-limit` defaults to 4000.
+    ;;
+    ;; Status symbols:
+    ;; - 'idle    : no active job exists
+    ;; - 'running : job yielded due to step limit
+    ;; - 'done    : evaluation completed successfully
+    ;; - 'stopped : stop request observed
+    ;; - 'error   : evaluation failed, message already formatted
+    ;;
+    ;; Output string is the current visible output text for UI display.
+    (define (job-step! [step-limit 4000])
+      (if (not current-job)
+          (values 'idle "No active computation.")
+          (let* ([normalized-step-limit
+                  (if (and (exact-integer? step-limit) (> step-limit 0))
+                      step-limit
+                      4000)]
+                 [controller
+                  (run-controller normalized-step-limit
+                                  0
+                                  (λ () (and current-job (eval-job-stop? current-job))))])
+            (let loop ()
+              (cond
+                [(not current-job)
+                 (values 'idle "No active computation.")]
+                [(null? (eval-job-remaining current-job))
+                 (define final-out
+                   (prepend-output (top-level-value->string (eval-job-last-value current-job))))
+                 (set! current-job #f)
+                 (values 'done final-out)]
+                [else
+                 (define expr (car (eval-job-remaining current-job)))
+                 (define resume-state (eval-job-current-state current-job))
+                 (with-handlers
+                   ([exn:fail:minischeme-yield?
+                     (λ (e)
+                       (set-eval-job-current-state! current-job
+                                                    (exn:fail:minischeme-yield-state e))
+                       (values 'running (job-running-output)))]
+                    [exn:fail:minischeme-stop?
+                     (λ (_e)
+                       (define stopped-out (prepend-output "=> execution stopped."))
+                       (set! current-job #f)
+                       (values 'stopped stopped-out))]
+                    [exn:fail?
+                     (λ (e)
+                       (define err-out (format-eval-error e))
+                       (set! current-job #f)
+                       (values 'error err-out))])
+                   (call-with-values
+                    (λ ()
+                      (cek-evaluate expr
+                                    global-env
+                                    '()
+                                    '()
+                                    controller
+                                    #t
+                                    resume-state))
+                    (λ (value _env _winds)
+                      (set-eval-job-last-value! current-job value)
+                      (set-eval-job-current-state! current-job #f)
+                      (set-eval-job-remaining! current-job
+                                               (cdr (eval-job-remaining current-job)))
+                      (if (null? (eval-job-remaining current-job))
+                          (let ([final-out (prepend-output (top-level-value->string value))])
+                            (set! current-job #f)
+                            (values 'done final-out))
+                          (loop)))))])))))
+
     (define (process-input s)
       (unless global-env
         (reset-state!))
+      (set! current-job #f)
       (reset-output!)
-      (define (prepend-output result)
-        (define out (get-output!))
-        (if (string=? out "")
-            result
-            (if (and (> (string-length out) 0)
-                     (char=? (string-ref out (sub1 (string-length out))) #\newline))
-                (string-append out result)
-                (string-append out "\n" result))))
-      (define (format-read-error e)
-        (prepend-output (string-append "=> read error: " (exn-message e))))
-      (define (format-eval-error e)
-        (define msg    (exn-message e))
-        (define prefix "minischeme: ")
-        (define normalized
-          (if (and (>= (string-length msg) (string-length prefix))
-                   (string=? (substring msg 0 (string-length prefix)) prefix))
-              (substring msg (string-length prefix))
-              msg))
-        (prepend-output (string-append "=> eval error: " normalized)))
-      (define-values (exprs read-error)
-        (with-handlers
-          ([exn:fail:read?
-            (λ (e) (values #f (format-read-error e)))]
-           [(λ _ #t)
-            (λ (e) (values #f (format-read-error e)))])
-          (values (parse-program/read s) #f)))
+      (define-values (expanded read-error)
+        (parse-and-expand-program s))
       (if read-error
           read-error
           (with-handlers
             ([exn:fail? (λ (e) (format-eval-error e))])
-            (define expanded (expand-program exprs))
             (if (null? expanded)
                 (prepend-output "=> ; no input")
                 (let ([value (evaluate-program expanded)])
                   (prepend-output (top-level-value->string value)))))))
 
     (reset-state!)
-    (values reset-state! process-input)))
+    (values reset-state! process-input start-job! job-step! job-stop! job-active?)))

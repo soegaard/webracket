@@ -873,6 +873,18 @@
                                            (type "button")
                                            (class "minischeme-btn minischeme-btn--run"))
                                         "Run")
+                                (button (@ (id "minischeme-pause")
+                                           (type "button")
+                                           (class "minischeme-btn minischeme-btn--pause"))
+                                        "Pause")
+                                (button (@ (id "minischeme-stop")
+                                           (type "button")
+                                           (class "minischeme-btn minischeme-btn--stop"))
+                                        "Stop")
+                                (span (@ (id "minischeme-run-state")
+                                         (class "minischeme-run-state")
+                                         (data-state "idle"))
+                                      "Idle.")
                                 (button (@ (id "minischeme-reset")
                                            (type "button")
                                            (class "minischeme-btn minischeme-btn--reset"))
@@ -916,6 +928,8 @@
 
 (define minischeme-page-started? #f)
 (define minischeme-run-handler   #f)
+(define minischeme-pause-handler #f)
+(define minischeme-stop-handler  #f)
 (define minischeme-reset-handler #f)
 (define minischeme-load-handler  #f)
 (define minischeme-input-handler #f)
@@ -1591,6 +1605,9 @@
     (define input-node       (js-get-element-by-id "minischeme-input"))
     (define output-node      (js-get-element-by-id "minischeme-output"))
     (define run-button       (js-get-element-by-id "minischeme-run"))
+    (define pause-button     (js-get-element-by-id "minischeme-pause"))
+    (define stop-button      (js-get-element-by-id "minischeme-stop"))
+    (define run-state-node   (js-get-element-by-id "minischeme-run-state"))
     (define reset-button     (js-get-element-by-id "minischeme-reset"))
     (define sample-button    (js-get-element-by-id "minischeme-load-sample"))
     (define sample-select    (js-get-element-by-id "minischeme-sample-select"))
@@ -1598,6 +1615,9 @@
     (when (or (js-nullish? input-node)
               (js-nullish? output-node)
               (js-nullish? run-button)
+              (js-nullish? pause-button)
+              (js-nullish? stop-button)
+              (js-nullish? run-state-node)
               (js-nullish? reset-button)
               (js-nullish? sample-button)
               (js-nullish? sample-select))
@@ -1608,15 +1628,122 @@
     (define (set-output! text)
       (js-set! output-node "textContent" text))
 
+    (define minischeme-step-limit 2500)
+    (define job-running? #f)
+    (define job-paused?  #f)
+    (define job-generation 0)
+
+    (define (set-disabled! node disabled?)
+      (js-set! node "disabled" (if disabled? #t #f)))
+
+    (define (update-controls!)
+      (set-disabled! run-button job-running?)
+      (set-disabled! pause-button (not job-running?))
+      (set-disabled! stop-button (not job-running?))
+      (set-disabled! sample-button job-running?)
+      (set-disabled! sample-select job-running?)
+      (js-set! pause-button
+               "textContent"
+               (cond
+                 [(not job-running?) "Pause"]
+                 [job-paused? "Restart"]
+                 [else "Pause"]))
+      (js-set! run-state-node
+               "textContent"
+               (cond
+                 [job-paused? "Paused..."]
+                 [job-running? "Running..."]
+                 [else "Idle."]))
+      (js-set-attribute! run-state-node
+                         "data-state"
+                         (cond
+                           [job-paused? "paused"]
+                           [job-running? "running"]
+                           [else "idle"])))
+
+    (define (finish-run! text)
+      (set! job-running? #f)
+      (set! job-paused? #f)
+      (set! job-generation (+ job-generation 1))
+      (set-output! text)
+      (update-controls!))
+
+    (define (schedule-next-step! run-generation)
+      (when (and job-running?
+                 (not job-paused?)
+                 (= job-generation run-generation))
+        (define callback
+          (procedure->external
+           (λ args
+             (when (and job-running?
+                        (not job-paused?)
+                        (= job-generation run-generation))
+               (run-step! run-generation))
+             (void))))
+        (js-send (js-var "window") "setTimeout" (vector callback 0))))
+
+    (define (run-step! run-generation)
+      (with-handlers ([exn:fail? (λ (e)
+                                   (finish-run! (string-append "error: " (exn-message e))))])
+        (define-values (status text)
+          (minischeme-job-step! minischeme-step-limit))
+        (if (eq? status 'running)
+            (begin
+              (set-output! text)
+              (schedule-next-step! run-generation))
+            (finish-run! text))))
+
+    (define (start-run! source)
+      (define-values (status text)
+        (minischeme-start-job! source))
+      (if (eq? status 'ready)
+          (begin
+            (set! job-running? #t)
+            (set! job-paused? #f)
+            (set! job-generation (+ job-generation 1))
+            (set-output! text)
+            (update-controls!)
+            (schedule-next-step! job-generation))
+          (begin
+            (set! job-running? #f)
+            (set! job-paused? #f)
+            (set! job-generation (+ job-generation 1))
+            (set-output! text)
+            (update-controls!))))
+
     (define (run! . _)
       (with-handlers ([exn:fail? (λ (e)
-                                   (set-output!
-                                    (string-append "error: " (exn-message e))))])
-        (define source (minischeme-editor-get-source input-node))
-        (set-output! (minischeme-process-input source))))
+                                   (finish-run! (string-append "error: " (exn-message e))))])
+        (unless job-running?
+          (start-run! (minischeme-editor-get-source input-node)))))
+
+    (define (pause/restart! . _)
+      (with-handlers ([exn:fail? (λ (e)
+                                   (finish-run! (string-append "error: " (exn-message e))))])
+        (when job-running?
+          (if job-paused?
+              (begin
+                (set! job-paused? #f)
+                (update-controls!)
+                (schedule-next-step! job-generation))
+              (begin
+                (set! job-paused? #t)
+                (update-controls!))))))
+
+    (define (stop! . _)
+      (with-handlers ([exn:fail? (λ (e)
+                                   (finish-run! (string-append "error: " (exn-message e))))])
+        (when job-running?
+          (set! job-paused? #f)
+          (minischeme-job-stop!)
+          (run-step! job-generation))))
 
     (define (reset! . _)
+      (set! job-running? #f)
+      (set! job-paused? #f)
+      (set! job-generation (+ job-generation 1))
       (minischeme-reset-state!)
+      (update-controls!)
       (set-output! (string-append "MiniScheme state reset. Build " minischeme-build-id ".")))
 
     (define (load-sample! . _)
@@ -1642,10 +1769,14 @@
     (js-add-event-listener! input-node "input" minischeme-input-handler)
 
     (set! minischeme-run-handler   (procedure->external run!))
+    (set! minischeme-pause-handler (procedure->external pause/restart!))
+    (set! minischeme-stop-handler  (procedure->external stop!))
     (set! minischeme-reset-handler (procedure->external reset!))
     (set! minischeme-load-handler  (procedure->external load-sample!))
 
     (js-add-event-listener! run-button    "click" minischeme-run-handler)
+    (js-add-event-listener! pause-button  "click" minischeme-pause-handler)
+    (js-add-event-listener! stop-button   "click" minischeme-stop-handler)
     (js-add-event-listener! reset-button  "click" minischeme-reset-handler)
     (js-add-event-listener! sample-button "click" minischeme-load-handler)
 
@@ -1744,4 +1875,5 @@
       })();")
 
     (minischeme-reset-state!)
+    (update-controls!)
     (set-output! (string-append "MiniScheme ready. Build " minischeme-build-id "."))))
