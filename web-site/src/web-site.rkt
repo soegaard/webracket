@@ -354,6 +354,7 @@
 (include "examples/matrix-rain-page.rkt")
 (include "examples/xtermjs-demo-page.rkt")
 (include "examples/space-invaders-page.rkt")
+(include "examples/canvas-hexagons-page.rkt")
 (include "examples/minischeme-page.rkt")
 
 ;;;
@@ -419,6 +420,17 @@
                     (cons 'features    (list "XtermJS integration"
                                              "DOM + JS FFI"
                                              "Timers / animation loop"))))
+   (make-hash (list (cons 'id          "canvas-hexagons")
+                    (cons 'title       "Glowing Hexagons")
+                    (cons 'path        "examples/canvas-hexagons")
+                    (cons 'entry       "canvas-hexagons.html")
+                    (cons 'demo-url    "canvas-hexagons.html")
+                    (cons 'source-path "web-site/src/examples/canvas-hexagons-page.rkt")
+                    (cons 'tags        (list 'canvas 'dom))
+                    (cons 'summary     "Glowing hexagons arranged in a honeycomb-style animation.")
+                    (cons 'features    (list "Canvas rendering"
+                                             "Animation loop"
+                                             "Procedural geometry"))))
    
    (make-hash (list (cons 'id       "minischeme")
                     (cons 'title    "MiniScheme REPL")
@@ -433,15 +445,15 @@
                                           "Reset + sample program"
                                           "DOM event handling"))))
    
-   (make-hash (list (cons 'id       "pict")
-                    (cons 'title    "Canvas + Pict")
-                    (cons 'path     "examples/pict")
-                    (cons 'entry    "pict.html")
-                    (cons 'tags     (list 'canvas))
-                    (cons 'summary  "Racket pict rendering pipeline compiled for the browser canvas.")
-                    (cons 'features (list "Canvas interop"
-                                          "Graphics rendering pipeline"
-                                          "Performance focus"))))
+   #;(make-hash (list (cons 'id       "pict")
+                      (cons 'title    "Canvas + Pict")
+                      (cons 'path     "examples/pict")
+                      (cons 'entry    "pict.html")
+                      (cons 'tags     (list 'canvas))
+                      (cons 'summary  "Racket pict rendering pipeline compiled for the browser canvas.")
+                      (cons 'features (list "Canvas interop"
+                                            "Graphics rendering pipeline"
+                                            "Performance focus"))))
    #;(make-hash (list (cons 'id       "raco-tiles")
                       (cons 'title    "Raccoon Tiles")
                       (cons 'path     "examples/raco")
@@ -578,6 +590,7 @@
     [(string-suffix? path "matrix-rain.html")                     'matrix-rain]
     [(string-suffix? path "xtermjs-demo.html")                    'xtermjs-demo]
     [(string-suffix? path "space-invaders.html")                  'space-invaders]
+    [(string-suffix? path "canvas-hexagons.html")                 'canvas-hexagons]
     [(string-suffix? path "minischeme.html")                      'minischeme]
     [(string-suffix? path "implementation-status.html")           'implementation-status]
     [(string-suffix? path "community.html")                       'community]
@@ -879,11 +892,8 @@
                           (href "installation.html"))
                        "Installation"))
                 (li (a (@ (class "example-action action-secondary")
-                          (href "overview.html"))
-                       "Overview"))
-                (li (a (@ (class "example-action action-secondary")
-                          (href "roadmap.html"))
-                       "Road Ahead"))))
+                          (href "documentation-webracket-glance.html"))
+                       "WebRacket at a Glance"))))
           #f
           "section--examples section-next-steps")
         ,(footer-section)))
@@ -974,6 +984,9 @@ a.code-pill:focus-visible {
 }
 .page--ffi-reference {
   width: min(1560px, 98vw);
+}
+.page--minischeme {
+  width: min(1500px, 96vw);
 }
 .navbar {
   display: flex;
@@ -1080,6 +1093,9 @@ a.code-pill:focus-visible {
   margin-top: 32px;
 }
 .mathjax-hero {
+  margin-top: 32px;
+}
+.minischeme-hero {
   margin-top: 32px;
 }
 .hero-sublead {
@@ -3722,6 +3738,428 @@ pre code {
   flex-wrap: wrap;
   gap: 12px;
 }
+.minischeme-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.minischeme-actions-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page--minischeme .minischeme-reference {
+  max-width: 1184px;
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(109, 127, 196, 0.22);
+  background: rgba(13, 17, 31, 0.58);
+}
+.page--minischeme .minischeme-ref-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 24px;
+  align-items: start;
+  position: relative;
+}
+.page--minischeme .minischeme-ref-main {
+  display: grid;
+  gap: 15px;
+  min-width: 0;
+}
+.page--minischeme .minischeme-ref-main h3 {
+  margin-top: 34px;
+  font-size: 1.18rem;
+  font-weight: 650;
+  color: rgba(228, 236, 255, 0.95);
+}
+.page--minischeme .minischeme-ref-main h2 + p {
+  margin-top: 4px;
+}
+.page--minischeme .minischeme-reference h2,
+.page--minischeme .minischeme-reference h3,
+.page--minischeme .minischeme-reference h4 {
+  margin: 0;
+}
+.page--minischeme .minischeme-reference [id] {
+  scroll-margin-top: 94px;
+}
+.page--minischeme .minischeme-reference p {
+  margin: 0;
+  line-height: 1.62;
+}
+.page--minischeme .minischeme-ref-toc ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 0;
+  padding: 0;
+}
+.page--minischeme .minischeme-ref-toc a {
+  color: rgba(202, 218, 255, 0.92);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(202, 218, 255, 0.24);
+}
+.page--minischeme .minischeme-ref-toc a:hover,
+.page--minischeme .minischeme-ref-toc a:focus-visible {
+  border-bottom-color: rgba(202, 218, 255, 0.55);
+}
+.page--minischeme .minischeme-ref-mobile-jump {
+  display: none;
+  gap: 8px;
+}
+.page--minischeme .minischeme-ref-mobile-jump label {
+  color: rgba(200, 215, 255, 0.9);
+  font-size: 0.82rem;
+}
+.page--minischeme .minischeme-ref-mobile-jump select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(119, 141, 214, 0.35);
+  background: rgba(11, 14, 30, 0.88);
+  color: rgba(229, 236, 255, 0.96);
+  padding: 8px 10px;
+}
+.page--minischeme .minischeme-ref-subpoints {
+  margin-top: -4px;
+}
+.page--minischeme .minischeme-ref-catalog {
+  display: grid;
+  gap: 18px;
+}
+.page--minischeme .minischeme-ref-count {
+  font-size: 0.86rem;
+  color: rgba(186, 194, 228, 0.88);
+}
+.page--minischeme .ms-terms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  column-width: 16rem;
+  column-gap: 28px;
+}
+.page--minischeme .ms-terms li {
+  break-inside: avoid;
+  margin: 0 0 12px;
+  line-height: 1.62;
+}
+.page--minischeme .ms-terms a,
+.page--minischeme .ms-terms span {
+  display: inline-block;
+  max-width: 100%;
+  color: rgba(222, 233, 255, 0.94);
+  overflow-wrap: anywhere;
+}
+.page--minischeme .ms-terms a {
+  cursor: pointer;
+  text-decoration: none;
+}
+.page--minischeme .ms-terms a:hover,
+.page--minischeme .ms-terms a:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: auto;
+  background: rgba(120, 145, 235, 0.08);
+}
+.page--minischeme .ms-terms a:focus-visible {
+  outline: 2px solid rgba(130, 155, 236, 0.6);
+  outline-offset: 2px;
+  border-radius: 5px;
+}
+.page--minischeme .ms-terms a:visited {
+  color: rgba(222, 233, 255, 0.94);
+}
+.page--minischeme .ms-terms code {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+.page--minischeme .minischeme-ref-groups {
+  display: grid;
+  gap: 26px;
+}
+.page--minischeme .minischeme-ref-group {
+  display: grid;
+  gap: 13px;
+  padding: 16px 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(111, 131, 206, 0.2);
+  background: rgba(11, 15, 29, 0.58);
+}
+.page--minischeme .minischeme-ref-group h4 {
+  font-size: 1.02rem;
+  font-weight: 640;
+}
+.page--minischeme .minischeme-ref-sidebar {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  align-self: start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(121, 141, 226, 0.24);
+  background: rgba(11, 14, 28, 0.68);
+}
+.page--minischeme .minischeme-ref-sidebar h3 {
+  font-size: 0.88rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(193, 205, 238, 0.88);
+}
+.page--minischeme .minischeme-ref-sidebar ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.page--minischeme .minischeme-ref-sidebar a {
+  color: rgba(202, 218, 255, 0.88);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+}
+.page--minischeme .minischeme-ref-sidebar a:hover,
+.page--minischeme .minischeme-ref-sidebar a:focus-visible {
+  color: rgba(226, 235, 255, 0.98);
+}
+.page--minischeme .minischeme-ref-sidebar a:focus-visible {
+  outline: 2px solid rgba(125, 152, 235, 0.55);
+  outline-offset: 2px;
+}
+.page--minischeme .minischeme-ref-sidebar a.is-active {
+  border-left-color: rgba(149, 178, 255, 1);
+  background: rgba(89, 122, 227, 0.2);
+  color: rgba(239, 245, 255, 1);
+  font-weight: 650;
+}
+.page--minischeme .minischeme-back-to-editor {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 146, 225, 0.45);
+  background: rgba(11, 16, 33, 0.92);
+  color: rgba(226, 233, 255, 0.98);
+  font-weight: 600;
+  cursor: pointer;
+}
+.page--minischeme .minischeme-back-to-editor.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.page--minischeme .minischeme-back-to-editor:focus-visible {
+  outline: 2px solid rgba(136, 163, 244, 0.72);
+  outline-offset: 2px;
+}
+@media (max-width: 1060px) {
+  .page--minischeme .minischeme-ref-layout {
+    grid-template-columns: 1fr;
+  }
+  .page--minischeme .minischeme-ref-sidebar {
+    display: none;
+  }
+  .page--minischeme .minischeme-ref-mobile-jump {
+    display: grid;
+  }
+}
+@media (max-width: 900px) {
+  .page--minischeme .ms-terms {
+    column-width: 14rem;
+    column-gap: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page--minischeme .minischeme-back-to-editor {
+    transition: none;
+  }
+}
+.page--minischeme .section.section--minischeme {
+  margin-top: 56px;
+}
+.page--minischeme .section.section--minischeme-details {
+  margin-top: 82px;
+}
+.page--minischeme .section.section--minischeme .section-content,
+.page--minischeme .section.section--minischeme-details .section-content {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+.page--minischeme .minischeme-shell {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 26px;
+  border-radius: 16px;
+  background: rgba(17, 21, 38, 0.9);
+  border: 1px solid rgba(121, 145, 228, 0.42);
+  box-shadow:
+    0 20px 44px rgba(7, 10, 22, 0.56),
+    0 0 0 1px rgba(107, 133, 220, 0.16) inset;
+}
+.page--minischeme .minischeme-shell-note {
+  margin: 0;
+  color: rgba(216, 226, 255, 0.9);
+}
+.page--minischeme .minischeme-editor {
+  display: block;
+  width: 100%;
+  height: 560px;
+  min-height: 560px;
+  resize: both;
+  overflow: auto;
+  font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
+  font-size: 0.96rem;
+  line-height: 1.47;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0d1020;
+  color: #eef2ff;
+  border: 1px solid rgba(129, 150, 226, 0.45);
+}
+.page--minischeme .minischeme-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.page--minischeme .minischeme-sample-select {
+  flex: 1 1 280px;
+  min-width: 220px;
+  max-width: 420px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 150, 226, 0.42);
+  background: rgba(15, 20, 38, 0.94);
+  color: rgba(230, 238, 255, 0.95);
+  padding: 0 12px;
+  font-size: 0.9rem;
+}
+.page--minischeme .minischeme-sample-select:focus-visible {
+  outline: 2px solid rgba(149, 178, 255, 0.75);
+  outline-offset: 2px;
+}
+.page--minischeme .minischeme-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: filter 140ms ease, transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+.page--minischeme .minischeme-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.page--minischeme .minischeme-btn:active {
+  transform: translateY(0);
+}
+.page--minischeme .minischeme-btn:focus-visible {
+  outline: 2px solid rgba(149, 178, 255, 0.75);
+  outline-offset: 2px;
+}
+.page--minischeme .minischeme-btn--run {
+  background: #6a86ff;
+  border-color: rgba(171, 193, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(168, 190, 255, 0.2) inset;
+}
+.page--minischeme .minischeme-btn--sample {
+  background: #237f73;
+  border-color: rgba(154, 228, 214, 0.2);
+}
+.page--minischeme .minischeme-btn--reset {
+  background: #7f5250;
+  border-color: rgba(217, 145, 137, 0.2);
+  color: rgba(255, 241, 241, 0.94);
+}
+.page--minischeme .minischeme-output {
+  margin: 0;
+  min-height: 96px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
+  background: #090d1b;
+  color: #dce5ff;
+  border: 1px solid rgba(122, 144, 223, 0.32);
+}
+.page--canvas-hexagons .section.section--mathjax {
+  margin-top: 60px;
+  padding-top: 22px;
+  padding-bottom: 22px;
+}
+.page--canvas-hexagons .canvas-hexagons-stage {
+  position: relative;
+  min-height: 72vh;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 140, 255, 0.22);
+  background: #000;
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.52),
+    0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.page--canvas-hexagons .canvas-hexagons-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 95% at 50% 14%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.0) 58%);
+}
+.page--canvas-hexagons .canvas-hexagons-stage canvas {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.page--canvas-hexagons .canvas-credits {
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.025);
+}
+.page--canvas-hexagons .canvas-credits-label {
+  margin: 0;
+  color: rgba(188, 196, 231, 0.92);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.page--canvas-hexagons .pill-row {
+  opacity: 0.84;
+}
+.page--canvas-hexagons .pill {
+  font-size: 0.66rem;
+}
+.page--canvas-hexagons .hero-panel {
+  gap: 16px;
+}
+.page--canvas-hexagons .canvas-credits p {
+  margin: 0;
+  color: rgba(186, 194, 228, 0.88);
+}
+.page--canvas-hexagons .canvas-credits-actions {
+  margin-top: 2px;
+}
+.page--canvas-hexagons .section.section--mathjax-details {
+  margin-bottom: 26px;
+}
 .arcade-frame {
   display: flex;
   justify-content: center;
@@ -3876,6 +4314,7 @@ CSS
       [(matrix-rain)           (matrix-rain-page)]
       [(xtermjs-demo)          (xtermjs-demo-page)]
       [(space-invaders)        (space-invaders-page)]
+      [(canvas-hexagons)       (canvas-hexagons-page)]
       [(minischeme)            (minischeme-page)]
       [else                    (home-page)]))
 
@@ -3902,6 +4341,9 @@ CSS
 
   (when (eq? (current-page) 'space-invaders)
     (init-space-invaders-page!))
+
+  (when (eq? (current-page) 'canvas-hexagons)
+    (init-canvas-hexagons-page!))
 
   (when (eq? (current-page) 'minischeme)
     (init-minischeme-page!))

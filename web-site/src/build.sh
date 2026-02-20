@@ -27,6 +27,7 @@ ROUTE_ALIASES=(
   documentation-ffi-jsxgraph
   documentation-ffi-xtermjs
   examples
+  canvas-hexagons
   formula1
   implementation-status
   installation

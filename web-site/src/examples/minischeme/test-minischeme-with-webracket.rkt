@@ -470,9 +470,6 @@
    (test-eval-contains "dynamic-wind type checks"
                        "(dynamic-wind 1 (lambda () 2) (lambda () 3))"
                        "dynamic-wind: before must be a procedure")
-   (test-equal "unwind-protect with call/cc escape updates captured state"
-               "((call/cc\n   (let ([x 'a])\n     (lambda (k)\n       (unwind-protect\n         (k (lambda () x))\n         (set! x 'b))))))"
-               "=> b")
    ;; This test follows the historical Scheme letrec probe (Al Petrofsky).
    ;; Note: full Racket evaluates the same program to 1.
    (test-equal "call/cc + letrec probe (Scheme semantics)"

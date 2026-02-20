@@ -210,7 +210,7 @@
                 let let* letrec
                 and or cond case
                 when unless
-                delay do unwind-protect
+                delay do
                 else =>))
 
       (define (install name proc)
@@ -1396,15 +1396,6 @@
                             (expand-expr (car else-tail)))))
                 expr)]
            [(eq? head 'begin) (cons 'begin (map expand-expr tail))]
-           [(eq? head 'unwind-protect)
-            (if (and (pair? tail) (pair? (cdr tail)) (null? (cddr tail)))
-                (let ([body (car tail)]
-                      [cleanup (cadr tail)])
-                  (list 'dynamic-wind
-                        (list 'lambda '() #f)
-                        (list 'lambda '() (expand-expr body))
-                        (list 'lambda '() (expand-expr cleanup))))
-                (error 'minischeme "unwind-protect: malformed form: ~s" expr))]
            [(eq? head 'set!)
             (if (and (pair? tail) (pair? (cdr tail)) (null? (cddr tail)))
                 (list 'set! (car tail) (expand-expr (cadr tail)))
