@@ -323,7 +323,7 @@ access to the JavaScript object `MathJax` and how to invoke methods
 such as `typesetPromise`.
 
 <p align="center">
-  <img src="assets/screenshots/examples/mathjax4.png"
+  <img src="assets/screenshots/examples/mathjax4-new.png"
        alt="MathJax 4 example"
        width="50%">
 </p>
@@ -346,7 +346,7 @@ terminal control through the XtermJS FFI, and real-time animation
 using browser callbacks.
 
 <p align="center">
-  <img src="assets/screenshots/examples/matrix-rain.png"
+  <img src="assets/screenshots/examples/matrix-rain-new.png"
        alt="Matrix - digital rain example"
        width="50%">
 </p>
@@ -367,7 +367,7 @@ The terminal itself is backed by `xterm.js`.
 Improvements to this example are welcome.
 
 <p align="center">
-  <img src="assets/screenshots/examples/minischeme.png"
+  <img src="assets/screenshots/examples/minischeme-new.png"
        alt="MiniScheme example"
        width="50%">
 </p>
@@ -396,7 +396,7 @@ game illustrates WebRacket's canvas bindings, event handling for user
 input, and stateful animation of sprites in a browser environment.
 
 <p align="center">
-  <img src="assets/screenshots/examples/space-invaders.png"
+  <img src="assets/screenshots/examples/space-invaders-new.png"
        alt="space invaders example"
        width="25%">
 </p>
@@ -416,7 +416,7 @@ terminal control through the XtermJS bindings, and integration of JS
 add-ons from Racket code.
 
 <p align="center">
-  <img src="assets/screenshots/examples/xtermjs.png"
+  <img src="assets/screenshots/examples/xtermjs-new.png"
        alt="xtermjs example"
        width="50%">
 </p>
