@@ -30173,9 +30173,9 @@
                     (struct.set $InputStringPort $utf8-bytes (local.get $sp) (local.get $seen))
                     (if (i32.eqz (local.get $left))
                         (then
+                         ;; UTF-8 sequence complete: count one character column.
                          (local.set $int-col
-                                    (i32.sub (local.get $int-col)
-                                             (i32.sub (local.get $seen) (i32.const 1))))
+                                    (i32.add (local.get $int-col) (i32.const 1)))
                          (struct.set $InputStringPort $utf8-len   (local.get $sp) (i32.const 0))
                          (struct.set $InputStringPort $utf8-left  (local.get $sp) (i32.const 0))
                          (struct.set $InputStringPort $utf8-bytes (local.get $sp) (i32.const 0)))))))
@@ -32023,10 +32023,9 @@
                       (struct.set $OutputStringPort $utf8-bytes (local.get $sp) (local.get $seen))
                       (if (i32.eqz (local.get $left))
                           (then
-                           ;; Sequence complete — count as 1 column
+                           ;; UTF-8 sequence complete: count one character column.
                            (local.set $int-col
-                                      (i32.sub (local.get $int-col)
-                                               (i32.sub (local.get $seen) (i32.const 1))))
+                                      (i32.add (local.get $int-col) (i32.const 1)))
                            (struct.set $OutputStringPort $utf8-len   (local.get $sp) (i32.const 0))
                            (struct.set $OutputStringPort $utf8-left  (local.get $sp) (i32.const 0))
                            (struct.set $OutputStringPort $utf8-bytes (local.get $sp) (i32.const 0))))))))

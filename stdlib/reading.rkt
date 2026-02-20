@@ -21,9 +21,39 @@
       (lx in source '()))
 
     ;; ----------------------------- Utilities ---------------------------------
+    (define (safe-make-srcloc source line col pos span)
+      (define (check-contract who field pred x)
+        (unless (or (eq? x #f) (pred x))
+          (error who "invalid ~a: ~a" field x)))
+      (check-contract 'safe-make-srcloc 'line exact-positive-integer? line)
+      (check-contract 'safe-make-srcloc 'column exact-nonnegative-integer? col)
+      (check-contract 'safe-make-srcloc 'position exact-nonnegative-integer? pos)
+      (check-contract 'safe-make-srcloc 'span exact-nonnegative-integer? span)
+      (make-srcloc source line col pos span))
+
+    (define (safe-srcloc-span start-pos end-pos)
+      (cond
+        [(and (exact-nonnegative-integer? start-pos)
+              (exact-nonnegative-integer? end-pos))
+         (define span (- end-pos start-pos))
+         (when (< span 0)
+           (error 'safe-srcloc-span
+                  "negative span: start-pos=~a end-pos=~a"
+                  start-pos end-pos))
+         span]
+        [(or (eq? start-pos #f) (eq? end-pos #f)) #f]
+        [else
+         (error 'safe-srcloc-span
+                "invalid positions: start-pos=~a end-pos=~a"
+                start-pos end-pos)]))
+
     (define (make-srcloc-from-port in source start-line start-col start-pos)
       (define-values (end-line end-col end-pos) (port-next-location in))
-      (make-srcloc source start-line start-col start-pos (- end-pos start-pos)))
+      (safe-make-srcloc source
+                   start-line
+                   start-col
+                   (and (exact-nonnegative-integer? start-pos) start-pos)
+                   (safe-srcloc-span start-pos end-pos)))
 
     (define (raise-read-error who msg loc)
       (define srclocs
@@ -92,7 +122,7 @@
       (define-values (sl sc sp) (port-next-location in))
       (define (err msg)
         (raise-read-error 'skip-nested-block-comment msg
-                          (make-srcloc source sl sc sp 2)))
+                          (safe-make-srcloc source sl sc sp 2)))
       (let loop ([depth 1])
         (define c (read-char in))
         (cond
@@ -172,7 +202,7 @@
                              (if bytes?
                                  "unterminated byte string"
                                  "unterminated string")
-                             (make-srcloc (lx-source L) sl sc sp 1))]
+                             (safe-make-srcloc (lx-source L) sl sc sp 1))]
           [(char=? ch #\")
            (define lexeme
              (if bytes?
@@ -188,7 +218,7 @@
            (cond
              [(eof-object? esc)
               (raise-read-error 'scan-string* "dangling escape in string"
-                                (make-srcloc (lx-source L) sl sc sp 1))]
+                                (safe-make-srcloc (lx-source L) sl sc sp 1))]
              [(member esc '(#\n #\r #\t #\" #\\))
               (emit (case esc
                       [(#\n) #\newline]
@@ -205,7 +235,7 @@
                 (cond
                   [(eof-object? c)
                    (raise-read-error 'scan-string* "unterminated \\x...; escape"
-                                     (make-srcloc (lx-source L) sl sc sp 1))]
+                                     (safe-make-srcloc (lx-source L) sl sc sp 1))]
                   [(char=? c #\;)
                    (read-char in) ; consume ';' and finish
                    (void)]
@@ -213,13 +243,13 @@
                    (define v (hex-digit->val c))
                    (unless v (raise-read-error
                               'scan-string* "invalid hex digit in \\x"
-                              (make-srcloc (lx-source L) sl sc sp 1)))
+                              (safe-make-srcloc (lx-source L) sl sc sp 1)))
                    (read-char in)
                    (set! acc (+ (* acc 16) v))
                    (hex-loop)]))
               (when (and bytes? (>= acc 256))
                 (raise-read-error 'scan-string* "byte value > 255 in byte string"
-                                  (make-srcloc (lx-source L) sl sc sp 1)))
+                                  (safe-make-srcloc (lx-source L) sl sc sp 1)))
               (emit (integer->char acc))
               (loop)]
              [else
@@ -254,7 +284,12 @@
       (cond
         [(eof-object? ch)
          (raise-read-error 'scan-char "unexpected EOF after `#\\`"
-                           (make-srcloc (lx-source L) sl sc sp 1))]
+                           (safe-make-srcloc (lx-source L) sl sc sp 1))]
+        [(delimiter-char? ch)
+         ;; Allow delimiter characters as single-character literals, e.g. #\. #\) #\;
+         (read-char in)
+         (token 'char ch (string-append "#\\" (string ch))
+                (make-srcloc-from-port in (lx-source L) sl sc sp))]
         [else
          (define (read-name)
            (define out (open-output-string))
@@ -269,7 +304,7 @@
             ;; `#\x` is the character x/X.
             ;; `#\xNN...` is a hex codepoint literal.
             (define s2x (peek-string 2 0 in))
-            (if (and (string? s2x)
+           (if (and (string? s2x)
                      (= (string-length s2x) 2)
                      (hex-digit->val (string-ref s2x 1)))
                 (begin
@@ -284,7 +319,7 @@
                          (define v (hex-digit->val c))
                          (unless v (raise-read-error
                                     'scan-char "invalid hex in #\\x..."
-                                    (make-srcloc (lx-source L) sl sc sp 1)))
+                                    (safe-make-srcloc (lx-source L) sl sc sp 1)))
                          (read-char in)
                          (set! out (+ (* out 16) v))
                          (hex-loop)]))
@@ -302,7 +337,7 @@
                               [else
                                (raise-read-error 'scan-char
                                                  (format "unknown character name ~a" name)
-                                                 (make-srcloc (lx-source L) sl sc sp 1))])])
+                                                 (safe-make-srcloc (lx-source L) sl sc sp 1))])])
                   (token 'char the (string-append "#\\" raw-name)
                          (make-srcloc-from-port in (lx-source L) sl sc sp))))]
            [else
@@ -319,7 +354,7 @@
                     [else
                      (raise-read-error 'scan-char
                                        (format "unknown character name ~a" name)
-                                       (make-srcloc (lx-source L) sl sc sp 1))]))
+                                       (safe-make-srcloc (lx-source L) sl sc sp 1))]))
             (token 'char the (string-append "#\\" raw-name)
                    (make-srcloc-from-port in (lx-source L) sl sc sp))])]))
 
@@ -375,7 +410,7 @@
          (raise-read-error
           'lexer
           (format "unsupported sharp-dispatch starting with ~a" s2)
-          (make-srcloc (lx-source L) sl sc sp 1))]))
+          (safe-make-srcloc (lx-source L) sl sc sp 1))]))
 
     ;; --------------------------- Keywords ------------------------------------
 
@@ -390,7 +425,7 @@
       (define name (accum-bareword in))
       (when (zero? (string-length name))
         (raise-read-error 'scan-keyword "expected keyword name after `#:`"
-                          (make-srcloc (lx-source L) sl sc sp 2)))
+                          (safe-make-srcloc (lx-source L) sl sc sp 2)))
       (token 'keyword (string->keyword name)
              (string-append "#:" name)
              (make-srcloc-from-port in (lx-source L) sl sc sp)))
@@ -425,7 +460,7 @@
               (when (eof-object? next)
                 (raise-read-error 'scan-bareword
                                   "dangling backslash in bareword"
-                                  (make-srcloc (object-name in) #f #f #f 0)))
+                                  (safe-make-srcloc (object-name in) #f #f #f 0)))
               (write-char (read-char in) out)
               (loop #f)]
              ;; Treat '.' as part of a number when appropriate
@@ -457,7 +492,7 @@
            (cond
              [(eof-object? ch)
               (raise-read-error 'scan-bareword "unterminated |...| in bareword"
-                                (make-srcloc (object-name in) #f #f #f 0))]
+                                (safe-make-srcloc (object-name in) #f #f #f 0))]
              [(char=? ch #\|)
               (read-char in)
               (loop #f)]
@@ -480,7 +515,7 @@
       (cond
         [(eof-object? ch)
          (define-values (line col pos) (port-next-location in))
-         (token 'eof #f "" (make-srcloc (lx-source L) line col pos 0))]
+         (token 'eof #f "" (safe-make-srcloc (lx-source L) line col pos 0))]
         [(char=? ch #\") (scan-string L)]
         ;; Special-case '.' that begins a number like .5
         [(char=? ch #\.)
@@ -519,7 +554,9 @@
     (define (srcloc-end-position loc)
       (define pos  (srcloc-position loc))
       (define span (srcloc-span loc))
-      (and pos span (+ pos span)))
+      (and (exact-nonnegative-integer? pos)
+           (exact-nonnegative-integer? span)
+           (+ pos span)))
 
     (define (srcloc-join start end)
       (define src     (or (srcloc-source start) (srcloc-source end)))
@@ -527,8 +564,9 @@
       (define col     (srcloc-column start))
       (define pos     (srcloc-position start))
       (define end-pos (srcloc-end-position end))
-      (define span    (and pos end-pos (- end-pos pos)))
-      (make-srcloc src line col pos span))
+      (define pos*    (and (exact-nonnegative-integer? pos) pos))
+      (define span    (safe-srcloc-span pos* end-pos))
+      (safe-make-srcloc src line col pos* span))
 
     (define (closer-for opener-type)
       (case opener-type
