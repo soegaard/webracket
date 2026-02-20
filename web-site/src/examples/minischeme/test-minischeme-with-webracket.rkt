@@ -252,6 +252,9 @@
    (test-equal "list-tail at end"
                "(list-tail '(10 20 30) 3)"
                "=> ()")
+   (test-equal "first" "(first '(10 20 30))" "=> 10")
+   (test-equal "second" "(second '(10 20 30))" "=> 20")
+   (test-equal "rest" "(rest '(10 20 30))" "=> (20 30)")
    (test-equal "memq"
                "(memq 'b '(a b c))"
                "=> (b c)")

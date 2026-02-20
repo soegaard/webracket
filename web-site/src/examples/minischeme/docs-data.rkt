@@ -69,6 +69,7 @@
      (names
       "cons" "car" "cdr" "set-car!" "set-cdr!"
       "pair?" "null?" "list" "list*" "list?" "append" "reverse"
+      "first" "second" "rest"
       "length" "list-tail" "list-ref" "list-set!"
       "make-list" "last-pair" "memq" "memv" "member"
       "assq" "assv" "assoc" "map" "for-each"))
@@ -225,6 +226,7 @@
     (floor . "r5rs:r5rs-Z-H-9.html#%_idx_314")
     (for-each . "r5rs:r5rs-Z-H-9.html#%_idx_582")
     (filter . "ref:pairs.html#%28def._%28%28lib._racket%2Fprivate%2Flist..rkt%29._filter%29%29")
+    (first . "ref:pairs.html#%28def._%28%28lib._racket%2Flist..rkt%29._first%29%29")
     (force . "r5rs:r5rs-Z-H-9.html#%_idx_584")
     (gcd . "r5rs:r5rs-Z-H-9.html#%_idx_306")
     (if . "r5rs:r5rs-Z-H-7.html#%_idx_98")
@@ -279,9 +281,11 @@
     (rationalize . "r5rs:r5rs-Z-H-9.html#%_idx_322")
     (real? . "r5rs:r5rs-Z-H-9.html#%_idx_248")
     (remainder . "r5rs:r5rs-Z-H-9.html#%_idx_302")
+    (rest . "ref:pairs.html#%28def._%28%28lib._racket%2Flist..rkt%29._rest%29%29")
     (reverse . "r5rs:r5rs-Z-H-9.html#%_idx_440")
     (round . "r5rs:r5rs-Z-H-9.html#%_idx_320")
     (scheme-report-environment . "r5rs:r5rs-Z-H-9.html#%_idx_602")
+    (second . "ref:pairs.html#%28def._%28%28lib._racket%2Flist..rkt%29._second%29%29")
     (set! . "r5rs:r5rs-Z-H-7.html#%_idx_104")
     (sin . "r5rs:r5rs-Z-H-9.html#%_idx_330")
     (sinh . "ref:generic-numbers.html#%28def._%28%28lib._racket%2Fmath..rkt%29._sinh%29%29")

@@ -3994,6 +3994,7 @@ pre code {
 }
 .page--minischeme .section.section--minischeme .section-content,
 .page--minischeme .section.section--minischeme-details .section-content {
+  width: 100%;
   max-width: 1360px;
   margin: 0 auto;
 }
@@ -4001,7 +4002,8 @@ pre code {
   display: grid;
   gap: 14px;
   width: 100%;
-  max-width: 1400px;
+  max-width: 980px;
+  min-width: 0;
   margin: 0 auto;
   padding: 26px;
   border-radius: 16px;
@@ -4013,7 +4015,30 @@ pre code {
 }
 .page--minischeme .minischeme-shell-note {
   margin: 0;
-  color: rgba(216, 226, 255, 0.9);
+  padding: 10px 12px;
+  border-left: 1px solid rgba(141, 158, 220, 0.34);
+  background: rgba(13, 18, 34, 0.38);
+  color: rgba(204, 216, 248, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.42;
+}
+.page--minischeme .minischeme-shell-note-label {
+  display: inline-block;
+  margin-right: 8px;
+  color: rgba(173, 195, 250, 0.86);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.page--minischeme .minischeme-sample-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.page--minischeme .ms-editor-pane {
+  position: relative;
 }
 .page--minischeme .minischeme-editor {
   display: block;
@@ -4025,7 +4050,7 @@ pre code {
   font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
   font-size: 0.96rem;
   line-height: 1.47;
-  padding: 12px;
+  padding: 12px 12px 44px;
   border-radius: 10px;
   background: #0d1020;
   color: #eef2ff;
@@ -4034,12 +4059,33 @@ pre code {
 .page--minischeme .minischeme-actions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
 }
+.page--minischeme .ms-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+.page--minischeme .ms-controls-center {
+  flex: 0 0 auto;
+  margin-left: auto;
+  margin-right: 0;
+}
+.page--minischeme .ms-controls-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 0 auto;
+}
 .page--minischeme .minischeme-sample-select {
-  flex: 1 1 280px;
-  min-width: 220px;
+  flex: 0 1 auto;
+  width: clamp(220px, 30vw, 420px);
+  min-width: 160px;
   max-width: 420px;
   height: 36px;
   border-radius: 999px;
@@ -4069,11 +4115,18 @@ pre code {
 .page--minischeme .minischeme-btn:active {
   transform: translateY(0);
 }
+.page--minischeme .minischeme-btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+  filter: none;
+  transform: none;
+}
 .page--minischeme .minischeme-btn:focus-visible {
   outline: 2px solid rgba(149, 178, 255, 0.75);
   outline-offset: 2px;
 }
 .page--minischeme .minischeme-btn--run {
+  margin-left: 6px;
   background: #6a86ff;
   border-color: rgba(171, 193, 255, 0.45);
   box-shadow: 0 0 0 1px rgba(168, 190, 255, 0.2) inset;
@@ -4082,22 +4135,108 @@ pre code {
   background: #237f73;
   border-color: rgba(154, 228, 214, 0.2);
 }
+.page--minischeme .minischeme-btn--pause {
+  background: #3f5fba;
+  border-color: rgba(165, 188, 255, 0.28);
+}
+.page--minischeme .minischeme-btn--stop {
+  background: #8f3f4a;
+  border-color: rgba(245, 173, 177, 0.24);
+}
 .page--minischeme .minischeme-btn--reset {
   background: #7f5250;
   border-color: rgba(217, 145, 137, 0.2);
   color: rgba(255, 241, 241, 0.94);
 }
+.page--minischeme .ms-output {
+  position: relative;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(121, 138, 202, 0.24);
+}
+.page--minischeme .ms-output-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 6px;
+}
+.page--minischeme .ms-output-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.84;
+  pointer-events: none;
+  color: rgba(218, 228, 255, 0.9);
+}
+.page--minischeme .ms-output-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: rgba(203, 214, 245, 0.78);
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+}
+.page--minischeme .ms-output-status::before {
+  content: "●";
+  font-size: 0.62rem;
+  line-height: 1;
+  color: rgba(171, 184, 224, 0.72);
+}
+.page--minischeme .ms-output-status[data-state="running"]::before {
+  color: rgba(120, 220, 160, 0.9);
+}
+.page--minischeme .ms-output-status[data-state="paused"]::before {
+  color: rgba(244, 193, 105, 0.92);
+}
+.page--minischeme .ms-output-status[data-state="error"]::before {
+  color: rgba(238, 120, 133, 0.94);
+}
+.page--minischeme .ms-output-body {
+  position: relative;
+  z-index: 1;
+}
+.page--minischeme .ms-copy-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 3;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(133, 154, 224, 0.42);
+  background: rgba(12, 17, 33, 0.9);
+  color: rgba(216, 227, 255, 0.92);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.page--minischeme .ms-copy-btn:hover {
+  background: rgba(17, 23, 43, 0.95);
+  border-color: rgba(153, 176, 245, 0.5);
+}
+.page--minischeme .ms-copy-btn:focus-visible {
+  outline: 2px solid rgba(149, 178, 255, 0.75);
+  outline-offset: 2px;
+}
 .page--minischeme .minischeme-output {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
   min-height: 96px;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: break-word;
-  padding: 12px;
+  padding: 12px 12px 44px;
   border-radius: 10px;
   font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
-  background: #090d1b;
+  background: #0b0f1d;
   color: #dce5ff;
   border: 1px solid rgba(122, 144, 223, 0.32);
+  box-shadow: inset 0 1px 0 rgba(160, 180, 240, 0.18);
 }
 .page--canvas-hexagons .section.section--mathjax {
   margin-top: 60px;

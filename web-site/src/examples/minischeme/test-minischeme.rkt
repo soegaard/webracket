@@ -425,6 +425,18 @@
      (reset!)
      (check-equal? (run "(list-tail '(10 20 30) 3)") "=> ()"))
 
+   (test-case "first"
+     (reset!)
+     (check-equal? (run "(first '(10 20 30))") "=> 10"))
+
+   (test-case "second"
+     (reset!)
+     (check-equal? (run "(second '(10 20 30))") "=> 20"))
+
+   (test-case "rest"
+     (reset!)
+     (check-equal? (run "(rest '(10 20 30))") "=> (20 30)"))
+
    (test-case "memq"
      (reset!)
      (check-equal? (run "(memq 'b '(a b c))") "=> (b c)"))
