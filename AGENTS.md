@@ -13,6 +13,12 @@ goals**. Most work involves **emitting validated WebAssembly GC
 code**, **writing runtime support functions**, and **implementing core
 Racket primitives** faithfully.
 
+### Bug-Finding Policy
+
+- The MiniScheme interpreter is used to stress test WebRacket.
+- When an error is found in WebRacket, do not code around the problem in examples.
+- Instead, create a minimal reproducible WebRacket program and work on fixing WebRacket itself.
+
 ---
 
 ## Implementing new WebRacket primitives
