@@ -31,16 +31,16 @@ The following steps are needed to implement a WebRacket primitive.
   (needed when the function doesn't take a fixed number of arguments)
 - Export the primitive in `primitives.rkt`.
 - If the WebRacket primitive isn't a primitive in Racket,
-  then add a "dummy" implementation at the botton of `primitives.rkt`.
+  then add a "dummy" implementation at the bottom of `primitives.rkt`.
   (this way a program written in `#lang webracket` works the same
    as if the program were compiled with webracket.
 - Add test cases to `test/test-basics.rkt`. 
   Make sure to put the test cases in the correct section.
-  (consult `docs/` to se the correct section)
-- When asked to implement a WebRacket primitives, which is also
+  (consult `docs/` to see the correct section)
+- When asked to implement a WebRacket primitive, which is also
   in Racket, consult the documentation in `docs/` to get a 
   documentation for the function.
-- If the WebRacket function has restrictions or behave differently
+- If the WebRacket function has restrictions or behaves differently
   from the Racket one, make a comment about it in `runtime-wasm.rkt`
 - If a parameter of a function is optional, mention it in an inline comment.
   Also, mention the default value.
