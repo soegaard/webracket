@@ -13,41 +13,54 @@
    (list "list-statistics"
          "List statistics"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; List statistics"
+            ";;   Compute count, sum, mean, minimum, and maximum for a list of numbers."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `xs` below to analyze a different dataset."
+            ""
             "(define xs '(12 7 5 22 9 13 18 4 11))"
             ""
             "(define (sum-list ys)"
-            "  (if (null? ys)"
-            "      0"
-            "      (+ (car ys) (sum-list (cdr ys)))))"
+            "  (cond"
+            "    [(null? ys) 0]"
+            "    [else       (+ (first ys) (sum-list (rest ys)))]))"
             ""
             "(define (min-list ys)"
-            "  (if (null? (cdr ys))"
-            "      (car ys)"
-            "      (let ((m (min-list (cdr ys))))"
-            "        (if (< (car ys) m) (car ys) m))))"
+            "  (cond"
+            "    [(null? (rest ys)) (first ys)]"
+            "    [else              (define m (min-list (rest ys)))"
+            "                       (if (< (first ys) m) (first ys) m)]))"
             ""
             "(define (max-list ys)"
-            "  (if (null? (cdr ys))"
-            "      (car ys)"
-            "      (let ((m (max-list (cdr ys))))"
-            "        (if (> (car ys) m) (car ys) m))))"
+            "  (cond"
+            "    [(null? (rest ys)) (first ys)]"
+            "    [else              (define m (max-list (rest ys)))"
+            "                       (if (> (first ys) m) (first ys) m)]))"
             ""
-            "(let* ((n (length xs))"
-            "       (total (sum-list xs))"
-            "       (lo (min-list xs))"
-            "       (hi (max-list xs))"
-            "       (mean (/ total n)))"
+            "(define (list-statistics xs)"
+            "  (define n     (length xs))"
+            "  (define total (sum-list xs))"
+            "  (define lo    (min-list xs))"
+            "  (define hi    (max-list xs))"
+            "  (define mean  (/ total n))"
             "  (list (list 'count n)"
-            "        (list 'sum total)"
-            "        (list 'mean mean)"
-            "        (list 'min lo)"
-            "        (list 'max hi)))")))
+            "        (list 'sum   total)"
+            "        (list 'mean  mean)"
+            "        (list 'min   lo)"
+            "        (list 'max   hi)))"
+            ""
+            "(list-statistics xs)")))
    (list "histogram"
          "Histogram"
          (minischeme-sample-program
-          '(";; Edit data lines:"
-            "(define scores '(44 52 71 68 91 83 77 59 62 74 88 93 47 69 72 80))"
+          '(";; Histogram"
+            ";;   Group scores into fixed-size bins and count each bin."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `scores` and `bin-size` below."
+            ""
+            "(define scores   '(44 52 71 68 91 83 77 59 62 74 88 93 47 69 72 80))"
             "(define bin-size 10)"
             ""
             "(define (bucket-of x)"
@@ -55,152 +68,138 @@
             ""
             "(define (inc-bucket hist bucket)"
             "  (cond"
-            "    ((null? hist) (list (list bucket 1)))"
-            "    ((= bucket (car (car hist)))"
-            "     (cons (list bucket (+ 1 (cadr (car hist))))"
-            "           (cdr hist)))"
-            "    (else"
-            "     (cons (car hist)"
-            "           (inc-bucket (cdr hist) bucket)))))"
+            "    [(null? hist)                (list (list bucket 1))]"
+            "    [(= bucket (first (first hist)))"
+            "     (cons (list bucket (+ 1 (second (first hist))))"
+            "           (rest hist))]"
+            "    [else"
+            "     (cons (first hist)"
+            "           (inc-bucket (rest hist) bucket))]))"
             ""
             "(define (build-hist ys hist)"
-            "  (if (null? ys)"
-            "      hist"
-            "      (build-hist (cdr ys)"
-            "                  (inc-bucket hist (bucket-of (car ys))))))"
+            "  (cond"
+            "    [(null? ys) hist]"
+            "    [else       (build-hist (rest ys)"
+            "                            (inc-bucket hist (bucket-of (first ys))))]))"
             ""
             "(build-hist scores '())")))
    (list "merge-sort"
          "Merge sort"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; Merge sort"
+            ";;   Sort a list of numbers using merge sort."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `xs` below."
+            ""
             "(define xs '(22 7 1 45 3 12 9 18 6 30))"
             ""
             "(define (split ys)"
-            "  (if (or (null? ys) (null? (cdr ys)))"
-            "      (list ys '())"
-            "      (let ((rest (split (cdr (cdr ys)))))"
-            "        (list (cons (car ys) (car rest))"
-            "              (cons (cadr ys) (cadr rest))))))"
+            "  (cond"
+            "    [(or (null? ys) (null? (rest ys))) (list ys '())]"
+            "    [else                               (define parts (split (rest (rest ys))))"
+            "                                        (list (cons (first ys)  (first parts))"
+            "                                              (cons (second ys) (second parts)))]))"
             ""
             "(define (merge left right)"
             "  (cond"
-            "    ((null? left) right)"
-            "    ((null? right) left)"
-            "    ((<= (car left) (car right))"
-            "     (cons (car left) (merge (cdr left) right)))"
-            "    (else"
-            "     (cons (car right) (merge left (cdr right))))))"
+            "    [(null? left)                     right]"
+            "    [(null? right)                    left]"
+            "    [(<= (first left) (first right))  (cons (first left)  (merge (rest left) right))]"
+            "    [else                             (cons (first right) (merge left (rest right)))]))"
             ""
             "(define (merge-sort ys)"
-            "  (if (or (null? ys) (null? (cdr ys)))"
-            "      ys"
-            "      (let* ((parts (split ys))"
-            "             (left (car parts))"
-            "             (right (cadr parts)))"
-            "        (merge (merge-sort left)"
-            "               (merge-sort right)))))"
+            "  (cond"
+            "    [(or (null? ys) (null? (rest ys))) ys]"
+            "    [else                              (define parts (split ys))"
+            "                                       (define left  (first parts))"
+            "                                       (define right (second parts))"
+            "                                       (merge (merge-sort left)"
+            "                                              (merge-sort right))]))"
             ""
             "(merge-sort xs)")))
-   (list "bracket-matcher"
-         "Bracket matcher"
-         (minischeme-sample-program
-          '(";; Edit data lines:"
-            "(define tokens '(lpar lbrack lbrace rbrace rbrack rpar))"
-            ""
-            "(define (opening? t)"
-            "  (or (eq? t 'lpar) (eq? t 'lbrack) (eq? t 'lbrace)))"
-            ""
-            "(define (closing? t)"
-            "  (or (eq? t 'rpar) (eq? t 'rbrack) (eq? t 'rbrace)))"
-            ""
-            "(define (matches? open close)"
-            "  (or (and (eq? open 'lpar) (eq? close 'rpar))"
-            "      (and (eq? open 'lbrack) (eq? close 'rbrack))"
-            "      (and (eq? open 'lbrace) (eq? close 'rbrace))))"
-            ""
-            "(define (balanced? toks stack)"
-            "  (cond"
-            "    ((null? toks) (null? stack))"
-            "    ((opening? (car toks))"
-            "     (balanced? (cdr toks) (cons (car toks) stack)))"
-            "    ((closing? (car toks))"
-            "     (and (pair? stack)"
-            "          (matches? (car stack) (car toks))"
-            "          (balanced? (cdr toks) (cdr stack))))"
-            "    (else (balanced? (cdr toks) stack))))"
-            ""
-            "(balanced? tokens '())")))
    (list "run-length"
          "Run-length encode/decode"
          (minischeme-sample-program
-          '(";; Edit data lines:"
-            "(define mode 'encode) ; set to 'decode to decode input"
+          '(";; Run-length encode/decode"
+            ";;   Encode repeated values as (value count) pairs, or decode them."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `mode` and `input` below."
+            ""
+            "(define mode  'encode) ; set to 'decode to decode input"
             "(define input '(a a a b b c c c c d a a))"
             ""
             "(define (replicate x n)"
-            "  (if (= n 0)"
-            "      '()"
-            "      (cons x (replicate x (- n 1)))))"
+            "  (cond"
+            "    [(= n 0) '()]"
+            "    [else    (cons x (replicate x (- n 1)))]))"
             ""
             "(define (decode pairs)"
-            "  (if (null? pairs)"
-            "      '()"
-            "      (append (replicate (car (car pairs)) (cadr (car pairs)))"
-            "              (decode (cdr pairs)))))"
+            "  (cond"
+            "    [(null? pairs) '()]"
+            "    [else          (append (replicate (first (first pairs)) (second (first pairs)))"
+            "                           (decode (rest pairs)))]))"
             ""
             "(define (encode xs)"
             "  (define (finish value count acc)"
             "    (cons (list value count) acc))"
-            "  (let loop ((rest xs) (current #f) (count 0) (acc '()))"
+            "  (let loop ([ys xs] [current #f] [count 0] [acc '()])"
             "    (cond"
-            "      ((null? rest)"
-            "       (if (= count 0)"
-            "           (reverse acc)"
-            "           (reverse (finish current count acc))))"
-            "      ((= count 0)"
-            "       (loop (cdr rest) (car rest) 1 acc))"
-            "      ((equal? (car rest) current)"
-            "       (loop (cdr rest) current (+ count 1) acc))"
-            "      (else"
-            "       (loop (cdr rest) (car rest) 1 (finish current count acc))))))"
+            "      [(null? ys)                  (if (= count 0)"
+            "                                      (reverse acc)"
+            "                                      (reverse (finish current count acc)))]"
+            "      [(= count 0)                 (loop (rest ys) (first ys) 1 acc)]"
+            "      [(equal? (first ys) current) (loop (rest ys) current (+ count 1) acc)]"
+            "      [else                        (loop (rest ys)"
+            "                                        (first ys)"
+            "                                        1"
+            "                                        (finish current count acc))])))"
             ""
-            "(if (eq? mode 'encode)"
-            "    (encode input)"
-            "    (decode input))")))
+            "(cond"
+            "  [(eq? mode 'encode) (encode input)]"
+            "  [else               (decode input)])")))
    (list "prime-sieve"
          "Prime sieve up to N"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; Prime sieve up to N"
+            ";;   Compute all primes from 2 up to a limit."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `limit` below."
+            ""
             "(define limit 100)"
             ""
             "(define (range from to)"
-            "  (if (> from to)"
-            "      '()"
-            "      (cons from (range (+ from 1) to))))"
+            "  (cond"
+            "    [(> from to) '()]"
+            "    [else        (cons from (range (+ from 1) to))]))"
             ""
             "(define (remove-multiples p xs)"
             "  (cond"
-            "    ((null? xs) '())"
-            "    ((= (remainder (car xs) p) 0)"
-            "     (remove-multiples p (cdr xs)))"
-            "    (else"
-            "     (cons (car xs)"
-            "           (remove-multiples p (cdr xs))))))"
+            "    [(null? xs)                    '()]"
+            "    [(= (remainder (first xs) p) 0) (remove-multiples p (rest xs))]"
+            "    [else                           (cons (first xs)"
+            "                                          (remove-multiples p (rest xs)))]))"
             ""
             "(define (sieve xs)"
-            "  (if (null? xs)"
-            "      '()"
-            "      (cons (car xs)"
-            "            (sieve (remove-multiples (car xs) (cdr xs))))))"
+            "  (cond"
+            "    [(null? xs) '()]"
+            "    [else       (cons (first xs)"
+            "                      (sieve (remove-multiples (first xs) (rest xs))))]))"
             ""
-            "(if (< limit 2)"
-            "    '()"
-            "    (sieve (range 2 limit)))")))
+            "(cond"
+            "  [(< limit 2) '()]"
+            "  [else        (sieve (range 2 limit))])")))
    (list "matrix-multiply"
          "Matrix multiply"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; Matrix multiply"
+            ";;   Multiply matrix A by matrix B."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change matrices `A` and `B` below."
+            ""
             "(define A '((1 2 3)"
             "            (4 5 6)))"
             "(define B '((7 8)"
@@ -208,46 +207,51 @@
             "            (11 12)))"
             ""
             "(define (column m j)"
-            "  (if (null? m)"
-            "      '()"
-            "      (cons (list-ref (car m) j)"
-            "            (column (cdr m) j))))"
+            "  (cond"
+            "    [(null? m) '()]"
+            "    [else      (cons (list-ref (first m) j)"
+            "                     (column (rest m) j))]))"
             ""
             "(define (transpose m)"
-            "  (if (null? m)"
-            "      '()"
-            "      (let ((cols (length (car m))))"
-            "        (let loop ((j 0))"
-            "          (if (= j cols)"
-            "              '()"
-            "              (cons (column m j)"
-            "                    (loop (+ j 1))))))))"
+            "  (cond"
+            "    [(null? m) '()]"
+            "    [else      (define cols (length (first m)))"
+            "               (let loop ([j 0])"
+            "                 (cond"
+            "                   [(= j cols) '()]"
+            "                   [else       (cons (column m j)"
+            "                                     (loop (+ j 1)))]))]))"
             ""
             "(define (dot xs ys)"
-            "  (if (null? xs)"
-            "      0"
-            "      (+ (* (car xs) (car ys))"
-            "         (dot (cdr xs) (cdr ys)))))"
+            "  (cond"
+            "    [(null? xs) 0]"
+            "    [else       (+ (* (first xs) (first ys))"
+            "                   (dot (rest xs) (rest ys)))]))"
             ""
             "(define (mul-row row cols)"
-            "  (if (null? cols)"
-            "      '()"
-            "      (cons (dot row (car cols))"
-            "            (mul-row row (cdr cols)))))"
+            "  (cond"
+            "    [(null? cols) '()]"
+            "    [else         (cons (dot row (first cols))"
+            "                        (mul-row row (rest cols)))]))"
             ""
             "(define (matmul a b)"
-            "  (let ((bt (transpose b)))"
-            "    (let loop ((rows a))"
-            "      (if (null? rows)"
-            "          '()"
-            "          (cons (mul-row (car rows) bt)"
-            "                (loop (cdr rows)))))))"
+            "  (define bt (transpose b))"
+            "  (let loop ([rows a])"
+            "    (cond"
+            "      [(null? rows) '()]"
+            "      [else         (cons (mul-row (first rows) bt)"
+            "                         (loop (rest rows)))])))"
             ""
             "(matmul A B)")))
    (list "linear-regression"
          "Linear regression (least squares)"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; Linear regression (least squares)"
+            ";;   Fit a line y = slope*x + intercept to data points."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `points` below."
+            ""
             "(define points '((1 1.4)"
             "                 (2 1.9)"
             "                 (3 3.2)"
@@ -256,27 +260,28 @@
             "                 (6 5.9)))"
             ""
             "(define (sum f xs)"
-            "  (if (null? xs)"
-            "      0"
-            "      (+ (f (car xs))"
-            "         (sum f (cdr xs)))))"
+            "  (apply + (map f xs)))"
             ""
-            "(define n (length points))"
-            "(define sx (sum car points))"
-            "(define sy (sum cadr points))"
-            "(define sxx (sum (lambda (p) (* (car p) (car p))) points))"
-            "(define sxy (sum (lambda (p) (* (car p) (cadr p))) points))"
+            "(define n         (length points))"
+            "(define sx        (sum first  points))"
+            "(define sy        (sum second points))"
+            "(define sxx       (sum (lambda (p) (* (first p) (first p)))   points))"
+            "(define sxy       (sum (lambda (p) (* (first p) (second p)))  points))"
+            "(define denom     (- (* n sxx) (* sx sx)))"
+            "(define slope     (/  (- (* n sxy) (* sx sy))  denom))"
+            "(define intercept (/  (- sy (* slope sx))      n))"
             ""
-            "(define denom (- (* n sxx) (* sx sx)))"
-            "(define slope (/ (- (* n sxy) (* sx sy)) denom))"
-            "(define intercept (/ (- sy (* slope sx)) n))"
-            ""
-            "(list (list 'slope slope)"
+            "(list (list 'slope     slope)"
             "      (list 'intercept intercept))")))
    (list "bfs-shortest-path"
          "BFS shortest path"
          (minischeme-sample-program
-          '(";; Edit data lines:"
+          '(";; BFS shortest path"
+            ";;   Find a shortest path between source and target in an unweighted graph."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `graph`, `source`, and `target` below."
+            ""
             "(define graph '((A (B C))"
             "                (B (A D E))"
             "                (C (A F))"
@@ -290,62 +295,71 @@
             "(define target 'I)"
             ""
             "(define (neighbors node g)"
-            "  (let ((entry (assoc node g)))"
-            "    (if entry (cadr entry) '())))"
+            "  (define entry (assoc node g))"
+            "  (cond"
+            "    [entry (second entry)]"
+            "    [else  '()]))"
             ""
             "(define (enqueue-neighbors ns path q seen-now)"
-            "  (if (null? ns)"
-            "      (list q seen-now)"
-            "      (let ((n (car ns)))"
-            "        (if (member n seen-now)"
-            "            (enqueue-neighbors (cdr ns) path q seen-now)"
-            "            (enqueue-neighbors (cdr ns)"
-            "                               path"
-            "                               (append q (list (cons n path)))"
-            "                               (cons n seen-now))))))"
+            "  (cond"
+            "    [(null? ns) (list q seen-now)]"
+            "    [else       (define n (first ns))"
+            "                (cond"
+            "                 [(member n seen-now)"
+            "                  (enqueue-neighbors (rest ns) path q seen-now)]"
+            "                 [else"
+            "                  (enqueue-neighbors (rest ns)"
+            "                                     path"
+            "                                     (append q (list (cons n path)))"
+            "                                     (cons n seen-now))])]))"
             ""
             "(define (bfs queue seen)"
-            "  (if (null? queue)"
-            "      #f"
-            "      (let* ((path (car queue))"
-            "             (node (car path)))"
-            "        (if (eq? node target)"
-            "            (reverse path)"
-            "            (let* ((state (enqueue-neighbors (neighbors node graph)"
-            "                                             path"
-            "                                             (cdr queue)"
-            "                                             seen))"
-            "                   (new-queue (car state))"
-            "                   (new-seen (cadr state)))"
-            "              (bfs new-queue new-seen))))))"
+            "  (cond"
+            "    [(null? queue) #f]"
+            "    [else          (define path (first queue))"
+            "                   (define node (first path))"
+            "                   (cond"
+            "                     [(eq? node target) (reverse path)]"
+            "                     [else              (define state"
+            "                                          (enqueue-neighbors (neighbors node graph)"
+            "                                                             path"
+            "                                                             (rest queue)"
+            "                                                             seen))"
+            "                                        (define new-queue (first state))"
+            "                                        (define new-seen  (second state))"
+            "                                        (bfs new-queue new-seen)])]))"
             ""
             "(bfs (list (list source)) (list source))")))
    (list "continuations"
          "Continuation demo (call/cc + dynamic-wind)"
          (minischeme-sample-program
-          '(";; Edit data lines:"
-            "(define data '(3 7 11 18 24 31))"
+          '(";; Continuation demo (call/cc + dynamic-wind)"
+            ";;   Exit early when a value is found and trace dynamic-wind enter/leave."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `data`, `target`, and `trace?` below."
+            ""
+            "(define data   '(3 7 11 18 24 31))"
             "(define target 18)"
             "(define trace? #t)"
             ""
             "(define trace-log '())"
             ""
             "(define (note x)"
-            "  (if trace?"
-            "      (set! trace-log (cons x trace-log))"
-            "      'ok))"
+            "  (cond"
+            "    [trace? (set! trace-log (cons x trace-log))]"
+            "    [else   'ok]))"
             ""
             "(define (find-first xs wanted)"
             "  (call/cc"
             "   (lambda (exit)"
             "     (dynamic-wind"
             "      (lambda () (note 'enter))"
-            "      (lambda ()"
-            "        (let loop ((rest xs))"
-            "          (cond"
-            "            ((null? rest) #f)"
-            "            ((= (car rest) wanted) (exit (car rest)))"
-            "            (else (loop (cdr rest))))))"
+            "      (lambda () (let loop ([ys xs])"
+            "                  (cond"
+            "                   [(null? ys)             #f]"
+            "                   [(= (first ys) wanted)  (exit (first ys))]"
+            "                   [else                   (loop (rest ys))])))"
             "      (lambda () (note 'leave))))))"
             ""
             "(list (list 'found (find-first data target))"
@@ -353,33 +367,48 @@
    (list "newton-root"
          "Newton root finder"
          (minischeme-sample-program
-          '(";; Edit data lines:"
-            "(define target 2.0) ; solve x^2 = target"
-            "(define guess 1.0)"
-            "(define tolerance 0.000001)"
-            "(define max-steps 20)"
+          '(";; Newton root finder"
+            ";;   Solve `f(x) = 0` using Newton's method."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `target`, `guess`, `tolerance`, and `max-steps` below."
+            ""
+            ";; Let's solve `x^2 - 2 = 0` to find the square root of two."
             ""
             "(define (f x)"
             "  (- (* x x) target))"
             ""
-            "(define (df x)"
+            "(define (df x) ; the derivative of f"
             "  (* 2.0 x))"
             ""
+            "(define target    2.0)      ; solve f(x) = target"
+            "(define guess     1.0)      ; initial guess for a root"
+            "(define tolerance 0.000001) "
+            "(define max-steps 20)"
+            ""
             "(define (newton x step)"
-            "  (let ((fx (f x)))"
-            "    (if (or (= step max-steps)"
-            "            (< (abs fx) tolerance))"
-            "        x"
-            "        (newton (- x (/ fx (df x)))"
-            "                (+ step 1)))))"
+            "  (define fx (f x))"
+            "  (cond"
+            "    [(or (= step max-steps)"
+            "         (< (abs fx) tolerance))"
+            "     x]"
+            "    [else"
+            "     (newton (- x (/ fx (df x)))"
+            "             (+ step 1))]))"
             ""
             "(define root (newton guess 0))"
-            "(list (list 'root root)"
+            "(list (list 'root      root)"
             "      (list 'f-at-root (f root)))")))
    (list "maze-solver"
          "Maze solver"
          (minischeme-sample-program
-          '("; S = Start"
+          '(";; Maze solver"
+            ";;   Find a path from S to G in an ASCII/Unicode maze and render the path."
+            ";;"
+            ";; Input data to edit:"
+            ";;   Change `maze` below."
+            ""
+            "; S = Start"
             "; G = Goal"
             "(define maze"
             "  '(\"┌─────────────┬─────────────┐\""
@@ -405,16 +434,19 @@
             "    \"└───────────────────────────┘\"))"
             ""
             "(define height (length maze))"
-            "(define width (if (null? maze) 0 (string-length (car maze))))"
+            "(define width"
+            "  (cond"
+            "    [(null? maze) 0]"
+            "    [else         (string-length (first maze))]))"
             ""
             "(define (cell-at cell)"
-            "  (string-ref (list-ref maze (cadr cell)) (car cell)))"
+            "  (string-ref (list-ref maze (second cell)) (first cell)))"
             ""
             "(define (inside? cell)"
-            "  (and (<= 0 (car cell))"
-            "       (< (car cell) width)"
-            "       (<= 0 (cadr cell))"
-            "       (< (cadr cell) height)))"
+            "  (and (<= 0 (first cell))"
+            "       (< (first cell) width)"
+            "       (<= 0 (second cell))"
+            "       (< (second cell) height)))"
             ""
             "(define wall-chars"
             "  '(#\\─ #\\│ #\\┌ #\\┐ #\\└ #\\┘ #\\├ #\\┤ #\\┬ #\\┴ #\\┼))"
@@ -426,99 +458,105 @@
             "  (wall? (cell-at cell)))"
             ""
             "(define (find-marker marker)"
-            "  (let loopy ((y 0))"
-            "    (if (= y height)"
-            "        #f"
-            "        (let loopx ((x 0))"
-            "          (cond"
-            "            ((= x width) (loopy (+ y 1)))"
-            "            ((char=? (string-ref (list-ref maze y) x) marker)"
-            "             (list x y))"
-            "            (else (loopx (+ x 1))))))))"
+            "  (let loopy ([y 0])"
+            "    (cond"
+            "      [(= y height) #f]"
+            "      [else         (let loopx ([x 0])"
+            "                      (cond"
+            "                        [(= x width) (loopy (+ y 1))]"
+            "                        [(char=? (string-ref (list-ref maze y) x) marker)"
+            "                         (list x y)]"
+            "                        [else       (loopx (+ x 1))]))])))"
             ""
             "(define start (find-marker #\\S))"
             "(define goal  (find-marker #\\G))"
             ""
             "(define (neighbors cell)"
-            "  (let* ((x (car cell))"
-            "         (y (cadr cell))"
-            "         (candidates (list (list (+ x 1) y)"
-            "                           (list (- x 1) y)"
-            "                           (list x (+ y 1))"
-            "                           (list x (- y 1)))))"
-            "    (let loop ((cs candidates))"
-            "      (cond"
-            "        ((null? cs) '())"
-            "        ((and (inside? (car cs))"
-            "              (not (blocked? (car cs))))"
-            "         (cons (car cs) (loop (cdr cs))))"
-            "        (else (loop (cdr cs)))))))"
+            "  (define x (first cell))"
+            "  (define y (second cell))"
+            "  (define candidates"
+            "    (list (list (+ x 1) y)"
+            "          (list (- x 1) y)"
+            "          (list x (+ y 1))"
+            "          (list x (- y 1))))"
+            "  (let loop ([cs candidates])"
+            "    (cond"
+            "      [(null? cs) '()]"
+            "      [(and (inside? (first cs))"
+            "            (not (blocked? (first cs))))"
+            "       (cons (first cs) (loop (rest cs)))]"
+            "      [else (loop (rest cs))])))"
             ""
             "(define (enqueue-neighbors ns path q seen-now)"
-            "  (if (null? ns)"
-            "      (list q seen-now)"
-            "      (let ((n (car ns)))"
-            "        (if (member n seen-now)"
-            "            (enqueue-neighbors (cdr ns) path q seen-now)"
-            "            (enqueue-neighbors (cdr ns)"
-            "                               path"
-            "                               (append q (list (cons n path)))"
-            "                               (cons n seen-now))))))"
+            "  (cond"
+            "    [(null? ns) (list q seen-now)]"
+            "    [else       (define n (first ns))"
+            "                (cond"
+            "                 [(member n seen-now)"
+            "                  (enqueue-neighbors (rest ns) path q seen-now)]"
+            "                 [else"
+            "                  (enqueue-neighbors (rest ns)"
+            "                                     path"
+            "                                     (append q (list (cons n path)))"
+            "                                     (cons n seen-now))])]))"
             ""
             "(define (solve queue seen)"
-            "  (if (null? queue)"
-            "      #f"
-            "      (let* ((path (car queue))"
-            "             (node (car path)))"
-            "        (if (equal? node goal)"
-            "            (reverse path)"
-            "            (let* ((state (enqueue-neighbors (neighbors node)"
-            "                                             path"
-            "                                             (cdr queue)"
-            "                                             seen))"
-            "                   (new-queue (car state))"
-            "                   (new-seen (cadr state)))"
-            "              (solve new-queue new-seen))))))"
+            "  (cond"
+            "    [(null? queue) #f]"
+            "    [else          (define path (first queue))"
+            "                   (define node (first path))"
+            "                   (cond"
+            "                     [(equal? node goal) (reverse path)]"
+            "                     [else                (define state"
+            "                                          (enqueue-neighbors (neighbors node)"
+            "                                                             path"
+            "                                                             (rest queue)"
+            "                                                             seen))"
+            "                                        (define new-queue (first state))"
+            "                                        (define new-seen  (second state))"
+            "                                        (solve new-queue new-seen)])]))"
             ""
             "(define (path-cell? c path)"
             "  (and path (member c path)))"
             ""
             "(define (render-cell cell path)"
             "  (cond"
-            "    ((equal? cell start) #\\S)"
-            "    ((equal? cell goal) #\\G)"
-            "    ((wall? (cell-at cell)) (cell-at cell))"
-            "    ((path-cell? cell path) #\\*)"
-            "    (else #\\.)))"
+            "    [(equal? cell start)      #\\S]"
+            "    [(equal? cell goal)       #\\G]"
+            "    [(wall? (cell-at cell))   (cell-at cell)]"
+            "    [(path-cell? cell path)   #\\*]"
+            "    [else                     #\\.]))"
             ""
             "(define (render-row y path)"
-            "  (let loop ((x 0))"
-            "    (if (= x width)"
-            "        '()"
-            "        (cons (render-cell (list x y) path)"
-            "              (loop (+ x 1))))))"
+            "  (let loop ([x 0])"
+            "    (cond"
+            "      [(= x width) '()]"
+            "      [else        (cons (render-cell (list x y) path)"
+            "                         (loop (+ x 1)))])))"
             ""
             "(define (join-lines lines)"
-            "  (if (null? lines)"
-            "      \"\""
-            "      (if (null? (cdr lines))"
-            "          (car lines)"
-            "          (string-append (car lines) \"\\n\" (join-lines (cdr lines))))))"
+            "  (cond"
+            "    [(null? lines)       \"\"]"
+            "    [(null? (rest lines)) (first lines)]"
+            "    [else                 (string-append (first lines)"
+            "                                        \"\\n\""
+            "                                         (join-lines (rest lines)))]))"
             ""
             "(define (render-maze path)"
-            "  (let loop ((y 0))"
-            "    (if (= y height)"
-            "        '()"
-            "        (cons (list->string (render-row y path))"
-            "              (loop (+ y 1))))))"
+            "  (let loop ([y 0])"
+            "    (cond"
+            "      [(= y height) '()]"
+            "      [else         (cons (list->string (render-row y path))"
+            "                         (loop (+ y 1)))])))"
             ""
-            "(define path (if (and start goal)"
-            "                 (solve (list (list start)) (list start))"
-            "                 #f))"
+            "(define path"
+            "  (cond"
+            "    [(and start goal) (solve (list (list start)) (list start))]"
+            "    [else             #f]))"
             ""
-            "(if path"
-            "    (displayln (join-lines (render-maze path)))"
-            "    \"No path found.\")")))))
+            "(cond"
+            "  [path (displayln (join-lines (render-maze path)))]"
+            "  [else \"No path found.\"])")))))
 
 (define minischeme-default-sample-id
   (if (null? minischeme-sample-programs)
@@ -858,37 +896,18 @@
                       (div (@ (class "minischeme-shell")
                               (id "minischeme-editor-section"))
                            (p (@ (class "minischeme-shell-note"))
-                              "Type one or more expressions, then click "
+                              (span (@ (class "minischeme-shell-note-label")) "TIP")
+                              "Write Scheme (R5RS-style) programs and click "
                               (code "Run")
-                              ". Definitions persist until reset. "
-                              "The editor runs MiniScheme: the language you type here is Scheme (R5RS-style). WebRacket is used only to implement the interpreter.")
-                           (textarea
-                            (@ (id "minischeme-input")
-                               (class "minischeme-editor")
-                               (rows "25")
-                               (spellcheck "false"))
-                            ,minischeme-default-sample-program)
-                           (div (@ (class "minischeme-actions"))
-                                (button (@ (id "minischeme-run")
-                                           (type "button")
-                                           (class "minischeme-btn minischeme-btn--run"))
-                                        "Run")
-                                (button (@ (id "minischeme-pause")
-                                           (type "button")
-                                           (class "minischeme-btn minischeme-btn--pause"))
-                                        "Pause")
-                                (button (@ (id "minischeme-stop")
-                                           (type "button")
-                                           (class "minischeme-btn minischeme-btn--stop"))
-                                        "Stop")
-                                (span (@ (id "minischeme-run-state")
-                                         (class "minischeme-run-state")
-                                         (data-state "idle"))
-                                      "Idle.")
-                                (button (@ (id "minischeme-reset")
-                                           (type "button")
-                                           (class "minischeme-btn minischeme-btn--reset"))
-                                        "Reset State")
+                              "."
+                              (br)
+                              "Definitions persist across runs until you reset the state or load a sample."
+                              (br)
+                              (br)
+                              "The code you write is Scheme. MiniScheme is implemented in WebRacket,"
+                              (br)
+                              "but WebRacket itself is not the language of this editor.")
+                           (div (@ (class "minischeme-sample-row"))
                                 (select (@ (id "minischeme-sample-select")
                                            (class "minischeme-sample-select")
                                            (aria-label "Choose a sample program"))
@@ -904,9 +923,55 @@
                                            (type "button")
                                            (class "minischeme-btn minischeme-btn--sample"))
                                         "Load Sample"))
-                           (pre (@ (id "minischeme-output")
-                                   (class "minischeme-output"))
-                                "MiniScheme ready."))))
+                           (div (@ (class "ms-editor-pane"))
+                                (textarea
+                                 (@ (id "minischeme-input")
+                                    (class "minischeme-editor")
+                                    (rows "25")
+                                    (spellcheck "false"))
+                                 ,minischeme-default-sample-program)
+                                (button (@ (id "minischeme-copy-editor")
+                                           (type "button")
+                                           (class "ms-copy-btn ms-copy-btn--editor")
+                                           (aria-label "Copy editor contents"))
+                                        "Copy"))
+                           (div (@ (class "minischeme-actions"))
+                                (div (@ (class "ms-controls-left"))
+                                     (button (@ (id "minischeme-run")
+                                                (type "button")
+                                                (class "minischeme-btn minischeme-btn--run"))
+                                             "Run")
+                                     (button (@ (id "minischeme-pause")
+                                                (type "button")
+                                                (class "minischeme-btn minischeme-btn--pause"))
+                                             "Pause")
+                                     (button (@ (id "minischeme-stop")
+                                                (type "button")
+                                                (class "minischeme-btn minischeme-btn--stop"))
+                                             "Stop")
+                                     (button (@ (id "minischeme-reset")
+                                                (type "button")
+                                                (class "minischeme-btn minischeme-btn--reset"))
+                                             "Reset State")))
+                           (div (@ (class "ms-output"))
+                                (div (@ (class "ms-output-header"))
+                                     (div (@ (class "ms-output-label")) "OUTPUT")
+                                     (span (@ (id "minischeme-run-state")
+                                              (class "ms-output-status")
+                                              (data-state "idle")
+                                              (aria-live "polite"))
+                                           "Idle"))
+                                (div (@ (class "ms-output-body")
+                                        (role "region")
+                                        (aria-label "Output"))
+                                     (pre (@ (id "minischeme-output")
+                                             (class "minischeme-output ms-output-content"))
+                                          "MiniScheme ready.")
+                                     (button (@ (id "minischeme-copy-output")
+                                                (type "button")
+                                                (class "ms-copy-btn ms-copy-btn--output")
+                                                (aria-label "Copy output"))
+                                             "Copy"))))))
         (section (@ (class "section section--minischeme-details"))
                  (div (@ (class "section-content"))
                       ,(minischeme-reference-section)))
@@ -932,12 +997,18 @@
 (define minischeme-stop-handler  #f)
 (define minischeme-reset-handler #f)
 (define minischeme-load-handler  #f)
+(define minischeme-copy-editor-handler #f)
+(define minischeme-copy-output-handler #f)
 (define minischeme-input-handler #f)
 (define minischeme-editor-key-handler #f)
 (define minischeme-editor-change-handler #f)
 (define minischeme-editor #f)
 (define minischeme-keyword-table (make-hasheq))
 (define minischeme-primitive-table (make-hasheq))
+(define minischeme-ui-handler-store '())
+
+(define (remember-minischeme-ui-handler! handler)
+  (set! minischeme-ui-handler-store (cons handler minischeme-ui-handler-store)))
 
 (define (minischeme-codemirror-ready?)
   (not (js-nullish? (js-var "CodeMirror"))))
@@ -1525,6 +1596,10 @@
               "}\n"
               ".CodeMirror-linenumber { color: #8FA0D8; }\n"
               ".CodeMirror-cursor { border-left: 1px solid #EAF0FF !important; }\n"
+              ".CodeMirror-scroll {"
+              "  box-sizing: border-box;"
+              "  padding-bottom: 44px;"
+              "}\n"
               ".cm-s-default .cm-comment { color: #7382B0; }\n"
               ".cm-s-default .cm-keyword { color: #44D5FF; font-weight: 700; }\n"
               ".cm-s-default .cm-number { color: #FFD166; }\n"
@@ -1599,11 +1674,183 @@
                       minischeme-codemirror-ready?
                       load-addons!)))
 
+(define (minischeme-external-string v)
+  (cond
+    [(string? v) v]
+    [(external? v)
+     (if (js-nullish? v)
+         #f
+         (js-value->string v))]
+    [else #f]))
+
+(define (minischeme-prefers-reduced-motion?)
+  (with-handlers ([exn:fail? (λ (_) #f)])
+    (define media-query (js-window-match-media "(prefers-reduced-motion: reduce)"))
+    (and (external? media-query)
+         (not (js-nullish? media-query))
+         (js-send/truthy media-query "matches" (vector)))))
+
+(define (minischeme-scroll-to-target-id! target-id smooth?)
+  (when (and (string? target-id) (not (string=? target-id "")))
+    (define node (js-get-element-by-id target-id))
+    (when (and (external? node) (not (js-nullish? node)))
+      (js-send node
+               "scrollIntoView"
+               (vector
+                (js-object
+                 (vector (vector "behavior" (if smooth? "smooth" "auto"))
+                         (vector "block" "start"))))))))
+
+(define (minischeme-history-replace-hash! target-id)
+  (with-handlers ([exn:fail? (λ (_) (void))])
+    (when (and (string? target-id) (not (string=? target-id "")))
+      (define history (js-window-history))
+      (when (and (external? history) (not (js-nullish? history)))
+        (js-send history
+                 "replaceState"
+                 (vector (js-null) "" (string-append "#" target-id)))))))
+
+(define (init-minischeme-reference-ui!)
+  (define editor-node  (js-get-element-by-id "minischeme-editor-section"))
+  (define back-button  (js-get-element-by-id "minischeme-back-to-editor"))
+  (define jump-select  (js-get-element-by-id "minischeme-ref-jump"))
+  (define smooth?      (not (minischeme-prefers-reduced-motion?)))
+  (define window-node  (js-window-window))
+  (define nav-links
+    (node-list->list
+     (js-query-selector-all ".minischeme-ref-sidebar a[data-ref-target]")))
+  (define nav-items
+    (reverse
+     (for/fold ([acc '()]) ([link (in-list nav-links)])
+       (define target-id
+         (minischeme-external-string (js-get-attribute link "data-ref-target")))
+       (if (and target-id (not (string=? target-id "")))
+           (let ([section (js-get-element-by-id target-id)])
+             (if (and (external? section) (not (js-nullish? section)))
+                 (cons (list section link target-id) acc)
+                 acc))
+           acc))))
+
+  (define (set-active! target-id)
+    (when (and (string? target-id) (not (string=? target-id "")))
+      (define matched? #f)
+      (for ([entry (in-list nav-items)])
+        (define link (cadr entry))
+        (define id   (caddr entry))
+        (if (string=? id target-id)
+            (begin
+              (set! matched? #t)
+              (classlist-add! link "is-active"))
+            (classlist-remove! link "is-active")))
+      (when (and matched?
+                 (external? jump-select)
+                 (not (js-nullish? jump-select)))
+        (define selected-id (minischeme-external-string (js-ref jump-select "value")))
+        (when (or (not selected-id) (not (string=? selected-id target-id)))
+          (js-set! jump-select "value" target-id)))))
+
+  (define (scroll-and-activate! target-id)
+    (when (and (string? target-id) (not (string=? target-id "")))
+      (minischeme-scroll-to-target-id! target-id smooth?)
+      (set-active! target-id)
+      (minischeme-history-replace-hash! target-id)))
+
+  (define (active-from-scroll!)
+    (define viewport-height (js-window-inner-height))
+    (define threshold
+      (if (number? viewport-height)
+          (* 0.35 viewport-height)
+          280.0))
+    (define candidate #f)
+    (for ([entry (in-list nav-items)])
+      (define section (car entry))
+      (define id      (caddr entry))
+      (define rect    (js-get-bounding-client-rect section))
+      (define top     (and rect (js-ref rect "top")))
+      (when (and (number? top) (<= top threshold))
+        (set! candidate id)))
+    (when (not candidate)
+      (when (pair? nav-items)
+        (set! candidate (caddr (car nav-items)))))
+    (when candidate
+      (set-active! candidate)))
+
+  (when (and (external? back-button)
+             (not (js-nullish? back-button))
+             (external? editor-node)
+             (not (js-nullish? editor-node)))
+    (define back-click-handler
+      (procedure->external
+       (λ (_evt)
+         (minischeme-scroll-to-target-id! "minischeme-editor-section" smooth?)
+         (void))))
+    (remember-minischeme-ui-handler! back-click-handler)
+    (js-add-event-listener! back-button "click" back-click-handler)
+
+    (define (sync-back-button-visibility!)
+      (define rect (js-get-bounding-client-rect editor-node))
+      (define top (and rect (js-ref rect "top")))
+      (define bottom (and rect (js-ref rect "bottom")))
+      (if (and (number? top)
+               (number? bottom)
+               (or (< bottom 0) (< top -100)))
+          (classlist-add! back-button "is-visible")
+          (classlist-remove! back-button "is-visible")))
+
+    (define back-scroll-handler
+      (procedure->external
+       (λ (_evt)
+         (sync-back-button-visibility!)
+         (void))))
+    (remember-minischeme-ui-handler! back-scroll-handler)
+    (js-add-event-listener! window-node "scroll" back-scroll-handler)
+    (js-add-event-listener! window-node "resize" back-scroll-handler)
+    (sync-back-button-visibility!))
+
+  (when (and (external? jump-select) (not (js-nullish? jump-select)))
+    (define jump-handler
+      (procedure->external
+       (λ (_evt)
+         (define target-id (minischeme-external-string (js-ref jump-select "value")))
+         (when (and target-id (not (string=? target-id "")))
+           (scroll-and-activate! target-id))
+         (void))))
+    (remember-minischeme-ui-handler! jump-handler)
+    (js-add-event-listener! jump-select "change" jump-handler))
+
+  (for ([entry (in-list nav-items)])
+    (define link      (cadr entry))
+    (define target-id (caddr entry))
+    (define click-handler
+      (procedure->external
+       (λ (evt)
+         (js-event-prevent-default evt)
+         (scroll-and-activate! target-id)
+         (void))))
+    (remember-minischeme-ui-handler! click-handler)
+    (js-add-event-listener! link "click" click-handler))
+
+  (when (pair? nav-items)
+    (define hash-value (minischeme-external-string (js-ref (js-window-location) "hash")))
+    (if (and hash-value (> (string-length hash-value) 1))
+        (set-active! (substring hash-value 1))
+        (active-from-scroll!))
+    (define active-scroll-handler
+      (procedure->external
+       (λ (_evt)
+         (active-from-scroll!)
+         (void))))
+    (remember-minischeme-ui-handler! active-scroll-handler)
+    (js-add-event-listener! window-node "scroll" active-scroll-handler)
+    (js-add-event-listener! window-node "resize" active-scroll-handler)))
+
 (define (init-minischeme-page!)
   (when (not minischeme-page-started?)
     (set! minischeme-page-started? #t)
     (define input-node       (js-get-element-by-id "minischeme-input"))
     (define output-node      (js-get-element-by-id "minischeme-output"))
+    (define copy-editor-btn  (js-get-element-by-id "minischeme-copy-editor"))
+    (define copy-output-btn  (js-get-element-by-id "minischeme-copy-output"))
     (define run-button       (js-get-element-by-id "minischeme-run"))
     (define pause-button     (js-get-element-by-id "minischeme-pause"))
     (define stop-button      (js-get-element-by-id "minischeme-stop"))
@@ -1620,7 +1867,9 @@
               (js-nullish? run-state-node)
               (js-nullish? reset-button)
               (js-nullish? sample-button)
-              (js-nullish? sample-select))
+              (js-nullish? sample-select)
+              (js-nullish? copy-editor-btn)
+              (js-nullish? copy-output-btn))
       (error 'minischeme-page "missing expected DOM nodes for MiniScheme page"))
 
     (minischeme-restore-source! input-node)
@@ -1628,9 +1877,83 @@
     (define (set-output! text)
       (js-set! output-node "textContent" text))
 
+    (define output-style (js-ref output-node "style"))
+    (define output-height-locked? #f)
+
+    (define (lock-output-height!)
+      (define height
+        (max (js-number-value (js-ref output-node "offsetHeight"))
+             (js-number-value (js-ref output-node "clientHeight"))))
+      (when (> height 0)
+        (js-set! output-style "minHeight" (format "~apx" (inexact->exact (ceiling height))))
+        (set! output-height-locked? #t)))
+
+    (define (unlock-output-height!)
+      (when output-height-locked?
+        (js-set! output-style "minHeight" "")
+        (set! output-height-locked? #f)))
+
+    (define (fallback-copy-text text)
+      (define helper (js-create-element "textarea"))
+      (define helper-style (js-ref helper "style"))
+      (js-set! helper "value" text)
+      (js-set-attribute! helper "readonly" "")
+      (when (not (js-nullish? helper-style))
+        (js-set! helper-style "position" "absolute")
+        (js-set! helper-style "left" "-9999px")
+        (js-set! helper-style "top" "0"))
+      (js-append-child! (js-document-body) helper)
+      (js-send helper "focus" (vector))
+      (js-send helper "select" (vector))
+      (define ok (js-send/truthy (js-document) "execCommand" (vector "copy")))
+      (js-remove! helper)
+      ok)
+
+    (define (set-copy-feedback! button text)
+      (js-set! button "textContent" text)
+      (define reset-handler
+        (procedure->external
+         (lambda args
+           (js-set! button "textContent" "Copy")
+           (void))))
+      (remember-minischeme-ui-handler! reset-handler)
+      (js-send (js-var "window") "setTimeout" (vector reset-handler 1200)))
+
+    (define (copy-text-with-feedback! button get-text)
+      (with-handlers ([exn:fail? (lambda (_)
+                                   (set-copy-feedback! button "Copy failed"))])
+        (define text (get-text))
+        (define win (js-var "window"))
+        (define navigator (js-ref win "navigator"))
+        (define clipboard (if (js-nullish? navigator) #f (js-ref navigator "clipboard")))
+        (define write-text (if (or (not clipboard) (js-nullish? clipboard))
+                               #f
+                               (js-ref clipboard "writeText")))
+        (if (or (not clipboard)
+                (js-nullish? write-text))
+            (set-copy-feedback! button (if (fallback-copy-text text) "Copied" "Copy failed"))
+            (let ([promise (js-send/extern clipboard "writeText" (vector text))])
+              (if (js-nullish? promise)
+                  (set-copy-feedback! button (if (fallback-copy-text text) "Copied" "Copy failed"))
+                  (let ([ok-handler
+                         (procedure->external
+                          (lambda args
+                            (set-copy-feedback! button "Copied")
+                            (void)))]
+                        [fail-handler
+                         (procedure->external
+                          (lambda args
+                            (set-copy-feedback! button "Copy failed")
+                            (void)))])
+                    (remember-minischeme-ui-handler! ok-handler)
+                    (remember-minischeme-ui-handler! fail-handler)
+                    (js-send promise "then" (vector ok-handler))
+                    (js-send promise "catch" (vector fail-handler))))))))
+
     (define minischeme-step-limit 2500)
     (define job-running? #f)
     (define job-paused?  #f)
+    (define run-status   'idle)
     (define job-generation 0)
 
     (define (set-disabled! node disabled?)
@@ -1651,22 +1974,35 @@
       (js-set! run-state-node
                "textContent"
                (cond
-                 [job-paused? "Paused..."]
-                 [job-running? "Running..."]
-                 [else "Idle."]))
+                 [(eq? run-status 'paused) "Paused"]
+                 [(eq? run-status 'running) "Running"]
+                 [(eq? run-status 'error) "Error"]
+                 [else "Idle"]))
       (js-set-attribute! run-state-node
                          "data-state"
                          (cond
-                           [job-paused? "paused"]
-                           [job-running? "running"]
+                           [(eq? run-status 'paused) "paused"]
+                           [(eq? run-status 'running) "running"]
+                           [(eq? run-status 'error) "error"]
                            [else "idle"])))
 
     (define (finish-run! text)
       (set! job-running? #f)
       (set! job-paused? #f)
+      (set! run-status 'idle)
       (set! job-generation (+ job-generation 1))
       (set-output! text)
-      (update-controls!))
+      (update-controls!)
+      (unlock-output-height!))
+
+    (define (fail-run! text)
+      (set! job-running? #f)
+      (set! job-paused? #f)
+      (set! run-status 'error)
+      (set! job-generation (+ job-generation 1))
+      (set-output! text)
+      (update-controls!)
+      (unlock-output-height!))
 
     (define (schedule-next-step! run-generation)
       (when (and job-running?
@@ -1684,7 +2020,7 @@
 
     (define (run-step! run-generation)
       (with-handlers ([exn:fail? (λ (e)
-                                   (finish-run! (string-append "error: " (exn-message e))))])
+                                   (fail-run! (string-append "error: " (exn-message e))))])
         (define-values (status text)
           (minischeme-job-step! minischeme-step-limit))
         (if (eq? status 'running)
@@ -1698,8 +2034,10 @@
         (minischeme-start-job! source))
       (if (eq? status 'ready)
           (begin
+            (lock-output-height!)
             (set! job-running? #t)
             (set! job-paused? #f)
+            (set! run-status 'running)
             (set! job-generation (+ job-generation 1))
             (set-output! text)
             (update-controls!)
@@ -1707,40 +2045,48 @@
           (begin
             (set! job-running? #f)
             (set! job-paused? #f)
+            (set! run-status 'idle)
             (set! job-generation (+ job-generation 1))
             (set-output! text)
             (update-controls!))))
 
     (define (run! . _)
       (with-handlers ([exn:fail? (λ (e)
-                                   (finish-run! (string-append "error: " (exn-message e))))])
+                                   (fail-run! (string-append "error: " (exn-message e))))])
         (unless job-running?
           (start-run! (minischeme-editor-get-source input-node)))))
 
     (define (pause/restart! . _)
       (with-handlers ([exn:fail? (λ (e)
-                                   (finish-run! (string-append "error: " (exn-message e))))])
+                                   (fail-run! (string-append "error: " (exn-message e))))])
         (when job-running?
           (if job-paused?
               (begin
                 (set! job-paused? #f)
+                (set! run-status 'running)
                 (update-controls!)
                 (schedule-next-step! job-generation))
               (begin
                 (set! job-paused? #t)
+                (set! run-status 'paused)
                 (update-controls!))))))
 
     (define (stop! . _)
       (with-handlers ([exn:fail? (λ (e)
-                                   (finish-run! (string-append "error: " (exn-message e))))])
+                                   (fail-run! (string-append "error: " (exn-message e))))])
         (when job-running?
           (set! job-paused? #f)
           (minischeme-job-stop!)
-          (run-step! job-generation))))
+          (set! job-running? #f)
+          (set! run-status 'idle)
+          (set! job-generation (+ job-generation 1))
+          (update-controls!)
+          (unlock-output-height!))))
 
     (define (reset! . _)
       (set! job-running? #f)
       (set! job-paused? #f)
+      (set! run-status 'idle)
       (set! job-generation (+ job-generation 1))
       (minischeme-reset-state!)
       (update-controls!)
@@ -1773,106 +2119,36 @@
     (set! minischeme-stop-handler  (procedure->external stop!))
     (set! minischeme-reset-handler (procedure->external reset!))
     (set! minischeme-load-handler  (procedure->external load-sample!))
+    (set! minischeme-copy-editor-handler
+          (procedure->external
+           (lambda (_event)
+             (copy-text-with-feedback! copy-editor-btn
+                                       (lambda ()
+                                         (minischeme-editor-get-source input-node)))
+             (void))))
+    (set! minischeme-copy-output-handler
+          (procedure->external
+           (lambda (_event)
+             (copy-text-with-feedback! copy-output-btn
+                                       (lambda ()
+                                         (define raw (js-ref output-node "textContent"))
+                                         (cond
+                                           [(string? raw) raw]
+                                           [(external? raw)
+                                            (if (js-nullish? raw) "" (js-value->string raw))]
+                                           [else ""])))
+             (void))))
 
     (js-add-event-listener! run-button    "click" minischeme-run-handler)
     (js-add-event-listener! pause-button  "click" minischeme-pause-handler)
     (js-add-event-listener! stop-button   "click" minischeme-stop-handler)
     (js-add-event-listener! reset-button  "click" minischeme-reset-handler)
     (js-add-event-listener! sample-button "click" minischeme-load-handler)
+    (js-add-event-listener! copy-editor-btn "click" minischeme-copy-editor-handler)
+    (js-add-event-listener! copy-output-btn "click" minischeme-copy-output-handler)
 
     (ensure-minischeme-codemirror-assets! input-node run!)
-
-    (js-eval
-     "(function(){
-        const editor = document.getElementById('minischeme-editor-section');
-        const backButton = document.getElementById('minischeme-back-to-editor');
-        const jumpSelect = document.getElementById('minischeme-ref-jump');
-        const prefersReduced = window.matchMedia &&
-          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const scrollBehavior = prefersReduced ? 'auto' : 'smooth';
-        const scrollToTarget = (id) => {
-          const node = document.getElementById(id);
-          if (!node) return;
-          node.scrollIntoView({ behavior: scrollBehavior, block: 'start' });
-        };
-
-        if (backButton && editor) {
-          backButton.addEventListener('click', () => {
-            editor.scrollIntoView({ behavior: scrollBehavior, block: 'start' });
-          });
-          if ('IntersectionObserver' in window) {
-            const editorObserver = new IntersectionObserver((entries) => {
-              const visible = entries[0] && entries[0].isIntersecting;
-              backButton.classList.toggle('is-visible', !visible);
-            }, { threshold: 0.05 });
-            editorObserver.observe(editor);
-          } else {
-            const fallback = () => {
-              const rect = editor.getBoundingClientRect();
-              backButton.classList.toggle('is-visible', rect.bottom < 0 || rect.top < -100);
-            };
-            window.addEventListener('scroll', fallback, { passive: true });
-            fallback();
-          }
-        }
-
-        if (jumpSelect) {
-          jumpSelect.addEventListener('change', (event) => {
-            const targetId = event.target && event.target.value;
-            if (!targetId) return;
-            scrollToTarget(targetId);
-          });
-        }
-
-        const navLinks = Array.from(document.querySelectorAll('.minischeme-ref-sidebar a[data-ref-target]'));
-        if (navLinks.length > 0) {
-          const targetToLink = new Map();
-          navLinks.forEach((link) => {
-            const id = link.getAttribute('data-ref-target');
-            if (!id) return;
-            const section = document.getElementById(id);
-            if (section) targetToLink.set(section, link);
-          });
-
-          const setActive = (id) => {
-            navLinks.forEach((link) => {
-              const active = link.getAttribute('data-ref-target') === id;
-              link.classList.toggle('is-active', active);
-            });
-            if (jumpSelect && jumpSelect.value !== id) {
-              jumpSelect.value = id;
-            }
-          };
-
-          navLinks.forEach((link) => {
-            link.addEventListener('click', (event) => {
-              const id = link.getAttribute('data-ref-target');
-              if (!id) return;
-              event.preventDefault();
-              scrollToTarget(id);
-              setActive(id);
-              if (history && history.replaceState) {
-                history.replaceState(null, '', '#' + id);
-              }
-            });
-          });
-
-          if ('IntersectionObserver' in window && targetToLink.size > 0) {
-            const sectionObserver = new IntersectionObserver((entries) => {
-              const visible = entries
-                .filter((entry) => entry.isIntersecting)
-                .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-              if (visible.length === 0) return;
-              const current = visible[0].target;
-              const link = targetToLink.get(current);
-              if (!link) return;
-              const id = link.getAttribute('data-ref-target');
-              if (id) setActive(id);
-            }, { rootMargin: '-30% 0px -55% 0px', threshold: 0 });
-            targetToLink.forEach((_link, section) => sectionObserver.observe(section));
-          }
-        }
-      })();")
+    (init-minischeme-reference-ui!)
 
     (minischeme-reset-state!)
     (update-controls!)

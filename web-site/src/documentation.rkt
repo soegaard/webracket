@@ -526,7 +526,7 @@
                  (h3 "Current limitations")
                  (ul
                   (li "Single-threaded execution only.")
-                  (li "Modules are work in progress (use " (code "include") " for now).")
+                  (li "Modules are a work in progress (use " (code "include") " for now).")
                   (li "Procedures do not yet support keyword arguments.")
                   (li "Some numeric and control features are not yet implemented."))
                  ,(callout
@@ -550,10 +550,10 @@
                             "references when you need exact APIs.")
                         `(div (@ (class "doc-cta-group"))
                               (a (@ (class "doc-cta doc-cta--primary")
-                                    (href "docs-ffi-guide.html"))
+                                    (href "documentation-js-ffi.html"))
                                  "Open FFI guide")
                               (a (@ (class "doc-cta")
-                                    (href "docs-ffi-reference.html"))
+                                    (href "documentation.html"))
                                  "Browse FFI references"))))
 
                  (h2 "Very Short Compiler Overview")
@@ -585,17 +585,10 @@
                       (div (@ (class "doc-card"))
                            (h3 "Understanding WebRacket")
                            (ul
-                            (li (a (@ (href "docs-compiler-overview.html"))
+                            (li (a (@ (href "documentation-compiler-overview.html"))
                                    "Compiler overview"))
-                            (li (a (@ (href "docs-runtime.html"))
-                                   "Runtime notes"))))
-                      (div (@ (class "doc-card"))
-                           (h3 "Extending WebRacket")
-                           (ul
-                            (li (a (@ (href "docs-compiler-passes.html"))
-                                   "Compiler passes"))
-                            (li (a (@ (href "docs-ffi-reference.html"))
-                                   "FFI reference docs")))))
+                            (li (a (@ (href "documentation-js-ffi.html"))
+                                   "Guide to the JavaScript FFI")))))
 
                  #;,(callout
                      'note
@@ -1693,7 +1686,7 @@
                          "Requires wasm-tools and Node.js for compilation and testing.")))
         ,(section-block
           "Prerequisites"
-          "Short-version checklist for a working WebRacket setup."
+          "Short version checklist for a working WebRacket setup."
           (list
            `(div (@ (class "install-grid"))
                  (div (@ (class "install-grid-item"))
@@ -1767,7 +1760,7 @@
                       (h3 "6. Quick test: Run the examples")
                       (p "Serve the examples and open one in your browser.")
                       (pre (code "cd examples\nraco static-web"))
-                      (p "Open http://localhost:8000/ and select an example - find the html file.")))
+                      (p "Open http://localhost:8000/ and select an example HTML file.")))
            `(div (@ (class "install-next-steps"))
                  (h3 "Next steps")
                  (p "Keep exploring with a quick demo or a deeper read.")
