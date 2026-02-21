@@ -47,7 +47,9 @@ echo "-- Copying Assets --"
 cp web-site.wasm ../public
 cp web-site.html ../public/index.html
 cp web-site.html ../public/web-site.html
-cp favicon.ico ../public
+mkdir -p ../public/assets/favicon
+cp assets/favicon/* ../public/assets/favicon/
+cp assets/favicon/favicon.ico ../public/favicon.ico
 
 for page in "${ROUTE_ALIASES[@]}"; do
   cp web-site.html "../public/${page}.html"
@@ -55,5 +57,5 @@ done
 
 echo "-- Done --"
 if [[ "$(uname)" == "Darwin" ]]; then
-  afplay /System/Library/Sounds/Glass.aiff
+  afplay /System/Library/Sounds/Glass.aiff || true
 fi

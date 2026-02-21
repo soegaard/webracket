@@ -439,7 +439,7 @@
                     (cons 'demo-url "minischeme.html")
                     (cons 'source-path "web-site/src/examples/minischeme-page.rkt")
                     (cons 'tags     (list 'repl 'dom))
-                    (cons 'summary  "Small Scheme interpreter running directly in the browser.")
+                    (cons 'summary  "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
                     (cons 'features (list "MiniScheme evaluator"
                                           "Persistent REPL state"
                                           "Reset + sample program"
@@ -816,7 +816,7 @@
                    `(a (@ (class "example-link") (href "mathjax.html")) "Open demo"))
              (list `(h3 "Space Invaders")
                    `(p "Arcade shooter on canvas with responsive keyboard controls.")
-                   `(a (@ (class "example-link") (href "examples/space-invaders/space-invaders.html")) "Open demo"))
+                   `(a (@ (class "example-link") (href "space-invaders.html")) "Open demo"))
              (list `(h3 "Formula 1 Countdown")
                    `(p "Next race from ICS, with days/hours countdown.")
                    `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
@@ -827,7 +827,7 @@
                    `(p "Terminal-style animation powered by XtermJS.")
                    `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
              (list `(h3 "MiniScheme REPL")
-                   `(p "Tiny Scheme interpreter with persistent browser-side state.")
+                   `(p "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
                    `(a (@ (class "example-link") (href "minischeme.html")) "Open demo"))
              
              #;(list `(h3 "Canvas + Pict")
@@ -908,6 +908,27 @@
 (define (init-dom)
   (define head (js-document-head))
   (define body (js-document-body))
+
+  (define favicon-links
+    (list
+     `(link (@ (rel "icon")
+               (type "image/png")
+               (href "assets/favicon/favicon-96x96.png")
+               (sizes "96x96")))
+     `(link (@ (rel "icon")
+               (type "image/svg+xml")
+               (href "assets/favicon/favicon.svg")))
+     `(link (@ (rel "shortcut icon")
+               (href "assets/favicon/favicon.ico")))
+     `(link (@ (rel "apple-touch-icon")
+               (sizes "180x180")
+               (href "assets/favicon/apple-touch-icon.png")))
+     `(link (@ (rel "manifest")
+               (href "assets/favicon/site.webmanifest")))))
+
+  (for-each (λ (link-node)
+              (js-append-child! head (sxml->dom link-node)))
+            favicon-links)
   
   (define style
     (sxml->dom
