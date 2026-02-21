@@ -43,11 +43,6 @@
 (define (inexact x)
   (if (exact? x) (exact->inexact x) x))
 
-;; randf : -> Inexact-Number
-;;   Produces a random inexact number in [0, 1).
-(define (randf)
-  (inexact (random)))
-
 ;; hsl-color : Number Number -> String
 ;;   Builds an HSL color string with fixed saturation for the glow effect.
 (define (hsl-color hue light)
@@ -127,7 +122,7 @@
   (set-line-light-input-multiplier!
    ln
    (+ opts-base-light-input-multiplier
-      (* opts-added-light-input-multiplier (randf))))
+      (* opts-added-light-input-multiplier (random))))
   (set-line-hue! ln (* (inexact hex-tick) opts-hue-change))
   (set-line-cumulative-time! ln 0.0)
   (line-begin-phase! ln))
@@ -141,11 +136,11 @@
   (set-line-target-time!
    ln
    (inexact->exact
-    (floor (+ opts-base-time (* opts-added-time (randf))))))
-  (set-line-rad!     ln (+ (line-rad ln) (* base-rad (if (< (randf) 0.5) 1.0 -1.0))))
+    (floor (+ opts-base-time (* opts-added-time (random))))))
+  (set-line-rad!     ln (+ (line-rad ln) (* base-rad (if (< (random) 0.5) 1.0 -1.0))))
   (set-line-added-x! ln (cos (line-rad ln)))
   (set-line-added-y! ln (sin (line-rad ln)))
-  (when (or (< (randf) opts-die-chance)
+  (when (or (< (random) opts-die-chance)
             (> (line-x ln)    hex-die-x)
             (< (line-x ln) (- hex-die-x))
             (> (line-y ln)    hex-die-y)
@@ -175,14 +170,14 @@
   (js-set-canvas2d-fill-style! hex-ctx color)
   (js-set-canvas2d-shadow-color! hex-ctx color)
   (js-canvas2d-fill-rect hex-ctx px py 2.0 2.0)
-  (when (< (randf) opts-spark-chance)
+  (when (< (random) opts-spark-chance)
     (define spark-x
       (+ px
-         (* (randf) opts-spark-dist (if (< (randf) 0.5) 1.0 -1.0))
+         (* (random) opts-spark-dist (if (< (random) 0.5) 1.0 -1.0))
          (/ opts-spark-size -2.0)))
     (define spark-y
       (+ py
-         (* (randf) opts-spark-dist (if (< (randf) 0.5) 1.0 -1.0))
+         (* (random) opts-spark-dist (if (< (random) 0.5) 1.0 -1.0))
          (/ opts-spark-size -2.0)))
     (js-canvas2d-fill-rect hex-ctx spark-x spark-y opts-spark-size opts-spark-size)))
 
@@ -199,7 +194,7 @@
   (js-canvas2d-fill-rect hex-ctx 0.0 0.0 hex-w hex-h)
   (js-set-canvas2d-global-composite-operation! hex-ctx "lighter")
   (when (and (< (length hex-lines) opts-count)
-             (< (randf) opts-spawn-chance))
+             (< (random) opts-spawn-chance))
     (define ln (line-new))
     (line-reset! ln)
     (set! hex-lines (cons ln hex-lines)))
