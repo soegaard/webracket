@@ -5,7 +5,7 @@ The WebRacket language is a subset of Racket that compiles to WebAssembly (wasm)
 The long-term goal is to support full Racket.
 However, to quote Piet Hein, “Things take time.”
 
-The subset supported by the WebRacket compiler is large enough,
+The subset supported by the WebRacket compiler is large enough
 to enable programmers to build practical programs for the web.
 
 The generated WebAssembly can be run either in the terminal (via Node) or in the browser.
@@ -14,7 +14,7 @@ WebAssembly is somewhat of a moving target.
 The compiler only uses widely supported features of WebAssembly. 
 Expect the generated code to work in Chrome, Firefox and Safari.
 
-A JavaScript FFI makes it possible to use standard JavaScript functions as well as browser specific APIs. 
+A JavaScript FFI makes it possible to use standard JavaScript functions as well as browser-specific APIs.
 Included are bindings for the DOM, Canvas, MathJax, XTermJS and JSXGraph.
 
 The hope is that this project allows the Racket community to experiment with WebAssembly.
@@ -54,7 +54,7 @@ Complex numbers and bignums are missing.
 
 ### Hash Tables
 Mutable hash tables of all four varieties (`eq?` `eqv?` `equal?` `always?`) are supported.
-The values of all mutable hash tables are strongly held, even for tables created by the weak construtors.
+The values of all mutable hash tables are strongly held, even for tables created by the weak constructors.
 
 Immutable hash tables are not yet supported.
 
@@ -93,7 +93,7 @@ Other omissions: promises, breaks, exit and black box.
 
 ## Concurrency and Parallelism
 
-Single threaded for now.
+Single-threaded for now.
 
 
 ## Foreign Function Interface
@@ -110,7 +110,7 @@ Included bindings currently cover the Math, DOM, Canvas, MathJax, XTermJS, and J
 After the initial release, the focus is to fix bugs found by early adopters.
 
 Then the top priority is to support modules.
-Work on implementing linklets (needed to support modules) have already started.
+Work on implementing linklets (needed to support modules) has already started.
 
 Due to my personal interests, complex numbers and bignums are likely to appear
 sooner rather than later.
@@ -165,7 +165,7 @@ locally, the package `raco-static-web` by Sam Philips is very convenient.
 
 3. Open `README.md` in the browser to see further instructions.
 
-4. Make sure to place `wasm-tools` in somewhere in your PATH.
+4. Make sure to place `wasm-tools` somewhere in your PATH.
    On macOS, you can do it with:
    
        sudo mv wasm-tools /usr/local/bin/
@@ -183,7 +183,7 @@ Then allow `wasm-tools` to run
 
 1. Go to https://nodejs.org/en/download and follow the instructions.
 
-2. Test that `node` works in the terminal (and that it is in you path).
+2. Test that `node` works in the terminal (and that it is in your path).
 
        node
 
@@ -208,7 +208,7 @@ The compiler needs Racket 9 or newer.
 
        raco pkg install raco-static-web
 
-2. Test it works. Go to a folder that holds an html file.
+2. Test it works. Go to a folder that holds an HTML file.
    Then start the web-server with:
    
        raco static-web
@@ -295,7 +295,7 @@ Examples include:
     raco static-web
     
 3. Open  http://localhost:8000/  in your favorite browser.
-4. Click on a folder and then click the html file.
+4. Click on a folder and then click the HTML file.
 
 
 ## examples/mathjax4
@@ -361,7 +361,7 @@ MiniScheme provides an interactive Scheme REPL.
 There are two parts to this example.
 
 A small "Scheme" interpreter handles reading and evaluation of the user input.
-Large parts of an editor is implemented to make the repl tolerable to use.
+Large parts of the editor are implemented to make the REPL tolerable to use.
 The terminal itself is backed by `xterm.js`.
 
 Improvements to this example are welcome.
