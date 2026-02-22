@@ -1,0 +1,45 @@
+name: docs-ffi
+
+on:
+  push:
+    paths:
+      - "DOCS-standard.md"
+      - "DOCS-dom.md"
+      - "DOCS-js.md"
+      - "DOCS-math.md"
+      - "DOCS-jsxgraph.md"
+      - "DOCS-xtermjs.md"
+      - "ffi/standard.ffi"
+      - "ffi/dom.ffi"
+      - "ffi/js.ffi"
+      - "ffi/math.ffi"
+      - "ffi/jsxgraph.ffi"
+      - "ffi/xtermjs.ffi"
+      - "tools/check-docs-standard.py"
+      - ".github/workflows/docs-standard.yml"
+  pull_request:
+    paths:
+      - "DOCS-standard.md"
+      - "DOCS-dom.md"
+      - "DOCS-js.md"
+      - "DOCS-math.md"
+      - "DOCS-jsxgraph.md"
+      - "DOCS-xtermjs.md"
+      - "ffi/standard.ffi"
+      - "ffi/dom.ffi"
+      - "ffi/js.ffi"
+      - "ffi/math.ffi"
+      - "ffi/jsxgraph.ffi"
+      - "ffi/xtermjs.ffi"
+      - "tools/check-docs-standard.py"
+      - ".github/workflows/docs-standard.yml"
+
+jobs:
+  check-docs-ffi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check FFI docs consistency
+        run: python3 tools/check-docs-standard.py
