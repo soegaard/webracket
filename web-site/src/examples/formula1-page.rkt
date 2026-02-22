@@ -42,13 +42,6 @@
 ;; ICS Parsing
 ;;------------------------------------------------------------------------------
 
-;; string-has-suffix? : String String -> Boolean
-(define (string-has-suffix? s suffix)
-  (define s-len (string-length s))
-  (define suf-len (string-length suffix))
-  (and (>= s-len suf-len)
-       (string=? (substring s (- s-len suf-len) s-len) suffix)))
-
 ;; race-summary? : String -> Boolean
 ;; Keep only full Grand Prix race sessions (exclude sprint events).
 (define (race-summary? summary)
@@ -69,10 +62,10 @@
 (define (weekend-key summary)
   (cond
     [(not (string? summary)) ""]
-    [(string-has-suffix? summary " - Sprint Race")
+    [(string-suffix? summary " - Sprint Race")
      (substring summary 0 (- (string-length summary)
                              (string-length " - Sprint Race")))]
-    [(string-has-suffix? summary " - Race")
+    [(string-suffix? summary " - Race")
      (substring summary 0 (- (string-length summary)
                              (string-length " - Race")))]
     [else summary]))
