@@ -47,12 +47,12 @@
 (define matrix-rain-started? #f)
 
 (define (matrix-rain-init-terminal)
-  (when (not matrix-rain-started?)
+  (unless matrix-rain-started?
     (define container (js-get-element-by-id "matrix-root"))
     (define terminal-constructor (js-var "Terminal"))
     (define fit-addon-global (js-var "FitAddon"))
     (define dependencies-ready?
-      (and (not (js-nullish? container))
+      (and container
            (not (js-nullish? terminal-constructor))
            (not (js-nullish? fit-addon-global))))
 
@@ -209,7 +209,7 @@
             (define desired-active-columns (max 1 (inexact->exact (ceiling (* columns 0.3)))))
             (define need-more? (< active-columns desired-active-columns))
             (for ([col (in-range columns)])
-              (when (not (vector-ref column-drops col))
+              (unless (vector-ref column-drops col)
                 (define spawn-rate
                   (if need-more?
                       (* base-spawn-rate 2.4)
@@ -324,7 +324,7 @@
 
   (define style-id "matrix-rain-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
-  (when (js-nullish? style-existing)
+  (unless style-existing
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -342,7 +342,7 @@
                           (void))))
 
   (cond
-    [(not (js-nullish? script-existing))
+    [script-existing
      (js-add-event-listener! script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))
@@ -352,7 +352,7 @@
      (js-append-child! head script)])
 
   (cond
-    [(not (js-nullish? fit-script-existing))
+    [fit-script-existing
      (js-add-event-listener! fit-script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))

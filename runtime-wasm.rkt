@@ -2154,6 +2154,15 @@
               (import "primitives" "external_string_to_string")
               (param externref) (result i32))
 
+        ;; Predicates used by define-foreign return-type adapters.
+        (func $js-external-nullish?
+              (import "primitives" "external_nullish")
+              (param externref) (result i32))
+
+        (func $js-external-undefined?
+              (import "primitives" "external_undefined")
+              (param externref) (result i32))
+
         ;; FFI host exception tag imported from the host runtime.
         ;; Foreign imports can throw this tag to communicate host-language
         ;; errors that must become ordinary WebRacket exceptions.

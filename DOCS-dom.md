@@ -56,7 +56,9 @@ All function names are linked to MDN pages for the corresponding Web API interfa
 
 | Type | Meaning |
 |---|---|
-| `(extern)` | Raw JavaScript value/object reference (no value conversion). |
+| `(extern)` | External JavaScript value/object reference. In return position, JS `null` maps to `#f`. |
+| `(extern/raw)` | Raw JavaScript return value/object reference (no `null`/`undefined` mapping). |
+| `(extern/undefined)` | External JavaScript return where JS `undefined` maps to `#f`. |
 | `(value)` | WebRacket value converted through the FFI value bridge. |
 | `(string)` | JavaScript string mapped to WebRacket string. |
 | `(i32)` | 32-bit integer; often used as JS boolean (`0` / non-zero). |
@@ -68,7 +70,9 @@ All function names are linked to MDN pages for the corresponding Web API interfa
 
 - Many DOM booleans are exposed as `(i32)` for historical compatibility in this FFI module.
 - Convention in this file: pass `0` for false and `1` for true where an `(i32)` flag is expected.
-- Functions returning `(extern)` can return JavaScript `null`; check with `js-nullish?` from `ffi/standard.ffi` when needed.
+- `(extern/raw)` results preserve exact JS values, including `null` and `undefined`.
+- `(extern)` results map JS `null` to `#f`.
+- `(extern/undefined)` results map JS `undefined` to `#f`.
 - `Side effects?` in function tables indicates whether the call is expected to mutate browser/DOM/canvas state.
 
 ### 2.3 Optional and Variadic Arguments
@@ -146,36 +150,36 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-window-window`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern)` | no | no | yes | `(js-window-window)` | read `window` as `extern`. |
-| [`js-window-self`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern)` | no | no | yes | `(js-window-self)` | read `self` as `extern`. |
-| [`js-window-document`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern)` | no | no | yes | `(js-window-document)` | read `document` as `extern`. |
+| [`js-window-window`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern/raw)` | no | no | yes | `(js-window-window)` | read `window` as `extern`. |
+| [`js-window-self`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern/raw)` | no | no | yes | `(js-window-self)` | read `self` as `extern`. |
+| [`js-window-document`](https://developer.mozilla.org/en-US/docs/Web/API/Window) | `()` | `(extern/raw)` | no | no | yes | `(js-window-document)` | read `document` as `extern`. |
 | [`js-window-name`](https://developer.mozilla.org/en-US/docs/Web/API/Window/name) | `()` | `(string)` | no | no | no | `(js-window-name)` | read `name` as `string`. |
 | [`js-set-window-name!`](https://developer.mozilla.org/en-US/docs/Web/API/Window/name) | `(string)` | `()` | yes | no | no | `(js-set-window-name! "x")` | set `name` on a Window value. |
-| [`js-window-location`](https://developer.mozilla.org/en-US/docs/Web/API/Window/location) | `()` | `(extern)` | no | no | yes | `(js-window-location)` | read `location` as `extern`. |
+| [`js-window-location`](https://developer.mozilla.org/en-US/docs/Web/API/Window/location) | `()` | `(extern/raw)` | no | no | yes | `(js-window-location)` | read `location` as `extern`. |
 | [`js-set-window-location!`](https://developer.mozilla.org/en-US/docs/Web/API/Window/location) | `(value)` | `()` | yes | no | no | `(js-set-window-location! (void))` | set `location` on a Window value. |
-| [`js-window-custom-elements`](https://developer.mozilla.org/en-US/docs/Web/API/Window/customElements) | `()` | `(extern)` | no | no | yes | `(js-window-custom-elements)` | read `custom-elements` as `extern`. |
-| [`js-window-history`](https://developer.mozilla.org/en-US/docs/Web/API/Window/history) | `()` | `(extern)` | no | no | yes | `(js-window-history)` | read `history` as `extern`. |
-| [`js-window-locationbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/locationbar) | `()` | `(extern)` | no | no | yes | `(js-window-locationbar)` | read `locationbar` as `extern`. |
-| [`js-window-menubar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/menubar) | `()` | `(extern)` | no | no | yes | `(js-window-menubar)` | read `menubar` as `extern`. |
-| [`js-window-personalbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/personalbar) | `()` | `(extern)` | no | no | yes | `(js-window-personalbar)` | read `personalbar` as `extern`. |
-| [`js-window-scrollbars`](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollbars) | `()` | `(extern)` | no | no | yes | `(js-window-scrollbars)` | read `scrollbars` as `extern`. |
-| [`js-window-statusbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/statusbar) | `()` | `(extern)` | no | no | yes | `(js-window-statusbar)` | read `statusbar` as `extern`. |
-| [`js-window-toolbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/toolbar) | `()` | `(extern)` | no | no | yes | `(js-window-toolbar)` | read `toolbar` as `extern`. |
+| [`js-window-custom-elements`](https://developer.mozilla.org/en-US/docs/Web/API/Window/customElements) | `()` | `(extern/raw)` | no | no | yes | `(js-window-custom-elements)` | read `custom-elements` as `extern`. |
+| [`js-window-history`](https://developer.mozilla.org/en-US/docs/Web/API/Window/history) | `()` | `(extern/raw)` | no | no | yes | `(js-window-history)` | read `history` as `extern`. |
+| [`js-window-locationbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/locationbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-locationbar)` | read `locationbar` as `extern`. |
+| [`js-window-menubar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/menubar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-menubar)` | read `menubar` as `extern`. |
+| [`js-window-personalbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/personalbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-personalbar)` | read `personalbar` as `extern`. |
+| [`js-window-scrollbars`](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollbars) | `()` | `(extern/raw)` | no | no | yes | `(js-window-scrollbars)` | read `scrollbars` as `extern`. |
+| [`js-window-statusbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/statusbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-statusbar)` | read `statusbar` as `extern`. |
+| [`js-window-toolbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/toolbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-toolbar)` | read `toolbar` as `extern`. |
 | [`js-window-status`](https://developer.mozilla.org/en-US/docs/Web/API/Window/status) | `()` | `(string)` | no | no | no | `(js-window-status)` | read `status` as `string`. |
 | [`js-set-window-status!`](https://developer.mozilla.org/en-US/docs/Web/API/Window/status) | `(string)` | `()` | yes | no | no | `(js-set-window-status! "x")` | set `status` on a Window value. |
 | [`js-window-closed`](https://developer.mozilla.org/en-US/docs/Web/API/Window/closed) | `()` | `(i32)` | no | no | no | `(js-window-closed)` | read `closed` as `i32`. |
-| [`js-window-frames`](https://developer.mozilla.org/en-US/docs/Web/API/Window/frames) | `()` | `(extern)` | no | no | yes | `(js-window-frames)` | read `frames` as `extern`. |
+| [`js-window-frames`](https://developer.mozilla.org/en-US/docs/Web/API/Window/frames) | `()` | `(extern/raw)` | no | no | yes | `(js-window-frames)` | read `frames` as `extern`. |
 | [`js-window-length`](https://developer.mozilla.org/en-US/docs/Web/API/Window/length) | `()` | `(u32)` | no | no | no | `(js-window-length)` | read `length` as `u32`. |
 | [`js-window-opener`](https://developer.mozilla.org/en-US/docs/Web/API/Window/opener) | `()` | `(extern)` | no | no | yes | `(js-window-opener)` | read `opener` as `extern`. |
 | [`js-set-window-opener!`](https://developer.mozilla.org/en-US/docs/Web/API/Window/opener) | `(extern)` | `()` | yes | no | no | `(js-set-window-opener! obj)` | set `opener` on a Window value. |
-| [`js-window-parent`](https://developer.mozilla.org/en-US/docs/Web/API/Window/parent) | `()` | `(extern)` | no | no | yes | `(js-window-parent)` | read `parent` as `extern`. |
-| [`js-window-top`](https://developer.mozilla.org/en-US/docs/Web/API/Window/top) | `()` | `(extern)` | no | no | yes | `(js-window-top)` | read `top` as `extern`. |
+| [`js-window-parent`](https://developer.mozilla.org/en-US/docs/Web/API/Window/parent) | `()` | `(extern/raw)` | no | no | yes | `(js-window-parent)` | read `parent` as `extern`. |
+| [`js-window-top`](https://developer.mozilla.org/en-US/docs/Web/API/Window/top) | `()` | `(extern/raw)` | no | no | yes | `(js-window-top)` | read `top` as `extern`. |
 | [`js-window-visual-viewport`](https://developer.mozilla.org/en-US/docs/Web/API/Window/visualViewport) | `()` | `(extern)` | no | no | yes | `(js-window-visual-viewport)` | read `visual-viewport` as `extern`. |
-| [`js-window-navigator`](https://developer.mozilla.org/en-US/docs/Web/API/Window/navigator) | `()` | `(extern)` | no | no | yes | `(js-window-navigator)` | read `navigator` as `extern`. |
+| [`js-window-navigator`](https://developer.mozilla.org/en-US/docs/Web/API/Window/navigator) | `()` | `(extern/raw)` | no | no | yes | `(js-window-navigator)` | read `navigator` as `extern`. |
 | [`js-window-origin`](https://developer.mozilla.org/en-US/docs/Web/API/Window/origin) | `()` | `(string)` | no | no | no | `(js-window-origin)` | read `origin` as `string`. |
-| [`js-window-crypto`](https://developer.mozilla.org/en-US/docs/Web/API/Window/crypto) | `()` | `(extern)` | no | no | yes | `(js-window-crypto)` | read `crypto` as `extern`. |
+| [`js-window-crypto`](https://developer.mozilla.org/en-US/docs/Web/API/Window/crypto) | `()` | `(extern/raw)` | no | no | yes | `(js-window-crypto)` | read `crypto` as `extern`. |
 | [`js-window-device-pixel-ratio`](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio) | `()` | `(f64)` | no | no | no | `(js-window-device-pixel-ratio)` | read `device-pixel-ratio` as `f64`. |
-| [`js-window-event`](https://developer.mozilla.org/en-US/docs/Web/API/Window/event) | `()` | `(extern)` | no | no | yes | `(js-window-event)` | read `event` as `extern`. |
+| [`js-window-event`](https://developer.mozilla.org/en-US/docs/Web/API/Window/event) | `()` | `(extern/undefined)` | no | no | yes | `(js-window-event)` | read `event` as `extern`. |
 | [`js-window-frame-element`](https://developer.mozilla.org/en-US/docs/Web/API/Window/frameElement) | `()` | `(extern)` | no | no | yes | `(js-window-frame-element)` | read `frame-element` as `extern`. |
 | [`js-window-inner-height`](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerHeight) | `()` | `(f64)` | no | no | no | `(js-window-inner-height)` | read `inner-height` as `f64`. |
 | [`js-window-inner-width`](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth) | `()` | `(f64)` | no | no | no | `(js-window-inner-width)` | read `inner-width` as `f64`. |
@@ -189,16 +193,16 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 | [`js-window-page-y-offset`](https://developer.mozilla.org/en-US/docs/Web/API/Window/pageYOffset) | `()` | `(f64)` | no | no | no | `(js-window-page-y-offset)` | read `page-y-offset` as `f64`. |
 | [`js-window-scroll-x`](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollX) | `()` | `(f64)` | no | no | no | `(js-window-scroll-x)` | read `scroll-x` as `f64`. |
 | [`js-window-scroll-y`](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollY) | `()` | `(f64)` | no | no | no | `(js-window-scroll-y)` | read `scroll-y` as `f64`. |
-| [`js-window-screen`](https://developer.mozilla.org/en-US/docs/Web/API/Window/screen) | `()` | `(extern)` | no | no | yes | `(js-window-screen)` | read `screen` as `extern`. |
-| [`js-window-local-storage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) | `()` | `(extern)` | no | no | yes | `(js-window-local-storage)` | read `local-storage` as `extern`. |
-| [`js-window-session-storage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) | `()` | `(extern)` | no | no | yes | `(js-window-session-storage)` | read `session-storage` as `extern`. |
-| [`js-window-performance`](https://developer.mozilla.org/en-US/docs/Web/API/Window/performance) | `()` | `(extern)` | no | no | yes | `(js-window-performance)` | read `performance` as `extern`. |
-| [`js-window-indexed-db`](https://developer.mozilla.org/en-US/docs/Web/API/Window/indexedDB) | `()` | `(extern)` | no | no | yes | `(js-window-indexed-db)` | read `indexed-db` as `extern`. |
+| [`js-window-screen`](https://developer.mozilla.org/en-US/docs/Web/API/Window/screen) | `()` | `(extern/raw)` | no | no | yes | `(js-window-screen)` | read `screen` as `extern`. |
+| [`js-window-local-storage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) | `()` | `(extern/raw)` | no | no | yes | `(js-window-local-storage)` | read `local-storage` as `extern`. |
+| [`js-window-session-storage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) | `()` | `(extern/raw)` | no | no | yes | `(js-window-session-storage)` | read `session-storage` as `extern`. |
+| [`js-window-performance`](https://developer.mozilla.org/en-US/docs/Web/API/Window/performance) | `()` | `(extern/raw)` | no | no | yes | `(js-window-performance)` | read `performance` as `extern`. |
+| [`js-window-indexed-db`](https://developer.mozilla.org/en-US/docs/Web/API/Window/indexedDB) | `()` | `(extern/raw)` | no | no | yes | `(js-window-indexed-db)` | read `indexed-db` as `extern`. |
 | [`js-window-is-secure-context`](https://developer.mozilla.org/en-US/docs/Web/API/Window/isSecureContext) | `()` | `(i32)` | no | no | no | `(js-window-is-secure-context)` | read `is-secure-context` as `i32`. |
 | [`js-window-cross-origin-isolated`](https://developer.mozilla.org/en-US/docs/Web/API/Window/crossOriginIsolated) | `()` | `(i32)` | no | no | no | `(js-window-cross-origin-isolated)` | read `cross-origin-isolated` as `i32`. |
-| [`js-window-caches`](https://developer.mozilla.org/en-US/docs/Web/API/Window/caches) | `()` | `(extern)` | no | no | yes | `(js-window-caches)` | read `caches` as `extern`. |
-| [`js-window-speech-synthesis`](https://developer.mozilla.org/en-US/docs/Web/API/Window/speechSynthesis) | `()` | `(extern)` | no | no | yes | `(js-window-speech-synthesis)` | read `speech-synthesis` as `extern`. |
-| [`js-window-style-media`](https://developer.mozilla.org/en-US/docs/Web/API/Window/styleMedia) | `()` | `(extern)` | no | no | yes | `(js-window-style-media)` | read `style-media` as `extern`. |
+| [`js-window-caches`](https://developer.mozilla.org/en-US/docs/Web/API/Window/caches) | `()` | `(extern/raw)` | no | no | yes | `(js-window-caches)` | read `caches` as `extern`. |
+| [`js-window-speech-synthesis`](https://developer.mozilla.org/en-US/docs/Web/API/Window/speechSynthesis) | `()` | `(extern/raw)` | no | no | yes | `(js-window-speech-synthesis)` | read `speech-synthesis` as `extern`. |
+| [`js-window-style-media`](https://developer.mozilla.org/en-US/docs/Web/API/Window/styleMedia) | `()` | `(extern/raw)` | no | no | yes | `(js-window-style-media)` | read `style-media` as `extern`. |
 | [`js-window-alert`](https://developer.mozilla.org/en-US/docs/Web/API/Window/alert) | `(string)` | `()` | yes | no | no | `(js-window-alert "x")` | call `alert` for side effects. |
 | [`js-window-atob`](https://developer.mozilla.org/en-US/docs/Web/API/Window/atob) | `(string)` | `(string)` | no | no | no | `(js-window-atob "x")` | call `atob` and use the `string` result. |
 | [`js-window-btoa`](https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa) | `(string)` | `(string)` | no | no | no | `(js-window-btoa "x")` | call `btoa` and use the `string` result. |
@@ -209,12 +213,12 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 | [`js-window-clear-timeout`](https://developer.mozilla.org/en-US/docs/Web/API/Window/clearTimeout) | `(u32)` | `()` | yes | no | no | `(js-window-clear-timeout 0)` | call `clear-timeout` for side effects. |
 | [`js-window-close`](https://developer.mozilla.org/en-US/docs/Web/API/Window/close) | `()` | `()` | yes | no | no | `(js-window-close)` | call `close` for side effects. |
 | [`js-window-confirm`](https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm) | `(string)` | `(i32)` | no | no | no | `(js-window-confirm "x")` | call `confirm` and use the `i32` result. |
-| [`js-window-create-image-bitmap`](https://developer.mozilla.org/en-US/docs/Web/API/Window/createImageBitmap) | `(extern value value value value value)` | `(extern)` | no | no | yes | `(js-window-create-image-bitmap obj (void) (void) (void) (void) (void))` | call `create-image-bitmap` and keep the raw JS result. |
-| [`js-window-fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch) | `(value value)` | `(extern)` | yes | no | yes | `(js-window-fetch (void) (void))` | call `fetch` and keep the raw JS result. |
+| [`js-window-create-image-bitmap`](https://developer.mozilla.org/en-US/docs/Web/API/Window/createImageBitmap) | `(extern value value value value value)` | `(extern/raw)` | no | no | yes | `(js-window-create-image-bitmap obj (void) (void) (void) (void) (void))` | call `create-image-bitmap` and keep the raw JS result. |
+| [`js-window-fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch) | `(value value)` | `(extern/raw)` | yes | no | yes | `(js-window-fetch (void) (void))` | call `fetch` and keep the raw JS result. |
 | [`js-window-focus`](https://developer.mozilla.org/en-US/docs/Web/API/Window/focus) | `()` | `()` | yes | no | no | `(js-window-focus)` | call `focus` for side effects. |
-| [`js-window-get-computed-style`](https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle) | `(extern value)` | `(extern)` | no | no | yes | `(js-window-get-computed-style obj (void))` | call `get-computed-style` and keep the raw JS result. |
+| [`js-window-get-computed-style`](https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle) | `(extern value)` | `(extern/raw)` | no | no | yes | `(js-window-get-computed-style obj (void))` | call `get-computed-style` and keep the raw JS result. |
 | [`js-window-get-selection`](https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection) | `()` | `(extern)` | no | no | yes | `(js-window-get-selection)` | call `get-selection` and keep the raw JS result. |
-| [`js-window-match-media`](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia) | `(string)` | `(extern)` | no | no | yes | `(js-window-match-media "x")` | call `match-media` and keep the raw JS result. |
+| [`js-window-match-media`](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia) | `(string)` | `(extern/raw)` | no | no | yes | `(js-window-match-media "x")` | call `match-media` and keep the raw JS result. |
 | [`js-window-move-by`](https://developer.mozilla.org/en-US/docs/Web/API/Window/moveBy) | `(f64 f64)` | `()` | yes | no | no | `(js-window-move-by 0.0 0.0)` | call `move-by` for side effects. |
 | [`js-window-move-to`](https://developer.mozilla.org/en-US/docs/Web/API/Window/moveTo) | `(f64 f64)` | `()` | yes | no | no | `(js-window-move-to 0.0 0.0)` | call `move-to` for side effects. |
 | [`js-window-open`](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) | `(string value value value)` | `(extern)` | yes | no | yes | `(js-window-open "x" (void) (void) (void))` | call `open` and keep the raw JS result. |
@@ -258,45 +262,45 @@ MDN root: [Document](https://developer.mozilla.org/en-US/docs/Web/API/Document)
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-document`](https://developer.mozilla.org/en-US/docs/Web/API/Document) | `()` | `(extern)` | no | no | yes | `(js-document)` | read `document` as `extern`. |
-| [`js-document-head`](https://developer.mozilla.org/en-US/docs/Web/API/Document/head) | `()` | `(extern)` | no | no | yes | `(js-document-head)` | read `head` as `extern`. |
-| [`js-document-body`](https://developer.mozilla.org/en-US/docs/Web/API/Document/body) | `()` | `(extern)` | no | no | yes | `(js-document-body)` | read `body` as `extern`. |
-| [`js-document-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement) | `()` | `(extern)` | no | no | yes | `(js-document-element)` | read `document-element` as `extern`. |
-| [`js-create-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement) | `(string)` | `(extern)` | no | no | yes | `(js-create-element "x")` | call `create-element` and keep the raw JS result. |
-| [`js-create-text-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) | `(string)` | `(extern)` | no | no | yes | `(js-create-text-node "x")` | call `create-text-node` and keep the raw JS result. |
-| [`js-adopt-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptNode) | `(extern)` | `(extern)` | no | no | yes | `(js-adopt-node obj)` | call `adopt-node` and keep the raw JS result. |
-| [`js-caret-range-from-point`](https://developer.mozilla.org/en-US/docs/Web/API/Document/clear) | `()` | `()` | yes | no | no | `(js-caret-range-from-point)` | call `clear` for side effects. |
+| [`js-document`](https://developer.mozilla.org/en-US/docs/Web/API/Document) | `()` | `(extern/raw)` | no | no | yes | `(js-document)` | read `document` as `extern`. |
+| [`js-document-head`](https://developer.mozilla.org/en-US/docs/Web/API/Document/head) | `()` | `(extern/raw)` | no | no | yes | `(js-document-head)` | read `head` as `extern`. |
+| [`js-document-body`](https://developer.mozilla.org/en-US/docs/Web/API/Document/body) | `()` | `(extern/raw)` | no | no | yes | `(js-document-body)` | read `body` as `extern`. |
+| [`js-document-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement) | `()` | `(extern/raw)` | no | no | yes | `(js-document-element)` | read `document-element` as `extern`. |
+| [`js-create-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-element "x")` | call `create-element` and keep the raw JS result. |
+| [`js-create-text-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-text-node "x")` | call `create-text-node` and keep the raw JS result. |
+| [`js-adopt-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptNode) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-adopt-node obj)` | call `adopt-node` and keep the raw JS result. |
+| [`js-caret-range-from-point`](https://developer.mozilla.org/en-US/docs/Web/API/Document/clear) | `(f64 f64)` | `(extern)` | yes | no | no | `(js-caret-range-from-point 0.0 0.0)` | call `clear` for side effects. |
 | [`js-close`](https://developer.mozilla.org/en-US/docs/Web/API/Document/close) | `()` | `()` | yes | no | no | `(js-close)` | call `close` for side effects. |
-| [`js-create-attribute`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttribute) | `(string)` | `(extern)` | no | no | yes | `(js-create-attribute "x")` | call `create-attribute` and keep the raw JS result. |
-| [`js-create-attribute-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttributeNS) | `(string string)` | `(extern)` | no | no | yes | `(js-create-attribute-ns "x" "x")` | call `create-attribute-ns` and keep the raw JS result. |
-| [`js-create-cdata-section`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createCdataSection) | `(string)` | `(extern)` | no | no | yes | `(js-create-cdata-section "x")` | call `create-cdata-section` and keep the raw JS result. |
-| [`js-create-comment`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createComment) | `(string)` | `(extern)` | no | no | yes | `(js-create-comment "x")` | call `create-comment` and keep the raw JS result. |
-| [`js-create-document-fragment`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createDocumentFragment) | `()` | `(extern)` | no | no | yes | `(js-create-document-fragment)` | read `create-document-fragment` as `extern`. |
-| [`js-create-element-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createEvent) | `(string)` | `(extern)` | no | no | yes | `(js-create-element-ns "x")` | call `create-event` and keep the raw JS result. |
-| [`js-create-expression`](https://developer.mozilla.org/en-US/docs/Web/API/XPathEvaluator/createExpression) | `(string extern)` | `(extern)` | no | no | yes | `(js-create-expression "//*" obj)` | call `create-expression` and keep the raw JS result. |
-| [`js-create-node-iterator`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createNodeIterator) | `(extern u32 extern)` | `(extern)` | no | no | yes | `(js-create-node-iterator obj 0 obj3)` | call `create-node-iterator` and keep the raw JS result. |
-| [`js-create-processing-instruction`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction) | `(string string)` | `(extern)` | no | no | yes | `(js-create-processing-instruction "x" "x")` | call `create-processing-instruction` and keep the raw JS result. |
-| [`js-create-range`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createRange) | `()` | `(extern)` | no | no | yes | `(js-create-range)` | read `create-range` as `extern`. |
-| [`js-create-tree-walker`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTreeWalker) | `(extern u32 extern)` | `(extern)` | no | no | yes | `(js-create-tree-walker obj 0 obj3)` | call `create-tree-walker` and keep the raw JS result. |
+| [`js-create-attribute`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttribute) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-attribute "x")` | call `create-attribute` and keep the raw JS result. |
+| [`js-create-attribute-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttributeNS) | `(string string)` | `(extern/raw)` | no | no | yes | `(js-create-attribute-ns "x" "x")` | call `create-attribute-ns` and keep the raw JS result. |
+| [`js-create-cdata-section`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createCdataSection) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-cdata-section "x")` | call `create-cdata-section` and keep the raw JS result. |
+| [`js-create-comment`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createComment) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-comment "x")` | call `create-comment` and keep the raw JS result. |
+| [`js-create-document-fragment`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createDocumentFragment) | `()` | `(extern/raw)` | no | no | yes | `(js-create-document-fragment)` | read `create-document-fragment` as `extern`. |
+| [`js-create-element-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createEvent) | `(string string)` | `(extern/raw)` | no | no | yes | `(js-create-element-ns "http://www.w3.org/1999/xhtml" "div")` | call `create-event` and keep the raw JS result. |
+| [`js-create-expression`](https://developer.mozilla.org/en-US/docs/Web/API/XPathEvaluator/createExpression) | `(string extern)` | `(extern/raw)` | no | no | yes | `(js-create-expression "//*" obj)` | call `create-expression` and keep the raw JS result. |
+| [`js-create-node-iterator`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createNodeIterator) | `(extern u32 extern)` | `(extern/raw)` | no | no | yes | `(js-create-node-iterator obj 0 obj3)` | call `create-node-iterator` and keep the raw JS result. |
+| [`js-create-processing-instruction`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction) | `(string string)` | `(extern/raw)` | no | no | yes | `(js-create-processing-instruction "x" "x")` | call `create-processing-instruction` and keep the raw JS result. |
+| [`js-create-range`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createRange) | `()` | `(extern/raw)` | no | no | yes | `(js-create-range)` | read `create-range` as `extern`. |
+| [`js-create-tree-walker`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTreeWalker) | `(extern u32 extern)` | `(extern/raw)` | no | no | yes | `(js-create-tree-walker obj 0 obj3)` | call `create-tree-walker` and keep the raw JS result. |
 | [`js-element-from-point`](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint) | `(f64 f64)` | `(extern)` | no | no | yes | `(js-element-from-point 0.0 0.0)` | call `element-from-point` and keep the raw JS result. |
-| [`js-elements-from-point`](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementsFromPoint) | `(f64 f64)` | `(extern)` | no | no | yes | `(js-elements-from-point 0.0 0.0)` | call `elements-from-point` and keep the raw JS result. |
+| [`js-elements-from-point`](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementsFromPoint) | `(f64 f64)` | `(extern/raw)` | no | no | yes | `(js-elements-from-point 0.0 0.0)` | call `elements-from-point` and keep the raw JS result. |
 | [`js-enable-style-sheets-for-set`](https://developer.mozilla.org/en-US/docs/Web/API/Document/enableStyleSheetsForSet) | `(string)` | `()` | yes | no | no | `(js-enable-style-sheets-for-set "x")` | call `enable-style-sheets-for-set` for side effects. |
-| [`js-evaluate`](https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand) | `(string i32 string)` | `(i32)` | no | no | no | `(js-evaluate "x" 1 "x")` | call `exec-command` and use the `i32` result. |
-| [`js-exit-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen) | `()` | `(extern)` | yes | no | yes | `(js-exit-fullscreen)` | read `exit-fullscreen` as `extern`. |
-| [`js-exit-picture-in-picture`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture) | `()` | `(extern)` | yes | no | yes | `(js-exit-picture-in-picture)` | read `exit-picture-in-picture` as `extern`. |
+| [`js-evaluate`](https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand) | `(string extern extern i32 extern)` | `(extern/raw)` | no | no | no | `(js-evaluate "//*" doc doc 0 doc)` | call `exec-command` and use the `i32` result. |
+| [`js-exit-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen) | `()` | `(extern/raw)` | yes | no | yes | `(js-exit-fullscreen)` | read `exit-fullscreen` as `extern`. |
+| [`js-exit-picture-in-picture`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture) | `()` | `(extern/raw)` | yes | no | yes | `(js-exit-picture-in-picture)` | read `exit-picture-in-picture` as `extern`. |
 | [`js-exit-pointer-lock`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPointerLock) | `()` | `()` | yes | no | no | `(js-exit-pointer-lock)` | call `exit-pointer-lock` for side effects. |
 | [`js-get-element-by-id`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementById) | `(string)` | `(extern)` | no | no | yes | `(js-get-element-by-id "root")` | call `get-element-by-id` and keep the raw JS result. |
-| [`js-get-elements-by-class-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByClassName) | `(string)` | `(extern)` | no | no | yes | `(js-get-elements-by-class-name "x")` | call `get-elements-by-class-name` and keep the raw JS result. |
-| [`js-get-elements-by-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByName) | `(string)` | `(extern)` | no | no | yes | `(js-get-elements-by-name "x")` | call `get-elements-by-name` and keep the raw JS result. |
-| [`js-get-elements-by-tag-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByTagName) | `(string)` | `(extern)` | no | no | yes | `(js-get-elements-by-tag-name "x")` | call `get-elements-by-tag-name` and keep the raw JS result. |
-| [`js-get-elements-by-tag-name-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByTagNameNS) | `(string string)` | `(extern)` | no | no | yes | `(js-get-elements-by-tag-name-ns "x" "x")` | call `get-elements-by-tag-name-ns` and keep the raw JS result. |
+| [`js-get-elements-by-class-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByClassName) | `(string)` | `(extern/raw)` | no | no | yes | `(js-get-elements-by-class-name "x")` | call `get-elements-by-class-name` and keep the raw JS result. |
+| [`js-get-elements-by-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByName) | `(string)` | `(extern/raw)` | no | no | yes | `(js-get-elements-by-name "x")` | call `get-elements-by-name` and keep the raw JS result. |
+| [`js-get-elements-by-tag-name`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByTagName) | `(string)` | `(extern/raw)` | no | no | yes | `(js-get-elements-by-tag-name "x")` | call `get-elements-by-tag-name` and keep the raw JS result. |
+| [`js-get-elements-by-tag-name-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementsByTagNameNS) | `(string string)` | `(extern/raw)` | no | no | yes | `(js-get-elements-by-tag-name-ns "x" "x")` | call `get-elements-by-tag-name-ns` and keep the raw JS result. |
 | [`js-get-selection`](https://developer.mozilla.org/en-US/docs/Web/API/Document/getSelection) | `()` | `(extern)` | no | no | yes | `(js-get-selection)` | read `get-selection` as `extern`. |
 | [`js-has-focus`](https://developer.mozilla.org/en-US/docs/Web/API/Document/hasFocus) | `()` | `(i32)` | no | no | no | `(js-has-focus)` | read `has-focus` as `i32`. |
-| [`js-import-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/importNode) | `(extern i32)` | `(extern)` | no | no | yes | `(js-import-node obj 1)` | call `import-node` and keep the raw JS result. |
-| [`js-open`](https://developer.mozilla.org/en-US/docs/Web/API/Document/queryCommandValue) | `(string)` | `(extern)` | no | no | yes | `(js-open "x")` | call `query-command-value` and keep the raw JS result. |
+| [`js-import-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/importNode) | `(extern i32)` | `(extern/raw)` | no | no | yes | `(js-import-node obj 1)` | call `import-node` and keep the raw JS result. |
+| [`js-open`](https://developer.mozilla.org/en-US/docs/Web/API/Document/queryCommandValue) | `()` | `(extern/raw)` | no | no | yes | `(js-open)` | call `query-command-value` and keep the raw JS result. |
 | [`js-query-selector`](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector) | `(string)` | `(extern)` | no | no | yes | `(js-query-selector ".item")` | call `query-selector` and keep the raw JS result. |
-| [`js-query-selector-all`](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll) | `(string)` | `(extern)` | no | no | yes | `(js-query-selector-all ".item")` | call `query-selector-all` and keep the raw JS result. |
-| [`js-release-events`](https://developer.mozilla.org/en-US/docs/Web/API/Document/writeln) | `(string)` | `()` | yes | no | no | `(js-release-events "x")` | call `writeln` for side effects. |
+| [`js-query-selector-all`](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll) | `(string)` | `(extern/raw)` | no | no | yes | `(js-query-selector-all ".item")` | call `query-selector-all` and keep the raw JS result. |
+| [`js-release-events`](https://developer.mozilla.org/en-US/docs/Web/API/Document/writeln) | `()` | `()` | yes | no | no | `(js-release-events)` | call `writeln` for side effects. |
 
 Note: Promise-like externals in this table: [`js-exit-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen), [`js-exit-picture-in-picture`](https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture).
 
@@ -307,53 +311,53 @@ MDN root: [Element](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-append-child!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/appendChild) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-append-child! obj obj2)` | call `append-child` and keep the raw JS result. |
+| [`js-append-child!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/appendChild) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-append-child! obj obj2)` | call `append-child` and keep the raw JS result. |
 | [`js-set-attribute!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute) | `(extern string string)` | `()` | yes | no | no | `(js-set-attribute! el "x" "x")` | set `attribute` on a Element value. |
 | [`js-after!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/after) | `(extern extern)` | `()` | yes | no | no | `(js-after! obj obj2)` | call `after` for side effects. |
-| [`js-animate`](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate) | `(extern extern extern)` | `(extern)` | no | yes | yes | `(js-animate obj obj2 obj3)` | call `animate` and keep the raw JS result. |
+| [`js-animate`](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate) | `(extern extern extern)` | `(extern/raw)` | no | yes | yes | `(js-animate obj obj2 obj3)` | call `animate` and keep the raw JS result. |
 | [`js-append!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/append) | `(extern extern)` | `()` | yes | no | no | `(js-append! obj obj2)` | call `append` for side effects. |
-| [`js-attach-shadow!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-attach-shadow! obj obj2)` | call `attach-shadow` and keep the raw JS result. |
+| [`js-attach-shadow!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-attach-shadow! obj obj2)` | call `attach-shadow` and keep the raw JS result. |
 | [`js-before!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/before) | `(extern extern)` | `()` | yes | no | no | `(js-before! obj obj2)` | call `before` for side effects. |
 | [`js-closest`](https://developer.mozilla.org/en-US/docs/Web/API/Element/closest) | `(extern string)` | `(extern)` | no | no | yes | `(js-closest obj "x")` | call `closest` and keep the raw JS result. |
-| [`js-computed-style-map`](https://developer.mozilla.org/en-US/docs/Web/API/Element/computedStyleMap) | `(extern)` | `(extern)` | no | no | yes | `(js-computed-style-map obj)` | call `computed-style-map` and keep the raw JS result. |
-| [`js-get-animations`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAnimations) | `(extern)` | `(extern)` | no | no | yes | `(js-get-animations obj)` | call `get-animations` and keep the raw JS result. |
+| [`js-computed-style-map`](https://developer.mozilla.org/en-US/docs/Web/API/Element/computedStyleMap) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-computed-style-map obj)` | call `computed-style-map` and keep the raw JS result. |
+| [`js-get-animations`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAnimations) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-get-animations obj)` | call `get-animations` and keep the raw JS result. |
 | [`js-get-attribute`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute) | `(extern string)` | `(extern)` | no | no | yes | `(js-get-attribute el "x")` | call `get-attribute` and keep the raw JS result. |
 | [`js-get-attribute-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNS) | `(extern string string)` | `(extern)` | no | no | yes | `(js-get-attribute-ns el "x" "x")` | call `get-attribute-ns` and keep the raw JS result. |
-| [`js-get-attribute-names`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNames) | `(extern)` | `(extern)` | no | no | yes | `(js-get-attribute-names el)` | call `get-attribute-names` and keep the raw JS result. |
+| [`js-get-attribute-names`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNames) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-get-attribute-names el)` | call `get-attribute-names` and keep the raw JS result. |
 | [`js-get-attribute-node`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNode) | `(extern string)` | `(extern)` | no | no | yes | `(js-get-attribute-node el "x")` | call `get-attribute-node` and keep the raw JS result. |
 | [`js-get-attribute-node-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNodeNS) | `(extern string string)` | `(extern)` | no | no | yes | `(js-get-attribute-node-ns el "x" "x")` | call `get-attribute-node-ns` and keep the raw JS result. |
-| [`js-get-bounding-client-rect`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) | `(extern)` | `(extern)` | no | no | yes | `(js-get-bounding-client-rect obj)` | call `get-bounding-client-rect` and keep the raw JS result. |
-| [`js-get-client-rects`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects) | `(extern)` | `(extern)` | no | no | yes | `(js-get-client-rects obj)` | call `get-client-rects` and keep the raw JS result. |
-| [`js-element-get-elements-by-class-name`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByClassName) | `(extern string)` | `(extern)` | no | no | yes | `(js-element-get-elements-by-class-name el "x")` | call `get-elements-by-class-name` and keep the raw JS result. |
-| [`js-element-get-elements-by-tag-name`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName) | `(extern string)` | `(extern)` | no | no | yes | `(js-element-get-elements-by-tag-name el "x")` | call `get-elements-by-tag-name` and keep the raw JS result. |
-| [`js-element-get-elements-by-tag-name-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagNameNS) | `(extern string string)` | `(extern)` | no | no | yes | `(js-element-get-elements-by-tag-name-ns el "x" "x")` | call `get-elements-by-tag-name-ns` and keep the raw JS result. |
+| [`js-get-bounding-client-rect`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-get-bounding-client-rect obj)` | call `get-bounding-client-rect` and keep the raw JS result. |
+| [`js-get-client-rects`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-get-client-rects obj)` | call `get-client-rects` and keep the raw JS result. |
+| [`js-element-get-elements-by-class-name`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByClassName) | `(extern string)` | `(extern/raw)` | no | no | yes | `(js-element-get-elements-by-class-name el "x")` | call `get-elements-by-class-name` and keep the raw JS result. |
+| [`js-element-get-elements-by-tag-name`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName) | `(extern string)` | `(extern/raw)` | no | no | yes | `(js-element-get-elements-by-tag-name el "x")` | call `get-elements-by-tag-name` and keep the raw JS result. |
+| [`js-element-get-elements-by-tag-name-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagNameNS) | `(extern string string)` | `(extern/raw)` | no | no | yes | `(js-element-get-elements-by-tag-name-ns el "x" "x")` | call `get-elements-by-tag-name-ns` and keep the raw JS result. |
 | [`js-has-attribute`](https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttribute) | `(extern string)` | `(i32)` | no | no | no | `(js-has-attribute el "x")` | call `has-attribute` and use the `i32` result. |
 | [`js-has-attribute-ns`](https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttributeNS) | `(extern string string)` | `(i32)` | no | no | no | `(js-has-attribute-ns el "x" "x")` | call `has-attribute-ns` and use the `i32` result. |
 | [`js-has-attributes`](https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttributes) | `(extern)` | `(i32)` | no | no | no | `(js-has-attributes el)` | call `has-attributes` and use the `i32` result. |
 | [`js-has-pointer-capture`](https://developer.mozilla.org/en-US/docs/Web/API/Element/hasPointerCapture) | `(extern i32)` | `(i32)` | no | no | no | `(js-has-pointer-capture obj 1)` | call `has-pointer-capture` and use the `i32` result. |
-| [`js-insert-adjacent-element!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentElement) | `(extern string extern)` | `(extern)` | yes | no | yes | `(js-insert-adjacent-element! obj "x" obj3)` | call `insert-adjacent-element` and keep the raw JS result. |
+| [`js-insert-adjacent-element!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentElement) | `(extern string extern)` | `(extern/raw)` | yes | no | yes | `(js-insert-adjacent-element! obj "x" obj3)` | call `insert-adjacent-element` and keep the raw JS result. |
 | [`js-insert-adjacent-html!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentHtml) | `(extern string string)` | `()` | yes | no | no | `(js-insert-adjacent-html! obj "x" "x")` | call `insert-adjacent-html` for side effects. |
 | [`js-insert-adjacent-text!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentText) | `(extern string string)` | `()` | yes | no | no | `(js-insert-adjacent-text! obj "x" "x")` | call `insert-adjacent-text` for side effects. |
 | [`js-matches`](https://developer.mozilla.org/en-US/docs/Web/API/Element/matches) | `(extern string)` | `(i32)` | no | no | no | `(js-matches obj "x")` | call `matches` and use the `i32` result. |
 | [`js-prepend!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/prepend) | `(extern extern)` | `()` | yes | no | no | `(js-prepend! obj obj2)` | call `prepend` for side effects. |
 | [`js-element-query-selector`](https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelector) | `(extern string)` | `(extern)` | no | no | yes | `(js-element-query-selector el ".item")` | call `query-selector` and keep the raw JS result. |
-| [`js-element-query-selector-all`](https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll) | `(extern string)` | `(extern)` | no | no | yes | `(js-element-query-selector-all el ".item")` | call `query-selector-all` and keep the raw JS result. |
+| [`js-element-query-selector-all`](https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll) | `(extern string)` | `(extern/raw)` | no | no | yes | `(js-element-query-selector-all el ".item")` | call `query-selector-all` and keep the raw JS result. |
 | [`js-release-pointer-capture!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/releasePointerCapture) | `(extern i32)` | `()` | yes | no | no | `(js-release-pointer-capture! obj 1)` | call `release-pointer-capture` for side effects. |
 | [`js-remove!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/remove) | `(extern)` | `()` | yes | no | no | `(js-remove! obj)` | call `remove` for side effects. |
 | [`js-remove-attribute!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute) | `(extern string)` | `()` | yes | no | no | `(js-remove-attribute! el "x")` | call `remove-attribute` for side effects. |
 | [`js-remove-attribute-ns!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNS) | `(extern string string)` | `()` | yes | no | no | `(js-remove-attribute-ns! el "x" "x")` | call `remove-attribute-ns` for side effects. |
-| [`js-remove-attribute-node!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNode) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-remove-attribute-node! el obj2)` | call `remove-attribute-node` and keep the raw JS result. |
+| [`js-remove-attribute-node!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNode) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-remove-attribute-node! el obj2)` | call `remove-attribute-node` and keep the raw JS result. |
 | [`js-replace-children!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/replaceChildren) | `(extern extern)` | `()` | yes | no | no | `(js-replace-children! obj obj2)` | call `replace-children` for side effects. |
 | [`js-replace-with!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/replaceWith) | `(extern extern)` | `()` | yes | no | no | `(js-replace-with! obj obj2)` | call `replace-with` for side effects. |
-| [`js-request-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen) | `(extern)` | `(extern)` | no | no | yes | `(js-request-fullscreen obj)` | call `request-fullscreen` and keep the raw JS result. |
+| [`js-request-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-request-fullscreen obj)` | call `request-fullscreen` and keep the raw JS result. |
 | [`js-request-pointer-lock`](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock) | `(extern)` | `()` | yes | no | no | `(js-request-pointer-lock obj)` | call `request-pointer-lock` for side effects. |
 | [`js-scroll!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll) | `(extern f64 f64)` | `()` | yes | no | no | `(js-scroll! obj 0.0 0.0)` | call `scroll` for side effects. |
 | [`js-scroll-by!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollBy) | `(extern f64 f64)` | `()` | yes | no | no | `(js-scroll-by! obj 0.0 0.0)` | call `scroll-by` for side effects. |
 | [`js-scroll-into-view!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView) | `(extern i32)` | `()` | yes | no | no | `(js-scroll-into-view! obj 1)` | call `scroll-into-view` for side effects. |
 | [`js-scroll-to!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo) | `(extern f64 f64)` | `()` | yes | no | no | `(js-scroll-to! obj 0.0 0.0)` | call `scroll-to` for side effects. |
 | [`js-set-attribute-ns!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNS) | `(extern string string string)` | `()` | yes | no | no | `(js-set-attribute-ns! el "x" "x" "x")` | set `attribute-ns` on a Element value. |
-| [`js-set-attribute-node!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-set-attribute-node! el obj2)` | set `attribute-node` on a Element value. |
-| [`js-set-attribute-node-ns!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-set-attribute-node-ns! el obj2)` | set `attribute-node-ns` on a Element value. |
+| [`js-set-attribute-node!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-set-attribute-node! el obj2)` | set `attribute-node` on a Element value. |
+| [`js-set-attribute-node-ns!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-set-attribute-node-ns! el obj2)` | set `attribute-node-ns` on a Element value. |
 | [`js-set-pointer-capture!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/setPointerCapture) | `(extern i32)` | `()` | yes | no | no | `(js-set-pointer-capture! obj 1)` | set `pointer-capture` on a Element value. |
 | [`js-toggle-attribute!`](https://developer.mozilla.org/en-US/docs/Web/API/Element/toggleAttribute) | `(extern string i32)` | `(i32)` | yes | no | no | `(js-toggle-attribute! el "x" 1)` | call `toggle-attribute` and use the `i32` result. |
 
@@ -379,7 +383,7 @@ MDN root: [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event)
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-event-new`](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event) | `(string value)` | `(extern)` | no | no | yes | `(js-event-new "click" (void))` | call `new` and keep the raw JS result. |
+| [`js-event-new`](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event) | `(string value)` | `(extern/raw)` | no | no | yes | `(js-event-new "click" (void))` | call `new` and keep the raw JS result. |
 | [`js-event-type`](https://developer.mozilla.org/en-US/docs/Web/API/Event/type) | `(extern)` | `(string)` | no | no | no | `(js-event-type evt)` | read `type` as `string`. |
 | [`js-event-target`](https://developer.mozilla.org/en-US/docs/Web/API/Event/target) | `(extern)` | `(extern)` | no | no | yes | `(js-event-target evt)` | read `target` as `extern`. |
 | [`js-event-current-target`](https://developer.mozilla.org/en-US/docs/Web/API/Event/currentTarget) | `(extern)` | `(extern)` | no | no | yes | `(js-event-current-target evt)` | read `current-target` as `extern`. |
@@ -390,7 +394,7 @@ MDN root: [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event)
 | [`js-event-composed`](https://developer.mozilla.org/en-US/docs/Web/API/Event/composed) | `(extern)` | `(i32)` | no | no | no | `(js-event-composed evt)` | read `composed` as `i32`. |
 | [`js-event-is-trusted`](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted) | `(extern)` | `(i32)` | no | no | no | `(js-event-is-trusted evt)` | read `is-trusted` as `i32`. |
 | [`js-event-time-stamp`](https://developer.mozilla.org/en-US/docs/Web/API/Event/timeStamp) | `(extern)` | `(f64)` | no | no | no | `(js-event-time-stamp evt)` | read `time-stamp` as `f64`. |
-| [`js-event-composed-path`](https://developer.mozilla.org/en-US/docs/Web/API/Event/composedPath) | `(extern)` | `(extern)` | no | no | yes | `(js-event-composed-path evt)` | call `composed-path` and keep the raw JS result. |
+| [`js-event-composed-path`](https://developer.mozilla.org/en-US/docs/Web/API/Event/composedPath) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-event-composed-path evt)` | call `composed-path` and keep the raw JS result. |
 | [`js-event-prevent-default`](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) | `(extern)` | `()` | yes | no | no | `(js-event-prevent-default evt)` | call `prevent-default` for side effects. |
 | [`js-event-stop-propagation`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) | `(extern)` | `()` | yes | no | no | `(js-event-stop-propagation evt)` | call `stop-propagation` for side effects. |
 | [`js-event-stop-immediate-propagation`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopImmediatePropagation) | `(extern)` | `()` | yes | no | no | `(js-event-stop-immediate-propagation evt)` | call `stop-immediate-propagation` for side effects. |
@@ -406,13 +410,13 @@ MDN root: [HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/H
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-canvas-capture-stream`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream) | `(extern f64)` | `(extern)` | no | no | yes | `(js-canvas-capture-stream canvas 0.0)` | call `capture-stream` and keep the raw JS result. |
+| [`js-canvas-capture-stream`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream) | `(extern f64)` | `(extern/raw)` | no | no | yes | `(js-canvas-capture-stream canvas 0.0)` | call `capture-stream` and keep the raw JS result. |
 | [`js-canvas-get-context`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext) | `(extern string extern)` | `(extern)` | no | no | yes | `(js-canvas-get-context canvas "x" obj3)` | call `get-context` and keep the raw JS result. |
 | [`js-canvas-height`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/height) | `(extern)` | `(u32)` | no | no | no | `(js-canvas-height canvas)` | call `height` and use the `u32` result. |
 | [`js-set-canvas-height!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/height) | `(extern u32)` | `()` | yes | no | no | `(js-set-canvas-height! canvas 0)` | set `height` on a HTMLCanvasElement value. |
 | [`js-canvas-to-blob`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob) | `(extern extern string f64)` | `()` | yes | no | no | `(js-canvas-to-blob canvas obj2 "x" 0.0)` | call `to-blob` for side effects. |
 | [`js-canvas-to-data-url`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataUrl) | `(extern string f64)` | `(string)` | no | no | no | `(js-canvas-to-data-url canvas "x" 0.0)` | call `to-data-url` and use the `string` result. |
-| [`js-canvas-transfer-control-to-offscreen`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/transferControlToOffscreen) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas-transfer-control-to-offscreen canvas)` | call `transfer-control-to-offscreen` and keep the raw JS result. |
+| [`js-canvas-transfer-control-to-offscreen`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/transferControlToOffscreen) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas-transfer-control-to-offscreen canvas)` | call `transfer-control-to-offscreen` and keep the raw JS result. |
 | [`js-canvas-width`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/width) | `(extern)` | `(u32)` | no | no | no | `(js-canvas-width canvas)` | call `width` and use the `u32` result. |
 | [`js-set-canvas-width!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/width) | `(extern u32)` | `()` | yes | no | no | `(js-set-canvas-width! canvas 0)` | set `width` on a HTMLCanvasElement value. |
 
@@ -425,10 +429,10 @@ MDN root: [CanvasRenderingContext2D](https://developer.mozilla.org/en-US/docs/We
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-canvas2d-canvas`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/canvas) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas2d-canvas ctx)` | call `canvas` and keep the raw JS result. |
+| [`js-canvas2d-canvas`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/canvas) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-canvas ctx)` | call `canvas` and keep the raw JS result. |
 | [`js-canvas2d-direction`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/direction) | `(extern)` | `(string)` | no | no | no | `(js-canvas2d-direction ctx)` | call `direction` and use the `string` result. |
 | [`js-set-canvas2d-direction!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/direction) | `(extern string)` | `()` | yes | no | no | `(js-set-canvas2d-direction! ctx "x")` | set `direction` on a CanvasRenderingContext2D value. |
-| [`js-canvas2d-fill-style`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas2d-fill-style ctx)` | call `fill-style` and keep the raw JS result. |
+| [`js-canvas2d-fill-style`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-fill-style ctx)` | call `fill-style` and keep the raw JS result. |
 | [`js-set-canvas2d-fill-style!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle) | `(extern value)` | `()` | yes | no | no | `(js-set-canvas2d-fill-style! ctx (void))` | set `fill-style` on a CanvasRenderingContext2D value. |
 | [`js-canvas2d-filter`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter) | `(extern)` | `(string)` | no | no | no | `(js-canvas2d-filter ctx)` | call `filter` and use the `string` result. |
 | [`js-set-canvas2d-filter!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter) | `(extern string)` | `()` | yes | no | no | `(js-set-canvas2d-filter! ctx "x")` | set `filter` on a CanvasRenderingContext2D value. |
@@ -460,7 +464,7 @@ MDN root: [CanvasRenderingContext2D](https://developer.mozilla.org/en-US/docs/We
 | [`js-set-canvas2d-shadow-offset-x!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/shadowOffsetX) | `(extern f64)` | `()` | yes | no | no | `(js-set-canvas2d-shadow-offset-x! ctx 0.0)` | set `shadow-offset-x` on a CanvasRenderingContext2D value. |
 | [`js-canvas2d-shadow-offset-y`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/shadowOffsetY) | `(extern)` | `(f64)` | no | no | no | `(js-canvas2d-shadow-offset-y ctx)` | call `shadow-offset-y` and use the `f64` result. |
 | [`js-set-canvas2d-shadow-offset-y!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/shadowOffsetY) | `(extern f64)` | `()` | yes | no | no | `(js-set-canvas2d-shadow-offset-y! ctx 0.0)` | set `shadow-offset-y` on a CanvasRenderingContext2D value. |
-| [`js-canvas2d-stroke-style`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas2d-stroke-style ctx)` | call `stroke-style` and keep the raw JS result. |
+| [`js-canvas2d-stroke-style`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-stroke-style ctx)` | call `stroke-style` and keep the raw JS result. |
 | [`js-set-canvas2d-stroke-style!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle) | `(extern value)` | `()` | yes | no | no | `(js-set-canvas2d-stroke-style! ctx (void))` | set `stroke-style` on a CanvasRenderingContext2D value. |
 | [`js-canvas2d-text-align`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/textAlign) | `(extern)` | `(string)` | no | no | no | `(js-canvas2d-text-align ctx)` | call `text-align` and use the `string` result. |
 | [`js-set-canvas2d-text-align!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/textAlign) | `(extern string)` | `()` | yes | no | no | `(js-set-canvas2d-text-align! ctx "x")` | set `text-align` on a CanvasRenderingContext2D value. |
@@ -489,12 +493,12 @@ MDN root: [CanvasRenderingContext2D](https://developer.mozilla.org/en-US/docs/We
 | [`js-canvas2d-clear-rect`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/clearRect) | `(extern f64 f64 f64 f64)` | `()` | yes | no | no | `(js-canvas2d-clear-rect ctx 0.0 0.0 0.0 0.0)` | call `clear-rect` for side effects. |
 | [`js-canvas2d-clip`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/clip) | `(extern value value)` | `()` | yes | no | no | `(js-canvas2d-clip ctx (void) (void))` | call `clip` for side effects. |
 | [`js-canvas2d-close-path`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/closePath) | `(extern)` | `()` | yes | no | no | `(js-canvas2d-close-path ctx)` | call `close-path` for side effects. |
-| [`js-canvas2d-create-image-data`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createImageData) | `(extern f64 f64)` | `(extern)` | no | no | yes | `(js-canvas2d-create-image-data ctx 0.0 0.0)` | call `create-image-data` and keep the raw JS result. |
-| [`js-canvas2d-create-image-data-from`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createImageData) | `(extern extern)` | `(extern)` | no | no | yes | `(js-canvas2d-create-image-data-from ctx obj2)` | call `create-image-data-from` and keep the raw JS result. |
-| [`js-canvas2d-create-linear-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createLinearGradient) | `(extern f64 f64 f64 f64)` | `(extern)` | no | no | yes | `(js-canvas2d-create-linear-gradient ctx 0.0 0.0 0.0 0.0)` | call `create-linear-gradient` and keep the raw JS result. |
+| [`js-canvas2d-create-image-data`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createImageData) | `(extern f64 f64)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-create-image-data ctx 0.0 0.0)` | call `create-image-data` and keep the raw JS result. |
+| [`js-canvas2d-create-image-data-from`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createImageData) | `(extern extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-create-image-data-from ctx obj2)` | call `create-image-data-from` and keep the raw JS result. |
+| [`js-canvas2d-create-linear-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createLinearGradient) | `(extern f64 f64 f64 f64)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-create-linear-gradient ctx 0.0 0.0 0.0 0.0)` | call `create-linear-gradient` and keep the raw JS result. |
 | [`js-canvas2d-create-pattern`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createPattern) | `(extern extern string)` | `(extern)` | no | no | yes | `(js-canvas2d-create-pattern ctx obj2 "x")` | call `create-pattern` and keep the raw JS result. |
-| [`js-canvas2d-create-radial-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createRadialGradient) | `(extern f64 f64 f64 f64 f64 f64)` | `(extern)` | no | no | yes | `(js-canvas2d-create-radial-gradient ctx 0.0 0.0 0.0 0.0 0.0 0.0)` | call `create-radial-gradient` and keep the raw JS result. |
-| [`js-canvas2d-create-conic-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createConicGradient) | `(extern f64 f64 f64)` | `(extern)` | no | no | yes | `(js-canvas2d-create-conic-gradient ctx 0.0 0.0 0.0)` | call `create-conic-gradient` and keep the raw JS result. |
+| [`js-canvas2d-create-radial-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createRadialGradient) | `(extern f64 f64 f64 f64 f64 f64)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-create-radial-gradient ctx 0.0 0.0 0.0 0.0 0.0 0.0)` | call `create-radial-gradient` and keep the raw JS result. |
+| [`js-canvas2d-create-conic-gradient`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/createConicGradient) | `(extern f64 f64 f64)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-create-conic-gradient ctx 0.0 0.0 0.0)` | call `create-conic-gradient` and keep the raw JS result. |
 | [`js-canvas2d-draw-focus-if-needed!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawFocusIfNeeded) | `(extern extern)` | `()` | yes | no | no | `(js-canvas2d-draw-focus-if-needed! ctx obj2)` | call `draw-focus-if-needed` for side effects. |
 | [`js-canvas2d-draw-focus-if-needed-path!`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawFocusIfNeeded) | `(extern extern extern)` | `()` | yes | no | no | `(js-canvas2d-draw-focus-if-needed-path! ctx obj2 obj3)` | call `draw-focus-if-needed-path` for side effects. |
 | [`js-canvas2d-draw-image`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage) | `(extern extern f64 f64)` | `()` | yes | no | no | `(js-canvas2d-draw-image ctx obj2 0.0 0.0)` | call `draw-image` for side effects. |
@@ -504,13 +508,13 @@ MDN root: [CanvasRenderingContext2D](https://developer.mozilla.org/en-US/docs/We
 | [`js-canvas2d-fill`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fill) | `(extern value value)` | `()` | yes | no | no | `(js-canvas2d-fill ctx (void) (void))` | call `fill` for side effects. |
 | [`js-canvas2d-fill-rect`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillRect) | `(extern f64 f64 f64 f64)` | `()` | yes | no | no | `(js-canvas2d-fill-rect ctx 0.0 0.0 0.0 0.0)` | call `fill-rect` for side effects. |
 | [`js-canvas2d-fill-text`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillText) | `(extern string f64 f64 value)` | `()` | yes | no | no | `(js-canvas2d-fill-text ctx "x" 0.0 0.0 (void))` | call `fill-text` for side effects. |
-| [`js-canvas2d-get-image-data`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData) | `(extern f64 f64 f64 f64 value)` | `(extern)` | no | no | yes | `(js-canvas2d-get-image-data ctx 0.0 0.0 0.0 0.0 (void))` | call `get-image-data` and keep the raw JS result. |
-| [`js-canvas2d-get-line-dash`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getLineDash) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas2d-get-line-dash ctx)` | call `get-line-dash` and keep the raw JS result. |
-| [`js-canvas2d-get-transform`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getTransform) | `(extern)` | `(extern)` | no | no | yes | `(js-canvas2d-get-transform ctx)` | call `get-transform` and keep the raw JS result. |
+| [`js-canvas2d-get-image-data`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getImageData) | `(extern f64 f64 f64 f64 value)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-get-image-data ctx 0.0 0.0 0.0 0.0 (void))` | call `get-image-data` and keep the raw JS result. |
+| [`js-canvas2d-get-line-dash`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getLineDash) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-get-line-dash ctx)` | call `get-line-dash` and keep the raw JS result. |
+| [`js-canvas2d-get-transform`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getTransform) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-get-transform ctx)` | call `get-transform` and keep the raw JS result. |
 | [`js-canvas2d-is-point-in-path`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/isPointInPath) | `(extern value f64 f64 value)` | `(i32)` | no | no | no | `(js-canvas2d-is-point-in-path ctx (void) 0.0 0.0 (void))` | call `is-point-in-path` and use the `i32` result. |
 | [`js-canvas2d-is-point-in-stroke`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/isPointInStroke) | `(extern value f64 f64)` | `(i32)` | no | no | no | `(js-canvas2d-is-point-in-stroke ctx (void) 0.0 0.0)` | call `is-point-in-stroke` and use the `i32` result. |
 | [`js-canvas2d-line-to`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineTo) | `(extern f64 f64)` | `()` | yes | no | no | `(js-canvas2d-line-to ctx 0.0 0.0)` | call `line-to` for side effects. |
-| [`js-canvas2d-measure-text`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/measureText) | `(extern string)` | `(extern)` | no | no | yes | `(js-canvas2d-measure-text ctx "x")` | call `measure-text` and keep the raw JS result. |
+| [`js-canvas2d-measure-text`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/measureText) | `(extern string)` | `(extern/raw)` | no | no | yes | `(js-canvas2d-measure-text ctx "x")` | call `measure-text` and keep the raw JS result. |
 | [`js-canvas2d-move-to`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/moveTo) | `(extern f64 f64)` | `()` | yes | no | no | `(js-canvas2d-move-to ctx 0.0 0.0)` | call `move-to` for side effects. |
 | [`js-canvas2d-put-image-data`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/putImageData) | `(extern extern f64 f64 value value value value)` | `()` | yes | no | no | `(js-canvas2d-put-image-data ctx obj2 0.0 0.0 (void) (void) (void) (void))` | call `put-image-data` for side effects. |
 | [`js-canvas2d-quadratic-curve-to`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/quadraticCurveTo) | `(extern f64 f64 f64 f64)` | `()` | yes | no | no | `(js-canvas2d-quadratic-curve-to ctx 0.0 0.0 0.0 0.0)` | call `quadratic-curve-to` for side effects. |
@@ -542,13 +546,13 @@ MDN root: [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HT
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-media-audio-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks) | `(extern)` | `(extern)` | no | no | yes | `(js-media-audio-tracks media)` | read `audio-tracks` as `extern`. |
+| [`js-media-audio-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-audio-tracks media)` | read `audio-tracks` as `extern`. |
 | [`js-media-autoplay`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/autoplay) | `(extern)` | `(i32)` | no | no | no | `(js-media-autoplay media)` | read `autoplay` as `i32`. |
 | [`js-set-media-autoplay!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/autoplay) | `(extern i32)` | `()` | yes | no | no | `(js-set-media-autoplay! media 1)` | set `autoplay` on a HTMLMediaElement value. |
-| [`js-media-buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered) | `(extern)` | `(extern)` | no | no | yes | `(js-media-buffered media)` | read `buffered` as `extern`. |
+| [`js-media-buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-buffered media)` | read `buffered` as `extern`. |
 | [`js-media-controls`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controls) | `(extern)` | `(i32)` | no | no | no | `(js-media-controls media)` | read `controls` as `i32`. |
 | [`js-set-media-controls!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controls) | `(extern i32)` | `()` | yes | no | no | `(js-set-media-controls! media 1)` | set `controls` on a HTMLMediaElement value. |
-| [`js-media-controls-list`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controlsList) | `(extern)` | `(extern)` | no | no | yes | `(js-media-controls-list media)` | read `controls-list` as `extern`. |
+| [`js-media-controls-list`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controlsList) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-controls-list media)` | read `controls-list` as `extern`. |
 | [`js-media-cross-origin`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin) | `(extern)` | `(value)` | no | no | yes | `(js-media-cross-origin media)` | read `cross-origin` as `value`. |
 | [`js-set-media-cross-origin!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin) | `(extern value)` | `()` | yes | no | no | `(js-set-media-cross-origin! media (void))` | set `cross-origin` on a HTMLMediaElement value. |
 | [`js-media-current-src`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentSrc) | `(extern)` | `(string)` | no | no | no | `(js-media-current-src media)` | read `current-src` as `string`. |
@@ -574,32 +578,32 @@ MDN root: [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HT
 | [`js-media-paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused) | `(extern)` | `(i32)` | no | no | no | `(js-media-paused media)` | read `paused` as `i32`. |
 | [`js-media-playback-rate`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate) | `(extern)` | `(f64)` | no | no | no | `(js-media-playback-rate media)` | read `playback-rate` as `f64`. |
 | [`js-set-media-playback-rate!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate) | `(extern f64)` | `()` | yes | no | no | `(js-set-media-playback-rate! media 0.0)` | set `playback-rate` on a HTMLMediaElement value. |
-| [`js-media-played`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/played) | `(extern)` | `(extern)` | no | no | yes | `(js-media-played media)` | read `played` as `extern`. |
+| [`js-media-played`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/played) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-played media)` | read `played` as `extern`. |
 | [`js-media-preload`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preload) | `(extern)` | `(string)` | no | no | no | `(js-media-preload media)` | read `preload` as `string`. |
 | [`js-set-media-preload!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preload) | `(extern string)` | `()` | yes | no | no | `(js-set-media-preload! media "x")` | set `preload` on a HTMLMediaElement value. |
 | [`js-media-preserves-pitch`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) | `(extern)` | `(i32)` | no | no | no | `(js-media-preserves-pitch media)` | read `preserves-pitch` as `i32`. |
 | [`js-set-media-preserves-pitch!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) | `(extern i32)` | `()` | yes | no | no | `(js-set-media-preserves-pitch! media 1)` | set `preserves-pitch` on a HTMLMediaElement value. |
 | [`js-media-ready-state`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState) | `(extern)` | `(u32)` | no | no | no | `(js-media-ready-state media)` | read `ready-state` as `u32`. |
-| [`js-media-seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable) | `(extern)` | `(extern)` | no | no | yes | `(js-media-seekable media)` | read `seekable` as `extern`. |
+| [`js-media-seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-seekable media)` | read `seekable` as `extern`. |
 | [`js-media-seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking) | `(extern)` | `(i32)` | no | no | no | `(js-media-seeking media)` | read `seeking` as `i32`. |
 | [`js-media-sink-id`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/sinkId) | `(extern)` | `(string)` | no | no | no | `(js-media-sink-id media)` | read `sink-id` as `string`. |
 | [`js-media-src`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src) | `(extern)` | `(string)` | no | no | no | `(js-media-src media)` | read `src` as `string`. |
 | [`js-set-media-src!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src) | `(extern string)` | `()` | yes | no | no | `(js-set-media-src! media "/img.png")` | set `src` on a HTMLMediaElement value. |
 | [`js-media-src-object`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject) | `(extern)` | `(extern)` | no | no | yes | `(js-media-src-object media)` | read `src-object` as `extern`. |
 | [`js-set-media-src-object!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject) | `(extern extern)` | `()` | yes | no | no | `(js-set-media-src-object! media obj2)` | set `src-object` on a HTMLMediaElement value. |
-| [`js-media-text-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/textTracks) | `(extern)` | `(extern)` | no | no | yes | `(js-media-text-tracks media)` | read `text-tracks` as `extern`. |
-| [`js-media-video-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/videoTracks) | `(extern)` | `(extern)` | no | no | yes | `(js-media-video-tracks media)` | read `video-tracks` as `extern`. |
+| [`js-media-text-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/textTracks) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-text-tracks media)` | read `text-tracks` as `extern`. |
+| [`js-media-video-tracks`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/videoTracks) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-video-tracks media)` | read `video-tracks` as `extern`. |
 | [`js-media-volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume) | `(extern)` | `(f64)` | no | no | no | `(js-media-volume media)` | read `volume` as `f64`. |
 | [`js-set-media-volume!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume) | `(extern f64)` | `()` | yes | no | no | `(js-set-media-volume! media 0.0)` | set `volume` on a HTMLMediaElement value. |
-| [`js-media-add-text-track!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/addTextTrack) | `(extern string value value)` | `(extern)` | yes | no | yes | `(js-media-add-text-track! media "x" (void) (void))` | call `add-text-track` and keep the raw JS result. |
+| [`js-media-add-text-track!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/addTextTrack) | `(extern string value value)` | `(extern/raw)` | yes | no | yes | `(js-media-add-text-track! media "x" (void) (void))` | call `add-text-track` and keep the raw JS result. |
 | [`js-media-can-play-type`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) | `(extern string)` | `(string)` | no | no | no | `(js-media-can-play-type media "x")` | call `can-play-type` and use the `string` result. |
-| [`js-media-capture-stream`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream) | `(extern value)` | `(extern)` | no | no | yes | `(js-media-capture-stream media (void))` | call `capture-stream` and keep the raw JS result. |
+| [`js-media-capture-stream`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream) | `(extern value)` | `(extern/raw)` | no | no | yes | `(js-media-capture-stream media (void))` | call `capture-stream` and keep the raw JS result. |
 | [`js-media-fast-seek!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/fastSeek) | `(extern f64)` | `()` | yes | no | no | `(js-media-fast-seek! media 0.0)` | call `fast-seek` for side effects. |
 | [`js-media-load!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load) | `(extern)` | `()` | yes | no | no | `(js-media-load! media)` | call `load` for side effects. |
 | [`js-media-pause`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/pause) | `(extern)` | `()` | yes | no | no | `(js-media-pause media)` | call `pause` for side effects. |
-| [`js-media-play`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play) | `(extern)` | `(extern)` | no | no | yes | `(js-media-play media)` | call `play` and keep the raw JS result. |
-| [`js-media-set-media-keys!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setMediaKeys) | `(extern extern)` | `(extern)` | yes | no | yes | `(js-media-set-media-keys! media obj2)` | call `media-keys` and keep the raw JS result. |
-| [`js-media-set-sink-id!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setSinkId) | `(extern string)` | `(extern)` | yes | no | yes | `(js-media-set-sink-id! media "root")` | call `sink-id` and keep the raw JS result. |
+| [`js-media-play`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-media-play media)` | call `play` and keep the raw JS result. |
+| [`js-media-set-media-keys!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setMediaKeys) | `(extern extern)` | `(extern/raw)` | yes | no | yes | `(js-media-set-media-keys! media obj2)` | call `media-keys` and keep the raw JS result. |
+| [`js-media-set-sink-id!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setSinkId) | `(extern string)` | `(extern/raw)` | yes | no | yes | `(js-media-set-sink-id! media "root")` | call `sink-id` and keep the raw JS result. |
 
 Note: Promise-like externals in this table: none.
 
@@ -610,7 +614,7 @@ MDN root: [HTMLImageElement](https://developer.mozilla.org/en-US/docs/Web/API/HT
 
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`js-image-new`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) | `(value value)` | `(extern)` | no | no | yes | `(js-image-new (void) (void))` | call `new` and keep the raw JS result. |
+| [`js-image-new`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image) | `(value value)` | `(extern/raw)` | no | no | yes | `(js-image-new (void) (void))` | call `new` and keep the raw JS result. |
 | [`js-image-alt`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt) | `(extern)` | `(string)` | no | no | no | `(js-image-alt img)` | read `alt` as `string`. |
 | [`js-set-image-alt!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt) | `(extern string)` | `()` | yes | no | no | `(js-set-image-alt! img "x")` | set `alt` on a HTMLImageElement value. |
 | [`js-image-src`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/src) | `(extern)` | `(string)` | no | no | no | `(js-image-src img)` | read `src` as `string`. |
@@ -645,7 +649,7 @@ MDN root: [HTMLImageElement](https://developer.mozilla.org/en-US/docs/Web/API/HT
 | [`js-set-image-name!`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/name) | `(extern string)` | `()` | yes | no | no | `(js-set-image-name! img "x")` | set `name` on a HTMLImageElement value. |
 | [`js-image-x`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/x) | `(extern)` | `(i32)` | no | no | no | `(js-image-x img)` | read `x` as `i32`. |
 | [`js-image-y`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/y) | `(extern)` | `(i32)` | no | no | no | `(js-image-y img)` | read `y` as `i32`. |
-| [`js-image-decode`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode) | `(extern)` | `(extern)` | no | no | yes | `(js-image-decode img)` | call `decode` and keep the promise-like JS result. |
+| [`js-image-decode`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-image-decode img)` | call `decode` and keep the promise-like JS result. |
 
 Note: Promise-like externals in this table: [`js-image-decode`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode).
 
@@ -722,4 +726,3 @@ old-role
 - `image`: 36 functions
 
 Deprecated forms that are commented out in `ffi/dom.ffi` are intentionally excluded.
-

@@ -13,7 +13,7 @@
 (define-foreign xterm-terminal-new
   #:module "xterm-terminal"
   #:name   "create"
-  (-> (value) (extern)))
+  (-> (value) (extern/raw)))
 
 ;;; Terminal properties
 
@@ -22,7 +22,7 @@
 (define-foreign xterm-terminal-buffer
   #:module "xterm-terminal"
   #:name   "buffer"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Number of columns in the viewport.
 ; (xterm-terminal-cols term:Extern) -> Unsigned-Integer
@@ -59,21 +59,21 @@
 (define-foreign xterm-terminal-markers
   #:module "xterm-terminal"
   #:name   "markers"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Terminal modes currently enabled.
 ; (xterm-terminal-modes term:Extern) -> Extern
 (define-foreign xterm-terminal-modes
   #:module "xterm-terminal"
   #:name   "modes"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Terminal options getter.
 ; (xterm-terminal-options term:Extern) -> Extern
 (define-foreign xterm-terminal-options
   #:module "xterm-terminal"
   #:name   "options"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Terminal options setter.
 ;; Provide a JS object describing the new options.
@@ -88,14 +88,14 @@
 (define-foreign xterm-terminal-parser
   #:module "xterm-terminal"
   #:name   "parser"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Unicode handling interface.
 ; (xterm-terminal-unicode term:Extern) -> Extern
 (define-foreign xterm-terminal-unicode
   #:module "xterm-terminal"
   #:name   "unicode"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;;; Terminal events
 
@@ -104,84 +104,84 @@
 (define-foreign xterm-terminal-on-bell
   #:module "xterm-terminal"
   #:name   "on-bell"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired for binary data.
 ; (xterm-terminal-on-binary term:Extern) -> Extern
 (define-foreign xterm-terminal-on-binary
   #:module "xterm-terminal"
   #:name   "on-binary"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when the cursor moves.
 ; (xterm-terminal-on-cursor-move term:Extern) -> Extern
 (define-foreign xterm-terminal-on-cursor-move
   #:module "xterm-terminal"
   #:name   "on-cursor-move"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when data is emitted by the terminal.
 ; (xterm-terminal-on-data term:Extern) -> Extern
 (define-foreign xterm-terminal-on-data
   #:module "xterm-terminal"
   #:name   "on-data"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when a key is pressed.
 ; (xterm-terminal-on-key term:Extern) -> Extern
 (define-foreign xterm-terminal-on-key
   #:module "xterm-terminal"
   #:name   "on-key"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when a line feed is added.
 ; (xterm-terminal-on-line-feed term:Extern) -> Extern
 (define-foreign xterm-terminal-on-line-feed
   #:module "xterm-terminal"
   #:name   "on-line-feed"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when rows are rendered.
 ; (xterm-terminal-on-render term:Extern) -> Extern
 (define-foreign xterm-terminal-on-render
   #:module "xterm-terminal"
   #:name   "on-render"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when the terminal is resized.
 ; (xterm-terminal-on-resize term:Extern) -> Extern
 (define-foreign xterm-terminal-on-resize
   #:module "xterm-terminal"
   #:name   "on-resize"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when the viewport scrolls.
 ; (xterm-terminal-on-scroll term:Extern) -> Extern
 (define-foreign xterm-terminal-on-scroll
   #:module "xterm-terminal"
   #:name   "on-scroll"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when the selection changes.
 ; (xterm-terminal-on-selection-change term:Extern) -> Extern
 (define-foreign xterm-terminal-on-selection-change
   #:module "xterm-terminal"
   #:name   "on-selection-change"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired when the terminal title changes.
 ; (xterm-terminal-on-title-change term:Extern) -> Extern
 (define-foreign xterm-terminal-on-title-change
   #:module "xterm-terminal"
   #:name   "on-title-change"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Event fired after write data was parsed.
 ; (xterm-terminal-on-write-parsed term:Extern) -> Extern
 (define-foreign xterm-terminal-on-write-parsed
   #:module "xterm-terminal"
   #:name   "on-write-parsed"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;;; Terminal methods
 
@@ -317,14 +317,14 @@
 (define-foreign xterm-terminal-register-decoration
   #:module "xterm-terminal"
   #:name   "register-decoration"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 ;; Register a custom link provider.
 ; (xterm-terminal-register-link-provider term:Extern provider:Extern) -> Extern
 (define-foreign xterm-terminal-register-link-provider
   #:module "xterm-terminal"
   #:name   "register-link-provider"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 ;; Register a marker relative to the cursor.
 ;; Pass (void) for `cursor-y-offset` to use the default offset of 0.
@@ -332,7 +332,7 @@
 (define-foreign xterm-terminal-register-marker
   #:module "xterm-terminal"
   #:name   "register-marker"
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 ;; Perform a full terminal reset.
 ; (xterm-terminal-reset term:Extern) -> Void
@@ -437,7 +437,7 @@
 (define-foreign xterm-fit-addon-new
   #:module "xterm-fit-addon"
   #:name   "create"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 ;;; FitAddon lifecycle
 

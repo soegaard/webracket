@@ -43,7 +43,8 @@ All function names are linked to JSXGraph API documentation.
 
 | Type | Meaning |
 |---|---|
-| `(extern)` | Raw JavaScript object reference (JSXGraph point object). |
+| `(extern)` | External JavaScript object reference (typically used for input parameters). |
+| `(extern/raw)` | Raw JavaScript return object reference (no `null`/`undefined` mapping). |
 | `(string)` | JavaScript string mapped to WebRacket string. |
 | `(f64)` | Double-precision floating-point number. |
 | `(i32)` | 32-bit integer. In this API it is often used as boolean flag (`0`/`1`). |
@@ -80,11 +81,11 @@ Reference root: [JXG.Point](https://jsxgraph.org/docs/symbols/JXG.Point.html)
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
 | [`jsx-point-attractor-distance`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(f64)` | `(jsx-point-attractor-distance pt)` | read the attractor capture distance. |
-| [`jsx-point-attractors`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(extern)` | `(jsx-point-attractors pt)` | inspect attractor points list. |
+| [`jsx-point-attractors`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(extern/raw)` | `(jsx-point-attractors pt)` | inspect attractor points list. |
 | [`jsx-point-attractor-unit`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(string)` | `(jsx-point-attractor-unit pt)` | read unit used for attractor distance. |
 | [`jsx-point-attract-to-grid`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(i32)` | `(jsx-point-attract-to-grid pt)` | check whether attract-to-grid is enabled. |
 | [`jsx-point-face`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(string)` | `(jsx-point-face pt)` | read point marker face. |
-| [`jsx-point-ignored-snap-to-points`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(extern)` | `(jsx-point-ignored-snap-to-points pt)` | read ignored points for snapping. |
+| [`jsx-point-ignored-snap-to-points`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(extern/raw)` | `(jsx-point-ignored-snap-to-points pt)` | read ignored points for snapping. |
 | [`jsx-point-infobox-digits`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(i32)` | `(jsx-point-infobox-digits pt)` | read infobox precision setting. |
 | [`jsx-point-show-infobox`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(i32)` | `(jsx-point-show-infobox pt)` | check whether infobox display is enabled. |
 | [`jsx-point-size`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `(f64)` | `(jsx-point-size pt)` | read point radius/size. |
@@ -136,7 +137,7 @@ Reference root: [JXG.Point](https://jsxgraph.org/docs/symbols/JXG.Point.html)
 | [`jsx-point-set-style!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern i32)` | `()` | `(jsx-point-set-style! pt 2)` | invoke point style setter method directly. |
 | [`jsx-point-update!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern i32)` | `()` | `(jsx-point-update! pt 1)` | recompute point position/state. |
 | [`jsx-point-update-renderer!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `()` | `(jsx-point-update-renderer! pt)` | trigger renderer refresh for current point state. |
-| [`jsx-point-update-transform!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern i32)` | `(extern)` | `(jsx-point-update-transform! pt 1)` | apply transformations and get transformed base element. |
+| [`jsx-point-update-transform!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern i32)` | `(extern/raw)` | `(jsx-point-update-transform! pt 1)` | apply transformations and get transformed base element. |
 
 ## Chapter 7 — Board API
 
@@ -148,24 +149,24 @@ Reference roots:
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`jsx-init-board`](https://jsxgraph.org/docs/symbols/JXG.JSXGraph.html) | `(string value)` | `(extern)` | `(jsx-init-board "box" attrs)` | initialize a board in a DOM container. |
-| [`jsx-board-create`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern string value value)` | `(extern)` | `(jsx-board-create board "point" parents attrs)` | create an element on an existing board. |
-| [`jsx-board-create-point`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-point board #[-3 1] attrs)` | create a point with a direct constructor wrapper. |
-| [`jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-line board #[p q] attrs)` | create a line using two points or coordinate parents. |
-| [`jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-segment board #[p q] attrs)` | create a finite segment between two parents. |
-| [`jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-circle board #[center p] attrs)` | create a circle from center+point or compatible parents. |
-| [`jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
-| [`jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-text board #[-5 5 "A"] attrs)` | create positioned text labels and annotations. |
+| [`jsx-init-board`](https://jsxgraph.org/docs/symbols/JXG.JSXGraph.html) | `(string value)` | `(extern/raw)` | `(jsx-init-board "box" attrs)` | initialize a board in a DOM container. |
+| [`jsx-board-create`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern string value value)` | `(extern/raw)` | `(jsx-board-create board "point" parents attrs)` | create an element on an existing board. |
+| [`jsx-board-create-point`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-point board #[-3 1] attrs)` | create a point with a direct constructor wrapper. |
+| [`jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-line board #[p q] attrs)` | create a line using two points or coordinate parents. |
+| [`jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-segment board #[p q] attrs)` | create a finite segment between two parents. |
+| [`jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-circle board #[center p] attrs)` | create a circle from center+point or compatible parents. |
+| [`jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
+| [`jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(jsx-board-create-text board #[-5 5 "A"] attrs)` | create positioned text labels and annotations. |
 
 ### 7.2 Lifecycle and Updates
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`jsx-board-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-update! board)` | update board state and redraw as needed. |
-| [`jsx-board-full-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-full-update! board)` | force a full board update pass. |
+| [`jsx-board-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern/raw)` | `(jsx-board-update! board)` | update board state and redraw as needed. |
+| [`jsx-board-full-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern/raw)` | `(jsx-board-full-update! board)` | force a full board update pass. |
 | [`jsx-board-remove-object!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern extern)` | `()` | `(jsx-board-remove-object! board obj)` | remove a previously created element. |
-| [`jsx-board-suspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-suspend-update! board)` | batch changes without intermediate redraws. |
-| [`jsx-board-unsuspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-unsuspend-update! board)` | resume redraws after batched changes. |
+| [`jsx-board-suspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern/raw)` | `(jsx-board-suspend-update! board)` | batch changes without intermediate redraws. |
+| [`jsx-board-unsuspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern/raw)` | `(jsx-board-unsuspend-update! board)` | resume redraws after batched changes. |
 
 ## Chapter 8 — Mini Workflows
 

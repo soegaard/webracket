@@ -69,6 +69,44 @@ Method call returning raw external JS value (no value conversion).
 
 Use this when you need to keep chaining JS operations on the same JS object/result.
 
+### `js-send/extern/null`
+
+Method call returning extern except when the JS result is `null`, which becomes `#f`.
+
+```racket
+(define obj (js-eval "({ f: () => null, g: () => 'ok' })"))
+(js-send/extern/null obj "f" (vector))
+;; => #f
+(external-string->string (js-send/extern/null obj "g" (vector)))
+;; => "ok"
+```
+
+### `js-send/extern/undefined`
+
+Method call returning extern except when the JS result is `undefined`, which becomes `#f`.
+
+```racket
+(define obj (js-eval "({ f: () => undefined, g: () => 'ok' })"))
+(js-send/extern/undefined obj "f" (vector))
+;; => #f
+(external-string->string (js-send/extern/undefined obj "g" (vector)))
+;; => "ok"
+```
+
+### `js-send/extern/nullish`
+
+Method call returning extern except when the JS result is `null` or `undefined`, both mapped to `#f`.
+
+```racket
+(define obj (js-eval "({ n: () => null, u: () => undefined, g: () => 'ok' })"))
+(js-send/extern/nullish obj "n" (vector))
+;; => #f
+(js-send/extern/nullish obj "u" (vector))
+;; => #f
+(external-string->string (js-send/extern/nullish obj "g" (vector)))
+;; => "ok"
+```
+
 ### `js-send/boolean`
 
 Method call expecting a boolean result. Accepts JS `true/false` and `Boolean` objects; raises an error for other result types.
@@ -98,6 +136,9 @@ Method call using JS truthiness (`0`, `""`, `null`, `undefined`, etc. are falsey
 - Use `js-send` for normal interop where converted Racket values are what you want.
 - Use `js-send/value` when you want to be explicit about conversion in code/readability.
 - Use `js-send/extern` when the result must stay a JS external object.
+- Use `js-send/extern/null` when `null` means "missing".
+- Use `js-send/extern/undefined` when `undefined` means "missing".
+- Use `js-send/extern/nullish` when either `null` or `undefined` should become `#f`.
 - Use `js-send/boolean` when non-boolean results are a bug and should fail fast.
 - Use `js-send/truthy` when JS truthiness semantics are intended.
 
@@ -107,6 +148,10 @@ Method call using JS truthiness (`0`, `""`, `null`, `undefined`, etc. are falsey
   - `js-send` / `js-send/value`
 - DOM/JS object chaining:
   - `js-send/extern`
+- Optional-handle APIs:
+  - `js-send/extern/null`
+  - `js-send/extern/undefined`
+  - `js-send/extern/nullish`
 - Predicate-style JS APIs (e.g., `includes`, `has`, `matches`) where strictness matters:
   - `js-send/boolean`
 - APIs where "is this value truthy?" is enough:

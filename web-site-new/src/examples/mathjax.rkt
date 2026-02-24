@@ -112,7 +112,7 @@
   (define existing (js-get-element-by-id "mathjax-script"))
 
   (cond
-    [(not (js-nullish? existing))
+    [existing
      ;; Script tag already present: just wait for load
      ;; (or if already loaded, the load event may never fire again).
      (js-add-event-listener! existing "load" mathjax-loaded-handler)]

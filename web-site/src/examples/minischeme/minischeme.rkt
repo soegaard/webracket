@@ -1177,7 +1177,7 @@
              (when (< arg-count req-count)
                (error 'minischeme "arity mismatch: expected at least ~a arguments, got ~a"
                       req-count arg-count))
-             (when (not (= req-count arg-count))
+             (unless (= req-count arg-count)
                (error 'minischeme "arity mismatch: expected ~a arguments, got ~a"
                       req-count arg-count)))
          (define new-env (make-env (closure-env value)))

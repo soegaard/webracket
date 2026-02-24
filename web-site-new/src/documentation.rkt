@@ -1184,8 +1184,8 @@
                      ,(doc-heading 2 "3. FFI type language (argument + result types)")
                      (p "The type language is intentionally small. Here are the core types and what they mean:")
                      (div (@ (class "ffi-table"))
-                          (table (@ (class "ffi-type-table") (aria-label "FFI core types"))
-                                 (caption "FFI core types")
+                          (table (@ (class "ffi-type-table") (aria-label "FFI argument types"))
+                                 (caption "FFI argument types")
                                  (thead
                                   (tr
                                    (th (@ (scope "col")) "Type")
@@ -1209,6 +1209,10 @@
                                    (td "An external JavaScript object (externref wrapper).")
                                    (td (@ (class "ffi-note-cell is-empty")) "—"))
                                   (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern/raw"))
+                                   (td "Alias for extern in argument position.")
+                                   (td (@ (class "ffi-note-cell")) "Optional explicit spelling."))
+                                  (tr
                                    (td (@ (class "ffi-type-cell")) (code "i32"))
                                    (td "Fixnum to signed 32-bit integer.")
                                    (td (@ (class "ffi-note-cell is-empty")) "—"))
@@ -1223,6 +1227,59 @@
                                   (tr
                                    (td (@ (class "ffi-type-cell")) (code "boolean"))
                                    (td "#f/#t to 0/1.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—")))))
+                     (div (@ (class "ffi-table"))
+                          (table (@ (class "ffi-type-table") (aria-label "FFI return types"))
+                                 (caption "FFI return types")
+                                 (thead
+                                  (tr
+                                   (th (@ (scope "col")) "Type")
+                                   (th (@ (scope "col")) "Meaning / mapping")
+                                   (th (@ (scope "col")) "Notes")))
+                                 (tbody
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "string"))
+                                   (td "A JavaScript string decoded to a WebRacket string.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "value"))
+                                   (td "Any JavaScript value decoded through the FASL bridge.")
+                                   (td (@ (class "ffi-note-cell")) "Marshaled via FASL."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern"))
+                                   (td "JS null maps to #f; other results are wrapped as external values.")
+                                   (td (@ (class "ffi-note-cell")) "Default extern return behavior."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern/raw"))
+                                   (td "An externref wrapped as a WebRacket external value.")
+                                   (td (@ (class "ffi-note-cell")) "Legacy extern behavior."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern/null"))
+                                   (td "Alias for extern: JS null maps to #f; other results are wrapped as external values.")
+                                   (td (@ (class "ffi-note-cell")) "Return type only."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern/undefined"))
+                                   (td "JS undefined maps to #f; other results are wrapped as external values.")
+                                   (td (@ (class "ffi-note-cell")) "Return type only."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "extern/nullish"))
+                                   (td "JS null or undefined map to #f; other results are wrapped as external values.")
+                                   (td (@ (class "ffi-note-cell")) "Return type only."))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "i32"))
+                                   (td "Signed 32-bit integer re-tagged as a fixnum.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "u32"))
+                                   (td "Unsigned 32-bit integer re-tagged as a fixnum.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "f64"))
+                                   (td "JavaScript number boxed as a flonum.")
+                                   (td (@ (class "ffi-note-cell is-empty")) "—"))
+                                  (tr
+                                   (td (@ (class "ffi-type-cell")) (code "boolean"))
+                                   (td "0/1 converted to #f/#t.")
                                    (td (@ (class "ffi-note-cell is-empty")) "—"))
                                   (tr
                                    (td (@ (class "ffi-type-cell")) (code "void"))

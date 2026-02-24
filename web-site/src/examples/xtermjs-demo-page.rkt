@@ -135,17 +135,17 @@
 ;;;
 
 (define (start-demo . _)
-  (when (not xtermjs-demo-started?)
+  (unless xtermjs-demo-started?
     (set! xtermjs-demo-started? #t)
 
         (define head (js-document-head))
         (define container (js-get-element-by-id "xtermjs-demo-root"))
-        (when (js-nullish? container)
+        (unless container
           (error 'xtermjs-demo "missing #xtermjs-demo-root container"))
 
         (define style-id "xtermjs-demo-style")
         (define style-existing (js-get-element-by-id style-id))
-        (when (js-nullish? style-existing)
+        (unless style-existing
           (define style (js-create-element "style"))
           (js-set-attribute! style "id" style-id)
           (js-set! style "textContent"
@@ -315,9 +315,9 @@
   ; Use webgl addon (needed for the powerline glyps to render correctly)
   (define win             (js-window-window))
   (define webgl-namespace (js-ref/extern win "WebglAddon"))
-  (when (not (js-nullish? webgl-namespace))
+  (unless (js-nullish? webgl-namespace)
     (define webgl-constructor (js-ref/extern webgl-namespace "WebglAddon"))
-    (when (not (js-nullish? webgl-constructor))
+    (unless (js-nullish? webgl-constructor)
       (define webgl (js-new webgl-constructor (vector)))
       (xterm-terminal-load-addon term webgl)))
 
@@ -742,7 +742,7 @@
 
   (define style-id "xtermjs-demo-xterm-css")
   (define style-existing (js-get-element-by-id style-id))
-  (when (js-nullish? style-existing)
+  (unless style-existing
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -760,7 +760,7 @@
                           (void))))
 
   (cond
-    [(not (js-nullish? script-existing))
+    [script-existing
      (js-add-event-listener! script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))
@@ -770,7 +770,7 @@
      (js-append-child! head script)])
 
   (cond
-    [(not (js-nullish? webgl-script-existing))
+    [webgl-script-existing
      (js-add-event-listener! webgl-script-existing "load" maybe-init-external)]
     [else
      (define script (js-create-element "script"))

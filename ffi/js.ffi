@@ -13,13 +13,13 @@
   #:module "array"
   #:name   "from"
   ;; Pass `(void)` for missing map function and this argument.
-  (-> (value extern value) (extern)))
+  (-> (value extern value) (extern/raw)))
 
 (define-foreign js-array-from-async
   #:module "array"
   #:name   "from-async"
   ;; Pass `(void)` for missing map function and this argument.
-  (-> (value extern value) (extern)))
+  (-> (value extern value) (extern/raw)))
 
 (define-foreign js-array-is-array
   #:module "array"
@@ -30,7 +30,7 @@
   #:module "array"
   #:name   "of"
   ;; `items` should be a list or vector.
-  (-> (value) (extern)))
+  (-> (value) (extern/raw)))
 
 ;;; Properties
 
@@ -60,18 +60,18 @@
   #:module "array"
   #:name   "concat"
   ;; `items` should be a list or vector.
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-array-copy-within
   #:module "array"
   #:name   "copy-within"
   ;; Pass `(void)` for missing end.
-  (-> (extern i32 i32 value) (extern)))
+  (-> (extern i32 i32 value) (extern/raw)))
 
 (define-foreign js-array-entries
   #:module "array"
   #:name   "entries"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-array-every
   #:module "array"
@@ -83,13 +83,13 @@
   #:module "array"
   #:name   "fill"
   ;; Pass `(void)` for missing start and end.
-  (-> (extern value value value) (extern)))
+  (-> (extern value value value) (extern/raw)))
 
 (define-foreign js-array-filter
   #:module "array"
   #:name   "filter"
   ;; Pass `(void)` for missing this-arg.
-  (-> (extern extern value) (extern)))
+  (-> (extern extern value) (extern/raw)))
 
 (define-foreign js-array-find
   #:module "array"
@@ -119,13 +119,13 @@
   #:module "array"
   #:name   "flat"
   ;; Pass `(void)` for missing depth.
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-array-flat-map
   #:module "array"
   #:name   "flat-map"
   ;; Pass `(void)` for missing this-arg.
-  (-> (extern extern value) (extern)))
+  (-> (extern extern value) (extern/raw)))
 
 (define-foreign js-array-for-each
   #:module "array"
@@ -154,7 +154,7 @@
 (define-foreign js-array-keys
   #:module "array"
   #:name   "keys"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-array-last-index-of
   #:module "array"
@@ -166,7 +166,7 @@
   #:module "array"
   #:name   "map"
   ;; Pass `(void)` for missing this-arg.
-  (-> (extern extern value) (extern)))
+  (-> (extern extern value) (extern/raw)))
 
 (define-foreign js-array-pop
   #:module "array"
@@ -194,7 +194,7 @@
 (define-foreign js-array-reverse
   #:module "array"
   #:name   "reverse"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-array-shift
   #:module "array"
@@ -205,7 +205,7 @@
   #:module "array"
   #:name   "slice"
   ;; Pass `(void)` for missing start and end.
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 (define-foreign js-array-some
   #:module "array"
@@ -217,13 +217,13 @@
   #:module "array"
   #:name   "sort"
   ;; Pass `(void)` for missing compare-function.
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-array-splice
   #:module "array"
   #:name   "splice"
   ;; `items` should be a list or vector.
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-array-to-locale-string
   #:module "array"
@@ -245,27 +245,27 @@
 (define-foreign js-array-values
   #:module "array"
   #:name   "values"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-array-to-reversed
   #:module "array"
   #:name   "to-reversed"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-array-to-sorted
   #:module "array"
   #:name   "to-sorted"
   ;; Pass `(void)` for missing compare-function.
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-array-to-spliced
   #:module "array"
   #:name   "to-spliced"
   ;; `items` should be a list or vector.
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-array-with
   #:module "array"
   #:name   "with"
-  (-> (extern i32 value) (extern)))
+  (-> (extern i32 value) (extern/raw)))
 

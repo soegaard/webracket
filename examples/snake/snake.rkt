@@ -175,7 +175,7 @@
               (update-score!)
               (set! apple (spawn-apple new-snake))
               (draw!)
-              (when (not apple)
+              (unless apple
                 (game-over! (string-append "You win! Final score: "
                                            (number->string score)))))
             (begin

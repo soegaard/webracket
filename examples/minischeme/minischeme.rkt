@@ -366,7 +366,7 @@
          [new (make-vector (max 0 (sub1 len)))])
     (let loop ([i 0])
       (when (< i len)
-        (when (not (= i idx))
+        (unless (= i idx)
           (define dest (if (< i idx) i (sub1 i)))
           (vector-set! new dest (vector-ref vec i)))
         (loop (add1 i))))
@@ -720,7 +720,7 @@
 ;;;
 
 (define (render-line! line prompt-line?)
-  (when (not (line-rendered line))
+  (unless (line-rendered line)
     (define raw (line-raw line))
     (define sanitized
       (let loop ([i 0]
@@ -1487,7 +1487,7 @@
   (define screen        (js-query-selector ".xterm-screen"))
   (define cols          (and term (xterm-terminal-cols term)))
   (define rows          (and term (xterm-terminal-rows term)))
-  (define rect          (and screen (js-send/extern screen "getBoundingClientRect" (vector))))
+  (define rect          (and screen (js-send/extern/null screen "getBoundingClientRect" (vector))))
   (define total-width   (and rect (js-ref rect "width")))
   (define total-height  (and rect (js-ref rect "height")))
   (define valid-cols?   (and (number? cols) (> cols 0)))
@@ -1502,7 +1502,7 @@
   (define target (or (js-ref event "currentTarget") (js-ref event "target")))
   (define-values (cell-width cell-height) (terminal-cell-dimensions))
   (if (and target cell-width cell-height)
-      (let* ([rect      (js-send/extern target "getBoundingClientRect" (vector))]
+      (let* ([rect      (js-send/extern/null target "getBoundingClientRect" (vector))]
              [left      (and rect (js-ref rect "left"))]
              [top       (and rect (js-ref rect "top"))]
              [client-x  (js-ref event "clientX")]
@@ -1928,7 +1928,7 @@
          (when (< arg-count req-count)
            (error 'minischeme "arity mismatch: expected at least ~a arguments, got ~a"
                   req-count arg-count))
-         (when (not (= req-count arg-count))
+         (unless (= req-count arg-count)
            (error 'minischeme "arity mismatch: expected ~a arguments, got ~a"
                   req-count arg-count)))
      (define new-env (make-env (closure-env value)))

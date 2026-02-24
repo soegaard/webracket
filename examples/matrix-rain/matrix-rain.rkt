@@ -192,7 +192,7 @@
 
   (define (maybe-spawn-drops! dt)
     (for ([col (in-range columns)])
-      (when (not (vector-ref column-drops col))
+      (unless (vector-ref column-drops col)
         (when (< (randf) (* base-spawn-rate dt))
           (spawn-drop! col)))))
 
@@ -291,4 +291,3 @@
 ;;;
 
 (load-and-start)
-

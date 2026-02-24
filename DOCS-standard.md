@@ -56,7 +56,10 @@ Assumption in examples: the program is compiled with `--ffi standard`.
 
 | Type | Meaning |
 |---|---|
-| `(extern)` | Raw JavaScript value/object reference (no WebRacket value conversion). |
+| `(extern)` | External JavaScript value/object reference. In return position, JS `null` maps to `#f`. |
+| `(extern/raw)` | Raw JavaScript return value/object reference (no `null`/`undefined` mapping). |
+| `(extern/undefined)` | External JavaScript return where JS `undefined` maps to `#f`. |
+| `(extern/nullish)` | External JavaScript return where JS `null` or `undefined` maps to `#f`. |
 | `(value)` | WebRacket value; JS results/inputs are converted through the FFI value bridge. |
 | `(boolean)` | WebRacket boolean (`#t` / `#f`). |
 | `(i32)` | 32-bit integer (often legacy 0/1 booleans in older wrappers). |
@@ -102,11 +105,11 @@ These are the functions you will use most in application code.
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-global-this`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis) | `()` | `(extern)` | `(js-global-this)` | you need the JS global object as an external value. |
+| [`js-global-this`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis) | `()` | `(extern/raw)` | `(js-global-this)` | you need the JS global object as an external value. |
 | [`js-infinity`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity) | `()` | `(f64)` | `(js-infinity)` | you want JS `Infinity` as a flonum. |
 | [`js-nan`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN) | `()` | `(f64)` | `(js-nan)` | you want JS `NaN` as a flonum. |
-| [`js-null`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null) | `()` | `(extern)` | `(js-null)` | an API needs literal JS `null`. |
-| [`js-undefined`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined) | `()` | `(extern)` | `(js-undefined)` | an API needs literal JS `undefined`. |
+| [`js-null`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null) | `()` | `(extern/raw)` | `(js-null)` | an API needs literal JS `null`. |
+| [`js-undefined`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined) | `()` | `(extern/raw)` | `(js-undefined)` | an API needs literal JS `undefined`. |
 
 ### 2.2 Value Predicates
 
@@ -127,7 +130,7 @@ Falsy values are `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`, and
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval) | `(string)` | `(extern)` | `(js-eval "({x: 10})")` | you must evaluate JS source dynamically. |
+| [`js-eval`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval) | `(string)` | `(extern/raw)` | `(js-eval "({x: 10})")` | you must evaluate JS source dynamically. |
 | [`js-parse-float`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat) | `(string)` | `(f64)` | `(js-parse-float "3.14abc")` | you want JS global `parseFloat` behavior. |
 | [`js-parse-int`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) | `(string)` | `(f64)` | `(js-parse-int "42")` | you want JS global `parseInt` behavior. |
 | [`js-decode-uri`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI) | `(string)` | `(string)` | `(js-decode-uri "https://a.test/?q=a%20b")` | you decode a full URI string. |
@@ -139,8 +142,8 @@ Falsy values are `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`, and
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-var`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis) | `(string)` | `(extern)` | `(js-var "Math")` | you need `globalThis[name]`. |
-| [`js-ref/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol)` | `(extern)` | `(js-ref/extern (js-var "window") "document")` | you need a raw JS property value as extern. |
+| [`js-var`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis) | `(string)` | `(extern/raw)` | `(js-var "Math")` | you need `globalThis[name]`. |
+| [`js-ref/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol)` | `(extern/raw)` | `(js-ref/extern (js-var "window") "document")` | you need a raw JS property value as extern. |
 | [`js-ref`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol)` | `(value)` | `(js-ref (js-eval "({a:1})") "a")` | you want a property converted to a WebRacket value. |
 | [`js-set!`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Assignment) | `(extern value value)` | `()` | `(js-set! (js-eval "({})") "x" 10)` | you need `obj[key] = value`. |
 | [`js-index`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern value)` | `(value)` | `(js-index (js-array/extern (vector 10 20)) 1)` | you read an indexed value and want conversion. |
@@ -150,13 +153,13 @@ Falsy values are `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`, and
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-new`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new) | `(extern value)` | `(extern)` | `(js-new (js-Date) (vector))` | you need `new Ctor(...args)`. |
+| [`js-new`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new) | `(extern value)` | `(extern/raw)` | `(js-new (js-Date) (vector))` | you need `new Ctor(...args)`. |
 | [`js-throw`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw) | `(value)` | `()` | `(js-throw "boom")` | you need to throw a JS exception. |
-| [`js-this`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) | `()` | `(extern)` | `(js-this)` | you need the current JS `this` (callback contexts). |
-| [`js-object`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer) | `(value)` | `(extern)` | `(js-object (vector (vector "x" 1) (vector "y" 2)))` | you need a JS object literal from key/value pairs. |
+| [`js-this`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) | `()` | `(extern/raw)` | `(js-this)` | you need the current JS `this` (callback contexts). |
+| [`js-object`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer) | `(value)` | `(extern/raw)` | `(js-object (vector (vector "x" 1) (vector "y" 2)))` | you need a JS object literal from key/value pairs. |
 | [`js-array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | `(value)` | `(value)` | `(js-array (vector 1 2 3))` | you need a JS array result converted to a WebRacket value. |
-| [`js-array/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | `(value)` | `(extern)` | `(js-array/extern (vector 1 2 3))` | you need a raw external JS array. |
-| [`js-Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | `(value)` | `(extern)` | `(js-Array)` | you need the JS `Array` constructor reference. |
+| [`js-array/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | `(value)` | `(extern/raw)` | `(js-array/extern (vector 1 2 3))` | you need a raw external JS array. |
+| [`js-Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) | `(value)` | `(extern/raw)` | `(js-Array)` | you need the JS `Array` constructor reference. |
 
 
 ### 2.6 Method Calls
@@ -164,7 +167,10 @@ Falsy values are `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`, and
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
 | [`js-send`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(value)` | `(js-send (js-array/extern (vector 1 2 3)) "join" (vector "-"))` | default method call with value conversion. |
-| [`js-send/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(extern)` | `(js-send/extern (js-array/extern (vector 1 2 3)) "slice" (vector 1))` | you need raw external method result. |
+| [`js-send/extern`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(extern/raw)` | `(js-send/extern (js-array/extern (vector 1 2 3)) "slice" (vector 1))` | you need raw external method result. |
+| [`js-send/extern/null`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(extern)` | `(js-send/extern/null (js-eval "({f:()=>null})") "f" (vector))` | `null` should be treated as missing (`#f`). |
+| [`js-send/extern/undefined`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(extern/undefined)` | `(js-send/extern/undefined (js-eval "({f:()=>undefined})") "f" (vector))` | `undefined` should be treated as missing (`#f`). |
+| [`js-send/extern/nullish`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(extern/nullish)` | `(js-send/extern/nullish (js-eval "({f:()=>null})") "f" (vector))` | both `null` and `undefined` should map to `#f`. |
 | [`js-send/value`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(value)` | `(js-send/value (js-array/extern (vector 1 2 3)) "slice" (vector 1))` | you want explicit value-converting method call. |
 | [`js-send/boolean`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(boolean)` | `(js-send/boolean (js-array/extern (vector 1 2 3)) "includes" (vector 2))` | the method must return a boolean; fail otherwise. |
 | [`js-send/truthy`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors) | `(extern string/symbol value)` | `(boolean)` | `(js-send/truthy (js-eval "({f:()=>0})") "f" (vector))` | you want JS truthiness mapped to `#t/#f`. |
@@ -172,9 +178,12 @@ Falsy values are `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN`, and
 
 Notes:
 - `send/extern` => raw JS result
+- `send/extern/null` => `null` becomes `#f`; other results stay extern
+- `send/extern/undefined` => `undefined` becomes `#f`; other results stay extern
+- `send/extern/nullish` => `null`/`undefined` become `#f`; other results stay extern
 - `send/value` => JS result converted via FASL
 - `send/boolean` => strict boolean result; throws on non-boolean
-- `send/truthy` => JS truthiness to 0/1
+- `send/truthy` => JS truthiness to `#t`/`#f`
 - default `send` mirrors `send/value`
 
 Error behavior:
@@ -196,7 +205,7 @@ Error behavior:
 | [`js-typeof`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof) | `(extern)` | `(string)` | `(js-typeof (js-var "Math"))` | you need JS `typeof` classification. |
 | [`js-value->string`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/String) | `(extern)` | `(string)` | `(js-value->string (js-send/extern (js-array/extern (vector 1 2)) "join" (vector ",")))` | you need JS string coercion for an extern value. |
 | [`js-instanceof`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof) | `(extern extern)` | `(boolean)` | `(js-instanceof (js-array/extern (vector)) (js-ref (js-global-this) "Array"))` | you need JS `instanceof` check. |
-| [`js-operator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators) | `(string/symbol value)` | `(extern)` | `(js-operator "+" (vector 1 2))` | you need dynamic operator application. |
+| [`js-operator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators) | `(string/symbol value)` | `(extern/raw)` | `(js-operator "+" (vector 1 2))` | you need dynamic operator application. |
 
 ### 2.8 Legacy Wrappers
 
@@ -308,119 +317,119 @@ For constructor-like globals, a safe check is:
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Object`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) | `()` | `(extern)` | `(js-typeof (js-Object))` | you need the JS global reference (`Object`). |
-| [`js-Function`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) | `()` | `(extern)` | `(js-typeof (js-Function))` | you need the JS global reference (`Function`). |
-| [`js-Boolean`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | `()` | `(extern)` | `(js-typeof (js-Boolean))` | you need the JS global reference (`Boolean`). |
-| [`js-Symbol`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol) | `()` | `(extern)` | `(js-typeof (js-Symbol))` | you need the JS global reference (`Symbol`). |
+| [`js-Object`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) | `()` | `(extern/raw)` | `(js-typeof (js-Object))` | you need the JS global reference (`Object`). |
+| [`js-Function`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) | `()` | `(extern/raw)` | `(js-typeof (js-Function))` | you need the JS global reference (`Function`). |
+| [`js-Boolean`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean) | `()` | `(extern/raw)` | `(js-typeof (js-Boolean))` | you need the JS global reference (`Boolean`). |
+| [`js-Symbol`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol) | `()` | `(extern/raw)` | `(js-typeof (js-Symbol))` | you need the JS global reference (`Symbol`). |
 
 ### 4.2 Error Types
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) | `()` | `(extern)` | `(js-typeof (js-Error))` | you need the constructor for a specific JS error type (`Error`). |
-| [`js-AggregateError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AggregateError) | `()` | `(extern)` | `(js-typeof (js-AggregateError))` | you need the constructor for a specific JS error type (`AggregateError`). |
-| [`js-EvalError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError) | `()` | `(extern)` | `(js-typeof (js-EvalError))` | you need the constructor for a specific JS error type (`EvalError`). |
-| [`js-RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError) | `()` | `(extern)` | `(js-typeof (js-RangeError))` | you need the constructor for a specific JS error type (`RangeError`). |
-| [`js-ReferenceError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError) | `()` | `(extern)` | `(js-typeof (js-ReferenceError))` | you need the constructor for a specific JS error type (`ReferenceError`). |
-| [`js-SuppressedError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SuppressedError) | `()` | `(extern)` | `(js-typeof (js-SuppressedError))` | you need the constructor for a specific JS error type (`SuppressedError`). |
-| [`js-SyntaxError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError) | `()` | `(extern)` | `(js-typeof (js-SyntaxError))` | you need the constructor for a specific JS error type (`SyntaxError`). |
-| [`js-TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError) | `()` | `(extern)` | `(js-typeof (js-TypeError))` | you need the constructor for a specific JS error type (`TypeError`). |
-| [`js-URIError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError) | `()` | `(extern)` | `(js-typeof (js-URIError))` | you need the constructor for a specific JS error type (`URIError`). |
-| [`js-InternalError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError) | `()` | `(extern)` | `(js-typeof (js-InternalError))` | you need the constructor for a specific JS error type (`InternalError`). |
+| [`js-Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) | `()` | `(extern/raw)` | `(js-typeof (js-Error))` | you need the constructor for a specific JS error type (`Error`). |
+| [`js-AggregateError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AggregateError) | `()` | `(extern/raw)` | `(js-typeof (js-AggregateError))` | you need the constructor for a specific JS error type (`AggregateError`). |
+| [`js-EvalError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError) | `()` | `(extern/raw)` | `(js-typeof (js-EvalError))` | you need the constructor for a specific JS error type (`EvalError`). |
+| [`js-RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError) | `()` | `(extern/raw)` | `(js-typeof (js-RangeError))` | you need the constructor for a specific JS error type (`RangeError`). |
+| [`js-ReferenceError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError) | `()` | `(extern/raw)` | `(js-typeof (js-ReferenceError))` | you need the constructor for a specific JS error type (`ReferenceError`). |
+| [`js-SuppressedError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SuppressedError) | `()` | `(extern/raw)` | `(js-typeof (js-SuppressedError))` | you need the constructor for a specific JS error type (`SuppressedError`). |
+| [`js-SyntaxError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError) | `()` | `(extern/raw)` | `(js-typeof (js-SyntaxError))` | you need the constructor for a specific JS error type (`SyntaxError`). |
+| [`js-TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError) | `()` | `(extern/raw)` | `(js-typeof (js-TypeError))` | you need the constructor for a specific JS error type (`TypeError`). |
+| [`js-URIError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError) | `()` | `(extern/raw)` | `(js-typeof (js-URIError))` | you need the constructor for a specific JS error type (`URIError`). |
+| [`js-InternalError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError) | `()` | `(extern/raw)` | `(js-typeof (js-InternalError))` | you need the constructor for a specific JS error type (`InternalError`). |
 
 ### 4.3 Numbers, Dates, and Text
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Number`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number) | `()` | `(extern)` | `(js-typeof (js-Number))` | you need the constructor/namespace (`Number`). |
-| [`js-BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) | `()` | `(extern)` | `(js-typeof (js-BigInt))` | you need the constructor/namespace (`BigInt`). |
-| [`js-Math`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math) | `()` | `(extern)` | `(js-typeof (js-Math))` | you need the constructor/namespace (`Math`). |
-| [`js-Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) | `()` | `(extern)` | `(js-typeof (js-Date))` | you need the constructor/namespace (`Date`). |
-| [`js-Temporal`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Temporal) | `()` | `(extern)` | `(js-typeof (js-Temporal))` | you need the constructor/namespace (`Temporal`). |
-| [`js-String`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) | `()` | `(extern)` | `(js-typeof (js-String))` | you need the constructor/namespace (`String`). |
-| [`js-RegExp`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) | `()` | `(extern)` | `(js-typeof (js-RegExp))` | you need the constructor/namespace (`RegExp`). |
+| [`js-Number`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number) | `()` | `(extern/raw)` | `(js-typeof (js-Number))` | you need the constructor/namespace (`Number`). |
+| [`js-BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) | `()` | `(extern/raw)` | `(js-typeof (js-BigInt))` | you need the constructor/namespace (`BigInt`). |
+| [`js-Math`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math) | `()` | `(extern/raw)` | `(js-typeof (js-Math))` | you need the constructor/namespace (`Math`). |
+| [`js-Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) | `()` | `(extern/raw)` | `(js-typeof (js-Date))` | you need the constructor/namespace (`Date`). |
+| [`js-Temporal`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Temporal) | `()` | `(extern/raw)` | `(js-typeof (js-Temporal))` | you need the constructor/namespace (`Temporal`). |
+| [`js-String`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) | `()` | `(extern/raw)` | `(js-typeof (js-String))` | you need the constructor/namespace (`String`). |
+| [`js-RegExp`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) | `()` | `(extern/raw)` | `(js-typeof (js-RegExp))` | you need the constructor/namespace (`RegExp`). |
 
 ### 4.4 Indexed Collections and Typed Arrays
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-TypedArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) | `()` | `(extern)` | `(js-typeof (js-TypedArray))` | you need the typed-array global (`TypedArray`). |
-| [`js-Int8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array) | `()` | `(extern)` | `(js-typeof (js-Int8Array))` | you need the typed-array global (`Int8Array`). |
-| [`js-Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) | `()` | `(extern)` | `(js-typeof (js-Uint8Array))` | you need the typed-array global (`Uint8Array`). |
-| [`js-Uint8ClampedArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray) | `()` | `(extern)` | `(js-typeof (js-Uint8ClampedArray))` | you need the typed-array global (`Uint8ClampedArray`). |
-| [`js-Int16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array) | `()` | `(extern)` | `(js-typeof (js-Int16Array))` | you need the typed-array global (`Int16Array`). |
-| [`js-Uint16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array) | `()` | `(extern)` | `(js-typeof (js-Uint16Array))` | you need the typed-array global (`Uint16Array`). |
-| [`js-Int32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array) | `()` | `(extern)` | `(js-typeof (js-Int32Array))` | you need the typed-array global (`Int32Array`). |
-| [`js-Uint32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array) | `()` | `(extern)` | `(js-typeof (js-Uint32Array))` | you need the typed-array global (`Uint32Array`). |
-| [`js-BigInt64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt64Array) | `()` | `(extern)` | `(js-typeof (js-BigInt64Array))` | you need the typed-array global (`BigInt64Array`). |
-| [`js-BigUint64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigUint64Array) | `()` | `(extern)` | `(js-typeof (js-BigUint64Array))` | you need the typed-array global (`BigUint64Array`). |
-| [`js-Float16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float16Array) | `()` | `(extern)` | `(js-typeof (js-Float16Array))` | you need the typed-array global (`Float16Array`). |
-| [`js-Float32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) | `()` | `(extern)` | `(js-typeof (js-Float32Array))` | you need the typed-array global (`Float32Array`). |
-| [`js-Float64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array) | `()` | `(extern)` | `(js-typeof (js-Float64Array))` | you need the typed-array global (`Float64Array`). |
+| [`js-TypedArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) | `()` | `(extern/raw)` | `(js-typeof (js-TypedArray))` | you need the typed-array global (`TypedArray`). |
+| [`js-Int8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array) | `()` | `(extern/raw)` | `(js-typeof (js-Int8Array))` | you need the typed-array global (`Int8Array`). |
+| [`js-Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) | `()` | `(extern/raw)` | `(js-typeof (js-Uint8Array))` | you need the typed-array global (`Uint8Array`). |
+| [`js-Uint8ClampedArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray) | `()` | `(extern/raw)` | `(js-typeof (js-Uint8ClampedArray))` | you need the typed-array global (`Uint8ClampedArray`). |
+| [`js-Int16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array) | `()` | `(extern/raw)` | `(js-typeof (js-Int16Array))` | you need the typed-array global (`Int16Array`). |
+| [`js-Uint16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array) | `()` | `(extern/raw)` | `(js-typeof (js-Uint16Array))` | you need the typed-array global (`Uint16Array`). |
+| [`js-Int32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array) | `()` | `(extern/raw)` | `(js-typeof (js-Int32Array))` | you need the typed-array global (`Int32Array`). |
+| [`js-Uint32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array) | `()` | `(extern/raw)` | `(js-typeof (js-Uint32Array))` | you need the typed-array global (`Uint32Array`). |
+| [`js-BigInt64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt64Array) | `()` | `(extern/raw)` | `(js-typeof (js-BigInt64Array))` | you need the typed-array global (`BigInt64Array`). |
+| [`js-BigUint64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigUint64Array) | `()` | `(extern/raw)` | `(js-typeof (js-BigUint64Array))` | you need the typed-array global (`BigUint64Array`). |
+| [`js-Float16Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float16Array) | `()` | `(extern/raw)` | `(js-typeof (js-Float16Array))` | you need the typed-array global (`Float16Array`). |
+| [`js-Float32Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) | `()` | `(extern/raw)` | `(js-typeof (js-Float32Array))` | you need the typed-array global (`Float32Array`). |
+| [`js-Float64Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array) | `()` | `(extern/raw)` | `(js-typeof (js-Float64Array))` | you need the typed-array global (`Float64Array`). |
 
 ### 4.5 Keyed Collections
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) | `()` | `(extern)` | `(js-typeof (js-Map))` | you need a keyed-collection constructor (`Map`). |
-| [`js-Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) | `()` | `(extern)` | `(js-typeof (js-Set))` | you need a keyed-collection constructor (`Set`). |
-| [`js-WeakMap`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap) | `()` | `(extern)` | `(js-typeof (js-WeakMap))` | you need a keyed-collection constructor (`WeakMap`). |
-| [`js-WeakSet`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) | `()` | `(extern)` | `(js-typeof (js-WeakSet))` | you need a keyed-collection constructor (`WeakSet`). |
+| [`js-Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) | `()` | `(extern/raw)` | `(js-typeof (js-Map))` | you need a keyed-collection constructor (`Map`). |
+| [`js-Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) | `()` | `(extern/raw)` | `(js-typeof (js-Set))` | you need a keyed-collection constructor (`Set`). |
+| [`js-WeakMap`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap) | `()` | `(extern/raw)` | `(js-typeof (js-WeakMap))` | you need a keyed-collection constructor (`WeakMap`). |
+| [`js-WeakSet`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) | `()` | `(extern/raw)` | `(js-typeof (js-WeakSet))` | you need a keyed-collection constructor (`WeakSet`). |
 
 ### 4.6 Structured Data
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) | `()` | `(extern)` | `(js-typeof (js-ArrayBuffer))` | you need the structured-data API object/constructor (`ArrayBuffer`). |
-| [`js-SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) | `()` | `(extern)` | `(js-typeof (js-SharedArrayBuffer))` | you need the structured-data API object/constructor (`SharedArrayBuffer`). |
-| [`js-DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView) | `()` | `(extern)` | `(js-typeof (js-DataView))` | you need the structured-data API object/constructor (`DataView`). |
-| [`js-Atomics`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics) | `()` | `(extern)` | `(js-typeof (js-Atomics))` | you need the structured-data API object/constructor (`Atomics`). |
-| [`js-JSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON) | `()` | `(extern)` | `(js-typeof (js-JSON))` | you need the structured-data API object/constructor (`JSON`). |
+| [`js-ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) | `()` | `(extern/raw)` | `(js-typeof (js-ArrayBuffer))` | you need the structured-data API object/constructor (`ArrayBuffer`). |
+| [`js-SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) | `()` | `(extern/raw)` | `(js-typeof (js-SharedArrayBuffer))` | you need the structured-data API object/constructor (`SharedArrayBuffer`). |
+| [`js-DataView`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView) | `()` | `(extern/raw)` | `(js-typeof (js-DataView))` | you need the structured-data API object/constructor (`DataView`). |
+| [`js-Atomics`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics) | `()` | `(extern/raw)` | `(js-typeof (js-Atomics))` | you need the structured-data API object/constructor (`Atomics`). |
+| [`js-JSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON) | `()` | `(extern/raw)` | `(js-typeof (js-JSON))` | you need the structured-data API object/constructor (`JSON`). |
 
 ### 4.7 Memory Management
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef) | `()` | `(extern)` | `(js-typeof (js-WeakRef))` | you need the memory-management constructor (`WeakRef`). |
-| [`js-FinalizationRegistry`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/FinalizationRegistry) | `()` | `(extern)` | `(js-typeof (js-FinalizationRegistry))` | you need the memory-management constructor (`FinalizationRegistry`). |
+| [`js-WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef) | `()` | `(extern/raw)` | `(js-typeof (js-WeakRef))` | you need the memory-management constructor (`WeakRef`). |
+| [`js-FinalizationRegistry`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/FinalizationRegistry) | `()` | `(extern/raw)` | `(js-typeof (js-FinalizationRegistry))` | you need the memory-management constructor (`FinalizationRegistry`). |
 
 ### 4.8 Control Abstractions
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator) | `()` | `(extern)` | `(js-typeof (js-Iterator))` | you need the control-abstraction global (`Iterator`). |
-| [`js-AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) | `()` | `(extern)` | `(js-typeof (js-AsyncIterator))` | you need the control-abstraction global (`AsyncIterator`). |
-| [`js-Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) | `()` | `(extern)` | `(js-typeof (js-Promise))` | you need the control-abstraction global (`Promise`). |
-| [`js-GeneratorFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction) | `()` | `(extern)` | `(js-typeof (js-GeneratorFunction))` | you need the control-abstraction global (`GeneratorFunction`). |
-| [`js-AsyncGeneratorFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGeneratorFunction) | `()` | `(extern)` | `(js-typeof (js-AsyncGeneratorFunction))` | you need the control-abstraction global (`AsyncGeneratorFunction`). |
-| [`js-Generator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) | `()` | `(extern)` | `(js-typeof (js-Generator))` | you need the control-abstraction global (`Generator`). |
-| [`js-AsyncGenerator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator) | `()` | `(extern)` | `(js-typeof (js-AsyncGenerator))` | you need the control-abstraction global (`AsyncGenerator`). |
-| [`js-AsyncFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncFunction) | `()` | `(extern)` | `(js-typeof (js-AsyncFunction))` | you need the control-abstraction global (`AsyncFunction`). |
-| [`js-DisposableStack`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DisposableStack) | `()` | `(extern)` | `(js-typeof (js-DisposableStack))` | you need the control-abstraction global (`DisposableStack`). |
-| [`js-AsyncDisposableStack`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncDisposableStack) | `()` | `(extern)` | `(js-typeof (js-AsyncDisposableStack))` | you need the control-abstraction global (`AsyncDisposableStack`). |
+| [`js-Iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator) | `()` | `(extern/raw)` | `(js-typeof (js-Iterator))` | you need the control-abstraction global (`Iterator`). |
+| [`js-AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) | `()` | `(extern/raw)` | `(js-typeof (js-AsyncIterator))` | you need the control-abstraction global (`AsyncIterator`). |
+| [`js-Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) | `()` | `(extern/raw)` | `(js-typeof (js-Promise))` | you need the control-abstraction global (`Promise`). |
+| [`js-GeneratorFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction) | `()` | `(extern/raw)` | `(js-typeof (js-GeneratorFunction))` | you need the control-abstraction global (`GeneratorFunction`). |
+| [`js-AsyncGeneratorFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGeneratorFunction) | `()` | `(extern/raw)` | `(js-typeof (js-AsyncGeneratorFunction))` | you need the control-abstraction global (`AsyncGeneratorFunction`). |
+| [`js-Generator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator) | `()` | `(extern/raw)` | `(js-typeof (js-Generator))` | you need the control-abstraction global (`Generator`). |
+| [`js-AsyncGenerator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator) | `()` | `(extern/raw)` | `(js-typeof (js-AsyncGenerator))` | you need the control-abstraction global (`AsyncGenerator`). |
+| [`js-AsyncFunction`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncFunction) | `()` | `(extern/raw)` | `(js-typeof (js-AsyncFunction))` | you need the control-abstraction global (`AsyncFunction`). |
+| [`js-DisposableStack`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DisposableStack) | `()` | `(extern/raw)` | `(js-typeof (js-DisposableStack))` | you need the control-abstraction global (`DisposableStack`). |
+| [`js-AsyncDisposableStack`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncDisposableStack) | `()` | `(extern/raw)` | `(js-typeof (js-AsyncDisposableStack))` | you need the control-abstraction global (`AsyncDisposableStack`). |
 
 ### 4.9 Reflection
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Reflect`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect) | `()` | `(extern)` | `(js-typeof (js-Reflect))` | you need the reflection API (`Reflect`). |
-| [`js-Proxy`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) | `()` | `(extern)` | `(js-typeof (js-Proxy))` | you need the reflection API (`Proxy`). |
+| [`js-Reflect`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect) | `()` | `(extern/raw)` | `(js-typeof (js-Reflect))` | you need the reflection API (`Reflect`). |
+| [`js-Proxy`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) | `()` | `(extern/raw)` | `(js-typeof (js-Proxy))` | you need the reflection API (`Proxy`). |
 
 ### 4.10 Internationalization
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`js-Intl`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl) | `()` | `(extern)` | `(js-typeof (js-Intl))` | you need the i18n constructor/namespace (`Intl`). |
-| [`js-IntlCollator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator) | `()` | `(extern)` | `(js-typeof (js-IntlCollator))` | you need the i18n constructor/namespace (`IntlCollator`). |
-| [`js-IntlDateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) | `()` | `(extern)` | `(js-typeof (js-IntlDateTimeFormat))` | you need the i18n constructor/namespace (`IntlDateTimeFormat`). |
-| [`js-IntlDisplayNames`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames) | `()` | `(extern)` | `(js-typeof (js-IntlDisplayNames))` | you need the i18n constructor/namespace (`IntlDisplayNames`). |
-| [`js-IntlDurationFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DurationFormat) | `()` | `(extern)` | `(js-typeof (js-IntlDurationFormat))` | you need the i18n constructor/namespace (`IntlDurationFormat`). |
-| [`js-IntlListFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat) | `()` | `(extern)` | `(js-typeof (js-IntlListFormat))` | you need the i18n constructor/namespace (`IntlListFormat`). |
-| [`js-IntlLocale`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale) | `()` | `(extern)` | `(js-typeof (js-IntlLocale))` | you need the i18n constructor/namespace (`IntlLocale`). |
-| [`js-IntlNumberFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat) | `()` | `(extern)` | `(js-typeof (js-IntlNumberFormat))` | you need the i18n constructor/namespace (`IntlNumberFormat`). |
-| [`js-IntlPluralRules`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules) | `()` | `(extern)` | `(js-typeof (js-IntlPluralRules))` | you need the i18n constructor/namespace (`IntlPluralRules`). |
-| [`js-IntlRelativeTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat) | `()` | `(extern)` | `(js-typeof (js-IntlRelativeTimeFormat))` | you need the i18n constructor/namespace (`IntlRelativeTimeFormat`). |
-| [`js-IntlSegmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter) | `()` | `(extern)` | `(js-typeof (js-IntlSegmenter))` | you need the i18n constructor/namespace (`IntlSegmenter`). |
+| [`js-Intl`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl) | `()` | `(extern/raw)` | `(js-typeof (js-Intl))` | you need the i18n constructor/namespace (`Intl`). |
+| [`js-IntlCollator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator) | `()` | `(extern/raw)` | `(js-typeof (js-IntlCollator))` | you need the i18n constructor/namespace (`IntlCollator`). |
+| [`js-IntlDateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) | `()` | `(extern/raw)` | `(js-typeof (js-IntlDateTimeFormat))` | you need the i18n constructor/namespace (`IntlDateTimeFormat`). |
+| [`js-IntlDisplayNames`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames) | `()` | `(extern/raw)` | `(js-typeof (js-IntlDisplayNames))` | you need the i18n constructor/namespace (`IntlDisplayNames`). |
+| [`js-IntlDurationFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DurationFormat) | `()` | `(extern/raw)` | `(js-typeof (js-IntlDurationFormat))` | you need the i18n constructor/namespace (`IntlDurationFormat`). |
+| [`js-IntlListFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat) | `()` | `(extern/raw)` | `(js-typeof (js-IntlListFormat))` | you need the i18n constructor/namespace (`IntlListFormat`). |
+| [`js-IntlLocale`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale) | `()` | `(extern/raw)` | `(js-typeof (js-IntlLocale))` | you need the i18n constructor/namespace (`IntlLocale`). |
+| [`js-IntlNumberFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat) | `()` | `(extern/raw)` | `(js-typeof (js-IntlNumberFormat))` | you need the i18n constructor/namespace (`IntlNumberFormat`). |
+| [`js-IntlPluralRules`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules) | `()` | `(extern/raw)` | `(js-typeof (js-IntlPluralRules))` | you need the i18n constructor/namespace (`IntlPluralRules`). |
+| [`js-IntlRelativeTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat) | `()` | `(extern/raw)` | `(js-typeof (js-IntlRelativeTimeFormat))` | you need the i18n constructor/namespace (`IntlRelativeTimeFormat`). |
+| [`js-IntlSegmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter) | `()` | `(extern/raw)` | `(js-typeof (js-IntlSegmenter))` | you need the i18n constructor/namespace (`IntlSegmenter`). |
 
 ## Chapter 5 — Choosing the Right Function Quickly
 
@@ -434,4 +443,3 @@ For constructor-like globals, a safe check is:
 ## Chapter 6 — Coverage Checklist
 
 This document covers **129** functions from `ffi/standard.ffi`.
-

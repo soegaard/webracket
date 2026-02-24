@@ -219,11 +219,11 @@
 ;; init-canvas-hexagons-page! : -> Void
 ;;   Creates canvas DOM state, hooks resize handler, and starts RAF animation loop.
 (define (init-canvas-hexagons-page!)
-  (when (not hex-started?)
+  (unless hex-started?
     (set! hex-started? #t)
     (js-set! (js-var "document") "title" "Glowing Hexagons")
     (define root (js-get-element-by-id "canvas-hexagons-root"))
-    (when (js-nullish? root)
+    (unless root
       (error 'canvas-hexagons "missing #canvas-hexagons-root container"))
     (set! hex-canvas (js-create-element "canvas"))
     ;; From original CSS:

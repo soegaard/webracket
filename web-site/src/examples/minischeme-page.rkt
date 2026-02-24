@@ -1039,10 +1039,10 @@
   (define storage (js-ref (js-var "window") "localStorage"))
   (if (js-nullish? storage)
       #f
-      (let ([saved (js-send/extern storage "getItem" (vector minischeme-storage-key))])
-        (if (js-nullish? saved)
-            #f
-            (js-value->string saved)))))
+      (let ([saved (js-send/extern/null storage "getItem" (vector minischeme-storage-key))])
+        (if saved
+            (js-value->string saved)
+            #f))))
 
 (define (minischeme-save-source source)
   (define storage (js-ref (js-var "window") "localStorage"))
@@ -1149,24 +1149,24 @@
       (char=? c #\.)))
 
 (define (minischeme-stream-peek-char stream)
-  (define raw (js-send/extern stream "peek" (vector)))
-  (if (js-nullish? raw)
-      #f
+  (define raw (js-send/extern/undefined stream "peek" (vector)))
+  (if raw
       (with-handlers ([exn:fail? (λ (_) #f)])
         (define s (js-value->string raw))
         (if (= (string-length s) 0)
             #f
-            (string-ref s 0)))))
+            (string-ref s 0)))
+      #f))
 
 (define (minischeme-stream-next-char stream)
-  (define raw (js-send/extern stream "next" (vector)))
-  (if (js-nullish? raw)
-      #f
+  (define raw (js-send/extern/undefined stream "next" (vector)))
+  (if raw
       (with-handlers ([exn:fail? (λ (_) #f)])
         (define s (js-value->string raw))
         (if (= (string-length s) 0)
             #f
-            (string-ref s 0)))))
+            (string-ref s 0)))
+      #f))
 
 (define (make-minischeme-overlay-token-handler)
   (procedure->external
@@ -1562,7 +1562,7 @@
 
   (define cm-style-id "minischeme-codemirror-css")
   (define cm-style-existing (js-get-element-by-id cm-style-id))
-  (when (js-nullish? cm-style-existing)
+  (unless cm-style-existing
     (define link (js-create-element "link"))
     (js-set-attribute! link "id" cm-style-id)
     (js-set-attribute! link "rel" "stylesheet")
@@ -1571,7 +1571,7 @@
 
   (define cm-ui-style-id "minischeme-codemirror-ui-style")
   (define cm-ui-style-existing (js-get-element-by-id cm-ui-style-id))
-  (when (js-nullish? cm-ui-style-existing)
+  (unless cm-ui-style-existing
     (define style (js-create-element "style"))
     (js-set-attribute! style "id" cm-ui-style-id)
     (js-set! style "textContent"
@@ -1618,7 +1618,7 @@
 
   (define (script-marked-loaded? script)
     (define raw (js-get-attribute script script-loaded-attr))
-    (and (not (js-nullish? raw))
+    (and raw
          (string=? (js-value->string raw) "1")))
 
   (define (mark-script-loaded! script)
@@ -1629,13 +1629,13 @@
       (procedure->external
        (λ (_)
          (define loaded-script (js-get-element-by-id script-id))
-         (when (not (js-nullish? loaded-script))
+         (when loaded-script
            (mark-script-loaded! loaded-script))
          (on-ready!)
          (void))))
     (define existing (js-get-element-by-id script-id))
     (cond
-      [(not (js-nullish? existing))
+      [existing
        (cond
          [(or (script-marked-loaded? existing) (ready?))
           (mark-script-loaded! existing)
@@ -1693,7 +1693,7 @@
 (define (minischeme-scroll-to-target-id! target-id smooth?)
   (when (and (string? target-id) (not (string=? target-id "")))
     (define node (js-get-element-by-id target-id))
-    (when (and (external? node) (not (js-nullish? node)))
+    (when node
       (js-send node
                "scrollIntoView"
                (vector
@@ -1726,7 +1726,7 @@
          (minischeme-external-string (js-get-attribute link "data-ref-target")))
        (if (and target-id (not (string=? target-id "")))
            (let ([section (js-get-element-by-id target-id)])
-             (if (and (external? section) (not (js-nullish? section)))
+             (if section
                  (cons (list section link target-id) acc)
                  acc))
            acc))))
@@ -1743,8 +1743,7 @@
               (classlist-add! link "is-active"))
             (classlist-remove! link "is-active")))
       (when (and matched?
-                 (external? jump-select)
-                 (not (js-nullish? jump-select)))
+                 jump-select)
         (define selected-id (minischeme-external-string (js-ref jump-select "value")))
         (when (or (not selected-id) (not (string=? selected-id target-id)))
           (js-set! jump-select "value" target-id)))))
@@ -1769,16 +1768,14 @@
       (define top     (and rect (js-ref rect "top")))
       (when (and (number? top) (<= top threshold))
         (set! candidate id)))
-    (when (not candidate)
+    (unless candidate
       (when (pair? nav-items)
         (set! candidate (caddr (car nav-items)))))
     (when candidate
       (set-active! candidate)))
 
-  (when (and (external? back-button)
-             (not (js-nullish? back-button))
-             (external? editor-node)
-             (not (js-nullish? editor-node)))
+  (when (and back-button
+             editor-node)
     (define back-click-handler
       (procedure->external
        (λ (_evt)
@@ -1807,7 +1804,7 @@
     (js-add-event-listener! window-node "resize" back-scroll-handler)
     (sync-back-button-visibility!))
 
-  (when (and (external? jump-select) (not (js-nullish? jump-select)))
+  (when jump-select
     (define jump-handler
       (procedure->external
        (λ (_evt)
@@ -1845,7 +1842,7 @@
     (js-add-event-listener! window-node "resize" active-scroll-handler)))
 
 (define (init-minischeme-page!)
-  (when (not minischeme-page-started?)
+  (unless minischeme-page-started?
     (set! minischeme-page-started? #t)
     (define input-node       (js-get-element-by-id "minischeme-input"))
     (define output-node      (js-get-element-by-id "minischeme-output"))
@@ -1859,17 +1856,17 @@
     (define sample-button    (js-get-element-by-id "minischeme-load-sample"))
     (define sample-select    (js-get-element-by-id "minischeme-sample-select"))
 
-    (when (or (js-nullish? input-node)
-              (js-nullish? output-node)
-              (js-nullish? run-button)
-              (js-nullish? pause-button)
-              (js-nullish? stop-button)
-              (js-nullish? run-state-node)
-              (js-nullish? reset-button)
-              (js-nullish? sample-button)
-              (js-nullish? sample-select)
-              (js-nullish? copy-editor-btn)
-              (js-nullish? copy-output-btn))
+    (when (or (not input-node)
+              (not output-node)
+              (not run-button)
+              (not pause-button)
+              (not stop-button)
+              (not run-state-node)
+              (not reset-button)
+              (not sample-button)
+              (not sample-select)
+              (not copy-editor-btn)
+              (not copy-output-btn))
       (error 'minischeme-page "missing expected DOM nodes for MiniScheme page"))
 
     (minischeme-restore-source! input-node)
@@ -1898,7 +1895,7 @@
       (define helper-style (js-ref helper "style"))
       (js-set! helper "value" text)
       (js-set-attribute! helper "readonly" "")
-      (when (not (js-nullish? helper-style))
+      (unless (js-nullish? helper-style)
         (js-set! helper-style "position" "absolute")
         (js-set! helper-style "left" "-9999px")
         (js-set! helper-style "top" "0"))
@@ -1932,8 +1929,8 @@
         (if (or (not clipboard)
                 (js-nullish? write-text))
             (set-copy-feedback! button (if (fallback-copy-text text) "Copied" "Copy failed"))
-            (let ([promise (js-send/extern clipboard "writeText" (vector text))])
-              (if (js-nullish? promise)
+            (let ([promise (js-send/extern/undefined clipboard "writeText" (vector text))])
+              (if (not promise)
                   (set-copy-feedback! button (if (fallback-copy-text text) "Copied" "Copy failed"))
                   (let ([ok-handler
                          (procedure->external

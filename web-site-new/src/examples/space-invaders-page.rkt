@@ -60,7 +60,7 @@
     [else ctor]))
 
 (define (ensure-audio!)
-  (when (not audio-context)
+  (unless audio-context
     (define ctor (audio-context-constructor))
     (when ctor
       (set! audio-context (js-new ctor (vector)))))
@@ -185,7 +185,7 @@
 
 (define (init-space-invaders-canvas!)
   (define root (js-get-element-by-id "space-invaders-root"))
-  (when (js-nullish? root)
+  (unless root
     (error 'space-invaders "missing #space-invaders-root container"))
   (set! canvas (js-create-element "canvas"))
   (js-set-canvas-width!  canvas canvas-width)

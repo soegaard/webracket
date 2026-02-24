@@ -37,7 +37,8 @@ All function names are linked to xterm.js API documentation.
 
 | Type | Meaning |
 |---|---|
-| `(extern)` | Raw JavaScript object/reference. |
+| `(extern)` | External JavaScript object/reference (typically used for input parameters). |
+| `(extern/raw)` | Raw JavaScript return object/reference (no `null`/`undefined` mapping). |
 | `(value)` | FFI value conversion boundary; can be JS object or primitive via WebRacket conversion rules. |
 | `(string)` | JavaScript string mapped to WebRacket string. |
 | `(i32)` | Signed 32-bit integer. Used for indexes/counts and some boolean-like returns (`1`/`0`). |
@@ -69,7 +70,7 @@ xterm.js Terminal API: [Terminal](https://xtermjs.org/docs/api/terminal/classes/
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`xterm-terminal-new`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(value)` | `(extern)` | `(xterm-terminal-new options)` | create a new Terminal instance. |
+| [`xterm-terminal-new`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(value)` | `(extern/raw)` | `(xterm-terminal-new options)` | create a new Terminal instance. |
 
 ## Chapter 4 — Terminal Properties
 
@@ -77,38 +78,38 @@ xterm.js Terminal API: [Terminal](https://xtermjs.org/docs/api/terminal/classes/
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`xterm-terminal-buffer`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-buffer term)` | access to the normal and alt buffers. |
+| [`xterm-terminal-buffer`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-buffer term)` | access to the normal and alt buffers. |
 | [`xterm-terminal-cols`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(u32)` | `(xterm-terminal-cols term)` | number of columns in the viewport. |
 | [`xterm-terminal-rows`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(u32)` | `(xterm-terminal-rows term)` | number of rows in the viewport. |
 | [`xterm-terminal-element`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(value)` | `(xterm-terminal-element term)` | root element that hosts the terminal. |
 | [`xterm-terminal-textarea`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(value)` | `(xterm-terminal-textarea term)` | textarea element that receives keyboard input. |
-| [`xterm-terminal-markers`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-markers term)` | registered markers associated with the buffer. |
-| [`xterm-terminal-modes`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-modes term)` | terminal modes currently enabled. |
-| [`xterm-terminal-options`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-options term)` | terminal options getter. |
+| [`xterm-terminal-markers`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-markers term)` | registered markers associated with the buffer. |
+| [`xterm-terminal-modes`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-modes term)` | terminal modes currently enabled. |
+| [`xterm-terminal-options`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-options term)` | terminal options getter. |
 | [`xterm-set-terminal-options!`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern value)` | `()` | `(xterm-set-terminal-options! term options)` | terminal options setter. |
-| [`xterm-terminal-parser`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-parser term)` | parser interface for custom escape handlers. |
-| [`xterm-terminal-unicode`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-unicode term)` | unicode handling interface. |
+| [`xterm-terminal-parser`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-parser term)` | parser interface for custom escape handlers. |
+| [`xterm-terminal-unicode`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-unicode term)` | unicode handling interface. |
 
 ## Chapter 5 — Terminal Events
 
 xterm.js Terminal API: [Terminal](https://xtermjs.org/docs/api/terminal/classes/terminal/)
 
-All `on-*` bindings return event emitter objects as `(extern)`; attach listeners via your JS interop layer.
+All `on-*` bindings return event emitter objects as `(extern/raw)`; attach listeners via your JS interop layer.
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`xterm-terminal-on-bell`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-bell term)` | event fired when the bell rings. |
-| [`xterm-terminal-on-binary`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-binary term)` | event fired for binary data. |
-| [`xterm-terminal-on-cursor-move`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-cursor-move term)` | event fired when the cursor moves. |
-| [`xterm-terminal-on-data`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-data term)` | event fired when data is emitted by the terminal. |
-| [`xterm-terminal-on-key`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-key term)` | event fired when a key is pressed. |
-| [`xterm-terminal-on-line-feed`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-line-feed term)` | event fired when a line feed is added. |
-| [`xterm-terminal-on-render`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-render term)` | event fired when rows are rendered. |
-| [`xterm-terminal-on-resize`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-resize term)` | event fired when the terminal is resized. |
-| [`xterm-terminal-on-scroll`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-scroll term)` | event fired when the viewport scrolls. |
-| [`xterm-terminal-on-selection-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-selection-change term)` | event fired when the selection changes. |
-| [`xterm-terminal-on-title-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-title-change term)` | event fired when the terminal title changes. |
-| [`xterm-terminal-on-write-parsed`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern)` | `(xterm-terminal-on-write-parsed term)` | event fired after write data was parsed. |
+| [`xterm-terminal-on-bell`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-bell term)` | event fired when the bell rings. |
+| [`xterm-terminal-on-binary`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-binary term)` | event fired for binary data. |
+| [`xterm-terminal-on-cursor-move`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-cursor-move term)` | event fired when the cursor moves. |
+| [`xterm-terminal-on-data`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-data term)` | event fired when data is emitted by the terminal. |
+| [`xterm-terminal-on-key`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-key term)` | event fired when a key is pressed. |
+| [`xterm-terminal-on-line-feed`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-line-feed term)` | event fired when a line feed is added. |
+| [`xterm-terminal-on-render`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-render term)` | event fired when rows are rendered. |
+| [`xterm-terminal-on-resize`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-resize term)` | event fired when the terminal is resized. |
+| [`xterm-terminal-on-scroll`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-scroll term)` | event fired when the viewport scrolls. |
+| [`xterm-terminal-on-selection-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-selection-change term)` | event fired when the selection changes. |
+| [`xterm-terminal-on-title-change`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-title-change term)` | event fired when the terminal title changes. |
+| [`xterm-terminal-on-write-parsed`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `(extern/raw)` | `(xterm-terminal-on-write-parsed term)` | event fired after write data was parsed. |
 
 ## Chapter 6 — Terminal Methods
 
@@ -134,9 +135,9 @@ xterm.js Terminal API: [Terminal](https://xtermjs.org/docs/api/terminal/classes/
 | [`xterm-terminal-paste`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern string)` | `()` | `(xterm-terminal-paste term "hello")` | paste text into the terminal. |
 | [`xterm-terminal-refresh`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern i32 i32)` | `()` | `(xterm-terminal-refresh term 1 1)` | refresh the viewport between the given rows. |
 | [`xterm-terminal-register-character-joiner`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern extern)` | `(i32)` | `(xterm-terminal-register-character-joiner term handler)` | register a character joiner and receive its identifier. |
-| [`xterm-terminal-register-decoration`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern extern)` | `(extern)` | `(xterm-terminal-register-decoration term options)` | register a decoration on the terminal. |
-| [`xterm-terminal-register-link-provider`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern extern)` | `(extern)` | `(xterm-terminal-register-link-provider term provider)` | register a custom link provider. |
-| [`xterm-terminal-register-marker`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern value)` | `(extern)` | `(xterm-terminal-register-marker term (void))` | register a marker relative to the cursor. |
+| [`xterm-terminal-register-decoration`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern extern)` | `(extern/raw)` | `(xterm-terminal-register-decoration term options)` | register a decoration on the terminal. |
+| [`xterm-terminal-register-link-provider`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern extern)` | `(extern/raw)` | `(xterm-terminal-register-link-provider term provider)` | register a custom link provider. |
+| [`xterm-terminal-register-marker`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern value)` | `(extern/raw)` | `(xterm-terminal-register-marker term (void))` | register a marker relative to the cursor. |
 | [`xterm-terminal-reset`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern)` | `()` | `(xterm-terminal-reset term)` | perform a full terminal reset. |
 | [`xterm-terminal-resize`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern i32 i32)` | `()` | `(xterm-terminal-resize term 1 1)` | resize the terminal viewport. |
 | [`xterm-terminal-scroll-lines`](https://xtermjs.org/docs/api/terminal/classes/terminal/) | `(extern i32)` | `()` | `(xterm-terminal-scroll-lines term 1)` | scroll by a number of lines. |
@@ -158,7 +159,7 @@ xterm.js FitAddon API: [FitAddon](https://xtermjs.org/docs/api/addons/addon-fit/
 
 | Function | Input types | Output type | Example | Use when |
 |---|---|---|---|---|
-| [`xterm-fit-addon-new`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/) | `()` | `(extern)` | `(xterm-fit-addon-new)` | create a new FitAddon instance. |
+| [`xterm-fit-addon-new`](https://xtermjs.org/docs/api/addons/addon-fit/classes/fitaddon/) | `()` | `(extern/raw)` | `(xterm-fit-addon-new)` | create a new FitAddon instance. |
 
 ### 7.2 Lifecycle
 
@@ -214,4 +215,3 @@ xterm.js FitAddon API: [FitAddon](https://xtermjs.org/docs/api/addons/addon-fit/
 - `fit addon construction`: 1 function
 - `fit addon lifecycle`: 2 functions
 - `fit addon behavior`: 2 functions
-

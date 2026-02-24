@@ -44,7 +44,8 @@ All function names are linked to MDN pages for the corresponding `Array` member.
 
 | Type | Meaning |
 |---|---|
-| `(extern)` | Raw JavaScript value/object reference (no WebRacket value conversion). |
+| `(extern)` | External JavaScript value/object reference (typically used for input parameters). |
+| `(extern/raw)` | Raw JavaScript return value/object reference (no `null`/`undefined` mapping). |
 | `(value)` | WebRacket value converted through the FFI value bridge. |
 | `(string)` | JavaScript string mapped to WebRacket string. |
 | `(i32)` | 32-bit integer. In this module it is used both for booleans (`1`/`0`) and indexes (`-1` when not found). |
@@ -55,7 +56,7 @@ All function names are linked to MDN pages for the corresponding `Array` member.
 
 - Predicate-style methods (`is-array`, `every`, `includes`, `some`) return `(i32)` where `1` means true and `0` means false.
 - Index methods (`find-index`, `find-last-index`, `index-of`, `last-index-of`) return `(i32)` indexes and return `-1` when no match is found.
-- Methods returning `(extern)` keep JavaScript identity; continue with FFI calls on that value.
+- Methods returning `(extern/raw)` keep JavaScript identity; continue with FFI calls on that value.
 - Callback parameters are `(extern)` and should be JavaScript-callable values.
 
 ### 2.3 Common Setup Helpers
@@ -83,10 +84,10 @@ MDN root: [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refere
 
 | Function | Input types | Output type | Mutates receiver? | Callback? | Example | Use when |
 |---|---|---|---|---|---|---|
-| [`js-array-from`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from) | `(value extern value)` | `(extern)` | n/a | yes | `(js-array-from (vector 1 2 3) (void) (void))` | convert iterable/array-like input to JS Array. |
-| [`js-array-from-async`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fromAsync) | `(value extern value)` | `(extern)` | n/a | yes | `(js-array-from-async (vector 1 2 3) (void) (void))` | build Array asynchronously from async input source. |
+| [`js-array-from`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from) | `(value extern value)` | `(extern/raw)` | n/a | yes | `(js-array-from (vector 1 2 3) (void) (void))` | convert iterable/array-like input to JS Array. |
+| [`js-array-from-async`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fromAsync) | `(value extern value)` | `(extern/raw)` | n/a | yes | `(js-array-from-async (vector 1 2 3) (void) (void))` | build Array asynchronously from async input source. |
 | [`js-array-is-array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray) | `(value)` | `(i32)` | n/a | no | `(js-array-is-array arr)` | check whether a value is an Array (`1`/`0`). |
-| [`js-array-of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/of) | `(value)` | `(extern)` | n/a | no | `(js-array-of (vector 4 5))` | construct an Array from explicit items. |
+| [`js-array-of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/of) | `(value)` | `(extern/raw)` | n/a | no | `(js-array-of (vector 4 5))` | construct an Array from explicit items. |
 
 ## Chapter 5 — Properties
 
@@ -105,43 +106,43 @@ MDN root: [Array.prototype](https://developer.mozilla.org/en-US/docs/Web/JavaScr
 |---|---|---|---|---|---|---|
 | [`js-array-ref`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) | `(extern i32)` | `(value)` | no | no | `(js-array-ref arr -1)` | read one element by index (supports negative indexes). |
 | [`js-array-at`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) | `(extern i32)` | `(value)` | no | no | `(js-array-at arr -1)` | read one element by index (supports negative indexes). |
-| [`js-array-concat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat) | `(extern value)` | `(extern)` | no | no | `(js-array-concat arr (vector 4 5))` | concatenate arrays/items into a new array. |
-| [`js-array-copy-within`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin) | `(extern i32 i32 value)` | `(extern)` | yes | no | `(js-array-copy-within arr 0 1 (void))` | copy a range in-place within same array. |
-| [`js-array-entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries) | `(extern)` | `(extern)` | no | no | `(js-array-entries arr)` | iterate index/value pairs. |
+| [`js-array-concat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat) | `(extern value)` | `(extern/raw)` | no | no | `(js-array-concat arr (vector 4 5))` | concatenate arrays/items into a new array. |
+| [`js-array-copy-within`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin) | `(extern i32 i32 value)` | `(extern/raw)` | yes | no | `(js-array-copy-within arr 0 1 (void))` | copy a range in-place within same array. |
+| [`js-array-entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/entries) | `(extern)` | `(extern/raw)` | no | no | `(js-array-entries arr)` | iterate index/value pairs. |
 | [`js-array-every`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every) | `(extern extern value)` | `(i32)` | no | yes | `(js-array-every arr callback (void))` | check whether all elements satisfy a predicate. |
-| [`js-array-fill`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill) | `(extern value value value)` | `(extern)` | yes | no | `(js-array-fill arr 0 (void) (void))` | overwrite a range with a single value. |
-| [`js-array-filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) | `(extern extern value)` | `(extern)` | no | yes | `(js-array-filter arr callback (void))` | create a new array with matching elements. |
+| [`js-array-fill`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill) | `(extern value value value)` | `(extern/raw)` | yes | no | `(js-array-fill arr 0 (void) (void))` | overwrite a range with a single value. |
+| [`js-array-filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) | `(extern extern value)` | `(extern/raw)` | no | yes | `(js-array-filter arr callback (void))` | create a new array with matching elements. |
 | [`js-array-find`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find) | `(extern extern value)` | `(value)` | no | yes | `(js-array-find arr callback (void))` | return first matching element (converted value). |
 | [`js-array-find-index`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex) | `(extern extern value)` | `(i32)` | no | yes | `(js-array-find-index arr callback (void))` | return first matching index, or `-1`. |
 | [`js-array-find-last`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast) | `(extern extern value)` | `(value)` | no | yes | `(js-array-find-last arr callback (void))` | return last matching element (converted value). |
 | [`js-array-find-last-index`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex) | `(extern extern value)` | `(i32)` | no | yes | `(js-array-find-last-index arr callback (void))` | return last matching index, or `-1`. |
-| [`js-array-flat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) | `(extern value)` | `(extern)` | no | no | `(js-array-flat arr (void))` | flatten nested arrays by depth. |
-| [`js-array-flat-map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap) | `(extern extern value)` | `(extern)` | no | yes | `(js-array-flat-map arr callback (void))` | map and flatten by one level in one pass. |
+| [`js-array-flat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) | `(extern value)` | `(extern/raw)` | no | no | `(js-array-flat arr (void))` | flatten nested arrays by depth. |
+| [`js-array-flat-map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap) | `(extern extern value)` | `(extern/raw)` | no | yes | `(js-array-flat-map arr callback (void))` | map and flatten by one level in one pass. |
 | [`js-array-for-each`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) | `(extern extern value)` | `()` | no | yes | `(js-array-for-each arr callback (void))` | run side-effect callback for each element. |
 | [`js-array-includes`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes) | `(extern value value)` | `(i32)` | no | no | `(js-array-includes arr 2 (void))` | membership test with `1`/`0` result. |
 | [`js-array-index-of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf) | `(extern value value)` | `(i32)` | no | no | `(js-array-index-of arr 2 (void))` | first index of exact value, or `-1`. |
 | [`js-array-join`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join) | `(extern value)` | `(string)` | no | no | `(js-array-join arr (void))` | convert array to delimiter-separated string. |
-| [`js-array-keys`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/keys) | `(extern)` | `(extern)` | no | no | `(js-array-keys arr)` | iterate indexes only. |
+| [`js-array-keys`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/keys) | `(extern)` | `(extern/raw)` | no | no | `(js-array-keys arr)` | iterate indexes only. |
 | [`js-array-last-index-of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/lastIndexOf) | `(extern value value)` | `(i32)` | no | no | `(js-array-last-index-of arr 2 (void))` | last index of exact value, or `-1`. |
-| [`js-array-map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) | `(extern extern value)` | `(extern)` | no | yes | `(js-array-map arr callback (void))` | create transformed array. |
+| [`js-array-map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) | `(extern extern value)` | `(extern/raw)` | no | yes | `(js-array-map arr callback (void))` | create transformed array. |
 | [`js-array-pop`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop) | `(extern)` | `(value)` | yes | no | `(js-array-pop arr)` | remove and return the last element. |
 | [`js-array-push`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push) | `(extern value)` | `(u32)` | yes | no | `(js-array-push arr (vector 4 5))` | append items and get new length. |
 | [`js-array-reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce) | `(extern extern value)` | `(value)` | no | yes | `(js-array-reduce arr callback 0)` | aggregate from left to right. |
 | [`js-array-reduce-right`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduceRight) | `(extern extern value)` | `(value)` | no | yes | `(js-array-reduce-right arr callback 0)` | aggregate from right to left. |
-| [`js-array-reverse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reverse) | `(extern)` | `(extern)` | yes | no | `(js-array-reverse arr)` | reverse elements in-place. |
+| [`js-array-reverse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reverse) | `(extern)` | `(extern/raw)` | yes | no | `(js-array-reverse arr)` | reverse elements in-place. |
 | [`js-array-shift`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift) | `(extern)` | `(value)` | yes | no | `(js-array-shift arr)` | remove and return the first element. |
-| [`js-array-slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) | `(extern value value)` | `(extern)` | no | no | `(js-array-slice arr 1 (void))` | copy a subrange into a new array. |
+| [`js-array-slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) | `(extern value value)` | `(extern/raw)` | no | no | `(js-array-slice arr 1 (void))` | copy a subrange into a new array. |
 | [`js-array-some`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some) | `(extern extern value)` | `(i32)` | no | yes | `(js-array-some arr callback (void))` | check whether any element satisfies predicate. |
-| [`js-array-sort`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) | `(extern extern)` | `(extern)` | yes | yes | `(js-array-sort arr compare-fn)` | sort array in-place. |
-| [`js-array-splice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice) | `(extern value)` | `(extern)` | yes | no | `(js-array-splice arr (vector 1 2 9))` | remove/insert items in-place. |
+| [`js-array-sort`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) | `(extern extern)` | `(extern/raw)` | yes | yes | `(js-array-sort arr compare-fn)` | sort array in-place. |
+| [`js-array-splice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice) | `(extern value)` | `(extern/raw)` | yes | no | `(js-array-splice arr (vector 1 2 9))` | remove/insert items in-place. |
 | [`js-array-to-locale-string`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toLocaleString) | `(extern value)` | `(string)` | no | no | `(js-array-to-locale-string arr (void))` | locale-aware string conversion. |
 | [`js-array-to-string`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toString) | `(extern)` | `(string)` | no | no | `(js-array-to-string arr)` | default string conversion. |
 | [`js-array-unshift`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/unshift) | `(extern value)` | `(u32)` | yes | no | `(js-array-unshift arr (vector 4 5))` | prepend items and get new length. |
-| [`js-array-values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/values) | `(extern)` | `(extern)` | no | no | `(js-array-values arr)` | iterate values only. |
-| [`js-array-to-reversed`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toReversed) | `(extern)` | `(extern)` | no | no | `(js-array-to-reversed arr)` | get reversed copy without mutating source. |
-| [`js-array-to-sorted`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted) | `(extern extern)` | `(extern)` | no | yes | `(js-array-to-sorted arr compare-fn)` | get sorted copy without mutating source. |
-| [`js-array-to-spliced`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSpliced) | `(extern value)` | `(extern)` | no | no | `(js-array-to-spliced arr (vector 1 0 9))` | get spliced copy without mutating source. |
-| [`js-array-with`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/with) | `(extern i32 value)` | `(extern)` | no | no | `(js-array-with arr 0 99)` | get copy with one index replaced. |
+| [`js-array-values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/values) | `(extern)` | `(extern/raw)` | no | no | `(js-array-values arr)` | iterate values only. |
+| [`js-array-to-reversed`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toReversed) | `(extern)` | `(extern/raw)` | no | no | `(js-array-to-reversed arr)` | get reversed copy without mutating source. |
+| [`js-array-to-sorted`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSorted) | `(extern extern)` | `(extern/raw)` | no | yes | `(js-array-to-sorted arr compare-fn)` | get sorted copy without mutating source. |
+| [`js-array-to-spliced`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/toSpliced) | `(extern value)` | `(extern/raw)` | no | no | `(js-array-to-spliced arr (vector 1 0 9))` | get spliced copy without mutating source. |
+| [`js-array-with`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/with) | `(extern i32 value)` | `(extern/raw)` | no | no | `(js-array-with arr 0 99)` | get copy with one index replaced. |
 
 ## Chapter 7 — Callback Signatures
 
@@ -287,4 +288,3 @@ replaced
 - `static methods`: 4 functions
 - `properties`: 2 functions
 - `instance methods`: 39 functions
-

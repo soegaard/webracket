@@ -108,6 +108,27 @@
                      [res (js-send/extern arr "join" (vector "-"))])
                 (and (external? res)
                      (equal? (external-string->string res) "1-2-3"))))
+        (list "js-send/extern/null"
+              (let ([obj (js-eval "({ n: function(){ return null; }, u: function(){ return undefined; }, s: function(){ return 'ok'; } })")])
+                (and (equal? (js-send/extern/null obj "n" (vector)) #f)
+                     (equal? (js-typeof (js-send/extern/null obj "u" (vector))) "undefined")
+                     (equal? (external-string->string
+                              (js-send/extern/null obj "s" (vector)))
+                             "ok"))))
+        (list "js-send/extern/undefined"
+              (let ([obj (js-eval "({ n: function(){ return null; }, u: function(){ return undefined; }, s: function(){ return 'ok'; } })")])
+                (and (equal? (js-send/extern/undefined obj "u" (vector)) #f)
+                     (equal? (js-typeof (js-send/extern/undefined obj "n" (vector))) "object")
+                     (equal? (external-string->string
+                              (js-send/extern/undefined obj "s" (vector)))
+                             "ok"))))
+        (list "js-send/extern/nullish"
+              (let ([obj (js-eval "({ n: function(){ return null; }, u: function(){ return undefined; }, s: function(){ return 'ok'; } })")])
+                (and (equal? (js-send/extern/nullish obj "n" (vector)) #f)
+                     (equal? (js-send/extern/nullish obj "u" (vector)) #f)
+                     (equal? (external-string->string
+                              (js-send/extern/nullish obj "s" (vector)))
+                             "ok"))))
         (list "js-send/value primitive result"
               (let ([arr (js-array/extern (vector 1 2 3))])
                 (equal? (js-send/value arr "join" (vector "-"))

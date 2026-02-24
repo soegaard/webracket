@@ -2609,7 +2609,7 @@ pre {
 }
 .page--quick-start .section--quick-start-step .qs-step-header {
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   margin-bottom: 6px;
 }
@@ -2621,7 +2621,7 @@ pre {
   transform: none;
   margin-top: 0;
   line-height: 1;
-  align-self: baseline;
+  align-self: center;
   background: rgba(101, 79, 240, 0.3);
   border: 1px solid rgba(101, 79, 240, 0.45);
   box-shadow: none;

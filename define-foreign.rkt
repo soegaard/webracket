@@ -16,7 +16,7 @@
 ;;   (define-foreign racket-name
 ;;     #:module "document"
 ;;     #:name   "create-text-node"
-;;     (-> (string) (extern)))           ; params → result
+;;     (-> (string) (extern/raw)))       ; params → result
 ;;
 ;;   (define-foreign set-attribute!
 ;;     #:module "document"
@@ -55,7 +55,11 @@
 ;;   string        — Racket string, marshaled as FASL → linear memory.
 ;;   string/symbol - accepts string or symbol as argument - a string is sent via fasl
 ;;   value         — arbitrary Racket value, marshaled as FASL → linear memory.
-;;   extern        — $External wrapper around externref.
+;;   extern/raw    — $External wrapper around externref.
+;;   extern        — externref; JS null maps to #f, others to $External.
+;;   extern/null   — alias for `extern` (JS null maps to #f).
+;;   extern/undefined — externref; JS undefined maps to #f, others to $External.
+;;   extern/nullish — externref; JS null/undefined map to #f, others to $External.
 ;;   i32           — fixnum → i32 ;   signed
 ;;   u32           — fixnum → u32 ; unsigned
 ;;   f64           — flonum → f64 (checked)
@@ -88,12 +92,13 @@
   (eq? (syntax-e x) (syntax-e y)))
 
 (define (validate-base-argument-type who form type)
-  (syntax-case* type (boolean string string/symbol value extern i32 u32 f64) literal=?
+  (syntax-case* type (boolean string string/symbol value extern extern/raw i32 u32 f64) literal=?
     [boolean       #t]
     [string        #t]
     [string/symbol #t]
     [value         #t]
     [extern        #t]
+    [extern/raw    #t]
     [i32           #t]
     [u32           #t]
     [f64           #t]
@@ -102,11 +107,15 @@
                          form type)]))
 
 (define (validate-base-result-type who form type)
-  (syntax-case* type (boolean string value extern i32 u32 f64) literal=?
+  (syntax-case* type (boolean string value extern extern/raw extern/null extern/undefined extern/nullish i32 u32 f64) literal=?
     [boolean #t]
     [string  #t]
     [value   #t]
     [extern  #t]
+    [extern/raw #t]
+    [extern/null #t]
+    [extern/undefined #t]
+    [extern/nullish #t]
     [i32     #t]
     [u32     #t]
     [f64     #t]
@@ -220,6 +229,10 @@
     [(string/symbol) 'i32]         ; index into linear memory
     [(value)         'i32]         ; index into linear memory
     [(extern)        'externref]
+    [(extern/raw)    'externref]
+    [(extern/null)   'externref]
+    [(extern/undefined) 'externref]
+    [(extern/nullish) 'externref]
     [(i32)           'i32]
     [(u32)           'i32]
     [(f64)           'f64]
@@ -238,6 +251,10 @@
               [(string)  'i32]         ; index into linear memory
               [(value)   'i32]         ; index into linear memory
               [(extern)  'externref]
+              [(extern/raw) 'externref]
+              [(extern/null) 'externref]
+              [(extern/undefined) 'externref]
+              [(extern/nullish) 'externref]
               [(i32)     'i32]
               [(u32)     'i32]
               [(f64)     'f64]
@@ -257,6 +274,7 @@
     [(string/symbol) '(ref eq)]         ; index into linear memory
     [(value)         '(ref eq)]         ; index into linear memory
     [(extern)        '(ref $External)]
+    [(extern/raw)    '(ref $External)]
     [(i32)           '(ref i31)]
     [(u32)           '(ref i31)]
     [(f64)           '(ref $Flonum)]
@@ -484,11 +502,43 @@
                [(list 'value) ; a value is returned as an index into linear memory
                 `(return
                   (call $linear-memory->value (local.get $results)))]
-               [(list 'extern) ; wrap externref in our External box
+               [(list 'extern/raw) ; wrap externref in our External box
                 `(return
                   (struct.new $External
                               (i32.const 0)              ;; $hash = 0 (lazy)
                               (local.get $results)))]    ;; externref payload
+               [(list 'extern) ; JS null => #f, otherwise wrap externref
+                `(return
+                  (if (result (ref eq))
+                      (ref.is_null (local.get $results))
+                      (then (global.get $false))
+                      (else (struct.new $External
+                                        (i32.const 0)      ;; $hash = 0 (lazy)
+                                        (local.get $results)))))]
+               [(list 'extern/null) ; JS null => #f, otherwise wrap externref
+                `(return
+                  (if (result (ref eq))
+                      (ref.is_null (local.get $results))
+                      (then (global.get $false))
+                      (else (struct.new $External
+                                        (i32.const 0)      ;; $hash = 0 (lazy)
+                                        (local.get $results)))))]
+               [(list 'extern/undefined) ; JS undefined => #f, otherwise wrap externref
+                `(return
+                  (if (result (ref eq))
+                      (call $js-external-undefined? (local.get $results))
+                      (then (global.get $false))
+                      (else (struct.new $External
+                                        (i32.const 0)      ;; $hash = 0 (lazy)
+                                        (local.get $results)))))]
+               [(list 'extern/nullish) ; JS null or undefined => #f, otherwise wrap externref
+                `(return
+                  (if (result (ref eq))
+                      (call $js-external-nullish? (local.get $results))
+                      (then (global.get $false))
+                      (else (struct.new $External
+                                        (i32.const 0)      ;; $hash = 0 (lazy)
+                                        (local.get $results)))))]
                [_
                 `(return (global.get $void))]))]))
 

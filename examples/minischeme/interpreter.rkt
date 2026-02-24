@@ -220,7 +220,7 @@
   (cond
     [(closure? value)
      (define params (closure-params value))
-     (when (not (= (length params) (length args)))
+     (unless (= (length params) (length args))
        (error 'minischeme "arity mismatch: expected ~a arguments, got ~a"
               (length params) (length args)))
      (define new-env (make-env (closure-env value)))
@@ -459,7 +459,6 @@
   (string-append
    "(define (fact n) (if (= n 0) 1 (* n (fact (- n 1))))) "
    "(fact 10)")))
-
 
 
 

@@ -9,65 +9,65 @@
 (define-foreign jsx-init-board
   #:module "jsx-board"
   #:name   "init-board"
-  (-> (string value) (extern)))
+  (-> (string value) (extern/raw)))
 
 ;; Create an element on a board
 ; (jsx-board-create board:Extern element-type:String parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create
   #:module "jsx-board"
   #:name   "create"
-  (-> (extern string value value) (extern)))
+  (-> (extern string value value) (extern/raw)))
 
 ;; Convenience constructors for common geometry elements
 ; (jsx-board-create-point board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-point
   #:module "jsx-board"
   #:name   "create-point"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ; (jsx-board-create-line board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-line
   #:module "jsx-board"
   #:name   "create-line"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ; (jsx-board-create-segment board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-segment
   #:module "jsx-board"
   #:name   "create-segment"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ; (jsx-board-create-circle board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-circle
   #:module "jsx-board"
   #:name   "create-circle"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ; (jsx-board-create-intersection board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-intersection
   #:module "jsx-board"
   #:name   "create-intersection"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ; (jsx-board-create-text board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign jsx-board-create-text
   #:module "jsx-board"
   #:name   "create-text"
-  (-> (extern value value) (extern)))
+  (-> (extern value value) (extern/raw)))
 
 ;; Update board state and redraw as needed
 ; (jsx-board-update! board:Extern) -> Extern
 (define-foreign jsx-board-update!
   #:module "jsx-board"
   #:name   "update!"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Force a full board update
 ; (jsx-board-full-update! board:Extern) -> Extern
 (define-foreign jsx-board-full-update!
   #:module "jsx-board"
   #:name   "full-update!"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Remove an object from the board
 ; (jsx-board-remove-object! board:Extern obj:Extern) -> Void
@@ -81,14 +81,14 @@
 (define-foreign jsx-board-suspend-update!
   #:module "jsx-board"
   #:name   "suspend-update!"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Resume automatic board updates
 ; (jsx-board-unsuspend-update! board:Extern) -> Extern
 (define-foreign jsx-board-unsuspend-update!
   #:module "jsx-board"
   #:name   "unsuspend-update!"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;;; Point
 
@@ -120,7 +120,7 @@
 (define-foreign jsx-point-attractors
   #:module "jsx-point"
   #:name   "attractors"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Set list of attractor points
 ; (jsx-set-point-attractors! pt:Extern attractors:Extern) -> Void
@@ -176,7 +176,7 @@
 (define-foreign jsx-point-ignored-snap-to-points
   #:module "jsx-point"
   #:name   "ignored-snap-to-points"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 ;; Set points ignored when snapping
 ; (jsx-set-point-ignored-snap-to-points! pt:Extern points:Extern) -> Void
@@ -408,4 +408,4 @@
 (define-foreign jsx-point-update-transform!
   #:module "jsx-point"
   #:name   "update-transform!"
-  (-> (extern i32) (extern)))
+  (-> (extern i32) (extern/raw)))

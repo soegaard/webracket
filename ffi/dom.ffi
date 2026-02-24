@@ -4,6 +4,10 @@
 
 ;; This file declares various JavaScript functions
 ;; that work with the DOM.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
 
 ;;;
 ;;; WebRacket Helpers
@@ -20,17 +24,17 @@
 (define-foreign js-window-window
   #:module "window"
   #:name   "window"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-self
   #:module "window"
   #:name   "self"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-document
   #:module "window"
   #:name   "document"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-name
   #:module "window"
@@ -45,7 +49,7 @@
 (define-foreign js-window-location
   #:module "window"
   #:name   "location"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-set-window-location!
   #:module "window"
@@ -56,42 +60,42 @@
 (define-foreign js-window-custom-elements
   #:module "window"
   #:name   "custom-elements"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-history
   #:module "window"
   #:name   "history"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-locationbar
   #:module "window"
   #:name   "locationbar"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-menubar
   #:module "window"
   #:name   "menubar"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-personalbar
   #:module "window"
   #:name   "personalbar"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-scrollbars
   #:module "window"
   #:name   "scrollbars"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-statusbar
   #:module "window"
   #:name   "statusbar"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-toolbar
   #:module "window"
   #:name   "toolbar"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-status
   #:module "window"
@@ -111,7 +115,7 @@
 (define-foreign js-window-frames
   #:module "window"
   #:name   "frames"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-length
   #:module "window"
@@ -131,12 +135,12 @@
 (define-foreign js-window-parent
   #:module "window"
   #:name   "parent"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-top
   #:module "window"
   #:name   "top"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-visual-viewport
   #:module "window"
@@ -146,7 +150,7 @@
 (define-foreign js-window-navigator
   #:module "window"
   #:name   "navigator"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-origin
   #:module "window"
@@ -156,7 +160,7 @@
 (define-foreign js-window-crypto
   #:module "window"
   #:name   "crypto"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-device-pixel-ratio
   #:module "window"
@@ -166,7 +170,7 @@
 (define-foreign js-window-event
   #:module "window"
   #:name   "event"
-  (-> () (extern)))
+  (-> () (extern/undefined)))
 
 (define-foreign js-window-frame-element
   #:module "window"
@@ -236,27 +240,27 @@
 (define-foreign js-window-screen
   #:module "window"
   #:name   "screen"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-local-storage
   #:module "window"
   #:name   "local-storage"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-session-storage
   #:module "window"
   #:name   "session-storage"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-performance
   #:module "window"
   #:name   "performance"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-indexed-db
   #:module "window"
   #:name   "indexed-db"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-is-secure-context
   #:module "window"
@@ -271,17 +275,17 @@
 (define-foreign js-window-caches
   #:module "window"
   #:name   "caches"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-speech-synthesis
   #:module "window"
   #:name   "speech-synthesis"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-window-style-media
   #:module "window"
   #:name   "style-media"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 ;; Methods
 
@@ -339,13 +343,13 @@
   #:module "window"
   #:name   "create-image-bitmap"
   ;; Pass `(void)` for missing optional arguments.
-  (-> (extern value value value value value) (extern)))
+  (-> (extern value value value value value) (extern/raw)))
 
 (define-foreign js-window-fetch
   #:module "window"
   #:name   "fetch"
   ;; Pass `(void)` for missing init
-  (-> (value value) (extern)))
+  (-> (value value) (extern/raw)))
 
 (define-foreign js-window-focus
   #:module "window"
@@ -355,7 +359,7 @@
 (define-foreign js-window-get-computed-style
   #:module "window"
   #:name   "get-computed-style"
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-window-get-selection
   #:module "window"
@@ -365,7 +369,7 @@
 (define-foreign js-window-match-media
   #:module "window"
   #:name   "match-media"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-window-move-by
   #:module "window"
@@ -498,37 +502,37 @@
 (define-foreign js-document
   #:module "document"
   #:name   "document"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-document-head
   #:module "document"
   #:name   "head"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-document-body
   #:module "document"
   #:name   "body"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-document-element
   #:module "document"
   #:name   "document-element"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-create-element
   #:module "document"
   #:name   "create-element"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-create-text-node
   #:module "document"
   #:name   "create-text-node"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-adopt-node
   #:module "document"
   #:name   "adopt-node"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-caret-range-from-point
   #:module "document"
@@ -555,69 +559,69 @@
 (define-foreign js-create-attribute
   #:module "document"
   #:name   "create-attribute"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-create-attribute-ns
   #:module "document"
   #:name   "create-attribute-ns"
-  (-> (string string) (extern)))
+  (-> (string string) (extern/raw)))
 
 (define-foreign js-create-cdata-section
   #:module "document"
   #:name   "create-cdata-section"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-create-comment
   #:module "document"
   #:name   "create-comment"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-create-document-fragment
   #:module "document"
   #:name   "create-document-fragment"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-create-element-ns
   #:module "document"
   #:name   "create-element-ns"
-  (-> (string string) (extern)))
+  (-> (string string) (extern/raw)))
 
 ; Deprecated
 #;(define-foreign js-create-event
   #:module "document"
   #:name   "create-event"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-create-expression
   #:module "document"
   #:name   "create-expression"
-  (-> (string extern) (extern)))
+  (-> (string extern) (extern/raw)))
 
 ; Deprecated
 #;(define-foreign js-create-ns-resolver
   #:module "document"
   #:name   "create-ns-resolver"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-create-node-iterator
   #:module "document"
   #:name   "create-node-iterator"
-  (-> (extern u32 extern) (extern)))  ; was u32  (it's a bitmask)
+  (-> (extern u32 extern) (extern/raw)))  ; was u32  (it's a bitmask)
 
 (define-foreign js-create-processing-instruction
   #:module "document"
   #:name   "create-processing-instruction"
-  (-> (string string) (extern)))
+  (-> (string string) (extern/raw)))
 
 (define-foreign js-create-range
   #:module "document"
   #:name   "create-range"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-create-tree-walker
   #:module "document"
   #:name   "create-tree-walker"
-  (-> (extern u32 extern) (extern)))
+  (-> (extern u32 extern) (extern/raw)))
 
 (define-foreign js-element-from-point
   #:module "document"
@@ -627,7 +631,7 @@
 (define-foreign js-elements-from-point
   #:module "document"
   #:name   "elements-from-point"
-  (-> (f64 f64) (extern)))
+  (-> (f64 f64) (extern/raw)))
 
 ; Deprecated
 (define-foreign js-enable-style-sheets-for-set
@@ -638,7 +642,7 @@
 (define-foreign js-evaluate
   #:module "document"
   #:name   "evaluate"
-  (-> (string extern extern i32 extern) (extern)))
+  (-> (string extern extern i32 extern) (extern/raw)))
 
 ; Deprecated
 #;(define-foreign js-exec-command
@@ -649,12 +653,12 @@
 (define-foreign js-exit-fullscreen
   #:module "document"
   #:name   "exit-fullscreen"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-exit-picture-in-picture
   #:module "document"
   #:name   "exit-picture-in-picture"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 (define-foreign js-exit-pointer-lock
   #:module "document"
@@ -669,22 +673,22 @@
 (define-foreign js-get-elements-by-class-name
   #:module "document"
   #:name   "get-elements-by-class-name"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-get-elements-by-name
   #:module "document"
   #:name   "get-elements-by-name"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-get-elements-by-tag-name
   #:module "document"
   #:name   "get-elements-by-tag-name"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-get-elements-by-tag-name-ns
   #:module "document"
   #:name   "get-elements-by-tag-name-ns"
-  (-> (string string) (extern)))
+  (-> (string string) (extern/raw)))
 
 (define-foreign js-get-selection
   #:module "document"
@@ -699,12 +703,12 @@
 (define-foreign js-import-node
   #:module "document"
   #:name   "import-node"
-  (-> (extern i32) (extern)))
+  (-> (extern i32) (extern/raw)))
 
 (define-foreign js-open
   #:module "document"
   #:name   "open"
-  (-> () (extern)))
+  (-> () (extern/raw)))
 
 ; Deprecated
 #;(define-foreign js-query-command-enabled
@@ -734,7 +738,7 @@
 #;(define-foreign js-query-command-value
   #:module "document"
   #:name   "query-command-value"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-query-selector
   #:module "document"
@@ -744,7 +748,7 @@
 (define-foreign js-query-selector-all
   #:module "document"
   #:name   "query-selector-all"
-  (-> (string) (extern)))
+  (-> (string) (extern/raw)))
 
 (define-foreign js-release-events
   #:module "document"
@@ -788,7 +792,7 @@
   #:module "event"
   #:name   "new"
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
-  (-> (string value) (extern)))
+  (-> (string value) (extern/raw)))
 
 ;; Properties
 (define-foreign js-event-type
@@ -845,7 +849,7 @@
 (define-foreign js-event-composed-path
   #:module "event"
   #:name   "composed-path"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-event-prevent-default
   #:module "event"
@@ -877,7 +881,7 @@
   #:name   "append-child!"
   ;; Parameters: two external references which may be null
   ;; Result: an external reference which may be null
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-set-attribute!
   #:module "element"
@@ -894,7 +898,7 @@
   #:module "element"
   #:name   "animate"
   ;; The options argument is optional.
-  (-> (extern extern extern) (extern)))
+  (-> (extern extern extern) (extern/raw)))
 
 (define-foreign js-append!
   #:module "element"
@@ -905,7 +909,7 @@
 (define-foreign js-attach-shadow!
   #:module "element"
   #:name   "attach-shadow!"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-before!
   #:module "element"
@@ -921,12 +925,12 @@
 (define-foreign js-computed-style-map
   #:module "element"
   #:name   "computed-style-map"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-get-animations
   #:module "element"
   #:name   "get-animations"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-get-attribute
   #:module "element"
@@ -941,7 +945,7 @@
 (define-foreign js-get-attribute-names
   #:module "element"
   #:name   "get-attribute-names"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-get-attribute-node
   #:module "element"
@@ -956,27 +960,27 @@
 (define-foreign js-get-bounding-client-rect
   #:module "element"
   #:name   "get-bounding-client-rect"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-get-client-rects
   #:module "element"
   #:name   "get-client-rects"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-element-get-elements-by-class-name
   #:module "element"
   #:name   "get-elements-by-class-name"
-  (-> (extern string) (extern)))
+  (-> (extern string) (extern/raw)))
 
 (define-foreign js-element-get-elements-by-tag-name
   #:module "element"
   #:name   "get-elements-by-tag-name"
-  (-> (extern string) (extern)))
+  (-> (extern string) (extern/raw)))
 
 (define-foreign js-element-get-elements-by-tag-name-ns
   #:module "element"
   #:name   "get-elements-by-tag-name-ns"
-  (-> (extern string string) (extern)))
+  (-> (extern string string) (extern/raw)))
 
 (define-foreign js-has-attribute
   #:module "element"
@@ -1001,7 +1005,7 @@
 (define-foreign js-insert-adjacent-element!
   #:module "element"
   #:name   "insert-adjacent-element!"
-  (-> (extern string extern) (extern)))
+  (-> (extern string extern) (extern/raw)))
 
 (define-foreign js-insert-adjacent-html!
   #:module "element"
@@ -1032,7 +1036,7 @@
 (define-foreign js-element-query-selector-all
   #:module "element"
   #:name   "query-selector-all"
-  (-> (extern string) (extern)))
+  (-> (extern string) (extern/raw)))
 
 (define-foreign js-release-pointer-capture!
   #:module "element"
@@ -1057,7 +1061,7 @@
 (define-foreign js-remove-attribute-node!
   #:module "element"
   #:name   "remove-attribute-node!"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-replace-children!
   #:module "element"
@@ -1074,7 +1078,7 @@
 (define-foreign js-request-fullscreen
   #:module "element"
   #:name   "request-fullscreen"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-request-pointer-lock
   #:module "element"
@@ -1113,12 +1117,12 @@
 (define-foreign js-set-attribute-node!
   #:module "element"
   #:name   "set-attribute-node!"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-set-attribute-node-ns!
   #:module "element"
   #:name   "set-attribute-node-ns!"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-set-pointer-capture!
   #:module "element"
@@ -1140,7 +1144,7 @@
 (define-foreign js-canvas-capture-stream
   #:module "canvas"
   #:name   "capture-stream"
-  (-> (extern f64) (extern)))
+  (-> (extern f64) (extern/raw)))
 
 (define-foreign js-canvas-get-context
   #:module "canvas"
@@ -1170,7 +1174,7 @@
 (define-foreign js-canvas-transfer-control-to-offscreen
   #:module "canvas"
   #:name   "transfer-control-to-offscreen"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-canvas-width
   #:module "canvas"
@@ -1191,7 +1195,7 @@
 (define-foreign js-canvas2d-canvas
   #:module "canvas-rendering-context-2d"
   #:name   "canvas"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-canvas2d-direction
   #:module "canvas-rendering-context-2d"
@@ -1206,7 +1210,7 @@
 (define-foreign js-canvas2d-fill-style
   #:module "canvas-rendering-context-2d"
   #:name   "fill-style"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-set-canvas2d-fill-style!
   #:module "canvas-rendering-context-2d"
@@ -1366,7 +1370,7 @@
 (define-foreign js-canvas2d-stroke-style
   #:module "canvas-rendering-context-2d"
   #:name   "stroke-style"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-set-canvas2d-stroke-style!
   #:module "canvas-rendering-context-2d"
@@ -1514,17 +1518,17 @@
 (define-foreign js-canvas2d-create-image-data
   #:module "canvas-rendering-context-2d"
   #:name   "create-image-data"
-  (-> (extern f64 f64) (extern)))
+  (-> (extern f64 f64) (extern/raw)))
 
 (define-foreign js-canvas2d-create-image-data-from
   #:module "canvas-rendering-context-2d"
   #:name   "create-image-data-from"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-canvas2d-create-linear-gradient
   #:module "canvas-rendering-context-2d"
   #:name   "create-linear-gradient"
-  (-> (extern f64 f64 f64 f64) (extern)))
+  (-> (extern f64 f64 f64 f64) (extern/raw)))
 
 (define-foreign js-canvas2d-create-pattern
   #:module "canvas-rendering-context-2d"
@@ -1534,12 +1538,12 @@
 (define-foreign js-canvas2d-create-radial-gradient
   #:module "canvas-rendering-context-2d"
   #:name   "create-radial-gradient"
-  (-> (extern f64 f64 f64 f64 f64 f64) (extern)))
+  (-> (extern f64 f64 f64 f64 f64 f64) (extern/raw)))
 
 (define-foreign js-canvas2d-create-conic-gradient
   #:module "canvas-rendering-context-2d"
   #:name   "create-conic-gradient"
-  (-> (extern f64 f64 f64) (extern)))
+  (-> (extern f64 f64 f64) (extern/raw)))
 
 (define-foreign js-canvas2d-draw-focus-if-needed!
   #:module "canvas-rendering-context-2d"
@@ -1595,17 +1599,17 @@
   #:module "canvas-rendering-context-2d"
   #:name   "get-image-data"
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
-  (-> (extern f64 f64 f64 f64 value) (extern)))
+  (-> (extern f64 f64 f64 f64 value) (extern/raw)))
 
 (define-foreign js-canvas2d-get-line-dash
   #:module "canvas-rendering-context-2d"
   #:name   "get-line-dash"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-canvas2d-get-transform
   #:module "canvas-rendering-context-2d"
   #:name   "get-transform"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-canvas2d-is-point-in-path
   #:module "canvas-rendering-context-2d"
@@ -1627,7 +1631,7 @@
 (define-foreign js-canvas2d-measure-text
   #:module "canvas-rendering-context-2d"
   #:name   "measure-text"
-  (-> (extern string) (extern)))
+  (-> (extern string) (extern/raw)))
 
 (define-foreign js-canvas2d-move-to
   #:module "canvas-rendering-context-2d"
@@ -1739,7 +1743,7 @@
 (define-foreign js-media-audio-tracks
   #:module "media"
   #:name   "audio-tracks"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-autoplay
   #:module "media"
@@ -1754,7 +1758,7 @@
 (define-foreign js-media-buffered
   #:module "media"
   #:name   "buffered"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-controls
   #:module "media"
@@ -1769,7 +1773,7 @@
 (define-foreign js-media-controls-list
   #:module "media"
   #:name   "controls-list"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-cross-origin
   #:module "media"
@@ -1899,7 +1903,7 @@
 (define-foreign js-media-played
   #:module "media"
   #:name   "played"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-preload
   #:module "media"
@@ -1929,7 +1933,7 @@
 (define-foreign js-media-seekable
   #:module "media"
   #:name   "seekable"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-seeking
   #:module "media"
@@ -1964,12 +1968,12 @@
 (define-foreign js-media-text-tracks
   #:module "media"
   #:name   "text-tracks"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-video-tracks
   #:module "media"
   #:name   "video-tracks"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-volume
   #:module "media"
@@ -1986,7 +1990,7 @@
   #:module "media"
   #:name   "add-text-track!"
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
-  (-> (extern string value value) (extern)))
+  (-> (extern string value value) (extern/raw)))
 
 (define-foreign js-media-can-play-type
   #:module "media"
@@ -1997,7 +2001,7 @@
   #:module "media"
   #:name   "capture-stream"
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
-  (-> (extern value) (extern)))
+  (-> (extern value) (extern/raw)))
 
 (define-foreign js-media-fast-seek!
   #:module "media"
@@ -2017,17 +2021,17 @@
 (define-foreign js-media-play
   #:module "media"
   #:name   "play"
-  (-> (extern) (extern)))
+  (-> (extern) (extern/raw)))
 
 (define-foreign js-media-set-media-keys!
   #:module "media"
   #:name   "set-media-keys!"
-  (-> (extern extern) (extern)))
+  (-> (extern extern) (extern/raw)))
 
 (define-foreign js-media-set-sink-id!
   #:module "media"
   #:name   "set-sink-id!"
-  (-> (extern string) (extern)))
+  (-> (extern string) (extern/raw)))
 
 ;;;
 ;;; HTMLImageElement
@@ -2039,7 +2043,7 @@
   #:module "image"
   #:name   "new"
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
-  (-> (value value) (extern)))
+  (-> (value value) (extern/raw)))
 
 ;; Properties
 (define-foreign js-image-alt
@@ -2216,6 +2220,4 @@
 (define-foreign js-image-decode
   #:module "image"
   #:name   "decode"
-  (-> (extern) (extern)))
-
-
+  (-> (extern) (extern/raw)))
