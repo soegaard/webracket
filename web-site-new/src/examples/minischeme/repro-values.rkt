@@ -1,0 +1,5 @@
+(include "minischeme.rkt")
+(minischeme-reset-state!)
+(list (minischeme-process-input "values")
+      (minischeme-process-input "(values 1 2 3)")
+      (minischeme-process-input "(call-with-values (lambda () (values 1 2 3)) list)"))
