@@ -2624,7 +2624,7 @@ pre {
   align-self: baseline;
   background: rgba(101, 79, 240, 0.3);
   border: 1px solid rgba(101, 79, 240, 0.45);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 .page--quick-start .quick-start-steps {
   counter-reset: step;

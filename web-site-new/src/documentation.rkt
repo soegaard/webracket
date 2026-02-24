@@ -2156,8 +2156,9 @@
              ,(quick-start-step
                1
                "Minimal Requirements"
-               "You’ll need:"
+               #f
                (list
+                `(p "You’ll need:")
                 `(ul
                   (li "Racket (9.0 or newer)")
                   (li "Node.js")
@@ -2167,14 +2168,16 @@
              ,(quick-start-step
                2
                "Get WebRacket"
-               "Clone the repository and enter it:"
+               #f
                (list
+                `(p "Clone the repository and enter it:")
                 `(pre (code "git clone https://github.com/soegaard/webracket.git\ncd webracket"))))
              ,(quick-start-step
                3
                "Run a Demo Site"
-               "WebRacket includes ready-made demos. To serve them locally:"
+               #f
                (list
+                `(p "WebRacket includes ready-made demos. To serve them locally:")
                 `(pre (code "cd examples\nraco static-web"))
                 `(p "This starts a local web server.")
                 `(p "Now open your browser at:")
@@ -2182,8 +2185,9 @@
              ,(quick-start-step
                4
                "Try a Demo"
-               "Pick one of the demos and open it in your browser."
+               #f
                (list
+                `(p "Pick one of the demos and open it in your browser.")
                 `(p "Some good starting points:")
                 `(ul
                   (li "MathJax Editor — live LaTeX preview in the browser")
@@ -2194,8 +2198,9 @@
              ,(quick-start-step
                5
                "Peek at the Source"
-               "Each demo has a Racket source file in the examples/ directory."
+               #f
                (list
+                `(p "Each demo has a Racket source file in the examples/ directory.")
                 `(p "Open one and notice:")
                 `(ul
                   (li "It looks like normal Racket")

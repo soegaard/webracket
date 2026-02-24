@@ -64,7 +64,9 @@ for page in "${ROUTE_ALIASES[@]}"; do
 done
 
 echo "-- Copying Assets --"
-rm -rf "${OUT_DIR}"
+mkdir -p "${OUT_DIR}"
+# Preserve mirrored new-site output under local/new when building old site only.
+find "${OUT_DIR}" -mindepth 1 -maxdepth 1 ! -name new -exec rm -rf {} +
 mkdir -p "${OUT_DIR}/assets/favicon"
 mkdir -p "${OUT_DIR}/assets/examples/screenshots"
 mkdir -p "${OUT_DIR}/assets/vendor/jsxgraph"
