@@ -8,12 +8,6 @@ From this folder:
 racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b hello-world.rkt
 ```
 
-Or from `examples/`:
-
-```sh
-./build.sh
-```
-
 ## Serve
 
 From this folder:
@@ -27,3 +21,5 @@ raco static-web
 Open:
 
 - `http://localhost:8000/hello-world.html`
+
+This example also calls `(js-log "Hello!")`, which prints `Hello!` in the browser's JavaScript console.

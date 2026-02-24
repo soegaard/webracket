@@ -30,6 +30,7 @@ build_example_node() {
 echo "-- Building runnable examples --"
 build_example "mathjax4"       "mathjax.rkt"        --ffi dom --ffi standard
 build_example "hello-world-2"  "hello-world.rkt"    --ffi dom --ffi standard
+build_example "hello-world-3"  "hello-world-3.rkt"  --ffi dom --ffi standard
 build_example "matrix-rain"    "matrix-rain.rkt"    --ffi xtermjs --ffi dom --ffi standard
 build_example "xtermjs-demo"   "xtermjs-demo.rkt"   --ffi xtermjs --ffi dom --ffi standard
 build_example "space-invaders" "space-invaders.rkt" --ffi dom --ffi standard
