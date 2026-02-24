@@ -18,7 +18,7 @@
                  (div (@ (class "section-content"))
                       (div (@ (class "space-invaders-frame"))
                            (p (@ (class "space-invaders-hint"))
-                              "Use ←/→ or A/D to move, Space to shoot.")
+                              "Use ←/→ or A/D to move, Space to shoot, M to toggle easy/hard mode.")
                            (div (@ (class "arcade-frame"))
                                 (div (@ (class "arcade-bezel"))
                                      (div (@ (id "space-invaders-root"))))))))
@@ -122,7 +122,7 @@
 ;;;
 
 (struct bullet (x y) #:mutable)
-(struct enemy  (x y) #:mutable)
+(struct enemy  (x y row) #:mutable)
 (struct player (x y) #:mutable)
 
 (define player-width      48.)
@@ -154,7 +154,8 @@
   (for*/list ([row (in-range enemy-rows)]
               [col (in-range enemy-cols)])
     (enemy (+ enemy-start-x (* col enemy-spacing-x))
-           (+ enemy-start-y (* row enemy-spacing-y)))))
+           (+ enemy-start-y (* row enemy-spacing-y))
+           row)))
 (define enemies-dir 1)
 
 
@@ -167,6 +168,9 @@
 (define left-pressed?        #f)              ; set on key down, reset on key up
 (define right-pressed?       #f)              ; ditto
 (define space-pressed?       #f)              ; ditto
+(define mode                 'easy)           ; 'easy or 'hard
+(define hard-shot-lock?      #f)              ; in hard mode: true until the shot reaches top
+(define hard-shot-y          0.)              ; virtual y-position for lock timing
 (define time-since-last-shot shoot-cooldown)  ; time passed since last shot
 (define last-time            #f)              ; timestamp from last tick
 (define win-sound-played?    #f)
@@ -217,6 +221,21 @@
       (string=? key "Spacebar")
       (string=? key "spacebar")))
 
+(define (mode-key? key)
+  (or (string=? key "m")
+      (string=? key "M")))
+
+(define (enforce-hard-mode-shot-state!)
+  (cond
+    [(null? bullets)
+     (set! hard-shot-lock? #f)
+     (set! hard-shot-y 0.)]
+    [else
+     (define b (car bullets))
+     (set! bullets (list b))
+     (set! hard-shot-lock? #t)
+     (set! hard-shot-y (bullet-y b))]))
+
 (define (on-key-down evt)
   (ensure-audio!)
   (define key      (js-ref evt "key"))
@@ -231,7 +250,12 @@
                            (set! handled? #t)]
       [(space-key? key)    (set! space-pressed? #t)
                            (set! handled? #t)
-                           (fire!)]))
+                           (fire!)]
+      [(mode-key? key)     (set! mode (if (eq? mode 'easy) 'hard 'easy))
+                           (if (eq? mode 'hard)
+                               (enforce-hard-mode-shot-state!)
+                               (set! hard-shot-lock? #f))
+                           (set! handled? #t)]))
   (when handled?
     (js-event-prevent-default evt)))
 
@@ -268,10 +292,15 @@
 
 (define (fire!)
   (when (and (eq? status 'playing)
-             (>= time-since-last-shot shoot-cooldown))
+             (>= time-since-last-shot shoot-cooldown)
+             (or (eq? mode 'easy)
+                 (not hard-shot-lock?)))
     (define new-bullet (bullet (player-x player-pos)
                                (- (player-y player-pos) bullet-height)))
     (set! bullets (cons new-bullet bullets))
+    (when (eq? mode 'hard)
+      (set! hard-shot-lock? #t)
+      (set! hard-shot-y (bullet-y new-bullet)))
     (set! time-since-last-shot 0.)
     (play-sfx 'shoot)))
 
@@ -298,6 +327,10 @@
 
 (define (update-bullets dt)
   (define new-bullets '())
+  (when hard-shot-lock?
+    (set! hard-shot-y (- hard-shot-y (* bullet-speed dt)))
+    (when (<= (+ hard-shot-y bullet-height) 0.)
+      (set! hard-shot-lock? #f)))
   (for ([b (in-list bullets)])
     (set-bullet-y! b (- (bullet-y b) (* bullet-speed dt)))
     (cond
@@ -312,7 +345,10 @@
 
 (define (update-enemies dt)
   (when (pair? enemies)
-    (define dx (* enemy-speed dt enemies-dir))
+    (define effective-enemy-speed (if (eq? mode 'hard)
+                                      (* enemy-speed 1.0)
+                                      enemy-speed))
+    (define dx (* effective-enemy-speed dt enemies-dir))
     (define drop?
       (for/or ([e (in-list enemies)])
         (define new-x (+ (enemy-x e) dx))
@@ -456,7 +492,12 @@
     ; Enemies (pixel aliens)
     (define alien-scale (ceiling (/ enemy-width (sprite-width alien-sprite))))
     (for ([e (in-list enemies)])
-      (draw-sprite! alien-sprite (enemy-x e) (enemy-y e) alien-scale "#f66"))
+      (define alien-color
+        (case (modulo (enemy-row e) 3)
+          [(0) "#b4232f"] ; logo red
+          [(1) "#4a6cff"] ; logo blue
+          [else "#5d4bea"])) ; logo purple
+      (draw-sprite! alien-sprite (enemy-x e) (enemy-y e) alien-scale alien-color))
 
     ; Instruction Text
     (js-set-canvas2d-fill-style!    ctx "#fff")
@@ -465,17 +506,28 @@
     (js-set-canvas2d-text-baseline! ctx "top")
     (js-canvas2d-fill-text          ctx instruction-text (/ width 2.) 16. (void))
 
+    ; Mode indicator
+    (js-set-canvas2d-fill-style! ctx (if (eq? mode 'hard) "#ff6961" "#73d673"))
+    (js-set-canvas2d-font!       ctx "bold 20px sans-serif")
+    (js-set-canvas2d-text-align! ctx "left")
+    (js-canvas2d-fill-text       ctx
+                                 (string-append "MODE: " (if (eq? mode 'hard) "hard" "easy"))
+                                 16.
+                                 56.
+                                 (void))
+
     ; Final Message
     (unless (eq? status 'playing)
       (js-set-canvas2d-font!          ctx "32px sans-serif")
       (js-set-canvas2d-text-baseline! ctx "middle")
+      (js-set-canvas2d-text-align!    ctx "left")
       (define message (if (eq? status 'won)
                           "You saved the day!"
                           "The invaders landed!"))
-      (js-canvas2d-fill-text ctx message (/ width 2.) (/ height 2.) (void))
+      (js-canvas2d-fill-text ctx message 32. (/ height 2.) (void))
       (js-set-canvas2d-font! ctx "18px sans-serif")
       (js-canvas2d-fill-text ctx "Hit \"R\" to play again."
-                             (/ width 2.)
+                             32.
                              (+ (/ height 2.) 36.)
                              (void)))))
 
@@ -502,12 +554,15 @@
   (set! enemies (for*/list ([row (in-range enemy-rows)]
                             [col (in-range enemy-cols)])
                   (enemy (+ enemy-start-x (* col enemy-spacing-x))
-                         (+ enemy-start-y (* row enemy-spacing-y)))))
+                         (+ enemy-start-y (* row enemy-spacing-y))
+                         row)))
   (set! enemies-dir          1)
   (set! status               'playing)
   (set! left-pressed?        #f)
   (set! right-pressed?       #f)
   (set! space-pressed?       #f)
+  (set! hard-shot-lock?      #f)
+  (set! hard-shot-y          0.)
   (set! time-since-last-shot shoot-cooldown)
   (set! last-time            #f)
   (set! win-sound-played?    #f)
