@@ -7,13 +7,14 @@ This document describes the JSXGraph bindings exported by `ffi/jsxgraph.ffi` in 
 JSXGraph is a browser-based JavaScript library for interactive mathematics and visualization, including geometry, function plotting, charting, and related educational/assessment use cases. In WebRacket, `ffi/jsxgraph.ffi` gives direct access to selected JSXGraph point APIs.
 
 Current scope:
+- Board lifecycle and element creation
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
-All function names are linked to JSXGraph Point API documentation.
+All function names are linked to JSXGraph API documentation.
 
 ### Table of Contents
 
@@ -26,11 +27,15 @@ All function names are linked to JSXGraph Point API documentation.
 - [Chapter 4 — Point Properties (Getters)](#chapter-4--point-properties-getters)
 - [Chapter 5 — Point Properties (Setters)](#chapter-5--point-properties-setters)
 - [Chapter 6 — Point Methods](#chapter-6--point-methods)
-- [Chapter 7 — Mini Workflows](#chapter-7--mini-workflows)
+- [Chapter 7 — Board API](#chapter-7--board-api)
+- [7.1 Construction](#71-construction)
+- [7.2 Lifecycle and Updates](#72-lifecycle-and-updates)
+- [Chapter 8 — Mini Workflows](#chapter-8--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
-- [Chapter 8 — Coverage Checklist](#chapter-8--coverage-checklist)
+- [Minimal Geometry Constructors](#minimal-geometry-constructors)
+- [Chapter 9 — Coverage Checklist](#chapter-9--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -133,7 +138,36 @@ Reference root: [JXG.Point](https://jsxgraph.org/docs/symbols/JXG.Point.html)
 | [`jsx-point-update-renderer!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern)` | `()` | `(jsx-point-update-renderer! pt)` | trigger renderer refresh for current point state. |
 | [`jsx-point-update-transform!`](https://jsxgraph.org/docs/symbols/JXG.Point.html) | `(extern i32)` | `(extern)` | `(jsx-point-update-transform! pt 1)` | apply transformations and get transformed base element. |
 
-## Chapter 7 — Mini Workflows
+## Chapter 7 — Board API
+
+Reference roots:
+- [JXG.JSXGraph](https://jsxgraph.org/docs/symbols/JXG.JSXGraph.html)
+- [JXG.Board](https://jsxgraph.org/docs/symbols/JXG.Board.html)
+
+### 7.1 Construction
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`jsx-init-board`](https://jsxgraph.org/docs/symbols/JXG.JSXGraph.html) | `(string value)` | `(extern)` | `(jsx-init-board "box" attrs)` | initialize a board in a DOM container. |
+| [`jsx-board-create`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern string value value)` | `(extern)` | `(jsx-board-create board "point" parents attrs)` | create an element on an existing board. |
+| [`jsx-board-create-point`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-point board #[-3 1] attrs)` | create a point with a direct constructor wrapper. |
+| [`jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-line board #[p q] attrs)` | create a line using two points or coordinate parents. |
+| [`jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-segment board #[p q] attrs)` | create a finite segment between two parents. |
+| [`jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-circle board #[center p] attrs)` | create a circle from center+point or compatible parents. |
+| [`jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
+| [`jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern)` | `(jsx-board-create-text board #[-5 5 "A"] attrs)` | create positioned text labels and annotations. |
+
+### 7.2 Lifecycle and Updates
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`jsx-board-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-update! board)` | update board state and redraw as needed. |
+| [`jsx-board-full-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-full-update! board)` | force a full board update pass. |
+| [`jsx-board-remove-object!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern extern)` | `()` | `(jsx-board-remove-object! board obj)` | remove a previously created element. |
+| [`jsx-board-suspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-suspend-update! board)` | batch changes without intermediate redraws. |
+| [`jsx-board-unsuspend-update!`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern)` | `(extern)` | `(jsx-board-unsuspend-update! board)` | resume redraws after batched changes. |
+
+## Chapter 8 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -161,12 +195,23 @@ Reference root: [JXG.Point](https://jsxgraph.org/docs/symbols/JXG.Point.html)
 (jsx-point-update-renderer! pt)
 ```
 
-## Chapter 8 — Coverage Checklist
+### Minimal Geometry Constructors
 
-- This document covers **45** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **45**
+```racket
+(define p (jsx-board-create-point board #[-3 1] (js-object (vector (vector "name" "P")))))
+(define q (jsx-board-create-point board #[2 2] (js-object (vector (vector "name" "Q")))))
+(define l (jsx-board-create-line board #[p q] (js-object (vector))))
+(define s (jsx-board-create-segment board #[p q] (js-object (vector))))
+(define c (jsx-board-create-circle board #[p q] (js-object (vector))))
+(define t (jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
+```
+
+## Chapter 9 — Coverage Checklist
+
+- This document covers **58** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **58**
+- `board api`: 13 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions
 - `point methods`: 8 functions
-
