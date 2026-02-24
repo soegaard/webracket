@@ -4,6 +4,8 @@ This folder contains a generated Racket dataset file:
 
 - `scheme_oldest_papers_dataset.rkt`
 
+The dataset might become a full example one day.
+
 ## Build
 
 No WebRacket browser build step is needed for this folder.
