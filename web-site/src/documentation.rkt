@@ -22,7 +22,7 @@
                          "Reference notes for WebRacket’s compiler and runtime.")))
         ,(section-block
           "Documentation Topics"
-          "Pick a focused topic for deeper details."
+          "Pick a topic."
           (list
            (card-grid
             (list
@@ -43,12 +43,30 @@
                    `(a (@ (class "doc-cta doc-cta--primary")
                           (href "documentation-ffi-standard.html"))
                        "Browse references"))
-             (list `(h3 "Short Compiler Overview")
+             (list `(h3 "Compiler Overview")
                    `(p "A high-level look at the compiler pipeline, passes, and runtime layout.")
                    `(a (@ (class "doc-cta doc-cta--primary")
                           (href "documentation-compiler-overview.html"))
                        "Read overview"))))
            )
+          #f
+          "section--docs-topics")
+        ,(section-block
+          "JSXGraph Examples"
+          #f
+          (list
+           (card-grid
+            (list
+             (list `(h3 "Board")
+                   `(p "Set up a JSXGraph board with the WebRacket bindings.")
+                   `(a (@ (class "doc-cta doc-cta--primary")
+                          (href "documentation-extended-example-jsxgraph-board-points.html"))
+                       "Open example"))
+             (list `(h3 "Board with points and lines")
+                   `(p "Board with point and lines.")
+                   `(a (@ (class "doc-cta doc-cta--primary")
+                          (href "documentation-extended-example-jsxgraph-geometry-constructors.html"))
+                       "Open example")))))
           #f
           "section--docs-topics")
         ,(section-block
@@ -60,9 +78,7 @@
              (lambda (entry)
                (define title  (cdr (assoc 'title  entry)))
                (define output (cdr (assoc 'output entry)))
-               (define source (cdr (assoc 'source entry)))
                (list `(h3 ,title)
-                     `(p "Source: " (code ,source))
                      `(a (@ (class "doc-cta doc-cta--primary")
                             (href ,output))
                          "Open reference")))
@@ -426,6 +442,166 @@
 (define (doc-ffi-xtermjs-page)  (doc-ffi-page "ffi-xtermjs"))
 
 ;;;
+;;; Extended Example: JSXGraph Board + Points
+;;;
+
+;; doc-extended-example-jsxgraph-board-points-page : -> List
+;;   Documentation subpage: extended example using jsx-board + jsx-point.
+(define (doc-extended-example-jsxgraph-board-points-page)
+  `(div (@ (class "page page--docs page--glance"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Extended Example")
+                           (span (@ (class "pill")) "JSXGraph")
+                           (span (@ (class "pill")) "FFI"))
+                      (p (@ (class "hero-sublead"))
+                         (a (@ (href "documentation.html")) "Documentation")
+                         " / JSXGraph Example: Board")
+                      (h1 (@ (class "hero-title")) "JSXGraph Example: Board")
+                      (p (@ (class "hero-lead"))
+                         "End-to-end setup of a JSXGraph board.")))
+        ,(section-block
+          "JSXGraph Example: Board"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
+                 (p "This example assumes your program is compiled with "
+                    (code "--ffi jsxgraph") ", " (code "--ffi dom") ", and "
+                    (code "--ffi standard") ".")
+
+                 (h2 "Live Board Demo")
+                 (p "This page initializes a live JSXGraph board with three points.")
+                 (div (@ (class "doc-demo-panel"))
+                      (div (@ (id "extended-jsx-board")
+                              (class "jxgbox")
+                              (style "width: 640px; height: 420px; border: 1px solid rgba(255,255,255,0.22); border-radius: 8px;")))
+                      (p (@ (id "extended-jsx-board-status") (class "hero-sublead"))
+                         "Loading JSXGraph..."))
+
+                 (h2 "Step 1: Create a container element")
+                 (p "JSXGraph needs a DOM element with a known id. "
+                    "Using " (code "sxml->dom") " from the browser stdlib keeps this concise.")
+                 (pre (code ";; Requires --stdlib in browser mode for sxml->dom.\n"
+                            "(define container\n"
+                            "  (sxml->dom\n"
+                            "   '(div (@ (id \"box\")\n"
+                            "             (class \"jxgbox\")\n"
+                            "             (style \"width: 640px; height: 420px;\")))))\n"
+                            "\n"
+                            "(js-append-child! (js-document-body) container)"))
+
+                 (h2 "Step 2: Initialize the board")
+                 (p "Build a JavaScript attributes object and initialize the board.")
+                 (pre (code "(define board-attrs\n"
+                            "  (js-object\n"
+                            "   (vector (vector \"boundingbox\" #[-6 6 6 -6])\n"
+                            "           (vector \"axis\" #t)\n"
+                            "           (vector \"keepaspectratio\" #t))))\n"
+                            "\n"
+                            "(define board\n"
+                            "  (jsx-init-board \"box\" board-attrs))"))
+
+                 (h2 "Step 3: Create core geometry elements")
+                 (p "Phase 2 adds constructor wrappers for common board elements.")
+                 (pre (code "(define p-attrs (js-object (vector (vector \"name\" \"P\") (vector \"size\" 4))))\n"
+                            "(define q-attrs (js-object (vector (vector \"name\" \"Q\") (vector \"size\" 4))))\n"
+                            "(define text-attrs (js-object (vector)))\n"
+                            "\n"
+                            "(define p (jsx-board-create-point board #[-3 1] p-attrs))\n"
+                            "(define q (jsx-board-create-point board #[2 2] q-attrs))\n"
+                            "(define l (jsx-board-create-line board #[p q] (js-object (vector))))\n"
+                            "(define s (jsx-board-create-segment board #[p q] (js-object (vector))))\n"
+                            "(define c (jsx-board-create-circle board #[p q] (js-object (vector))))\n"
+                            "(define t (jsx-board-create-text board #[-5 5 \"PQ\"] text-attrs))"))
+
+                 (h2 "Step 4: Read and adjust point properties")
+                 (p "Point bindings can validate and update appearance/behavior.")
+                 (pre (code "(when (jsx-point? p)\n"
+                            "  (jsx-set-point-face! p \"circle\")\n"
+                            "  (jsx-set-point-size! p 5.0)\n"
+                            "  (jsx-set-point-snap-to-grid! p 1))\n"
+                            "\n"
+                            "(list (jsx-point-x p)\n"
+                            "      (jsx-point-y p)\n"
+                            "      (jsx-point-size p))"))
+
+                 (h2 "Step 5: Batch updates for performance")
+                 (p "Suspend redraws during multiple changes, then resume and refresh.")
+                 (pre (code "(jsx-board-suspend-update! board)\n"
+                            "(jsx-set-point-size! q 6.0)\n"
+                            "(jsx-board-unsuspend-update! board)\n"
+                            "(jsx-board-update! board)"))
+
+                 (h2 "Step 6: Remove an object")
+                 (pre (code "(jsx-board-remove-object! board s)\n"
+                            "(jsx-board-full-update! board)"))))
+          #f
+          #f)
+        ,(footer-section)))
+
+;; doc-extended-example-jsxgraph-geometry-constructors-page : -> List
+;;   Documentation subpage: extended example for Phase 2 geometry constructors.
+(define (doc-extended-example-jsxgraph-geometry-constructors-page)
+  `(div (@ (class "page page--docs page--glance"))
+        ,(navbar)
+        (section (@ (class "docs-hero"))
+                 (div (@ (class "hero-panel"))
+                      (div (@ (class "pill-row"))
+                           (span (@ (class "pill")) "Extended Example")
+                           (span (@ (class "pill")) "JSXGraph")
+                           (span (@ (class "pill")) "Geometry"))
+                      (p (@ (class "hero-sublead"))
+                         (a (@ (href "documentation.html")) "Documentation")
+                         " / JSXGraph Example: Board with points and lines")
+                      (h1 (@ (class "hero-title"))
+                          "JSXGraph Example: Board with points and lines")
+                      (p (@ (class "hero-lead"))
+                         "Build geometry elements using the Phase 2 constructor wrappers.")))
+        ,(section-block
+          "JSXGraph Example: Board with points and lines"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
+                 (p "This example assumes your program is compiled with "
+                    (code "--ffi jsxgraph") ", " (code "--ffi dom") ", and "
+                    (code "--ffi standard") ".")
+
+                 (h2 "Live Board Demo")
+                 (p "This page initializes a board and demonstrates point, line, segment, circle, intersection, and text.")
+                 (div (@ (class "doc-demo-panel"))
+                      (div (@ (id "extended-jsx-geometry-board")
+                              (class "jxgbox")
+                              (style "width: 640px; height: 420px; border: 1px solid rgba(255,255,255,0.22); border-radius: 8px;")))
+                      (p (@ (id "extended-jsx-geometry-board-status") (class "hero-sublead"))
+                         "Loading JSXGraph..."))
+
+                 (h2 "Step 1: Create geometry constructors")
+                 (pre (code "(define p (jsx-board-create-point board '(-4 1)\n"
+                            "             (js-object (vector (vector \"name\" \"P\") (vector \"size\" 4)))))\n"
+                            "(define q (jsx-board-create-point board '(2 3)\n"
+                            "             (js-object (vector (vector \"name\" \"Q\") (vector \"size\" 4)))))\n"
+                            "(define l (jsx-board-create-line board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define s (jsx-board-create-segment board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define c (jsx-board-create-circle board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define i (jsx-board-create-point board '(0 0)\n"
+                            "             (js-object (vector (vector \"name\" \"I\") (vector \"size\" 3)))))\n"
+                            "(jsx-point-make-intersection! i l c 0 0)\n"
+                            "(define t (jsx-board-create-text board '(-6 6 \"P-Q constructors\")\n"
+                            "             (js-object (vector))))"))
+
+                 (h2 "Step 2: Lifecycle")
+                 (pre (code "(jsx-board-suspend-update! board)\n"
+                            "(jsx-set-point-size! p 5.0)\n"
+                            "(jsx-set-point-size! q 5.0)\n"
+                            "(jsx-board-unsuspend-update! board)\n"
+                            "(jsx-board-full-update! board)"))))
+          #f
+          #f)
+        ,(footer-section)))
+
+;;;
 ;;; WebRacket at a Glance
 ;;;
 
@@ -556,14 +732,14 @@
                                     (href "documentation.html"))
                                  "Browse FFI references"))))
 
-                 (h2 "Very Short Compiler Overview")
+                 (h2 "Very Brief Compiler Overview")
                  (p "WebRacket uses a direct-style compiler that translates expanded Racket programs "
                     "into WebAssembly through a sequence of small, focused transformations. This "
                     "structure keeps the compiler pipeline easy to follow and makes it "
                     "straightforward to relate generated code back to the original source program.")
                  (p "For a pass-by-pass description of the compiler pipeline and pointers into the "
                     "implementation, see the "
-                    (a (@ (href "documentation-compiler-overview.html")) "Short Compiler Overview")
+                    (a (@ (href "documentation-compiler-overview.html")) "Compiler Overview")
                     ".")
 
 
@@ -586,7 +762,7 @@
                            (h3 "Understanding WebRacket")
                            (ul
                             (li (a (@ (href "documentation-compiler-overview.html"))
-                                   "Compiler overview"))
+                                   "Compiler Overview"))
                             (li (a (@ (href "documentation-js-ffi.html"))
                                    "Guide to the JavaScript FFI")))))
 
@@ -603,11 +779,11 @@
 
 
 ;;;
-;;; Short Compiler Overview
+;;; Compiler Overview
 ;;;
 
 ;; doc-compiler-overview-page : -> List
-;;   Documentation subpage: Short Compiler Overview.
+;;   Documentation subpage: Compiler Overview.
 (define (doc-compiler-overview-page)
   `(div (@ (class "page page--docs"))
         ,(navbar)
@@ -619,72 +795,296 @@
                            (span (@ (class "pill")) "Wasm"))
                       (p (@ (class "hero-sublead"))
                          (a (@ (href "documentation.html")) "Documentation")
-                         " / Short Compiler Overview")
-                      (h1 (@ (class "hero-title")) "Short Compiler Overview")
+                         " / Compiler Overview")
+                      (h1 (@ (class "hero-title")) "Compiler Overview")
                       (p (@ (class "hero-lead"))
-                         "A quick, high-level guide to the WebRacket compiler pipeline.")))
+                         "A guide to the WebRacket compiler pipeline.")))
         ,(section-block
-          "Short Compiler Overview"
+          "Introduction"
           #f
           (list
            `(div (@ (class "doc-content"))
-                 (p "The WebRacket compiler is a direct-style compiler. This choice has made it easier "
-                    "to relate the generated code to the source program. In the future we will probably "
-                    "need to add a CPS-pass in order to support continuations and continuation marks.")
+                 (p "Compilers are complex programs. It is helpful to look at a compiler as a pipeline. "
+                    "We will (mis)use the classic terminology of front end, middle end and backend.")
                  ,(callout
                    'note
-                   "Note"
-                   `(p "WebRacket stays in direct style to keep the compiler pipeline easy to trace. "
-                       "A future CPS pass may be added to support continuations and continuation marks."))
-                 (p "The frontend of the WebRacket compiler uses "
-                    ,(code-link "https://docs.racket-lang.org/reference/reader.html#%28def._%28%28quote._~23~25kernel%29._read-syntax%29%29"
-                                "read-syntax")
-                    " to read a WebRacket program from a file. The resulting syntax object is fed into "
-                    "the normal Racket expander to produce a program in fully expanded form.")
+                   "Etymology"
+                   `(p "The division of a compiler in the "
+                       ,(ext "https://en.wikipedia.org/wiki/Compiler#Three-stage_compiler_structure"
+                             "three stages")
+                       " front end, middle end and back end dates back to the late 70s and early 80s."))
+                 (p "We will interpret \"front end\" and \"back end\" as the parts that others wrote "
+                    "and \"middle end\" as the part implemented for WebRacket specifically.")
+                 (p "In the following sections we will look at the components of this pipeline.")))
+          #f
+          #f)
+        ,(section-block
+          "Compiler Pipeline"
+          `(span
+            "WebRacket is a direct-style compiler (no "
+            (a (@ (href "https://en.wikipedia.org/wiki/Continuation-passing_style")
+                  (target "_blank")
+                  (rel "noreferrer noopener"))
+               "CPS")
+            " pass) that outputs "
+            (a (@ (href "https://webassembly.org/")
+                  (target "_blank")
+                  (rel "noreferrer noopener"))
+               "WebAssembly")
+            ". The "
+            (a (@ (href "https://nanopass.org/")
+                  (target "_blank")
+                  (rel "noreferrer noopener"))
+               "NanoPass")
+            " compiler framework is used for the internal passes.")
+          (list
+           (card-grid
+            (list
+             (list `(div (@ (class "pipeline-header"))
+                         ,(step-badge)
+                         (h3 (@ (class "pipeline-title")) "Frontend"))
+                   `(p "Racket syntax is expanded, then normalized into a "
+                       (a (@ (href "https://docs.racket-lang.org/reference/syntax-model.html#%28part._fully-expanded%29")
+                             (target "_blank")
+                             (rel "noreferrer noopener"))
+                          "compiler-friendly core")
+                       "."))
+             (list `(div (@ (class "pipeline-header"))
+                         ,(step-badge)
+                         (h3 (@ (class "pipeline-title")) "Middle End"))
+                   `(p "Nanopass passes like "
+                       (a (@ (href "https://matt.might.net/articles/closure-conversion/")
+                             (target "_blank")
+                             (rel "noreferrer noopener"))
+                          "closure conversion")
+                       " and "
+                       (a (@ (href "https://matt.might.net/articles/a-normalization/")
+                             (target "_blank")
+                             (rel "noreferrer noopener"))
+                          "ANF")
+                       " make environments and intermediate values explicit."))
+             (list `(div (@ (class "pipeline-header"))
+                         ,(step-badge)
+                         (h3 (@ (class "pipeline-title")) "Backend"))
+                   `(p (a (@ (href "https://scholarworks.iu.edu/dspace/handle/2022/34138")
+                            (target "_blank")
+                            (rel "noreferrer noopener"))
+                          "Destination-driven code generation")
+                       " emits WebAssembly."))
+             (list `(div (@ (class "pipeline-header"))
+                         ,(step-badge)
+                         (h3 (@ (class "pipeline-title")) "Runtime"))
+                   `(p "The runtime is written to be as independent from JavaScript as possible.")))
+            "pipeline-grid"))
+          #f
+          "section--pipeline")
+        ,(section-block
+          "Direct style vs continuation passing style"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
+                 (p "Compilation can be seen as a series of program rewrites. Each rewrite removes complexity until eventually the program has become simple enough that the backend can handle it.")
+                 (p "There has been a long discussion in the compiler community about whether a compiler should rewrite the program into the so-called continuation-passing style. This style makes continuations explicit.")
+                 (p "In a direct-style program continuations are implicit. In simple programs there is often an obvious connection between the original program and the structure of the resulting WebAssembly program.")
+                 (p "The WebRacket compiler is so far a direct-style compiler. Relating obscure WebAssembly errors to the problematic location in the original, erroneous program has worked reasonably well so far.")
+                 (p "However, I am not sure WebRacket will stay a direct-style compiler. At some point continuations and continuation marks need to be added. It might be possible to use WebAssembly support to implement continuations and keep the compiler direct-style, but I think continuation marks require a CPS transformation. Time will tell.")
+                 (p (@ (class "doc-spacer-top"))
+                    "Finally, the external tool "
+                    (a (@ (class "code-link")
+                          (href "https://github.com/bytecodealliance/wasm-tools")
+                          (target "_blank")
+                          (rel "noreferrer noopener"))
+                       (code "wasm-tools"))
+                    " "
+                    (a (@ (class "code-link")
+                          (href "https://bytecodealliance.github.io/wasm-tools/parse")
+                          (target "_blank")
+                          (rel "noreferrer noopener"))
+                       (code "parse"))
+                    " is called to get the wasm bytecode.")
+                 (h3 "References")
+                 (ul
+                  (li "Flanagan, Sabry, Duba, and Felleisen (1993, 2004), "
+                      "\"The Essence of Compiling with Continuations\". "
+                      ,(ext "https://doi.org/10.1145/173262.155113" "DOI")
+                      ", "
+                      ,(ext "https://dl.acm.org/doi/pdf/10.1145/173262.155113" "PDF")
+                      ", "
+                      ,(ext "https://dl.acm.org/doi/pdf/10.1145/989393.989443" "PDF"))
+                  (li "Kennedy (2007), "
+                      "\"Compiling with Continuations, Continued\". "
+                      ,(ext "https://doi.org/10.1145/1291151.1291179" "DOI")
+                      ", "
+                      ,(ext "https://www.microsoft.com/en-us/research/wp-content/uploads/2007/10/compilingwithcontinuationscontinued.pdf" "PDF"))
+                  (li "Danvy and Filinski (1992), "
+                      "\"Representing Control: a Study of the CPS Transformation\". "
+                      ,(ext "https://doi.org/10.1017/S0960129500001535" "DOI")
+                      ", "
+                      ,(ext "http://www.cs.tufts.edu/~nr/cs257/archive/olivier-danvy/danvy92representing.ps.gz" "PS"))
+                  (li "Appel (1991), "
+                      "\"Compiling with Continuations\". "
+                      ,(ext "https://doi.org/10.1017/CBO9780511609619" "DOI"))
+                  (li "Steele (1978), "
+                      "\"RABBIT: A Compiler for Scheme\". "
+                      ,(ext "https://dl.acm.org/doi/abs/10.5555/889478" "DOI")
+                      ", "
+                      ,(ext "https://dl.acm.org/doi/suppl/10.5555/889478/suppl_file/mit___artificial_intelligence_laboratory_aitr-474.ps" "PS")))))
+          #f
+          #f)
+        ,(section-block
+          "Frontend"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
+                 (p "The frontend of WebRacket reads in a source file and passes it on to the normal Racket expander. "
+                    "During expansion the compile-time portions of the program are evaluated.")
+                 (p "The result is a large top-level form that follows the grammar for "
+                    ,(ext "https://docs.racket-lang.org/reference/syntax-model.html#%28part._fully-expanded%29"
+                          "fully expanded programs")
+                    ". Think of fully expanded programs as programs written in a small, compiler-friendly subset of Racket.")
+                 (p "The WebRacket compiler converts the fully expanded program (which is a large syntax object) "
+                    "into AST records that NanoPass passes expect. To be precise, by the normal Racket expander, I mean "
+                    ,(code-link "https://docs.racket-lang.org/syntax/toplevel.html#%28def._%28%28lib._syntax%2Ftoplevel..rkt%29._expand-syntax-top-level-with-compile-time-evals%29%29"
+                                "expand-top-level-with-compile-time-evals")
+                    " and not "
+                    ,(code-link "https://docs.racket-lang.org/reference/Expanding_Top-Level_Forms.html#%28def._%28%28quote._~23~25kernel%29._expand-syntax%29%29:~:text=(-,expand%2Dsyntax,-stx%C2%A0%5B"
+                                "expand-syntax")
+                    ". Note that WebRacket only compiles the runtime part of the expanded program.")
+                 (h3 "References")
+                 (ul
+                  (li "Flatt (2016), "
+                      "\"Binding as Sets of Scopes\". "
+                      ,(ext "https://doi.org/10.1145/2914770.2837620" "DOI")
+                      ", "
+                      ,(ext "https://dl.acm.org/doi/pdf/10.1145/2914770.2837620" "PDF")
+                      ", "
+                      ,(ext "https://users.cs.utah.edu/plt/scope-sets/" "Web")))))
+          #f
+          #f)
+        ,(section-block
+          "Middle End"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
                  (p "The middle end of the compiler consists of several passes implemented using the "
                     ,(code-link "https://github.com/nanopass/nanopass-framework-racket" "NanoPass")
-                    " framework.")
-                 (p "The passes are as follows:")
+                    " framework. For completeness the list below includes frontend and backend passes.")
                  (div (@ (class "pass-list-block"))
                       (div (@ (class "pass-list-label pass-list-label--quiet")) "Compiler passes")
                       (pre (@ (class "pass-list"))
-                           (code "unexpand\nparse\nflatten-topbegin\ninfer-names\nconvert-quotations\nexplicit-begin\nexplicit-case-lambda\nα-rename\nassignment-conversion\ncategorize-applications\nanormalize\nclosure-conversion\nflatten-begin\n(classify-variables)\ngenerate-code")))
-                 (p "See the comments in \"" ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
-                    "\" for an explanation of each pass.")
+                           (code "FRONTEND\n  unexpand\n  parse\nMIDDLE END\n  flatten-topbegin\n  infer-names\n  convert-quotations\n  explicit-begin\n  explicit-case-lambda\n  α-rename\n  assignment-conversion\n  categorize-applications\n  anormalize\n  closure-conversion\n  flatten-begin\nBACKEND\n  (classify-variables)\n  generate-code")))
+                 (p "The first pass of the middle end is " (code "flatten-topbegin")
+                    ". This pass rewrites nested top-level " (code "begin")
+                    " expressions into a single top-level " (code "begin") ".")
+                 (p "The pass " (code "infer-names")
+                    " annotates lambda expressions with names. For example, "
+                    (code "(define fact (lambda (n) ...))")
+                    " will annotate the resulting procedure with the name "
+                    (code "fact") ". The names are used in error messages.")
+                 (p "The pass " (code "convert-quotations")
+                    " removes " (code "quote")
+                    " from the program. After this pass only literals are allowed as subexpressions of "
+                    (code "quote") ".")
+                 (p "Bodies of " (code "lambda") ", " (code "let-values")
+                    ", and " (code "letrec-values")
+                    " can be sequences of expressions. There is an implicit "
+                    (code "begin")
+                    " around the body expressions. After the "
+                    (code "explicit-begin")
+                    " pass, these forms have only a single expression in their bodies.")
+                 (p "The pass " (code "explicit-case-lambda")
+                    " introduces a " (code "lambda")
+                    " expression for each clause. Later, " (code "case-lambda")
+                    " is compiled as a case statement that determines which closure to call.")
+                 (p "The pass " (code "α-rename")
+                    " renames identifiers. After this pass, two identifiers with the same name have the same binding. "
+                    "The pass is written not to rename primitives, so after the pass everything that looks like a primitive is a primitive.")
+                 (p "The pass " (code "assignment-conversion")
+                    " identifies assignable variables. If a variable is potentially assigned to, the variable is bound to a box. "
+                    "Assignments are then turned into box mutations. The pass simplifies the representation of closures.")
+                 (p "The pass " (code "categorize-applications")
+                    " annotates each application as an application of a primitive, an abstraction, or a general procedure. "
+                    "Closed applications (direct calls of a lambda expression) are rewritten into "
+                    (code "let")
+                    " expressions.")
+                 (p "The pass " (code "anormalize")
+                    " (short for A-normalization) introduces an evaluation order for complex expressions. "
+                    "At the same time, intermediate results are named.")
+                 (p "The pass " (code "closure-conversion")
+                    " performs closure conversion. For each abstraction (lambda expression), closure conversion chooses a concrete runtime representation. "
+                    "WebRacket uses flat closures, which means closures are represented as a code label and an array of the values of the free variables at closure-creation time. "
+                    "Due to boxing in the " (code "assignment-conversion")
+                    " pass, this representation also works with assignable variables.")
+                 (p "The final pass of the middle end is " (code "flatten-begin")
+                    ", which removes nested " (code "begin")
+                    " expressions. This simplifies the code generator a little.")
+                 (p "See the comments in " ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
+                    " to see the gory details.")
+                 (h3 "References")
+                 (ul
+                  (li "Flanagan, Sabry, Duba, and Felleisen (1993), "
+                      "\"The Essence of Compiling with Continuations\" (introduces A-normal form / ANF). "
+                      ,(ext "https://doi.org/10.1145/155090.155113" "DOI")
+                      ", "
+                      ,(ext "https://dl.acm.org/doi/pdf/10.1145/155090.155113" "PDF")))
                  ,(callout
                    'note
                    "Why so many passes?"
-                   `(p "Small, focused passes keep each transformation understandable, testable, and easier to evolve."))
+                   `(p "Small, focused passes keep each transformation understandable and testable."))))
+          #f
+          #f)
+        ,(section-block
+          "Backend"
+          #f
+          (list
+           `(div (@ (class "doc-content"))
                  (p (@ (class "doc-spacer-top"))
-                    "The code generator generates WebAssembly in the form of " (code "S-expressions")
-                    " in the \"folded\" format.")
-                 (p "This code generator is inspired by \""
-                    ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138"
-                          "Destination-driven Code Generation")
-                    "\" by Dybvig, "
-                    "Hieb and Butler. There are some differences, however. The code generator in the paper "
-                    "generates \"flat\" code (assembler) whereas we generate nested WebAssembly instructions.")
-                 ,(callout
-                   'info
-                   "Source paper"
-                   `(p "Read the full \"Destination-driven Code Generation\" paper on "
-                       ,(ext "https://scholarworks.iu.edu/dspace/handle/2022/34138" "IU ScholarWorks")
-                       " for background on the generator’s design and terminology."))
+                    "The backend, also known as the code generator, is responsible for choosing concrete representations "
+                    "for both data and variables in the WebAssembly runtime.")
+                 (p "WebAssembly supports a simple form of structs (arrays with named fields). These are used to represent "
+                    "most Racket data types. The concrete choices of WebAssembly data structures were inspired by traditional "
+                    "compilers such as Larceny and Chez Scheme, and also by the WebAssembly projects Guile Hoot and Wasocaml.")
+                 (p "Modern compilers often use register allocators to map variables to machine registers. WebRacket instead "
+                    "uses the approach in \"Destination-Driven Code Generation\": generate code that matches the context in "
+                    "which the result value is needed. This reduces many unnecessary register shuffles.")
+                 (p "The output of the code generator is WebAssembly. WebAssembly tools accept WebAssembly in two formats. "
+                    "We output the folded textual format. In the folded format, we can use nested expressions - so if you squint "
+                    "the WebAssembly looks like low-level Scheme.")
                  (p (@ (class "doc-spacer-top"))
                     "Finally, the external tool "
-                    ,(code-link "https://github.com/bytecodealliance/wasm-tools" "wasm-tools")
+                    (a (@ (class "code-link")
+                          (href "https://github.com/bytecodealliance/wasm-tools")
+                          (target "_blank")
+                          (rel "noreferrer noopener"))
+                       (code "wasm-tools"))
                     " "
-                    ,(code-link "https://bytecodealliance.github.io/wasm-tools/parse"
-                                "parse")
-                    " converts the S-expression representation into bytecode format.")
+                    (a (@ (class "code-link")
+                          (href "https://bytecodealliance.github.io/wasm-tools/parse")
+                          (target "_blank")
+                          (rel "noreferrer noopener"))
+                       (code "parse"))
+                    " is called to get the wasm bytecode.")
+                 (h3 "References")
+                 (ul
+                  (li "Dybvig, Hieb, and Butler (1990), \"Destination-Driven Code Generation\". "
+                      ,(ext "https://hdl.handle.net/2022/34138" "DOI")
+                      ", "
+                      ,(ext "https://scholarworks.iu.edu/dspace/bitstreams/bd620c2a-3f98-41ef-9617-21f2998ce228/download" "PDF"))
+                  (li "Léo Andrès (2024), \"Exécution symbolique pour tous ou Compilation d'OCaml vers WebAssembly\". DOI unavailable. "
+                      ,(ext "https://theses.fr/2024UBFCK015" "Record")
+                      ", "
+                      ,(ext "https://theses.hal.science/tel-04995610/document" "PDF"))
+                  (li "\"Hoot: Scheme on WebAssembly\". "
+                      ,(ext "https://spritely.institute/hoot/" "Web")))
+                 (h3 "Source")
                  (p "The main part of the compiler is in "
-                    ,(code-pill (gh-file "compiler.rkt") "compiler.rkt")
+                    ,(code-link (gh-file "compiler.rkt") "compiler.rkt")
                     ". The WebAssembly runtime is in "
-                    ,(code-pill (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
+                    ,(code-link (gh-file "runtime-wasm.rkt") "runtime-wasm.rkt")
                     ". The standard library (implemented in WebRacket) is found in "
-                    ,(code-pill (gh-dir "stdlib/") "stdlib/")
+                    ,(code-link (gh-dir "stdlib/") "stdlib/")
                     ". FFI bindings for popular libraries are in "
-                    ,(code-pill (gh-dir "ffi/") "ffi/") ".")
+                    ,(code-link (gh-dir "ffi/") "ffi/") ".")
                  (p "It has been a design goal to avoid relying on functionality provided by the "
                     "WebAssembly host if possible. Who knows - maybe someone needs a non-JavaScript host "
                     "at some point? For browser functionality there is no way around interfacing with "
@@ -694,29 +1094,7 @@
                    'note
                    "Runtime goal"
                    `(p "The runtime deliberately minimizes host dependencies so WebRacket can target "
-                       "non-JavaScript environments when they become viable."))
-                 (div (@ (class "doc-cta-card"))
-                      ,(callout
-                        'info
-                        "Further reading"
-                        `(p "Explore the compiler and runtime sources to see how WebRacket’s pipeline fits together. "
-                            "Want a closer look? Browse the real compiler and runtime code.")
-                        `(div (@ (class "doc-cta-group"))
-                              (a (@ (class "doc-cta doc-cta--primary")
-                                    (href ,(gh-file "compiler.rkt"))
-                                    (target "_blank")
-                                    (rel "noreferrer noopener"))
-                                 "Open compiler.rkt")
-                              (a (@ (class "doc-cta")
-                                    (href ,(gh-file "runtime-wasm.rkt"))
-                                    (target "_blank")
-                                    (rel "noreferrer noopener"))
-                                 "View runtime")
-                              (a (@ (class "doc-cta")
-                                    (href ,(gh-dir "stdlib/"))
-                                    (target "_blank")
-                                    (rel "noreferrer noopener"))
-                                 "Browse stdlib"))))))
+                       "non-JavaScript environments when they become viable."))))
           #f
           #f)
         ,(footer-section)))
@@ -969,6 +1347,242 @@
 
 
 
+;; init-extended-example-jsxgraph-board! : -> Void
+;;   Loads JSXGraph assets (if needed) and renders the live board demo.
+(define (init-extended-example-jsxgraph-board!)
+  (define board-el (js-get-element-by-id "extended-jsx-board"))
+  (define status-el (js-get-element-by-id "extended-jsx-board-status"))
+  (define head (js-document-head))
+  (define body (js-document-body))
+  (define win (js-window-window))
+  (define local-jsxgraph-css "assets/vendor/jsxgraph/jsxgraph.css")
+  (define local-jsxgraph-js "assets/vendor/jsxgraph/jsxgraphcore.js")
+  (define cdn-jsxgraph-css "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
+  (define cdn-jsxgraph-js "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
+  (define (extern-present? v)
+    (and (external? v) (not (js-nullish? v))))
+  (define (board-ready?)
+    (define v (and board-el (js-get-attribute board-el "data-jxg-ready")))
+    (and (string? v) (string=? v "1")))
+  (define (set-status! msg)
+    (when status-el
+      (js-set! status-el "textContent" msg)))
+  (define (ensure-assets!)
+    (define append-target
+      (if (extern-present? head) head body))
+    (unless (extern-present? (js-query-selector "link[data-jsxgraph-css='1']"))
+      (define link (js-create-element "link"))
+      (js-set-attribute! link "rel" "stylesheet")
+      (js-set-attribute! link "href" cdn-jsxgraph-css)
+      (js-set-attribute! link "data-jsxgraph-css" "1")
+      (define on-css-error
+        (procedure->external
+         (lambda (_evt)
+           (js-set-attribute! link "href" local-jsxgraph-css))))
+      (js-add-event-listener! link "error" on-css-error)
+      (js-append-child! append-target link))
+    (unless (extern-present? (js-query-selector "script[data-jsxgraph-core='1']"))
+      (define script (js-create-element "script"))
+      (js-set-attribute! script "src" cdn-jsxgraph-js)
+      (js-set-attribute! script "data-jsxgraph-core" "1")
+      (define on-error
+        (procedure->external
+         (lambda (_evt)
+           (js-set-attribute! script "src" local-jsxgraph-js))))
+      (js-add-event-listener! script "error" on-error)
+      (js-append-child! append-target script)))
+  (define (initialize-board!)
+    (define jxg (js-ref win "JXG"))
+    (cond
+      [(not (extern-present? jxg))
+       #f]
+      [else
+       (define jsxgraph (js-ref jxg "JSXGraph"))
+       (cond
+         [(not (extern-present? jsxgraph))
+          #f]
+         [else
+          (define attrs
+            (js-object
+             (vector (vector "boundingbox" #[-6 6 6 -6])
+                     (vector "axis" #t)
+                     (vector "keepaspectratio" #t))))
+          (define board
+            (js-send/extern jsxgraph "initBoard" (vector "extended-jsx-board" attrs)))
+          (define p
+            (js-send/extern board "create"
+                            (vector "point" #[-3 1]
+                                    (js-object
+                                     (vector (vector "name" "P")
+                                             (vector "size" 4)
+                                             (vector "strokeColor" "#2b6cb0")
+                                             (vector "fillColor" "#2b6cb0"))))))
+          (define q
+            (js-send/extern board "create"
+                            (vector "point" #[2 2]
+                                    (js-object
+                                     (vector (vector "name" "Q")
+                                             (vector "size" 4)
+                                             (vector "strokeColor" "#2f855a")
+                                             (vector "fillColor" "#2f855a"))))))
+          (define r
+            (js-send/extern board "create"
+                            (vector "point" #[1 -3]
+                                    (js-object
+                                     (vector (vector "name" "R")
+                                             (vector "size" 4)
+                                             (vector "strokeColor" "#c53030")
+                                             (vector "fillColor" "#c53030"))))))
+          (js-send/extern board "update" (vector))
+          (js-set-attribute! board-el "data-jxg-ready" "1")
+          (set-status! "Board ready. Drag points P, Q, and R.")
+          #t])]))
+  (when board-el
+    (if (board-ready?)
+        (begin
+          (set-status! "Board ready. Drag points P, Q, and R."))
+        (let ([tries 0]
+              [attempt-ext #f])
+          (set-status! "Loading JSXGraph...")
+          (ensure-assets!)
+          (define (attempt . _args)
+            (with-handlers ([exn? (lambda (_e)
+                                    (set-status! "Failed to initialize JSXGraph board."))])
+              (if (initialize-board!)
+                  (void)
+                  (begin
+                    (set! tries (+ tries 1))
+                    (if (< tries 80)
+                        (js-window-set-timeout/delay attempt-ext 100.)
+                        (begin
+                          (set-status! "Failed to load JSXGraph assets.")))))))
+          (set! attempt-ext (procedure->external attempt))
+          (attempt #f)))))
+
+;; init-extended-example-jsxgraph-geometry-board! : -> Void
+;;   Loads JSXGraph assets (if needed) and renders the geometry constructor board demo.
+(define (init-extended-example-jsxgraph-geometry-board!)
+  (define board-el (js-get-element-by-id "extended-jsx-geometry-board"))
+  (define status-el (js-get-element-by-id "extended-jsx-geometry-board-status"))
+  (define head (js-document-head))
+  (define body (js-document-body))
+  (define win (js-window-window))
+  (define local-jsxgraph-css "assets/vendor/jsxgraph/jsxgraph.css")
+  (define local-jsxgraph-js "assets/vendor/jsxgraph/jsxgraphcore.js")
+  (define cdn-jsxgraph-css "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
+  (define cdn-jsxgraph-js "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js")
+  (define (extern-present? v)
+    (and (external? v) (not (js-nullish? v))))
+  (define (board-ready?)
+    (define v (and board-el (js-get-attribute board-el "data-jxg-ready")))
+    (and (string? v) (string=? v "1")))
+  (define (set-status! msg)
+    (when status-el
+      (js-set! status-el "textContent" msg)))
+  (define (ensure-assets!)
+    (define append-target
+      (if (extern-present? head) head body))
+    (unless (extern-present? (js-query-selector "link[data-jsxgraph-css='1']"))
+      (define link (js-create-element "link"))
+      (js-set-attribute! link "rel" "stylesheet")
+      (js-set-attribute! link "href" cdn-jsxgraph-css)
+      (js-set-attribute! link "data-jsxgraph-css" "1")
+      (define on-css-error
+        (procedure->external
+         (lambda (_evt)
+           (js-set-attribute! link "href" local-jsxgraph-css))))
+      (js-add-event-listener! link "error" on-css-error)
+      (js-append-child! append-target link))
+    (unless (extern-present? (js-query-selector "script[data-jsxgraph-core='1']"))
+      (define script (js-create-element "script"))
+      (js-set-attribute! script "src" cdn-jsxgraph-js)
+      (js-set-attribute! script "data-jsxgraph-core" "1")
+      (define on-error
+        (procedure->external
+         (lambda (_evt)
+           (js-set-attribute! script "src" local-jsxgraph-js))))
+      (js-add-event-listener! script "error" on-error)
+      (js-append-child! append-target script)))
+  (define (initialize-board!)
+    (define jxg (js-ref win "JXG"))
+    (cond
+      [(not (extern-present? jxg)) #f]
+      [else
+       (define jsxgraph (js-ref jxg "JSXGraph"))
+       (cond
+         [(not (extern-present? jsxgraph)) #f]
+         [else
+          (define attrs
+            (js-object
+             (vector (vector "boundingbox" #[-7 7 7 -7])
+                     (vector "axis" #t)
+                     (vector "keepaspectratio" #t))))
+          (define board
+            (js-send/extern jsxgraph "initBoard" (vector "extended-jsx-geometry-board" attrs)))
+          (define p-parent '(-4 1))
+          (define q-parent '(2 3))
+          (define line-parents (list p-parent q-parent))
+          (define text-parent '(-6 6 "P-Q constructors"))
+          (define (list->js-array v)
+            (cond
+              [(list? v) (list->vector (map list->js-array v))]
+              [else v]))
+          (define p
+            (js-send/extern board "create"
+                            (vector "point" (list->js-array p-parent)
+                                    (js-object (vector (vector "name" "P")
+                                                       (vector "size" 4))))))
+          (define q
+            (js-send/extern board "create"
+                            (vector "point" (list->js-array q-parent)
+                                    (js-object (vector (vector "name" "Q")
+                                                       (vector "size" 4))))))
+          (define l
+            (js-send/extern board "create"
+                            (vector "line" (list->js-array line-parents) (js-object (vector)))))
+          (define s
+            (js-send/extern board "create"
+                            (vector "segment" (list->js-array line-parents) (js-object (vector)))))
+          (define c
+            (js-send/extern board "create"
+                            (vector "circle" (list->js-array line-parents) (js-object (vector)))))
+          (define i
+            (js-send/extern board "create"
+                            (vector "point" (list->js-array '(0 0))
+                                    (js-object (vector (vector "name" "I")
+                                                       (vector "size" 3))))))
+          (js-send/extern i "makeIntersection" (vector l c 0 0))
+          (define _t
+            (js-send/extern board "create"
+                            (vector "text" (list->js-array text-parent) (js-object (vector)))))
+          (js-send/extern board "suspendUpdate" (vector))
+          (js-set! p "size" 5)
+          (js-set! q "size" 5)
+          (js-send/extern board "unsuspendUpdate" (vector))
+          (js-send/extern board "fullUpdate" (vector))
+          (js-set-attribute! board-el "data-jxg-ready" "1")
+          (set-status! "Board ready. Phase 2 constructors demo loaded.")
+          #t])]))
+  (when board-el
+    (if (board-ready?)
+        (set-status! "Board ready. Phase 2 constructors demo loaded.")
+        (let ([tries 0]
+              [attempt-ext #f])
+          (set-status! "Loading JSXGraph...")
+          (ensure-assets!)
+          (define (attempt . _args)
+            (with-handlers ([exn? (lambda (_e)
+                                    (set-status! "Failed to initialize JSXGraph board."))])
+              (if (initialize-board!)
+                  (void)
+                  (begin
+                    (set! tries (+ tries 1))
+                    (if (< tries 80)
+                        (js-window-set-timeout/delay attempt-ext 100.)
+                        (set-status! "Failed to load JSXGraph assets."))))))
+          (set! attempt-ext (procedure->external attempt))
+          (attempt #f)))))
+
 ;; init-doc-js-ffi-page! : -> Void
 ;;   Enhances the JS FFI doc page using WebRacket DOM helpers.
 (define (init-doc-js-ffi-page!)
@@ -977,6 +1591,10 @@
   (define docs-layout (js-query-selector ".docs-layout"))
   (when (and doc-root content)
     (let* ([body (js-document-body)]
+           [extended-jsx-board-page?
+            (memq (current-page)
+                  '(doc-extended-example-jsxgraph-board-points
+                    doc-extended-example-jsxgraph-geometry-constructors))]
            [page-root (js-query-selector ".page")]
            [page-class-names (element-class-string page-root)]
            [ffi-reference-page?
@@ -1508,6 +2126,10 @@
                       (js-event-prevent-default evt))))
                  (remember-doc-js-ffi-handler! disable-handler)
                  (js-add-event-listener! link "click" disable-handler)))))
+        (when (eq? (current-page) 'doc-extended-example-jsxgraph-board-points)
+          (init-extended-example-jsxgraph-board!))
+        (when (eq? (current-page) 'doc-extended-example-jsxgraph-geometry-constructors)
+          (init-extended-example-jsxgraph-geometry-board!))
         (void))))
 
 ;; quick-start-page : -> List

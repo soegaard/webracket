@@ -21,14 +21,6 @@
 (include "generated/ffi-doc-pages.inc.rkt")
 (include "generated/ffi-doc-pages-structured.inc.rkt")
 
-(define-syntax (compile-time-file-to-string stx)
-  (syntax-case stx ()
-    [(_ file-name)
-     (datum->syntax #'here (file->string (syntax-e #'file-name)))]))
-
-(define (get-f1-calendar-ics)
-  (compile-time-file-to-string "examples/formula1/better-f1-calendar.ics"))
-
 ;;;
 ;;; Color Helpers
 ;;;
@@ -349,219 +341,6 @@
 ;;;
 
 (include "completion.rkt")
-(include "examples/mathjax.rkt")
-(include "examples/formula1-page.rkt")
-(include "examples/matrix-rain-page.rkt")
-(include "examples/xtermjs-demo-page.rkt")
-(include "examples/space-invaders-page.rkt")
-(include "examples/canvas-hexagons-page.rkt")
-(include "examples/minischeme-page.rkt")
-
-;;;
-;;; Examples Data
-;;;
-
-(define examples
-  (list
-   (make-hash (list (cons 'id          "mathjax4")
-                    (cons 'title       "MathJax 4 Editor")
-                    (cons 'path        "examples/mathjax4")
-                    (cons 'entry       "mathjax.html")
-                    (cons 'demo-url    "mathjax.html")
-                    (cons 'source-path "web-site/src/examples/mathjax.rkt")
-                    (cons 'tags        (list 'dom 'mathjax))
-                    (cons 'summary     "Two-pane editor with instant MathJax 4 LaTeX preview.")
-                    (cons 'features    (list "MathJax 4 interop"
-                                             "DOM + JS FFI"
-                                             "Input handling"
-                                             "Editor state"))))
-   (make-hash (list (cons 'id       "xtermjs-demo")
-                    (cons 'title    "XtermJS Demo")
-                    (cons 'path     "examples/xtermjs-demo")
-                    (cons 'entry    "xtermjs-demo.html")
-                    (cons 'demo-url "xtermjs-demo.html")
-                    (cons 'source-path "examples/xtermjs-demo/xtermjs-demo.rkt")
-                    (cons 'tags     (list 'xterm 'dom))
-                    (cons 'summary  "Interactive terminal with themed styling and built-in commands.")
-                    (cons 'features (list "XtermJS add-ons"
-                                          "Input handling"
-                                          "Command dispatch"))))
-   (make-hash (list (cons 'id       "space-invaders")
-                    (cons 'title    "Space Invaders")
-                    (cons 'path     "examples/space-invaders")
-                    (cons 'entry    "space-invaders.html")
-                    (cons 'demo-url "space-invaders.html")
-                    (cons 'source-path "web-site/src/examples/space-invaders-page.rkt")
-                    (cons 'tags     (list 'canvas 'dom))
-                    (cons 'summary  "Arcade shooter on canvas with responsive keyboard controls.")
-                    (cons 'features (list "Canvas API via DOM + JS FFI"
-                                          "Keyboard events"
-                                          "Timers / animation loop"
-                                          "Mutable game state"))))
-   (make-hash (list (cons 'id          "formula1")
-                    (cons 'title       "Formula 1 Countdown")
-                    (cons 'path        "examples/formula1")
-                    (cons 'entry       "formula1.html")
-                    (cons 'demo-url    "formula1.html")
-                    (cons 'source-path "web-site/src/examples/formula1-page.rkt")
-                    (cons 'tags        (list 'dom))
-                    (cons 'summary     "Reads an ICS calendar and shows the next Formula 1 race countdown.")
-                    (cons 'features    (list "ICS parsing"
-                                             "Date/time calculations"
-                                             "Countdown in days/hours"))))
-   (make-hash (list (cons 'id          "matrix-rain")
-                    (cons 'title       "Matrix Rain")
-                    (cons 'path        "examples/matrix-rain")
-                    (cons 'entry       "matrix-rain.html")
-                    (cons 'demo-url    "matrix-rain.html")
-                    (cons 'source-path "examples/matrix-rain/matrix-rain.rkt")
-                    (cons 'tags        (list 'xterm 'dom))
-                    (cons 'summary     "Matrix rain animation rendered in a browser terminal.")
-                    (cons 'features    (list "XtermJS integration"
-                                             "DOM + JS FFI"
-                                             "Timers / animation loop"))))
-   (make-hash (list (cons 'id          "canvas-hexagons")
-                    (cons 'title       "Glowing Hexagons")
-                    (cons 'path        "examples/canvas-hexagons")
-                    (cons 'entry       "canvas-hexagons.html")
-                    (cons 'demo-url    "canvas-hexagons.html")
-                    (cons 'source-path "web-site/src/examples/canvas-hexagons-page.rkt")
-                    (cons 'tags        (list 'canvas 'dom))
-                    (cons 'summary     "Glowing hexagons arranged in a honeycomb-style animation.")
-                    (cons 'features    (list "Canvas rendering"
-                                             "Animation loop"
-                                             "Procedural geometry"))))
-   
-   (make-hash (list (cons 'id       "minischeme")
-                    (cons 'title    "MiniScheme REPL")
-                    (cons 'path     "examples/minischeme")
-                    (cons 'entry    "minischeme.html")
-                    (cons 'demo-url "minischeme.html")
-                    (cons 'source-path "web-site/src/examples/minischeme-page.rkt")
-                    (cons 'tags     (list 'repl 'dom))
-                    (cons 'summary  "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
-                    (cons 'features (list "MiniScheme evaluator"
-                                          "Persistent REPL state"
-                                          "Reset + sample program"
-                                          "DOM event handling"))))
-   
-   #;(make-hash (list (cons 'id       "pict")
-                      (cons 'title    "Canvas + Pict")
-                      (cons 'path     "examples/pict")
-                      (cons 'entry    "pict.html")
-                      (cons 'tags     (list 'canvas))
-                      (cons 'summary  "Racket pict rendering pipeline compiled for the browser canvas.")
-                      (cons 'features (list "Canvas interop"
-                                            "Graphics rendering pipeline"
-                                            "Performance focus"))))
-   #;(make-hash (list (cons 'id       "raco-tiles")
-                      (cons 'title    "Raccoon Tiles")
-                      (cons 'path     "examples/raco")
-                      (cons 'entry    "tiles.html")
-                      (cons 'tags     (list 'canvas))
-                      (cons 'summary  "Pixel-art tile sheet drawn on canvas with a custom palette.")
-                      (cons 'features (list "Canvas interop"
-                                            "Palette mapping"
-                                            "Grid layout"))))))
-
-(define featured-example-ids
-  (list "mathjax4"
-        "xtermjs-demo"
-        "space-invaders"
-        "formula1"))
-
-;; example-demo-url : Hash -> (U #f String)
-;;   Builds the local demo URL when an entry HTML file is available.
-(define (example-demo-url example)
-  (define demo-url (hash-ref example 'demo-url #f))
-  (define entry (hash-ref example 'entry #f))
-  (cond
-    [demo-url demo-url]
-    [entry (string-append (hash-ref example 'path) "/" entry)]
-    [else #f]))
-
-;; example-source-url : Hash -> String
-;;   Builds the GitHub source URL for the example folder.
-(define (example-source-url example)
-  (define source-path (hash-ref example 'source-path #f))
-  (cond
-    [(and source-path (string-suffix? source-path ".rkt"))
-     (gh-file source-path)]
-    [source-path
-     (gh-dir source-path)]
-    [else
-     (gh-dir (hash-ref example 'path))]))
-
-;; example-kind-class : (Listof Symbol) -> (U #f String)
-;;   Picks a category class for subtle accent styling.
-(define (example-kind-class tags)
-  (cond
-    [(member 'mathjax tags) "kind-mathjax"]
-    [(member 'xterm tags)   "kind-xterm"]
-    [(member 'repl tags)    "kind-repl"]
-    [(member 'canvas tags)  "kind-canvas"]
-    [(member 'dom tags)     "kind-dom"]
-    [else                   #f]))
-
-;; example-kind-label : (Listof Symbol) -> (U #f String)
-;;   Labels the kind pill in example cards.
-(define (example-kind-label tags)
-  (cond
-    [(member 'mathjax tags) "MathJax"]
-    [(member 'xterm tags)   "XtermJS"]
-    [(member 'repl tags)    "REPL"]
-    [(member 'canvas tags)  "Canvas"]
-    [(member 'dom tags)     "DOM"]
-    [else                   #f]))
-
-;; example-tags-string : (Listof Symbol) -> String
-;;   Joins tags for data attributes.
-(define (example-tags-string tags)
-  (string-join (map symbol->string tags) " "))
-
-;; example-card : Hash -> List
-;;   Creates a card for a single example entry.
-(define (example-card example)
-  (define title       (hash-ref example 'title))
-  (define summary     (hash-ref example 'summary))
-  (define features    (hash-ref example 'features))
-  (define tags        (hash-ref example 'tags '()))
-  (define kind-class  (example-kind-class  tags))
-  (define kind-label  (example-kind-label  tags))
-  (define tags-string (example-tags-string tags))
-  (define demo-url    (example-demo-url    example))
-  (define source-url  (example-source-url  example))
-  (define base-class "card example-card")
-  `(div (@ (class ,(string-append base-class
-                                 (if kind-class (string-append " " kind-class) "")))
-           (data-tags ,tags-string))
-        (div (@ (class "example-header"))
-             (h3 ,title)
-             ,@(if kind-label
-                   (list `(span (@ (class "example-kind")) ,kind-label))
-                   '()))
-        (p ,summary)
-        (div (@ (class "example-showcases"))
-             (span (@ (class "sr-only")) "Showcases:")
-             ,(make-ul-list features "feature-list"))
-        (div (@ (class "example-actions"))
-             ,@(if demo-url
-                   (list `(a (@ (class "example-action action-primary")
-                                (href ,demo-url))
-                             "Open demo →"))
-                   '())
-             (a (@ (class "example-action action-secondary")
-                   (href ,source-url))
-                "View source →"))))
-
-;; examples-grid : (Listof Hash) -> List
-;;   Wraps example cards into a responsive grid.
-(define (examples-grid cards [class-name #f])
-  (define base-class (if class-name
-                         (string-append "card-grid examples-grid " class-name)
-                         "card-grid examples-grid"))
-  `(div (@ (class ,base-class))
-        ,@(map example-card cards)))
 
 ;;;
 ;;; PAGES
@@ -573,7 +352,6 @@
   (define path (js-ref (js-window-location) "pathname"))
   (cond
     [(string-suffix? path "documentation.html")                   'documentation]
-    [(string-suffix? path "documentation-webracket-glance.html")  'doc-webracket-glance]
     [(string-suffix? path "documentation-compiler-overview.html") 'doc-compiler-overview]
     [(string-suffix? path "documentation-js-ffi.html")            'doc-js-ffi]
     [(string-suffix? path "documentation-ffi-standard.html")      'doc-ffi-standard]
@@ -586,38 +364,15 @@
                                                               'doc-extended-example-jsxgraph-board-points]
     [(string-suffix? path "documentation-extended-example-jsxgraph-geometry-constructors.html")
                                                               'doc-extended-example-jsxgraph-geometry-constructors]
-    [(string-suffix? path "quick-start.html")                     'quick-start]
-    [(string-suffix? path "installation.html")                    'installation]
-    [(string-suffix? path "examples.html")                        'examples]
-    [(string-suffix? path "mathjax.html")                         'mathjax]
-    [(string-suffix? path "formula1.html")                        'formula1]
-    [(string-suffix? path "matrix-rain.html")                     'matrix-rain]
-    [(string-suffix? path "xtermjs-demo.html")                    'xtermjs-demo]
-    [(string-suffix? path "space-invaders.html")                  'space-invaders]
-    [(string-suffix? path "canvas-hexagons.html")                 'canvas-hexagons]
-    [(string-suffix? path "minischeme.html")                      'minischeme]
-    [(string-suffix? path "implementation-status.html")           'implementation-status]
-    [(string-suffix? path "community.html")                       'community]
-    [(string-suffix? path "overview.html")                        'overview]
-    [(string-suffix? path "roadmap.html")                         'roadmap]
-    [(string-suffix? path "is-webracket-for-you.html")            'for-you]
-    [else                                                         'home]))
+    [else                                                         'documentation]))
 
-;; nav-active-page : -> Symbol
-;;   Maps doc subpages to the Documentation tab for the navbar.
 (define (nav-active-page)
   (define page (current-page))
-  (if (memq page '(doc-webracket-glance
-                   doc-compiler-overview
-                   doc-js-ffi
-                   doc-ffi-standard
-                   doc-ffi-dom
-                   doc-ffi-js
-                   doc-ffi-math
-                   doc-ffi-jsxgraph
-                   doc-ffi-xtermjs
-                   doc-extended-example-jsxgraph-board-points
-                   doc-extended-example-jsxgraph-geometry-constructors))
+  (if (memq page '(doc-compiler-overview doc-js-ffi
+                 doc-ffi-standard doc-ffi-dom doc-ffi-js
+                 doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs
+                 doc-extended-example-jsxgraph-board-points
+                 doc-extended-example-jsxgraph-geometry-constructors))
       'documentation
       page))
 
@@ -725,15 +480,7 @@
                              (alt "WebRacket logo")))
                      (span "WebRacket")))
              (div (@ (class "nav-links"))
-                  #;,(nav-link "For You" "is-webracket-for-you.html" 'for-you active-page)
-                  #;,(nav-link "Overview" "overview.html" 'overview active-page)
-                  #;,(nav-link "Road Ahead" "roadmap.html" 'roadmap active-page)
-                  ,(nav-link "Status"        "implementation-status.html" 'implementation-status active-page)
-                  ,(nav-link "Documentation" "documentation.html"         'documentation         active-page)
-                  ,(nav-link "Quick Start"   "quick-start.html"           'quick-start           active-page)
-                  ,(nav-link "Installation"  "installation.html"          'installation          active-page)
-                  ,(nav-link "Community"     "community.html"             'community             active-page)
-                  ,(nav-link "Examples"      "examples.html"              'examples              active-page)))
+                  ,(nav-link "Documentation" "documentation.html" 'documentation active-page)))
         (div (@ (class "navbar-site-switch"))
              ,(site-switch-toggle))))
 
@@ -741,243 +488,10 @@
 ;;   Shared footer for all pages.
 (define (footer-section)
   `(footer (@ (class "footer"))
-           (span "WebRacket — Racket for the browser.")           
-           (address (@ (class "footer-contact"))
-                    (p "Jens Axel Søgaard")
-                    (p (a (@ (href "mailto:jensaxel@soegaard.net"))
-                          "jensaxel@soegaard.net")))
+           (span "WebRacket — Racket for the browser.")
            (span "Made for the Racket community.")))
 
 ;;;
-;;; HOME PAGE
-;;;
-
-;; home-page : -> List
-;;   Homepage layout.
-(define (home-page)
-  `(div (@ (class "page"))
-        ,(navbar)
-        (section (@ (class "hero"))
-                 (div (@ (class "hero-panel"))
-                      (h1 (@ (class "hero-title")) "WebRacket")
-                      (div (@ (class "hero-copy"))
-                           (p  (@ (class "hero-lead"))
-                               "A Racket to WebAssembly compiler. " (br)
-                               "Build practical browser applications with Racket.")
-                           #;(div (@ (class "pill-row"))
-                                (span (@ (class "pill")) "JS + DOM FFI")
-                                (span (@ (class "pill")) "Runs in browsers + Node"))
-                           (div (@ (class "hero-cta"))
-                                (a (@ (class "cta-button") (href "#examples")) "Try Live Demo")
-                                (a (@ (class "cta-link") (href "https://github.com/soegaard/webracket")) "View on GitHub"))))
-                 (div (@ (class "hero-carousel-panel"))
-                      (div (@ (class "hero-carousel"))
-                           (div (@ (class "carousel-header"))
-                                (span "Example screenshots")
-                                (span (@ (class "highlight")) "Live demos"))
-                           (div (@ (class "carousel-frame"))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/mathjax4-new.png")
-                                        (alt   "MathJax 4 editor")
-                                        (style "animation-delay: 0s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/space-invaders-new.png")
-                                        (alt   "Space Invaders canvas game")
-                                        (style "animation-delay: 20s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/matrix-rain-new.png")
-                                        (alt   "Matrix digital rain demo")
-                                        (style "animation-delay: 5s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/formula1-new.png")
-                                        (alt   "Next Formula 1 Race")
-                                        (style "animation-delay: 5s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/xtermjs-new.png")
-                                        (alt   "XtermJS terminal demo")
-                                        (style "animation-delay: 10s;")))
-                                (img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/minischeme-new.png")
-                                        (alt   "MiniScheme browser REPL")
-                                        (style "animation-delay: 15s;")))                                
-                                #;(img (@ (class "carousel-shot")
-                                        (src   "assets/examples/screenshots/pict.png")
-                                        (alt   "Pict rendering demo")
-                                        (style "animation-delay: 25s;")))))))
-        ,(section-block
-          "Why WebRacket?"
-          "WebRacket is a subset of Racket that compiles to WebAssembly, so you can target modern browsers while staying in a familiar language."
-          (list
-           (make-ul-list
-            (list
-             "Compile Racket programs into WebAssembly that runs in Chrome, Firefox, and Safari."
-             "Leverage a JavaScript FFI for DOM, Canvas, MathJax, XtermJS, and JSXGraph integrations."
-             "Use WebRacket to prototype ideas that could influence a future Racket WebAssembly backend."))))
-        ,(section-block
-          "Language Coverage"
-          "WebRacket implements a substantial portion of Racket with a focus on practical web applications."
-          (list
-           (card-grid
-            (list
-             (list `(h3 "Numbers")
-                   `(p "Flonums and fixnums."))
-             (list `(h3 "Hash Tables")
-                   `(p "Mutable hash tables for "
-                       (strong (code "eq?"))
-                       ", "
-                       (strong (code "eqv?"))
-                       ", "
-                       (strong (code "equal?"))
-                       ", and "
-                       (strong (code "always?"))
-                       " comparisons."))
-             (list `(h3 "Structures")
-                   `(p "Support for structure properties, super structures, and applicable structs."))
-             (list `(h3 "Macros")
-                   `(p "Standard Racket expander support, including for and match forms."))
-             (list `(h3 "Control Flow")
-                   `(p "Tail calls, multiple values, and upward exceptions."))
-             (list `(h3 "Builtins")
-                   `(p "Large parts of racket/base is available."))
-             (list `(h3 "Concurrency")
-                   `(p "Single-threaded execution only."))
-             (list `(h3 "Modules")
-                   `(p "Work in progress. Use include for now.")))
-            "coverage-grid"))
-          #f
-          "section--coverage")
-        ,(section-block
-          "Toolchain Essentials"
-          "You only need three tools to run WebRacket."
-          (list
-           `(div (@ (class "toolchain-panel"))
-                 (p (@ (class "toolchain-lede")) "Three tools cover build, run, and serve with minimal setup.")
-                 ,(make-ul-list
-                   (list
-                    `(span
-                      (a (@ (href "https://github.com/bytecodealliance/wasm-tools/blob/main/README.md")
-                            (target "_blank")
-                            (rel "noreferrer noopener"))
-                         "wasm-tools")
-                      " builds and validates the WebAssembly output.")
-                    `(span
-                      (a (@ (href "https://nodejs.org/")
-                            (target "_blank")
-                            (rel "noreferrer noopener"))
-                         "Node.js")
-                      " can run WebRacket programs in the terminal.")
-                    `(span
-                      (a (@ (href "https://github.com/samdphillips/raco-static-web")
-                            (target "_blank")
-                            (rel "noreferrer noopener"))
-                         "raco-static-web")
-                      " makes it easy to serve compiled artifacts locally."))
-                   "toolchain-list")))
-          #f
-          "section--toolchain")
-        ,(section-block
-          "Roadmap"
-          "The long-term goal is full Racket support, but there is plenty more to tackle next."
-          (list
-           (make-ul-list
-            (list
-             "Fix bugs reported by early adopters and stabilize the current runtime."
-             "Unlock modules by completing linklet support."
-             "Add complex numbers, bignums, impersonators, and chaperones."
-             "Improve regular expression support and consider CPS for continuations.")))
-          #f
-          "section--roadmap")
-        ,(section-block
-          "Example Projects"
-          "The following examples show what WebRacket can do."
-          (list
-           (card-grid
-            (list
-             (list `(h3 "MathJax 4 Editor")
-                   `(p "Live formula preview with WebRacket + MathJax.")
-                   `(a (@ (class "example-link") (href "mathjax.html")) "Open demo"))
-             (list `(h3 "Space Invaders")
-                   `(p "Arcade shooter on canvas with responsive keyboard controls.")
-                   `(a (@ (class "example-link") (href "space-invaders.html")) "Open demo"))
-             (list `(h3 "Formula 1 Countdown")
-                   `(p "Next race from ICS, with days/hours countdown.")
-                   `(a (@ (class "example-link") (href "formula1.html")) "Open demo"))
-             (list `(h3 "XtermJS Demo")
-                   `(p "Interactive terminal with themed styling and built-in commands.")
-                   `(a (@ (class "example-link") (href "xtermjs-demo.html")) "Open demo"))
-             (list `(h3 "Matrix Rain")
-                   `(p "Terminal-style animation powered by XtermJS.")
-                   `(a (@ (class "example-link") (href "matrix-rain.html")) "Open demo"))
-             (list `(h3 "MiniScheme REPL")
-                   `(p "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
-                   `(a (@ (class "example-link") (href "minischeme.html")) "Open demo"))
-             
-             #;(list `(h3 "Canvas + Pict")
-                   `(p "Racket pict rendering pipeline for the browser canvas.")
-                   `(a (@ (class "example-link") (href "examples.html")) "Open demo")))
-            "examples-grid"))
-          "examples"
-          "section--examples")
-        ,(footer-section)))
-
-;;;
-;;; EXAMPLES PAGE
-;;;
-
-;; examples-page : -> List
-;;   Examples page layout.
-(define (examples-page)
-  (define featured-examples
-    (filter (λ (example)
-              (member (hash-ref example 'id) featured-example-ids))
-            examples))
-  (define all-examples
-    (filter (λ (example)
-              (not (member (hash-ref example 'id) featured-example-ids)))
-            examples))
-  `(div (@ (class "page"))
-        ,(navbar)
-        (section (@ (class "examples-hero"))
-                 (div (@ (class "hero-panel"))
-                      (div (@ (class "pill-row"))
-                           (span (@ (class "pill")) "DOM + JS FFI")
-                           (span (@ (class "pill")) "Canvas")
-                           (span (@ (class "pill")) "MathJax")
-                           (span (@ (class "pill")) "XtermJS")
-                           (span (@ (class "pill")) "REPL"))
-                      (h1 (@ (class "hero-title")) "Examples")
-                      (p (@ (class "hero-lead"))
-                         "The examples show what can be done with WebRacket and browser APIs.")
-                         ))
-        ,@(if (null? featured-examples)
-              '()
-              (list
-               (section-block
-                "Featured"
-                "Start here for the most representative WebRacket demos."
-                (list (examples-grid featured-examples "examples-grid--featured"))
-                #f
-                "section--examples section-featured")))
-        ,(section-block
-          "All examples"
-          "Browse every example in the repository."
-          (list (examples-grid all-examples))
-          #f
-          "section--examples")
-        ,(section-block
-          "Next steps"
-          "Ready to build your own?"
-          (list
-           `(ul (@ (class "next-steps-links"))
-                (li (a (@ (class "example-action action-primary")
-                          (href "installation.html"))
-                       "Installation"))
-                (li (a (@ (class "example-action action-secondary")
-                          (href "documentation-webracket-glance.html"))
-                       "WebRacket at a Glance"))))
-          #f
-          "section--examples section-next-steps")
-        ,(footer-section)))
 
 ;;;
 ;;; DOCUMENTATION PAGE
@@ -989,27 +503,6 @@
 (define (init-dom)
   (define head (js-document-head))
   (define body (js-document-body))
-
-  (define favicon-links
-    (list
-     `(link (@ (rel "icon")
-               (type "image/png")
-               (href "assets/favicon/favicon-96x96.png")
-               (sizes "96x96")))
-     `(link (@ (rel "icon")
-               (type "image/svg+xml")
-               (href "assets/favicon/favicon.svg")))
-     `(link (@ (rel "shortcut icon")
-               (href "assets/favicon/favicon.ico")))
-     `(link (@ (rel "apple-touch-icon")
-               (sizes "180x180")
-               (href "assets/favicon/apple-touch-icon.png")))
-     `(link (@ (rel "manifest")
-               (href "assets/favicon/site.webmanifest")))))
-
-  (for-each (λ (link-node)
-              (js-append-child! head (sxml->dom link-node)))
-            favicon-links)
   
   (define style
     (sxml->dom
@@ -1038,43 +531,6 @@ body {
   min-height: 100vh;
 }
 a { color: var(--blue); text-decoration: none; }
-a.code-link[href*="github.com"] {
-  color: var(--purple);
-  font-family: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  text-decoration: underline;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.12em;
-}
-a.code-link[href*="github.com"]:hover {
-  color: #8D7BFF;
-}
-.section--pipeline a {
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-}
-.section--pipeline a:hover,
-.section--pipeline a:focus-visible {
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-}
-.skip-link {
-  position: fixed;
-  left: 12px;
-  top: 12px;
-  transform: translateY(-160%);
-  z-index: 10000;
-  background: #f6f7ff;
-  color: #0C0D1A;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(12, 13, 26, 0.25);
-  font-weight: 600;
-  transition: transform 0.2s ease;
-}
-.skip-link:focus,
-.skip-link:active {
-  transform: translateY(0);
-}
 a.code-link { color: inherit; }
 a.code-link code { color: inherit; }
 a.code-link:hover { text-decoration: underline; }
@@ -1082,25 +538,6 @@ a.code-link:focus-visible {
   outline: 2px solid rgba(74, 108, 255, 0.6);
   outline-offset: 2px;
   border-radius: 4px;
-}
-a.code-link--pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2em;
-  padding: 1px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(101, 79, 240, 0.45);
-  background: rgba(101, 79, 240, 0.2);
-  color: #E9ECFA;
-  text-decoration: none;
-  box-shadow: 0 0 0 rgba(101, 79, 240, 0);
-  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
-}
-a.code-link--pill:hover {
-  border-color: rgba(74, 108, 255, 0.55);
-  background: rgba(101, 79, 240, 0.3);
-  box-shadow: 0 0 10px rgba(101, 79, 240, 0.25);
-  text-decoration: none;
 }
 a.code-pill {
   display: inline-flex;
@@ -1142,9 +579,6 @@ a.code-pill:focus-visible {
 }
 .page--ffi-reference {
   width: min(1560px, 98vw);
-}
-.page--minischeme {
-  width: min(1500px, 96vw);
 }
 .navbar {
   display: flex;
@@ -1298,7 +732,7 @@ a.code-pill:focus-visible {
 }
 .hero-panel {
   background: linear-gradient(140deg, rgba(101, 79, 240, 0.2), rgba(74, 108, 255, 0.08));
-  border: 0;
+  border: 1px solid rgba(101, 79, 240, 0.3);
   border-radius: 28px;
   padding: 36px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
@@ -1306,16 +740,7 @@ a.code-pill:focus-visible {
   flex-direction: column;
   gap: 18px;
 }
-.examples-hero {
-  margin-top: 32px;
-}
 .docs-hero {
-  margin-top: 32px;
-}
-.mathjax-hero {
-  margin-top: 32px;
-}
-.minischeme-hero {
   margin-top: 32px;
 }
 .hero-sublead {
@@ -1383,7 +808,11 @@ a.code-pill:focus-visible {
   100% { opacity: 0; transform: scale(1.02); }
 }
 .pill-row {
-  display: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  /* Hero spacing polish */
+  margin-bottom: 8px;
 }
 .pill {
   border-radius: 999px;
@@ -1392,20 +821,6 @@ a.code-pill:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--muted);
   font-size: 0.85rem;
-}
-.page--formula1 .hero-panel {
-  background: linear-gradient(140deg, rgba(101, 79, 240, 0.16), rgba(74, 108, 255, 0.06));
-  border-color: rgba(101, 79, 240, 0.24);
-  padding: 29px;
-  gap: 14px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
-}
-.page--formula1 .hero-lead {
-  margin-bottom: 16px;
-}
-.page--formula1 .f1-countdown-card {
-  position: relative;
-  overflow: hidden;
 }
 .f1-countdown {
   display: flex;
@@ -1521,7 +936,7 @@ a.code-pill:focus-visible {
 }
 .install-hero-panel {
   background: linear-gradient(145deg, rgba(101, 79, 240, 0.18), rgba(74, 108, 255, 0.08));
-  border: 0;
+  border: 1px solid rgba(101, 79, 240, 0.28);
   border-radius: 28px;
   padding: 36px;
   display: flex;
@@ -2677,45 +2092,6 @@ pre {
 .card-grid--quick-start .card .doc-cta-group {
   margin-top: auto;
 }
-/* Glance page: stronger H2 anchors (no separator lines) */
-.page--glance .doc-content > h2 {
-  font-size: 1.55rem;
-  margin: 40px 0 12px;
-  padding-top: 0;
-  letter-spacing: -0.012em;
-  color: #F6F7FF;
-  border-top: none;
-}
-.page--glance .doc-content > h2::before {
-  content: none;
-  display: none;
-}
-.page--glance .doc-content > h2 {
-  font-size: 1.55rem;
-  margin: 56px 0 12px;   /* spacing creates rhythm */
-  padding-top: 0;
-  letter-spacing: -0.012em;
-  color: #F6F7FF;
-  border-top: none;
-}
-/* Single subtle gradient separator before each section (except first) */
-.page--glance .doc-content > h2:not(:first-of-type)::before {
-  content: "";
-  display: block;
-  height: 2px;
-  margin-bottom: 18px;
-  opacity: 0.6;
-  background: linear-gradient(
-    90deg,
-    rgba(74, 108, 255, 0.45),
-    rgba(101, 79, 240, 0.18),
-    rgba(101, 79, 240, 0)
-  );
-}
-/* No separator before the first heading */
-.page--glance .doc-content > h2:first-of-type::before {
-  display: none;
-}
 .page--status {
   --status-card-padding: 10px;
   --status-card-gap: 5.2px;
@@ -3439,12 +2815,6 @@ pre code {
 .section--roadmap {
   --accent-h: 250;
 }
-.section--examples {
-  --accent-h: 238;
-  --example-card-border: hsla(var(--accent-h), 75%, 75%, 0.09);
-  --example-card-shadow: 0 13px 26px rgba(0, 0, 0, 0.23);
-  --example-divider: rgba(255, 255, 255, 0.084);
-}
 .doc-cta-group {
   display: flex;
   flex-wrap: wrap;
@@ -3590,7 +2960,7 @@ pre code {
   color: #F3F4FF;
   background: rgba(101, 79, 240, 0.3);
   border: 1px solid rgba(101, 79, 240, 0.45);
-  box-shadow: 0 1px 3px rgba(20, 32, 52, 0.08);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12);
   transform: translate(-2px, -6px);
   flex-shrink: 0;
 }
@@ -3695,89 +3065,9 @@ pre code {
   white-space: nowrap;
   border: 0;
 }
-.examples-grid {
-  gap: 20px;
-}
-.example-card {
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-  --example-accent: rgba(101, 79, 240, 0.2);
-  --example-accent-strong: rgba(101, 79, 240, 0.36);
-  border-color: var(--example-card-border, rgba(255, 255, 255, 0.08));
-  box-shadow: var(--example-card-shadow, 0 14px 28px rgba(0, 0, 0, 0.25));
-}
-.example-card h3::after {
-  background: var(--example-divider, rgba(255, 255, 255, 0.084));
-}
-.example-card:hover,
-.example-card:focus-within {
-  border-color: var(--example-accent-strong, rgba(101, 79, 240, 0.36));
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.3), 0 12px 20px var(--example-accent, rgba(101, 79, 240, 0.1));
-}
-.example-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-}
-.example-kind {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--muted);
-  background: var(--surface-soft);
-  box-shadow: inset 0 0 0 1px var(--example-accent, rgba(101, 79, 240, 0.18));
-  white-space: nowrap;
-}
 /* Examples: category cue strip */
-.example-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--example-accent, rgba(101, 79, 240, 0.22)), rgba(0, 0, 0, 0));
-  pointer-events: none;
-  transition: background 200ms ease;
-}
-.example-card:hover::before,
-.example-card:focus-within::before {
-  background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.36)), rgba(0, 0, 0, 0));
-}
 .section-featured .example-card::before {
   background: linear-gradient(90deg, var(--example-accent-strong, rgba(101, 79, 240, 0.36)), rgba(0, 0, 0, 0));
-}
-.example-card.kind-dom {
-  --example-accent: rgba(82, 110, 255, 0.2);
-  --example-accent-strong: rgba(82, 110, 255, 0.38);
-}
-.example-card.kind-canvas {
-  --example-accent: rgba(86, 138, 255, 0.2);
-  --example-accent-strong: rgba(86, 138, 255, 0.38);
-}
-.example-card.kind-repl {
-  --example-accent: rgba(132, 96, 255, 0.22);
-  --example-accent-strong: rgba(132, 96, 255, 0.4);
-}
-.example-card.kind-mathjax {
-  --example-accent: rgba(146, 112, 255, 0.22);
-  --example-accent-strong: rgba(146, 112, 255, 0.41);
-}
-.example-card.kind-xterm {
-  --example-accent: rgba(88, 92, 255, 0.22);
-  --example-accent-strong: rgba(88, 92, 255, 0.4);
-}
-.example-showcases {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 .feature-list {
   margin: 0;
@@ -3791,12 +3081,6 @@ pre code {
   margin-bottom: 0;
   line-height: 1.5;
 }
-.example-actions {
-  margin-top: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
 .next-steps-links {
   list-style: none;
   margin: 0;
@@ -3807,18 +3091,6 @@ pre code {
 }
 .next-steps-links li {
   margin: 0;
-}
-.example-action {
-  color: var(--text);
-  font-weight: 500;
-  font-size: 0.9rem;
-  opacity: 0.8;
-  transition: opacity 150ms ease;
-}
-.example-action:hover,
-.example-action:focus-visible {
-  opacity: 1;
-  text-decoration: underline;
 }
 .action-primary {
   color: var(--blue);
@@ -3845,45 +3117,6 @@ pre code {
 .action-secondary:focus-visible {
   opacity: 0.88;
 }
-.example-link {
-  margin-top: auto;
-  color: var(--blue);
-  font-weight: 600;
-  font-size: 0.92rem;
-}
-.example-link::after {
-  content: " →";
-}
-.example-link:focus-visible {
-  outline: 2px solid rgba(74, 108, 255, 0.6);
-  outline-offset: 3px;
-}
-.mathjax-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  align-items: stretch;
-}
-.mathjax-pane {
-  background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 320px;
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
-}
-.mathjax-pane-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-}
 .pane-label {
   font-weight: 600;
 }
@@ -3892,628 +3125,6 @@ pre code {
   letter-spacing: 0.08em;
   text-transform: none;
   opacity: 0.8;
-}
-.mathjax-input {
-  width: 100%;
-  min-height: 240px;
-  resize: vertical;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-.mathjax-input:focus {
-  outline: 2px solid rgba(74, 108, 255, 0.6);
-  outline-offset: 2px;
-  border-color: rgba(74, 108, 255, 0.7);
-}
-.mathjax-preview {
-  flex: 1;
-  min-height: 240px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 22px;
-  text-align: center;
-  color: var(--text);
-}
-.mathjax-preview mjx-container {
-  font-size: 150%;
-  margin: 0 auto;
-  max-width: 100%;
-}
-.mathjax-hint {
-  margin: 0;
-  color: rgba(182, 189, 221, 0.82);
-  font-size: 0.82rem;
-  font-style: italic;
-  line-height: 1.55;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px dashed rgba(74, 108, 255, 0.28);
-  background: rgba(74, 108, 255, 0.08);
-}
-.mathjax-hint code {
-  font-style: normal;
-  color: rgba(235, 238, 255, 0.95);
-}
-.mathjax-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.mathjax-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.minischeme-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.minischeme-actions-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.page--minischeme .minischeme-reference {
-  max-width: 1184px;
-  margin: 0 auto;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(109, 127, 196, 0.22);
-  background: rgba(13, 17, 31, 0.58);
-}
-.page--minischeme .minischeme-ref-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 24px;
-  align-items: start;
-  position: relative;
-}
-.page--minischeme .minischeme-ref-main {
-  display: grid;
-  gap: 15px;
-  min-width: 0;
-}
-.page--minischeme .minischeme-ref-main h3 {
-  margin-top: 34px;
-  font-size: 1.18rem;
-  font-weight: 650;
-  color: rgba(228, 236, 255, 0.95);
-}
-.page--minischeme .minischeme-ref-main h2 + p {
-  margin-top: 4px;
-}
-.page--minischeme .minischeme-reference h2,
-.page--minischeme .minischeme-reference h3,
-.page--minischeme .minischeme-reference h4 {
-  margin: 0;
-}
-.page--minischeme .minischeme-reference [id] {
-  scroll-margin-top: 94px;
-}
-.page--minischeme .minischeme-reference p {
-  margin: 0;
-  line-height: 1.62;
-}
-.page--minischeme .minischeme-ref-toc ul {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  margin: 0;
-  padding: 0;
-}
-.page--minischeme .minischeme-ref-toc a {
-  color: rgba(202, 218, 255, 0.92);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(202, 218, 255, 0.24);
-}
-.page--minischeme .minischeme-ref-toc a:hover,
-.page--minischeme .minischeme-ref-toc a:focus-visible {
-  border-bottom-color: rgba(202, 218, 255, 0.55);
-}
-.page--minischeme .minischeme-ref-mobile-jump {
-  display: none;
-  gap: 8px;
-}
-.page--minischeme .minischeme-ref-mobile-jump label {
-  color: rgba(200, 215, 255, 0.9);
-  font-size: 0.82rem;
-}
-.page--minischeme .minischeme-ref-mobile-jump select {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid rgba(119, 141, 214, 0.35);
-  background: rgba(11, 14, 30, 0.88);
-  color: rgba(229, 236, 255, 0.96);
-  padding: 8px 10px;
-}
-.page--minischeme .minischeme-ref-subpoints {
-  margin-top: -4px;
-}
-.page--minischeme .minischeme-ref-catalog {
-  display: grid;
-  gap: 18px;
-}
-.page--minischeme .minischeme-ref-count {
-  font-size: 0.86rem;
-  color: rgba(186, 194, 228, 0.88);
-}
-.page--minischeme .ms-terms {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  column-width: 16rem;
-  column-gap: 28px;
-}
-.page--minischeme .ms-terms li {
-  break-inside: avoid;
-  margin: 0 0 12px;
-  line-height: 1.62;
-}
-.page--minischeme .ms-terms a,
-.page--minischeme .ms-terms span {
-  display: inline-block;
-  max-width: 100%;
-  color: rgba(222, 233, 255, 0.94);
-  overflow-wrap: anywhere;
-}
-.page--minischeme .ms-terms a {
-  cursor: pointer;
-  text-decoration: none;
-}
-.page--minischeme .ms-terms a:hover,
-.page--minischeme .ms-terms a:focus-visible {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  text-decoration-skip-ink: auto;
-  background: rgba(120, 145, 235, 0.08);
-}
-.page--minischeme .ms-terms a:focus-visible {
-  outline: 2px solid rgba(130, 155, 236, 0.6);
-  outline-offset: 2px;
-  border-radius: 5px;
-}
-.page--minischeme .ms-terms a:visited {
-  color: rgba(222, 233, 255, 0.94);
-}
-.page--minischeme .ms-terms code {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-}
-.page--minischeme .minischeme-ref-groups {
-  display: grid;
-  gap: 26px;
-}
-.page--minischeme .minischeme-ref-group {
-  display: grid;
-  gap: 13px;
-  padding: 16px 16px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(111, 131, 206, 0.2);
-  background: rgba(11, 15, 29, 0.58);
-}
-.page--minischeme .minischeme-ref-group h4 {
-  font-size: 1.02rem;
-  font-weight: 640;
-}
-.page--minischeme .minischeme-ref-sidebar {
-  position: sticky;
-  top: 88px;
-  display: grid;
-  align-self: start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(121, 141, 226, 0.24);
-  background: rgba(11, 14, 28, 0.68);
-}
-.page--minischeme .minischeme-ref-sidebar h3 {
-  font-size: 0.88rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(193, 205, 238, 0.88);
-}
-.page--minischeme .minischeme-ref-sidebar ul {
-  list-style: none;
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-}
-.page--minischeme .minischeme-ref-sidebar a {
-  color: rgba(202, 218, 255, 0.88);
-  text-decoration: none;
-  border-left: 2px solid transparent;
-  padding-left: 8px;
-}
-.page--minischeme .minischeme-ref-sidebar a:hover,
-.page--minischeme .minischeme-ref-sidebar a:focus-visible {
-  color: rgba(226, 235, 255, 0.98);
-}
-.page--minischeme .minischeme-ref-sidebar a:focus-visible {
-  outline: 2px solid rgba(125, 152, 235, 0.55);
-  outline-offset: 2px;
-}
-.page--minischeme .minischeme-ref-sidebar a.is-active {
-  border-left-color: rgba(149, 178, 255, 1);
-  background: rgba(89, 122, 227, 0.2);
-  color: rgba(239, 245, 255, 1);
-  font-weight: 650;
-}
-.page--minischeme .minischeme-back-to-editor {
-  position: fixed;
-  right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 20;
-  opacity: 0;
-  transform: translateY(8px);
-  pointer-events: none;
-  transition: opacity 180ms ease, transform 180ms ease;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(125, 146, 225, 0.45);
-  background: rgba(11, 16, 33, 0.92);
-  color: rgba(226, 233, 255, 0.98);
-  font-weight: 600;
-  cursor: pointer;
-}
-.page--minischeme .minischeme-back-to-editor.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-.page--minischeme .minischeme-back-to-editor:focus-visible {
-  outline: 2px solid rgba(136, 163, 244, 0.72);
-  outline-offset: 2px;
-}
-@media (max-width: 1060px) {
-  .page--minischeme .minischeme-ref-layout {
-    grid-template-columns: 1fr;
-  }
-  .page--minischeme .minischeme-ref-sidebar {
-    display: none;
-  }
-  .page--minischeme .minischeme-ref-mobile-jump {
-    display: grid;
-  }
-}
-@media (max-width: 900px) {
-  .page--minischeme .ms-terms {
-    column-width: 14rem;
-    column-gap: 20px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .page--minischeme .minischeme-back-to-editor {
-    transition: none;
-  }
-}
-.page--minischeme .section.section--minischeme {
-  margin-top: 56px;
-}
-.page--minischeme .section.section--minischeme-details {
-  margin-top: 82px;
-}
-.page--minischeme .section.section--minischeme .section-content,
-.page--minischeme .section.section--minischeme-details .section-content {
-  width: 100%;
-  max-width: 1360px;
-  margin: 0 auto;
-}
-.page--minischeme .minischeme-shell {
-  display: grid;
-  gap: 14px;
-  width: 100%;
-  max-width: 980px;
-  min-width: 0;
-  margin: 0 auto;
-  padding: 26px;
-  border-radius: 16px;
-  background: rgba(17, 21, 38, 0.9);
-  border: 1px solid rgba(121, 145, 228, 0.42);
-  box-shadow:
-    0 20px 44px rgba(7, 10, 22, 0.56),
-    0 0 0 1px rgba(107, 133, 220, 0.16) inset;
-}
-.page--minischeme .minischeme-shell-note {
-  margin: 0;
-  padding: 10px 12px;
-  border-left: 1px solid rgba(141, 158, 220, 0.34);
-  background: rgba(13, 18, 34, 0.38);
-  color: rgba(204, 216, 248, 0.82);
-  font-size: 0.9rem;
-  line-height: 1.42;
-}
-.page--minischeme .minischeme-shell-note-label {
-  display: inline-block;
-  margin-right: 8px;
-  color: rgba(173, 195, 250, 0.86);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-.page--minischeme .minischeme-sample-row {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-}
-.page--minischeme .ms-editor-pane {
-  position: relative;
-}
-.page--minischeme .minischeme-editor {
-  display: block;
-  width: 100%;
-  height: 560px;
-  min-height: 560px;
-  resize: both;
-  overflow: auto;
-  font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
-  font-size: 0.96rem;
-  line-height: 1.47;
-  padding: 12px 12px 44px;
-  border-radius: 10px;
-  background: #0d1020;
-  color: #eef2ff;
-  border: 1px solid rgba(129, 150, 226, 0.45);
-}
-.page--minischeme .minischeme-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: nowrap;
-  align-items: center;
-}
-.page--minischeme .ms-controls-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  flex: 0 0 auto;
-}
-.page--minischeme .ms-controls-center {
-  flex: 0 0 auto;
-  margin-left: auto;
-  margin-right: 0;
-}
-.page--minischeme .ms-controls-right {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  flex: 0 0 auto;
-}
-.page--minischeme .minischeme-sample-select {
-  flex: 0 1 auto;
-  width: clamp(220px, 30vw, 420px);
-  min-width: 160px;
-  max-width: 420px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid rgba(129, 150, 226, 0.42);
-  background: rgba(15, 20, 38, 0.94);
-  color: rgba(230, 238, 255, 0.95);
-  padding: 0 12px;
-  font-size: 0.9rem;
-}
-.page--minischeme .minischeme-sample-select:focus-visible {
-  outline: 2px solid rgba(149, 178, 255, 0.75);
-  outline-offset: 2px;
-}
-.page--minischeme .minischeme-btn {
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-weight: 600;
-  cursor: pointer;
-  color: #fff;
-  transition: filter 140ms ease, transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-}
-.page--minischeme .minischeme-btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-.page--minischeme .minischeme-btn:active {
-  transform: translateY(0);
-}
-.page--minischeme .minischeme-btn:disabled {
-  cursor: default;
-  opacity: 0.55;
-  filter: none;
-  transform: none;
-}
-.page--minischeme .minischeme-btn:focus-visible {
-  outline: 2px solid rgba(149, 178, 255, 0.75);
-  outline-offset: 2px;
-}
-.page--minischeme .minischeme-btn--run {
-  margin-left: 6px;
-  background: #6a86ff;
-  border-color: rgba(171, 193, 255, 0.45);
-  box-shadow: 0 0 0 1px rgba(168, 190, 255, 0.2) inset;
-}
-.page--minischeme .minischeme-btn--sample {
-  background: #237f73;
-  border-color: rgba(154, 228, 214, 0.2);
-}
-.page--minischeme .minischeme-btn--pause {
-  background: #3f5fba;
-  border-color: rgba(165, 188, 255, 0.28);
-}
-.page--minischeme .minischeme-btn--stop {
-  background: #8f3f4a;
-  border-color: rgba(245, 173, 177, 0.24);
-}
-.page--minischeme .minischeme-btn--reset {
-  background: #7f5250;
-  border-color: rgba(217, 145, 137, 0.2);
-  color: rgba(255, 241, 241, 0.94);
-}
-.page--minischeme .ms-output {
-  position: relative;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(121, 138, 202, 0.24);
-}
-.page--minischeme .ms-output-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  padding: 0 12px 6px;
-}
-.page--minischeme .ms-output-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0.84;
-  pointer-events: none;
-  color: rgba(218, 228, 255, 0.9);
-}
-.page--minischeme .ms-output-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  color: rgba(203, 214, 245, 0.78);
-  cursor: default;
-  user-select: none;
-  pointer-events: none;
-}
-.page--minischeme .ms-output-status::before {
-  content: "●";
-  font-size: 0.62rem;
-  line-height: 1;
-  color: rgba(171, 184, 224, 0.72);
-}
-.page--minischeme .ms-output-status[data-state="running"]::before {
-  color: rgba(120, 220, 160, 0.9);
-}
-.page--minischeme .ms-output-status[data-state="paused"]::before {
-  color: rgba(244, 193, 105, 0.92);
-}
-.page--minischeme .ms-output-status[data-state="error"]::before {
-  color: rgba(238, 120, 133, 0.94);
-}
-.page--minischeme .ms-output-body {
-  position: relative;
-  z-index: 1;
-}
-.page--minischeme .ms-copy-btn {
-  position: absolute;
-  right: 12px;
-  bottom: 10px;
-  z-index: 3;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(133, 154, 224, 0.42);
-  background: rgba(12, 17, 33, 0.9);
-  color: rgba(216, 227, 255, 0.92);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-.page--minischeme .ms-copy-btn:hover {
-  background: rgba(17, 23, 43, 0.95);
-  border-color: rgba(153, 176, 245, 0.5);
-}
-.page--minischeme .ms-copy-btn:focus-visible {
-  outline: 2px solid rgba(149, 178, 255, 0.75);
-  outline-offset: 2px;
-}
-.page--minischeme .minischeme-output {
-  margin: 0;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 96px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  padding: 12px 12px 44px;
-  border-radius: 10px;
-  font-family: "Iosevka", "Fira Code", ui-monospace, monospace;
-  background: #0b0f1d;
-  color: #dce5ff;
-  border: 1px solid rgba(122, 144, 223, 0.32);
-  box-shadow: inset 0 1px 0 rgba(160, 180, 240, 0.18);
-}
-.page--canvas-hexagons .section.section--mathjax {
-  margin-top: 60px;
-  padding-top: 22px;
-  padding-bottom: 22px;
-}
-.page--canvas-hexagons .canvas-hexagons-stage {
-  position: relative;
-  min-height: 72vh;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(120, 140, 255, 0.22);
-  background: #000;
-  box-shadow:
-    inset 0 0 24px rgba(0, 0, 0, 0.52),
-    0 10px 28px rgba(0, 0, 0, 0.28);
-}
-.page--canvas-hexagons .canvas-hexagons-stage::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(120% 95% at 50% 14%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.0) 58%);
-}
-.page--canvas-hexagons .canvas-hexagons-stage canvas {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.page--canvas-hexagons .canvas-credits {
-  gap: 10px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  background: rgba(255, 255, 255, 0.025);
-}
-.page--canvas-hexagons .canvas-credits-label {
-  margin: 0;
-  color: rgba(188, 196, 231, 0.92);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-.page--canvas-hexagons .pill-row {
-  opacity: 0.84;
-}
-.page--canvas-hexagons .pill {
-  font-size: 0.66rem;
-}
-.page--canvas-hexagons .hero-panel {
-  gap: 16px;
-}
-.page--canvas-hexagons .canvas-credits p {
-  margin: 0;
-  color: rgba(186, 194, 228, 0.88);
-}
-.page--canvas-hexagons .canvas-credits-actions {
-  margin-top: 2px;
-}
-.page--canvas-hexagons .section.section--mathjax-details {
-  margin-bottom: 26px;
 }
 .arcade-frame {
   display: flex;
@@ -4549,9 +3160,6 @@ pre code {
   background: #000;
 }
 @media (min-width: 900px) {
-  .examples-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 /* Motion + reduced motion */
@@ -4577,8 +3185,6 @@ pre code {
 @media (prefers-reduced-motion: reduce) {
   .cta-button::after { transition: none; transform: none; }
   .hero-carousel-panel { animation: none; }
-  .carousel-shot { animation: none; opacity: 0; transform: none; }
-  .carousel-shot:first-child { opacity: 1; }
   .section-title::after { transition: none; background-position: 0% 50%; }
   .card { transition: none; }
   .card:hover,
@@ -4592,14 +3198,6 @@ pre code {
   color: var(--muted);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 20px;
-  align-items: center;
-}
-.footer address {
-  font-style: normal;
-}
-.footer-contact p {
-  margin: 0;
-  text-align: center;
 }
 .highlight { color: var(--gold); font-weight: 600; }
 .accent    { color: var(--blue); }
@@ -4629,8 +3227,6 @@ pre code {
   .hero { grid-template-columns: 1fr; gap: 24px; }
   .section { margin-top: 56px; padding: 24px 18px; }
   .card-grid { grid-template-columns: 1fr; gap: 20px; }
-  .mathjax-grid { grid-template-columns: 1fr; }
-  .docs-layout { grid-template-columns: 1fr; }
   .docs-toc { display: none; }
   .toc-mobile { display: block; }
 }
@@ -4651,9 +3247,7 @@ CSS
 
   (define page-structure
     (case (current-page)
-      [(implementation-status) (implementation-status-page)]
       [(documentation)         (documentation-page)]
-      [(doc-webracket-glance)  (doc-webracket-at-a-glance-page)]
       [(doc-compiler-overview) (doc-compiler-overview-page)]
       [(doc-js-ffi)            (doc-js-ffi-page)]
       [(doc-ffi-standard)      (doc-ffi-standard-page)]
@@ -4666,56 +3260,16 @@ CSS
                                (doc-extended-example-jsxgraph-board-points-page)]
       [(doc-extended-example-jsxgraph-geometry-constructors)
                                (doc-extended-example-jsxgraph-geometry-constructors-page)]
-      [(examples)              (examples-page)]
-      [(quick-start)           (quick-start-page)]
-      [(installation)          (installation-page)]
-      [(community)             (community-page)]
-      [(mathjax)               (mathjax-page)]
-      [(formula1)              (formula1-page)]
-      [(matrix-rain)           (matrix-rain-page)]
-      [(xtermjs-demo)          (xtermjs-demo-page)]
-      [(space-invaders)        (space-invaders-page)]
-      [(canvas-hexagons)       (canvas-hexagons-page)]
-      [(minischeme)            (minischeme-page)]
-      [else                    (home-page)]))
+      [else                    (documentation-page)]))
 
   (define safe-structure
     (if (eq? (current-page) 'doc-js-ffi)
         (sanitize-sxml page-structure)
         page-structure))
 
-  (define page
-    (sxml->dom
-     `(div
-       (a (@ (class "skip-link")
-             (href "#main-content"))
-          "Skip to main content")
-       (main (@ (id "main-content")
-                (tabindex "-1"))
-             ,safe-structure))))
+  (define page (sxml->dom safe-structure))
 
   (js-append-child! body page)
-
-  (when (eq? (current-page) 'mathjax)
-    (init-mathjax-page!))
-
-  (when (eq? (current-page) 'formula1)
-    (init-formula1-page!))
-
-  (when (eq? (current-page) 'matrix-rain)
-    (init-matrix-rain-page!))
-
-  (when (eq? (current-page) 'xtermjs-demo)
-    (init-xtermjs-demo-page!))
-
-  (when (eq? (current-page) 'space-invaders)
-    (init-space-invaders-page!))
-
-  (when (eq? (current-page) 'canvas-hexagons)
-    (init-canvas-hexagons-page!))
-
-  (when (eq? (current-page) 'minischeme)
-    (init-minischeme-page!))
 
   (when (memq (current-page)
               '(doc-js-ffi
@@ -4726,10 +3280,7 @@ CSS
   (when (eq? (current-page) 'doc-extended-example-jsxgraph-board-points)
     (init-extended-example-jsxgraph-board!))
   (when (eq? (current-page) 'doc-extended-example-jsxgraph-geometry-constructors)
-    (init-extended-example-jsxgraph-geometry-board!))
-
-  (when (eq? (current-page) 'implementation-status)
-    (init-status-page-handlers!)))
+    (init-extended-example-jsxgraph-geometry-board!)))
 
 ;;;
 ;;; Entry Point
