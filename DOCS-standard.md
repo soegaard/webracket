@@ -442,4 +442,4 @@ For constructor-like globals, a safe check is:
 
 ## Chapter 6 — Coverage Checklist
 
-This document covers **129** functions from `ffi/standard.ffi`.
+This document covers **132** functions from `ffi/standard.ffi`.

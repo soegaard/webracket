@@ -507,12 +507,12 @@
 (define-foreign js-document-head
   #:module "document"
   #:name   "head"
-  (-> () (extern/raw)))
+  (-> () (extern)))
 
 (define-foreign js-document-body
   #:module "document"
   #:name   "body"
-  (-> () (extern/raw)))
+  (-> () (extern)))
 
 (define-foreign js-document-element
   #:module "document"

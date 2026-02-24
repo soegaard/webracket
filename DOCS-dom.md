@@ -263,8 +263,8 @@ MDN root: [Document](https://developer.mozilla.org/en-US/docs/Web/API/Document)
 | Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [`js-document`](https://developer.mozilla.org/en-US/docs/Web/API/Document) | `()` | `(extern/raw)` | no | no | yes | `(js-document)` | read `document` as `extern`. |
-| [`js-document-head`](https://developer.mozilla.org/en-US/docs/Web/API/Document/head) | `()` | `(extern/raw)` | no | no | yes | `(js-document-head)` | read `head` as `extern`. |
-| [`js-document-body`](https://developer.mozilla.org/en-US/docs/Web/API/Document/body) | `()` | `(extern/raw)` | no | no | yes | `(js-document-body)` | read `body` as `extern`. |
+| [`js-document-head`](https://developer.mozilla.org/en-US/docs/Web/API/Document/head) | `()` | `(extern)` | no | no | yes | `(js-document-head)` | read `head` as `extern`. |
+| [`js-document-body`](https://developer.mozilla.org/en-US/docs/Web/API/Document/body) | `()` | `(extern)` | no | no | yes | `(js-document-body)` | read `body` as `extern`. |
 | [`js-document-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement) | `()` | `(extern/raw)` | no | no | yes | `(js-document-element)` | read `document-element` as `extern`. |
 | [`js-create-element`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-element "x")` | call `create-element` and keep the raw JS result. |
 | [`js-create-text-node`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode) | `(string)` | `(extern/raw)` | no | no | yes | `(js-create-text-node "x")` | call `create-text-node` and keep the raw JS result. |
