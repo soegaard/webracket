@@ -29,7 +29,7 @@
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
-(define stdlib?         (make-parameter #f))   ; include standard library?
+(define stdlib?         (make-parameter #t))   ; include standard library by default
 
 (define file-to-compile
   (command-line
@@ -52,8 +52,10 @@
                              (label-map-forms #f)]
    [("--timings") "Print timing breakdown for compilation steps"
                   (timings? #t)]
-   [("--stdlib")             "Include the standard library"
+   [("--stdlib")             "Include the standard library (default)"
                              (stdlib? #t)]
+   [("--no-stdlib")          "Do not include the standard library"
+                             (stdlib? #f)]
    
 
    #:once-any ; only one flag from this group
