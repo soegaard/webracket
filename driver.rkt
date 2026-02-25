@@ -28,8 +28,10 @@
 (require (only-in syntax/modread    with-module-reading-parameterization)
          (only-in racket/path       path-only path-get-extension)
          (only-in racket/file       make-directory* make-temporary-file)
+         (only-in racket/port       open-output-nowhere)
          (only-in racket/pretty     pretty-write)
          (only-in racket/format     ~a)
+         (only-in racket/system     system*)
          #;(only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
          (only-in racket/list       append*)
@@ -43,7 +45,7 @@
          "define-foreign.rkt")
 
 ;;;
-;;; 
+;;; THE MAIN DRIVER
 ;;;
 
 (define (drive-compilation
@@ -88,9 +90,8 @@
   (current-ffi-imports-wat ffi-imports)
   (current-ffi-funcs-wat   ffi-funcs)
   
-  ; 1. Check that `filename` exists.
-  (unless (file-exists? filename)
-    (error 'drive-compilation (~a "file not found: " filename)))
+  ; 1. Check that `filename` exists and is a source file.
+  (ensure-source-file! 'drive-compilation filename)
 
   ; 2. Read the top-level forms from `filename`.
   (define stx
@@ -104,7 +105,8 @@
   (define stx-with-stdlib
     (cond
       [(and stdlib? browser?)
-       (displayln "Including `stdlib/stdlib-for-browser.rkt`" (current-error-port))
+       (when verbose?
+         (displayln "Including `stdlib/stdlib-for-browser.rkt`" (current-error-port)))
        #`(begin
            (include/reader "stdlib/stdlib-for-browser.rkt" read-syntax/skip-first-line)
            #,stx)]
@@ -116,7 +118,44 @@
 
   (define t0 (now-ms))
 
-  ; 4. Compile the syntax object.
+  ; 4. Preflight checks
+
+  ; Preflight: `-r` requires Node host mode.
+  (when (and run-after? browser?)
+    (error 'drive-compilation
+           "cannot use `-r` in browser mode; use Node mode or omit `-r`."))
+
+  ; Preflight: `-r` in Node mode requires a Node.js executable.
+  (when (and node? run-after?)
+    (check-node! 'drive-compilation))
+
+  ; Precompute output paths for preflight checks.
+  (define out-wat  (or wat-filename  (path-replace-extension filename ".wat")))
+  (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
+  (define out-map  (path-replace-extension out-wasm ".wasm.map.sexp"))
+  (define out-host (or host-filename
+                       (if node?
+                           (path-replace-extension filename ".js")
+                           (path-replace-extension filename ".html"))))
+
+  ; Preflight: ensure output files do not collide.
+  (ensure-distinct-output-files!
+   'drive-compilation
+   (list (cons "WAT output file"       out-wat)
+         (cons "Wasm output file"      out-wasm)
+         (cons "label-map output file" out-map)
+         (cons "host output file"      out-host)))
+
+  ; Preflight: ensure output locations are writable.
+  (ensure-output-path-writable! 'drive-compilation out-wat  "WAT output file")
+  (ensure-output-path-writable! 'drive-compilation out-wasm "Wasm output file")
+  (ensure-output-path-writable! 'drive-compilation out-map  "label-map output file")
+  (ensure-output-path-writable! 'drive-compilation out-host "host output file")
+  
+  ; Preflight: ensure wasm-tools exists and can run.
+  (check-wasm-tools! 'drive-compilation)
+
+  ; 5. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
   (current-pass-timings? timings?)
   (define t-compile-start (now-ms))
@@ -127,48 +166,49 @@
       (comp stx-with-stdlib)))
   (define t-compile-end (now-ms))
 
-  ; 5. Save the resulting WAT module.
-  (define out-wat (or wat-filename (path-replace-extension filename ".wat")))
+  ; 6. Save the resulting WAT module.
   (define t-write-wat-start (now-ms))
   (write-wat-to-file out-wat wat)
+  (ensure-generated-file-exists! 'drive-compilation out-wat "WAT output file")
   (define t-write-wat-end (now-ms))
 
-  ; 6. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
-  (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
+  ; 7. Compile the wat-file to wasm using `wat->wasm` from `assembler.rkt`
   (define t-assemble-start (now-ms))
-  (with-handlers ([exn:fail? (λ (e)
-                               (error 'drive-compilation
-                                      (~a "wat->wasm failed: " (exn-message e))))])
-    (wat->wasm wat #:wat out-wat #:wasm out-wasm))
+  (define wat->wasm-success?
+    (with-handlers ([exn:fail? (λ (e)
+                                 (error 'drive-compilation
+                                        (~a "wat->wasm failed: " (exn-message e))))])
+      (wat->wasm wat #:wat out-wat #:wasm out-wasm)))
+  (unless wat->wasm-success?
+    (error 'drive-compilation
+           (~a "wat->wasm failed to produce bytecode for " filename)))
+  (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
   (define t-assemble-end (now-ms))
 
-  ; 6b. Write label map sidecar
-  (define out-map (path-replace-extension out-wasm ".wasm.map.sexp"))
+  ; 7b. Write label map sidecar
   (define t-write-map-start (now-ms))
   (with-output-to-file out-map
     (λ () (pretty-write (label-map->sexp)))
     #:exists 'replace)
+  (ensure-generated-file-exists! 'drive-compilation out-map "label-map output file")
   (define t-write-map-end (now-ms))
 
-  ; 7. Write the host file (default: "runtime.js")
-  (define out-host (or host-filename
-                       (if node?
-                           (path-replace-extension filename ".js")
-                           (path-replace-extension filename ".html"))))
+  ; 8. Write the host file (default: "runtime.js")
   (define t-write-host-start (now-ms))
   (with-output-to-file out-host
     (λ () (displayln
            (runtime #:out out-wasm #:host (if node? 'node 'browser))))
     #:exists 'replace)
+  (ensure-generated-file-exists! 'drive-compilation out-host "host output file")
   (define t-write-host-end (now-ms))
 
   (when timings?
-    (define compile-ms (- t-compile-end t-compile-start))
-    (define write-wat-ms (- t-write-wat-end t-write-wat-start))
-    (define assemble-ms (- t-assemble-end t-assemble-start))
-    (define write-map-ms (- t-write-map-end t-write-map-start))
+    (define compile-ms    (- t-compile-end t-compile-start))
+    (define write-wat-ms  (- t-write-wat-end t-write-wat-start))
+    (define assemble-ms   (- t-assemble-end t-assemble-start))
+    (define write-map-ms  (- t-write-map-end t-write-map-start))
     (define write-host-ms (- t-write-host-end t-write-host-start))
-    (define total-ms (- t-write-host-end t0))
+    (define total-ms      (- t-write-host-end t0))
     (define overall-table
       (format-timing-table
        (list (list "compile" compile-ms)
@@ -188,8 +228,9 @@
       (displayln "=== Generate-Code Phases ===")
       (displayln gen-table)))
 
-  ; 8. Optionally run the program via Node.js.
+  ; 9. Optionally run the program via Node.js.
   (when (and node? run-after?)
+    (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
     (define runtime-js out-host)
     (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
 
@@ -223,6 +264,101 @@
       (displayln ";; This file was generated by `webracket`.")
       (pretty-write wat))
     #:exists 'replace))
+
+;;;
+;;; PREFLIGHT CHECK TOOLS
+;;;
+
+(define (ensure-source-file! who filename)
+  (cond
+    [(directory-exists? filename)
+     (error who (~a "expected a source file, got directory: " filename))]
+    [(not (file-exists? filename))
+     (error who (~a "file not found: " filename))]))
+
+(define (ensure-generated-file-exists! who path kind)
+  (unless (file-exists? path)
+    (error who (~a kind " was not created: " path))))
+
+(define (ensure-output-path-writable! who output-path kind)
+  (when (directory-exists? output-path)
+    (error who
+           (~a "cannot write " kind ": " output-path
+               "\n" "target path is an existing directory")))
+  (define dir (or (path-only output-path) (current-directory)))
+  (with-handlers ([exn:fail:filesystem?
+                   (λ (e)
+                     (error who
+                            (~a "cannot prepare directory for " kind ": " dir
+                                "\n" (exn-message e))))])
+    (make-directory* dir))
+  (define probe #f)
+  (with-handlers ([exn:fail:filesystem?
+                   (λ (e)
+                     (when (and probe (file-exists? probe))
+                       (with-handlers ([exn:fail:filesystem? void])
+                         (delete-file probe)))
+                     (error who
+                            (~a "cannot write " kind ": " output-path
+                                "\n" (exn-message e))))])
+    (set! probe (make-temporary-file "webracket-write-check~a.tmp" #f dir))
+    (delete-file probe)))
+
+(define (check-node! who)
+  (define node-path (find-executable-path "node"))
+  (unless node-path
+    (error who
+           (string-append
+            "required executable `node` was not found in PATH.\n"
+            "Install Node.js or run without `-r`.")))
+  (define node-ok?
+    (parameterize ([current-output-port (open-output-nowhere)]
+                   [current-error-port (open-output-nowhere)])
+      (system* node-path "--version")))
+  (unless node-ok?
+    (error who
+           (string-append
+            "found `node` in PATH but could not run `node --version`.\n"
+            "Check the installation and executable permissions.")))
+  (define wasm-exnref-flag-ok?
+    (parameterize ([current-output-port (open-output-nowhere)]
+                   [current-error-port (open-output-nowhere)])
+      (system* node-path "--experimental-wasm-exnref" "-e" "")))
+  (unless wasm-exnref-flag-ok?
+    (error who
+           (string-append
+            "found `node`, but it does not accept `--experimental-wasm-exnref`.\n"
+            "Install a compatible Node.js version or run without `-r`."))))
+
+(define (ensure-distinct-output-files! who entries)
+  (define seen (make-hash))
+  (for ([entry entries])
+    (define kind          (car entry))
+    (define path          (cdr entry))
+    (define normalized    (path->complete-path path (current-directory)))
+    (define previous-kind (hash-ref seen normalized #f))
+    (when previous-kind
+      (error who
+             (~a "output file collision: " previous-kind " and "
+                 kind " resolve to the same path: " path)))
+    (hash-set! seen normalized kind)))
+
+(define (check-wasm-tools! who)
+  (define wasm-tools-path (find-executable-path "wasm-tools"))
+  (unless wasm-tools-path
+    (error who
+           (string-append
+            "required executable `wasm-tools` was not found in PATH.\n"
+            "Install `wasm-tools` to compile `.wat` files to `.wasm`.")))
+  (define parse-help-ok?
+    (parameterize ([current-output-port (open-output-nowhere)]
+                   [current-error-port (open-output-nowhere)])
+      (system* wasm-tools-path "parse" "--help")))
+  (unless parse-help-ok?
+    (error who
+           (string-append
+            "found `wasm-tools` in PATH but could not run `wasm-tools parse --help`.\n"
+            "Check the installation and executable permissions."))))
 
 ;;;
 ;;; READ MODULE
