@@ -4,7 +4,7 @@
 ;;;   Input and Output
 ;;;
 
-;; racket -l errortrace -t ../webracket.rkt -- --stdlib --ffi standard.ffi --ffi dom.ffi -b completion.rkt
+;; racket -l errortrace -t ../webracket.rkt -- --ffi standard.ffi --ffi dom.ffi -b completion.rkt
 
 ; This program displays a web-page with a section for each section in
 ; the Data Structure chapter in the reference.

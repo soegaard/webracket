@@ -29,7 +29,7 @@
 
 ;; Compile this demo with:
 ;;
-;;     racket ../../webracket.rkt --ffi xtermjs --ffi dom.ffi --ffi standard.ffi --stdlib -b xtermjs-demo.rkt
+;;     racket ../../webracket.rkt --ffi xtermjs --ffi dom.ffi --ffi standard.ffi -b xtermjs-demo.rkt
 ;;
 ;; Use a local web-server to serve the files in this folder.
 ;;

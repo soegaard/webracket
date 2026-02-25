@@ -7,7 +7,7 @@ This browser example uses SXML via `sxml->dom` to build the page without direct 
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b hello-world-3.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b hello-world-3.rkt
 ```
 
 ## Serve

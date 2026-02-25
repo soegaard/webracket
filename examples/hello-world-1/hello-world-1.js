@@ -575,6 +575,8 @@ var imports = {
          ? to_string(obj)
          : (obj instanceof String ? to_string(obj.valueOf())
                                    : to_string(String(obj))))),
+      'external_nullish': (obj => ((obj === null) || (obj === undefined)) ? 1 : 0),
+      'external_undefined': (obj => (obj === undefined) ? 1 : 0),
       'char_upcase': ((cp) => {
         const s = String.fromCodePoint(cp).toUpperCase();
         const arr = Array.from(s);

@@ -5,7 +5,7 @@
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b tiles.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b tiles.rkt
 ```
 
 ## Serve

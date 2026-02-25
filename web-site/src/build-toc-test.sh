@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "-- Compiling test-toc.rkt --"
-racket ../../webracket.rkt --browser --ffi dom --ffi standard --ffi js --stdlib test-toc.rkt
+racket ../../webracket.rkt --browser --ffi dom --ffi standard --ffi js test-toc.rkt
 
 echo "-- Copying Assets --"
 cp test-toc.wasm ../public

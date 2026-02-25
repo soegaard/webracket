@@ -10,7 +10,7 @@ else
 fi
 
 echo "-- Compiling website-docs-only.rkt --"
-racket ../../webracket.rkt --browser --ffi dom --ffi standard --ffi js --stdlib website-docs-only.rkt
+racket ../../webracket.rkt --browser --ffi dom --ffi standard --ffi js website-docs-only.rkt
 
 echo "-- Copying Docs Assets --"
 mkdir -p ../public/assets/vendor/jsxgraph

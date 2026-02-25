@@ -7,7 +7,7 @@ This example targets Node.js and runs in the terminal.
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --stdlib -r hello-world-1.rkt
+racket ../../webracket.rkt -r hello-world-1.rkt
 ```
 
 The switch -r causes webracket to compile and run the program in one go.
@@ -18,7 +18,7 @@ Node is used to run the program.
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --node --stdlib hello-world-1.rkt
+racket ../../webracket.rkt --node hello-world-1.rkt
 ```
 
 The switch --node causes webracket to compile the program for Node.
@@ -48,5 +48,5 @@ Not applicable (terminal example; no browser page).
 
 Notes:
 
-- `--stdlib` is needed because this example uses `displayln`.
-- If the program only uses `js-log`, `--stdlib` can be dropped.
+- Stdlib is enabled by default, so this example works as-is with `displayln`.
+- For programs that do not use stdlib functionality, add `--no-stdlib`.

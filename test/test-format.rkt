@@ -1,5 +1,5 @@
 ;; Test suite for format (stdlib)
-;; Run with: racket -t ../webracket.rkt -- --stdlib -r test-format.rkt
+;; Run with: racket -t ../webracket.rkt -- -r test-format.rkt
 
 (require (for-syntax racket/file))
 

@@ -5,7 +5,7 @@
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b mathjax.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b mathjax.rkt
 ```
 
 Or from `examples/`:

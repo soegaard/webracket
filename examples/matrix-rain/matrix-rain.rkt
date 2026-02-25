@@ -7,7 +7,7 @@
 
 ;; Compile this demo with:
 
-;;    racket -t ../../webracket.rkt -- --ffi xtermjs --ffi dom --ffi standard --stdlib -b matrix-rain.rkt
+;;    racket -t ../../webracket.rkt -- --ffi xtermjs --ffi dom --ffi standard -b matrix-rain.rkt
 
 ;;;
 ;;; Utilities

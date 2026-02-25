@@ -3,7 +3,7 @@
 ;; WebRacket: download an .ics file via window.fetch and show it in the page.
 
 ;; Build:
-;;   racket ../../../../webracket.rkt -b --stdlib --ffi standard --ffi dom download-calendar.rkt
+;;   racket ../../../../webracket.rkt -b --ffi standard --ffi dom download-calendar.rkt
 
 (define URL "https://better-f1-calendar.vercel.app/api/calendar.ics")
 

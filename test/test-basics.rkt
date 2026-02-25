@@ -1,7 +1,7 @@
 ;; The numbering follows the sections in "The Reference".
 
 ;; These basic tests needs to work without the standard library.
-;; So avoid use --stdlib when compiling this test.
+;; Compile this file with `--no-stdlib`.
 ;;
 ;; Known failing subtests currently kept enabled (for tracking):
 ;;

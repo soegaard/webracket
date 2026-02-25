@@ -7,7 +7,7 @@
 ;;;
 
 ;; Compile with:
-;;     racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
+;;     racket ../../webracket.rkt --browser --ffi dom web-site.rkt
 ;; Build script which also copies assets:
 ;;     ./build.sh
 
@@ -1688,15 +1688,10 @@ a.code-pill:focus-visible {
 .callout a {
   overflow-wrap: anywhere;
 }
-/* Installation: Step 6 completion emphasis */
-.install-step-card:nth-child(6) {
+/* Installation: Step 8 completion emphasis */
+.install-step-card:nth-child(8) {
   border-color: rgba(101, 79, 240, 0.32);
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.34);
-}
-.install-step-card:nth-child(6) h3::after {
-  content: " ✓";
-  color: rgba(230, 232, 242, 0.7);
-  font-size: 0.95rem;
 }
 .install-next-steps {
   margin-top: 32px;

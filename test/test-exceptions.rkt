@@ -89,7 +89,7 @@
                (equal? (unquoted-printing-string? s)        #f)
                (equal? (unquoted-printing-string-value ups) s))))
 
-  ; Note: display and write are in stdlib, so use --stdlib
+  ; Note: display and write are in stdlib (enabled by default).
   (list "unquoted-printing-string display/write"
         (let* ([ups       (unquoted-printing-string "x\ny")]
                [displayed (call-with-output-string

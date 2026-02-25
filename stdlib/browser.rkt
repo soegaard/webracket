@@ -3,8 +3,8 @@
 ;;; Standard library for the browser host
 ;;;
 
-;; This file is only included with --stdlib when the host
-;; is the browser (that is, webracket must be invoked with --stdlib -b).
+;; This file is included when the host is the browser
+;; (that is, webracket is invoked with -b and stdlib is enabled).
 
 
 ;;;
@@ -39,4 +39,3 @@
      elem]
     [_
      (error 'sxml->dom "unsupported expression: ~a" exp)]))
-

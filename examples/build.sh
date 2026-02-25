@@ -12,7 +12,7 @@ build_example() {
   echo "  - ${dir}/${entry}"
   (
     cd "${EXAMPLES_DIR}/${dir}"
-    racket "${COMPILER}" "$@" --stdlib -b "${entry}"
+    racket "${COMPILER}" "$@" -b "${entry}"
   )
 }
 
@@ -23,7 +23,7 @@ build_example_node() {
   echo "  - ${dir}/${entry} (node)"
   (
     cd "${EXAMPLES_DIR}/${dir}"
-    racket "${COMPILER}" --node "$@" --stdlib "${entry}"
+    racket "${COMPILER}" --node "$@" "${entry}"
   )
 }
 

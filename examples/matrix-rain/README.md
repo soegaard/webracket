@@ -5,7 +5,7 @@
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi xtermjs --ffi dom --ffi standard --stdlib -b matrix-rain.rkt
+racket ../../webracket.rkt --ffi xtermjs --ffi dom --ffi standard -b matrix-rain.rkt
 ```
 
 Or from `examples/`:

@@ -21,7 +21,7 @@
 
 - Canonical test commands:
   - `racket web-site/src/examples/minischeme/test-minischeme.rkt`
-  - `(cd web-site/src/examples/minischeme && racket ../../../../webracket.rkt --stdlib -r test-minischeme-with-webracket.rkt)`
+  - `(cd web-site/src/examples/minischeme && racket ../../../../webracket.rkt -r test-minischeme-with-webracket.rkt)`
 
 - Known expected WebRacket test failures:
   - None currently. Treat any WebRacket-run failure as a regression until triaged.

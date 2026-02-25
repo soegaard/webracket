@@ -1,6 +1,6 @@
 ;; Isolated MiniScheme repro for character literal handling.
 ;; Run from this directory:
-;;   racket ../../../../webracket.rkt --stdlib -r test-char-basics-only.rkt
+;;   racket ../../../../webracket.rkt -r test-char-basics-only.rkt
 
 (include "minischeme.rkt")
 

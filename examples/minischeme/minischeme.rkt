@@ -14,7 +14,7 @@
 ;;; Build Instructions
 ;;;
 
-;; racket ../../webracket.rkt --ffi standard --ffi xtermjs --ffi js --ffi dom  --stdlib -b minischeme.rkt
+;; racket ../../webracket.rkt --ffi standard --ffi xtermjs --ffi js --ffi dom  -b minischeme.rkt
 
 ;; Start a local web-server and open "minischeme.html".
 

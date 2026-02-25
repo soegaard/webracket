@@ -9,7 +9,7 @@
 
 ;; Run the test suite like this:
 ;;
-;;   racket -t ../webracket.rkt -- --stdlib -r test-stdlib.rkt 
+;;   racket -t ../webracket.rkt -- -r test-stdlib.rkt 
 ;;
 
 (list

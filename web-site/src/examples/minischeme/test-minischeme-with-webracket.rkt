@@ -2,7 +2,7 @@
 ;;; MiniScheme tests executed through WebRacket (`-r`).
 ;;;
 ;;; Run from this directory:
-;;;   racket ../../../../webracket.rkt --stdlib -r test-minischeme-with-webracket.rkt
+;;;   racket ../../../../webracket.rkt -r test-minischeme-with-webracket.rkt
 ;;;
 ;;; This file avoids rackunit on purpose, so it can run as a plain
 ;;; WebRacket program and print a compact test report.

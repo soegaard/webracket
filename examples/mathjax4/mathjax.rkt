@@ -9,7 +9,7 @@
 ;;; Build the example with the standard library so that `sxml->dom` is
 ;;; available:
 ;;;
-;;;   racket ../../webracket.rkt --ffi dom.ffi --ffi standard.ffi --stdlib -b mathjax.rkt
+;;;   racket ../../webracket.rkt --ffi dom.ffi --ffi standard.ffi -b mathjax.rkt
 ;;;
 ;;; Serve the folder with `raco static-web` (or any static server) and
 ;;; open `mathjax.html`.

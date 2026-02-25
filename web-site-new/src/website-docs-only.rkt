@@ -7,7 +7,7 @@
 ;;;
 
 ;; Compile with:
-;;     racket ../../webracket.rkt --browser --ffi dom --stdlib web-site.rkt
+;;     racket ../../webracket.rkt --browser --ffi dom web-site.rkt
 ;; Build script which also copies assets:
 ;;     ./build.sh
 

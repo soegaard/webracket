@@ -5,7 +5,7 @@
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b space-invaders.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b space-invaders.rkt
 ```
 
 Or from `examples/`:

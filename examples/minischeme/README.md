@@ -5,7 +5,7 @@
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi standard --ffi xtermjs --ffi js --ffi dom --stdlib -b minischeme.rkt
+racket ../../webracket.rkt --ffi standard --ffi xtermjs --ffi js --ffi dom -b minischeme.rkt
 ```
 
 Or from `examples/`:

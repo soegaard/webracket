@@ -22,7 +22,7 @@ cat > examples/minischeme/build-id.rkt <<EOF
 EOF
 
 echo "-- Compiling web-site.rkt --"
-racket ../../webracket.rkt --browser --ffi xtermjs --ffi dom --ffi standard --stdlib web-site.rkt
+racket ../../webracket.rkt --browser --ffi xtermjs --ffi dom --ffi standard web-site.rkt
 
 perl -0777 -i -pe "s/web-site\\.wasm\"/web-site.wasm?v=${STAMP}\"/g" web-site.html
 # Keep `lang="en"` in the static HTML shell for baseline accessibility before

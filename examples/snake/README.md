@@ -7,8 +7,8 @@ This folder contains multiple variants (`snake`, `snake2`, and an experimental `
 From this folder:
 
 ```sh
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b snake.rkt
-racket ../../webracket.rkt --ffi dom --ffi standard --stdlib -b snake2.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b snake.rkt
+racket ../../webracket.rkt --ffi dom --ffi standard -b snake2.rkt
 ```
 
 ## Serve

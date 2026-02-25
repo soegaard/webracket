@@ -484,7 +484,7 @@
                  (h2 "Step 1: Create a container element")
                  (p "JSXGraph needs a DOM element with a known id. "
                     "Using " (code "sxml->dom") " from the browser stdlib keeps this concise.")
-                 (pre (code ";; Requires --stdlib in browser mode for sxml->dom.\n"
+                 (pre (code ";; Requires browser mode with stdlib enabled for sxml->dom.\n"
                             "(define container\n"
                             "  (sxml->dom\n"
                             "   '(div (@ (id \"box\")\n"
@@ -2390,7 +2390,9 @@
                      'note
                      "Troubleshooting"
                      `(p "On macOS, you may get a Privacy & Security prompt. "
-                         "Allow " (code "wasm-tools") " to run from System Settings.")))
+                         "Allow " (code "wasm-tools") " to run from System Settings.")
+                     `(p "Instead of using Privacy and Security you can use the following command:")
+                     `(pre (code "sudo xattr -d com.apple.quarantine /usr/local/bin/wasm-tools"))))
              (list `(h3 "2. Node.js")
                    `(p "Install Node.js from "
                        (a (@ (href "https://nodejs.org/en/download")
@@ -2420,10 +2422,17 @@
                    `(pre (code "raco pkg install raco-static-web"))
                    `(p "Run it in a folder with an HTML file:")
                    `(pre (code "raco static-web")))
-             (list `(h3 "5. Clone the WebRacket repo")
+             (list `(h3 "5. nanopass")
+                   `(p "Install " (code "nanopass") ".")
+                   `(pre (code "raco pkg install nanopass")))             
+             (list `(h3 "6. Clone the WebRacket repo")
                    `(p "Clone the WebRacket repository (compiler and examples).")
                    `(pre (code "git clone https://github.com/soegaard/webracket.git")))
-             (list `(h3 "6. Quick test: run the examples")
+             (list `(h3 "7. Make WebRacket a local package")
+                   `(p "In the root of the " (code "webracket") " repo:")
+                   `(pre (code "raco pkg install --auto --name webracket ."))
+                   `(p "That installs the local checkout as a Racket package named webracket."))
+             (list `(h3 "8. Quick test: run the examples")
                    `(p "Serve the examples and open one in your browser.")
                    `(pre (code "cd examples\nraco static-web"))
                    `(p "Open http://localhost:8000/ and select an example HTML file.")))
