@@ -1013,7 +1013,7 @@
   
   (define style
     (sxml->dom
-     `(style
+        `(style
        ,(format
          #<<CSS
 :root {
@@ -4646,30 +4646,30 @@ CSS
 
   (define page-structure
     (case (current-page)
-      [(implementation-status) (implementation-status-page)]
-      [(documentation)         (documentation-page)]
-      [(doc-webracket-glance)  (doc-webracket-at-a-glance-page)]
-      [(doc-compiler-overview) (doc-compiler-overview-page)]
-      [(doc-js-ffi)            (doc-js-ffi-page)]
-      [(doc-ffi-standard)      (doc-ffi-standard-page)]
-      [(doc-ffi-dom)           (doc-ffi-dom-page)]
-      [(doc-ffi-js)            (doc-ffi-js-page)]
-      [(doc-ffi-math)          (doc-ffi-math-page)]
-      [(doc-ffi-jsxgraph)      (doc-ffi-jsxgraph-page)]
-      [(doc-ffi-xtermjs)       (doc-ffi-xtermjs-page)]
-      [(doc-extended-example-jsxgraph-board-points)
-                               (doc-extended-example-jsxgraph-board-points-page)]
-      [(doc-extended-example-jsxgraph-geometry-constructors)
-                               (doc-extended-example-jsxgraph-geometry-constructors-page)]
-      [(examples)              (examples-page)]
-      [(quick-start)           (quick-start-page)]
-      [(installation)          (installation-page)]
-      [(community)             (community-page)]
-      [(mathjax)               (mathjax-page)]
-      [(formula1)              (formula1-page)]
-      [(matrix-rain)           (matrix-rain-page)]
-      [(xtermjs-demo)          (xtermjs-demo-page)]
-      [(space-invaders)        (space-invaders-page)]
+         [(implementation-status) (implementation-status-page)]
+         [(documentation)         (documentation-page)]
+         [(doc-webracket-glance)  (doc-webracket-at-a-glance-page)]
+         [(doc-compiler-overview) (doc-compiler-overview-page)]
+         [(doc-js-ffi)            (doc-js-ffi-page)]
+         [(doc-ffi-standard)      (doc-ffi-standard-page)]
+         [(doc-ffi-dom)           (doc-ffi-dom-page)]
+         [(doc-ffi-js)            (doc-ffi-js-page)]
+         [(doc-ffi-math)          (doc-ffi-math-page)]
+         [(doc-ffi-jsxgraph)      (doc-ffi-jsxgraph-page)]
+         [(doc-ffi-xtermjs)       (doc-ffi-xtermjs-page)]
+         [(doc-extended-example-jsxgraph-board-points)
+                                  (doc-extended-example-jsxgraph-board-points-page)]
+         [(doc-extended-example-jsxgraph-geometry-constructors)
+                                  (doc-extended-example-jsxgraph-geometry-constructors-page)]
+         [(examples)              (examples-page)]
+         [(quick-start)           (quick-start-page)]
+         [(installation)          (installation-page)]
+         [(community)             (community-page)]
+         [(mathjax)               (mathjax-page)]
+         [(formula1)              (formula1-page)]
+         [(matrix-rain)           (matrix-rain-page)]
+         [(xtermjs-demo)          (xtermjs-demo-page)]
+         [(space-invaders)        (space-invaders-page)]
       [(canvas-hexagons)       (canvas-hexagons-page)]
       [(minischeme)            (minischeme-page)]
       [else                    (home-page)]))
@@ -4681,7 +4681,7 @@ CSS
 
   (define page
     (sxml->dom
-     `(div
+        `(div
        (a (@ (class "skip-link")
              (href "#main-content"))
           "Skip to main content")
