@@ -42375,18 +42375,25 @@
 
                (func $entry-uncaught-exception2
                      (param $e (ref eq))
-                     (call $js-log (call $format/display (local.get $e)))
-                     (unreachable))
+                     (drop (call $js-log (call $format/display (local.get $e)))))
 
                (func $entry-uncaught-exception1
                      (param $e (ref eq))
-                     (call $js-log (local.get $e))
-                     (unreachable))
+                     (drop (call $js-log (local.get $e))))
 
-               (func $entry-uncaught-exception (unreachable))
+               (func $entry-uncaught-exception
+                     (param $e (ref eq))
+                     (if (ref.eq (call $exn? (local.get $e)) (global.get $false))
+                         (then
+                          (call $entry-uncaught-exception1 (local.get $e)))
+                         (else
+                          (call $entry-uncaught-exception2
+                                (call $exn-message (local.get $e)))))
+                     (throw $exn (local.get $e)))
                
                (func $entry (export "entry") (result i32)
                      ; Declare local variables (bound by let-values and letrec-values)
+                     (local $entry-exn (ref eq))
                      ,@(let ()
                          (define (Local  x)
                            (match x
@@ -42624,7 +42631,18 @@
                          (define (Init* xs) (map Init xs))
                          (Init* entry-locals))
 
-                     ,entry-body
+                     ; This runs `entry-body`. An exception handler is
+                     ; installed to catch exceptions not handled by the
+                     ; user program.
+                     (block $entry-done
+                            (local.set $entry-exn
+                                       (block $entry-handler (result (ref eq))
+                                              (try_table (result (ref eq))
+                                                         (catch $exn $entry-handler)
+                                                         ,entry-body
+                                                         (br $entry-done))))
+                            (call $entry-uncaught-exception (local.get $entry-exn))
+                            (unreachable))
                      
                      ; Return the result
                      (global.set $result-bytes

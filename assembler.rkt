@@ -631,7 +631,7 @@ var imports = {
         'memory': memory
     },
     'primitives': {
-      'console_log': ((x)   => console.log(x)),
+      'console_log': ((x)   => console.error(x)),
       'add':         ((x,y) => x+y),
       'foreign_error_tag': foreign_error_tag,
       'make_callback': make_callback,
@@ -639,7 +639,7 @@ var imports = {
       'js_print_fasl': ((start, len) => {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
         const [v] = fasl_to_js_value(bytes);
-        console.log(v);
+        console.error(v);
       }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),
@@ -2228,7 +2228,19 @@ const wasmModule
                           callback_export = callback;
                           callback_accepts_argc_export = callback_accepts_argc;
                           callback_expected_arity_export = callback_expected_arity;
-                          var result = entry();
+                          var result;
+                          try {
+                            result = entry();
+                          } catch (err) {
+                            const isWasmException =
+                              (typeof WebAssembly.Exception !== 'undefined') &&
+                              (err instanceof WebAssembly.Exception);
+                            if (isWasmException) {
+                              console.error("-----");
+                              console.error("[Host] Uncaught WebAssembly exception:");
+                            }
+                            throw err;
+                          }
                           // console.log( "Output:")
                           // console.log( output_string );
                           // console.log( "Result:")
