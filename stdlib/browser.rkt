@@ -20,7 +20,18 @@
 
 (define (add-children! elem children)
   (for ([child (in-list children)])
-    (js-append-child! elem (sxml->dom child))))
+    (define dom-child (sxml->dom child))
+    (unless (or (string? child) (pair? child))
+      (raise-arguments-error
+       'sxml->dom
+       "child must be a string or nested element expression"
+       "child"
+       child))
+    (when (number? dom-child)
+      (error 'sxml->dom
+             "internal error: child compiled to number before append\n  child expression: ~a\n  compiled child: ~a\n  parent element: ~a"
+             child dom-child elem))
+    (js-append-child! elem dom-child)))
 
 (define (raise-sxml-shape-error exp)
   (raise-arguments-error
@@ -86,23 +97,34 @@
     [else         (format "~a" v)]))
 
 (define (attribute-entry->name+value attr index exp)
-  (match attr
-    [(list name value)
-     (unless (or (symbol? name) (string? name))
-       (raise-sxml-attribute-name-error index name exp))
-     (values (if (symbol? name) (symbol->string name) name)
-             (attribute-value->string value))]
-    [_
-     (raise-sxml-attribute-entry-error index attr exp)]))
+  (unless (and (pair? attr)
+               (pair? (cdr attr)))
+    (raise-sxml-attribute-entry-error index attr exp))
+  (define name (car attr))
+  (define attr-values (cdr attr))
+  (unless (or (symbol? name) (string? name))
+    (raise-sxml-attribute-name-error index name exp))
+  ;; Allow multi-part attribute values like:
+  ;;   (style "width: 100%;" "height: 90vh;")
+  ;; by concatenating parts left-to-right.
+  (define value
+    (if (null? (cdr attr-values))
+        (attribute-value->string (car attr-values))
+        (apply string-append (map attribute-value->string attr-values))))
+  (list (if (symbol? name) (symbol->string name) name)
+        value))
+
+(define (set-elem-attributes/loop! elem rest index exp)
+  (when (pair? rest)
+    (define name+value
+      (attribute-entry->name+value (car rest) index exp))
+    (js-set-attribute! elem (car name+value) (cadr name+value))
+    (set-elem-attributes/loop! elem (cdr rest) (+ index 1) exp)))
 
 (define (set-elem-attributes! elem attrs exp)
   (unless (list? attrs)
     (raise-sxml-attribute-block-error attrs exp))
-  (for ([attr (in-list attrs)]
-        [index (in-naturals 0)])
-    (define-values (name value)
-      (attribute-entry->name+value attr index exp))
-    (js-set-attribute! elem name value)))
+  (set-elem-attributes/loop! elem attrs 0 exp))
 
 (define (create-element/with-context tag exp)
   (define tag-name (symbol->string tag))
