@@ -2403,12 +2403,17 @@
     (define top                '())
     (define (top! x)           (set! top (cons x top)))
     (define (top!* xs)         (for-each top! xs))
-    (define (TopLevelForm* Ts) (for-each TopLevelForm Ts)))
+    (define (TopLevelForm* Ts) (for-each TopLevelForm Ts))
+    (define (ModuleLevelForm* Ms) (for-each ModuleLevelForm Ms)))
 
   (TopLevelForm : TopLevelForm (T) -> * ()
     [(topbegin ,s ,t ...)           (TopLevelForm* t)]
     [(#%expression ,s ,e)           (void)]
-    [(topmodule ,s ,mn ,mp ,mf ...) (void)]
+    [(topmodule ,s ,mn ,mp ,mf ...) (ModuleLevelForm* mf)]
+    [,g                             (GeneralTopLevelForm g)])
+
+  (ModuleLevelForm : ModuleLevelForm (M) -> * ()
+    [(#%provide ,rps ...)           (void)]
     [,g                             (GeneralTopLevelForm g)])
 
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> * ()
@@ -2704,9 +2709,10 @@
     [(app ,s ,e0 ,e1 ...)                     (letv ((e0 ρ) (Expr e0 ρ))
                                                 (letv ((e1 ρ) (Expr* e1 ρ))
                                                   (values `(app ,s ,e0 ,e1 ...) ρ)))]
-    ; Note: top-level-variables are looked up by name in the namespace,
-    ;       so they can't be renamed.
-    [(top ,s ,x)                              (values `(top ,s ,x) ρ)]
+    ; Until full namespace lookup is implemented, normalize known top refs
+    ; to the collected top-level binding so forward and non-forward refs
+    ; share one variable path.
+    [(top ,s ,x)                              (values (or (ρ x) `(top ,s ,x)) ρ)]
     [(variable-reference ,s ,vrx)             (values E ρ)])
   
   (let ([ρ0 (extend-map-to-self* initial-ρ top-bindings)])
@@ -3455,8 +3461,8 @@
                                                           (set-union (primitives->id-set)
                                                                      (non-literal-constants->id-set)))))]
     [(topmodule ,s ,mn ,mp ,mf ...) (for ([m mf]) ; todo: find all identifiers defined at the module level
-                                      (ModuleLevelForm m '()))   ; mark abstractions in the module
-                                    (values T '())]               ; no free variables in module
+                                      (ModuleLevelForm m empty-set)) ; mark abstractions in the module
+                                    (values T empty-set)]            ; no free variables in module
     [(#%expression ,s ,[e xs])      (values T xs)]
     [,g                             (GeneralTopLevelForm g xs)])
   (ModuleLevelForm : ModuleLevelForm (M xs) -> ModuleLevelForm (xs)
@@ -5344,7 +5350,13 @@
             (if (and (integer? ar) (< ar 0))
                 invoke-via-procedure
                 invoke-direct))
-          
+
+          ;; TODO:
+          ;;  - There is a potential for optimization here.
+          ;;    If there is no free variables, then we
+          ;;    can jump directly to the label, without allocating
+          ;;    a closure. [See the commented out definition below.]
+         
           (define work            
             `(block ,@(cond
                         [(eq? dd <value>)  (list `(result (ref eq)))]
