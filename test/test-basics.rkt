@@ -82,7 +82,82 @@
                      #;(equal? (procedure? call-with-current-continuation) #t)
                      #;(equal? (procedure? call-with-escape-continuation) #t)
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
-                     (equal? (procedure-arity procedure?) 1))))))
+                     (equal? (procedure-arity procedure?) 1)))
+              (list "closedapp: mutation with 0/1/2/3 free variables"
+                    (and
+                     ;; 0 free variables: mutation is local to the activation.
+                     (equal? ((lambda (x) (set! x (+ x 1)) x) 10) 11)
+                     ;; 1 free variable: mutation is shared across closures.
+                     (equal? (let ([x 0])
+                               (let ([inc (lambda () (set! x (+ x 1)) x)]
+                                     [get (lambda () x)])
+                                 (list (inc) (inc) (get))))
+                             '(1 2 2))
+                     ;; 2 free variables: both captured variables are mutated and observed.
+                     (equal? (let ([x 1] [y 10])
+                               (let ([bump (lambda () (set! x (+ x 1)) (set! y (+ y 2)) 0)]
+                                     [get  (lambda () (+ x y))])
+                                 (bump)
+                                 (bump)
+                                 (get)))
+                             17)
+                     ;; 3 free variables: chained mutation through three captured bindings.
+                     (equal? (let ([a 1] [b 2] [c 3])
+                               (let ([step (lambda (n)
+                                             (set! a (+ a n))
+                                             (set! b (+ b a))
+                                             (set! c (+ c b))
+                                             (+ a b c))])
+                                 (list (step 4) a b c)))
+                             '(22 5 7 10))))
+              (list "mutation + closure conversion: boxed vars vs free refs"
+                    (and
+                     ;; Captured variable sees later mutation in enclosing scope.
+                     (equal? (let ([x 1])
+                               (let ([f (lambda () x)])
+                                 (set! x 2)
+                                 (f)))
+                             2)
+                     ;; Multiple closures share one mutable captured variable.
+                     (equal? (let ([x 0])
+                               (let ([inc! (lambda () (set! x (+ x 1)))]
+                                     [get  (lambda () x)])
+                                 (inc!)
+                                 (inc!)
+                                 (get)))
+                             2)
+                     ;; Shadowing must not corrupt free-variable resolution.
+                     (equal? (let ([x 5])
+                               (let ([f (lambda () x)])
+                                 (let ([x 9])
+                                   (set! x 10)
+                                   (f))))
+                             5)
+                     ;; Procedure-valued captured variable remains mutable and callable.
+                     (equal? (let ([f (lambda () 1)])
+                               (let ([g (lambda () (f))])
+                                 (set! f (lambda () 2))
+                                 (g)))
+                             2)
+                     ;; Read/write interactions across three closures over same capture.
+                     (equal? (let ([x 0])
+                               (let ([setx! (lambda (v) (set! x v))]
+                                     [addx! (lambda (d) (set! x (+ x d)))]
+                                     [getx  (lambda () x)])
+                                 (setx! 7)
+                                 (addx! 5)
+                                 (getx)))
+                             12)))
+              ;; Regression from the matrix-rain/browser examples:
+              ;; this minimal shape helped fix an α-rename name-capture bug.
+              (list "alpha-rename: internal values definition"
+                    (equal? (let ()
+                              (define values 0)
+                              42
+                              (define result 1)
+                              result)
+                            1))
+              )))
 
  (list "4. Datatypes"
        (list "4.1 Equality"
