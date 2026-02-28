@@ -19,6 +19,8 @@
 (define wasm-filename   (make-parameter #f))
 (define host-filename   (make-parameter #f))
 (define label-map-forms (make-parameter #t))
+(define dump-passes-dir (make-parameter #f))
+(define dump-passes-limit (make-parameter #f))
 (define timings?        (make-parameter #f))
 
 (define browser         (make-parameter #f))
@@ -50,6 +52,14 @@
                           (label-map-forms #t)]
    [("--no-label-map-forms") "Omit (form ...) entries in .wasm.map.sexp"
                              (label-map-forms #f)]
+   [("--dump-passes") dir "Write per-pass dumps to directory <dir>"
+                      (dump-passes-dir dir)]
+   [("--dump-passes-limit") n "Dump at most <n> passes (0 means no dumps)"
+                            (define maybe-n (string->number n))
+                            (unless (and maybe-n (exact-integer? maybe-n) (>= maybe-n 0))
+                              (error 'webracket
+                                     (format "--dump-passes-limit expects an exact nonnegative integer, got: ~a" n)))
+                            (dump-passes-limit maybe-n)]
    [("--timings") "Print timing breakdown for compilation steps"
                   (timings? #t)]
    [("--stdlib")             "Include the standard library (default)"
@@ -86,6 +96,8 @@
                    #:wasm-filename (wasm-filename)
                    #:host-filename (host-filename)
                    #:label-map-forms? (label-map-forms)
+                   #:dump-passes-dir (dump-passes-dir)
+                   #:dump-passes-limit (dump-passes-limit)
                    #:timings?     (timings?)
                    #:verbose?      (verbose-mode)
                    #:browser?      (browser)

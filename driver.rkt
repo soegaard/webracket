@@ -54,6 +54,8 @@
          #:wasm-filename wasm-filename
          #:host-filename host-filename ; default: "runtime.js"
          #:label-map-forms? label-map-forms?
+         #:dump-passes-dir dump-passes-dir
+         #:dump-passes-limit dump-passes-limit
          #:timings?     timings?
          #:verbose?      verbose?
          #:browser?      browser?
@@ -157,6 +159,8 @@
 
   ; 5. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
+  (current-pass-dump-dir dump-passes-dir)
+  (current-pass-dump-limit dump-passes-limit)
   (current-pass-timings? timings?)
   (define t-compile-start (now-ms))
   (define wat

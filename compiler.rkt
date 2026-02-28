@@ -51,6 +51,7 @@
          ; "wasm-data.rkt"
          nanopass/base
          racket/match
+         racket/file
          racket/port
          racket/pretty
          (only-in racket/string string-prefix? string-replace)
@@ -2481,8 +2482,29 @@
          b ...))]))
 
 (define (id=? v1 v2)
-  ; After α-renaming all names are unique so we can check for symbolic equality.
-  (eq? (syntax-e (variable-id v1)) (syntax-e (variable-id v2))))
+  ;; During α-renaming we must preserve lexical binding identity.
+  ;; Comparing only `(syntax-e ...)` causes accidental capture when a
+  ;; user binding has the same printed name as a core binding
+  ;; (for example local `values` vs primitive `values`).
+  ;;
+  ;; However, some compiler-generated top-level/unbound identifiers are
+  ;; compared by printed name in existing code paths, so we keep a narrow
+  ;; fallback for cases where lexical binding data is missing.
+  (define id1 (variable-id v1))
+  (define id2 (variable-id v2))
+  (define b1 (identifier-binding id1))
+  (define b2 (identifier-binding id2))
+  (define s1 (syntax-e id1))
+  (define s2 (syntax-e id2))
+  (or (free-identifier=? id1 id2)
+      (bound-identifier=? id1 id2)
+      ;; Name fallback is only allowed when neither side is lexical.
+      ;; This preserves module/unbound matching (needed for some top refs)
+      ;; while avoiding local lexical capture (for example local `values`).
+      (and (not (eq? b1 'lexical))
+           (not (eq? b2 'lexical))
+           (or (not b1) (not b2))
+           (eq? s1 s2))))
 
 (define α-rename-mode (make-parameter 'full))  ; 'full or 'simple
 
@@ -5970,9 +5992,13 @@
            (read))))]))
 
 (define debug:print-passes? #f)
-(define current-pass-timings? (make-parameter #f))
+
+;; Get command line options
+(define current-pass-timings?     (make-parameter #f))
 (define current-pass-timing-table (make-parameter #f))
-(define current-gen-timing-table (make-parameter #f))
+(define current-gen-timing-table  (make-parameter #f))
+(define current-pass-dump-dir     (make-parameter #f))
+(define current-pass-dump-limit   (make-parameter #f))
 
 (define (comp+ stx)
   (run (comp stx)))
@@ -5982,14 +6008,46 @@
   (reset-label-map!)
   (current-pass-timing-table #f)
   (current-gen-timing-table #f)
+  (define dump-dir (current-pass-dump-dir))
+  (define dump-limit (current-pass-dump-limit))
+  (when dump-dir
+    (make-directory* dump-dir))
   (define pass-times '())
-  (define (time-pass label thunk [size-fn #f])
+  (define pass-counter 0)
+
+  (define (sanitize-pass-label s)
+    (list->string
+     (for/list ([ch (in-string s)])
+       (if (or (char-alphabetic? ch)
+               (char-numeric? ch))
+           ch
+           #\-))))
+
+  (define (dump-pass! label dump-fn v)
+    (when (and dump-dir
+               (or (not dump-limit) (< pass-counter dump-limit)))
+      (define base-label (sanitize-pass-label label))
+      (define dump-file  (build-path dump-dir
+                           (format "~a-~a.sexp" pass-counter base-label)))
+      (with-output-to-file dump-file
+        (lambda ()
+          (pretty-write (dump-fn v)))
+        #:exists 'replace))
+    (set! pass-counter (+ pass-counter 1)))
+
+  ; The time-pass function also handles dumping if ncessary
+  (define (time-pass label thunk [size-fn #f] [dump-fn #f])
+    (define (finish-pass v ms)
+      (when (current-pass-timings?)
+        (define size (and size-fn (size-fn v)))
+        (set! pass-times (cons (list label ms size) pass-times)))
+      (when dump-fn
+        (dump-pass! label dump-fn v))
+      v)
     (if (current-pass-timings?)
         (let-values ([(v ms) (with-timing thunk)])
-          (define size (and size-fn (size-fn v)))
-          (set! pass-times (cons (list label ms size) pass-times))
-          v)
-        (thunk)))
+          (finish-pass v ms))
+        (finish-pass (thunk) #f)))
 
   (define t
     (time-pass "topexpand"
@@ -5998,16 +6056,34 @@
         (when debug:print-passes?
           (displayln "--- topexpand ---")
           (displayln (pretty-print (syntax->datum t)) (current-error-port)))
-        t)))
+        t)
+      #f
+      (λ (v) (if (syntax? v) (syntax->datum v) v))))
 
-  (define u   (time-pass "unexpand"             (λ () (unexpand t))))
-  (define p   (time-pass "parse"                (λ () (parse u)) (λ (v) (count-unparsed unparse-LFE v))))
-  (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p)) (λ (v) (count-unparsed unparse-LFE v))))
-  (define in  (time-pass "infer-names"          (λ () (infer-names ft)) (λ (v) (count-unparsed unparse-LFE v))))
-  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in)) (λ (v) (count-unparsed unparse-LFE v))))
-  (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq)) (λ (v) (count-unparsed unparse-LFE1 v))))
-  (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb)) (λ (v) (count-unparsed unparse-LFE2 v))))
-  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl)) (λ (v) (count-unparsed unparse-LFE2+ v))))
+  (define u   (time-pass "unexpand"             (λ () (unexpand t))
+                         #f
+                         (λ (v) (if (syntax? v) (syntax->datum v) v))))
+  (define p   (time-pass "parse"                (λ () (parse u))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define in  (time-pass "infer-names"          (λ () (infer-names ft))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq))
+                         (λ (v) (count-unparsed unparse-LFE1 v))
+                         (λ (v) (unparse-all (unparse-LFE1 v)))))
+  (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb))
+                         (λ (v) (count-unparsed unparse-LFE2 v))
+                         (λ (v) (unparse-all (unparse-LFE2 v)))))
+  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
+                         (λ (v) (count-unparsed unparse-LFE2+ v))
+                         (λ (v) (unparse-all (unparse-LFE2+ v)))))
 
   (define ac
     (time-pass "assignment-conversion"
@@ -6017,14 +6093,24 @@
           (displayln "--- assignment conversion ---")
           (displayln (pretty-print a) (current-error-port)))
         a)
-      (λ (v) (count-unparsed unparse-LFE2+ v))))
+      (λ (v) (count-unparsed unparse-LFE2+ v))
+      (λ (v) (unparse-all (unparse-LFE2+ v)))))
 
-  (define ca  (time-pass "categorize-applications" (λ () (categorize-applications ac)) (λ (v) (count-unparsed unparse-LFE3 v))))
-  (define an  (time-pass "anormalize"            (λ () (anormalize ca)) (λ (v) (count-unparsed unparse-LANF v))))
-  (define cc  (time-pass "closure-conversion"    (λ () (closure-conversion an)) (λ (v) (count-unparsed unparse-LANF+closure v))))
-  (define fb  (time-pass "flatten-begin"         (λ () (flatten-begin cc)) (λ (v) (count-unparsed unparse-LANF+closure v))))
+  (define ca  (time-pass "categorize-applications" (λ () (categorize-applications ac))
+                         (λ (v) (count-unparsed unparse-LFE3 v))
+                         (λ (v) (unparse-all (unparse-LFE3 v)))))
+  (define an  (time-pass "anormalize"            (λ () (anormalize ca))
+                         (λ (v) (count-unparsed unparse-LANF v))
+                         (λ (v) (unparse-all (unparse-LANF v)))))
+  (define cc  (time-pass "closure-conversion"    (λ () (closure-conversion an))
+                         (λ (v) (count-unparsed unparse-LANF+closure v))
+                         (λ (v) (unparse-all (unparse-LANF+closure v)))))
+  (define fb  (time-pass "flatten-begin"         (λ () (flatten-begin cc))
+                         (λ (v) (count-unparsed unparse-LANF+closure v))
+                         (λ (v) (unparse-all (unparse-LANF+closure v)))))
   (define gen (time-pass "generate-code"         (λ () (generate-code fb))
-                         (λ (_) (count-unparsed unparse-LANF+closure fb))))
+                         (λ (_) (count-unparsed unparse-LANF+closure fb))
+                         (λ (v) (strip v))))
 
   (define result (strip gen))
   (when debug:print-passes?
