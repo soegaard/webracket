@@ -111,6 +111,14 @@
       [(info) "callout--info"]
       [(warn warning) "callout--warn"]
       [else "callout--note"]))
+  (define no-icon?
+    (member "callout--no-icon"
+            (filter string? (flatten body))))
+  (define clean-body
+    (filter (λ (item)
+              (not (and (string? item)
+                        (string=? item "callout--no-icon"))))
+            body))
   (define icon
     (case kind-key
       [(info) "ℹ"]
@@ -122,11 +130,14 @@
   (define title-node
     (and show-title?
          `(div (@ (class "callout-title"))
-               (span (@ (class "callout-icon")) ,icon)
+               ,@(if no-icon?
+                     '()
+                     (list `(span (@ (class "callout-icon")) ,icon)))
                (span (@ (class "callout-label")) ,title))))
-  `(div (@ (class ,(string-append "callout " kind-class)))
+  `(div (@ (class ,(string-append "callout " kind-class
+                                  (if no-icon? " callout--no-icon" ""))))
         ,@(if title-node (list title-node) '())
-        ,@body))
+        ,@clean-body))
 
 ;; section-block : String (U #f String) (Listof List) (U #f String) (U #f String) -> List
 ;;   Creates a section container with a title, optional subtitle, and content.
@@ -356,6 +367,7 @@
 (include "examples/space-invaders-page.rkt")
 (include "examples/canvas-hexagons-page.rkt")
 (include "examples/minischeme-page.rkt")
+(include "examples/connections-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -444,6 +456,18 @@
                                           "Persistent REPL state"
                                           "Reset + sample program"
                                           "DOM event handling"))))
+   (make-hash (list (cons 'id       "connections")
+                    (cons 'title    "Connections")
+                    (cons 'path     "examples/connections")
+                    (cons 'entry    "connections.html")
+                    (cons 'demo-url "connections.html")
+                    (cons 'source-path "web-site/src/examples/connections-page.rkt")
+                    (cons 'tags     (list 'dom 'game))
+                    (cons 'summary  "Connections puzzle with an immutable game model and browser-rendered tiles.")
+                    (cons 'features (list "Model / View / Control split"
+                                          "DOM + JS FFI"
+                                          "State machine"
+                                          "Puzzle data representation"))))
    
    #;(make-hash (list (cons 'id       "pict")
                       (cons 'title    "Canvas + Pict")
@@ -596,6 +620,7 @@
     [(string-suffix? path "space-invaders.html")                  'space-invaders]
     [(string-suffix? path "canvas-hexagons.html")                 'canvas-hexagons]
     [(string-suffix? path "minischeme.html")                      'minischeme]
+    [(string-suffix? path "connections.html")                     'connections]
     [(string-suffix? path "implementation-status.html")           'implementation-status]
     [(string-suffix? path "community.html")                       'community]
     [(string-suffix? path "overview.html")                        'overview]
@@ -911,6 +936,9 @@
              (list `(h3 "MiniScheme REPL")
                    `(p "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
                    `(a (@ (class "example-link") (href "minischeme.html")) "Open demo"))
+             (list `(h3 "Connections")
+                   `(p "Find four groups of related words using an MVC-style browser app.")
+                   `(a (@ (class "example-link") (href "connections.html")) "Open demo"))
              
              #;(list `(h3 "Canvas + Pict")
                    `(p "Racket pict rendering pipeline for the browser canvas.")
@@ -2779,11 +2807,35 @@ pre {
   color: rgba(182, 189, 221, 0.82);
   font-size: 0.92rem;
 }
-.status-summary-grid .status-metric {
+#status-summary-grid .status-metric {
   margin: 0 0 12px;
-  font-size: clamp(2rem, 3vw, 2.6rem);
-  font-weight: 600;
+  font-size: clamp(2.85rem, 4.95vw, 4rem);
+  font-weight: 760;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: center;
   color: var(--text);
+}
+#status-summary-grid .card {
+  text-align: center;
+}
+#status-summary-grid .card h3 {
+  text-align: center;
+}
+#status-summary-grid .card p:empty {
+  display: none;
+}
+#status-summary-grid .status-metric--implemented {
+  color: #42b2ff;
+}
+#status-summary-grid .status-metric--missing {
+  color: #f06868;
+}
+#status-summary-grid .status-metric--stdlib {
+  color: #5ccc8c;
+}
+#status-summary-grid .status-metric--webracket-only {
+  color: #b18cff;
 }
 .attention-grid .card {
   --status-stack-gap: calc(var(--status-stack-gap-base) - 1px);
@@ -3023,7 +3075,7 @@ pre {
   color: var(--muted);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   min-height: var(--status-cta-line-height);
   line-height: var(--status-cta-line-height);
   padding: var(--status-row-padding) 0;
@@ -3250,17 +3302,17 @@ pre {
 .status-cta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 7.5px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 .status-cta-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 22px;
   align-items: center;
 }
 code {
@@ -3939,11 +3991,13 @@ pre code {
   font-style: normal;
   color: rgba(235, 238, 255, 0.95);
 }
+.examples-details,
 .mathjax-details {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+.examples-actions,
 .mathjax-actions {
   display: flex;
   flex-wrap: wrap;
@@ -4449,7 +4503,7 @@ pre code {
   border: 1px solid rgba(122, 144, 223, 0.32);
   box-shadow: inset 0 1px 0 rgba(160, 180, 240, 0.18);
 }
-.page--canvas-hexagons .section.section--mathjax {
+.page--canvas-hexagons .section.section--examples {
   margin-top: 60px;
   padding-top: 22px;
   padding-bottom: 22px;
@@ -4507,7 +4561,7 @@ pre code {
 .page--canvas-hexagons .canvas-credits-actions {
   margin-top: 2px;
 }
-.page--canvas-hexagons .section.section--mathjax-details {
+.page--canvas-hexagons .section.section--examples-details {
   margin-bottom: 26px;
 }
 .arcade-frame {
@@ -4672,6 +4726,7 @@ CSS
          [(space-invaders)        (space-invaders-page)]
       [(canvas-hexagons)       (canvas-hexagons-page)]
       [(minischeme)            (minischeme-page)]
+      [(connections)           (connections-page)]
       [else                    (home-page)]))
 
   (define safe-structure
@@ -4711,6 +4766,9 @@ CSS
 
   (when (eq? (current-page) 'minischeme)
     (init-minischeme-page!))
+
+  (when (eq? (current-page) 'connections)
+    (init-connections-page!))
 
   (when (memq (current-page)
               '(doc-js-ffi

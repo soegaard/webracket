@@ -54,6 +54,7 @@ ROUTE_ALIASES=(
   mathjax
   matrix-rain
   minischeme
+  connections
   quick-start
   space-invaders
   xtermjs-demo

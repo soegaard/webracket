@@ -4047,11 +4047,13 @@ pre code {
   font-style: normal;
   color: rgba(235, 238, 255, 0.95);
 }
+.examples-details,
 .mathjax-details {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+.examples-actions,
 .mathjax-actions {
   display: flex;
   flex-wrap: wrap;
@@ -4557,7 +4559,7 @@ pre code {
   border: 1px solid rgba(122, 144, 223, 0.32);
   box-shadow: inset 0 1px 0 rgba(160, 180, 240, 0.18);
 }
-.page--canvas-hexagons .section.section--mathjax {
+.page--canvas-hexagons .section.section--examples {
   margin-top: 60px;
   padding-top: 22px;
   padding-bottom: 22px;
@@ -4615,7 +4617,7 @@ pre code {
 .page--canvas-hexagons .canvas-credits-actions {
   margin-top: 2px;
 }
-.page--canvas-hexagons .section.section--mathjax-details {
+.page--canvas-hexagons .section.section--examples-details {
   margin-bottom: 26px;
 }
 .arcade-frame {
@@ -5371,7 +5373,6 @@ CSS
       [(minischeme)            (minischeme-page)]
       [(connections)           (connections-page)]
       [else                    (home-page)]))
-
   (define safe-structure
     (if (eq? (current-page) 'doc-js-ffi)
         (sanitize-sxml page-structure)

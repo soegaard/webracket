@@ -359,7 +359,7 @@
                               "The controller uses functional updates. "
                               "The view uses the FFI to render the game state in the browser.")
                            (div (@ (class "examples-actions connections-meta-actions"))
-                                ,(code-pill (gh-file "web-site-new/src/examples/connections-page.rkt")
+                                ,(code-pill (gh-file "web-site/src/examples/connections-page.rkt")
                                             "Source")))))
         ,(footer-section)))
 
@@ -395,8 +395,7 @@
               "  border: none !important;"
               "  box-shadow: none !important;"
               "  background: transparent !important;"
-              "  margin-top: 10px !important;"
-              "  padding: 0 !important;"
+              "  margin-top: 24px !important;"
               "}\n"
               ".page--connections .section--connections::before {"
               "  background: transparent !important;"
