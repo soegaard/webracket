@@ -2866,6 +2866,50 @@
        (for/list ([p (in-list primitives)]
                   #:when (memq p implemented-set))
          p))
+     (define has-implemented?
+       (ormap (λ (sym)
+                (and (not (memq sym standard-library-identifiers))
+                     (memq sym implemented-set)))
+              primitives))
+     (define has-stdlib?
+       (ormap (λ (sym) (memq sym standard-library-identifiers)) primitives))
+     (define has-missing?
+       (ormap (λ (sym)
+                (and (not (memq sym standard-library-identifiers))
+                     (not (memq sym implemented-set))))
+              primitives))
+     (define available-groups
+       (append (if has-implemented? (list "implemented") '())
+               (if has-stdlib?      (list "stdlib")      '())
+               (if has-missing?     (list "missing")     '())))
+     (define sort-enabled? (> (length available-groups) 1))
+     (define default-group
+       (if (member "implemented" available-groups)
+           "implemented"
+           (if (pair? available-groups) (car available-groups) "implemented")))
+     (define legend-controls
+       (if sort-enabled?
+           `((div (@ (class "status-body-legend"))
+                  ,@(append
+                     (if has-implemented? (list (group-button "implemented" "Implemented" "status-chip--done")) '())
+                     (if has-stdlib?      (list (group-button "stdlib"      "Stdlib"      "status-chip--stdlib")) '())
+                     (if has-missing?     (list (group-button "missing"     "Missing"     "status-chip--todo")) '()))))
+           '()))
+     (define (group-button group label base-class)
+       (if sort-enabled?
+           `(button (@ (class ,(string-append "status-chip " base-class " status-chip--filter"
+                                              (if (string=? group default-group) " status-chip--active" "")))
+                       (type "button")
+                       (aria-pressed ,(if (string=? group default-group) "true" "false"))
+                       (data-status-group ,group))
+                    ,label)
+           `(button (@ (class ,(string-append "status-chip " base-class " status-chip--filter status-chip--inactive"))
+                       (type "button")
+                       (disabled "disabled")
+                       (aria-disabled "true")
+                       (aria-pressed "false")
+                       (data-status-group ,group))
+                    ,label)))
 
      (define stats             (section-stats title primitives implemented-set))
      (define implemented-count (list-ref stats 2))
@@ -2901,26 +2945,10 @@
                                                   tier))))))
                 )
        (div (@ (class "status-body"))
-            (div (@ (class "status-body-header"))
-                 (div (@ (class "status-body-legend"))
-                      (button (@ (class "status-chip status-chip--done status-chip--filter status-chip--active")
-                                 (type              "button")
-                                 (aria-pressed      "true")
-                                 (data-status-group "implemented"))
-                              "Implemented")
-                      (button (@ (class "status-chip status-chip--stdlib status-chip--filter")
-                                 (type              "button")
-                                 (aria-pressed      "false")
-                                 (data-status-group "stdlib"))
-                              "Stdlib")
-                      (button (@ (class "status-chip status-chip--todo status-chip--filter")
-                                 (type              "button")
-                                 (aria-pressed      "false")
-                                 (data-status-group "missing"))
-                              "Missing"))
-                 (button (@ (class "status-body-hint")
-                            (type "button"))
-                         "Close to collapse"))
+            ,@(if (pair? legend-controls)
+                  `((div (@ (class "status-body-header"))
+                         ,@legend-controls))
+                  '())
             (ul (@ (class "status-list"))
                 ,@(map (λ (sym) (primitive-item sym implemented-set))
                        (sort primitives symbol<?)))))]))
@@ -3027,7 +3055,7 @@
               (h3 ,display)
               (span (@ (class "attention-percent")) ,(format "~a%" pct-num)))
         `(p (@ (class "attention-count"))
-            ,(format "~a of ~a primitives implemented" implemented-count total))
+            ,(format "~a/~a implemented" implemented-count total))
         `(p (@ (class "attention-note")) ,note)
         `(a (@ (class "attention-link")
                (href ,(string-append "#" anchor-id))
@@ -3041,14 +3069,16 @@
 (define (status-legend)
   `(div (@ (class "status-legend"))
         (div (@ (class "status-legend-title")) "Legend")
-        (ul (@ (class "status-legend-list"))
-            (li (span (@ (class "status-legend-term")) "Implemented primitives")
-                " implemented in the WebRacket runtime.")
-            (li (span (@ (class "status-legend-term")) "Stdlib coverage")
-                " identifiers provided by the stdlib (counted as covered).")
-            (li (span (@ (class "status-legend-term")) "Missing primitives")
-                " not yet implemented in the runtime.")
-            (li "Pict is tracked separately."))))
+        (dl (@ (class "status-legend-grid"))
+            (div (@ (class "status-legend-row"))
+                 (dt (@ (class "status-legend-term")) "Implemented Primitives")
+                 (dd (@ (class "status-legend-desc")) "Implemented in WebAssembly"))
+            (div (@ (class "status-legend-row"))
+                 (dt (@ (class "status-legend-term")) "Standard Library")
+                 (dd (@ (class "status-legend-desc")) "Implemented in WebRacket"))
+            (div (@ (class "status-legend-row"))
+                 (dt (@ (class "status-legend-term")) "Missing Primitives")
+                 (dd (@ (class "status-legend-desc")) "To do")))))
 
 ;; status-insight-callout: -> list?
 ;;   Render a callout highlighting strongest and weakest sections.
@@ -3277,9 +3307,16 @@
   (when section
     (js-set! section "open" #t)
     (define summary (js-element-query-selector section "summary"))
-    (js-send section "scrollIntoView"
-             (vector (js-object (vector (vector "behavior" "smooth")
-                                        (vector "block"    "start")))))
+    (define scroll-target
+      (or (js-element-query-selector section ".status-body")
+          section))
+    (js-window-set-timeout
+     (procedure->external
+      (lambda ()
+        (js-send scroll-target "scrollIntoView"
+                 (vector (js-object (vector (vector "behavior" "smooth")
+                                            (vector "block"    "start")))))))
+     20)
     (when summary
       (js-send summary "focus"
                (vector (js-object (vector (vector "preventScroll" #t))))))))
@@ -3301,6 +3338,14 @@
                     (vector (js-null) "" (string-append "#" target-id)))))))
     (remember-status-handler! handler)
     (js-add-event-listener! link "click" handler))
+  (define hashchange-handler
+    (procedure->external
+     (lambda (_evt)
+       (define next-hash (js-ref (js-window-location) "hash"))
+       (when (and (string? next-hash) (> (string-length next-hash) 1))
+         (status-open-target! (substring next-hash 1))))))
+  (remember-status-handler! hashchange-handler)
+  (js-add-event-listener! (js-window-window) "hashchange" hashchange-handler)
   (define hash (js-ref (js-window-location) "hash"))
   (when (and (string? hash) (> (string-length hash) 1))
     (status-open-target! (substring hash 1))))
@@ -3386,17 +3431,38 @@
     [(external? group) (external-string->string group)]
     [else group]))
 
-;; status-sync-buttons!: list? string? -> void?
+;; status-available-groups: any/c -> list?
+;;   Return available status groups present in a section list.
+;;   Returns groups in stable priority order.
+(define (status-available-groups list-el)
+  (define rows (node-list->list (js-element-query-selector-all list-el ".prim-row")))
+  (define has-implemented?
+    (ormap (λ (row) (string=? (status-row-status row) "implemented")) rows))
+  (define has-stdlib?
+    (ormap (λ (row) (string=? (status-row-status row) "stdlib")) rows))
+  (define has-missing?
+    (ormap (λ (row) (string=? (status-row-status row) "missing")) rows))
+  (append (if has-implemented? (list "implemented") '())
+          (if has-stdlib?      (list "stdlib")      '())
+          (if has-missing?     (list "missing")     '())))
+
+;; status-sync-buttons!: list? string? list? boolean? -> void?
 ;;   Sync filter button states to active group.
 ;;   Returns (void) after updating button state.
-(define (status-sync-buttons! buttons active-group)
+(define (status-sync-buttons! buttons active-group available-groups sort-enabled?)
   (for ([button (in-list buttons)])
     (define group      (status-group->string
                         (js-get-attribute button "data-status-group")))
-    (define is-active  (and (string? group) (string=? group active-group)))
+    (define available? (and (string? group) (member group available-groups)))
+    (define is-active  (and available? sort-enabled? (string=? group active-group)))
+    (define interactive? (and available? sort-enabled?))
     (js-set-attribute! button "aria-pressed" (if is-active "true" "false"))
+    (js-set-attribute! button "aria-disabled" (if interactive? "false" "true"))
+    (js-set! button "disabled" (if interactive? #f #t))
     (define class-list (js-ref button "classList"))
     (when class-list
+      (js-send class-list "toggle"
+               (vector "status-chip--inactive" (if interactive? #f #t)))
       (js-send class-list "toggle"
                (vector "status-chip--active" (and is-active #t))))))
 
@@ -3412,10 +3478,17 @@
                          (js-element-query-selector-all section "[data-status-group]")))
 
     (when (and list-el (pair? button-list))
+      (define available-groups (status-available-groups list-el))
+      (define sort-enabled? (> (length available-groups) 1))
+      (define default-group
+        (if (pair? available-groups) (car available-groups) "implemented"))
+
       (define (active-group)
         (define current (status-group->string
                          (js-get-attribute section "data-status-active-group")))
-        (if (string? current) current "implemented"))
+        (if (and (string? current) (member current available-groups))
+            current
+            default-group))
         
       (define (active-dir)
         (define current (status-group->string
@@ -3430,7 +3503,7 @@
       ;;   Refresh button state and re-sort the list.
       ;;   Returns (void) after syncing state.
       (define (sync-and-sort! group dir)
-        (status-sync-buttons! button-list group)
+        (status-sync-buttons! button-list group available-groups sort-enabled?)
         (status-sort-list! list-el group dir))
       
       (for ([button (in-list button-list)])
@@ -3439,7 +3512,10 @@
            (lambda (_evt)
              (define group (status-group->string
                             (js-get-attribute button "data-status-group")))
-             (when (and (string? group) (not (string=? group "")))
+             (when (and sort-enabled?
+                        (string? group)
+                        (not (string=? group ""))
+                        (member group available-groups))
                (define current-group (active-group))
                (define current-dir   (active-dir))
                (define next-dir      (if (string=? group current-group)
@@ -3489,51 +3565,42 @@
                  (div (@ (class "hero-panel"))
                       (div (@ (class "pill-row"))
                            (span (@ (class "pill")) "Runtime primitives")
-                           (span (@ (class "pill")) "Stdlib coverage")
+                           (span (@ (class "pill")) "Standard Library")
                            (span (@ (class "pill")) "Documentation links"))
-                      (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard")
+                      (h1 (@ (class "hero-title")) "WebRacket Coverage Report")
                       (p (@ (class "hero-lead"))
-                         "A progress tracker for contributors and users. "
-                         "See which Racket primitives are implemented, what's missing, "
-                         "and where to help next.")
+                         "This dashboard tracks implemented Racket primitives. "
+                         "Use it to see what's done, what's missing and what to implement next.")
                       (p (@ (class "hero-sublead"))
-                         "Each function links to the Racket docs; sections expand to show "
-                         "implemented, stdlib-backed, and missing primitives.")
-                      (p (@ (class "hero-note"))
-                         "How to read this: Implemented means built into the WebRacket runtime, "
-                         "while stdlib identifiers count as covered.")))
+                         "Each section expands and reveals a list of primitives. "
+                         "Each primitive is linked to the Racket documentation.")))
         ,(section-block
           "At a glance"
-          "Summary metrics across the tracked chapters."
+          "Summary metrics."
           (list
            (card-grid
             (list
-             (list `(h3 "Implemented primitives")
-                   `(p (@ (class "status-metric"))
+             (list `(h3 "Implemented Primitives")
+                   `(p (@ (class "status-metric status-metric--implemented"))
                        ,(number->string (length implemented-primitives)))
-                   `(p "Runtime primitives. Implemented in WebAssembly."))
-             (list `(h3 "Missing primitives")
-                   `(p (@ (class "status-metric"))
+                   `(p "Implemented in WebAssembly"))
+             (list `(h3 "Missing Primitives")
+                   `(p (@ (class "status-metric status-metric--missing"))
                        ,(number->string missing-primitives))
-                   `(p "Still to be implemented in the runtime."))
-             (list `(h3 "Stdlib coverage")
-                   `(p (@ (class "status-metric"))
+                   `(p ""))
+             (list `(h3 "Standard Library")
+                   `(p (@ (class "status-metric status-metric--stdlib"))
                        ,(number->string total-standard-library-identifiers))
-                   `(p "Identifiers provided by the standard library. Implemented in WebRacket."))
-             (list `(h3 "Stdlib-only identifiers")
-                   `(p (@ (class "status-metric"))
+                   `(p "Implemented in WebRacket"))
+             (list `(h3 "WebRacket Only")
+                   `(p (@ (class "status-metric status-metric--webracket-only"))
                        ,(number->string (- (length standard-library-identifiers)
                                            total-standard-library-identifiers)))
-                   `(p "Identifiers that exist only in WebRacket (not full Racket).")))))
+                   `(p "")))))
             "status-summary-grid")
-        ,(callout
-          'info
-          "About the counts"
-          `(p "Pict functions are tracked separately and excluded from primitive totals. "
-              "Stdlib identifiers count as covered for completeness."))
         ,(section-block
           "Needs attention"
-          "Highest-impact gaps to unlock more programs."
+          "Next in line."
           (list
            (card-grid (map attention-card (needs-attention-items))
                       "attention-grid"))
@@ -3543,11 +3610,11 @@
               ,(status-insight-callout))
         ,(section-block
           "Completion by chapter"
-          "Expand a section to see which primitives are implemented or still missing."
+          #f
           (list
            (status-legend)
            `(p (@ (class "status-helper"))
-               "Click a card to expand missing primitives.")
+               "Click a card to see the list of primitives.")
            `(div (@ (class "status-chapters"))
                  ,@(map chapter-block prepared-chapters)))
           #f
@@ -3555,11 +3622,11 @@
 
         ,(section-block
           "Help close the gaps"
-          "Contribute runtime support or stdlib coverage to unlock more programs."
+          "Help by adding a primitive or expand the standard library."
           (list
            `(div (@ (class "status-cta"))
                  (div (@ (class "status-cta-actions"))
-                      (a (@ (class "cta-button")
+                      (a (@ (class "cta-link")
                             (href ,(gh-file "runtime-wasm.rkt"))
                             (target "_blank")
                             (rel "noreferrer noopener"))

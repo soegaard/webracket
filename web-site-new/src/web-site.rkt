@@ -111,6 +111,14 @@
       [(info) "callout--info"]
       [(warn warning) "callout--warn"]
       [else "callout--note"]))
+  (define no-icon?
+    (member "callout--no-icon"
+            (filter string? (flatten body))))
+  (define clean-body
+    (filter (λ (item)
+              (not (and (string? item)
+                        (string=? item "callout--no-icon"))))
+            body))
   (define icon
     (case kind-key
       [(info) "ℹ"]
@@ -122,11 +130,14 @@
   (define title-node
     (and show-title?
          `(div (@ (class "callout-title"))
-               (span (@ (class "callout-icon")) ,icon)
+               ,@(if no-icon?
+                     '()
+                     (list `(span (@ (class "callout-icon")) ,icon)))
                (span (@ (class "callout-label")) ,title))))
-  `(div (@ (class ,(string-append "callout " kind-class)))
+  `(div (@ (class ,(string-append "callout " kind-class
+                                  (if no-icon? " callout--no-icon" ""))))
         ,@(if title-node (list title-node) '())
-        ,@body))
+        ,@clean-body))
 
 ;; section-block : String (U #f String) (Listof List) (U #f String) (U #f String) -> List
 ;;   Creates a section container with a title, optional subtitle, and content.
@@ -356,6 +367,7 @@
 (include "examples/space-invaders-page.rkt")
 (include "examples/canvas-hexagons-page.rkt")
 (include "examples/minischeme-page.rkt")
+(include "examples/connections-page.rkt")
 
 ;;;
 ;;; Examples Data
@@ -431,6 +443,18 @@
                     (cons 'features    (list "Canvas rendering"
                                              "Animation loop"
                                              "Procedural geometry"))))
+   (make-hash (list (cons 'id          "connections")
+                    (cons 'title       "Connections")
+                    (cons 'path        "web-site-new/src/examples")
+                    (cons 'entry       "connections.html")
+                    (cons 'demo-url    "connections.html")
+                    (cons 'source-path "web-site-new/src/examples/connections-page.rkt")
+                    (cons 'tags        (list 'dom))
+                    (cons 'summary     "Connections-style word grouping puzzle built with WebRacket.")
+                    (cons 'features    (list "Interactive tile selection"
+                                             "Puzzle validation"
+                                             "State transitions"
+                                             "DOM updates"))))
    
    (make-hash (list (cons 'id       "minischeme")
                     (cons 'title    "MiniScheme REPL")
@@ -596,6 +620,7 @@
     [(string-suffix? path "space-invaders.html")                  'space-invaders]
     [(string-suffix? path "canvas-hexagons.html")                 'canvas-hexagons]
     [(string-suffix? path "minischeme.html")                      'minischeme]
+    [(string-suffix? path "connections.html")                     'connections]
     [(string-suffix? path "implementation-status.html")           'implementation-status]
     [(string-suffix? path "community.html")                       'community]
     [(string-suffix? path "overview.html")                        'overview]
@@ -919,6 +944,9 @@
              (list `(h3 "MiniScheme REPL")
                    `(p "MiniScheme is a Scheme interpreter written in WebRacket that runs R5RS-style programs in the browser.")
                    `(a (@ (class "example-link") (href "minischeme.html")) "Open demo"))
+             (list `(h3 "Connections")
+                   `(p "Connections-style puzzle where you group 16 words into 4 related sets.")
+                   `(a (@ (class "example-link") (href "connections.html")) "Open demo"))
              
              #;(list `(h3 "Canvas + Pict")
                    `(p "Racket pict rendering pipeline for the browser canvas.")
@@ -2798,6 +2826,19 @@ pre {
 .status-hero {
   margin-top: 32px;
 }
+.page--status .hero-panel {
+  gap: 14px;
+}
+.page--status .hero-title,
+.page--status .hero-lead,
+.page--status .hero-sublead,
+.page--status .hero-note {
+  max-width: 70ch;
+}
+.page--status .hero-lead,
+.page--status .hero-sublead {
+  margin: 0;
+}
 .page--status .section {
   padding: var(--status-section-padding-y) var(--status-section-padding-x);
 }
@@ -2826,7 +2867,7 @@ pre {
   color: rgba(182, 189, 221, 0.82);
   font-size: 0.92rem;
 }
-.status-summary-grid .status-metric {
+#status-summary-grid .status-metric {
   margin: 0 0 12px;
   font-size: clamp(2rem, 3vw, 2.6rem);
   font-weight: 600;
@@ -2834,8 +2875,8 @@ pre {
 }
 .attention-grid .card {
   --status-stack-gap: calc(var(--status-stack-gap-base) - 1px);
-  padding: var(--status-attention-padding);
-  gap: var(--status-stack-gap);
+  padding: 12px;
+  gap: 8px;
 }
 .attention-grid {
   grid-template-columns: minmax(0, 1fr);
@@ -2862,91 +2903,116 @@ pre {
 .attention-header h3 {
   margin: 0;
   line-height: var(--status-title-line-height);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 1.02rem;
+  font-weight: 620;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
   min-width: 0;
 }
 .attention-percent {
-  font-weight: 600;
-  color: var(--text);
-  font-size: 0.95rem;
-  line-height: var(--status-title-line-height);
+  font-weight: 620;
+  color: #44556a;
+  font-size: 0.86rem;
+  line-height: 1.25;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 .attention-count {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: var(--status-meta-line-height);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #3c4b5d;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 .attention-note {
   margin: 0;
-  color: rgba(182, 189, 221, 0.92);
-  font-size: 0.9rem;
-  line-height: var(--status-desc-line-height);
-  min-height: calc(var(--status-desc-line-height) * 2);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: #566273;
+  font-size: 0.95rem;
+  line-height: 1.42;
+  min-height: 0;
+  display: block;
+  overflow: visible;
 }
 .attention-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
+  gap: 4px;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: #C9D5FF;
-  text-decoration: none;
-  border-radius: 999px;
-  padding: 0 calc(var(--status-attention-gap) + 4px);
-  background: rgba(74, 108, 255, 0.15);
-  border: 1px solid rgba(74, 108, 255, 0.35);
-  transition: transform 150ms ease, box-shadow 150ms ease, color 150ms ease;
-  min-height: var(--status-cta-height);
-  padding-block: var(--status-row-padding);
+  color: #0b79ad;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+  min-height: 0;
+  margin-top: 2px;
   flex: 0 0 auto;
 }
 .attention-link:hover,
 .attention-link:focus-visible {
-  color: #F7F8FF;
-  box-shadow: 0 10px 20px rgba(74, 108, 255, 0.18);
-  transform: translateY(-1px);
+  color: #075f88;
+  text-decoration-color: currentColor;
 }
 .attention-link:focus-visible {
-  outline: 2px solid rgba(74, 108, 255, 0.7);
-  outline-offset: 3px;
+  outline: 2px solid rgba(11, 121, 173, 0.35);
+  outline-offset: 2px;
 }
 .status-legend {
   display: flex;
   flex-direction: column;
-  gap: var(--status-card-gap);
-  padding: var(--status-card-padding);
-  border-radius: 16px;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 .status-legend-title {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(182, 189, 221, 0.7);
 }
-.status-legend-list {
-  list-style: none;
+.status-legend-grid {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 4px;
+  gap: 4px 12px;
+}
+.status-legend-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 10px;
+}
+.status-legend-grid dt,
+.status-legend-grid dd {
+  margin: 0;
 }
 .status-legend-term {
   color: #DCE2FF;
   font-weight: 600;
+}
+.status-legend-desc {
+  color: rgba(182, 189, 221, 0.92);
+}
+@media (max-width: 760px) {
+  .status-legend-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+  }
 }
 .status-helper {
   margin: calc(var(--status-card-gap) / 2) 0 0;
@@ -3070,7 +3136,7 @@ pre {
   color: var(--muted);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   min-height: var(--status-cta-line-height);
   line-height: var(--status-cta-line-height);
   padding: var(--status-row-padding) 0;
@@ -3170,6 +3236,7 @@ pre {
   gap: var(--status-card-gap);
 }
 .status-body-hint {
+  margin-left: auto;
   color: rgba(182, 189, 221, 0.75);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -3294,20 +3361,26 @@ pre {
   color: #F7B1B1;
   border: 1px solid rgba(209, 58, 58, 0.35);
 }
+.status-chip--inactive {
+  opacity: 0.42;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: none;
+}
 .status-cta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 7.5px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 .status-cta-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 22px;
   align-items: center;
 }
 code {
@@ -5044,6 +5117,20 @@ input[type="submit"]:hover {
   color: #4f7fa6 !important;
   opacity: 1 !important;
 }
+.page--status .hero-note {
+  color: #334558 !important;
+  background: #f4f9ff !important;
+  border: 1px solid #c7dbea !important;
+  border-left: 3px solid #84add0 !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  margin-top: 2px !important;
+}
+.page--status .hero-note strong {
+  color: #25384e !important;
+}
 .page--status .status-legend {
   background: #ffffff !important;
   border: 1px solid #c7dbea !important;
@@ -5052,18 +5139,94 @@ input[type="submit"]:hover {
 .page--status .status-legend-title {
   color: #6a7584 !important;
 }
-.page--status .status-legend li {
-  color: #556173 !important;
+.page--status .status-legend-row {
+  border-top: 1px solid #e7eef5 !important;
+  padding-top: 4px !important;
+}
+.page--status .status-legend-row:first-of-type {
+  border-top: none !important;
+  padding-top: 0 !important;
 }
 .page--status .status-legend-term {
   color: #2f3a49 !important;
 }
+.page--status .status-legend-desc {
+  color: #556173 !important;
+}
 .page--status .status-helper {
   color: #687487 !important;
+}
+.page--status .status-chip--done {
+  background: #e8f1fb !important;
+  color: #2e5f90 !important;
+  border-color: #9fc3e6 !important;
+}
+.page--status .status-chip--stdlib {
+  background: #eef7ef !important;
+  color: #2f6f4f !important;
+  border-color: #afd5ba !important;
+}
+.page--status .status-chip--todo {
+  background: #fff0f0 !important;
+  color: #8d3a3a !important;
+  border-color: #e0b3b3 !important;
+}
+.page--status .status-chip--inactive {
+  background: #f3f6f9 !important;
+  color: #8a95a3 !important;
+  border-color: #d5dde7 !important;
+  opacity: 0.6 !important;
+}
+.page--status .section#status-summary-grid {
+  margin-bottom: 14px !important;
+}
+.page--status .section + .callout {
+  margin-top: 14px !important;
+}
+.page--status #status-summary-grid .card p:not(.status-metric) {
+  font-size: 0.98rem !important;
+  line-height: 1.45 !important;
+  color: #566273 !important;
+}
+.page--status #status-summary-grid .card {
+  text-align: center !important;
+}
+.page--status #status-summary-grid .card h3 {
+  text-align: center !important;
+}
+.page--status #status-summary-grid .card p:empty {
+  display: none !important;
+}
+.page--status #status-summary-grid .status-metric {
+  margin: 0 0 8px !important;
+  font-size: clamp(2.85rem, 4.95vw, 4rem) !important;
+  font-weight: 760 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.02em !important;
+  text-align: center !important;
+}
+.page--status #status-summary-grid .status-metric--implemented {
+  color: #0f628a !important;
+}
+.page--status #status-summary-grid .status-metric--missing {
+  color: #9a2d2d !important;
+}
+.page--status #status-summary-grid .status-metric--stdlib {
+  color: #2a7b57 !important;
+}
+.page--status #status-summary-grid .status-metric--webracket-only {
+  color: #704da2 !important;
 }
 .page--status .status-section {
   background: #ffffff !important;
   border-color: #c7dbea !important;
+  overflow: hidden !important;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+.page--status .status-section:hover {
+  border-color: #8ab4d6 !important;
+  box-shadow: 0 6px 16px rgba(23, 56, 88, 0.14) !important;
+  transform: translateY(-1px);
 }
 .page--status .status-title {
   color: #263241 !important;
@@ -5073,7 +5236,20 @@ input[type="submit"]:hover {
   color: #5c687a !important;
 }
 .page--status .status-summary:hover {
-  background: #eef5fb !important;
+  background: #f4f9fd !important;
+}
+.page--status .status-summary {
+  border-radius: 14px !important;
+}
+.page--status .status-section[open] {
+  overflow: visible !important;
+}
+.page--status .status-section[open] .status-summary {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.page--status .status-section[open] .status-summary:hover {
+  background: transparent !important;
 }
 
 /* Closer to racket-lang.org docs tone */
@@ -5193,6 +5369,7 @@ CSS
          [(space-invaders)        (space-invaders-page)]
       [(canvas-hexagons)       (canvas-hexagons-page)]
       [(minischeme)            (minischeme-page)]
+      [(connections)           (connections-page)]
       [else                    (home-page)]))
 
   (define safe-structure
@@ -5232,6 +5409,9 @@ CSS
 
   (when (eq? (current-page) 'minischeme)
     (init-minischeme-page!))
+
+  (when (eq? (current-page) 'connections)
+    (init-connections-page!))
 
   (when (memq (current-page)
               '(doc-js-ffi

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# Development workflow rule:
+# Build outputs go to local/ only. Do not write to public/ here.
+# publish.sh is responsible for copying local/ -> public/.
+
 STAMP=$(date +%s)
 OUT_DIR="../local"
 OLD_SITE_NEW_DIR="../../web-site/local/new"
@@ -51,6 +55,7 @@ ROUTE_ALIASES=(
   mathjax
   matrix-rain
   minischeme
+  connections
   quick-start
   space-invaders
   xtermjs-demo
