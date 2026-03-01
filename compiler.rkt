@@ -2492,11 +2492,11 @@
   ;; fallback for cases where lexical binding data is missing.
   (define id1 (variable-id v1))
   (define id2 (variable-id v2))
-  (define b1 (identifier-binding id1))
-  (define b2 (identifier-binding id2))
-  (define s1 (syntax-e id1))
-  (define s2 (syntax-e id2))
-  (or (free-identifier=? id1 id2)
+  (define b1  (identifier-binding id1))
+  (define b2  (identifier-binding id2))
+  (define s1  (syntax-e id1))
+  (define s2  (syntax-e id2))
+  (or (free-identifier=?  id1 id2)
       (bound-identifier=? id1 id2)
       ;; Name fallback is only allowed when neither side is lexical.
       ;; This preserves module/unbound matching (needed for some top refs)
