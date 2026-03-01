@@ -36,9 +36,12 @@
                          (equal? ((lambda x (length x)) 1 2 3 4) 4)
                          (equal? ((lambda (a b . r) r) 1 2 3 4) '(3 4))
                          (let ([compose (lambda (f g) (lambda args (f (apply g args))))])
-                             (equal? ((compose sqrt *) 12 75) 30)) ; todo : improve *
+                           (equal? ((compose sqrt *) 12 75) 30)) ; todo : improve *
                          (let ([compose (lambda (f g) (lambda args (f (apply g args))))])
                            (equal? ((compose sqrt (λ (x y) (* x y))) 12 75) 30))
+                         (equal? (let ([λ<~ (lambda (x) x)])
+                                   (λ<~ 1))
+                                 1)
                          (let ([a (procedure-arity (lambda x x))])
                            (and (arity-at-least? a)
                                 (equal? (arity-at-least-value a) 0)))))

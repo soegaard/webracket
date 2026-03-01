@@ -2,7 +2,8 @@
 (provide run wat->wasm runtime)
 
 (require "fasl.rkt"
-         "get-env-path.rkt")
+         "get-env-path.rkt"
+         "wat-identifiers.rkt")
 
 ;;;
 ;;; ASSEMBLER
@@ -2336,7 +2337,10 @@ const wasmModule
 (define (wat-pretty-write x)
   (parameterize ([current-print write]
                  [pretty-print-current-style-table (wat-pretty-print-table)])
-    (pretty-write x)))
+    (display (rewrite-wat-identifiers
+              (with-output-to-string
+                (λ ()
+                  (pretty-write x)))))))
 
 (define (print-wat x)
   (wat-pretty-write x))
