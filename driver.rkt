@@ -49,20 +49,21 @@
 ;;;
 
 (define (drive-compilation
-         #:filename      filename
-         #:wat-filename  wat-filename
-         #:wasm-filename wasm-filename
-         #:host-filename host-filename ; default: "runtime.js"
-         #:label-map-forms? label-map-forms?
-         #:dump-passes-dir dump-passes-dir
-         #:dump-passes-limit dump-passes-limit
-         #:timings?     timings?
-         #:verbose?      verbose?
-         #:browser?      browser?
-         #:node?         node?
-         #:run-after?    run-after?
-         #:ffi-files     ffi-files    ; list of file paths for .ffi files
-         #:stdlib?       stdlib?)     ; include standard library 
+         #:filename          filename
+         #:wat-filename      wat-filename
+         #:wasm-filename     wasm-filename
+         #:host-filename     host-filename      ; default: "runtime.js"
+         #:label-map-forms?  label-map-forms?
+         #:dump-passes-dir   dump-passes-dir
+         #:dump-passes-limit dump-passes-limit  ; max number of passes to dump
+         #:timings?          timings?
+         #:verbose?          verbose?
+         #:browser?          browser?
+         #:node?             node?
+         #:run-after?        run-after?
+         #:ffi-files         ffi-files    ; list of file paths for .ffi files
+         #:stdlib?           stdlib?)     ; include standard library 
+  (define exit-code 0)
   
   ; 0. Handle ffi-files
   (define resolved-ffi-files
@@ -236,7 +237,9 @@
   (when (and node? run-after?)
     (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
     (define runtime-js out-host)
-    (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
+    (set! exit-code
+          (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
+  exit-code)
 
 ;;;
 ;;; READ TOP-LEVEL FORMS FROM FILE 

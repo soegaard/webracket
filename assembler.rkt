@@ -2380,18 +2380,19 @@ const wasmModule
     (if x
         (wat->wasm x #:wat out.wat #:wasm out.wasm)
         #t))
-  (when okay?
-    ; 2. Write runtime
-    (with-output-to-file runtime.js
-      (λ () (displayln (runtime #:out out.wasm)))
-      #:exists 'replace)
-    ; 3. Invoke runtime.js using Node
-    (define success? #t)
-    (define output
-      (with-output-to-string
-        (λ ()
-          (set! success?
-                (system (format "node --experimental-wasm-exnref --expose-gc ~a"
-                                runtime.js))))))
-    ; 3. If there were any errors, display the error messages
-    (displayln output)))
+  (if (not okay?)
+      1
+      (begin
+        ; 2. Write runtime
+        (with-output-to-file runtime.js
+          (λ () (displayln (runtime #:out out.wasm)))
+          #:exists 'replace)
+        ; 3. Invoke runtime.js using Node and propagate exact child exit code.
+        (let ([node-path (find-executable-path "node")])
+          (if node-path
+              (system*/exit-code
+               node-path
+               "--experimental-wasm-exnref"
+               "--expose-gc"
+               runtime.js)
+              1)))))

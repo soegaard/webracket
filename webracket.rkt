@@ -90,18 +90,24 @@
    ; return the argument as a filename to compile
    (source-filename filename)))
 
+;; In the case that -r is used to run the program directly,
+;; we propagate the exit code from `node`.
 
-(drive-compilation #:filename      (source-filename)
-                   #:wat-filename  (wat-filename)
-                   #:wasm-filename (wasm-filename)
-                   #:host-filename (host-filename)
-                   #:label-map-forms? (label-map-forms)
-                   #:dump-passes-dir (dump-passes-dir)
-                   #:dump-passes-limit (dump-passes-limit)
-                   #:timings?     (timings?)
-                   #:verbose?      (verbose-mode)
-                   #:browser?      (browser)
-                   #:node?         (nodejs)
-                   #:run-after?    (run-after)
-                   #:ffi-files     (ffi-files)
-                   #:stdlib?       (stdlib?))
+(define exit-code
+  (drive-compilation #:filename      (source-filename)
+                     #:wat-filename  (wat-filename)
+                     #:wasm-filename (wasm-filename)
+                     #:host-filename (host-filename)
+                     #:label-map-forms? (label-map-forms)
+                     #:dump-passes-dir (dump-passes-dir)
+                     #:dump-passes-limit (dump-passes-limit)
+                     #:timings?     (timings?)
+                     #:verbose?      (verbose-mode)
+                     #:browser?      (browser)
+                     #:node?         (nodejs)
+                     #:run-after?    (run-after)
+                     #:ffi-files     (ffi-files)
+                     #:stdlib?       (stdlib?)))
+
+(unless (zero? exit-code)
+  (exit exit-code))
