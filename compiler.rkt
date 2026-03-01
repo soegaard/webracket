@@ -2661,12 +2661,9 @@
   (Expr : Expr (E ρ) -> Expr (ρ)
     [,x                                         (let ([ρx (ρ x)])                                                  
                                                   (cond
-                                                    [(and (not ρx) (inside-module?))
-                                                     (raise-syntax-error
-                                                      'α-rename "compiler.rkt: unbound variable"
-                                                      (variable-id x))]
-                                                    
-                                                    [(not ρx)
+                                                    [ρx
+                                                     (values `,ρx ρ)]
+                                                    [else
                                                      (unless (variable? x)
                                                        (error 'here "got ~a" x))
                                                      (define s (syntax-e (variable-id x)))
@@ -2677,6 +2674,10 @@
                                                                 ρ)]
                                                        [(non-literal-constant? s) ; like prop:object-name
                                                         (values `,x ρ)]
+                                                       [(inside-module?)
+                                                        (raise-syntax-error
+                                                         'α-rename "compiler.rkt: unbound variable"
+                                                         (variable-id x))]
                                                        [else
                                                         ; signal unbound variable at runtime
                                                         (displayln (list 'WARNING "unbound?" x))
@@ -2689,8 +2690,7 @@
                                                                       ; ,`(quote ,#'here  ,(datum #'unbound (variable-id x)))
                                                                       )
                                                                 ρ)])]
-                                                    [else
-                                                     (values `,ρx ρ)]))]
+                                                    ))]
     [,ab                                        (Abstraction ab ρ)]
     [(case-lambda ,s ,ab ...)                   (let ([ρ-orig ρ])
                                                   (let-values ([(ab ρ) (Abstraction* ab ρ)])

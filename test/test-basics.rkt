@@ -307,6 +307,17 @@
                           (equal? (equal-always? c1 c2) #t)
                           (equal? (equal? c1 c3)        #f)
                           (equal? (equal-always? c1 c3) #f)))))
+
+       (list "named constants"
+             (and (equal? null '())
+                  (equal? empty '())
+                  (equal? true #t)
+                  (equal? false #f)
+                  (eof-object? eof)
+                  (< (abs (- pi 3.141592653589793)) 1e-12)
+                  (eq? undefined undefined)
+                  (eq? unsafe-undefined unsafe-undefined)
+                  (not (eq? undefined unsafe-undefined))))
        
        (list "4.2 Booleans"
              (list
