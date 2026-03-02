@@ -33,8 +33,14 @@ jobs:
       - name: Ensure nanopass
         run: raco pkg install --auto --skip-installed --no-docs nanopass
 
-      - name: Install wasm-tools
-        run: cargo install wasm-tools --locked
+      - name: Install wasm-tools (prebuilt)
+        run: |
+          WASM_TOOLS_VERSION="1.225.0"
+          curl -L -o /tmp/wasm-tools.tar.gz \
+            "https://github.com/bytecodealliance/wasm-tools/releases/download/v${WASM_TOOLS_VERSION}/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux.tar.gz"
+          tar -xzf /tmp/wasm-tools.tar.gz -C /tmp
+          sudo mv "/tmp/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux/wasm-tools" /usr/local/bin/wasm-tools
+          wasm-tools --version
 
       - name: Setup Node (for webracket -r)
         uses: actions/setup-node@v4
