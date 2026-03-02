@@ -19,10 +19,11 @@ Commands:
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
   quick      Run doctor preflight, then core tests + smoke compile
-  ci         Stable non-headless CI entrypoint (doctor + all)
+  ci         CI smoke entrypoint (doctor + check-ci-smoke)
   status     Print tools/artifacts status and suggested next command
   urls       Print smoke URLs without starting a server
   parity-open Print parity test URLs
+  guard      Run dashboard guard self-test
   open       Start local smoke server (raco static-web)
   doctor     Check local prerequisites and print setup hints
   clean      Remove generated smoke artifacts
@@ -34,6 +35,7 @@ print_urls() {
   local port="${SMOKE_PORT:-8000}"
   local base_url="http://localhost:${port}"
   printf '  %-10s %-13s %s\n' "index" "(manual):" "$base_url/index.html"
+  printf '  %-10s %-13s %s\n' "visual" "(manual):" "$base_url/test-browser-visual-check.html"
   printf '  %-10s %-13s %s\n' "dashboard" "(automatic):" "$base_url/test-browser-dashboard.html"
   printf '  %-10s %-13s %s\n' "parity" "(automatic):" "$base_url/test-browser-parity-dashboard.html"
 }
@@ -56,6 +58,10 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-counters.html"
   echo "  $base_url/test-browser-parity-tabs.html"
   echo "  $base_url/test-browser-parity-tabs-dynamic.html"
+  echo "  $base_url/test-browser-parity-profile.html"
+  echo "  $base_url/test-browser-parity-settings.html"
+  echo "  $base_url/test-browser-parity-table.html"
+  echo "  $base_url/test-browser-parity-menu-keys.html"
   echo "  $base_url/test-browser-parity-list.html"
   echo "  $base_url/test-browser-parity-todo.html"
 }
@@ -67,6 +73,10 @@ parity_check() {
   "$SCRIPT_DIR/run-browser-parity-counters-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-tabs-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-tabs-dynamic-compile.sh"
+  "$SCRIPT_DIR/run-browser-parity-profile-compile.sh"
+  "$SCRIPT_DIR/run-browser-parity-settings-compile.sh"
+  "$SCRIPT_DIR/run-browser-parity-table-compile.sh"
+  "$SCRIPT_DIR/run-browser-parity-menu-keys-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-list-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-todo-compile.sh"
 }
@@ -241,7 +251,7 @@ case "$1" in
     ;;
   ci)
     doctor
-    "$SCRIPT_DIR/check-all.sh"
+    "$SCRIPT_DIR/check-ci-smoke.sh"
     ;;
   status)
     status
@@ -258,6 +268,9 @@ case "$1" in
     ;;
   parity-open)
     print_parity_urls
+    ;;
+  guard)
+    "$SCRIPT_DIR/check-dashboard-guard.sh"
     ;;
   open)
     open_server

@@ -2,6 +2,29 @@
 
 Browser smoke tests for `lib/web-easy`.
 
+## Smoke Test Conventions
+
+All browser smoke pages under `smoke/test-browser-*.html` should follow these rules:
+
+1. Status protocol:
+   - expose a top-level `#status` node.
+   - set status text to start with `PASS` or `FAIL`.
+2. No leaked placeholder/sentinel values in DOM attributes:
+   - rendered DOM attributes must not contain any forbidden token.
+   - current forbidden tokens:
+     - `#<value>`, `#<void>`, `#<procedure>`, `#<eof>`,
+       `[object Object]`, `undefined`, `NaN`, `Infinity`.
+   - full/parity dashboards enforce this automatically after each page reports `PASS`.
+3. Dashboard compatibility:
+   - pages intended for automation must be listed in the dashboard test arrays.
+   - manual pages (for example visual inspection pages) should be excluded explicitly.
+
+Guard self-test command:
+
+- `./check-dashboard-guard.sh`
+- `./smoke.sh guard`
+- expected result: script exits `0` when guard correctly reports a `FAIL` for the intentional fixture page.
+
 ## Smoke Grouping
 
 Current grouping policy:
@@ -20,15 +43,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `19` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `8` tests
+- full dashboard (`test-browser-dashboard.html`): `26` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `12` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-02):
 
-- full headless dashboard: `19/19` PASS
-- parity-only headless dashboard: `8/8` PASS
+- full headless dashboard: `26/26` PASS
+- parity-only headless dashboard: `12/12` PASS
+- CI helper run (2026-03-02): PASS (`26/26` dashboard PASS + guard self-test expected FAIL detected)
 
 ## Command Wrapper
 
@@ -53,15 +77,27 @@ Wrapper commands:
 - `./smoke.sh urls`
 - `./smoke.sh dashboards`
 - `./smoke.sh parity-open`
+- `./smoke.sh guard`
 - `./smoke.sh open`
 - `./smoke.sh doctor`
 - `./smoke.sh clean`
 - `./smoke.sh clean-dry`
 
+CI helper script:
+
+- `./check-ci-smoke.sh` (runs full headless smoke + guard self-test)
+
+Repository-root aliases:
+
+- `make smoke-ci`
+- `make smoke-headless`
+- `make smoke-parity-headless`
+- `make smoke-one SINGLE_COMPILE=run-browser-parity-menu-keys-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
+
 Command notes:
 
 - `quick`: runs `doctor` preflight, then `all`.
-- `ci`: stable non-headless CI entrypoint (`doctor` + `all`).
+- `ci`: CI smoke entrypoint (`doctor` + `check-ci-smoke.sh`).
 - `status`: shows tool/artifact status and suggests the next command.
 
 `tab-panel` entry forms:
@@ -155,6 +191,9 @@ Then open:
 - `http://localhost:8000/test-browser-dashboard.html` (runs all smoke pages)
 - `http://localhost:8000/test-browser-parity-dashboard.html` (runs parity-only smoke pages)
 - `http://localhost:8000/test-browser-smoke.html`
+- `http://localhost:8000/test-browser-group.html`
+- `http://localhost:8000/test-browser-menu-keys.html`
+- `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
 - `http://localhost:8000/test-browser-list.html`
@@ -165,6 +204,7 @@ Then open:
 - `http://localhost:8000/test-browser-tab-panel.html`
 - `http://localhost:8000/test-browser-tab-panel-keys.html`
 - `http://localhost:8000/test-browser-tab-panel-disabled.html`
+- `http://localhost:8000/test-browser-visual-check.html` (manual visual sanity page)
 - `http://localhost:8000/test-browser-parity-hello.html`
 - `http://localhost:8000/test-browser-parity-counter.html`
 - `http://localhost:8000/test-browser-parity-dynamic-list.html`
@@ -173,11 +213,20 @@ Then open:
 - `http://localhost:8000/test-browser-parity-tabs-dynamic.html`
 - `http://localhost:8000/test-browser-parity-list.html`
 - `http://localhost:8000/test-browser-parity-todo.html`
+- `http://localhost:8000/test-browser-parity-profile.html`
+- `http://localhost:8000/test-browser-parity-settings.html`
+- `http://localhost:8000/test-browser-parity-table.html`
+- `http://localhost:8000/test-browser-parity-menu-keys.html`
 
 Dashboards:
 
 - full: `http://localhost:8000/test-browser-dashboard.html`
 - parity: `http://localhost:8000/test-browser-parity-dashboard.html`
+
+Manual visual page:
+
+- `test-browser-visual-check.html` is intentionally not part of dashboard PASS/FAIL automation.
+- compile helper: `./run-browser-visual-check-compile.sh`
 
 ## Optional Headless Run
 
@@ -208,9 +257,49 @@ This command:
 3. Opens `test-browser-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
 
+## Single Example Headless
+
+From `lib/web-easy/smoke`:
+
+```bash
+./check-single-headless.sh <compile-script> <test-page>
+```
+
+Examples:
+
+```bash
+./check-single-headless.sh run-browser-parity-hello-compile.sh test-browser-parity-hello.html
+./check-single-headless.sh run-browser-parity-profile-compile.sh test-browser-parity-profile.html
+```
+
+This command:
+
+1. Compiles one example.
+2. Starts a local static server.
+3. Runs Playwright against one test page.
+4. Exits `0` on PASS for that page, nonzero on FAIL.
+
+## Troubleshooting
+
+Common failure patterns and what to check first:
+
+1. `Timed out waiting for ... UI`:
+   - app page likely failed to render expected node(s) in time.
+   - open the failing `test-browser-*.html` directly and inspect browser console/runtime errors.
+2. `Playwright is not installed`:
+   - install with `npm --prefix .local-tools install --save-dev playwright`.
+3. Guard failures (`Found forbidden token in DOM attributes`):
+   - inspect the cited element/attribute in the failure message.
+   - ensure renderer/backend do not emit internal values into DOM attributes.
+4. Web server/port issues:
+   - ensure no stale `raco static-web` server is already bound to the port.
+5. Compiler/runtime path mismatch:
+   - rerun the specific compile script (for example `run-browser-*-compile.sh`) before rechecking.
+
 Note:
 
-- CI wiring for the headless smoke path is not configured yet.
+- `check-ci-smoke.sh` is the local CI-helper command (`headless dashboard + guard self-test`).
+- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs `./smoke.sh ci` on pushes/PRs touching `lib/web-easy/**`.
 
 ## Recommended Daily Flow
 
@@ -246,6 +335,10 @@ From `lib/web-easy/smoke`:
   - `./run-browser-parity-tabs-dynamic-test.sh`
   - `./run-browser-parity-list-test.sh`
   - `./run-browser-parity-todo-test.sh`
+  - `./run-browser-parity-profile-test.sh`
+  - `./run-browser-parity-settings-test.sh`
+  - `./run-browser-parity-table-test.sh`
+  - `./run-browser-parity-menu-keys-test.sh`
 
 Parity quickstart:
 
@@ -259,6 +352,17 @@ Verification snippet (sequential):
 2. `./smoke.sh parity-headless`
 3. `./check-all.sh --headless`
 
+## Manual Release Checklist
+
+Before merge/release, run in this order from `lib/web-easy/smoke`:
+
+1. `./check-ci-smoke.sh`
+
+Expected high-level outcomes:
+
+1. full smoke: `PASS` with `26/26 smoke tests passed`
+2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
+
 Concurrency note:
 
 - Do not run `./smoke.sh parity-headless` and `./check-all.sh --headless` at the same time.
@@ -267,6 +371,9 @@ Concurrency note:
 ## Expected PASS Lines
 
 - smoke: `PASS initial=0, after-click=1`
+- group: `PASS group uses fieldset + legend`
+- menu-keys: `PASS menu-item focus + Enter/Space activation`
+- width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
 - list: `PASS initial=a,b,c; after-click=c,a,b`
@@ -285,3 +392,6 @@ Concurrency note:
 - parity-tabs-dynamic: `PASS dynamic tabs parity: add faq, remove selected, remove details`
 - parity-list: `PASS list parity: alpha,beta -> reverse -> +gamma -> -beta`
 - parity-todo: `PASS todo parity: add, edit/cancel, edit/save, toggle, mark-all-done, clear-done`
+- parity-settings: `PASS settings parity: table rows + menu actions`
+- parity-table: `PASS table parity: multi-column cells + menu actions`
+- parity-menu-keys: `PASS parity menu-item focus + Enter/Space activation`

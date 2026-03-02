@@ -15,6 +15,14 @@ echo
 echo
 "$SCRIPT_DIR/run-browser-parity-tabs-dynamic-test.sh"
 echo
+"$SCRIPT_DIR/run-browser-parity-profile-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-settings-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-table-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-menu-keys-test.sh"
+echo
 "$SCRIPT_DIR/run-browser-parity-list-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-parity-todo-test.sh"

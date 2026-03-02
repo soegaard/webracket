@@ -1,0 +1,45 @@
+name: web-easy-smoke
+
+on:
+  push:
+    paths:
+      - "lib/web-easy/**"
+      - ".github/workflows/web-easy-smoke.yml"
+  pull_request:
+    paths:
+      - "lib/web-easy/**"
+      - ".github/workflows/web-easy-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Racket
+        uses: Bogdanp/setup-racket@v1.11
+        with:
+          architecture: x64
+          distribution: full
+          version: stable
+
+      - name: Ensure raco static-web
+        run: raco pkg install --auto --skip-installed static-web
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright package
+        run: npm --prefix .local-tools install --save-dev playwright
+
+      - name: Install Playwright Chromium
+        run: npx --prefix .local-tools playwright install --with-deps chromium
+
+      - name: Run web-easy smoke CI helper
+        run: |
+          cd lib/web-easy/smoke
+          ./smoke.sh ci

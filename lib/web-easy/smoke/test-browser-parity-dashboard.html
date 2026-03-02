@@ -56,6 +56,7 @@
     <tbody></tbody>
   </table>
 
+  <script src="./dashboard-guard.js"></script>
   <script>
     const tests = [
       "test-browser-parity-hello.html",
@@ -64,6 +65,10 @@
       "test-browser-parity-counters.html",
       "test-browser-parity-tabs.html",
       "test-browser-parity-tabs-dynamic.html",
+      "test-browser-parity-profile.html",
+      "test-browser-parity-settings.html",
+      "test-browser-parity-table.html",
+      "test-browser-parity-menu-keys.html",
       "test-browser-parity-list.html",
       "test-browser-parity-todo.html"
     ];
@@ -123,6 +128,16 @@
           if (status) {
             const text = (status.textContent || "").trim();
             if (text.startsWith("PASS")) {
+              const offenders = window.smokeDashboardGuard.findForbiddenAttrTokensRecursively(doc, page);
+              if (offenders.length > 0) {
+                frame.remove();
+                const samples = offenders.slice(0, 4).join("; ");
+                return {
+                  page,
+                  ok: false,
+                  message: "FAIL\nFound forbidden token in DOM attributes: " + samples
+                };
+              }
               frame.remove();
               return { page, ok: true, message: text };
             }
