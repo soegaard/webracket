@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity todo smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 340px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity todo assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-todo.html" title="web-easy parity todo app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === label);
+    }
+
+    function todoText(frameDoc) {
+      return bodyText(frameDoc).replace(/\s+/g, "");
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      let lastDiag = "";
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const draftInput = frameDoc.querySelector("input:not([type='checkbox'])");
+          const todoCheckbox = frameDoc.querySelector("input[type='checkbox']");
+          const text = todoText(frameDoc);
+          const inputCount = frameDoc.querySelectorAll("input").length;
+          lastDiag = "inputs=" + inputCount +
+                     ", draft=" + (draftInput ? "1" : "0") +
+                     ", checkbox=" + (todoCheckbox ? "1" : "0") +
+                     ", todoText=" + JSON.stringify(text) +
+                     ", body=" + JSON.stringify(bodyText(frameDoc).slice(0, 120));
+          if (draftInput &&
+              todoCheckbox &&
+              buttonByText(frameDoc, "add-todo") &&
+              buttonByText(frameDoc, "mark-all-done") &&
+              buttonByText(frameDoc, "clear-done") &&
+              text.includes("remaining:1") &&
+              text.includes("task-0")) {
+            return { frameDoc, draftInput };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity todo UI\n" + lastDiag);
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = todoText(ui.frameDoc);
+        assertTrue(text.includes("task-0"), "initial todo present");
+        assertTrue(text.includes("remaining:1"), "initial remaining count");
+
+        ui.draftInput.value = "task-1";
+        ui.draftInput.dispatchEvent(new Event("input", { bubbles: true }));
+        ui.draftInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(100);
+        text = todoText(ui.frameDoc);
+        assertTrue(text.includes("task-1"), "new todo added via Enter");
+        assertTrue(text.includes("remaining:2"), "remaining count after add");
+
+        buttonByText(ui.frameDoc, "edit").click();
+        await sleep(50);
+        const allTextInputs = ui.frameDoc.querySelectorAll("input:not([type='checkbox'])");
+        const editInput = allTextInputs[allTextInputs.length - 1];
+        editInput.value = "task-0-cancelled";
+        editInput.dispatchEvent(new Event("input", { bubbles: true }));
+        buttonByText(ui.frameDoc, "cancel").click();
+        await sleep(100);
+        text = todoText(ui.frameDoc);
+        assertTrue(!text.includes("task-0-cancelled") && text.includes("task-0"), "edit/cancel keeps original label");
+
+        buttonByText(ui.frameDoc, "edit").click();
+        await sleep(50);
+        const allTextInputs2 = ui.frameDoc.querySelectorAll("input:not([type='checkbox'])");
+        const editInput2 = allTextInputs2[allTextInputs2.length - 1];
+        editInput2.value = "task-0-edited";
+        editInput2.dispatchEvent(new Event("input", { bubbles: true }));
+        buttonByText(ui.frameDoc, "save").click();
+        await sleep(100);
+        text = todoText(ui.frameDoc);
+        assertTrue(text.includes("task-0-edited"), "edit/save updates todo label");
+
+        const firstCheckbox = ui.frameDoc.querySelector("input[type='checkbox']");
+        firstCheckbox.checked = true;
+        firstCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        assertTrue(firstCheckbox.checked === true, "first todo toggled done");
+        text = todoText(ui.frameDoc);
+        assertTrue(text.includes("remaining:1"), "remaining count after toggle");
+
+        buttonByText(ui.frameDoc, "mark-all-done").click();
+        await sleep(100);
+        text = todoText(ui.frameDoc);
+        assertTrue(text.includes("remaining:0"), "remaining count after mark-all-done");
+
+        buttonByText(ui.frameDoc, "clear-done").click();
+        await sleep(100);
+        text = todoText(ui.frameDoc);
+        assertTrue(!text.includes("task-0-edited") && !text.includes("task-1"), "clear-done removed done todos");
+        assertTrue(text.includes("remaining:0"), "remaining count after clear-done");
+
+        setStatus("PASS\ntodo parity: add, edit/cancel, edit/save, toggle, mark-all-done, clear-done", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

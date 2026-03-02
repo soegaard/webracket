@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy smoke dashboard</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+      max-width: 1000px;
+    }
+    #summary {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #summary.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #summary.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    td.status-pass {
+      color: #0a6a0a;
+    }
+    td.status-fail {
+      color: #8a1111;
+    }
+  </style>
+</head>
+<body>
+  <h1>web-easy smoke dashboard</h1>
+  <div id="summary">Running all smoke pages...</div>
+  <table id="results">
+    <thead>
+      <tr>
+        <th>Test Page</th>
+        <th>Status</th>
+        <th>Message</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const tests = [
+      "test-browser-smoke.html",
+      "test-browser-input.html",
+      "test-browser-checkbox.html",
+      "test-browser-list.html",
+      "test-browser-destroy.html",
+      "test-browser-branch.html",
+      "test-browser-controls.html",
+      "test-browser-operators.html",
+      "test-browser-tab-panel.html",
+      "test-browser-tab-panel-keys.html",
+      "test-browser-tab-panel-disabled.html",
+      "test-browser-parity-hello.html",
+      "test-browser-parity-counter.html",
+      "test-browser-parity-dynamic-list.html",
+      "test-browser-parity-counters.html",
+      "test-browser-parity-tabs.html",
+      "test-browser-parity-tabs-dynamic.html",
+      "test-browser-parity-list.html",
+      "test-browser-parity-todo.html"
+    ];
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function setSummary(text, cls) {
+      const s = document.getElementById("summary");
+      s.textContent = text;
+      s.className = cls;
+    }
+
+    function appendRow(page, status, message) {
+      const tbody = document.querySelector("#results tbody");
+      const tr = document.createElement("tr");
+
+      const tdPage = document.createElement("td");
+      const link = document.createElement("a");
+      link.href = page;
+      link.textContent = page;
+      link.target = "_blank";
+      tdPage.appendChild(link);
+
+      const tdStatus = document.createElement("td");
+      tdStatus.textContent = status;
+      tdStatus.className = status === "PASS" ? "status-pass" : "status-fail";
+
+      const tdMessage = document.createElement("td");
+      tdMessage.textContent = message;
+
+      tr.appendChild(tdPage);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdMessage);
+      tbody.appendChild(tr);
+    }
+
+    async function runOne(page) {
+      const frame = document.createElement("iframe");
+      frame.style.position = "absolute";
+      frame.style.left = "-10000px";
+      frame.style.top = "0";
+      frame.style.width = "900px";
+      frame.style.height = "700px";
+      frame.style.border = "0";
+      frame.src = page;
+      document.body.appendChild(frame);
+
+      const timeoutMs = 30000;
+      const start = Date.now();
+
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const status = doc.getElementById("status");
+          if (status) {
+            const text = (status.textContent || "").trim();
+            if (text.startsWith("PASS")) {
+              frame.remove();
+              return { page, ok: true, message: text };
+            }
+            if (text.startsWith("FAIL")) {
+              frame.remove();
+              return { page, ok: false, message: text };
+            }
+          }
+        }
+        await sleep(50);
+      }
+
+      frame.remove();
+      return { page, ok: false, message: "FAIL\nTimed out waiting for PASS/FAIL status" };
+    }
+
+    (async function runAll() {
+      const results = [];
+      for (const page of tests) {
+        const result = await runOne(page);
+        results.push(result);
+        appendRow(page, result.ok ? "PASS" : "FAIL", result.message);
+      }
+
+      const passed = results.filter((r) => r.ok).length;
+      const total = results.length;
+      if (passed === total) {
+        setSummary("PASS\n" + passed + "/" + total + " smoke tests passed", "pass");
+      } else {
+        setSummary("FAIL\n" + passed + "/" + total + " smoke tests passed", "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity dynamic tabs smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity dynamic tabs assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-tabs-dynamic.html" title="web-easy parity dynamic tabs app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === label);
+    }
+
+    function tabButtonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button")).find((b) => {
+        const text = (b.textContent || "").trim();
+        const role = b.getAttribute("role");
+        return role === "tab" && text === label;
+      });
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const text = bodyText(frameDoc);
+          if (buttonByText(frameDoc, "add-faq") &&
+              tabButtonByText(frameDoc, "overview") &&
+              text.includes("Overview panel")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for dynamic tabs UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Overview panel"), "initial overview panel visible");
+
+        tabButtonByText(ui.frameDoc, "overview").dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Details panel"), "ArrowRight moves selection to details");
+
+        tabButtonByText(ui.frameDoc, "details").dispatchEvent(
+          new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Overview panel"), "ArrowLeft moves selection back to overview");
+
+        tabButtonByText(ui.frameDoc, "help").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Help panel"), "help panel visible before Home/End checks");
+
+        tabButtonByText(ui.frameDoc, "help").dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Overview panel"), "Home moves selection to first enabled tab");
+
+        tabButtonByText(ui.frameDoc, "overview").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Overview panel"), "overview panel visible before End check");
+
+        buttonByText(ui.frameDoc, "add-faq").click();
+        await sleep(100);
+        assertTrue(!!tabButtonByText(ui.frameDoc, "faq"), "faq tab added");
+
+        tabButtonByText(ui.frameDoc, "overview").dispatchEvent(
+          new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("FAQ panel"), "End moves selection to last enabled tab");
+
+        tabButtonByText(ui.frameDoc, "faq").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("FAQ panel"), "faq panel visible after select");
+
+        buttonByText(ui.frameDoc, "remove-selected").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(!tabButtonByText(ui.frameDoc, "faq"), "faq tab removed");
+        assertTrue(text.includes("Overview panel"), "selection preserved to overview after removing selected");
+
+        buttonByText(ui.frameDoc, "remove-details").click();
+        await sleep(100);
+        assertTrue(!tabButtonByText(ui.frameDoc, "details"), "details tab removed");
+
+        setStatus("PASS\ndynamic tabs parity: Arrow keys + add faq + remove selected + remove details", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>
