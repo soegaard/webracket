@@ -69,6 +69,27 @@ jobs:
         with:
           node-version: 25.2.1
 
+      - name: Cache Playwright package
+        uses: actions/cache@v4
+        with:
+          path: .local-tools/node_modules
+          key: ${{ runner.os }}-playwright-node-modules-${{ hashFiles('.github/workflows/web-easy-smoke.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-node-modules-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('.github/workflows/web-easy-smoke.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-browsers-
+
+      - name: Ensure Playwright Chromium
+        run: |
+          npm --prefix .local-tools install --save-dev playwright
+          npx --prefix .local-tools playwright install --with-deps chromium
+
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
 
@@ -85,5 +106,17 @@ jobs:
           fi
           echo "web-easy webracket tests passed"
 
-          echo "[3/3] smoke compile"
+          echo "[3/4] smoke compile"
           ./check-smoke.sh
+
+          echo "[4/4] smoke headless dashboard"
+          PORT=8765
+          HOST=127.0.0.1
+          BASE_URL="http://${HOST}:${PORT}"
+          raco static-web --port "$PORT" --dir . >/tmp/web-easy-smoke-headless.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
+          sleep 1
+          SMOKE_BASE_URL="$BASE_URL" \
+          SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
+          node ./check-smoke-headless.mjs
