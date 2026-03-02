@@ -30,6 +30,9 @@ jobs:
           raco pkg install --auto --skip-installed --no-docs raco-static-web
           raco static-web --help >/dev/null
 
+      - name: Link local webracket collection
+        run: raco link webracket
+
       - name: Run web-easy non-headless smoke checks
         run: |
           cd lib/web-easy/smoke
