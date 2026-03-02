@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity table smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity table assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-table.html" title="web-easy parity table app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("span"))
+        .find((span) => (span.textContent || "").trim() === label);
+    }
+
+    function countCells(frameDoc) {
+      return {
+        th: frameDoc.querySelectorAll("th").length,
+        td: frameDoc.querySelectorAll("td").length
+      };
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const table = frameDoc.querySelector("table");
+          const nav = frameDoc.querySelector("nav");
+          const text = bodyText(frameDoc);
+          const cells = countCells(frameDoc);
+          if (table &&
+              nav &&
+              menuItemByText(frameDoc, "Activate Bob") &&
+              text.includes("aliceadminactive") &&
+              text.includes("bobeditoridle") &&
+              cells.th === 3 &&
+              cells.td === 6) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity table UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        let cells = countCells(ui.frameDoc);
+        assertTrue(cells.th === 3, "initial header cell count");
+        assertTrue(cells.td === 6, "initial data cell count");
+        assertTrue(text.includes("rows:2"), "initial rows count text");
+
+        menuItemByText(ui.frameDoc, "Activate Bob").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("bobeditoractive"), "bob status changed to active");
+        assertTrue(text.includes("status:bob-activated"), "status after activate bob");
+
+        menuItemByText(ui.frameDoc, "Add Cara").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        cells = countCells(ui.frameDoc);
+        assertTrue(cells.th === 3, "header cell count after add");
+        assertTrue(cells.td === 9, "data cell count after add");
+        assertTrue(text.includes("caraviewerpending"), "cara row text after add");
+        assertTrue(text.includes("rows:3"), "rows count text after add");
+        assertTrue(text.includes("status:cara-added"), "status after add");
+
+        menuItemByText(ui.frameDoc, "Reset table").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        cells = countCells(ui.frameDoc);
+        assertTrue(cells.th === 3, "header cell count after reset");
+        assertTrue(cells.td === 6, "data cell count after reset");
+        assertTrue(!text.includes("caraviewerpending"), "cara removed after reset");
+        assertTrue(text.includes("bobeditoridle"), "bob row reset to idle");
+        assertTrue(text.includes("rows:2"), "rows count text after reset");
+        assertTrue(text.includes("status:reset"), "status after reset");
+
+        setStatus("PASS\ntable parity: multi-column cells + menu actions", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const cells = frameDoc ? countCells(frameDoc) : { th: 0, td: 0 };
+        const diag = frameDoc
+          ? ("diag: tables=" + frameDoc.querySelectorAll("table").length +
+             " th=" + cells.th +
+             " td=" + cells.td +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

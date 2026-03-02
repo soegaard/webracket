@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser tab-panel keyboard smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser tab-panel keyboard-only smoke assertions...</div>
+  <iframe id="app-frame" src="./example-browser-tab-panel.html" title="web-easy tab-panel keyboard smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const buttons = frameDoc.querySelectorAll("button");
+          const text = frameDoc.body ? frameDoc.body.textContent || "" : "";
+          if (buttons.length >= 3 && text.includes("Info tab")) {
+            return { frameDoc, buttons };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for tab-panel keyboard smoke UI");
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function selectedButtons(frameDoc) {
+      return Array.from(frameDoc.querySelectorAll("button[aria-selected='true']"));
+    }
+
+    function selectedLabel(frameDoc) {
+      const selected = selectedButtons(frameDoc);
+      if (selected.length !== 1) {
+        return "";
+      }
+      return selected[0].textContent.trim();
+    }
+
+    function focusedLabel(frameDoc) {
+      const active = frameDoc.activeElement;
+      if (!active || active.tagName !== "BUTTON") {
+        return "";
+      }
+      return (active.textContent || "").trim();
+    }
+
+    function assertSelectionMatchesFocus(frameDoc, label) {
+      const selected = selectedLabel(frameDoc);
+      const focused = focusedLabel(frameDoc);
+      assertEqual(selected, label, "selected header " + label);
+      assertEqual(focused, label, "focused header " + label);
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        ui.buttons[0].focus();
+        await sleep(50);
+        assertSelectionMatchesFocus(ui.frameDoc, "info");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "settings");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "about");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "info");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "about");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "info");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(100);
+        assertSelectionMatchesFocus(ui.frameDoc, "settings");
+
+        setStatus("PASS\nselection+focus track keyboard: info->settings->about->info->about->info->settings", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

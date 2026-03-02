@@ -217,11 +217,13 @@
     (define (spacer)
       (view kind/spacer '() '()))
 
-    ;; table : list? (or/c list? observable?) -> view?
-    ;;   Construct a minimal table view with columns and row data.
-    (define (table columns rows)
+    ;; table : list? (or/c list? observable?) [symbol?] -> view?
+    ;;   Construct a minimal table view with columns/rows and optional spacing density.
+    ;;   Optional parameter density defaults to 'normal.
+    (define (table columns rows [density 'normal])
       (view kind/table (list (cons 'columns columns)
-                             (cons 'rows rows))
+                             (cons 'rows rows)
+                             (cons 'density density))
             '()))
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
@@ -232,10 +234,15 @@
                               (cons 'action action))
             '()))
 
-    ;; image : (or/c string? observable?) -> view?
-    ;;   Construct an image view from a source path/string.
-    (define (image src)
-      (view kind/image (list (cons 'src src)) '()))
+    ;; image : (or/c string? observable?) [any/c] [any/c] -> view?
+    ;;   Construct an image view from a source path/string with optional width/height attrs.
+    ;;   Optional parameter width defaults to #f.
+    ;;   Optional parameter height defaults to #f.
+    (define (image src [width #f] [height #f])
+      (view kind/image (list (cons 'src src)
+                             (cons 'width width)
+                             (cons 'height height))
+            '()))
 
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.

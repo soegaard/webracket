@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser list smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser list smoke assertions...</div>
+  <iframe id="app-frame" src="./example-browser-list.html" title="web-easy list smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function readListText(frameDoc) {
+      const text = frameDoc.body ? frameDoc.body.textContent || "" : "";
+      return text.replace(/\s+/g, "");
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const button = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "reorder");
+          if (button) {
+            return { frameDoc, button };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for list smoke UI");
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function containsInOrder(haystack, parts) {
+      let idx = 0;
+      for (const p of parts) {
+        const next = haystack.indexOf(p, idx);
+        if (next < 0) {
+          return false;
+        }
+        idx = next + p.length;
+      }
+      return true;
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const before = readListText(ui.frameDoc);
+        assertEqual(containsInOrder(before, ["a", "b", "c"]), true, "initial order a,b,c");
+
+        ui.button.click();
+        await sleep(100);
+
+        const after = readListText(ui.frameDoc);
+        assertEqual(containsInOrder(after, ["c", "a", "b"]), true, "reordered order c,a,b");
+        setStatus("PASS\ninitial=a,b,c; after-click=c,a,b", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

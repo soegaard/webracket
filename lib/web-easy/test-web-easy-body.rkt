@@ -325,11 +325,14 @@
      (group @group-label
             (text "inside"))))))
 (define group-node (node-child (node-child (renderer-root r9) 0) 0))
+(define group-legend-node (node-child group-node 0))
+(define group-content-node (node-child group-node 1))
 (check-equal (dom-node-tag group-node) 'group "group node tag")
-(check-equal (node-attr group-node 'label) "Settings" "group initial label")
-(check-equal (dom-node-text (node-child group-node 0)) "inside" "group child render")
+(check-equal (dom-node-tag group-legend-node) 'legend "group legend node tag")
+(check-equal (dom-node-text group-legend-node) "Settings" "group initial legend text")
+(check-equal (dom-node-text group-content-node) "inside" "group child render")
 (:= @group-label "Advanced")
-(check-equal (node-attr group-node 'label) "Advanced" "group label reflects observable update")
+(check-equal (dom-node-text group-legend-node) "Advanced" "group legend reflects observable update")
 
 ;; if-view switches branch on observable condition
 (define @show-then (@ #t))
@@ -399,13 +402,27 @@
 (define table-node (node-child (node-child (renderer-root r14) 0) 0))
 (check-equal (dom-node-tag table-node) 'table "table node tag")
 (check-equal (node-attr table-node 'columns) '(value) "table columns")
-(check-equal (map dom-node-text (dom-node-children table-node))
-             '("10" "20")
+(define (row-cell-texts row-node)
+  (map dom-node-text (dom-node-children row-node)))
+(check-equal (map row-cell-texts (dom-node-children table-node))
+             '(("value") ("10") ("20"))
              "table initial rows")
 (:= @rows '(30 40 50))
-(check-equal (map dom-node-text (dom-node-children table-node))
-             '("30" "40" "50")
+(check-equal (map row-cell-texts (dom-node-children table-node))
+             '(("value") ("30") ("40") ("50"))
              "table reactive rows update")
+
+;; table supports compact density style
+(define r14b
+  (render
+   (window
+    (vpanel
+     (table '(k v) '(("a" 1)) 'compact)))))
+(define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
+(check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
+(check-equal (node-attr table-node-compact 'style)
+             "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"
+             "table compact density style")
 
 ;; observable-view switches rendered child when data changes
 (define @ov (@ "one"))
@@ -477,6 +494,17 @@
 (:= @img-src "y.png")
 (check-equal (node-attr image-node2 'src) "y.png" "image observable updated src")
 
+;; image supports optional width/height attributes
+(define r19b
+  (render
+   (window
+    (vpanel
+     (image "size.png" 64 32)))))
+(define image-node3 (node-child (node-child (renderer-root r19b) 0) 0))
+(check-equal (node-attr image-node3 'src) "size.png" "image sized src")
+(check-equal (node-attr image-node3 'width) 64 "image optional width attr")
+(check-equal (node-attr image-node3 'height) 32 "image optional height attr")
+
 ;; menu-bar/menu/menu-item render and menu-item action
 (define @menu-label (@ "File"))
 (define @item-label (@ "Open"))
@@ -490,11 +518,14 @@
             (menu-item @item-label
                        (lambda () (<~ @menu-clicks add1)))))))))
 (define menu-bar-node (node-child (node-child (renderer-root r20) 0) 0))
-(define menu-node (node-child menu-bar-node 0))
+(define menu-node (node-child menu-bar-node 1))
 (define menu-item-node (node-child menu-node 0))
 (check-equal (dom-node-tag menu-bar-node) 'menu-bar "menu-bar tag")
+(check-equal (dom-node-tag (node-child menu-bar-node 0)) 'style "menu-bar includes style node")
 (check-equal (dom-node-tag menu-node) 'menu "menu tag")
 (check-equal (dom-node-tag menu-item-node) 'menu-item "menu-item tag")
+(check-equal (node-attr menu-item-node 'role) 'button "menu-item role attr")
+(check-equal (node-attr menu-item-node 'tabindex) 0 "menu-item tabindex attr")
 (check-equal (node-attr menu-node 'label) "File" "menu initial label")
 (check-equal (dom-node-text menu-item-node) "Open" "menu-item initial label")
 (dom-node-click! menu-item-node)
@@ -509,6 +540,12 @@
 (:= @item-label "Paste")
 (check-equal (node-attr menu-node 'label) "View" "menu label second observable update")
 (check-equal (dom-node-text menu-item-node) "Paste" "menu-item label second observable update")
+(dom-node-click! menu-item-node)
+(check-equal (obs-peek @menu-clicks) 3 "menu-item action still works after second label updates")
+(dom-node-keydown! menu-item-node "Enter")
+(check-equal (obs-peek @menu-clicks) 4 "menu-item Enter key invokes action")
+(dom-node-keydown! menu-item-node " ")
+(check-equal (obs-peek @menu-clicks) 5 "menu-item Space key invokes action")
 
 ;; case-view handles repeated transitions among matching and fallback clauses
 (:= @mode 'b)

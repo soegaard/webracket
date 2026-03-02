@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity profile settings smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 340px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity profile settings assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-profile.html" title="web-easy parity profile settings app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      const buttons = Array.from(frameDoc.querySelectorAll("button"));
+      const spans = Array.from(frameDoc.querySelectorAll("span"));
+      return buttons.concat(spans)
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function fieldsetLegendText(fieldset) {
+      const legend = fieldset ? fieldset.querySelector("legend") : null;
+      return legend ? (legend.textContent || "").trim() : "";
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const fieldset = frameDoc.querySelector("fieldset");
+          const select = frameDoc.querySelector("select");
+          const image = frameDoc.querySelector("img");
+          const text = bodyText(frameDoc);
+          if (fieldset &&
+              select &&
+              image &&
+              menuItemByText(frameDoc, "Reset") &&
+              text.includes("mode:photo") &&
+              text.includes("status:ready")) {
+            return { frameDoc, fieldset, select, image };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity profile settings UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Alice", "initial group legend");
+        assertTrue(text.includes("img:avatar-photo.png"), "initial image text");
+
+        if (ui.select.options && ui.select.options.length >= 3) {
+          ui.select.selectedIndex = 2;
+        } else {
+          ui.select.value = "icon";
+        }
+        ui.select.dispatchEvent(new Event("input", { bubbles: true }));
+        ui.select.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("mode:icon"), "radios/select changed mode to icon");
+        assertTrue(text.includes("img:avatar-icon.png"), "image preview updated for icon");
+
+        menuItemByText(ui.frameDoc, "Rename Bob").click();
+        await sleep(100);
+        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Bob", "group legend updates after rename");
+        assertTrue(bodyText(ui.frameDoc).includes("status:renamed"), "status after rename");
+
+        menuItemByText(ui.frameDoc, "Save preset").click();
+        await sleep(100);
+        assertTrue(bodyText(ui.frameDoc).includes("status:saved"), "status after save preset");
+
+        ui.select.value = "initials";
+        ui.select.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        assertTrue(bodyText(ui.frameDoc).includes("mode:initials"), "mode changed to initials before load");
+
+        menuItemByText(ui.frameDoc, "Load preset").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("mode:icon"), "load preset restored mode");
+        assertTrue(text.includes("img:avatar-icon.png"), "load preset restored image");
+        assertTrue(text.includes("status:loaded"), "status after load preset");
+
+        menuItemByText(ui.frameDoc, "Reset").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Alice", "reset restored profile name");
+        assertTrue(text.includes("mode:photo"), "reset restored mode");
+        assertTrue(text.includes("img:avatar-photo.png"), "reset restored image");
+        assertTrue(text.includes("status:reset"), "status after reset");
+
+        setStatus("PASS\nprofile settings parity: radios+image+group+menu actions", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: selects=" + frameDoc.querySelectorAll("select").length +
+             " imgs=" + frameDoc.querySelectorAll("img").length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

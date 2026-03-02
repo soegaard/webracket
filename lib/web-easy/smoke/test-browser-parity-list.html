@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity list smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity list assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-list.html" title="web-easy parity list app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function listLeafLabels(frameDoc) {
+      const skip = new Set(["reverse", "add-gamma", "remove-beta"]);
+      const leaves = Array.from(frameDoc.querySelectorAll("*"))
+        .filter((el) => el.children.length === 0)
+        .map((el) => (el.textContent || "").trim())
+        .filter((t) => t.length > 0 && !skip.has(t));
+      return leaves;
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const text = bodyText(frameDoc);
+          if (buttonByText(frameDoc, "reverse") && text.includes("alpha") && text.includes("beta")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity list UI");
+    }
+
+    function indexOfToken(items, token) {
+      return items.indexOf(token);
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        let labels = listLeafLabels(ui.frameDoc);
+        assertTrue(indexOfToken(labels, "alpha") >= 0 && indexOfToken(labels, "beta") >= 0, "initial has alpha and beta");
+        assertTrue(indexOfToken(labels, "alpha") < indexOfToken(labels, "beta"), "initial order alpha,beta");
+
+        buttonByText(ui.frameDoc, "reverse").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        labels = listLeafLabels(ui.frameDoc);
+        assertTrue(indexOfToken(labels, "beta") < indexOfToken(labels, "alpha"), "after reverse order beta,alpha");
+
+        buttonByText(ui.frameDoc, "add-gamma").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        labels = listLeafLabels(ui.frameDoc);
+        assertTrue(indexOfToken(labels, "gamma") >= 0, "after add-gamma includes gamma");
+
+        buttonByText(ui.frameDoc, "remove-beta").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        labels = listLeafLabels(ui.frameDoc);
+        assertTrue(indexOfToken(labels, "beta") < 0
+          && indexOfToken(labels, "alpha") >= 0
+          && indexOfToken(labels, "gamma") >= 0,
+          "after remove-beta excludes beta and keeps alpha/gamma");
+
+        setStatus("PASS\nlist parity: alpha,beta -> reverse -> +gamma -> -beta", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

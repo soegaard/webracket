@@ -101,14 +101,16 @@
     (define (apply-attributes! n attrs)
       (define native (dom-node-record-native n))
       (define tag (dom-node-record-tag n))
-      (when (eq? tag 'select)
+      (when (or (eq? tag 'select)
+                (eq? tag 'radios)
+                (eq? tag 'choice))
         (define choices (alist-ref/default attrs 'choices '()))
         (sync-select-options! native choices))
       (for-each (lambda (a)
                   (define name (car a))
                   (define value (cdr a))
                   (case name
-                    [(choices)
+                    [(choices columns density)
                      (void)]
                     [(selected)
                      ((#%top . js-set!) native "value" (value->attr-string value))]
@@ -152,6 +154,7 @@
         [(window vpanel hpanel) "div"]
         [(style) "style"]
         [(group) "fieldset"]
+        [(legend) "legend"]
         [(text menu-item) "span"]
         [(button) "button"]
         [(input) "input"]
@@ -162,6 +165,8 @@
         [(spacer) "div"]
         [(table) "table"]
         [(tr) "tr"]
+        [(th) "th"]
+        [(td) "td"]
         [(menu-bar menu) "nav"]
         [(image) "img"]
         [else "div"]))
@@ -222,6 +227,12 @@
         [(ArrowRight ArrowLeft Home End) #t]
         [else #f]))
 
+    ;; activation-key? : string? -> boolean?
+    ;;   Check whether key should activate a button-like control.
+    (define (activation-key? key)
+      (or (string=? key "Enter")
+          (string=? key " ")))
+
     ;; focus-selected-sibling-tab! : any/c -> void?
     ;;   Focus selected tab button in the same tablist as native.
     (define (focus-selected-sibling-tab! native)
@@ -279,6 +290,14 @@
           (when (and on-enter (string=? key "Enter"))
             ((#%top . js-send) evt "preventDefault" (vector))
             (on-enter))
+          (define on-click (dom-node-record-on-click n))
+          (define role-pair (assq 'role (dom-node-record-attrs n)))
+          (when (and on-click
+                     role-pair
+                     (eq? (cdr role-pair) 'button)
+                     (activation-key? key))
+            ((#%top . js-send) evt "preventDefault" (vector))
+            (on-click))
           (define callback (dom-node-record-on-change n))
           (when (and callback (tab-key-node? n))
             (when (nav-key? key)

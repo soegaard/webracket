@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser controls smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser controls smoke assertions...</div>
+  <iframe id="app-frame" src="./example-browser-controls.html" title="web-easy controls smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const select = frameDoc.querySelector("select");
+          const slider = frameDoc.querySelector("input");
+          const progress = frameDoc.querySelector("progress");
+          const text = bodyText(frameDoc);
+          if (select && slider && (progress || text.includes("10"))) {
+            return { frameDoc, select, slider, progress };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for controls smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        assertEqual(bodyText(ui.frameDoc).includes("color:red"), true, "initial color text contains color:red");
+        assertEqual(bodyText(ui.frameDoc).includes("level:10"), true, "initial level text contains level:10");
+
+        ui.select.value = "green";
+        ui.select.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        assertEqual(bodyText(ui.frameDoc).includes("color:green"), true, "color text after select contains color:green");
+
+        ui.slider.value = "42";
+        ui.slider.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        assertEqual(bodyText(ui.frameDoc).includes("level:42"), true, "level text after slider contains level:42");
+        if (ui.progress) {
+          assertEqual(ui.progress.getAttribute("value"), "42", "progress value attr after slider");
+        } else {
+          assertEqual(bodyText(ui.frameDoc).includes("level:42"), true, "fallback progress/text contains level:42");
+        }
+
+        setStatus("PASS\ncolor: red->green; level: 10->42; progress=42", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: selects=" + frameDoc.querySelectorAll("select").length +
+             " inputs=" + frameDoc.querySelectorAll("input").length +
+             " progress=" + frameDoc.querySelectorAll("progress").length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

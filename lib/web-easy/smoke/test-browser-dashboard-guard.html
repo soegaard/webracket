@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy dashboard guard self-test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; max-width: 900px; }
+    #summary { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #summary.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #summary.fail { color: #8a1111; border-color: #8a1111; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <h1>dashboard guard self-test</h1>
+  <div id="summary">Running guard self-test...</div>
+  <table id="results">
+    <thead>
+      <tr><th>Test Page</th><th>Status</th><th>Message</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="./dashboard-guard.js"></script>
+  <script>
+    const tests = [
+      "test-browser-value-leak.html",
+      "test-browser-undefined-leak.html",
+      "test-browser-object-leak.html"
+    ];
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function setSummary(text, cls) {
+      const s = document.getElementById("summary");
+      s.textContent = text;
+      s.className = cls;
+    }
+
+    function appendRow(page, status, message) {
+      const tbody = document.querySelector("#results tbody");
+      const tr = document.createElement("tr");
+      const tdPage = document.createElement("td");
+      const tdStatus = document.createElement("td");
+      const tdMessage = document.createElement("td");
+      tdPage.textContent = page;
+      tdStatus.textContent = status;
+      tdMessage.textContent = message;
+      tr.appendChild(tdPage);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdMessage);
+      tbody.appendChild(tr);
+    }
+
+    async function runOne(page) {
+      const frame = document.createElement("iframe");
+      frame.style.position = "absolute";
+      frame.style.left = "-10000px";
+      frame.style.width = "800px";
+      frame.style.height = "500px";
+      frame.src = page;
+      document.body.appendChild(frame);
+
+      const timeoutMs = 10000;
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const status = doc.getElementById("status");
+          if (status && (status.textContent || "").trim().startsWith("PASS")) {
+            const offenders = window.smokeDashboardGuard.findForbiddenAttrTokensInDoc(doc, page);
+            frame.remove();
+            if (offenders.length > 0) {
+              return { page, ok: false, message: "FAIL\nFound forbidden token in DOM attributes: " + offenders[0] };
+            }
+            return { page, ok: true, message: "PASS\nNo value leak found" };
+          }
+        }
+        await sleep(25);
+      }
+      frame.remove();
+      return { page, ok: false, message: "FAIL\nTimed out waiting for fixture PASS status" };
+    }
+
+    (async function runAll() {
+      const results = [];
+      for (const page of tests) {
+        const result = await runOne(page);
+        results.push(result);
+        appendRow(result.page, result.ok ? "PASS" : "FAIL", result.message);
+      }
+      const expectedFailures = results.filter((r) => !r.ok).length;
+      if (expectedFailures === tests.length) {
+        setSummary("FAIL\nGuard correctly detected forbidden token leakage in all fixtures", "fail");
+      } else {
+        setSummary("PASS\nGuard missed at least one fixture (unexpected)", "pass");
+      }
+    })();
+  </script>
+</body>
+</html>

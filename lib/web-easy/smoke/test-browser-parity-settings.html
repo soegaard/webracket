@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity settings smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity settings assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-settings.html" title="web-easy parity settings app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      const buttons = Array.from(frameDoc.querySelectorAll("button"));
+      const spans = Array.from(frameDoc.querySelectorAll("span"));
+      return buttons.concat(spans)
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const table = frameDoc.querySelector("table");
+          const nav = frameDoc.querySelector("nav");
+          const text = bodyText(frameDoc);
+          if (table &&
+              nav &&
+              menuItemByText(frameDoc, "Promote Alice") &&
+              text.includes("Alice:viewer") &&
+              text.includes("Bob:editor") &&
+              text.includes("count:2") &&
+              text.includes("status:ready")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity settings UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Alice:viewer"), "initial Alice role");
+        assertTrue(text.includes("Bob:editor"), "initial Bob role");
+        assertTrue(text.includes("count:2"), "initial row count");
+
+        const promote = menuItemByText(ui.frameDoc, "Promote Alice");
+        promote.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Alice:admin"), "alice promoted");
+        assertTrue(text.includes("status:promoted"), "status after promote");
+
+        const addCara = menuItemByText(ui.frameDoc, "Add Cara");
+        addCara.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Cara:viewer"), "cara added");
+        assertTrue(text.includes("count:3"), "row count after add");
+        assertTrue(text.includes("status:added-cara"), "status after add");
+
+        menuItemByText(ui.frameDoc, "Reset settings").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Alice:viewer"), "reset restores alice");
+        assertTrue(!text.includes("Alice:admin"), "reset removes promoted alice");
+        assertTrue(!text.includes("Cara:viewer"), "reset removes cara");
+        assertTrue(text.includes("count:2"), "row count after reset");
+        assertTrue(text.includes("status:reset"), "status after reset");
+
+        setStatus("PASS\nsettings parity: table rows + menu actions", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: tables=" + frameDoc.querySelectorAll("table").length +
+             " navs=" + frameDoc.querySelectorAll("nav").length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

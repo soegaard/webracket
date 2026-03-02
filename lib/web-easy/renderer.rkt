@@ -57,13 +57,17 @@
     (define attr/role   'role)   ; Attribute key for semantic role.
     (define attr/layout 'layout) ; Attribute key for layout direction.
     (define text/fallback "#<value>") ; Fallback when value cannot be rendered as text.
+    (define table/density-normal 'normal) ; Default table spacing density.
+    (define table/density-compact 'compact) ; Compact table spacing density.
     (define tab-panel-counter 0) ; Monotonic counter for tab-panel ids.
     (define tab-panel-style-text
-      ".we-tab-list{display:flex;gap:4px;align-items:stretch;}\
-       .we-tab-btn{min-width:88px;padding:4px 8px;border:2px solid #999;background:#fff;font-weight:normal;}\
-       .we-tab-btn.is-selected{border-color:#333;background:#ddd;font-weight:bold;}\
+      ".we-tab-list{display:flex;gap:6px;align-items:stretch;border-bottom:1px solid #999;padding-bottom:4px;margin-bottom:4px;}\
+       .we-tab-btn{min-width:88px;padding:4px 10px;border:1px solid #999;border-bottom-width:2px;background:#fff;font-weight:normal;}\
+       .we-tab-btn.is-selected{border-color:#333;background:#ececec;font-weight:bold;}\
        .we-tab-btn.is-disabled{border-color:#bbb;background:#f3f3f3;color:#777;opacity:.7;}\
        .we-tab-btn:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") ; CSS for class-based tab styles.
+    (define menu-style-text
+      ".we-menu-item:focus,.we-menu-item:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") ; CSS for menu-item keyboard focus visibility.
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -154,8 +158,9 @@
         (on-change selected)))
 
     ;; dom-node-keydown! : dom-node? string? -> void?
-    ;;   Dispatch keydown payload for tabs and Enter callbacks for inputs.
+    ;;   Dispatch keydown payload for tabs, input Enter actions, and menu-item key activation.
     (define (dom-node-keydown! n key)
+      (define on-click (dom-node-on-click n))
       (define on-change (dom-node-on-change n))
       (define on-enter-pair (assq 'on-enter-action (dom-node-attrs n)))
       (define role-pair (assq 'role (dom-node-attrs n)))
@@ -163,6 +168,12 @@
                  (procedure? (cdr on-enter-pair))
                  (string=? key "Enter"))
         ((cdr on-enter-pair)))
+      (when (and on-click
+                 role-pair
+                 (eq? (cdr role-pair) 'button)
+                 (or (string=? key "Enter")
+                     (string=? key " ")))
+        (on-click))
       (when (and on-change role-pair (eq? (cdr role-pair) 'tab))
         (on-change key)))
 
@@ -261,14 +272,71 @@
     (define (maybe-observable-value v)
       (if (obs? v) (obs-peek v) v))
 
-    ;; render-table-rows! : dom-node? list? -> void?
-    ;;   Replace table rows with row nodes rendered from rows data.
-    (define (render-table-rows! table-node rows)
-      (define row-nodes
+    ;; normalize-table-density : any/c -> symbol?
+    ;;   Normalize density to 'normal or 'compact.
+    (define (normalize-table-density density)
+      (if (symbol? density)
+          (case density
+            [(normal compact) density]
+            [else table/density-normal])
+          table/density-normal))
+
+    ;; table-dims-style : symbol? -> string?
+    ;;   Return table spacing style for density.
+    (define (table-dims-style density)
+      (case density
+        [(compact) "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]
+        [else "border-collapse:separate;border-spacing:2px 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]))
+
+    ;; table-header-cell-style : symbol? -> string?
+    ;;   Return header cell style for density.
+    (define (table-header-cell-style density)
+      (case density
+        [(compact) "padding:1px 4px;text-align:left;border-bottom:1px solid #bbb;"]
+        [else "padding:2px 8px;text-align:left;border-bottom:1px solid #bbb;"]))
+
+    ;; table-data-cell-style : symbol? -> string?
+    ;;   Return data cell style for density.
+    (define (table-data-cell-style density)
+      (case density
+        [(compact) "padding:1px 4px;"]
+        [else "padding:2px 8px;"]))
+
+    ;; render-table-rows! : dom-node? list? list? symbol? -> void?
+    ;;   Replace table rows with a header row and data rows rendered as table cells.
+    (define (render-table-rows! table-node columns rows density)
+      (define normalized-rows (ensure-list rows 'table "rows"))
+      (define (header-cell column)
+        (dom-node 'th
+                  (list (cons 'style (table-header-cell-style density)))
+                  '()
+                  (value->text column)
+                  #f
+                  #f))
+      (define (data-cell cell-value)
+        (dom-node 'td
+                  (list (cons 'style (table-data-cell-style density)))
+                  '()
+                  (value->text cell-value)
+                  #f
+                  #f))
+      (define (row-values row)
+        (if (list? row)
+            row
+            (list row)))
+      (define (build-row cell-values build-cell)
+        (define row-node (dom-node 'tr '() '() #f #f #f))
+        (backend-replace-children! row-node (map build-cell cell-values))
+        row-node)
+      (define header-row
+        (if (null? columns)
+            '()
+            (list (build-row columns header-cell))))
+      (define data-rows
         (map (lambda (row)
-               (dom-node 'tr '() '() (value->text row) #f #f))
-             (ensure-list rows 'table "rows")))
-      (backend-replace-children! table-node row-nodes))
+               (build-row (row-values row) data-cell))
+             normalized-rows))
+      (backend-replace-children! table-node (append header-row data-rows)))
 
     ;; build-node : view? (-> (-> void?) void?) -> dom-node?
     ;;   Build a dom-node tree from v and register lifecycle cleanups.
@@ -296,17 +364,14 @@
         [(group)
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define node (dom-node 'group
-                                (list (cons attr/layout 'column)
-                                      (cons 'label ""))
+                                (list (cons attr/layout 'column))
                                 '()
                                 #f
                                 #f
                                 #f))
+         (define legend-node (dom-node 'legend '() '() "" #f #f))
          (define (set-label! label-value)
-           (set-dom-node-attrs!
-            node
-            (list (cons attr/layout 'column)
-                  (cons 'label (value->text label-value)))))
+           (set-dom-node-text! legend-node (value->text label-value)))
          (cond
            [(obs? raw-label)
             (set-label! (obs-peek raw-label))
@@ -316,6 +381,7 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
            [else
             (set-label! raw-label)])
+         (backend-append-child! node legend-node)
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
@@ -336,13 +402,19 @@
         [(button)
          (define label (alist-ref (view-props v) 'label 'render))
          (define action (alist-ref (view-props v) 'action 'render))
-         (dom-node 'button '() '() (value->text label) action #f)]
+         (dom-node 'button
+                   (list (cons 'style "align-self:flex-start;width:auto;"))
+                   '()
+                   (value->text label)
+                   action
+                   #f)]
         [(input)
          (define raw-value (alist-ref (view-props v) 'value 'render))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define on-enter  (alist-ref (view-props v) 'on-enter 'render))
          (define node (dom-node 'input
                                 (list (cons 'value "")
+                                      (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
                                       (cons 'on-enter-action on-enter))
                                 '()
                                 #f
@@ -351,6 +423,7 @@
          (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
          (define (set-input-value! value)
            (set-dom-node-attrs! node (list (cons 'value (value->text value))
+                                           (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
                                            (cons 'on-enter-action on-enter))))
          (cond
            [(obs? raw-value)
@@ -365,10 +438,17 @@
         [(checkbox)
          (define raw-value (alist-ref (view-props v) 'value 'render))
          (define action    (alist-ref (view-props v) 'action 'render))
-         (define node (dom-node 'checkbox (list (cons 'checked #f)) '() #f #f #f))
+         (define node (dom-node 'checkbox
+                                (list (cons 'checked #f)
+                                      (cons 'style "align-self:flex-start;"))
+                                '()
+                                #f
+                                #f
+                                #f))
          (set-dom-node-on-change! node (lambda (new-checked) (action (not (not new-checked)))))
          (define (set-checked! v)
-           (set-dom-node-attrs! node (list (cons 'checked (not (not v))))))
+           (set-dom-node-attrs! node (list (cons 'checked (not (not v)))
+                                           (cons 'style "align-self:flex-start;"))))
          (cond
            [(obs? raw-value)
             (set-checked! (obs-peek raw-value))
@@ -387,6 +467,7 @@
          (define action       (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'select
                                 (list (cons 'choices choices)
+                                      (cons 'style "align-self:flex-start;")
                                       (cons 'selected #f))
                                 '()
                                 #f
@@ -397,6 +478,7 @@
            (set-dom-node-attrs!
             node
             (list (cons 'choices choices)
+                  (cons 'style "align-self:flex-start;")
                   (cons 'selected v))))
          (cond
            [(obs? raw-selected)
@@ -416,6 +498,7 @@
          (define node (dom-node 'slider
                                 (list (cons 'min min-value)
                                       (cons 'max max-value)
+                                      (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
                                 #f
@@ -427,6 +510,7 @@
             node
             (list (cons 'min min-value)
                   (cons 'max max-value)
+                  (cons 'style "align-self:flex-start;")
                   (cons 'value v))))
          (cond
            [(obs? raw-value)
@@ -445,6 +529,7 @@
          (define node (dom-node 'progress
                                 (list (cons 'min min-value)
                                       (cons 'max max-value)
+                                      (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
                                 #f
@@ -455,6 +540,7 @@
             node
             (list (cons 'min min-value)
                   (cons 'max max-value)
+                  (cons 'style "align-self:flex-start;")
                   (cons 'value v))))
          (cond
            [(obs? raw-value)
@@ -739,22 +825,26 @@
          (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                       'table
                                       "columns"))
-         (define raw-rows (alist-ref (view-props v) 'rows 'render))
+         (define raw-rows    (alist-ref (view-props v) 'rows 'render))
+         (define raw-density (alist-ref (view-props v) 'density 'render))
+         (define density     (normalize-table-density (maybe-observable-value raw-density)))
          (define node (dom-node 'table
-                                (list (cons 'columns columns))
+                                (list (cons 'columns columns)
+                                      (cons 'density density)
+                                      (cons 'style (table-dims-style density)))
                                 '()
                                 #f
                                 #f
                                 #f))
          (cond
            [(obs? raw-rows)
-            (render-table-rows! node (obs-peek raw-rows))
+            (render-table-rows! node columns (obs-peek raw-rows) density)
             (define (listener updated)
-              (render-table-rows! node updated))
+              (render-table-rows! node columns updated density))
             (obs-observe! raw-rows listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-rows listener)))]
            [else
-            (render-table-rows! node raw-rows)])
+            (render-table-rows! node columns raw-rows density)])
          node]
         [(radios)
          (define choices      (ensure-list (alist-ref (view-props v) 'choices 'render)
@@ -764,6 +854,7 @@
          (define action       (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'radios
                                 (list (cons 'choices choices)
+                                      (cons 'style "align-self:flex-start;")
                                       (cons 'selected #f))
                                 '()
                                 #f
@@ -774,6 +865,7 @@
            (set-dom-node-attrs!
             node
             (list (cons 'choices choices)
+                  (cons 'style "align-self:flex-start;")
                   (cons 'selected selected))))
          (cond
            [(obs? raw-selected)
@@ -786,31 +878,74 @@
             (set-selected! raw-selected)])
          node]
         [(image)
-         (define raw-src (alist-ref (view-props v) 'src 'render))
-         (define node (dom-node 'image (list (cons 'src "")) '() #f #f #f))
-         (define (set-src! src)
-           (set-dom-node-attrs! node (list (cons 'src (value->text src)))))
-         (cond
-           [(obs? raw-src)
-            (set-src! (obs-peek raw-src))
-            (define (listener updated)
-              (set-src! updated))
-            (obs-observe! raw-src listener)
-            (register-cleanup! (lambda () (obs-unobserve! raw-src listener)))]
-           [else
-            (set-src! raw-src)])
+         (define raw-src    (alist-ref (view-props v) 'src 'render))
+         (define raw-width  (alist-ref (view-props v) 'width 'render))
+         (define raw-height (alist-ref (view-props v) 'height 'render))
+         (define node (dom-node 'image
+                                (list (cons 'src "")
+                                      (cons 'style "align-self:flex-start;"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define (with-optional-attr attrs key value)
+           (if (eq? value #f)
+               attrs
+               (append attrs (list (cons key value)))))
+         (define (current-value v)
+           (if (obs? v) (obs-peek v) v))
+         (define (set-image-attrs! src width height)
+           (define attrs/base (list (cons 'src (value->text src))
+                                    (cons 'style "align-self:flex-start;")))
+           (define attrs/width (with-optional-attr attrs/base 'width width))
+           (define attrs/final (with-optional-attr attrs/width 'height height))
+           (set-dom-node-attrs! node attrs/final))
+         (define (refresh-image!)
+           (set-image-attrs! (current-value raw-src)
+                             (current-value raw-width)
+                             (current-value raw-height)))
+         (refresh-image!)
+         (when (obs? raw-src)
+           (define (src-listener _updated)
+             (refresh-image!))
+           (obs-observe! raw-src src-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-src src-listener))))
+         (when (obs? raw-width)
+           (define (width-listener _updated)
+             (refresh-image!))
+           (obs-observe! raw-width width-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-width width-listener))))
+         (when (obs? raw-height)
+           (define (height-listener _updated)
+             (refresh-image!))
+           (obs-observe! raw-height height-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-height height-listener))))
          node]
         [(menu-bar)
-         (define node (dom-node 'menu-bar '() '() #f #f #f))
+         (define style-node (dom-node 'style '() '() menu-style-text #f #f))
+         (define node (dom-node 'menu-bar
+                                (list (cons 'style "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0;"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (backend-append-child! node style-node)
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
         [(menu)
          (define raw-label (alist-ref (view-props v) 'label 'render))
-         (define node (dom-node 'menu (list (cons 'label "")) '() #f #f #f))
+         (define node (dom-node 'menu
+                                (list (cons 'label "")
+                                      (cons 'style "display:inline-flex;gap:8px;align-items:center;"))
+                                '()
+                                #f
+                                #f
+                                #f))
          (define (set-label! label-value)
-           (set-dom-node-attrs! node (list (cons 'label (value->text label-value)))))
+           (set-dom-node-attrs! node (list (cons 'label (value->text label-value))
+                                           (cons 'style "display:inline-flex;gap:8px;align-items:center;"))))
          (cond
            [(obs? raw-label)
             (set-label! (obs-peek raw-label))
@@ -827,7 +962,15 @@
         [(menu-item)
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define action    (alist-ref (view-props v) 'action 'render))
-         (define node (dom-node 'menu-item '() '() "" action #f))
+         (define node (dom-node 'menu-item
+                                (list (cons attr/role 'button)
+                                      (cons 'class "we-menu-item")
+                                      (cons 'tabindex 0)
+                                      (cons 'style "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;"))
+                                '()
+                                ""
+                                action
+                                #f))
          (cond
            [(obs? raw-label)
             (set-dom-node-text! node (value->text (obs-peek raw-label)))

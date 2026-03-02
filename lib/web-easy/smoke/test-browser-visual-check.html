@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy visual check page</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #note {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #app-frame {
+      width: 100%;
+      height: 520px;
+      border: 1px solid #999;
+    }
+    ul {
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>web-easy visual check page</h1>
+  <div id="note">Manual visual sanity page (not part of dashboard PASS/FAIL automation).</div>
+  <iframe id="app-frame" src="./example-browser-visual-check.html" title="web-easy visual check app"></iframe>
+  <ul>
+    <li>Check fieldset/group border and spacing (the frame with legend "Visual Check").</li>
+    <li>Check action chips look clickable and have horizontal separation.</li>
+    <li>Check table border/cell spacing and separation from status text.</li>
+    <li>Check tabs have distinct selected/unselected visuals and keyboard focus ring.</li>
+    <li>Check input/checkbox/choice/slider/progress alignment and spacing.</li>
+    <li>Expected widths/alignment:
+      <br>group: full-width, left
+      <br>input: full-width, left
+      <br>checkbox/choice/slider/progress: content-width, left
+      <br>table: content-width, left
+      <br>tab-panel: full-width, left
+      <br>menu-bar: row left; action chips content-width
+    </li>
+  </ul>
+</body>
+</html>

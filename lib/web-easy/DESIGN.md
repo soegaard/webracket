@@ -617,9 +617,8 @@ M5 phase 1 status:
   - `test-browser-parity-counter.html`: PASS (`counter starts at 0 and increments to 1`)
   - `test-browser-parity-dynamic-list.html`: PASS (`initial: a:0,b:0; inc-a: a:1; reorder: b before a; add-c: c:0; drop-b: a:1,c:0`)
   - report file: `lib/web-easy/smoke/parity-report.md`
-- Last validated (2026-03-02):
-  - full headless dashboard: `19/19` PASS
-  - parity-only headless dashboard: `8/8` PASS
+- Current validation baseline:
+  - maintained in `lib/web-easy/smoke/SMOKE.md` under "Current Test Counts" and "Last validated".
 
 M5 phase 2 status:
 
@@ -636,6 +635,53 @@ M5 phase 2 status:
   - `PASS list parity: alpha,beta -> reverse -> +gamma -> -beta`
   - `PASS todo parity: add, edit/cancel, edit/save, toggle, mark-all-done, clear-done`
 
+## Current Widget-to-Element Mapping
+
+Current browser backend element mapping (as implemented today):
+
+| widget/tag | HTML element(s) | Notes |
+|---|---|---|
+| `window`, `vpanel`, `hpanel` | `div` | `vpanel`/`hpanel` use flex layout styles. |
+| `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
+| `text` | `span` | Plain inline text node wrapper. |
+| `button` | `button` | Native clickable button. |
+| `input` | `input` | Text input; supports Enter callback wiring. |
+| `checkbox` | `input[type=checkbox]` | Boolean toggle control. |
+| `choice`, `radios` | `select` | `radios` currently rendered as select in browser backend. |
+| `slider` | `input[type=range]` | Numeric range input. |
+| `progress` | `progress` | One-way progress display. |
+| `tab-panel` | composite: `div` + `button` + `div` + injected `style` | Tab strip uses tab buttons with ARIA attrs and keyboard handling. |
+| `spacer` | `div` | Empty layout spacer. |
+| `table` | `table` + `tr` + `th` + `td` | Header row from columns, data rows from row values. |
+| `image` | `img` | Optional `width`/`height`; keeps intrinsic size by default. |
+| `menu-bar`, `menu` | `nav` | Container/navigation wrappers. |
+| `menu-item` | `span` | Styled as clickable action chip; click wired via renderer/backend. |
+
+## Width Policy (Current Defaults)
+
+Current width defaults are intentionally split between layout containers and leaf controls.
+
+- Fill-width by default:
+  - `window`, `vpanel`, `hpanel`, `group`, tab content containers.
+  - `input` (explicit `width: 100%` in current renderer output).
+- Content-width by default:
+  - `table`, `image`, `button`, `checkbox`, `choice`, `radios`, `slider`, `progress`, `menu-item`.
+- Alignment default:
+  - leaf/content-width controls are left-aligned via `align-self: flex-start` in column layouts.
+- Rationale:
+  - containers define structure and usually fill available width;
+  - leaf widgets stay intrinsic by default to avoid accidental full-width controls.
+
+## Baseline Changelog
+
+- 2026-03-02 baseline update:
+  - full dashboard baseline: `25` automated smoke tests.
+  - parity dashboard baseline: `11` automated parity tests.
+  - recent additions to full dashboard baseline:
+    - `test-browser-group.html` (fieldset + legend semantics)
+    - `test-browser-menu-keys.html` (menu-item focus + Enter/Space activation)
+    - `test-browser-width.html` (width-policy runtime assertions)
+
 ## Open Design Questions
 
 1. Exact API shape for `window` in web context:
@@ -646,6 +692,9 @@ M5 phase 2 status:
 5. Tab visual polish roadmap:
    - current tabs intentionally use button-like styling for behavior-first parity checks.
    - deferred UI pass should make tabs more tab-like (selected tab merged with panel, inactive tabs recessed, clearer tab strip hierarchy).
+6. Group/legend follow-up:
+   - `group` now renders as `fieldset` with a `legend` child.
+   - follow up: decide whether additional class-based styling defaults are needed for legend consistency.
 
 ## Immediate Next Steps
 
@@ -657,3 +706,9 @@ M5 phase 2 status:
    - next: choose phase-3 parity targets.
 3. Keep counts and validation stamps up to date:
    - update dashboard test counts and last-validated lines whenever smoke/parity inventory changes.
+4. Revisit DOM element choices per widget:
+   - review whether each widget currently maps to the best semantic HTML element.
+   - document intended element mapping policy and any accessibility tradeoffs.
+5. Revisit CSS strategy (inline vs stylesheet/classes):
+   - define when inline style is acceptable vs when class-based styles in shared `<style>` should be preferred.
+   - align renderer output with that policy for maintainability and visual consistency.

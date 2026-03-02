@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity tabs smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 280px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity tabs assertions...</div>
+  <iframe id="app-frame" src="./example-browser-parity-tabs.html" title="web-easy parity tabs app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const text = bodyText(frameDoc);
+          if (buttonByText(frameDoc, "overview") && text.includes("Overview panel")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity tabs UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Overview panel"), "initial tab is overview");
+
+        buttonByText(ui.frameDoc, "details").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Details panel"), "details tab content visible");
+
+        buttonByText(ui.frameDoc, "help").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("Help panel"), "help tab content visible");
+
+        setStatus("PASS\ntabs switch content: overview->details->help", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>
