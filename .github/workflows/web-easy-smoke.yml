@@ -30,18 +30,7 @@ jobs:
           raco pkg install --auto --skip-installed raco-static-web
           raco static-web --help >/dev/null
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Playwright package
-        run: npm --prefix .local-tools install --save-dev playwright
-
-      - name: Install Playwright Chromium
-        run: npx --prefix .local-tools playwright install --with-deps chromium
-
-      - name: Run web-easy smoke CI helper
+      - name: Run web-easy non-headless smoke checks
         run: |
           cd lib/web-easy/smoke
-          ./smoke.sh ci
+          ./check-all.sh
