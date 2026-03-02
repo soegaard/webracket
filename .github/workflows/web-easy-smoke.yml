@@ -31,7 +31,7 @@ jobs:
           raco static-web --help >/dev/null
 
       - name: Link local webracket collection
-        run: raco link webracket
+        run: raco link "$GITHUB_WORKSPACE"
 
       - name: Run web-easy non-headless smoke checks
         run: |
