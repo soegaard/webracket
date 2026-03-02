@@ -33,6 +33,11 @@ jobs:
       - name: Ensure nanopass
         run: raco pkg install --auto --skip-installed --no-docs nanopass
 
+      - name: Setup Node (for webracket -r)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
 
