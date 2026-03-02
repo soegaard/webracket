@@ -4,16 +4,16 @@ on:
   push:
     paths:
       - "lib/web-easy/**"
-      - ".github/workflows/web-easy-smoke.yml"
   pull_request:
     paths:
       - "lib/web-easy/**"
-      - ".github/workflows/web-easy-smoke.yml"
   workflow_dispatch:
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    env:
+      WASM_TOOLS_VERSION: "1.225.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,6 +25,16 @@ jobs:
           distribution: full
           version: stable
 
+      - name: Cache Racket user packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/racket
+            ~/.cache/racket
+          key: ${{ runner.os }}-racket-user-${{ hashFiles('.github/workflows/web-easy-smoke.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-racket-user-
+
       - name: Ensure raco static-web
         run: |
           raco pkg install --auto --skip-installed --no-docs raco-static-web
@@ -33,13 +43,25 @@ jobs:
       - name: Ensure nanopass
         run: raco pkg install --auto --skip-installed --no-docs nanopass
 
+      - name: Cache wasm-tools binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/wasm-tools
+          key: ${{ runner.os }}-wasm-tools-${{ env.WASM_TOOLS_VERSION }}
+
+      - name: Add local bin to PATH
+        run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Install wasm-tools (prebuilt)
         run: |
-          WASM_TOOLS_VERSION="1.225.0"
-          curl -L -o /tmp/wasm-tools.tar.gz \
-            "https://github.com/bytecodealliance/wasm-tools/releases/download/v${WASM_TOOLS_VERSION}/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux.tar.gz"
-          tar -xzf /tmp/wasm-tools.tar.gz -C /tmp
-          sudo mv "/tmp/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux/wasm-tools" /usr/local/bin/wasm-tools
+          if [ ! -x "$HOME/.local/bin/wasm-tools" ]; then
+            mkdir -p "$HOME/.local/bin"
+            curl -L -o /tmp/wasm-tools.tar.gz \
+              "https://github.com/bytecodealliance/wasm-tools/releases/download/v${WASM_TOOLS_VERSION}/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux.tar.gz"
+            tar -xzf /tmp/wasm-tools.tar.gz -C /tmp
+            cp "/tmp/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux/wasm-tools" "$HOME/.local/bin/wasm-tools"
+            chmod +x "$HOME/.local/bin/wasm-tools"
+          fi
           wasm-tools --version
 
       - name: Setup Node (for webracket -r)
