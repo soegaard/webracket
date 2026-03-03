@@ -60,7 +60,7 @@
     }
 
     function menuItem(frameDoc) {
-      return frameDoc.querySelector("span.we-menu-item");
+      return frameDoc.querySelector('.we-menu-item[role="button"]');
     }
 
     async function waitForUI(frame, timeoutMs) {
@@ -114,7 +114,7 @@
         const frame = document.getElementById("app-frame");
         const frameDoc = frameDocFrom(frame);
         const diag = frameDoc
-          ? ("diag: menu-items=" + frameDoc.querySelectorAll("span.we-menu-item").length +
+          ? ("diag: menu-items=" + frameDoc.querySelectorAll('.we-menu-item[role="button"]').length +
              " body=" + JSON.stringify(bodyText(frameDoc)))
           : "diag: no frame document";
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");

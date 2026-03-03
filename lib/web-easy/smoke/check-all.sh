@@ -22,10 +22,10 @@ if [ "$HEADLESS" -eq 0 ]; then
 fi
 
 echo "[1/3] core tests (real Racket)"
-racket "$ROOT_DIR/lib/web-easy/test-web-easy.rkt"
+racket "$ROOT_DIR/lib/web-easy/test/test-web-easy.rkt"
 
 echo "[2/3] core tests (webracket -r)"
-WEBRACKET_OUT="$(cd "$ROOT_DIR/lib/web-easy" && racket ../../webracket.rkt -r test-web-easy-run.rkt)"
+WEBRACKET_OUT="$(cd "$ROOT_DIR/lib/web-easy/test" && racket ../../../webracket.rkt -r test-web-easy-run.rkt)"
 if [ -n "$WEBRACKET_OUT" ] && [ "$WEBRACKET_OUT" != "#<void>" ]; then
   printf '%s\n' "$WEBRACKET_OUT"
 fi

@@ -86,15 +86,15 @@
     ;; sync-select-options! : any/c list? -> void?
     ;;   Replace select children with option nodes for choices.
     (define (sync-select-options! native choices)
-      (define fragment ((#%top . js-create-document-fragment)))
+      (define fragment (js-create-document-fragment))
       (for-each (lambda (choice)
-                  (define option ((#%top . js-create-element) "option"))
+                  (define option (js-create-element "option"))
                   (define s (value->attr-string choice))
-                  ((#%top . js-set-attribute!) option "value" s)
-                  ((#%top . js-replace-children!) option ((#%top . js-create-text-node) s))
-                  ((#%top . js-append-child!) fragment option))
+                  (js-set-attribute! option "value" s)
+                  (js-replace-children! option (js-create-text-node s))
+                  (js-append-child! fragment option))
                 choices)
-      ((#%top . js-replace-children!) native fragment))
+      (js-replace-children! native fragment))
 
     ;; apply-attributes! : dom-node-record? list? -> void?
     ;;   Apply tracked attributes to native node.
@@ -113,20 +113,20 @@
                     [(choices columns density)
                      (void)]
                     [(selected)
-                     ((#%top . js-set!) native "value" (value->attr-string value))]
+                     (js-set! native "value" (value->attr-string value))]
                     [(value)
-                     ((#%top . js-set!) native "value" (value->attr-string value))]
+                     (js-set! native "value" (value->attr-string value))]
                     [(checked)
-                     ((#%top . js-set!) native attr/checked (if value #t #f))]
+                     (js-set! native attr/checked (if value #t #f))]
                     [(layout)
                      (case value
                        [(row)
-                        ((#%top . js-set-attribute!)
+                        (js-set-attribute!
                          native
                          "style"
                          "display:flex;flex-direction:row;align-items:center;gap:4px;")]
                        [(column)
-                        ((#%top . js-set-attribute!)
+                        (js-set-attribute!
                          native
                          "style"
                          "display:flex;flex-direction:column;gap:4px;")]
@@ -135,7 +135,7 @@
                     [(on-enter-action)
                      (void)]
                     [else
-                     ((#%top . js-set-attribute!) native
+                     (js-set-attribute! native
                                                   (symbol->attr-name name)
                                                   (value->attr-string value))]))
                 attrs))
@@ -144,8 +144,8 @@
     ;;   Replace native node children with a single text child.
     (define (apply-text! native t)
       (if t
-          ((#%top . js-replace-children!) native ((#%top . js-create-text-node) (value->attr-string t)))
-          ((#%top . js-replace-children!) native ((#%top . js-create-text-node) ""))))
+          (js-replace-children! native (js-create-text-node (value->attr-string t)))
+          (js-replace-children! native (js-create-text-node ""))))
 
     ;; tag->element-name : symbol? -> string?
     ;;   Map backend tag symbol to HTML element name.
@@ -155,7 +155,8 @@
         [(style) "style"]
         [(group) "fieldset"]
         [(legend) "legend"]
-        [(text menu-item) "span"]
+        [(text) "span"]
+        [(menu-item) "button"]
         [(button) "button"]
         [(input) "input"]
         [(checkbox) "input"]
@@ -176,8 +177,9 @@
     (define (install-default-node-shape! n)
       (define native (dom-node-record-native n))
       (case (dom-node-record-tag n)
-        [(checkbox) ((#%top . js-set-attribute!) native attr/type "checkbox")]
-        [(slider) ((#%top . js-set-attribute!) native attr/type "range")]
+        [(checkbox) (js-set-attribute! native attr/type "checkbox")]
+        [(slider) (js-set-attribute! native attr/type "range")]
+        [(menu-item) (js-set-attribute! native attr/type "button")]
         [else (void)]))
 
     ;; node-change-value : dom-node-record? -> any/c
@@ -187,24 +189,24 @@
       (case (dom-node-record-tag n)
         [(checkbox)
          (let ([checked-string
-                ((#%top . js-value->string)
-                 ((#%top . js-ref/extern) native attr/checked))])
+                (js-value->string
+                 (js-ref/extern native attr/checked))])
            (if (string=? checked-string "true") #t #f))]
         [(slider)
          (define raw
-           ((#%top . js-value->string)
-            ((#%top . js-ref/extern) native "value")))
+           (js-value->string
+            (js-ref/extern native "value")))
          (define parsed (string->number raw))
          (if parsed parsed 0)]
         [else
-         ((#%top . js-value->string)
-          ((#%top . js-ref/extern) native "value"))]))
+         (js-value->string
+          (js-ref/extern native "value"))]))
 
     ;; event-key-value : any/c -> string?
     ;;   Read keyboard event key as a plain string.
     (define (event-key-value evt)
-      ((#%top . js-value->string)
-       ((#%top . js-ref/extern) evt "key")))
+      (js-value->string
+       (js-ref/extern evt "key")))
 
     ;; tab-key-node? : dom-node-record? -> boolean?
     ;;   Check whether n is a tab header button that should receive key navigation.
@@ -236,59 +238,59 @@
     ;; focus-selected-sibling-tab! : any/c -> void?
     ;;   Focus selected tab button in the same tablist as native.
     (define (focus-selected-sibling-tab! native)
-      (define parent ((#%top . js-ref/extern) native "parentElement"))
+      (define parent (js-ref/extern native "parentElement"))
       (when parent
         (define selected
-          ((#%top . js-send/extern/nullish)
+          (js-send/extern/nullish
            parent
            "querySelector"
            (vector "button[aria-selected='true']")))
         (when selected
-          ((#%top . js-send) selected "focus" (vector)))))
+          (js-send selected "focus" (vector)))))
 
     ;; dom-node : symbol? list? list? any/c any/c any/c -> dom-node?
     ;;   Construct a browser-backed node and install event bridges.
     (define (dom-node tag attrs children text on-click on-change)
-      (define native ((#%top . js-create-element) (tag->element-name tag)))
+      (define native (js-create-element (tag->element-name tag)))
       (define n (dom-node-record tag attrs children text on-click on-change native))
       (install-default-node-shape! n)
       (apply-attributes! n attrs)
       (when text
         (apply-text! native text))
-      ((#%top . js-add-event-listener!)
+      (js-add-event-listener!
        native
        "click"
-       ((#%top . procedure->external)
+       (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-click n))
           (when callback
             (callback)))))
-      ((#%top . js-add-event-listener!)
+      (js-add-event-listener!
        native
        "change"
-       ((#%top . procedure->external)
+       (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-change n))
           (when callback
             (callback (node-change-value n))))))
       (when (eq? tag 'input)
-        ((#%top . js-add-event-listener!)
+        (js-add-event-listener!
          native
          "input"
-         ((#%top . procedure->external)
+         (procedure->external
           (lambda (_evt)
             (define callback (dom-node-record-on-change n))
             (when callback
               (callback (node-change-value n)))))))
-      ((#%top . js-add-event-listener!)
+      (js-add-event-listener!
        native
        "keydown"
-       ((#%top . procedure->external)
+       (procedure->external
         (lambda (evt)
           (define key (event-key-value evt))
           (define on-enter (input-enter-action n))
           (when (and on-enter (string=? key "Enter"))
-            ((#%top . js-send) evt "preventDefault" (vector))
+            (js-send evt "preventDefault" (vector))
             (on-enter))
           (define on-click (dom-node-record-on-click n))
           (define role-pair (assq 'role (dom-node-record-attrs n)))
@@ -296,12 +298,12 @@
                      role-pair
                      (eq? (cdr role-pair) 'button)
                      (activation-key? key))
-            ((#%top . js-send) evt "preventDefault" (vector))
+            (js-send evt "preventDefault" (vector))
             (on-click))
           (define callback (dom-node-record-on-change n))
           (when (and callback (tab-key-node? n))
             (when (nav-key? key)
-              ((#%top . js-send) evt "preventDefault" (vector)))
+              (js-send evt "preventDefault" (vector)))
             (callback key)
             (when (nav-key? key)
               (focus-selected-sibling-tab! native))))))
@@ -389,7 +391,7 @@
       (set-dom-node-record-children!
        parent
        (append (dom-node-record-children parent) (list child)))
-      ((#%top . js-append-child!) (dom-node-record-native parent)
+      (js-append-child! (dom-node-record-native parent)
                                   (dom-node-record-native child))
       (void))
 
@@ -397,7 +399,7 @@
     ;;   Replace children with one node in model and browser DOM.
     (define (backend-set-single-child! parent child)
       (set-dom-node-record-children! parent (list child))
-      ((#%top . js-replace-children!) (dom-node-record-native parent)
+      (js-replace-children! (dom-node-record-native parent)
                                       (dom-node-record-native child))
       (void))
 
@@ -405,18 +407,18 @@
     ;;   Replace children list in model and browser DOM.
     (define (backend-replace-children! parent children)
       (set-dom-node-record-children! parent children)
-      (define fragment ((#%top . js-create-document-fragment)))
+      (define fragment (js-create-document-fragment))
       (for-each (lambda (child)
-                  ((#%top . js-append-child!) fragment (dom-node-record-native child)))
+                  (js-append-child! fragment (dom-node-record-native child)))
                 children)
-      ((#%top . js-replace-children!) (dom-node-record-native parent) fragment)
+      (js-replace-children! (dom-node-record-native parent) fragment)
       (void))
 
     ;; backend-mount-root! : dom-node? [any/c] -> void?
     ;;   Mount root node into browser container.
     ;;   Optional parameter container defaults to document body.
-    (define (backend-mount-root! root [container ((#%top . js-document-body))])
-      ((#%top . js-replace-children!) container (dom-node-record-native root))
+    (define (backend-mount-root! root [container (js-document-body)])
+      (js-replace-children! container (dom-node-record-native root))
       (void))
 
     (values dom-node

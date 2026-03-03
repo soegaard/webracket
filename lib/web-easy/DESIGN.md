@@ -365,9 +365,9 @@ No class-based API is required internally.
 Current `web-easy` test workflows:
 
 1. Real Racket semantics test:
-   - `racket lib/web-easy/test-web-easy.rkt`
+   - `racket lib/web-easy/test/test-web-easy.rkt`
 2. WebRacket compiler+node path:
-   - `cd lib/web-easy && racket ../../webracket.rkt -r test-web-easy-run.rkt`
+   - `cd lib/web-easy/test && racket ../../../webracket.rkt -r test-web-easy-run.rkt`
 3. Browser smoke compile+runtime:
    - `lib/web-easy/smoke/run-browser-smoke-test.sh`
    - then open `http://localhost:8000/test-browser-smoke.html` while serving `lib/web-easy/smoke`.
@@ -526,18 +526,18 @@ Verification sequence (run in order):
 
 Current test location:
 
-- `lib/web-easy/test-web-easy.rkt` (include-based `#lang webracket` test entrypoint)
-- `lib/web-easy/test-web-easy-run.rkt` (no-`#lang` entrypoint for `webracket.rkt -r`)
-- `lib/web-easy/test-web-easy-body.rkt` (shared test definitions/assertions)
+- `lib/web-easy/test/test-web-easy.rkt` (include-based `#lang webracket` test entrypoint)
+- `lib/web-easy/test/test-web-easy-run.rkt` (no-`#lang` entrypoint for `webracket.rkt -r`)
+- `lib/web-easy/test/test-web-easy-body.rkt` (shared test definitions/assertions)
 
 Current test commands:
 
 - Real Racket run:
   - `cd /Users/soegaard/Dropbox/GitHub/webracket`
-  - `racket lib/web-easy/test-web-easy.rkt`
+  - `racket lib/web-easy/test/test-web-easy.rkt`
 - WebRacket compiler + node run:
-  - `cd /Users/soegaard/Dropbox/GitHub/webracket/lib/web-easy`
-  - `racket ../../webracket.rkt -r test-web-easy-run.rkt`
+  - `cd /Users/soegaard/Dropbox/GitHub/webracket/lib/web-easy/test`
+  - `racket ../../../webracket.rkt -r test-web-easy-run.rkt`
 
 ## Milestones
 
@@ -703,3 +703,22 @@ Current width defaults are intentionally split between layout containers and lea
 5. Revisit CSS strategy (inline vs stylesheet/classes):
    - define when inline style is acceptable vs when class-based styles in shared `<style>` should be preferred.
    - align renderer output with that policy for maintainability and visual consistency.
+
+## Element/CSS Cleanup Start (2026-03-03)
+
+Initial cleanup slice completed:
+
+1. Menu-related inline styles are now centralized as named renderer constants (`menu-bar-style`, `menu-style`, `menu-item-style`) instead of repeated literal strings.
+2. Existing behavior is unchanged; this is a maintainability refactor only.
+
+Rationale:
+
+- Reduces copy-paste drift when adjusting spacing/appearance across `menu-bar`, `menu`, and `menu-item`.
+- Establishes a repeatable pattern for moving widget styling from scattered literals toward an explicit style policy.
+- Keeps risk low while we prepare larger semantic-element decisions.
+
+Next cleanup slices:
+
+1. Define target semantic element mapping table per widget (`menu-item`, `choice/radios`, `table`, `group`, `tab-panel` controls).
+2. Move additional repeated style literals (width/alignment policy styles) into shared constants.
+3. Decide which widget styles should become class-based + shared `<style>` blocks versus staying inline.

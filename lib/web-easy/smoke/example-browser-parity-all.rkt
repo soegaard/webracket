@@ -80,9 +80,9 @@
 ;;   Resolve current test id from browser location search.
 (define selected-test-id
   (let ()
-    (define loc ((#%top . js-window-location)))
-    (define search ((#%top . js-value->string)
-                    ((#%top . js-ref/extern) loc "search")))
+    (define loc (js-window-location))
+    (define search (js-value->string
+                    (js-ref/extern loc "search")))
     (query->test-id search)))
 
 ;; selected-entry : any/c
@@ -95,15 +95,15 @@
 ;;   Dedicated root container for mounted parity capsule page.
 (define root
   (let ()
-    (define r ((#%top . js-create-element) "div"))
-    ((#%top . js-set-attribute!) r "id" "parity-root")
-    ((#%top . js-append-child!) ((#%top . js-document-body)) r)
+    (define r (js-create-element "div"))
+    (js-set-attribute! r "id" "parity-root")
+    (js-append-child! (js-document-body) r)
     r))
 
 ;; render-error! : string? -> void?
 ;;   Render a plain-text error in the root container.
 (define (render-error! msg)
-  ((#%top . js-replace-children!) root ((#%top . js-create-text-node) msg)))
+  (js-replace-children! root (js-create-text-node msg)))
 
 (cond
   [selected-entry

@@ -38,7 +38,7 @@
 ;;   backend-set-single-child!
 ;;   backend-replace-children!
 
-  (define-values
+(define-values
   (renderer?
    render
    renderer-root
@@ -54,20 +54,28 @@
     (struct renderer-state (root cleanups destroyed?) #:mutable #:transparent)
 
     ;; Constants for node attributes and fallbacks.
-    (define attr/role   'role)   ; Attribute key for semantic role.
-    (define attr/layout 'layout) ; Attribute key for layout direction.
-    (define text/fallback "#<value>") ; Fallback when value cannot be rendered as text.
-    (define table/density-normal 'normal) ; Default table spacing density.
-    (define table/density-compact 'compact) ; Compact table spacing density.
-    (define tab-panel-counter 0) ; Monotonic counter for tab-panel ids.
-    (define tab-panel-style-text
+    (define attr/role             'role)      ; Attribute key for semantic role.
+    (define attr/layout           'layout)    ; Attribute key for layout direction.
+    (define text/fallback         "#<value>") ; Fallback when value cannot be rendered as text.
+    (define table/density-normal  'normal)    ; Default table spacing density.
+    (define table/density-compact 'compact)   ; Compact table spacing density.
+    (define tab-panel-counter     0)          ; Monotonic counter for tab-panel ids.
+
+    ;; Style constants
+    (define tab-panel-style-text ; CSS for class-based tab styles.
       ".we-tab-list{display:flex;gap:6px;align-items:stretch;border-bottom:1px solid #999;padding-bottom:4px;margin-bottom:4px;}\
        .we-tab-btn{min-width:88px;padding:4px 10px;border:1px solid #999;border-bottom-width:2px;background:#fff;font-weight:normal;}\
        .we-tab-btn.is-selected{border-color:#333;background:#ececec;font-weight:bold;}\
        .we-tab-btn.is-disabled{border-color:#bbb;background:#f3f3f3;color:#777;opacity:.7;}\
-       .we-tab-btn:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") ; CSS for class-based tab styles.
-    (define menu-style-text
-      ".we-menu-item:focus,.we-menu-item:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") ; CSS for menu-item keyboard focus visibility.
+       .we-tab-btn:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") 
+    (define menu-style-text      ; CSS for menu-item keyboard focus visibility.
+      ".we-menu-item:focus,.we-menu-item:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") 
+    (define menu-bar-style       ; Inline style for menu-bar container layout.
+      "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0;") 
+    (define menu-style           ; Inline style for menu container layout.
+      "display:inline-flex;gap:8px;align-items:center;") 
+    (define menu-item-style      ; Inline style for menu-item chip appearance.
+      "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;") 
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -129,9 +137,9 @@
     ;; dom-node-slide! : dom-node? number? -> void?
     ;;   Update slider value attribute and invoke the change callback.
     (define (dom-node-slide! n value)
-      (define attrs (dom-node-attrs n))
-      (define min-pair (assq 'min attrs))
-      (define max-pair (assq 'max attrs))
+      (define attrs     (dom-node-attrs n))
+      (define min-pair  (assq 'min attrs))
+      (define max-pair  (assq 'max attrs))
       (define min-value (if min-pair (cdr min-pair) 0))
       (define max-value (if max-pair (cdr max-pair) 100))
       (set-dom-node-attrs!
@@ -146,8 +154,8 @@
     ;; dom-node-radio-select! : dom-node? any/c -> void?
     ;;   Update radio selected attribute and invoke the change callback.
     (define (dom-node-radio-select! n selected)
-      (define attrs (dom-node-attrs n))
-      (define choices-pair (assq 'choices attrs))
+      (define attrs         (dom-node-attrs n))
+      (define choices-pair  (assq 'choices attrs))
       (define choices-value (if choices-pair (cdr choices-pair) '()))
       (set-dom-node-attrs!
        n
@@ -160,10 +168,10 @@
     ;; dom-node-keydown! : dom-node? string? -> void?
     ;;   Dispatch keydown payload for tabs, input Enter actions, and menu-item key activation.
     (define (dom-node-keydown! n key)
-      (define on-click (dom-node-on-click n))
-      (define on-change (dom-node-on-change n))
+      (define on-click      (dom-node-on-click n))
+      (define on-change     (dom-node-on-change n))
       (define on-enter-pair (assq 'on-enter-action (dom-node-attrs n)))
-      (define role-pair (assq 'role (dom-node-attrs n)))
+      (define role-pair     (assq 'role (dom-node-attrs n)))
       (when (and on-enter-pair
                  (procedure? (cdr on-enter-pair))
                  (string=? key "Enter"))
@@ -207,7 +215,7 @@
         [(string? v) v]
         [(number? v) (number->string v)]
         [(symbol? v) (symbol->string v)]
-        [else text/fallback]))
+        [else        text/fallback]))
 
     ;; next-tab-panel-id : -> string?
     ;;   Allocate a unique id string for tab-panel content region.
@@ -244,7 +252,7 @@
     (define (render-list-items parent entries old-items key-proc make-view-proc register-cleanup!)
       (define new-items
         (map (lambda (entry)
-               (define key (key-proc entry))
+               (define key      (key-proc entry))
                (define old-item (assoc key old-items))
                (cond
                  [(and old-item (equal? (cadr old-item) entry))
@@ -278,29 +286,29 @@
       (if (symbol? density)
           (case density
             [(normal compact) density]
-            [else table/density-normal])
+            [else             table/density-normal])
           table/density-normal))
 
     ;; table-dims-style : symbol? -> string?
     ;;   Return table spacing style for density.
     (define (table-dims-style density)
       (case density
-        [(compact) "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]
-        [else "border-collapse:separate;border-spacing:2px 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]))
+        [(compact) "border-collapse:separate;border-spacing:0   0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]
+        [else      "border-collapse:separate;border-spacing:2px 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]))
 
     ;; table-header-cell-style : symbol? -> string?
     ;;   Return header cell style for density.
     (define (table-header-cell-style density)
       (case density
         [(compact) "padding:1px 4px;text-align:left;border-bottom:1px solid #bbb;"]
-        [else "padding:2px 8px;text-align:left;border-bottom:1px solid #bbb;"]))
+        [else      "padding:2px 8px;text-align:left;border-bottom:1px solid #bbb;"]))
 
     ;; table-data-cell-style : symbol? -> string?
     ;;   Return data cell style for density.
     (define (table-data-cell-style density)
       (case density
         [(compact) "padding:1px 4px;"]
-        [else "padding:2px 8px;"]))
+        [else      "padding:2px 8px;"]))
 
     ;; render-table-rows! : dom-node? list? list? symbol? -> void?
     ;;   Replace table rows with a header row and data rows rendered as table cells.
@@ -387,7 +395,7 @@
                    (view-children v))
          node]
         [(text)
-         (define raw (alist-ref (view-props v) 'value 'render))
+         (define raw  (alist-ref (view-props v) 'value 'render))
          (define node (dom-node 'span '() '() "" #f #f))
          (cond
            [(obs? raw)
@@ -400,7 +408,7 @@
            (set-dom-node-text! node (value->text raw))])
          node]
         [(button)
-         (define label (alist-ref (view-props v) 'label 'render))
+         (define label  (alist-ref (view-props v) 'label  'render))
          (define action (alist-ref (view-props v) 'action 'render))
          (dom-node 'button
                    (list (cons 'style "align-self:flex-start;width:auto;"))
@@ -409,8 +417,8 @@
                    action
                    #f)]
         [(input)
-         (define raw-value (alist-ref (view-props v) 'value 'render))
-         (define action    (alist-ref (view-props v) 'action 'render))
+         (define raw-value (alist-ref (view-props v) 'value    'render))
+         (define action    (alist-ref (view-props v) 'action   'render))
          (define on-enter  (alist-ref (view-props v) 'on-enter 'render))
          (define node (dom-node 'input
                                 (list (cons 'value "")
@@ -436,7 +444,7 @@
             (set-input-value! raw-value)])
          node]
         [(checkbox)
-         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-value (alist-ref (view-props v) 'value  'render))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'checkbox
                                 (list (cons 'checked #f)
@@ -460,11 +468,11 @@
             (set-checked! raw-value)])
          node]
         [(choice)
-         (define choices     (ensure-list (alist-ref (view-props v) 'choices 'render)
-                                          'choice
-                                          "choices"))
+         (define choices      (ensure-list (alist-ref (view-props v) 'choices 'render)
+                                           'choice
+                                           "choices"))
          (define raw-selected (alist-ref (view-props v) 'selected 'render))
-         (define action       (alist-ref (view-props v) 'action 'render))
+         (define action       (alist-ref (view-props v) 'action   'render))
          (define node (dom-node 'select
                                 (list (cons 'choices choices)
                                       (cons 'style "align-self:flex-start;")
@@ -477,8 +485,8 @@
          (define (set-selected! v)
            (set-dom-node-attrs!
             node
-            (list (cons 'choices choices)
-                  (cons 'style "align-self:flex-start;")
+            (list (cons 'choices  choices)
+                  (cons 'style    "align-self:flex-start;")
                   (cons 'selected v))))
          (cond
            [(obs? raw-selected)
@@ -491,13 +499,13 @@
             (set-selected! raw-selected)])
          node]
         [(slider)
-         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-value (alist-ref (view-props v) 'value  'render))
          (define action    (alist-ref (view-props v) 'action 'render))
-         (define min-value (alist-ref (view-props v) 'min 'render))
-         (define max-value (alist-ref (view-props v) 'max 'render))
+         (define min-value (alist-ref (view-props v) 'min    'render))
+         (define max-value (alist-ref (view-props v) 'max    'render))
          (define node (dom-node 'slider
-                                (list (cons 'min min-value)
-                                      (cons 'max max-value)
+                                (list (cons 'min   min-value)
+                                      (cons 'max   max-value)
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
@@ -524,11 +532,11 @@
          node]
         [(progress)
          (define raw-value (alist-ref (view-props v) 'value 'render))
-         (define min-value (alist-ref (view-props v) 'min 'render))
-         (define max-value (alist-ref (view-props v) 'max 'render))
+         (define min-value (alist-ref (view-props v) 'min   'render))
+         (define max-value (alist-ref (view-props v) 'max   'render))
          (define node (dom-node 'progress
-                                (list (cons 'min min-value)
-                                      (cons 'max max-value)
+                                (list (cons 'min   min-value)
+                                      (cons 'max   max-value)
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
@@ -538,8 +546,8 @@
          (define (set-progress-value! v)
            (set-dom-node-attrs!
             node
-            (list (cons 'min min-value)
-                  (cons 'max max-value)
+            (list (cons 'min   min-value)
+                  (cons 'max   max-value)
                   (cons 'style "align-self:flex-start;")
                   (cons 'value v))))
          (cond
@@ -640,22 +648,22 @@
          (define tabs         (map normalize-tab-entry tabs/raw))
          (define panel-id     (next-tab-panel-id))
          (define node (dom-node 'tab-panel (list (cons 'selected #f)
-                                                 (cons 'class "we-tab-panel"))
+                                                 (cons 'class    "we-tab-panel"))
                                '()
                                #f
                                #f
                                #f))
          (define style-node (dom-node 'style '() '() tab-panel-style-text #f #f))
-         (define tabs-node (dom-node 'div (list (cons attr/layout 'row)
-                                                (cons attr/role 'tablist)
-                                                (cons 'class "we-tab-list"))
-                                     '()
-                                     #f
-                                     #f
-                                     #f))
+         (define tabs-node  (dom-node 'div (list (cons attr/layout 'row)
+                                                 (cons attr/role   'tablist)
+                                                 (cons 'class      "we-tab-list"))
+                                      '()
+                                      #f
+                                      #f
+                                      #f))
          (define content-node (dom-node 'div (list (cons attr/role 'tabpanel)
-                                                   (cons 'id panel-id)
-                                                   (cons 'class "we-tab-content"))
+                                                   (cons 'id       panel-id)
+                                                   (cons 'class    "we-tab-content"))
                                         '()
                                         #f
                                         #f
@@ -663,9 +671,9 @@
          (backend-append-child! node style-node)
          (backend-append-child! node tabs-node)
          (backend-append-child! node content-node)
-         (define tab-buttons '())
+         (define tab-buttons    '())
          (define selected-value #f)
-         (define tab-ids (map car tabs))
+         (define tab-ids        (map car tabs))
          (define enabled-tab-ids
            (map car (filter (lambda (tab) (not (list-ref tab 2))) tabs)))
          (define (choose-view selected)
@@ -763,7 +771,7 @@
                         (define disabled? (list-ref tab 2))
                         (define button-node
                           (dom-node 'button
-                                    (list (cons 'tab-id tab-id)
+                                    (list (cons 'tab-id   tab-id)
                                           (cons 'selected #f))
                                     '()
                                     (value->text tab-id)
@@ -798,8 +806,8 @@
             (render-tab! raw-selected)])
          node]
         [(observable-view)
-         (define raw-data    (alist-ref (view-props v) 'data 'render))
-         (define make-view   (alist-ref (view-props v) 'make-view 'render))
+         (define raw-data    (alist-ref (view-props v) 'data       'render))
+         (define make-view   (alist-ref (view-props v) 'make-view  'render))
          (define equal-proc  (alist-ref (view-props v) 'equal-proc 'render))
          (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
          (define last-value #f)
@@ -825,7 +833,7 @@
          (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                       'table
                                       "columns"))
-         (define raw-rows    (alist-ref (view-props v) 'rows 'render))
+         (define raw-rows    (alist-ref (view-props v) 'rows    'render))
          (define raw-density (alist-ref (view-props v) 'density 'render))
          (define density     (normalize-table-density (maybe-observable-value raw-density)))
          (define node (dom-node 'table
@@ -851,7 +859,7 @@
                                            'radios
                                            "choices"))
          (define raw-selected (alist-ref (view-props v) 'selected 'render))
-         (define action       (alist-ref (view-props v) 'action 'render))
+         (define action       (alist-ref (view-props v) 'action   'render))
          (define node (dom-node 'radios
                                 (list (cons 'choices choices)
                                       (cons 'style "align-self:flex-start;")
@@ -864,8 +872,8 @@
          (define (set-selected! selected)
            (set-dom-node-attrs!
             node
-            (list (cons 'choices choices)
-                  (cons 'style "align-self:flex-start;")
+            (list (cons 'choices  choices)
+                  (cons 'style    "align-self:flex-start;")
                   (cons 'selected selected))))
          (cond
            [(obs? raw-selected)
@@ -878,8 +886,8 @@
             (set-selected! raw-selected)])
          node]
         [(image)
-         (define raw-src    (alist-ref (view-props v) 'src 'render))
-         (define raw-width  (alist-ref (view-props v) 'width 'render))
+         (define raw-src    (alist-ref (view-props v) 'src    'render))
+         (define raw-width  (alist-ref (view-props v) 'width  'render))
          (define raw-height (alist-ref (view-props v) 'height 'render))
          (define node (dom-node 'image
                                 (list (cons 'src "")
@@ -895,9 +903,9 @@
          (define (current-value v)
            (if (obs? v) (obs-peek v) v))
          (define (set-image-attrs! src width height)
-           (define attrs/base (list (cons 'src (value->text src))
+           (define attrs/base (list (cons 'src   (value->text src))
                                     (cons 'style "align-self:flex-start;")))
-           (define attrs/width (with-optional-attr attrs/base 'width width))
+           (define attrs/width (with-optional-attr attrs/base  'width  width))
            (define attrs/final (with-optional-attr attrs/width 'height height))
            (set-dom-node-attrs! node attrs/final))
          (define (refresh-image!)
@@ -924,7 +932,7 @@
         [(menu-bar)
          (define style-node (dom-node 'style '() '() menu-style-text #f #f))
          (define node (dom-node 'menu-bar
-                                (list (cons 'style "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0;"))
+                                (list (cons 'style menu-bar-style))
                                 '()
                                 #f
                                 #f
@@ -938,14 +946,14 @@
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define node (dom-node 'menu
                                 (list (cons 'label "")
-                                      (cons 'style "display:inline-flex;gap:8px;align-items:center;"))
+                                      (cons 'style menu-style))
                                 '()
                                 #f
                                 #f
                                 #f))
          (define (set-label! label-value)
            (set-dom-node-attrs! node (list (cons 'label (value->text label-value))
-                                           (cons 'style "display:inline-flex;gap:8px;align-items:center;"))))
+                                           (cons 'style menu-style))))
          (cond
            [(obs? raw-label)
             (set-label! (obs-peek raw-label))
@@ -960,13 +968,13 @@
                    (view-children v))
          node]
         [(menu-item)
-         (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define raw-label (alist-ref (view-props v) 'label  'render))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'menu-item
                                 (list (cons attr/role 'button)
-                                      (cons 'class "we-menu-item")
+                                      (cons 'class    "we-menu-item")
                                       (cons 'tabindex 0)
-                                      (cons 'style "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;"))
+                                      (cons 'style    menu-item-style))
                                 '()
                                 ""
                                 action
@@ -982,8 +990,8 @@
             (set-dom-node-text! node (value->text raw-label))])
          node]
         [(list-view)
-         (define raw-entries (alist-ref (view-props v) 'entries 'render))
-         (define key-proc    (alist-ref (view-props v) 'key 'render))
+         (define raw-entries (alist-ref (view-props v) 'entries   'render))
+         (define key-proc    (alist-ref (view-props v) 'key       'render))
          (define make-view   (alist-ref (view-props v) 'make-view 'render))
          (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
          (define items '())

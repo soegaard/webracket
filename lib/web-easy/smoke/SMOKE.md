@@ -163,8 +163,8 @@ From `lib/web-easy/smoke`:
 
 This runs:
 
-1. `racket ../test-web-easy.rkt` (full Racket path)
-2. `webracket.rkt -r ../test-web-easy-run.rkt` (WebRacket compiler + Node path)
+1. `racket ../test/test-web-easy.rkt` (full Racket path)
+2. `webracket.rkt -r ../test/test-web-easy-run.rkt` (WebRacket compiler + Node path)
 3. smoke compile
 
 Use `./check-all.sh --headless` to add dashboard-driven headless smoke execution.

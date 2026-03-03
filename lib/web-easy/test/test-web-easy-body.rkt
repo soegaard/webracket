@@ -28,6 +28,23 @@
   (define p (assq key (dom-node-attrs n)))
   (if p (cdr p) #f))
 
+;; normalize-css-whitespace : string? -> string?
+;;   Normalize CSS whitespace so style checks are robust to formatting-only differences.
+(define (normalize-css-whitespace s)
+  (define chars (string->list s))
+  (define (loop rest prev-space? acc)
+    (cond
+      [(null? rest)
+       (list->string (reverse acc))]
+      [else
+       (define ch (car rest))
+       (if (char-whitespace? ch)
+           (if prev-space?
+               (loop (cdr rest) #t acc)
+               (loop (cdr rest) #t (cons #\space acc)))
+           (loop (cdr rest) #f (cons ch acc)))]))
+  (loop chars #f '()))
+
 (define (node-child-by-role n role)
   (let loop ([children (dom-node-children n)])
     (cond
@@ -420,8 +437,9 @@
      (table '(k v) '(("a" 1)) 'compact)))))
 (define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
-(check-equal (node-attr table-node-compact 'style)
-             "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"
+(check-equal (normalize-css-whitespace (node-attr table-node-compact 'style))
+             (normalize-css-whitespace
+              "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;")
              "table compact density style")
 
 ;; observable-view switches rendered child when data changes
