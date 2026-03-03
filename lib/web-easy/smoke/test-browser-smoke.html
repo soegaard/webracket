@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser smoke assertions...</div>
-  <iframe id="app-frame" src="./example-browser-smoke.html" title="web-easy smoke app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=smoke" title="web-easy smoke app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -45,9 +45,9 @@
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    function findFirstIntegerText(frameDoc) {
+    function findCounterText(frameDoc) {
       const text = (frameDoc.body && frameDoc.body.textContent) ? frameDoc.body.textContent : "";
-      const m = text.match(/-?\d+/);
+      const m = text.match(/count:(-?\d+)/);
       return m ? m[0] : null;
     }
 
@@ -57,7 +57,7 @@
         const frameDoc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
         if (frameDoc) {
           const button = frameDoc.querySelector("button");
-          const numberText = findFirstIntegerText(frameDoc);
+          const numberText = findCounterText(frameDoc);
           if (button && numberText !== null) {
             return { frameDoc, button, numberText };
           }
@@ -90,12 +90,12 @@
         }
 
         const ui = await waitForUI(frame, 20000);
-        assertEqual(ui.numberText, "0", "initial counter");
+        assertEqual(ui.numberText, "count:0", "initial counter");
 
         ui.button.click();
         await sleep(100);
 
-        assertEqual(findFirstIntegerText(ui.frameDoc), "1", "counter after one click");
+        assertEqual(findCounterText(ui.frameDoc), "count:1", "counter after one click");
         setStatus("PASS\ninitial=0, after-click=1", "pass");
       } catch (err) {
         console.error(err);

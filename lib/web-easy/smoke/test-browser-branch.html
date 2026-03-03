@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser branch smoke assertions...</div>
-  <iframe id="app-frame" src="./example-browser-branch.html" title="web-easy branch smoke app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=branch" title="web-easy branch smoke app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -54,7 +54,8 @@
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
-          const button = frameDoc.querySelector("button");
+          const button = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "toggle");
           const text = frameDoc.body ? frameDoc.body.textContent || "" : "";
           if (button && (text.includes("ON") || text.includes("OFF"))) {
             return { frameDoc, button };

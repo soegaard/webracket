@@ -41,6 +41,16 @@ Rationale:
 - Keeps the dashboard as a stable regression signal for core runtime/features.
 - Keeps parity verification in the same automation path as core smoke checks.
 
+## Compile Architecture
+
+- Generated browser artifacts are written to `smoke/generated/`.
+- Core smoke pages compile through `example-browser-smoke-all.rkt` selected by `?test=...`.
+- Parity pages compile through `example-browser-parity-all.rkt` selected by `?test=...`.
+- `check-smoke.sh` runs 3 compile targets:
+  - `smoke-all`
+  - `visual-check`
+  - `parity-all`
+
 ## Current Test Counts
 
 - full dashboard (`test-browser-dashboard.html`): `26` tests
@@ -139,6 +149,8 @@ Optional preview without deleting files:
 ```bash
 ./clean-smoke.sh --dry-run
 ```
+
+This cleans generated browser artifacts under `smoke/generated/` (and legacy root artifacts, if present).
 
 ## End-To-End Script
 
@@ -252,7 +264,7 @@ From `lib/web-easy/smoke`:
 
 This command:
 
-1. Compiles all smoke examples.
+1. Compiles smoke artifacts (`smoke-all`, `visual-check`, `parity-all`).
 2. Starts a local static server.
 3. Opens `test-browser-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.

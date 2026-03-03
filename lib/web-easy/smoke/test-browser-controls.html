@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser controls smoke assertions...</div>
-  <iframe id="app-frame" src="./example-browser-controls.html" title="web-easy controls smoke app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=controls" title="web-easy controls smoke app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -64,8 +64,14 @@
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
-          const select = frameDoc.querySelector("select");
-          const slider = frameDoc.querySelector("input");
+          const select = Array.from(frameDoc.querySelectorAll("select"))
+            .find((sel) => (sel.textContent || "").includes("red")
+                        && (sel.textContent || "").includes("green")
+                        && (sel.textContent || "").includes("blue"));
+          const slider = Array.from(frameDoc.querySelectorAll("input[type='range']"))
+            .find((inp) => inp.getAttribute("min") === "0"
+                        && inp.getAttribute("max") === "100"
+                        && inp.value === "10");
           const progress = frameDoc.querySelector("progress");
           const text = bodyText(frameDoc);
           if (select && slider && (progress || text.includes("10"))) {

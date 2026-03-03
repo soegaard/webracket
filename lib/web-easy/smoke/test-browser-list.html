@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser list smoke assertions...</div>
-  <iframe id="app-frame" src="./example-browser-list.html" title="web-easy list smoke app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=list" title="web-easy list smoke app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -49,9 +49,15 @@
       return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
     }
 
-    function readListText(frameDoc) {
+    function readListItems(frameDoc) {
       const text = frameDoc.body ? frameDoc.body.textContent || "" : "";
-      return text.replace(/\s+/g, "");
+      const out = [];
+      const re = /item:([a-z])/g;
+      let m = null;
+      while ((m = re.exec(text)) !== null) {
+        out.push(m[1]);
+      }
+      return out;
     }
 
     async function waitForUI(frame, timeoutMs) {
@@ -76,18 +82,6 @@
       }
     }
 
-    function containsInOrder(haystack, parts) {
-      let idx = 0;
-      for (const p of parts) {
-        const next = haystack.indexOf(p, idx);
-        if (next < 0) {
-          return false;
-        }
-        idx = next + p.length;
-      }
-      return true;
-    }
-
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -100,14 +94,14 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const before = readListText(ui.frameDoc);
-        assertEqual(containsInOrder(before, ["a", "b", "c"]), true, "initial order a,b,c");
+        const before = readListItems(ui.frameDoc).join(",");
+        assertEqual(before, "a,b,c", "initial order a,b,c");
 
         ui.button.click();
         await sleep(100);
 
-        const after = readListText(ui.frameDoc);
-        assertEqual(containsInOrder(after, ["c", "a", "b"]), true, "reordered order c,a,b");
+        const after = readListItems(ui.frameDoc).join(",");
+        assertEqual(after, "c,a,b", "reordered order c,a,b");
         setStatus("PASS\ninitial=a,b,c; after-click=c,a,b", "pass");
       } catch (err) {
         console.error(err);

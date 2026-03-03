@@ -67,27 +67,34 @@ print_parity_urls() {
 }
 
 parity_check() {
-  "$SCRIPT_DIR/run-browser-parity-hello-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-counter-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-dynamic-list-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-counters-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-tabs-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-tabs-dynamic-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-profile-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-settings-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-table-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-menu-keys-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-list-compile.sh"
-  "$SCRIPT_DIR/run-browser-parity-todo-compile.sh"
+  "$SCRIPT_DIR/run-browser-parity-all-compile.sh"
 }
 
 count_artifacts() {
-  find "$SCRIPT_DIR" -maxdepth 1 -type f \
-    \( -name 'example-browser-*.html' \
-    -o -name 'example-browser-*.wasm' \
-    -o -name 'example-browser-*.wasm.map.sexp' \
-    -o -name 'example-browser-*.wat' \) \
-    | wc -l | tr -d ' '
+  local generated_count
+  local legacy_count
+
+  generated_count="$(
+    find "$SCRIPT_DIR/generated" -maxdepth 1 -type f 2>/dev/null \
+      \( -name 'example-browser-*.html' \
+      -o -name 'example-browser-*.js' \
+      -o -name 'example-browser-*.wasm' \
+      -o -name 'example-browser-*.wasm.map.sexp' \
+      -o -name 'example-browser-*.wat' \) \
+      | wc -l | tr -d ' '
+  )"
+
+  legacy_count="$(
+    find "$SCRIPT_DIR" -maxdepth 1 -type f \
+      \( -name 'example-browser-*.html' \
+      -o -name 'example-browser-*.js' \
+      -o -name 'example-browser-*.wasm' \
+      -o -name 'example-browser-*.wasm.map.sexp' \
+      -o -name 'example-browser-*.wat' \) \
+      | wc -l | tr -d ' '
+  )"
+
+  echo "$((generated_count + legacy_count))"
 }
 
 status() {

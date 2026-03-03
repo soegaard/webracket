@@ -16,13 +16,26 @@ for arg in "$@"; do
 done
 
 mapfile -t FILES < <(
-  find "$SCRIPT_DIR" -maxdepth 1 -type f \
+  find "$SCRIPT_DIR/generated" -maxdepth 1 -type f 2>/dev/null \
     \( -name 'example-browser-*.html' \
+    -o -name 'example-browser-*.js' \
     -o -name 'example-browser-*.wasm' \
     -o -name 'example-browser-*.wasm.map.sexp' \
     -o -name 'example-browser-*.wat' \) \
     | sort
 )
+
+mapfile -t LEGACY_FILES < <(
+  find "$SCRIPT_DIR" -maxdepth 1 -type f \
+    \( -name 'example-browser-*.html' \
+    -o -name 'example-browser-*.js' \
+    -o -name 'example-browser-*.wasm' \
+    -o -name 'example-browser-*.wasm.map.sexp' \
+    -o -name 'example-browser-*.wat' \) \
+    | sort
+)
+
+FILES+=("${LEGACY_FILES[@]}")
 
 if [ "${#FILES[@]}" -eq 0 ]; then
   echo "No generated smoke artifacts found."

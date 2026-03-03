@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser width-policy assertions...</div>
-  <iframe id="app-frame" src="./example-browser-width.html" title="web-easy width policy app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=width" title="web-easy width policy app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -64,14 +64,18 @@
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
-          const fieldset = frameDoc.querySelector("fieldset");
-          const input = frameDoc.querySelector("input[type='text'], input:not([type]), input[type='']");
-          const checkbox = frameDoc.querySelector("input[type='checkbox']");
-          const select = frameDoc.querySelector("select");
-          const slider = frameDoc.querySelector("input[type='range']");
-          const progress = frameDoc.querySelector("progress");
-          const button = frameDoc.querySelector("button");
-          const table = frameDoc.querySelector("table");
+          const fieldset = Array.from(frameDoc.querySelectorAll("fieldset"))
+            .find((fs) => {
+              const lg = fs.querySelector("legend");
+              return lg && (lg.textContent || "").trim() === "Width Policy";
+            });
+          const input = fieldset && fieldset.querySelector("input[type='text'], input:not([type]), input[type='']");
+          const checkbox = fieldset && fieldset.querySelector("input[type='checkbox']");
+          const select = fieldset && fieldset.querySelector("select");
+          const slider = fieldset && fieldset.querySelector("input[type='range']");
+          const progress = fieldset && fieldset.querySelector("progress");
+          const button = fieldset && fieldset.querySelector("button");
+          const table = fieldset && fieldset.querySelector("table");
           if (fieldset && input && checkbox && select && slider && progress && button && table) {
             return { frameDoc, fieldset, input, checkbox, select, slider, progress, button, table };
           }

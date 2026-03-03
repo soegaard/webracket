@@ -32,7 +32,7 @@
 </head>
 <body>
   <div id="status">Running browser input smoke assertions...</div>
-  <iframe id="app-frame" src="./example-browser-input.html" title="web-easy input smoke app"></iframe>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=input" title="web-easy input smoke app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -54,7 +54,7 @@
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
-          const input = frameDoc.querySelector("input");
+          const input = frameDoc.querySelector("input:not([type='checkbox'])");
           if (input) {
             return { frameDoc, input };
           }
