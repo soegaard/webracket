@@ -457,6 +457,7 @@ Current dashboard test counts:
 
 1. full dashboard (`smoke/test-browser-dashboard.html`): `38` tests
 2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `19` tests
+3. contract dashboard (`smoke/test-browser-contract-dashboard.html`): `8` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -488,6 +489,7 @@ Smoke lifecycle quick commands:
 - `cd lib/web-easy/smoke && ./smoke.sh ci`
 - `cd lib/web-easy/smoke && ./smoke.sh headless`
 - `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
+- `cd lib/web-easy/smoke && ./smoke.sh contract`
 - `cd lib/web-easy/smoke && ./smoke.sh clean`
 - `cd lib/web-easy/smoke && ./smoke.sh clean-dry`
 
@@ -499,8 +501,9 @@ Known operational caveats:
 Verification sequence (run in order):
 
 1. `cd lib/web-easy/smoke && ./smoke.sh dashboards`
-2. `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
-3. `cd lib/web-easy/smoke && ./check-all.sh --headless`
+2. `cd lib/web-easy/smoke && ./smoke.sh contract`
+3. `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
+4. `cd lib/web-easy/smoke && ./check-all.sh --headless`
 
 ## Error Handling
 

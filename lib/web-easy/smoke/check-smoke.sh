@@ -49,6 +49,7 @@ fi
 echo
 echo "All smoke examples compiled."
 echo "Serve this directory and open these pages:"
+echo "  http://localhost:8000/test-browser-contract-dashboard.html"
 echo "  http://localhost:8000/test-browser-smoke.html"
 echo "  http://localhost:8000/test-browser-group.html"
 echo "  http://localhost:8000/test-browser-menu-keys.html"

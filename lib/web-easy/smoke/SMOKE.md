@@ -79,6 +79,7 @@ Wrapper commands:
 - `./smoke.sh parity`
 - `./smoke.sh parity-check`
 - `./smoke.sh parity-headless`
+- `./smoke.sh contract`
 - `./smoke.sh all`
 - `./smoke.sh headless`
 - `./smoke.sh rebuild`
@@ -203,6 +204,7 @@ Then open:
 
 - `http://localhost:8000/test-browser-dashboard.html` (runs all smoke pages)
 - `http://localhost:8000/test-browser-parity-dashboard.html` (runs parity-only smoke pages)
+- `http://localhost:8000/test-browser-contract-dashboard.html` (runs contract-only smoke pages)
 - `http://localhost:8000/test-browser-smoke.html`
 - `http://localhost:8000/test-browser-group.html`
 - `http://localhost:8000/test-browser-menu-keys.html`
@@ -247,6 +249,7 @@ Dashboards:
 
 - full: `http://localhost:8000/test-browser-dashboard.html`
 - parity: `http://localhost:8000/test-browser-parity-dashboard.html`
+- contract: `http://localhost:8000/test-browser-contract-dashboard.html`
 
 Manual visual page:
 
@@ -280,6 +283,19 @@ This command:
 1. Compiles smoke artifacts (`smoke-all`, `visual-check`, `parity-all`).
 2. Starts a local static server.
 3. Opens `test-browser-dashboard.html` in headless Chromium.
+4. Exits `0` on PASS summary, nonzero on FAIL.
+
+Contract-only headless runner:
+
+```bash
+./check-contract-headless.sh
+```
+
+This command:
+
+1. Compiles `smoke-all` and `parity-all`.
+2. Starts a local static server.
+3. Opens `test-browser-contract-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
 
 Environment flags:
@@ -383,6 +399,13 @@ Parity quickstart:
 3. open the parity URLs printed by `parity`.
 
 Verification snippet (sequential):
+
+1. `./smoke.sh dashboards`
+2. `./smoke.sh contract`
+3. `./smoke.sh parity-headless`
+4. `./check-all.sh --headless`
+
+Legacy parity-only snippet:
 
 1. `./smoke.sh dashboards`
 2. `./smoke.sh parity-headless`
