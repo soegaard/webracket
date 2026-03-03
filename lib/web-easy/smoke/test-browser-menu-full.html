@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser menu full smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser menu-full assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="web-easy menu-full app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function menuLabelByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-label[role="button"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const labels = frameDoc.querySelectorAll('.we-menu-label[role="button"]');
+          const items = frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]');
+          const menus = frameDoc.querySelectorAll('.we-menu');
+          const text = bodyText(frameDoc);
+          if (labels.length === 2 &&
+              items.length === 4 &&
+              menus.length === 2 &&
+              text.includes("File") &&
+              text.includes("Edit") &&
+              text.includes("status:ready") &&
+              text.includes("open:0") &&
+              text.includes("save:0") &&
+              text.includes("undo:0") &&
+              text.includes("redo:0")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for menu-full UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+
+        const fileLabel = menuLabelByText(ui.frameDoc, "File");
+        const editLabel = menuLabelByText(ui.frameDoc, "Edit");
+        assertTrue(!!fileLabel && !!editLabel, "menu labels found");
+        const menubar = ui.frameDoc.querySelector('.we-menu-bar[role="menubar"]');
+        assertTrue(!!menubar, "menubar role present");
+        assertTrue(menubar.getAttribute("aria-orientation") === "horizontal", "menubar orientation attr");
+        assertTrue(ui.frameDoc.querySelectorAll('.we-menu-popup[role="menu"]').length === 2, "menu popup role present");
+        const fileControls = fileLabel.getAttribute("aria-controls");
+        const filePopup = fileControls ? ui.frameDoc.getElementById(fileControls) : null;
+        assertTrue(!!filePopup, "menu label aria-controls resolves popup");
+        assertTrue(filePopup.getAttribute("role") === "menu", "controlled popup has menu role");
+
+        const openItem = menuItemByText(ui.frameDoc, "open");
+        const saveItem = menuItemByText(ui.frameDoc, "save");
+        const undoItem = menuItemByText(ui.frameDoc, "undo");
+        const redoItem = menuItemByText(ui.frameDoc, "redo");
+
+        assertTrue(!!openItem && !!saveItem && !!undoItem && !!redoItem, "all menu items found");
+
+        fileLabel.click();
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu toggle open");
+        fileLabel.click();
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "File menu toggle close");
+
+        fileLabel.click();
+        await sleep(50);
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        await sleep(60);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "End opens last menu");
+        assertTrue(ui.frameDoc.activeElement === editLabel, "End focuses last menu label");
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        await sleep(60);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "Home opens first menu");
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "Home focuses first menu label");
+
+        if (fileLabel.getAttribute("aria-expanded") !== "true") {
+          fileLabel.click();
+          await sleep(50);
+        }
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu opened");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === openItem, "ArrowDown focuses first File item");
+        openItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === saveItem, "ArrowDown moves to next File item");
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === saveItem, "ArrowDown at last File item does not wrap");
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === openItem, "ArrowUp moves to previous File item");
+        openItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === openItem, "ArrowUp at first File item does not wrap");
+        openItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "ArrowRight from item opens Edit menu");
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "ArrowRight from item closes File menu");
+        assertTrue(ui.frameDoc.activeElement === editLabel, "ArrowRight from item focus moves to Edit label");
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "ArrowLeft after item-switch returns to File label");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "ArrowRight opens Edit menu");
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "ArrowRight closes File menu");
+        assertTrue(ui.frameDoc.activeElement === editLabel, "ArrowRight from label focus moves to Edit label");
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "ArrowRight wraps from Edit to File");
+        assertTrue(editLabel.getAttribute("aria-expanded") === "false", "ArrowRight wrap closes Edit");
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "ArrowRight wrap focuses File label");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "ArrowLeft wraps from File to Edit");
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "ArrowLeft wrap closes File");
+        assertTrue(ui.frameDoc.activeElement === editLabel, "ArrowLeft wrap focuses Edit label");
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "ArrowLeft from Edit returns to File label");
+        editLabel.click();
+        await sleep(50);
+        undoItem.focus();
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === undoItem, "Edit item focus after wrap checks");
+        undoItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "ArrowLeft from item opens File menu");
+        assertTrue(editLabel.getAttribute("aria-expanded") === "false", "ArrowLeft from item closes Edit menu");
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "ArrowLeft from item focus moves to File label");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === editLabel, "ArrowRight re-focuses Edit label");
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "ArrowLeft opens File menu");
+        assertTrue(editLabel.getAttribute("aria-expanded") === "false", "ArrowLeft closes Edit menu");
+        assertTrue(ui.frameDoc.activeElement === fileLabel, "ArrowLeft from label focus moves to File label");
+
+        openItem.click();
+        await sleep(75);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:open"), "status after open click");
+        assertTrue(text.includes("open:1"), "open counter after click");
+        fileLabel.click();
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu opened before focus-leave");
+        ui.frameDoc.body.setAttribute("tabindex", "-1");
+        ui.frameDoc.body.focus();
+        await sleep(60);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "File menu closes when focus leaves menu");
+
+        fileLabel.click();
+        await sleep(50);
+        saveItem.focus();
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === saveItem, "save focus");
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:save"), "status after save Enter");
+        assertTrue(text.includes("save:1"), "save counter after Enter");
+        fileLabel.click();
+        await sleep(50);
+        saveItem.focus();
+        await sleep(40);
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+        await sleep(60);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "Tab closes open menu");
+
+        fileLabel.click();
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu reopened");
+        editLabel.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+        await sleep(50);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "File menu closed by hover switch");
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "Edit menu opened by hover switch");
+        undoItem.focus();
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === undoItem, "undo focus");
+        undoItem.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:undo"), "status after undo Space");
+        assertTrue(text.includes("undo:1"), "undo counter after Space");
+        editLabel.click();
+        await sleep(50);
+        undoItem.focus();
+        await sleep(40);
+        undoItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+        await sleep(60);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "false", "Shift+Tab closes open menu");
+        editLabel.click();
+        await sleep(50);
+        undoItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        await sleep(50);
+        assertTrue(editLabel.getAttribute("aria-expanded") === "false", "Escape closes open menu");
+        assertTrue(ui.frameDoc.activeElement === editLabel, "Escape returns focus to menu label");
+
+        editLabel.click();
+        await sleep(50);
+        redoItem.click();
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:redo"), "status after redo click");
+        assertTrue(text.includes("redo:1"), "redo counter after click");
+
+        setStatus("PASS\nmenu-full: multi-menu items + click/Enter/Space", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: menus=" + frameDoc.querySelectorAll('.we-menu').length +
+             " menu-items=" + frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]').length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

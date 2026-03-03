@@ -14,6 +14,7 @@
 (include/reader "smoke-capsule-controls.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-width.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-menu-keys.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-menu-full.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-operators.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-tab-panel.rkt" read-syntax/skip-first-line)
@@ -34,6 +35,7 @@
         (cons 'controls (list controls-make-page controls-run-test controls-cleanup))
         (cons 'width    (list width-make-page    width-run-test    width-cleanup))
         (cons 'menu-keys (list menu-keys-make-page menu-keys-run-test menu-keys-cleanup))
+        (cons 'menu-full (list menu-full-make-page menu-full-run-test menu-full-cleanup))
         (cons 'group    (list group-make-page group-run-test group-cleanup))
         (cons 'operators (list operators-make-page operators-run-test operators-cleanup))
         (cons 'tab-panel

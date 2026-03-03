@@ -60,8 +60,8 @@
     }
 
     function menuItemByText(frameDoc, label) {
-      return Array.from(frameDoc.querySelectorAll("span"))
-        .find((span) => (span.textContent || "").trim() === label);
+      return Array.from(frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]'))
+        .find((item) => (item.textContent || "").trim() === label);
     }
 
     function countCells(frameDoc) {

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity menu full smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity menu-full assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="web-easy parity menu-full app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function menuLabelByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-label[role="button"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const labels = frameDoc.querySelectorAll('.we-menu-label[role="button"]');
+          const items = frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]');
+          const menus = frameDoc.querySelectorAll('.we-menu');
+          const text = bodyText(frameDoc);
+          if (labels.length === 2 &&
+              items.length === 4 &&
+              menus.length === 2 &&
+              text.includes("Project") &&
+              text.includes("Help") &&
+              text.includes("status:ready") &&
+              text.includes("build:0") &&
+              text.includes("deploy:0") &&
+              text.includes("docs:0") &&
+              text.includes("about:0")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity menu-full UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+
+        const projectLabel = menuLabelByText(ui.frameDoc, "Project");
+        const helpLabel = menuLabelByText(ui.frameDoc, "Help");
+        assertTrue(!!projectLabel && !!helpLabel, "parity menu labels found");
+        const menubar = ui.frameDoc.querySelector('.we-menu-bar[role="menubar"]');
+        assertTrue(!!menubar, "parity menubar role present");
+        assertTrue(menubar.getAttribute("aria-orientation") === "horizontal", "parity menubar orientation attr");
+        assertTrue(ui.frameDoc.querySelectorAll('.we-menu-popup[role="menu"]').length === 2, "parity menu popup role present");
+        const projectControls = projectLabel.getAttribute("aria-controls");
+        const projectPopup = projectControls ? ui.frameDoc.getElementById(projectControls) : null;
+        assertTrue(!!projectPopup, "parity menu label aria-controls resolves popup");
+        assertTrue(projectPopup.getAttribute("role") === "menu", "parity controlled popup has menu role");
+
+        const buildItem = menuItemByText(ui.frameDoc, "build");
+        const deployItem = menuItemByText(ui.frameDoc, "deploy");
+        const docsItem = menuItemByText(ui.frameDoc, "docs");
+        const aboutItem = menuItemByText(ui.frameDoc, "about");
+
+        assertTrue(!!buildItem && !!deployItem && !!docsItem && !!aboutItem, "all parity menu items found");
+
+        projectLabel.click();
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "Project menu toggle open");
+        projectLabel.click();
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "Project menu toggle close");
+
+        projectLabel.click();
+        await sleep(50);
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        await sleep(60);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "true", "End opens last parity menu");
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "End focuses last parity menu label");
+        helpLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        await sleep(60);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "Home opens first parity menu");
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "Home focuses first parity menu label");
+
+        if (projectLabel.getAttribute("aria-expanded") !== "true") {
+          projectLabel.click();
+          await sleep(50);
+        }
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === buildItem, "ArrowDown focuses first Project item");
+        buildItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === deployItem, "ArrowDown moves to next Project item");
+        deployItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === deployItem, "ArrowDown at last Project item does not wrap");
+        deployItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === buildItem, "ArrowUp moves to previous Project item");
+        buildItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === buildItem, "ArrowUp at first Project item does not wrap");
+        buildItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "true", "ArrowRight from item opens Help menu");
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "ArrowRight from item closes Project menu");
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "ArrowRight from item focus moves to Help label");
+        helpLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "ArrowLeft after item-switch returns to Project label");
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "true", "ArrowRight opens Help menu");
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "ArrowRight closes Project menu");
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "ArrowRight from label focus moves to Help label");
+        helpLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "ArrowRight wraps from Help to Project");
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "false", "ArrowRight wrap closes Help");
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "ArrowRight wrap focuses Project label");
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "true", "ArrowLeft wraps from Project to Help");
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "ArrowLeft wrap closes Project");
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "ArrowLeft wrap focuses Help label");
+        helpLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "ArrowLeft from Help returns to Project label");
+        helpLabel.click();
+        await sleep(50);
+        docsItem.focus();
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === docsItem, "Help item focus after wrap checks");
+        docsItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "ArrowLeft from item opens Project menu");
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "false", "ArrowLeft from item closes Help menu");
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "ArrowLeft from item focus moves to Project label");
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "ArrowRight re-focuses Help label");
+        helpLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "ArrowLeft opens Project menu");
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "false", "ArrowLeft closes Help menu");
+        assertTrue(ui.frameDoc.activeElement === projectLabel, "ArrowLeft from label focus moves to Project label");
+
+        projectLabel.click();
+        await sleep(50);
+        buildItem.click();
+        await sleep(75);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:build"), "status after build click");
+        assertTrue(text.includes("build:1"), "build counter after click");
+        projectLabel.click();
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "Project menu opened before focus-leave");
+        ui.frameDoc.body.setAttribute("tabindex", "-1");
+        ui.frameDoc.body.focus();
+        await sleep(60);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "Project menu closes when focus leaves menu");
+
+        projectLabel.click();
+        await sleep(50);
+        deployItem.focus();
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === deployItem, "deploy focus");
+        deployItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:deploy"), "status after deploy Enter");
+        assertTrue(text.includes("deploy:1"), "deploy counter after Enter");
+        projectLabel.click();
+        await sleep(50);
+        deployItem.focus();
+        await sleep(40);
+        deployItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+        await sleep(60);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "Tab closes open parity menu");
+
+        projectLabel.click();
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "true", "Project menu reopened");
+        helpLabel.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+        await sleep(50);
+        assertTrue(projectLabel.getAttribute("aria-expanded") === "false", "Project menu closed by hover switch");
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "true", "Help menu opened by hover switch");
+        docsItem.focus();
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === docsItem, "docs focus");
+        docsItem.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:docs"), "status after docs Space");
+        assertTrue(text.includes("docs:1"), "docs counter after Space");
+        helpLabel.click();
+        await sleep(50);
+        docsItem.focus();
+        await sleep(40);
+        docsItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+        await sleep(60);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "false", "Shift+Tab closes open parity menu");
+        helpLabel.click();
+        await sleep(50);
+        docsItem.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        await sleep(50);
+        assertTrue(helpLabel.getAttribute("aria-expanded") === "false", "Escape closes open parity menu");
+        assertTrue(ui.frameDoc.activeElement === helpLabel, "Escape returns focus to parity menu label");
+
+        helpLabel.click();
+        await sleep(50);
+        aboutItem.click();
+        await sleep(75);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:about"), "status after about click");
+        assertTrue(text.includes("about:1"), "about counter after click");
+
+        setStatus("PASS\nparity menu-full: multi-menu items + click/Enter/Space", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: menus=" + frameDoc.querySelectorAll('.we-menu').length +
+             " menu-items=" + frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]').length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

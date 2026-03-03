@@ -60,7 +60,11 @@
     }
 
     function menuItem(frameDoc) {
-      return frameDoc.querySelector('.we-menu-item[role="button"]');
+      return frameDoc.querySelector('.we-menu-item[role="menuitem"]');
+    }
+
+    function menuLabel(frameDoc) {
+      return frameDoc.querySelector('.we-menu-label[role="button"]');
     }
 
     async function waitForUI(frame, timeoutMs) {
@@ -69,9 +73,10 @@
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
           const item = menuItem(frameDoc);
+          const label = menuLabel(frameDoc);
           const text = bodyText(frameDoc);
-          if (item && text.includes("count:0")) {
-            return { frameDoc, item };
+          if (item && label && text.includes("count:0")) {
+            return { frameDoc, item, label };
           }
         }
         await sleep(25);
@@ -91,8 +96,14 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        assertTrue(ui.item.getAttribute("role") === "button", "menu-item role");
+        assertTrue(ui.label.getAttribute("role") === "button", "menu label role");
+        assertTrue(ui.label.getAttribute("aria-haspopup") === "true", "menu label popup attr");
+        assertTrue(ui.item.getAttribute("role") === "menuitem", "menu-item role");
         assertTrue(ui.item.getAttribute("tabindex") === "0", "menu-item tabindex");
+
+        ui.label.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.label.getAttribute("aria-expanded") === "true", "Enter opens menu");
 
         ui.item.focus();
         await sleep(50);
@@ -108,13 +119,17 @@
         await sleep(75);
         assertTrue(bodyText(ui.frameDoc).includes("count:2"), "Space increments count");
 
-        setStatus("PASS\nparity menu-item focus + Enter/Space activation", "pass");
+        ui.label.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.label.getAttribute("aria-expanded") === "false", "Escape closes menu");
+
+        setStatus("PASS\nparity menu popup + menu-item focus + Enter/Space activation", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");
         const frameDoc = frameDocFrom(frame);
         const diag = frameDoc
-          ? ("diag: menu-items=" + frameDoc.querySelectorAll('.we-menu-item[role="button"]').length +
+          ? ("diag: menu-items=" + frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]').length +
              " body=" + JSON.stringify(bodyText(frameDoc)))
           : "diag: no frame document";
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");

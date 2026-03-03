@@ -110,7 +110,7 @@
                   (define name (car a))
                   (define value (cdr a))
                   (case name
-                    [(choices columns density)
+                    [(choices columns density menu-trigger)
                      (void)]
                     [(selected)
                      (js-set! native "value" (value->attr-string value))]
@@ -168,7 +168,8 @@
         [(tr) "tr"]
         [(th) "th"]
         [(td) "td"]
-        [(menu-bar menu) "nav"]
+        [(menu-bar) "nav"]
+        [(menu) "div"]
         [(image) "img"]
         [else "div"]))
 
@@ -215,12 +216,24 @@
            (let ([p (assq 'role (dom-node-record-attrs n))])
              (and p (eq? (cdr p) 'tab)))))
 
+    ;; role-button-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is button-like via role=button.
+    (define (role-button-node? n)
+      (let ([p (assq 'role (dom-node-record-attrs n))])
+        (and p (eq? (cdr p) 'button))))
+
     ;; input-enter-action : dom-node-record? -> any/c
     ;;   Return input Enter callback when present.
     (define (input-enter-action n)
       (and (eq? (dom-node-record-tag n) 'input)
            (let ([p (assq 'on-enter-action (dom-node-record-attrs n))])
              (and p (cdr p)))))
+
+    ;; menu-trigger-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a menu trigger button.
+    (define (menu-trigger-node? n)
+      (let ([p (assq 'menu-trigger (dom-node-record-attrs n))])
+        (and p (cdr p))))
 
     ;; nav-key? : string? -> boolean?
     ;;   Check whether key triggers tab keyboard navigation.
@@ -234,6 +247,261 @@
     (define (activation-key? key)
       (or (string=? key "Enter")
           (string=? key " ")))
+
+    ;; class-value : dom-node-record? -> string?
+    ;;   Read class attribute string for n, defaulting to empty.
+    (define (class-value n)
+      (define p (assq 'class (dom-node-record-attrs n)))
+      (if p
+          (value->attr-string (cdr p))
+          ""))
+
+    ;; menu-label-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a menu label button.
+    (define (menu-label-node? n)
+      (string=? (class-value n) "we-menu-label"))
+
+    ;; menu-item-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a menu item button.
+    (define (menu-item-node? n)
+      (string=? (class-value n) "we-menu-item"))
+
+    ;; string->int/default : string? integer? -> integer?
+    ;;   Parse s as integer and return default-value on failure.
+    (define (string->int/default s default-value)
+      (define maybe-n (string->number s))
+      (if maybe-n
+          maybe-n
+          default-value))
+
+    ;; nodelist-length : any/c -> integer?
+    ;;   Read NodeList length as integer.
+    (define (nodelist-length node-list)
+      (string->int/default
+       (js-value->string (js-ref/extern node-list "length"))
+       0))
+
+    ;; nodelist-item : any/c integer? -> any/c
+    ;;   Read NodeList item at index idx.
+    (define (nodelist-item node-list idx)
+      (js-send/extern/nullish node-list "item" (vector idx)))
+
+    ;; extern-nullish? : any/c -> boolean?
+    ;;   Check whether external value encodes null or undefined.
+    (define (extern-nullish? v)
+      (define s (js-value->string v))
+      (or (string=? s "null")
+          (string=? s "undefined")))
+
+    ;; extern-bool-true? : any/c -> boolean?
+    ;;   Interpret external value as boolean true/false by string conversion.
+    (define (extern-bool-true? v)
+      (string=? (js-value->string v) "true"))
+
+    ;; menu-container-node? : any/c -> boolean?
+    ;;   Check whether external node looks like a top-level .we-menu container.
+    (define (menu-container-node? node)
+      (and node
+           (not (extern-nullish? node))
+           (let ([label
+                  (js-send/extern/nullish
+                   node
+                   "querySelector"
+                   (vector ".we-menu-label[role='button']"))])
+             (and label #t))))
+
+    ;; focusout-menu-container : dom-node-record? any/c -> any/c
+    ;;   Return enclosing menu container native node for focusout checks, or #f.
+    (define (focusout-menu-container n native)
+      (cond
+        [(menu-label-node? n)
+         (define parent* (js-ref/extern native "parentElement"))
+         (if (or (not parent*)
+                 (extern-nullish? parent*))
+             #f
+             parent*)]
+        [(menu-item-node? n)
+         (define popup* (js-ref/extern native "parentElement"))
+         (if (or (not popup*)
+                 (extern-nullish? popup*))
+             #f
+             (let ([menu* (js-ref/extern popup* "parentElement")])
+               (if (or (not menu*)
+                       (extern-nullish? menu*))
+                   #f
+                   menu*)))]
+        [else
+         #f]))
+
+    ;; focus-first-menu-item! : any/c -> void?
+    ;;   Focus first menu item in popup for label-native.
+    (define (focus-first-menu-item! label-native)
+      (define popup-native (js-ref/extern label-native "nextElementSibling"))
+      (when popup-native
+        (define first-item
+          (js-send/extern/nullish
+           popup-native
+           "querySelector"
+           (vector ".we-menu-item[role='menuitem']")))
+        (when first-item
+          (js-send first-item "focus" (vector)))))
+
+    ;; focus-last-menu-item! : any/c -> void?
+    ;;   Focus last menu item in popup for label-native.
+    (define (focus-last-menu-item! label-native)
+      (define popup-native (js-ref/extern label-native "nextElementSibling"))
+      (when popup-native
+        (define item-list
+          (js-send/extern/nullish
+           popup-native
+           "querySelectorAll"
+           (vector ".we-menu-item[role='menuitem']")))
+        (when item-list
+          (define len (nodelist-length item-list))
+          (when (> len 0)
+            (define last-item (nodelist-item item-list (- len 1)))
+            (when last-item
+              (js-send last-item "focus" (vector)))))))
+
+    ;; sibling-menu-native : any/c symbol? -> any/c
+    ;;   Return adjacent menu container from from-menu using direction dir with wrap.
+    (define (sibling-menu-native from-menu dir)
+      (define raw*
+        (case dir
+          [(next) (js-ref/extern from-menu "nextElementSibling")]
+          [(prev) (js-ref/extern from-menu "previousElementSibling")]
+          [else #f]))
+      (define raw
+        (if (or (not raw*)
+                (extern-nullish? raw*))
+            #f
+            raw*))
+      (if (and raw (menu-container-node? raw))
+          raw
+          (let* ([bar-native* (js-ref/extern from-menu "parentElement")]
+                 [bar-native (if (or (not bar-native*)
+                                     (extern-nullish? bar-native*))
+                                 #f
+                                 bar-native*)])
+            (if bar-native
+                (case dir
+                  [(next)
+                   (js-send/extern/nullish
+                    bar-native
+                    "querySelector"
+                    (vector ".we-menu"))]
+                  [(prev)
+                   (let ([menu-list
+                          (js-send/extern/nullish
+                           bar-native
+                           "querySelectorAll"
+                           (vector ".we-menu"))])
+                     (if menu-list
+                         (let ([len (nodelist-length menu-list)])
+                           (if (> len 0)
+                               (nodelist-item menu-list (- len 1))
+                               #f))
+                         #f))]
+                  [else
+                   #f])
+                #f))))
+
+    ;; switch-menu-from-label! : any/c symbol? -> void?
+    ;;   Open sibling menu from label-native in direction dir and focus sibling label.
+    (define (switch-menu-from-label! label-native dir)
+      (define from-menu (js-ref/extern label-native "parentElement"))
+      (when from-menu
+        (define to-menu (sibling-menu-native from-menu dir))
+        (when to-menu
+          (define to-label
+            (js-send/extern/nullish
+             to-menu
+             "querySelector"
+             (vector ".we-menu-label[role='button']")))
+          (when to-label
+            (js-send to-label "click" (vector))
+            (js-send to-label "focus" (vector))))))
+
+    ;; focus-edge-menu-label! : any/c symbol? -> void?
+    ;;   Open and focus first/last top-level menu label for label-native.
+    (define (focus-edge-menu-label! label-native edge)
+      (define from-menu (js-ref/extern label-native "parentElement"))
+      (when from-menu
+        (define bar-native (js-ref/extern from-menu "parentElement"))
+        (when bar-native
+          (define target-label
+            (case edge
+              [(first)
+               (js-send/extern/nullish
+                bar-native
+                "querySelector"
+                (vector ".we-menu-label[role='button']"))]
+              [(last)
+               (let ([label-list
+                      (js-send/extern/nullish
+                       bar-native
+                       "querySelectorAll"
+                       (vector ".we-menu-label[role='button']"))])
+                 (if label-list
+                     (let ([len (nodelist-length label-list)])
+                       (if (> len 0)
+                           (nodelist-item label-list (- len 1))
+                           #f))
+                     #f))]
+              [else
+               #f]))
+          (when target-label
+            (js-send target-label "click" (vector))
+            (js-send target-label "focus" (vector))))))
+
+    ;; switch-menu-from-item! : any/c symbol? -> void?
+    ;;   Open sibling menu from item-native in direction dir and focus sibling label.
+    (define (switch-menu-from-item! item-native dir)
+      (define popup-native (js-ref/extern item-native "parentElement"))
+      (when popup-native
+        (define from-menu (js-ref/extern popup-native "parentElement"))
+        (when from-menu
+          (define to-menu (sibling-menu-native from-menu dir))
+          (when to-menu
+            (define to-label
+              (js-send/extern/nullish
+               to-menu
+               "querySelector"
+               (vector ".we-menu-label[role='button']")))
+            (when to-label
+              (js-send to-label "click" (vector))
+              (js-send to-label "focus" (vector)))))))
+
+    ;; focus-next-menu-item! : any/c -> void?
+    ;;   Move focus to next item in same popup, clamping at last.
+    (define (focus-next-menu-item! item-native)
+      (define next-item (js-ref/extern item-native "nextElementSibling"))
+      (if next-item
+          (js-send next-item "focus" (vector))
+          (js-send item-native "focus" (vector))))
+
+    ;; focus-prev-menu-item! : any/c -> void?
+    ;;   Move focus to previous item in same popup, clamping at first.
+    (define (focus-prev-menu-item! item-native)
+      (define prev-item (js-ref/extern item-native "previousElementSibling"))
+      (if prev-item
+          (js-send prev-item "focus" (vector))
+          (js-send item-native "focus" (vector))))
+
+    ;; focus-own-menu-label! : any/c -> void?
+    ;;   Focus top-level menu label for item-native.
+    (define (focus-own-menu-label! item-native)
+      (define popup-native (js-ref/extern item-native "parentElement"))
+      (when popup-native
+        (define menu-native (js-ref/extern popup-native "parentElement"))
+        (when menu-native
+          (define label-native
+            (js-send/extern/nullish
+             menu-native
+             "querySelector"
+             (vector ".we-menu-label[role='button']")))
+          (when label-native
+            (js-send label-native "focus" (vector))))))
 
     ;; focus-selected-sibling-tab! : any/c -> void?
     ;;   Focus selected tab button in the same tablist as native.
@@ -296,7 +564,8 @@
           (define role-pair (assq 'role (dom-node-record-attrs n)))
           (when (and on-click
                      role-pair
-                     (eq? (cdr role-pair) 'button)
+                     (or (eq? (cdr role-pair) 'button)
+                         (eq? (cdr role-pair) 'menuitem))
                      (activation-key? key))
             (js-send evt "preventDefault" (vector))
             (on-click))
@@ -306,7 +575,88 @@
               (js-send evt "preventDefault" (vector)))
             (callback key)
             (when (nav-key? key)
-              (focus-selected-sibling-tab! native))))))
+              (focus-selected-sibling-tab! native)))
+          (when (menu-label-node? n)
+            (case (string->symbol key)
+              [(ArrowDown)
+               (js-send evt "preventDefault" (vector))
+               (focus-first-menu-item! native)]
+              [(ArrowUp)
+               (js-send evt "preventDefault" (vector))
+               (focus-last-menu-item! native)]
+              [(ArrowRight)
+               (js-send evt "preventDefault" (vector))
+               (switch-menu-from-label! native 'next)]
+              [(ArrowLeft)
+               (js-send evt "preventDefault" (vector))
+               (switch-menu-from-label! native 'prev)]
+              [(Home)
+               (js-send evt "preventDefault" (vector))
+               (focus-edge-menu-label! native 'first)]
+              [(End)
+               (js-send evt "preventDefault" (vector))
+               (focus-edge-menu-label! native 'last)]
+              [(Tab)
+               (when callback
+                 (callback "focusout"))]
+              [else
+               (void)]))
+          (when (menu-item-node? n)
+            (case (string->symbol key)
+              [(ArrowDown)
+               (js-send evt "preventDefault" (vector))
+               (focus-next-menu-item! native)]
+              [(ArrowUp)
+               (js-send evt "preventDefault" (vector))
+               (focus-prev-menu-item! native)]
+              [(ArrowRight)
+               (js-send evt "preventDefault" (vector))
+               (switch-menu-from-item! native 'next)]
+              [(ArrowLeft)
+               (js-send evt "preventDefault" (vector))
+               (switch-menu-from-item! native 'prev)]
+              [(Tab)
+               (when callback
+                 (callback "focusout"))]
+              [(Escape)
+               (when callback
+                 (callback "Escape"))
+               (focus-own-menu-label! native)]
+              [else
+               (void)]))
+          (when (and callback (role-button-node? n))
+            (callback key)))))
+      (js-add-event-listener!
+       native
+       "mouseenter"
+       (procedure->external
+        (lambda (_evt)
+          (define callback (dom-node-record-on-change n))
+          (when (and callback (menu-trigger-node? n))
+            (callback "mouseenter")))))
+      (js-add-event-listener!
+       native
+       "focusout"
+       (procedure->external
+        (lambda (evt)
+          (define callback (dom-node-record-on-change n))
+          (define menu-container (focusout-menu-container n native))
+          (when (and callback menu-container)
+            (define related* (js-ref/extern evt "relatedTarget"))
+            (define related
+              (if (or (not related*)
+                      (extern-nullish? related*))
+                  #f
+                  related*))
+            (define still-inside?
+              (and related
+                   (extern-bool-true?
+                    (js-send/extern/nullish
+                     menu-container
+                     "contains"
+                     (vector related)))))
+            (unless still-inside?
+              (callback "focusout"))))))
       n)
 
     ;; dom-node? : any/c -> boolean?

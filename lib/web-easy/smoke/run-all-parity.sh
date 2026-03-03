@@ -23,6 +23,8 @@ echo
 echo
 "$SCRIPT_DIR/run-browser-parity-menu-keys-test.sh"
 echo
+"$SCRIPT_DIR/run-browser-parity-menu-full-test.sh"
+echo
 "$SCRIPT_DIR/run-browser-parity-list-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-parity-todo-test.sh"

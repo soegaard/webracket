@@ -60,6 +60,8 @@
     (define table/density-normal  'normal)    ; Default table spacing density.
     (define table/density-compact 'compact)   ; Compact table spacing density.
     (define tab-panel-counter     0)          ; Monotonic counter for tab-panel ids.
+    (define menu-popup-counter    0)          ; Monotonic counter for menu popup ids.
+    (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
     ;; Style constants
     (define tab-panel-style-text ; CSS for class-based tab styles.
@@ -68,12 +70,26 @@
        .we-tab-btn.is-selected{border-color:#333;background:#ececec;font-weight:bold;}\
        .we-tab-btn.is-disabled{border-color:#bbb;background:#f3f3f3;color:#777;opacity:.7;}\
        .we-tab-btn:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") 
-    (define menu-style-text      ; CSS for menu-item keyboard focus visibility.
-      ".we-menu-item:focus,.we-menu-item:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") 
+    (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
+      ".we-menu-item:focus,.we-menu-item:focus-visible,.we-menu-label:focus,.we-menu-label:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}\
+       .we-menu-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 8px;border:1px solid #aaa;border-radius:4px;background:#f3f3f3;box-sizing:border-box;}\
+       .we-menu{position:relative;display:inline-block;}\
+       .we-menu-label{padding:2px 8px;border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;}\
+       .we-menu-label:hover{background:#e8e8e8;border-color:#c0c0c0;}\
+       .we-menu-label[aria-expanded='true']{background:#fff;border-color:#888;border-bottom-color:#fff;position:relative;z-index:1001;}\
+       .we-menu-popup{position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;}\
+       .we-menu-popup.is-open{display:flex;}\
+       .we-menu-item{display:block;width:100%;text-align:left;}") 
     (define menu-bar-style       ; Inline style for menu-bar container layout.
-      "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0;") 
+      "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 8px;border:1px solid #aaa;border-radius:4px;background:#f3f3f3;box-sizing:border-box;") 
     (define menu-style           ; Inline style for menu container layout.
-      "display:inline-flex;gap:8px;align-items:center;") 
+      "position:relative;display:inline-block;") 
+    (define menu-label-style     ; Inline style for menu trigger button appearance.
+      "padding:2px 8px;border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;") 
+    (define menu-popup-style     ; Inline style for hidden menu item popup.
+      "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
+    (define menu-popup-open-style ; Inline style for visible menu item popup.
+      "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:flex;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
     (define menu-item-style      ; Inline style for menu-item chip appearance.
       "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;") 
 
@@ -178,11 +194,16 @@
         ((cdr on-enter-pair)))
       (when (and on-click
                  role-pair
-                 (eq? (cdr role-pair) 'button)
+                 (or (eq? (cdr role-pair) 'button)
+                     (eq? (cdr role-pair) 'menuitem))
                  (or (string=? key "Enter")
                      (string=? key " ")))
         (on-click))
-      (when (and on-change role-pair (eq? (cdr role-pair) 'tab))
+      (when (and on-change
+                 role-pair
+                 (or (eq? (cdr role-pair) 'tab)
+                     (eq? (cdr role-pair) 'button)
+                     (eq? (cdr role-pair) 'menuitem)))
         (on-change key)))
 
     ;; alist-ref : (listof pair?) symbol? symbol? -> any/c
@@ -222,6 +243,12 @@
     (define (next-tab-panel-id)
       (set! tab-panel-counter (add1 tab-panel-counter))
       (string-append "tab-panel-" (number->string tab-panel-counter)))
+
+    ;; next-menu-popup-id : -> string?
+    ;;   Allocate a unique id string for menu popup region.
+    (define (next-menu-popup-id)
+      (set! menu-popup-counter (add1 menu-popup-counter))
+      (string-append "menu-popup-" (number->string menu-popup-counter)))
 
     ;; normalize-tab-entry : any/c -> list?
     ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
@@ -932,7 +959,10 @@
         [(menu-bar)
          (define style-node (dom-node 'style '() '() menu-style-text #f #f))
          (define node (dom-node 'menu-bar
-                                (list (cons 'style menu-bar-style))
+                                (list (cons 'class "we-menu-bar")
+                                      (cons attr/role 'menubar)
+                                      (cons 'aria-orientation "horizontal")
+                                      (cons 'style menu-bar-style))
                                 '()
                                 #f
                                 #f
@@ -944,16 +974,86 @@
          node]
         [(menu)
          (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define popup-id (next-menu-popup-id))
+         (define open? #f)
          (define node (dom-node 'menu
-                                (list (cons 'label "")
+                                (list (cons 'class "we-menu")
                                       (cons 'style menu-style))
                                 '()
                                 #f
                                 #f
                                 #f))
+         (define label-node (dom-node 'button
+                                      (list (cons attr/role 'button)
+                                            (cons 'class "we-menu-label")
+                                            (cons 'menu-trigger #t)
+                                            (cons 'tabindex 0)
+                                            (cons 'style menu-label-style)
+                                            (cons 'aria-haspopup "true")
+                                            (cons 'aria-controls popup-id)
+                                            (cons 'aria-expanded "false"))
+                                      '()
+                                      ""
+                                      (lambda ()
+                                        (set-open! (not open?)))
+                                      (lambda (key)
+                                        (case (string->symbol key)
+                                          [(ArrowDown)
+                                           (set-open! #t)]
+                                          [(mouseenter)
+                                           (when (and active-menu-close
+                                                      (not open?))
+                                             (set-open! #t))]
+                                          [(focusout)
+                                           (set-open! #f)]
+                                          [(Escape)
+                                           (set-open! #f)]
+                                          [else
+                                           (void)]))))
+         (define popup-node (dom-node 'vpanel
+                                      (list (cons attr/role 'menu)
+                                            (cons 'id popup-id)
+                                            (cons 'class "we-menu-popup")
+                                            (cons 'style menu-popup-style))
+                                      '()
+                                      #f
+                                      #f
+                                      #f))
+         (define close-self!
+           (lambda ()
+             (set-open! #f)))
+         ;; set-open! : boolean? -> void?
+         ;;   Toggle popup visibility and update menu trigger aria state.
+         (define (set-open! next-open?)
+           (when (and next-open?
+                      active-menu-close
+                      (not (eq? active-menu-close close-self!)))
+             (active-menu-close))
+           (set! open? (not (not next-open?)))
+           (when open?
+             (set! active-menu-close close-self!))
+           (when (and (not open?)
+                      active-menu-close
+                      (eq? active-menu-close close-self!))
+             (set! active-menu-close #f))
+           (set-dom-node-attrs!
+            label-node
+            (list (cons attr/role 'button)
+                  (cons 'class "we-menu-label")
+                  (cons 'menu-trigger #t)
+                  (cons 'tabindex 0)
+                  (cons 'style menu-label-style)
+                  (cons 'aria-haspopup "true")
+                  (cons 'aria-controls popup-id)
+                  (cons 'aria-expanded (if open? "true" "false"))))
+          (set-dom-node-attrs!
+            popup-node
+            (list (cons attr/role 'menu)
+                  (cons 'id popup-id)
+                  (cons 'class (if open? "we-menu-popup is-open" "we-menu-popup"))
+                  (cons 'style (if open? menu-popup-open-style menu-popup-style)))))
          (define (set-label! label-value)
-           (set-dom-node-attrs! node (list (cons 'label (value->text label-value))
-                                           (cons 'style menu-style))))
+           (set-dom-node-text! label-node (value->text label-value)))
          (cond
            [(obs? raw-label)
             (set-label! (obs-peek raw-label))
@@ -963,15 +1063,36 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
            [else
             (set-label! raw-label)])
+         (backend-append-child! node label-node)
+         (backend-append-child! node popup-node)
          (for-each (lambda (child)
-                     (backend-append-child! node (build-node child register-cleanup!)))
+                     (define child-node (build-node child register-cleanup!))
+                     (when (eq? (dom-node-tag child-node) 'menu-item)
+                       (define on-click (dom-node-on-click child-node))
+                       (when on-click
+                         (set-dom-node-on-click!
+                          child-node
+                          (lambda ()
+                            (on-click)
+                            (set-open! #f))))
+                       (set-dom-node-on-change!
+                        child-node
+                        (lambda (key)
+                          (case (string->symbol key)
+                            [(focusout)
+                             (set-open! #f)]
+                            [(Escape)
+                             (set-open! #f)]
+                            [else
+                             (void)]))))
+                     (backend-append-child! popup-node child-node))
                    (view-children v))
          node]
         [(menu-item)
          (define raw-label (alist-ref (view-props v) 'label  'render))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'menu-item
-                                (list (cons attr/role 'button)
+                                (list (cons attr/role 'menuitem)
                                       (cons 'class    "we-menu-item")
                                       (cons 'tabindex 0)
                                       (cons 'style    menu-item-style))
