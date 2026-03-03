@@ -150,6 +150,12 @@
           projectLabel.click();
           await sleep(50);
         }
+        projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "d", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === deployItem, "type-ahead from Project label focuses deploy");
+        deployItem.dispatchEvent(new KeyboardEvent("keydown", { key: "b", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === buildItem, "type-ahead from deploy focuses build");
         projectLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
         await sleep(50);
         assertTrue(ui.frameDoc.activeElement === buildItem, "ArrowDown focuses first Project item");
@@ -286,7 +292,7 @@
         assertTrue(text.includes("status:about"), "status after about click");
         assertTrue(text.includes("about:1"), "about counter after click");
 
-        setStatus("PASS\nparity menu-full: multi-menu items + click/Enter/Space", "pass");
+        setStatus("PASS\nparity menu-full: multi-menu items + click/Enter/Space + type-ahead", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");

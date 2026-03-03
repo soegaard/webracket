@@ -656,6 +656,7 @@ Current browser backend element mapping (as implemented today):
 - `Up`/`Down` inside a popup is clamped (no wrap), matching current macOS-style behavior.
 - `Home`/`End` on labels moves to first/last label.
 - `Enter`/`Space` activates menu items.
+- Typing a letter while a menu label or menu item has focus performs type-ahead focus to the next matching menu item.
 - `Escape` closes the popup and returns focus to the owning label.
 - Leaving menu focus (focus moves outside menu container) closes the open popup.
 

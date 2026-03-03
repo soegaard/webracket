@@ -401,7 +401,7 @@ Concurrency note:
 - smoke: `PASS initial=0, after-click=1`
 - group: `PASS group uses fieldset + legend`
 - menu-keys: `PASS menu popup + menu-item focus + Enter/Space activation`
-- menu-full: `PASS menu-full: multi-menu items + click/Enter/Space`
+- menu-full: `PASS menu-full: multi-menu items + click/Enter/Space + type-ahead`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -424,4 +424,4 @@ Concurrency note:
 - parity-settings: `PASS settings parity: table rows + menu actions`
 - parity-table: `PASS table parity: multi-column cells + menu actions`
 - parity-menu-keys: `PASS parity menu popup + menu-item focus + Enter/Space activation`
-- parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space`
+- parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space + type-ahead`
