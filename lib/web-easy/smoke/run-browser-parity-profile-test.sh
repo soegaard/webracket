@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser parity profile settings artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-parity-profile-compile.sh"
+"$SCRIPT_DIR/run-browser-parity-all-compile.sh"
 
 echo
 echo "browser parity profile settings runtime: manual steps"

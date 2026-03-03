@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser controls smoke artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-controls-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser controls smoke runtime: manual steps"

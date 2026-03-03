@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser tab-panel artifacts and print keyboard-only runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-tab-panel-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser tab-panel keyboard smoke runtime: manual steps"

@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser tab-panel-disabled artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-tab-panel-disabled-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser tab-panel-disabled smoke runtime: manual steps"

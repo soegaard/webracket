@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser branch smoke artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-branch-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser branch smoke runtime: manual steps"

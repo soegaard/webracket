@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser parity dynamic list artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-parity-dynamic-list-compile.sh"
+"$SCRIPT_DIR/run-browser-parity-all-compile.sh"
 
 echo
 echo "browser parity dynamic-list runtime: manual steps"

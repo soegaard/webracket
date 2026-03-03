@@ -46,6 +46,7 @@ Rationale:
 - Generated browser artifacts are written to `smoke/generated/`.
 - Core smoke pages compile through `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile through `example-browser-parity-all.rkt` selected by `?test=...`.
+- Canonical compile runner: `run-browser-target-compile.sh <smoke-all|parity-all|visual-check>`.
 - `check-smoke.sh` runs 3 compile targets:
   - `smoke-all`
   - `visual-check`
@@ -102,7 +103,7 @@ Repository-root aliases:
 - `make smoke-ci`
 - `make smoke-headless`
 - `make smoke-parity-headless`
-- `make smoke-one SINGLE_COMPILE=run-browser-parity-menu-keys-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
+- `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
 
 Command notes:
 
@@ -269,6 +270,14 @@ This command:
 3. Opens `test-browser-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
 
+Environment flags:
+
+- `SMOKE_FORCE_COMPILE=1`:
+  - forces recompilation in compile wrappers even when `generated/` artifacts already exist.
+- `SMOKE_SKIP_COMPILE=1`:
+  - skips compilation in headless wrapper scripts and reuses existing `generated/` artifacts.
+  - used by `check-all.sh --headless` for step `[4/4]` to avoid redundant recompiles.
+
 ## Single Example Headless
 
 From `lib/web-easy/smoke`:
@@ -280,8 +289,8 @@ From `lib/web-easy/smoke`:
 Examples:
 
 ```bash
-./check-single-headless.sh run-browser-parity-hello-compile.sh test-browser-parity-hello.html
-./check-single-headless.sh run-browser-parity-profile-compile.sh test-browser-parity-profile.html
+./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-hello.html
+./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-profile.html
 ```
 
 This command:
@@ -306,7 +315,7 @@ Common failure patterns and what to check first:
 4. Web server/port issues:
    - ensure no stale `raco static-web` server is already bound to the port.
 5. Compiler/runtime path mismatch:
-   - rerun the specific compile script (for example `run-browser-*-compile.sh`) before rechecking.
+   - rerun the specific compile script (for example `run-browser-target-compile.sh <target>`) before rechecking.
 
 Note:
 

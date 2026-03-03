@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser operators smoke artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-operators-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser operators smoke runtime: manual steps"

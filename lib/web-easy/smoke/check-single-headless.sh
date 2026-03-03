@@ -14,8 +14,8 @@ Usage:
   ./check-single-headless.sh <compile-script> <test-page>
 
 Examples:
-  ./check-single-headless.sh run-browser-parity-profile-compile.sh test-browser-parity-profile.html
-  ./check-single-headless.sh run-browser-parity-todo-compile.sh test-browser-parity-todo.html
+  ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-profile.html
+  ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-todo.html
 USAGE
 }
 
@@ -41,7 +41,11 @@ if [ ! -f "$SCRIPT_DIR/$TEST_PAGE" ]; then
   exit 2
 fi
 
-"$COMPILE_SCRIPT"
+if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
+  echo "Skipping compile (SMOKE_SKIP_COMPILE=1): $COMPILE_SCRIPT"
+else
+  "$COMPILE_SCRIPT"
+fi
 
 if ! command -v raco >/dev/null 2>&1; then
   echo "raco is required to serve smoke files via static-web."

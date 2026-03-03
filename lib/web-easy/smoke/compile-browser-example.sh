@@ -16,8 +16,6 @@ SUCCESS_MESSAGE="$2"
 cd "$WEB_EASY_DIR/smoke"
 mkdir -p generated
 
-racket ../../../webracket.rkt --browser --ffi dom --ffi standard "$EXAMPLE_RKT"
-
 BASENAME="${EXAMPLE_RKT%.rkt}"
 
 # Lock per compile target so concurrent jobs cannot clobber shared outputs.
@@ -36,6 +34,17 @@ cleanup_lock() {
   rmdir "$LOCK_DIR" >/dev/null 2>&1 || true
 }
 trap cleanup_lock EXIT
+
+# Fast path: if key generated outputs already exist, skip recompilation.
+if [ "${SMOKE_FORCE_COMPILE:-0}" != "1" ] \
+  && [ -f "generated/$BASENAME.html" ] \
+  && [ -f "generated/$BASENAME.wasm" ] \
+  && [ -f "generated/$BASENAME.wat" ]; then
+  echo "$SUCCESS_MESSAGE (cached)"
+  exit 0
+fi
+
+racket ../../../webracket.rkt --browser --ffi dom --ffi standard "$EXAMPLE_RKT"
 
 for ext in html js wasm wasm.map.sexp wat; do
   SRC="$BASENAME.$ext"

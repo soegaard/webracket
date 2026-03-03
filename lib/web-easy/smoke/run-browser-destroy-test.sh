@@ -4,7 +4,7 @@ set -euo pipefail
 # Build browser destroy smoke artifacts and print runtime test instructions.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$SCRIPT_DIR/run-browser-destroy-compile.sh"
+"$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
 
 echo
 echo "browser destroy smoke runtime: manual steps"

@@ -8,7 +8,11 @@ HOST="${SMOKE_HOST:-127.0.0.1}"
 BASE_URL="http://${HOST}:${PORT}"
 LOCAL_TOOLS_DIR="${SMOKE_LOCAL_TOOLS_DIR:-$ROOT_DIR/.local-tools}"
 
-"$SCRIPT_DIR/check-smoke.sh"
+if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
+  echo "Skipping smoke compile (SMOKE_SKIP_COMPILE=1)."
+else
+  "$SCRIPT_DIR/check-smoke.sh"
+fi
 
 if ! command -v raco >/dev/null 2>&1; then
   echo "raco is required to serve smoke files via static-web."
