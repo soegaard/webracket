@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `28` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `14` tests
+- full dashboard (`test-browser-dashboard.html`): `30` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `15` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-03):
 
-- full headless dashboard: `28/28` PASS
-- parity-only headless dashboard: `14/14` PASS
-- latest local `check-all.sh --headless`: PASS (`28/28`)
+- full headless dashboard: `30/30` PASS
+- parity-only headless dashboard: `15/15` PASS
+- latest local `check-all.sh --headless`: PASS (`30/30`)
 
 ## Command Wrapper
 
@@ -206,6 +206,7 @@ Then open:
 - `http://localhost:8000/test-browser-smoke.html`
 - `http://localhost:8000/test-browser-group.html`
 - `http://localhost:8000/test-browser-menu-keys.html`
+- `http://localhost:8000/test-browser-menu-full.html`
 - `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
@@ -232,6 +233,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-settings.html`
 - `http://localhost:8000/test-browser-parity-table.html`
 - `http://localhost:8000/test-browser-parity-menu-keys.html`
+- `http://localhost:8000/test-browser-parity-menu-full.html`
 
 Dashboards:
 
@@ -364,6 +366,7 @@ From `lib/web-easy/smoke`:
   - `./run-browser-parity-settings-test.sh`
   - `./run-browser-parity-table-test.sh`
   - `./run-browser-parity-menu-keys-test.sh`
+  - `./run-browser-parity-menu-full-test.sh`
 
 Parity quickstart:
 
@@ -385,7 +388,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `28/28 smoke tests passed`
+1. full smoke: `PASS` with `30/30 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -397,7 +400,8 @@ Concurrency note:
 
 - smoke: `PASS initial=0, after-click=1`
 - group: `PASS group uses fieldset + legend`
-- menu-keys: `PASS menu-item focus + Enter/Space activation`
+- menu-keys: `PASS menu popup + menu-item focus + Enter/Space activation`
+- menu-full: `PASS menu-full: multi-menu items + click/Enter/Space`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -419,4 +423,5 @@ Concurrency note:
 - parity-todo: `PASS todo parity: add, edit/cancel, edit/save, toggle, mark-all-done, clear-done`
 - parity-settings: `PASS settings parity: table rows + menu actions`
 - parity-table: `PASS table parity: multi-column cells + menu actions`
-- parity-menu-keys: `PASS parity menu-item focus + Enter/Space activation`
+- parity-menu-keys: `PASS parity menu popup + menu-item focus + Enter/Space activation`
+- parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space`

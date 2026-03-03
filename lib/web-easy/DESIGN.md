@@ -455,8 +455,8 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `28` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `14` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `30` tests
+2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `15` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -643,8 +643,21 @@ Current browser backend element mapping (as implemented today):
 | `spacer` | `div` | Empty layout spacer. |
 | `table` | `table` + `tr` + `th` + `td` | Header row from columns, data rows from row values. |
 | `image` | `img` | Optional `width`/`height`; keeps intrinsic size by default. |
-| `menu-bar`, `menu` | `nav` | Container/navigation wrappers. |
-| `menu-item` | `span` | Styled as clickable action chip; click wired via renderer/backend. |
+| `menu-bar` | `nav` (`role="menubar"`, `aria-orientation="horizontal"`) | Top-level menu label row. |
+| `menu` | `div` (`role="menu"`, popup `id`) | Popup menu container linked from label via `aria-controls`. |
+| `menu-item` | `button type="button"` (`role="menuitem"`) | Action entry with keyboard activation (`Enter`/`Space`). |
+
+## Menu Interaction Contract (Current)
+
+- Menu labels are rendered as focusable buttons with `aria-haspopup="menu"`, `aria-controls`, and `aria-expanded`.
+- Clicking a label toggles that menu popup.
+- When a popup is open, `Left`/`Right` on labels wraps across top-level labels.
+- When focus is on a menu item, `Left`/`Right` switches to adjacent menu label and opens that menu.
+- `Up`/`Down` inside a popup is clamped (no wrap), matching current macOS-style behavior.
+- `Home`/`End` on labels moves to first/last label.
+- `Enter`/`Space` activates menu items.
+- `Escape` closes the popup and returns focus to the owning label.
+- Leaving menu focus (focus moves outside menu container) closes the open popup.
 
 ## Width Policy (Current Defaults)
 
@@ -664,14 +677,16 @@ Current width defaults are intentionally split between layout containers and lea
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
-  - full dashboard baseline: `28` automated smoke tests.
-  - parity dashboard baseline: `14` automated parity tests.
+  - full dashboard baseline: `30` automated smoke tests.
+  - parity dashboard baseline: `15` automated parity tests.
   - recent additions to full dashboard baseline:
     - `test-browser-group.html` (fieldset + legend semantics)
-    - `test-browser-menu-keys.html` (menu-item focus + Enter/Space activation)
+    - `test-browser-menu-keys.html` (menu popup + menu-item focus + Enter/Space activation)
+    - `test-browser-menu-full.html` (multi-menu/multi-item activation and status updates)
     - `test-browser-width.html` (width-policy runtime assertions)
     - `test-browser-parity-incident.html` (real-world incident triage parity flow)
     - `test-browser-parity-release.html` (real-world release checklist parity flow)
+    - `test-browser-parity-menu-full.html` (richer parity menu interaction coverage)
 
 ## Open Design Questions
 
@@ -710,12 +725,17 @@ Initial cleanup slice completed:
 
 1. Menu-related inline styles are now centralized as named renderer constants (`menu-bar-style`, `menu-style`, `menu-item-style`) instead of repeated literal strings.
 2. Existing behavior is unchanged; this is a maintainability refactor only.
+3. Browser element mapping now uses:
+   - `menu-bar` -> `<nav>`
+   - `menu` -> `<div>`
+   - `menu-item` -> `<button type=\"button\">`
 
 Rationale:
 
 - Reduces copy-paste drift when adjusting spacing/appearance across `menu-bar`, `menu`, and `menu-item`.
 - Establishes a repeatable pattern for moving widget styling from scattered literals toward an explicit style policy.
 - Keeps risk low while we prepare larger semantic-element decisions.
+- Avoids nested navigation landmarks and gives menu actions native button semantics.
 
 Next cleanup slices:
 
