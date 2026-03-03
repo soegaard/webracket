@@ -93,7 +93,7 @@ jobs:
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
 
-      - name: Run web-easy non-headless smoke checks
+      - name: Run web-easy smoke checks (compile + headless dashboard)
         run: |
           cd lib/web-easy/smoke
           echo "[1/3] core tests (real Racket)"
