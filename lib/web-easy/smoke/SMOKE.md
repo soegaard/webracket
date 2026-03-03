@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `31` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `15` tests
+- full dashboard (`test-browser-dashboard.html`): `32` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `16` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-03):
 
-- full headless dashboard: `31/31` PASS
-- parity-only headless dashboard: `15/15` PASS
-- latest local `check-all.sh --headless`: PASS (`31/31`)
+- full headless dashboard: `32/32` PASS
+- parity-only headless dashboard: `16/16` PASS
+- latest local `check-all.sh --headless`: PASS (`32/32`)
 
 ## Command Wrapper
 
@@ -235,6 +235,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-table.html`
 - `http://localhost:8000/test-browser-parity-menu-keys.html`
 - `http://localhost:8000/test-browser-parity-menu-full.html`
+- `http://localhost:8000/test-browser-parity-a11y-contract.html`
 
 Dashboards:
 
@@ -389,7 +390,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `31/31 smoke tests passed`
+1. full smoke: `PASS` with `32/32 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -427,3 +428,4 @@ Concurrency note:
 - parity-table: `PASS table parity: multi-column cells + menu actions`
 - parity-menu-keys: `PASS parity menu popup + menu-item focus + Enter/Space activation`
 - parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space + type-ahead`
+- parity-a11y-contract: `PASS parity a11y contract: menu/tab/table semantics`
