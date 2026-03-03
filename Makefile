@@ -4,10 +4,13 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: smoke-ci smoke-headless smoke-parity-headless smoke-one
+.PHONY: smoke-ci smoke-contract smoke-headless smoke-parity-headless smoke-one
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./smoke.sh ci
+
+smoke-contract:
+	cd $(SMOKE_DIR) && ./smoke.sh contract
 
 smoke-headless:
 	cd $(SMOKE_DIR) && ./smoke.sh headless
