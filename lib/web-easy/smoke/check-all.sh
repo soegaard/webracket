@@ -4,20 +4,34 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 HEADLESS=0
+CONTRACT_FIRST=0
 
 for arg in "$@"; do
   case "$arg" in
     --headless) HEADLESS=1 ;;
+    --contract-first) CONTRACT_FIRST=1 ;;
     *)
       echo "Unknown argument: $arg"
-      echo "Usage: $0 [--headless]"
+      echo "Usage: $0 [--headless] [--contract-first]"
       exit 2
       ;;
   esac
 done
 
+if [ "$CONTRACT_FIRST" -eq 1 ] && [ "$HEADLESS" -eq 0 ]; then
+  echo "--contract-first requires --headless."
+  echo "Usage: $0 [--headless] [--contract-first]"
+  exit 2
+fi
+
 if [ "$HEADLESS" -eq 0 ]; then
   echo "Headless step skipped. Use --headless to run browser dashboard automation."
+  echo
+fi
+
+if [ "$CONTRACT_FIRST" -eq 1 ]; then
+  echo "[0/4] contract headless"
+  "$SCRIPT_DIR/smoke.sh" contract
   echo
 fi
 
