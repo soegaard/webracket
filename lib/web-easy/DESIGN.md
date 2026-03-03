@@ -455,7 +455,7 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `30` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `31` tests
 2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `15` tests
 
 Update these counts whenever test pages are added or removed.
@@ -678,12 +678,13 @@ Current width defaults are intentionally split between layout containers and lea
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
-  - full dashboard baseline: `30` automated smoke tests.
+  - full dashboard baseline: `31` automated smoke tests.
   - parity dashboard baseline: `15` automated parity tests.
   - recent additions to full dashboard baseline:
     - `test-browser-group.html` (fieldset + legend semantics)
     - `test-browser-menu-keys.html` (menu popup + menu-item focus + Enter/Space activation)
     - `test-browser-menu-full.html` (multi-menu/multi-item activation and status updates)
+    - `test-browser-a11y-contract.html` (cross-widget semantic/ARIA contract checks for menu/tab/group/table)
     - `test-browser-width.html` (width-policy runtime assertions)
     - `test-browser-parity-incident.html` (real-world incident triage parity flow)
     - `test-browser-parity-release.html` (real-world release checklist parity flow)
