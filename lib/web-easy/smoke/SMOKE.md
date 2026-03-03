@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `34` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `17` tests
+- full dashboard (`test-browser-dashboard.html`): `36` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `18` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-03):
 
-- full headless dashboard: `34/34` PASS
-- parity-only headless dashboard: `17/17` PASS
-- latest local `check-all.sh --headless`: PASS (`34/34`)
+- full headless dashboard: `36/36` PASS
+- parity-only headless dashboard: `18/18` PASS
+- latest local `check-all.sh --headless`: PASS (`36/36`)
 
 ## Command Wrapper
 
@@ -209,6 +209,7 @@ Then open:
 - `http://localhost:8000/test-browser-menu-full.html`
 - `http://localhost:8000/test-browser-a11y-contract.html`
 - `http://localhost:8000/test-browser-keyboard-contract.html`
+- `http://localhost:8000/test-browser-focus-order.html`
 - `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
@@ -238,6 +239,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-menu-full.html`
 - `http://localhost:8000/test-browser-parity-a11y-contract.html`
 - `http://localhost:8000/test-browser-parity-keyboard-contract.html`
+- `http://localhost:8000/test-browser-parity-focus-order.html`
 
 Dashboards:
 
@@ -392,7 +394,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `34/34 smoke tests passed`
+1. full smoke: `PASS` with `36/36 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -408,6 +410,7 @@ Concurrency note:
 - menu-full: `PASS menu-full: multi-menu items + click/Enter/Space + type-ahead`
 - a11y-contract: `PASS a11y contract: menu/tab/group/table semantics`
 - keyboard-contract: `PASS keyboard contract: menu + tabs keyboard-only flow`
+- focus-order: `PASS focus-order: menu labels + tab headers are stable`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -433,3 +436,4 @@ Concurrency note:
 - parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space + type-ahead`
 - parity-a11y-contract: `PASS parity a11y contract: menu/tab/table semantics`
 - parity-keyboard-contract: `PASS parity keyboard contract: menu + tabs keyboard-only flow`
+- parity-focus-order: `PASS parity focus-order: menu labels + tab headers are stable`

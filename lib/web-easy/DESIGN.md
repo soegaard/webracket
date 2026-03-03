@@ -455,8 +455,8 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `34` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `17` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `36` tests
+2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `18` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -678,20 +678,22 @@ Current width defaults are intentionally split between layout containers and lea
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
-  - full dashboard baseline: `34` automated smoke tests.
-  - parity dashboard baseline: `17` automated parity tests.
+  - full dashboard baseline: `36` automated smoke tests.
+  - parity dashboard baseline: `18` automated parity tests.
   - recent additions to full dashboard baseline:
     - `test-browser-group.html` (fieldset + legend semantics)
     - `test-browser-menu-keys.html` (menu popup + menu-item focus + Enter/Space activation)
     - `test-browser-menu-full.html` (multi-menu/multi-item activation and status updates)
     - `test-browser-a11y-contract.html` (cross-widget semantic/ARIA contract checks for menu/tab/group/table)
     - `test-browser-keyboard-contract.html` (keyboard-only contract checks for menu/tab navigation and activation)
+    - `test-browser-focus-order.html` (focus-order contract checks for menu-label and tab-header ordering)
     - `test-browser-width.html` (width-policy runtime assertions)
     - `test-browser-parity-incident.html` (real-world incident triage parity flow)
     - `test-browser-parity-release.html` (real-world release checklist parity flow)
     - `test-browser-parity-menu-full.html` (richer parity menu interaction coverage)
     - `test-browser-parity-a11y-contract.html` (parity-side semantic/ARIA contract checks for menu/tab/table)
     - `test-browser-parity-keyboard-contract.html` (parity keyboard-only contract checks for menu/tab flows)
+    - `test-browser-parity-focus-order.html` (parity focus-order contract checks for menu/tab ordering)
 
 ## Open Design Questions
 
