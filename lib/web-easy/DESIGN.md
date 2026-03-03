@@ -217,28 +217,16 @@ Current compatibility notes:
   - `main-browser.rkt`
   - `backend-browser.rkt`
   - `browser-host.rkt` (`mount-renderer!`)
-- Browser smoke example:
-  - `smoke/example-browser-smoke.rkt`
-  - input smoke example: `smoke/example-browser-input.rkt`
-  - checkbox smoke example: `smoke/example-browser-checkbox.rkt`
-  - list-view smoke example: `smoke/example-browser-list.rkt`
-  - destroy lifecycle smoke example: `smoke/example-browser-destroy.rkt`
-  - branch switching smoke example: `smoke/example-browser-branch.rkt`
-  - controls smoke example: `smoke/example-browser-controls.rkt`
-  - operators smoke example: `smoke/example-browser-operators.rkt`
-  - tab-panel smoke example: `smoke/example-browser-tab-panel.rkt`
-  - tab-panel disabled smoke example: `smoke/example-browser-tab-panel-disabled.rkt`
-  - compile helpers:
-    - `smoke/run-browser-smoke-compile.sh`
-    - `smoke/run-browser-input-compile.sh`
-    - `smoke/run-browser-checkbox-compile.sh`
-    - `smoke/run-browser-list-compile.sh`
-    - `smoke/run-browser-destroy-compile.sh`
-    - `smoke/run-browser-branch-compile.sh`
-    - `smoke/run-browser-controls-compile.sh`
-    - `smoke/run-browser-operators-compile.sh`
-    - `smoke/run-browser-tab-panel-compile.sh`
-    - `smoke/run-browser-tab-panel-disabled-compile.sh`
+- Browser smoke/parity drivers:
+  - `smoke/example-browser-smoke-all.rkt`
+  - `smoke/example-browser-parity-all.rkt`
+  - compile entrypoints:
+    - `smoke/run-browser-smoke-all-compile.sh`
+    - `smoke/run-browser-parity-all-compile.sh`
+    - `smoke/run-browser-visual-check-compile.sh`
+    - `smoke/run-browser-target-compile.sh <smoke-all|parity-all|visual-check>`
+  - generated artifacts:
+    - written to `smoke/generated/`
   - runtime harnesses:
     - `smoke/test-browser-smoke.html`
     - `smoke/test-browser-input.html`
@@ -251,7 +239,8 @@ Current compatibility notes:
     - `smoke/test-browser-tab-panel.html`
     - `smoke/test-browser-tab-panel-keys.html`
     - `smoke/test-browser-tab-panel-disabled.html`
-  - aggregate runner: `smoke/run-all-smoke.sh`
+  - aggregate dashboard:
+    - `smoke/test-browser-dashboard.html`
 
 Rationale:
 
@@ -275,7 +264,7 @@ Current status snapshot (March 1, 2026):
 | Operators | `@`, `:=`, `<~`, `λ<~`, `~>`, `~#>` | Implemented | Core tests + smoke | Operator smoke covers filter + thunk behavior in browser runtime. |
 | Operators | `~#>`, `λ<~` | Implemented | Core tests | `~#>` maps to `obs-filter`; `λ<~` builds update thunks. |
 | Desktop-specific API parity | dialogs/snips/canvas/native window semantics | Deferred | N/A | Requires explicit web-specific capability design. |
-| Automation | headless smoke in CI | Deferred | Local headless only | Local script exists; CI wiring intentionally postponed. |
+| Automation | headless smoke in CI | Implemented | Local + CI headless | GitHub workflow runs compile + dashboard headless checks. |
 
 Remaining Step 2 planning items:
 
@@ -387,8 +376,9 @@ Current `web-easy` test workflows:
    - `lib/web-easy/smoke/run-browser-input-test.sh`
    - then open `http://localhost:8000/test-browser-input.html` while serving `lib/web-easy/smoke`.
    - compile uses `--ffi dom --ffi standard`.
-5. Build both smoke apps:
-   - `lib/web-easy/smoke/run-all-smoke.sh`
+5. Compile current smoke matrix:
+   - `lib/web-easy/smoke/check-smoke.sh`
+   - current compile targets: `smoke-all`, `visual-check`, `parity-all`.
 6. Browser checkbox smoke compile+runtime:
    - `lib/web-easy/smoke/run-browser-checkbox-test.sh`
    - then open `http://localhost:8000/test-browser-checkbox.html` while serving `lib/web-easy/smoke`.
@@ -427,10 +417,10 @@ Current `web-easy` test workflows:
    - checks disabled click-ignore and ArrowLeft/ArrowRight skip behavior.
 15. Browser no-dependency aggregate runner:
    - open `http://localhost:8000/test-browser-dashboard.html` to run all smoke pages in hidden iframes and aggregate PASS/FAIL.
-16. Optional headless automation (available now):
+16. Headless automation (available now):
    - headless browser execution can run `smoke/test-browser-dashboard.html` and return local pass/fail.
    - script path: `lib/web-easy/smoke/check-smoke-headless.sh` (requires Node + Playwright + `raco static-web`).
-   - CI wiring for this headless path is not configured yet.
+   - CI wiring is configured in `.github/workflows/web-easy-smoke.yml`.
 17. Parity hello smoke compile+runtime (manual):
    - `lib/web-easy/smoke/run-browser-parity-hello-test.sh`
    - then open `http://localhost:8000/test-browser-parity-hello.html` while serving `lib/web-easy/smoke`.
@@ -440,9 +430,9 @@ Current `web-easy` test workflows:
 19. Parity dynamic-list smoke compile+runtime (manual):
    - `lib/web-easy/smoke/run-browser-parity-dynamic-list-test.sh`
    - then open `http://localhost:8000/test-browser-parity-dynamic-list.html` while serving `lib/web-easy/smoke`.
-20. Parity aggregate helper (manual):
-   - `lib/web-easy/smoke/run-all-parity.sh`
-   - runs parity helper scripts in sequence.
+20. Parity aggregate compile helper:
+   - `lib/web-easy/smoke/run-browser-parity-all-compile.sh`
+   - compiles parity pages through `example-browser-parity-all.rkt`.
 21. Parity counters smoke compile+runtime (manual):
    - `lib/web-easy/smoke/run-browser-parity-counters-test.sh`
    - then open `http://localhost:8000/test-browser-parity-counters.html` while serving `lib/web-easy/smoke`.
@@ -465,8 +455,8 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `19` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `8` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `26` tests
+2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `12` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -583,26 +573,26 @@ The following M4-adjacent items are deferred as web-specific design work, not bl
 Initial parity targets (from gui-easy quickstart progression):
 
 1. Hello world (`1.1` style example)
-   - status: implemented (`smoke/example-browser-parity-hello.rkt`)
+   - status: implemented (served via `smoke/example-browser-parity-all.rkt?test=parity-hello`)
    - pass criteria:
      - static UI renders expected text in browser.
      - no runtime errors in smoke dashboard/manual page.
 2. Counter (`1.2` style example)
-   - status: implemented (`smoke/example-browser-parity-counter.rkt`)
+   - status: implemented (served via `smoke/example-browser-parity-all.rkt?test=parity-counter`)
    - pass criteria:
      - counter starts at `0`.
      - button click increments count deterministically.
 3. Dynamic counters/list (`1.4` style example)
-   - status: implemented (`smoke/example-browser-parity-dynamic-list.rkt`)
+   - status: implemented (served via `smoke/example-browser-parity-all.rkt?test=parity-dynamic-list`)
    - pass criteria:
      - list of counters updates with keyed reconciliation behavior.
      - add/remove/reorder interactions preserve state by key.
 
 Execution notes:
 
-- Add each parity case as `smoke/example-browser-parity-*.rkt`.
+- Add each parity case as a capsule in `smoke/smoke-capsule-parity-*.rkt`.
 - Add companion smoke page `smoke/test-browser-parity-*.html`.
-- Keep `run-all-parity.sh` as a focused parity-only helper for local/manual checks.
+- Compile parity pages through `smoke/run-browser-parity-all-compile.sh`.
 
 M5 phase 1 status:
 
@@ -616,18 +606,17 @@ M5 phase 1 status:
   - `test-browser-parity-hello.html`: PASS (`hello text rendered`)
   - `test-browser-parity-counter.html`: PASS (`counter starts at 0 and increments to 1`)
   - `test-browser-parity-dynamic-list.html`: PASS (`initial: a:0,b:0; inc-a: a:1; reorder: b before a; add-c: c:0; drop-b: a:1,c:0`)
-  - report file: `lib/web-easy/smoke/parity-report.md`
 - Current validation baseline:
   - maintained in `lib/web-easy/smoke/SMOKE.md` under "Current Test Counts" and "Last validated".
 
 M5 phase 2 status:
 
 - Phase 2 targets implemented:
-  - counters (`smoke/example-browser-parity-counters.rkt`)
-  - tabs (`smoke/example-browser-parity-tabs.rkt`)
-  - dynamic tabs add/remove (`smoke/example-browser-parity-tabs-dynamic.rkt`)
-  - list (`smoke/example-browser-parity-list.rkt`)
-  - simple todo (`smoke/example-browser-parity-todo.rkt`)
+  - counters (`parity-counters` capsule in `example-browser-parity-all.rkt`)
+  - tabs (`parity-tabs` capsule in `example-browser-parity-all.rkt`)
+  - dynamic tabs add/remove (`parity-tabs-dynamic` capsule in `example-browser-parity-all.rkt`)
+  - list (`parity-list` capsule in `example-browser-parity-all.rkt`)
+  - simple todo (`parity-todo` capsule in `example-browser-parity-all.rkt`)
 - Expected phase-2 parity PASS lines:
   - `PASS independent counters: c1 0->1->0, c2 0->2`
   - `PASS tabs switch content: overview->details->help`
@@ -675,8 +664,8 @@ Current width defaults are intentionally split between layout containers and lea
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
-  - full dashboard baseline: `25` automated smoke tests.
-  - parity dashboard baseline: `11` automated parity tests.
+  - full dashboard baseline: `26` automated smoke tests.
+  - parity dashboard baseline: `12` automated parity tests.
   - recent additions to full dashboard baseline:
     - `test-browser-group.html` (fieldset + legend semantics)
     - `test-browser-menu-keys.html` (menu-item focus + Enter/Space activation)
