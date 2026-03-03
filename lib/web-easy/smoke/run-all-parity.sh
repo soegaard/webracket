@@ -26,3 +26,7 @@ echo
 "$SCRIPT_DIR/run-browser-parity-list-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-parity-todo-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-incident-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-release-test.sh"

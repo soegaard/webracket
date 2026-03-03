@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `26` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `12` tests
+- full dashboard (`test-browser-dashboard.html`): `28` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `14` tests
 
 Update these counts whenever test pages are added or removed.
 
-Last validated (2026-03-02):
+Last validated (2026-03-03):
 
-- full headless dashboard: `26/26` PASS
-- parity-only headless dashboard: `12/12` PASS
-- CI helper run (2026-03-02): PASS (`26/26` dashboard PASS + guard self-test expected FAIL detected)
+- full headless dashboard: `28/28` PASS
+- parity-only headless dashboard: `14/14` PASS
+- latest local `check-all.sh --headless`: PASS (`28/28`)
 
 ## Command Wrapper
 
@@ -226,6 +226,8 @@ Then open:
 - `http://localhost:8000/test-browser-parity-tabs-dynamic.html`
 - `http://localhost:8000/test-browser-parity-list.html`
 - `http://localhost:8000/test-browser-parity-todo.html`
+- `http://localhost:8000/test-browser-parity-incident.html`
+- `http://localhost:8000/test-browser-parity-release.html`
 - `http://localhost:8000/test-browser-parity-profile.html`
 - `http://localhost:8000/test-browser-parity-settings.html`
 - `http://localhost:8000/test-browser-parity-table.html`
@@ -356,6 +358,8 @@ From `lib/web-easy/smoke`:
   - `./run-browser-parity-tabs-dynamic-test.sh`
   - `./run-browser-parity-list-test.sh`
   - `./run-browser-parity-todo-test.sh`
+  - `./run-browser-parity-incident-test.sh`
+  - `./run-browser-parity-release-test.sh`
   - `./run-browser-parity-profile-test.sh`
   - `./run-browser-parity-settings-test.sh`
   - `./run-browser-parity-table-test.sh`
@@ -381,7 +385,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `26/26 smoke tests passed`
+1. full smoke: `PASS` with `28/28 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:

@@ -17,6 +17,8 @@
 (include/reader "smoke-capsule-parity-menu-keys.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-todo.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-incident.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-release.rkt" read-syntax/skip-first-line)
 
 ;; Constants used by parity-all query dispatch and test registry.
 (define query/test-prefix "?test=") ; Prefix used in query dispatch.
@@ -53,7 +55,15 @@
         (cons 'parity-list
               (list parity-list-make-page parity-list-run-test parity-list-cleanup))
         (cons 'parity-todo
-              (list parity-todo-make-page parity-todo-run-test parity-todo-cleanup))))
+              (list parity-todo-make-page parity-todo-run-test parity-todo-cleanup))
+        (cons 'parity-incident
+              (list parity-incident-make-page
+                    parity-incident-run-test
+                    parity-incident-cleanup))
+        (cons 'parity-release
+              (list parity-release-make-page
+                    parity-release-run-test
+                    parity-release-cleanup))))
 
 ;; query->test-id : string? -> symbol?
 ;;   Parse `?test=...` query into a registered symbol id.

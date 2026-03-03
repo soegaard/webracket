@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 labels=(
   "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/group/operators/tab-panel/tab-panel-disabled)"
   "visual-check"
-  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-dynamic/profile/settings/table/menu-keys/list/todo)"
+  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-dynamic/profile/settings/table/menu-keys/list/todo/incident/release)"
 )
 
 cmds=(
@@ -76,3 +76,5 @@ echo "  http://localhost:8000/test-browser-parity-table.html"
 echo "  http://localhost:8000/test-browser-parity-menu-keys.html"
 echo "  http://localhost:8000/test-browser-parity-list.html"
 echo "  http://localhost:8000/test-browser-parity-todo.html"
+echo "  http://localhost:8000/test-browser-parity-incident.html"
+echo "  http://localhost:8000/test-browser-parity-release.html"

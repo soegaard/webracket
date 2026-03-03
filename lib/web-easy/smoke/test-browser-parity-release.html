@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity release smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 360px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity release assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-release" title="web-easy parity release app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      const buttons = Array.from(frameDoc.querySelectorAll("button"));
+      const spans = Array.from(frameDoc.querySelectorAll("span"));
+      return buttons.concat(spans)
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const select = frameDoc.querySelector("select");
+          const progress = frameDoc.querySelector("progress");
+          const table = frameDoc.querySelector("table");
+          const text = bodyText(frameDoc);
+          if (select &&
+              progress &&
+              table &&
+              menuItemByText(frameDoc, "Toggle Visible") &&
+              text.includes("visible:3;total:3;done:1;pct:33") &&
+              text.includes("201:alice:todo:docs") &&
+              text.includes("202:bob:todo:ci") &&
+              text.includes("203:alice:done:release-notes")) {
+            return { frameDoc, select };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity release UI");
+    }
+
+    function setSelectValue(select, value) {
+      const options = Array.from(select.options);
+      const idx = options.findIndex((opt) => opt.value === value || opt.textContent.trim() === value);
+      if (idx < 0) {
+        throw new Error("select option missing: " + value);
+      }
+      select.selectedIndex = idx;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+
+        setSelectValue(ui.select, "bob");
+        await sleep(100);
+        let text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("visible:1;total:3;done:1;pct:33"), "summary after owner filter");
+        assertTrue(text.includes("202:bob:todo:ci"), "bob filter keeps id 202");
+        assertTrue(!text.includes("201:alice:todo:docs"), "bob filter hides alice row");
+
+        menuItemByText(ui.frameDoc, "Toggle Visible").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("visible:1;total:3;done:2;pct:66"), "summary after toggle");
+        assertTrue(text.includes("202:bob:done:ci"), "toggle updates row state");
+        assertTrue(text.includes("status:toggled:202"), "status after toggle");
+
+        menuItemByText(ui.frameDoc, "Assign Visible Bob")
+          .dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("status:assigned-bob:202"), "status after assign bob");
+
+        menuItemByText(ui.frameDoc, "Reset Checklist").click();
+        await sleep(100);
+        text = bodyText(ui.frameDoc);
+        assertTrue(text.includes("visible:3;total:3;done:1;pct:33"), "summary after reset");
+        assertTrue(text.includes("status:reset"), "status after reset");
+        assertTrue(text.includes("202:bob:todo:ci"), "reset restores default row state");
+
+        setStatus("PASS\nrelease parity: owner filter + toggle/assign/reset", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: selects=" + frameDoc.querySelectorAll("select").length +
+             " progress=" + frameDoc.querySelectorAll("progress").length +
+             " tables=" + frameDoc.querySelectorAll("table").length +
+             " body=" + JSON.stringify(bodyText(frameDoc)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

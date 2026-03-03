@@ -64,6 +64,8 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-menu-keys.html"
   echo "  $base_url/test-browser-parity-list.html"
   echo "  $base_url/test-browser-parity-todo.html"
+  echo "  $base_url/test-browser-parity-incident.html"
+  echo "  $base_url/test-browser-parity-release.html"
 }
 
 parity_check() {

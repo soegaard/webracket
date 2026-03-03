@@ -35,13 +35,34 @@ cleanup_lock() {
 }
 trap cleanup_lock EXIT
 
+mtime_seconds() {
+  local path="$1"
+  if stat -f "%m" "$path" >/dev/null 2>&1; then
+    stat -f "%m" "$path"
+  else
+    stat -c "%Y" "$path"
+  fi
+}
+
 # Fast path: if key generated outputs already exist, skip recompilation.
-if [ "${SMOKE_FORCE_COMPILE:-0}" != "1" ] \
-  && [ -f "generated/$BASENAME.html" ] \
-  && [ -f "generated/$BASENAME.wasm" ] \
-  && [ -f "generated/$BASENAME.wat" ]; then
-  echo "$SUCCESS_MESSAGE (cached)"
-  exit 0
+if [ "${SMOKE_FORCE_COMPILE:-0}" != "1" ]; then
+  if [ -f "generated/$BASENAME.html" ] \
+    && [ -f "generated/$BASENAME.wasm" ] \
+    && [ -f "generated/$BASENAME.wat" ]; then
+    newest_source=0
+    for src in "$WEB_EASY_DIR"/*.rkt "$WEB_EASY_DIR/smoke"/*.rkt; do
+      src_mtime="$(mtime_seconds "$src")"
+      if [ "$src_mtime" -gt "$newest_source" ]; then
+        newest_source="$src_mtime"
+      fi
+    done
+
+    artifact_mtime="$(mtime_seconds "generated/$BASENAME.wasm")"
+    if [ "$artifact_mtime" -ge "$newest_source" ]; then
+      echo "$SUCCESS_MESSAGE (cached)"
+      exit 0
+    fi
+  fi
 fi
 
 racket ../../../webracket.rkt --browser --ffi dom --ffi standard "$EXAMPLE_RKT"
