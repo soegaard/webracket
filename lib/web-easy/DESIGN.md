@@ -368,162 +368,29 @@ Current `web-easy` test workflows:
    - `racket lib/web-easy/test/test-web-easy.rkt`
 2. WebRacket compiler+node path:
    - `cd lib/web-easy/test && racket ../../../webracket.rkt -r test-web-easy-run.rkt`
-3. Browser smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-smoke-test.sh`
-   - then open `http://localhost:8000/test-browser-smoke.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-4. Browser input smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-input-test.sh`
-   - then open `http://localhost:8000/test-browser-input.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-5. Compile current smoke matrix:
-   - `lib/web-easy/smoke/check-smoke.sh`
-   - current compile targets: `smoke-all`, `visual-check`, `parity-all`.
-6. Browser checkbox smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-checkbox-test.sh`
-   - then open `http://localhost:8000/test-browser-checkbox.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-7. Browser list-view smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-list-test.sh`
-   - then open `http://localhost:8000/test-browser-list.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-8. Browser destroy lifecycle smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-destroy-test.sh`
-   - then open `http://localhost:8000/test-browser-destroy.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-9. Browser branch switching smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-branch-test.sh`
-   - then open `http://localhost:8000/test-browser-branch.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-10. Browser controls smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-controls-test.sh`
-   - then open `http://localhost:8000/test-browser-controls.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-11. Browser operators smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-operators-test.sh`
-   - then open `http://localhost:8000/test-browser-operators.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-12. Browser tab-panel smoke compile+runtime:
-   - `lib/web-easy/smoke/run-browser-tab-panel-test.sh`
-   - then open `http://localhost:8000/test-browser-tab-panel.html` while serving `lib/web-easy/smoke`.
-   - compile uses `--ffi dom --ffi standard`.
-13. Browser tab-panel keyboard-only smoke runtime:
-   - `lib/web-easy/smoke/run-browser-tab-panel-keys-test.sh`
-   - then open `http://localhost:8000/test-browser-tab-panel-keys.html` while serving `lib/web-easy/smoke`.
-   - uses keyboard-only interaction checks (ArrowRight/Home/End).
-14. Browser tab-panel disabled-tab smoke runtime:
-   - `lib/web-easy/smoke/run-browser-tab-panel-disabled-test.sh`
-   - then open `http://localhost:8000/test-browser-tab-panel-disabled.html` while serving `lib/web-easy/smoke`.
-   - checks disabled click-ignore and ArrowLeft/ArrowRight skip behavior.
-15. Browser no-dependency aggregate runner:
-   - open `http://localhost:8000/test-browser-dashboard.html` to run all smoke pages in hidden iframes and aggregate PASS/FAIL.
-16. Headless automation (available now):
-   - headless browser execution can run `smoke/test-browser-dashboard.html` and return local pass/fail.
-   - canonical command: `cd lib/web-easy/smoke && ./headless.sh smoke` (requires Node + Playwright + `raco static-web`).
-   - CI wiring is configured in `.github/workflows/web-easy-smoke.yml`.
-17. Parity hello smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-hello-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-hello.html` while serving `lib/web-easy/smoke`.
-18. Parity counter smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-counter-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-counter.html` while serving `lib/web-easy/smoke`.
-19. Parity dynamic-list smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-dynamic-list-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-dynamic-list.html` while serving `lib/web-easy/smoke`.
-20. Parity aggregate compile helper:
-   - `lib/web-easy/smoke/run-browser-parity-all-compile.sh`
-   - compiles parity pages through `example-browser-parity-all.rkt`.
-21. Parity counters smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-counters-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-counters.html` while serving `lib/web-easy/smoke`.
-22. Parity tabs smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-tabs-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-tabs.html` while serving `lib/web-easy/smoke`.
-23. Parity list smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-list-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-list.html` while serving `lib/web-easy/smoke`.
-24. Parity todo smoke compile+runtime (manual):
-   - `lib/web-easy/smoke/run-browser-parity-todo-test.sh`
-   - then open `http://localhost:8000/test-browser-parity-todo.html` while serving `lib/web-easy/smoke`.
-25. Dashboard/headless parity coverage:
-   - parity pages are included in `smoke/test-browser-dashboard.html`.
-   - `check-all.sh --headless` now validates parity pages alongside core smoke pages.
-26. Parity-only dashboard/headless loop:
-   - parity dashboard: `smoke/test-browser-parity-dashboard.html`
-   - parity-only headless runner: `smoke/headless.sh parity`
-
-Current dashboard test counts:
-
-1. full dashboard (`smoke/test-browser-dashboard.html`): `60` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `30` tests
-3. contract dashboard (`smoke/test-browser-contract-dashboard.html`): `26` tests
-
-Update these counts whenever test pages are added or removed.
-
-Smoke lifecycle quick commands:
-
-1. Compile smoke artifacts:
+3. Browser smoke compile matrix:
    - `cd lib/web-easy/smoke && ./check-smoke.sh`
-2. Run core+smoke flow:
-   - `cd lib/web-easy/smoke && ./check-all.sh`
-3. Run core+smoke+headless flow:
-   - `cd lib/web-easy/smoke && ./check-all.sh --headless`
-4. Clean generated smoke artifacts:
-   - `cd lib/web-easy/smoke && ./clean-smoke.sh`
+4. Headless smoke orchestration:
+   - `cd lib/web-easy/smoke && ./headless.sh ci`
+5. Fast local headless gate (no compile):
+   - `make smoke-headless-lite`
 
-`smoke.sh` wrapper commands (non-headless + dispatcher):
+Command ownership:
 
-- `cd lib/web-easy/smoke && ./smoke.sh status`
-- `cd lib/web-easy/smoke && ./smoke.sh doctor`
-- `cd lib/web-easy/smoke && ./smoke.sh urls`
-- `cd lib/web-easy/smoke && ./smoke.sh dashboards`
-- `cd lib/web-easy/smoke && ./smoke.sh parity`
-- `cd lib/web-easy/smoke && ./smoke.sh parity-open`
-- `cd lib/web-easy/smoke && ./smoke.sh open`
-- `cd lib/web-easy/smoke && ./smoke.sh check`
-- `cd lib/web-easy/smoke && ./smoke.sh parity-check`
-- `cd lib/web-easy/smoke && ./smoke.sh rebuild`
-- `cd lib/web-easy/smoke && ./smoke.sh all`
-- `cd lib/web-easy/smoke && ./smoke.sh quick`
-- `cd lib/web-easy/smoke && ./smoke.sh headless-run <mode> [args]`
-- `cd lib/web-easy/smoke && ./smoke.sh clean`
-- `cd lib/web-easy/smoke && ./smoke.sh clean-dry`
+- `smoke.sh`: local/manual utility wrapper (serve + compile helpers).
+- `headless.sh`: canonical headless orchestration entrypoint.
+- `make`: canonical repo-root automation entrypoints.
 
-Canonical headless commands:
+Canonical smoke documentation:
 
-- `cd lib/web-easy/smoke && ./headless.sh doctor`
-- `cd lib/web-easy/smoke && ./headless.sh contract`
-- `cd lib/web-easy/smoke && ./headless.sh parity`
-- `cd lib/web-easy/smoke && ./headless.sh smoke`
-- `cd lib/web-easy/smoke && ./headless.sh dashboards`
-- `cd lib/web-easy/smoke && ./headless.sh ci`
-- `cd lib/web-easy/smoke && ./headless.sh single <compile-script> <test-page>`
-- `cd lib/web-easy/smoke && ./headless.sh list`
+- `lib/web-easy/smoke/SMOKE.md` (operations, commands, CI usage)
+- `lib/web-easy/smoke/SMOKE-CONTRACTS.md` (contract semantics + expected PASS prefixes)
+- `lib/web-easy/smoke/COMMANDS.tsv` (machine-readable command inventory)
 
-Canonical Make targets:
+Rationale:
 
-- `make smoke-ci`
-- `make smoke-ci-lite`
-- `make smoke-smoke`
-- `make smoke-parity`
-- `make smoke-dashboards`
-- `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...`
-- `make smoke-list`
-
-Machine-readable command inventory:
-
-- `lib/web-easy/smoke/COMMANDS.tsv`
-
-Known operational caveats:
-
-1. Do not run multiple headless commands in parallel (`./headless.sh parity`, `./headless.sh smoke`, `./headless.sh all`, `./headless.sh dashboards`).
-2. These commands share generated artifacts under `lib/web-easy/smoke`.
-
-Verification sequence (run in order):
-
-1. `cd lib/web-easy/smoke && ./smoke.sh dashboards`
-2. `cd lib/web-easy/smoke && ./headless.sh parity`
-3. `cd lib/web-easy/smoke && ./headless.sh ci`
+- Keep `DESIGN.md` focused on architecture and implementation semantics.
+- Keep operational command details in smoke-specific docs where they can evolve independently.
 
 ## Error Handling
 
