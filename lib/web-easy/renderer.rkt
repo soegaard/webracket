@@ -698,8 +698,7 @@
                                #f
                                #f
                                #f))
-         (define tabs-node  (dom-node 'div (list (cons attr/layout 'row)
-                                                 (cons attr/role   'tablist)
+         (define tabs-node  (dom-node 'div (list (cons attr/role   'tablist)
                                                  (cons 'data-we-widget "tab-list")
                                                  (cons 'class      "we-tab-list"))
                                       '()
