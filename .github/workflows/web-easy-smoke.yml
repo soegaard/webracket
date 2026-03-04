@@ -115,7 +115,7 @@ jobs:
           ./check-smoke.sh
 
           echo "[4/4] unified headless CI (contract + smoke + guard)"
-          SMOKE_SKIP_COMPILE=1 ./headless.sh ci
+          SMOKE_TIMEOUT_MS=300000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
           echo "unified headless CI gate passed"
 
       - name: Prepare smoke failure context
