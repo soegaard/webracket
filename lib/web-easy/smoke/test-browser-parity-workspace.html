@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity workspace smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 420px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity workspace assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="web-easy parity workspace app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuItemByText(frameDoc, label) {
+      const buttons = Array.from(frameDoc.querySelectorAll("button"));
+      const spans = Array.from(frameDoc.querySelectorAll("span"));
+      return buttons.concat(spans)
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function tabByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('button[role="tab"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const tabs = frameDoc.querySelectorAll('button[role="tab"]');
+          const inputs = frameDoc.querySelectorAll("input");
+          const table = frameDoc.querySelector("table");
+          const text = bodyText(frameDoc);
+          if (tabs.length === 3 &&
+              inputs.length >= 2 &&
+              table &&
+              menuItemByText(frameDoc, "Reset workspace") &&
+              text.includes("name:Alice") &&
+              text.includes("email:alice@example.com") &&
+              text.includes("theme:system") &&
+              text.includes("status:ready")) {
+            return { frameDoc };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity workspace UI");
+    }
+
+    function visibleText(frameDoc) {
+      return bodyText(frameDoc).replace(/\s+/g, " ");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        let text = visibleText(ui.frameDoc);
+
+        const accountTab = tabByText(ui.frameDoc, "account");
+        const securityTab = tabByText(ui.frameDoc, "security");
+        const notificationsTab = tabByText(ui.frameDoc, "notifications");
+        assertTrue(!!accountTab && !!securityTab && !!notificationsTab, "all tabs present");
+        assertTrue(accountTab.getAttribute("aria-selected") === "true", "initial account tab selected");
+
+        const nameInput = ui.frameDoc.querySelectorAll("input")[0];
+        const emailInput = ui.frameDoc.querySelectorAll("input")[1];
+
+        nameInput.value = "Bob";
+        nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+        emailInput.value = "bob@example.com";
+        emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("name:Bob"), "name updated");
+        assertTrue(text.includes("email:bob@example.com"), "email updated");
+
+        securityTab.click();
+        await sleep(100);
+        assertTrue(securityTab.getAttribute("aria-selected") === "true", "security tab selected");
+        const securityCheckbox = ui.frameDoc.querySelector('input[type="checkbox"]');
+        assertTrue(!!securityCheckbox, "security checkbox present");
+        securityCheckbox.click();
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("two-factor:on"), "security toggle on");
+
+        notificationsTab.click();
+        await sleep(100);
+        assertTrue(notificationsTab.getAttribute("aria-selected") === "true", "notifications tab selected");
+        const notifyCheckbox = ui.frameDoc.querySelector('input[type="checkbox"]');
+        const themeSelect = ui.frameDoc.querySelector("select");
+        assertTrue(!!notifyCheckbox, "notifications checkbox present");
+        assertTrue(!!themeSelect, "theme select present");
+        notifyCheckbox.click();
+        themeSelect.value = "dark";
+        themeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("notify-email:off"), "notifications toggle off");
+        assertTrue(text.includes("theme:dark"), "theme switched to dark");
+
+        menuItemByText(ui.frameDoc, "Save preset").click();
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("status:saved"), "status after save preset");
+
+        accountTab.click();
+        await sleep(100);
+        const accountInputsAfter = ui.frameDoc.querySelectorAll("input");
+        accountInputsAfter[0].value = "Carol";
+        accountInputsAfter[0].dispatchEvent(new Event("input", { bubbles: true }));
+        await sleep(100);
+        notificationsTab.click();
+        await sleep(100);
+        const notifyCheckbox2 = ui.frameDoc.querySelector('input[type="checkbox"]');
+        const themeSelect2 = ui.frameDoc.querySelector("select");
+        if (!notifyCheckbox2.checked) {
+          notifyCheckbox2.click();
+        }
+        themeSelect2.value = "light";
+        themeSelect2.dispatchEvent(new Event("change", { bubbles: true }));
+        await sleep(100);
+
+        menuItemByText(ui.frameDoc, "Load preset").click();
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("name:Bob"), "load preset restores name");
+        assertTrue(text.includes("email:bob@example.com"), "load preset restores email");
+        assertTrue(text.includes("two-factor:on"), "load preset restores 2FA");
+        assertTrue(text.includes("notify-email:off"), "load preset restores notify");
+        assertTrue(text.includes("theme:dark"), "load preset restores theme");
+        assertTrue(text.includes("status:loaded"), "status after load preset");
+
+        menuItemByText(ui.frameDoc, "Reset workspace").click();
+        await sleep(100);
+        text = visibleText(ui.frameDoc);
+        assertTrue(text.includes("name:Alice"), "reset restores name");
+        assertTrue(text.includes("email:alice@example.com"), "reset restores email");
+        assertTrue(text.includes("two-factor:off"), "reset restores 2FA");
+        assertTrue(text.includes("notify-email:on"), "reset restores notify");
+        assertTrue(text.includes("theme:system"), "reset restores theme");
+        assertTrue(accountTab.getAttribute("aria-selected") === "true", "reset restores account tab");
+        assertTrue(text.includes("status:reset"), "status after reset");
+
+        setStatus("PASS\nworkspace parity: tabs + form + menu preset flow", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: tabs=" + frameDoc.querySelectorAll('button[role="tab"]').length +
+             " inputs=" + frameDoc.querySelectorAll("input").length +
+             " selects=" + frameDoc.querySelectorAll("select").length +
+             " body=" + JSON.stringify(visibleText(frameDoc).slice(0, 260)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

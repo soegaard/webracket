@@ -74,6 +74,7 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-todo.html"
   echo "  $base_url/test-browser-parity-incident.html"
   echo "  $base_url/test-browser-parity-release.html"
+  echo "  $base_url/test-browser-parity-workspace.html"
 }
 
 parity_check() {

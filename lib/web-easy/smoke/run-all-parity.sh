@@ -32,3 +32,5 @@ echo
 "$SCRIPT_DIR/run-browser-parity-incident-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-parity-release-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-workspace-test.sh"

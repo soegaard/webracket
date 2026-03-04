@@ -54,16 +54,37 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `38` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `19` tests
+- full dashboard (`test-browser-dashboard.html`): `39` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `20` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-03):
 
-- full headless dashboard: `38/38` PASS
-- parity-only headless dashboard: `19/19` PASS
-- latest local `check-all.sh --headless`: PASS (`38/38`)
+- full headless dashboard: `39/39` PASS
+- parity-only headless dashboard: `20/20` PASS
+- latest local `check-all.sh --headless`: PASS (`39/39`)
+
+## Menu Behavior Contract
+
+Menu contract pages define the expected menu UX and keyboard semantics:
+
+- `test-browser-menu-full.html`
+- `test-browser-parity-menu-full.html`
+- `test-browser-keyboard-contract.html`
+- `test-browser-parity-keyboard-contract.html`
+
+Expected behavior:
+
+- Opening one top-level menu closes any other open top-level menu.
+- `ArrowRight`/`ArrowLeft` on top-level menu labels move between labels and wrap.
+- `ArrowRight`/`ArrowLeft` on menu items switch to sibling top-level menu and focus its label.
+- `ArrowDown`/`ArrowUp` within a popup move item focus but do not wrap at edges.
+- `Home`/`End` on menu labels focus/open first/last top-level menu.
+- Type-ahead on menu label or menu items focuses matching menu items.
+- `Escape` closes popup and returns focus to owning top-level menu label.
+- Focus leaving the menu container closes the currently open menu.
+- Hovering another top-level menu label while one menu is open switches open menu.
 
 ## Command Wrapper
 
@@ -235,6 +256,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-todo.html`
 - `http://localhost:8000/test-browser-parity-incident.html`
 - `http://localhost:8000/test-browser-parity-release.html`
+- `http://localhost:8000/test-browser-parity-workspace.html`
 - `http://localhost:8000/test-browser-parity-profile.html`
 - `http://localhost:8000/test-browser-parity-settings.html`
 - `http://localhost:8000/test-browser-parity-table.html`
@@ -386,6 +408,7 @@ From `lib/web-easy/smoke`:
   - `./run-browser-parity-todo-test.sh`
   - `./run-browser-parity-incident-test.sh`
   - `./run-browser-parity-release-test.sh`
+  - `./run-browser-parity-workspace-test.sh`
   - `./run-browser-parity-profile-test.sh`
   - `./run-browser-parity-settings-test.sh`
   - `./run-browser-parity-table-test.sh`
@@ -419,7 +442,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `38/38 smoke tests passed`
+1. full smoke: `PASS` with `39/39 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -464,3 +487,6 @@ Concurrency note:
 - parity-keyboard-contract: `PASS parity keyboard contract: menu + tabs keyboard-only flow`
 - parity-focus-order: `PASS parity focus-order: menu labels + tab headers are stable`
 - parity-disabled-contract: `PASS parity disabled contract: disabled tab is non-activating and skipped`
+- parity-incident: `PASS incident parity: filter + query + assign/resolve/reset`
+- parity-release: `PASS release parity: tabs + controls + list + menu actions`
+- parity-workspace: `PASS workspace parity: tabs + form + menu preset flow`
