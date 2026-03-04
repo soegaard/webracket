@@ -239,20 +239,6 @@
                      (js-set! native "value" (value->attr-string value))]
                     [(checked)
                      (js-set! native attr/checked (if value #t #f))]
-                    [(layout)
-                     (case value
-                       [(row)
-                        (js-set-attribute!
-                         native
-                         "style"
-                         "display:flex;flex-direction:row;align-items:center;gap:4px;")]
-                       [(column)
-                        (js-set-attribute!
-                         native
-                         "style"
-                         "display:flex;flex-direction:column;gap:4px;")]
-                       [else
-                        (void)])]
                     [(on-enter-action)
                      (void)]
                     [else
