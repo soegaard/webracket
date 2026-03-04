@@ -33,6 +33,7 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
 
   echo -e "make\tmake smoke-ci\tRun canonical local CI headless gate."
   echo -e "make\tmake smoke-headless-lite\tRun contract+smoke+parity+guard without compile."
+  echo -e "make\tmake smoke-theme\tRun theme-only dashboard headless."
   echo -e "make\tmake smoke-verify\tRun local headless verify preflight."
   echo -e "make\tmake smoke-quick\tRun smoke-verify + smoke-headless-lite."
   echo -e "make\tmake smoke-release\tRun smoke-commands + smoke-quick + smoke-ci."
