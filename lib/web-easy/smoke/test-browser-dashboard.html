@@ -51,6 +51,7 @@
         <th>Test Page</th>
         <th>Status</th>
         <th>Message</th>
+        <th>Duration (ms)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -131,7 +132,7 @@
       s.className = cls;
     }
 
-    function appendRow(page, status, message) {
+    function appendRow(page, status, message, durationMs) {
       const tbody = document.querySelector("#results tbody");
       const tr = document.createElement("tr");
 
@@ -149,9 +150,13 @@
       const tdMessage = document.createElement("td");
       tdMessage.textContent = message;
 
+      const tdDuration = document.createElement("td");
+      tdDuration.textContent = String(durationMs);
+
       tr.appendChild(tdPage);
       tr.appendChild(tdStatus);
       tr.appendChild(tdMessage);
+      tr.appendChild(tdDuration);
       tbody.appendChild(tr);
     }
 
@@ -183,15 +188,16 @@
                 return {
                   page,
                   ok: false,
-                  message: "FAIL\nFound forbidden token in DOM attributes: " + samples
+                  message: "FAIL\nFound forbidden token in DOM attributes: " + samples,
+                  durationMs: Date.now() - start
                 };
               }
               frame.remove();
-              return { page, ok: true, message: text };
+              return { page, ok: true, message: text, durationMs: Date.now() - start };
             }
             if (text.startsWith("FAIL")) {
               frame.remove();
-              return { page, ok: false, message: text };
+              return { page, ok: false, message: text, durationMs: Date.now() - start };
             }
           }
         }
@@ -199,7 +205,12 @@
       }
 
       frame.remove();
-      return { page, ok: false, message: "FAIL\nTimed out waiting for PASS/FAIL status" };
+      return {
+        page,
+        ok: false,
+        message: "FAIL\nTimed out waiting for PASS/FAIL status",
+        durationMs: Date.now() - start
+      };
     }
 
     (async function runAll() {
@@ -207,7 +218,7 @@
       for (const page of tests) {
         const result = await runOne(page);
         results.push(result);
-        appendRow(page, result.ok ? "PASS" : "FAIL", result.message);
+        appendRow(page, result.ok ? "PASS" : "FAIL", result.message, result.durationMs);
       }
 
       const passed = results.filter((r) => r.ok).length;
