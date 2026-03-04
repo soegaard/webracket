@@ -13,7 +13,6 @@ smoke	./smoke.sh headless-run <mode> [args]	Forward to headless dispatcher.
 smoke	./smoke.sh check	Compile smoke artifacts.
 smoke	./smoke.sh open	Serve smoke pages locally.
 make	make smoke-ci	Run canonical local CI headless gate.
-make	make smoke-ci-full	Compatibility alias for make smoke-ci.
 make	make smoke-ci-lite	Run canonical CI headless gate without compile.
 make	make smoke-verify	Run local headless verify preflight.
 make	make smoke-quick	Run smoke-verify + smoke-ci-lite.
@@ -21,8 +20,7 @@ make	make smoke-release	Run smoke-commands + smoke-quick + smoke-ci.
 make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.
 make	make smoke-dashboards	Run contract+smoke dashboards headless.
-make	make smoke-contract	Compatibility alias for ./headless.sh contract.
-make	make smoke-compat	Show compatibility aliases and preferred replacements.
+make	make smoke-compat	Show replacements for removed aliases.
 make	make smoke-list	Print canonical commands.
 make	make smoke-commands	Regenerate COMMANDS.tsv.
 make	make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...	Run one page headless via Make variables.

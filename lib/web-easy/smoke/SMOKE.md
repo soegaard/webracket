@@ -25,14 +25,12 @@ Common top-level aliases:
 
 ```bash
 make smoke-ci
-make smoke-ci-full
 make smoke-ci-lite
 make smoke-verify
 make smoke-quick
 make smoke-smoke
 make smoke-parity
 make smoke-dashboards
-make smoke-contract
 make smoke-compat
 make smoke-list
 make smoke-release
@@ -54,15 +52,8 @@ Make target migration:
 - `make smoke-headless` -> `make smoke-smoke`
 - `make smoke-parity-headless` -> `make smoke-parity`
 - `make smoke-all-contract` -> `make smoke-dashboards`
-- `make smoke-contract` -> `./headless.sh contract`
-
-Deprecation window note:
-
-- Legacy names were removed from the primary interface in March 2026.
-- Compatibility aliases currently available: `make smoke-contract` and `make smoke-ci-full`.
-- Preferred names remain: `make smoke-dashboards` and `make smoke-ci`.
-- Planned removal date for compatibility aliases: 2026-07-31.
-- Aliases scheduled for removal: `make smoke-contract`, `make smoke-ci-full`.
+- `make smoke-contract` -> `make smoke-dashboards` (or `./headless.sh contract`)
+- `make smoke-ci-full` -> `make smoke-ci`
 
 ## Release Quickstart
 
@@ -206,14 +197,12 @@ CI helper script:
 Repository-root aliases:
 
 - `make smoke-ci`
-- `make smoke-ci-full`
 - `make smoke-ci-lite`
 - `make smoke-verify`
 - `make smoke-quick`
 - `make smoke-smoke`
 - `make smoke-parity`
 - `make smoke-dashboards`
-- `make smoke-contract`
 - `make smoke-compat`
 - `make smoke-list`
 - `make smoke-release`

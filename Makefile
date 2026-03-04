@@ -4,13 +4,12 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-ci-full smoke-ci-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-contract smoke-compat smoke-one smoke-list smoke-commands
+.PHONY: help smoke-ci smoke-ci-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-compat smoke-one smoke-list smoke-commands
 
 help:
 	@echo "Available targets:"
 	@echo "  help                  Show this help."
 	@echo "  smoke-ci              Run local CI smoke entrypoint (preferred)."
-	@echo "  smoke-ci-full         Compatibility alias for smoke-ci."
 	@echo "  smoke-ci-lite         Run local CI headless gate without compile."
 	@echo "  smoke-verify          Run local headless verify preflight."
 	@echo "  smoke-quick           Run smoke-verify + smoke-ci-lite."
@@ -18,16 +17,13 @@ help:
 	@echo "  smoke-smoke           Run full smoke dashboard headless."
 	@echo "  smoke-parity          Run parity-only headless dashboard."
 	@echo "  smoke-dashboards      Run contract+smoke dashboards headless."
-	@echo "  smoke-contract        Compatibility alias for headless contract."
-	@echo "  smoke-compat          Show compatibility aliases and preferred replacements."
+	@echo "  smoke-compat          Show replacements for removed aliases."
 	@echo "  smoke-list            Print canonical smoke/headless commands."
 	@echo "  smoke-commands        Regenerate smoke/COMMANDS.tsv."
 	@echo "  smoke-one             Run one headless smoke page (set SINGLE_COMPILE, SINGLE_PAGE)."
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
-
-smoke-ci-full: smoke-ci
 
 smoke-ci-lite:
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./headless.sh ci
@@ -48,13 +44,10 @@ smoke-parity:
 smoke-dashboards:
 	cd $(SMOKE_DIR) && ./headless.sh dashboards
 
-smoke-contract:
-	cd $(SMOKE_DIR) && ./headless.sh contract
-
 smoke-compat:
-	@echo "Compatibility aliases:"
-	@echo "smoke-ci-full -> smoke-ci"
-	@echo "smoke-contract -> smoke-dashboards (or ./headless.sh contract)"
+	@echo "Removed aliases:"
+	@echo "smoke-ci-full => smoke-ci"
+	@echo "smoke-contract => smoke-dashboards (or ./headless.sh contract)"
 
 smoke-list:
 	@echo "Canonical headless modes:"
@@ -62,7 +55,6 @@ smoke-list:
 	@echo
 	@echo "Canonical Make targets:"
 	@echo "smoke-ci"
-	@echo "smoke-ci-full"
 	@echo "smoke-ci-lite"
 	@echo "smoke-verify"
 	@echo "smoke-quick"
@@ -70,7 +62,6 @@ smoke-list:
 	@echo "smoke-smoke"
 	@echo "smoke-parity"
 	@echo "smoke-dashboards"
-	@echo "smoke-contract"
 	@echo "smoke-compat"
 	@echo "smoke-commands"
 	@echo "smoke-one"

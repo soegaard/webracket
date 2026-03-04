@@ -98,21 +98,6 @@ jobs:
           cd lib/web-easy/smoke
           SMOKE_LOCAL_TOOLS_DIR="$GITHUB_WORKSPACE/.local-tools" ./headless.sh verify
 
-      - name: Warn on compatibility alias usage
-        run: |
-          mapfile -t hits < <(
-            rg -n "make (smoke-ci-full|smoke-contract)\\b" \
-              lib/web-easy .github/workflows \
-              -g '!lib/web-easy/smoke/SMOKE.md' \
-              -g '!lib/web-easy/smoke/COMMANDS.tsv' \
-              -g '!lib/web-easy/smoke/gen-commands.sh' \
-              -g '!Makefile' || true
-          )
-          if [ "${#hits[@]}" -gt 0 ]; then
-            echo "::warning::Compatibility aliases detected outside approved compatibility files."
-            printf '%s\n' "${hits[@]}"
-          fi
-
       - name: Run web-easy smoke checks (contract gate + full dashboard)
         run: |
           cd lib/web-easy/smoke
