@@ -25,6 +25,7 @@ Use `headless.sh` from `lib/web-easy/smoke`:
 ./headless.sh ci
 ./headless.sh timings
 ./headless.sh guard
+./headless.sh theme
 ./headless.sh single <compile-script> <test-page>
 ```
 
@@ -51,6 +52,8 @@ make smoke-ci
 | Full local CI gate | `make smoke-ci` |
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
+| Theme token smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-contract.html` |
+| Theme-only dashboard headless | `./headless.sh theme` |
 | Compile smoke artifacts only | `./smoke.sh check` |
 | Run headless timing snapshot | `./headless.sh timings` |
 | Serve local smoke pages | `./smoke.sh open` |
@@ -99,6 +102,29 @@ Available utility commands:
   - `smoke-all`
   - `visual-check`
   - `parity-all`
+- Theme token coverage is validated by:
+  - `test-browser-theme-vars.html` (tab selected styles)
+  - `test-browser-theme-dialog-vars.html` (dialog overlay/panel)
+  - `test-browser-theme-menu-vars.html` (menu-bar surface)
+  - `test-browser-theme-token-contract.html` (required token presence + override contract)
+  - parity mirrors for tab/dialog/menu pages
+
+## Theming Verification
+
+Smoke pages:
+
+- `test-browser-theme-vars.html`
+- `test-browser-theme-dialog-vars.html`
+- `test-browser-theme-menu-vars.html`
+- `test-browser-theme-token-contract.html`
+- `test-browser-parity-theme-vars.html`
+- `test-browser-parity-theme-dialog-vars.html`
+- `test-browser-parity-theme-menu-vars.html`
+
+All are part of the standard dashboard/headless runs (`check-all.sh --headless`, `headless.sh smoke`, `headless.sh parity`).
+Theme-only fast gate:
+
+- `./headless.sh theme` runs `test-browser-theme-contract-dashboard.html`
 
 ## CSS Hook Inspection
 

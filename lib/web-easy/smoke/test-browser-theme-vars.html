@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser theme vars smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser theme-vars assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=tab-panel" title="web-easy theme vars app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function selectedTabButton(frameDoc) {
+      return frameDoc.querySelector("button[aria-selected='true']");
+    }
+
+    function normalizedCssColor(v) {
+      return (v || "").replace(/\s+/g, "").toLowerCase();
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const selected = selectedTabButton(frameDoc);
+          if (selected) {
+            return { frameDoc, selected };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for theme-vars smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const bgBefore = normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
+        const borderBefore = normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
+
+        ui.frameDoc.documentElement.style.setProperty("--we-bg-selected", "rgb(250, 250, 180)");
+        ui.frameDoc.documentElement.style.setProperty("--we-border-strong", "rgb(2, 90, 2)");
+        await sleep(80);
+
+        const bgAfter = normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
+        const borderAfter = normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
+
+        assertTrue(bgAfter === "rgb(250,250,180)", "selected-tab background follows --we-bg-selected");
+        assertTrue(borderAfter === "rgb(2,90,2)", "selected-tab border follows --we-border-strong");
+        assertTrue(bgAfter !== bgBefore, "selected-tab background changed after var update");
+        assertTrue(borderAfter !== borderBefore, "selected-tab border changed after var update");
+
+        setStatus(
+          "PASS\nselected tab styles update via CSS variables (--we-bg-selected/--we-border-strong)",
+          "pass"
+        );
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

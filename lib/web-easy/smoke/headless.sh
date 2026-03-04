@@ -16,6 +16,7 @@ Modes:
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
+  theme                    Run theme-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
   ci                       Run dashboards and guard self-test
   timings                  Run contract/smoke/parity (skip compile) and print combined top timings
@@ -29,6 +30,7 @@ Examples:
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
+  ./headless.sh theme
   ./headless.sh dashboards
   ./headless.sh ci
   ./headless.sh timings
@@ -47,6 +49,7 @@ doctor	Check headless prerequisites
 smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
+theme	Run theme-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
 ci	Run dashboards and guard self-test
 timings	Run contract/smoke/parity with compile skipped and print combined top timings
@@ -138,6 +141,10 @@ case "$1" in
   contract)
     shift
     exec "$SCRIPT_DIR/check-contract-headless.sh" "$@"
+    ;;
+  theme)
+    shift
+    exec "$SCRIPT_DIR/check-theme-headless.sh" "$@"
     ;;
   dashboards)
     shift

@@ -26,3 +26,11 @@ echo
 "$SCRIPT_DIR/run-browser-tab-panel-keys-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-tab-panel-disabled-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-theme-vars-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-theme-dialog-vars-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-theme-menu-vars-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-theme-token-contract-test.sh"

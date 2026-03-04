@@ -31,6 +31,7 @@ print_urls() {
   printf '  %-10s %-13s %s\n' "dashboard" "(automatic):" "$base_url/test-browser-dashboard.html"
   printf '  %-10s %-13s %s\n' "parity" "(automatic):" "$base_url/test-browser-parity-dashboard.html"
   printf '  %-10s %-13s %s\n' "contract" "(automatic):" "$base_url/test-browser-contract-dashboard.html"
+  printf '  %-10s %-13s %s\n' "theme" "(automatic):" "$base_url/test-browser-theme-contract-dashboard.html"
 }
 
 print_dashboards() {
@@ -40,6 +41,7 @@ print_dashboards() {
   echo "  full:   $base_url/test-browser-dashboard.html"
   echo "  parity: $base_url/test-browser-parity-dashboard.html"
   echo "  contract: $base_url/test-browser-contract-dashboard.html"
+  echo "  theme:  $base_url/test-browser-theme-contract-dashboard.html"
 }
 
 print_parity_urls() {

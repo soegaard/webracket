@@ -21,6 +21,12 @@ echo
 echo
 "$SCRIPT_DIR/run-browser-parity-table-test.sh"
 echo
+"$SCRIPT_DIR/run-browser-parity-theme-vars-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-theme-dialog-vars-test.sh"
+echo
+"$SCRIPT_DIR/run-browser-parity-theme-menu-vars-test.sh"
+echo
 "$SCRIPT_DIR/run-browser-parity-menu-keys-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-parity-menu-full-test.sh"
