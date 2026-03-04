@@ -42,6 +42,20 @@ Full pre-release (compile + headless):
 make smoke-ci
 ```
 
+## Task To Command
+
+| Task | Command |
+| --- | --- |
+| Refresh command inventory | `make smoke-commands` |
+| Fast pre-push gate (skip compile) | `make smoke-headless-lite` |
+| Full local CI gate | `make smoke-ci` |
+| Headless preflight only | `make smoke-verify` |
+| One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
+| Compile smoke artifacts only | `./smoke.sh check` |
+| Run headless timing snapshot | `./headless.sh timings` |
+| Serve local smoke pages | `./smoke.sh open` |
+| Guard self-test only | `./headless.sh guard` |
+
 ## Make Targets
 
 - `make smoke-ci`
