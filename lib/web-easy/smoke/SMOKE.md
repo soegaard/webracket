@@ -104,6 +104,7 @@ Wrapper commands:
 - `./smoke.sh all`
 - `./smoke.sh headless`
 - `./smoke.sh headless-run <mode> [args]`
+- `./smoke.sh ci-fast`
 - `./smoke.sh rebuild`
 - `./smoke.sh quick`
 - `./smoke.sh ci`
@@ -122,6 +123,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh smoke`
 - `./headless.sh parity`
 - `./headless.sh contract`
+- `./headless.sh dashboards`
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
@@ -129,7 +131,7 @@ Headless dispatcher (for one-prefix approval workflows):
 
 CI helper script:
 
-- `./check-ci-smoke.sh` (runs full headless smoke + guard self-test)
+- `./check-ci-smoke.sh` (runs full headless smoke + guard self-test via dispatcher)
 
 Repository-root aliases:
 
@@ -142,6 +144,7 @@ Command notes:
 
 - `quick`: runs `doctor` preflight, then `all`.
 - `ci`: CI smoke entrypoint (`doctor` + `check-ci-smoke.sh`).
+- `ci-fast`: GitHub-like gate (`check-smoke` + `headless contract` + `headless smoke` + `headless guard`).
 - `status`: shows tool/artifact status and suggests the next command.
 
 `tab-panel` entry forms:
@@ -329,7 +332,7 @@ npm --prefix .local-tools install --save-dev playwright
 From `lib/web-easy/smoke`:
 
 ```bash
-./check-smoke-headless.sh
+./headless.sh smoke
 ```
 
 This command:
@@ -348,7 +351,7 @@ One-prefix approval tip (Codex runs):
 Contract-only headless runner:
 
 ```bash
-./check-contract-headless.sh
+./headless.sh contract
 ```
 
 This command:
@@ -357,6 +360,19 @@ This command:
 2. Starts a local static server.
 3. Opens `test-browser-contract-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
+
+Combined contract+smoke dashboard run:
+
+```bash
+./headless.sh dashboards
+```
+
+This command:
+
+1. Compiles once (unless `SMOKE_SKIP_COMPILE=1`).
+2. Runs contract dashboard headless.
+3. Runs full smoke dashboard headless.
+4. Exits nonzero on first failure.
 
 Environment flags:
 
@@ -371,14 +387,14 @@ Environment flags:
 From `lib/web-easy/smoke`:
 
 ```bash
-./check-single-headless.sh <compile-script> <test-page>
+./headless.sh single <compile-script> <test-page>
 ```
 
 Examples:
 
 ```bash
-./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-hello.html
-./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-profile.html
+./headless.sh single run-browser-parity-all-compile.sh test-browser-parity-hello.html
+./headless.sh single run-browser-parity-all-compile.sh test-browser-parity-profile.html
 ```
 
 This command:
@@ -416,8 +432,8 @@ From `lib/web-easy/smoke`:
 
 1. Fast contract gate:
    - `./smoke.sh contract`
-2. Full contract-first headless flow:
-   - `./check-all.sh --headless --contract-first`
+2. Combined contract+smoke headless flow:
+   - `./headless.sh dashboards`
 3. Optional guard self-test before push:
    - `./smoke.sh guard`
 
@@ -432,7 +448,7 @@ From `lib/web-easy/smoke`:
 - print parity URLs:
   - `./smoke.sh parity-open`
 - run parity-only headless dashboard:
-  - `./smoke.sh parity-headless`
+  - `./headless.sh parity`
 - run parity helper scripts in sequence:
   - `./run-all-parity.sh`
 - run individual parity helpers:
@@ -463,15 +479,15 @@ Parity quickstart:
 Verification snippet (sequential):
 
 1. `./smoke.sh dashboards`
-2. `./smoke.sh contract`
-3. `./smoke.sh parity-headless`
-4. `./check-all.sh --headless`
+2. `./headless.sh contract`
+3. `./headless.sh parity`
+4. `./headless.sh smoke`
 
 Legacy parity-only snippet:
 
 1. `./smoke.sh dashboards`
-2. `./smoke.sh parity-headless`
-3. `./check-all.sh --headless`
+2. `./headless.sh parity`
+3. `./headless.sh smoke`
 
 ## Manual Release Checklist
 
@@ -486,8 +502,8 @@ Expected high-level outcomes:
 
 Concurrency note:
 
-- Do not run `./smoke.sh parity-headless` and `./check-all.sh --headless` at the same time.
-- Both commands write the same generated smoke artifacts in `lib/web-easy/smoke`.
+- Do not run multiple headless commands in parallel (`./headless.sh parity`, `./headless.sh smoke`, `./headless.sh all`, `./headless.sh dashboards`).
+- These commands share generated smoke artifacts in `lib/web-easy/smoke`.
 
 ## Expected PASS Lines
 
