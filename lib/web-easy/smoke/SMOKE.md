@@ -43,6 +43,12 @@ Full pre-release (compile + headless):
 make smoke-ci
 ```
 
+Fast local headless gate (contract + theme + guard, skips full dashboard run):
+
+```bash
+./check-all.sh --headless --fast-theme
+```
+
 ## Task To Command
 
 | Task | Command |

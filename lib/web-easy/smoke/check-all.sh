@@ -5,14 +5,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 HEADLESS=0
 CONTRACT_FIRST=0
+FAST_THEME=0
 
 for arg in "$@"; do
   case "$arg" in
     --headless) HEADLESS=1 ;;
     --contract-first) CONTRACT_FIRST=1 ;;
+    --fast-theme) FAST_THEME=1 ;;
     *)
       echo "Unknown argument: $arg"
-      echo "Usage: $0 [--headless] [--contract-first]"
+      echo "Usage: $0 [--headless] [--contract-first] [--fast-theme]"
       exit 2
       ;;
   esac
@@ -20,7 +22,13 @@ done
 
 if [ "$CONTRACT_FIRST" -eq 1 ] && [ "$HEADLESS" -eq 0 ]; then
   echo "--contract-first requires --headless."
-  echo "Usage: $0 [--headless] [--contract-first]"
+  echo "Usage: $0 [--headless] [--contract-first] [--fast-theme]"
+  exit 2
+fi
+
+if [ "$FAST_THEME" -eq 1 ] && [ "$HEADLESS" -eq 0 ]; then
+  echo "--fast-theme requires --headless."
+  echo "Usage: $0 [--headless] [--contract-first] [--fast-theme]"
   exit 2
 fi
 
@@ -29,7 +37,7 @@ if [ "$HEADLESS" -eq 0 ]; then
   echo
 fi
 
-if [ "$CONTRACT_FIRST" -eq 1 ]; then
+if [ "$CONTRACT_FIRST" -eq 1 ] && [ "$FAST_THEME" -eq 0 ]; then
   echo "[0/4] contract headless"
   "$SCRIPT_DIR/headless.sh" contract
   echo
@@ -49,6 +57,17 @@ echo "[3/3] smoke compile"
 "$SCRIPT_DIR/check-smoke.sh"
 
 if [ "$HEADLESS" -eq 1 ]; then
-  echo "[4/4] smoke headless"
-  SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh"
+  if [ "$FAST_THEME" -eq 1 ]; then
+    echo "[4/6] contract headless"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-contract-headless.sh"
+    echo
+    echo "[5/6] theme headless"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-theme-headless.sh"
+    echo
+    echo "[6/6] guard self-test"
+    "$SCRIPT_DIR/check-dashboard-guard.sh"
+  else
+    echo "[4/4] smoke headless"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh"
+  fi
 fi
