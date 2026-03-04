@@ -131,3 +131,13 @@ jobs:
           echo "[6/6] dashboard guard self-test"
           ./check-dashboard-guard.sh
           echo "guard gate passed"
+
+      - name: Upload smoke failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-easy-smoke-failure-logs
+          if-no-files-found: warn
+          path: |
+            /tmp/web-easy-smoke-headless.log
+            /tmp/web-easy-dashboard-guard.log
