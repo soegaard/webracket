@@ -97,19 +97,25 @@
         assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "dialog initially hidden");
         assertTrue(text.includes("status:idle"), "status idle");
 
+        ui.openButton.focus();
         ui.openButton.click();
         await sleep(80);
         text = bodyText(ui.frameDoc);
+        const cancelButtonAfterOpen = buttonByText(ui.frameDoc, "cancel");
+        assertTrue(!!cancelButtonAfterOpen, "cancel button after open");
         assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "dialog visible after open");
         assertTrue(text.includes("Delete project?"), "dialog content rendered");
         assertTrue(text.includes("status:open"), "status after open");
+        assertTrue(ui.frameDoc.activeElement === cancelButtonAfterOpen, "dialog initial focus moves inside panel");
 
         ui.dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         await sleep(80);
         text = bodyText(ui.frameDoc);
         assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "dialog hidden after Escape");
         assertTrue(text.includes("status:escape"), "status after Escape");
+        assertTrue(ui.frameDoc.activeElement === ui.openButton, "focus returns to trigger after Escape");
 
+        ui.openButton.focus();
         ui.openButton.click();
         await sleep(80);
         const cancelButton = buttonByText(ui.frameDoc, "cancel");
@@ -119,6 +125,7 @@
         text = bodyText(ui.frameDoc);
         assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "dialog hidden after cancel");
         assertTrue(text.includes("status:cancel"), "status after cancel");
+        assertTrue(ui.frameDoc.activeElement === ui.openButton, "focus returns to trigger after cancel");
 
         setStatus("PASS\ndialog open/close: open button, Escape, cancel", "pass");
       } catch (err) {

@@ -56,6 +56,9 @@
     (define attr/type "type") ; Attribute name for input element type.
     (define attr/value "value") ; Attribute name for value-bearing controls.
     (define attr/checked "checked") ; Property/attribute name for checked controls.
+    (define dialog-focusable-selector
+      "button,[href],input,select,textarea,[tabindex]:not([tabindex='-1'])") ; CSS selector for focusable dialog controls.
+    (define dialog-focus-returns '()) ; Association list mapping dialog native nodes to return-focus targets.
 
     ;; symbol->attr-name : symbol? -> string?
     ;;   Convert attribute symbol key to browser DOM attribute name.
@@ -96,11 +99,117 @@
                 choices)
       (js-replace-children! native fragment))
 
-    ;; apply-attributes! : dom-node-record? list? -> void?
-    ;;   Apply tracked attributes to native node.
-    (define (apply-attributes! n attrs)
+    ;; dialog-open-attr? : list? -> boolean?
+    ;;   Read boolean dialog open state from attrs.
+    (define (dialog-open-attr? attrs)
+      (define p (assq 'open attrs))
+      (and p (not (eq? (cdr p) #f))))
+
+    ;; dialog-focus-return-set! : any/c any/c -> void?
+    ;;   Track focus return target for dialog-native.
+    (define (dialog-focus-return-set! dialog-native target)
+      (set! dialog-focus-returns
+            (cons (cons dialog-native target)
+                  (let loop ([pairs dialog-focus-returns])
+                    (cond
+                      [(null? pairs) '()]
+                      [(eq? (caar pairs) dialog-native) (cdr pairs)]
+                      [else (cons (car pairs) (loop (cdr pairs)))])))))
+
+    ;; dialog-focus-return-ref : any/c -> any/c
+    ;;   Return focus return target for dialog-native or #f.
+    (define (dialog-focus-return-ref dialog-native)
+      (define p (assq dialog-native dialog-focus-returns))
+      (if p (cdr p) #f))
+
+    ;; dialog-focus-return-remove! : any/c -> void?
+    ;;   Remove focus return target mapping for dialog-native.
+    (define (dialog-focus-return-remove! dialog-native)
+      (set! dialog-focus-returns
+            (let loop ([pairs dialog-focus-returns])
+              (cond
+                [(null? pairs) '()]
+                [(eq? (caar pairs) dialog-native) (cdr pairs)]
+                [else (cons (car pairs) (loop (cdr pairs)))]))))
+
+    ;; focus-first-dialog-target! : any/c -> void?
+    ;;   Focus the first focusable dialog descendant, falling back to the dialog node.
+    (define (focus-first-dialog-target! dialog-native)
+      (define first-target
+        (js-send/extern/nullish
+         dialog-native
+         "querySelector"
+         (vector dialog-focusable-selector)))
+      (if (and first-target
+               (not (extern-nullish? first-target)))
+          (js-send first-target "focus" (vector))
+          (js-send dialog-native "focus" (vector))))
+
+    ;; focus-cycled-dialog-target! : any/c boolean? -> void?
+    ;;   Cycle focus inside dialog-native forward/backward depending on shift?.
+    (define (focus-cycled-dialog-target! dialog-native shift?)
+      (define items
+        (js-send/extern/nullish
+         dialog-native
+         "querySelectorAll"
+         (vector dialog-focusable-selector)))
+      (if (or (not items)
+              (extern-nullish? items))
+          (js-send dialog-native "focus" (vector))
+          (let ([count (nodelist-length items)])
+            (if (= count 0)
+                (js-send dialog-native "focus" (vector))
+                (let* ([doc (js-document)]
+                       [active* (js-ref/extern doc "activeElement")]
+                       [active (if (or (not active*) (extern-nullish? active*))
+                                   #f
+                                   active*)]
+                       [current-index
+                        (let loop ([i 0])
+                          (if (>= i count)
+                              -1
+                              (let ([candidate (nodelist-item items i)])
+                                (if (and candidate (eq? candidate active))
+                                    i
+                                    (loop (add1 i))))))]
+                       [target-index
+                        (if (= current-index -1)
+                            (if shift? (- count 1) 0)
+                            (if shift?
+                                (modulo (+ current-index (- count 1)) count)
+                                (modulo (+ current-index 1) count)))]
+                       [target (nodelist-item items target-index)])
+                  (if target
+                      (js-send target "focus" (vector))
+                      (js-send dialog-native "focus" (vector))))))))
+
+    ;; handle-dialog-open-transition! : any/c -> void?
+    ;;   Capture return focus target and move focus into dialog.
+    (define (handle-dialog-open-transition! dialog-native)
+      (define doc (js-document))
+      (define active* (js-ref/extern doc "activeElement"))
+      (define active
+        (if (or (not active*) (extern-nullish? active*))
+            #f
+            active*))
+      (dialog-focus-return-set! dialog-native active)
+      (focus-first-dialog-target! dialog-native))
+
+    ;; handle-dialog-close-transition! : any/c -> void?
+    ;;   Restore focus to tracked return target when available.
+    (define (handle-dialog-close-transition! dialog-native)
+      (define target (dialog-focus-return-ref dialog-native))
+      (when (and target (not (extern-nullish? target)))
+        (js-send target "focus" (vector)))
+      (dialog-focus-return-remove! dialog-native))
+
+    ;; apply-attributes! : dom-node-record? list? list? -> void?
+    ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
+    (define (apply-attributes! n old-attrs attrs)
       (define native (dom-node-record-native n))
       (define tag (dom-node-record-tag n))
+      (define old-open? (dialog-open-attr? old-attrs))
+      (define new-open? (dialog-open-attr? attrs))
       (when (or (eq? tag 'select)
                 (eq? tag 'radios)
                 (eq? tag 'choice))
@@ -110,7 +219,7 @@
                   (define name (car a))
                   (define value (cdr a))
                   (case name
-                    [(choices columns density menu-trigger)
+                    [(choices columns density menu-trigger open)
                      (void)]
                     [(selected)
                      (js-set! native "value" (value->attr-string value))]
@@ -138,7 +247,11 @@
                      (js-set-attribute! native
                                                   (symbol->attr-name name)
                                                   (value->attr-string value))]))
-                attrs))
+                attrs)
+      (when (and (eq? tag 'dialog) (not old-open?) new-open?)
+        (handle-dialog-open-transition! native))
+      (when (and (eq? tag 'dialog) old-open? (not new-open?))
+        (handle-dialog-close-transition! native)))
 
     ;; apply-text! : any/c any/c -> void?
     ;;   Replace native node children with a single text child.
@@ -642,7 +755,7 @@
       (define native (js-create-element (tag->element-name tag)))
       (define n (dom-node-record tag attrs children text on-click on-change native))
       (install-default-node-shape! n)
-      (apply-attributes! n attrs)
+      (apply-attributes! n '() attrs)
       (when text
         (apply-text! native text))
       (js-add-event-listener!
@@ -750,6 +863,11 @@
                    (js-send evt "preventDefault" (vector))))]))
           (when (and callback (role-button-node? n))
             (callback key))
+          (when (and (role-dialog-node? n) (string=? key "Tab"))
+            (js-send evt "preventDefault" (vector))
+            (define shift? (extern-bool-true? (js-ref/extern evt "shiftKey")))
+            (when (dialog-open-attr? (dom-node-record-attrs n))
+              (focus-cycled-dialog-target! native shift?)))
           (when (and callback (role-dialog-node? n))
             (callback key)))))
       (js-add-event-listener!
@@ -829,9 +947,10 @@
     ;;   Replace tracked attributes and sync native DOM attributes.
     (define (set-dom-node-attrs! n attrs)
       (define native (dom-node-record-native n))
-      (clear-attributes! native (dom-node-record-attrs n))
+      (define old-attrs (dom-node-record-attrs n))
+      (clear-attributes! native old-attrs)
       (set-dom-node-record-attrs! n attrs)
-      (apply-attributes! n attrs)
+      (apply-attributes! n old-attrs attrs)
       (void))
 
     ;; set-dom-node-children! : dom-node? list? -> void?

@@ -872,6 +872,7 @@
            (set-dom-node-attrs!
             node
             (list (cons attr/role 'dialog)
+                  (cons 'open open-value)
                   (cons 'class (if open-value "we-dialog is-open" "we-dialog"))
                   (cons 'tabindex -1)
                   (cons 'aria-modal "true")
