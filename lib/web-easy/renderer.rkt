@@ -85,10 +85,17 @@
        .we-menu-popup{position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;}") 
-    (define control-style-text ; CSS defaults for non-table controls previously styled inline.
+    (define control-style-text ; CSS defaults for controls and table density classes.
       ".we-button{align-self:flex-start;width:auto;}\
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
-       .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}")
+       .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
+       .we-table{border-collapse:separate;border:1px solid #999;margin-bottom:6px;align-self:flex-start;}\
+       .we-table.we-density-normal{border-spacing:2px 0;}\
+       .we-table.we-density-compact{border-spacing:0 0;}\
+       .we-table-header-cell.we-density-normal{padding:2px 8px;text-align:left;border-bottom:1px solid #bbb;}\
+       .we-table-header-cell.we-density-compact{padding:1px 4px;text-align:left;border-bottom:1px solid #bbb;}\
+       .we-table-data-cell.we-density-normal{padding:2px 8px;}\
+       .we-table-data-cell.we-density-compact{padding:1px 4px;}")
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -314,43 +321,31 @@
             [else             table/density-normal])
           table/density-normal))
 
-    ;; table-dims-style : symbol? -> string?
-    ;;   Return table spacing style for density.
-    (define (table-dims-style density)
+    ;; density-class : symbol? -> string?
+    ;;   Return CSS class for table density variants.
+    (define (density-class density)
       (case density
-        [(compact) "border-collapse:separate;border-spacing:0   0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]
-        [else      "border-collapse:separate;border-spacing:2px 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;"]))
-
-    ;; table-header-cell-style : symbol? -> string?
-    ;;   Return header cell style for density.
-    (define (table-header-cell-style density)
-      (case density
-        [(compact) "padding:1px 4px;text-align:left;border-bottom:1px solid #bbb;"]
-        [else      "padding:2px 8px;text-align:left;border-bottom:1px solid #bbb;"]))
-
-    ;; table-data-cell-style : symbol? -> string?
-    ;;   Return data cell style for density.
-    (define (table-data-cell-style density)
-      (case density
-        [(compact) "padding:1px 4px;"]
-        [else      "padding:2px 8px;"]))
+        [(compact) "we-density-compact"]
+        [else      "we-density-normal"]))
 
     ;; render-table-rows! : dom-node? list? list? symbol? -> void?
     ;;   Replace table rows with a header row and data rows rendered as table cells.
     (define (render-table-rows! table-node columns rows density)
       (define normalized-rows (ensure-list rows 'table "rows"))
       (define (header-cell column)
+        (define density-css (density-class density))
         (dom-node 'th
                   (list (cons 'data-we-widget "table-header-cell")
-                        (cons 'style (table-header-cell-style density)))
+                        (cons 'class (string-append "we-table-header-cell " density-css)))
                   '()
                   (value->text column)
                   #f
                   #f))
       (define (data-cell cell-value)
+        (define density-css (density-class density))
         (dom-node 'td
                   (list (cons 'data-we-widget "table-data-cell")
-                        (cons 'style (table-data-cell-style density)))
+                        (cons 'class (string-append "we-table-data-cell " density-css)))
                   '()
                   (value->text cell-value)
                   #f
@@ -971,11 +966,12 @@
          (define raw-rows    (alist-ref (view-props v) 'rows    'render))
          (define raw-density (alist-ref (view-props v) 'density 'render))
          (define density     (normalize-table-density (maybe-observable-value raw-density)))
+         (define density-css (density-class density))
          (define node (dom-node 'table
                                 (list (cons 'columns columns)
                                       (cons 'data-we-widget "table")
                                       (cons 'density density)
-                                      (cons 'style (table-dims-style density)))
+                                      (cons 'class (string-append "we-table " density-css)))
                                 '()
                                 #f
                                 #f

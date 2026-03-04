@@ -482,6 +482,8 @@
 (define table-header-cell (node-child table-header-row 0))
 (check-equal (node-attr table-header-row 'data-we-widget) "table-row" "table header row data-we-widget attr")
 (check-equal (node-attr table-header-cell 'data-we-widget) "table-header-cell" "table header cell data-we-widget attr")
+(check-equal (node-attr table-node 'class) "we-table we-density-normal" "table normal density class")
+(check-equal (node-attr table-header-cell 'class) "we-table-header-cell we-density-normal" "table header cell normal class")
 (define (row-cell-texts row-node)
   (map dom-node-text (dom-node-children row-node)))
 (check-equal (map row-cell-texts (dom-node-children table-node))
@@ -495,6 +497,7 @@
 (define table-data-cell (node-child table-data-row 0))
 (check-equal (node-attr table-data-row 'data-we-widget) "table-row" "table data row data-we-widget attr")
 (check-equal (node-attr table-data-cell 'data-we-widget) "table-data-cell" "table data cell data-we-widget attr")
+(check-equal (node-attr table-data-cell 'class) "we-table-data-cell we-density-normal" "table data cell normal class")
 
 ;; table supports compact density style
 (define r14b
@@ -504,10 +507,7 @@
      (table '(k v) '(("a" 1)) 'compact)))))
 (define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
-(check-equal (normalize-css-whitespace (node-attr table-node-compact 'style))
-             (normalize-css-whitespace
-              "border-collapse:separate;border-spacing:0 0;border:1px solid #999;margin-bottom:6px;align-self:flex-start;")
-             "table compact density style")
+(check-equal (node-attr table-node-compact 'class) "we-table we-density-compact" "table compact density class")
 
 ;; observable-view switches rendered child when data changes
 (define @ov (@ "one"))
