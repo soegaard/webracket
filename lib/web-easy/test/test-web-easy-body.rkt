@@ -28,23 +28,6 @@
   (define p (assq key (dom-node-attrs n)))
   (if p (cdr p) #f))
 
-;; normalize-css-whitespace : string? -> string?
-;;   Normalize CSS whitespace so style checks are robust to formatting-only differences.
-(define (normalize-css-whitespace s)
-  (define chars (string->list s))
-  (define (loop rest prev-space? acc)
-    (cond
-      [(null? rest)
-       (list->string (reverse acc))]
-      [else
-       (define ch (car rest))
-       (if (char-whitespace? ch)
-           (if prev-space?
-               (loop (cdr rest) #t acc)
-               (loop (cdr rest) #t (cons #\space acc)))
-           (loop (cdr rest) #f (cons ch acc)))]))
-  (loop chars #f '()))
-
 (define (node-child-by-role n role)
   (let loop ([children (dom-node-children n)])
     (cond

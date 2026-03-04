@@ -719,7 +719,6 @@
          (backend-append-child! node content-node)
          (define tab-buttons    '())
          (define selected-value #f)
-         (define tab-ids        (map car tabs))
          (define enabled-tab-ids
            (map car (filter (lambda (tab) (not (list-ref tab 2))) tabs)))
          (define (choose-view selected)
