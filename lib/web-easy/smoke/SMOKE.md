@@ -133,6 +133,10 @@ Forbidden tokens checked in dashboard DOM attributes:
 - `NaN`
 - `Infinity`
 
+Additional dashboard guard:
+
+- fails if any rendered widget node (`[data-we-widget]`) has a non-empty inline `style` attribute.
+
 ## Timing Output
 
 Headless timing behavior:
