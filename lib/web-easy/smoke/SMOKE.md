@@ -7,6 +7,7 @@ Browser smoke tests for `lib/web-easy`.
 Use these as the default interface:
 
 ```bash
+./headless.sh list
 ./headless.sh doctor
 ./headless.sh contract
 ./headless.sh smoke
@@ -23,6 +24,7 @@ make smoke-ci-lite
 make smoke-smoke
 make smoke-parity
 make smoke-dashboards
+make smoke-list
 make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
 ```
 
@@ -161,6 +163,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh dashboards`
 - `./headless.sh ci`
+- `./headless.sh list`
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
@@ -173,9 +176,11 @@ CI helper script:
 Repository-root aliases:
 
 - `make smoke-ci`
+- `make smoke-ci-lite`
 - `make smoke-smoke`
 - `make smoke-parity`
 - `make smoke-dashboards`
+- `make smoke-list`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
 
 Command notes:
@@ -183,6 +188,7 @@ Command notes:
 - `quick`: runs `doctor` preflight, then `all`.
 - `headless-run`: preferred `smoke.sh` entrypoint for headless modes.
 - `status`: shows tool/artifact status and suggests the next command.
+- `COMMANDS.tsv`: machine-readable inventory of canonical smoke/headless commands.
 
 `tab-panel` entry forms:
 

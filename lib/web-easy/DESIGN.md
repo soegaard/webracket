@@ -419,7 +419,7 @@ Current `web-easy` test workflows:
    - open `http://localhost:8000/test-browser-dashboard.html` to run all smoke pages in hidden iframes and aggregate PASS/FAIL.
 16. Headless automation (available now):
    - headless browser execution can run `smoke/test-browser-dashboard.html` and return local pass/fail.
-   - script path: `lib/web-easy/smoke/check-smoke-headless.sh` (requires Node + Playwright + `raco static-web`).
+   - canonical command: `cd lib/web-easy/smoke && ./headless.sh smoke` (requires Node + Playwright + `raco static-web`).
    - CI wiring is configured in `.github/workflows/web-easy-smoke.yml`.
 17. Parity hello smoke compile+runtime (manual):
    - `lib/web-easy/smoke/run-browser-parity-hello-test.sh`
@@ -454,9 +454,9 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `38` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `19` tests
-3. contract dashboard (`smoke/test-browser-contract-dashboard.html`): `8` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `60` tests
+2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `30` tests
+3. contract dashboard (`smoke/test-browser-contract-dashboard.html`): `26` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -498,6 +498,21 @@ Canonical headless commands:
 - `cd lib/web-easy/smoke && ./headless.sh dashboards`
 - `cd lib/web-easy/smoke && ./headless.sh ci`
 - `cd lib/web-easy/smoke && ./headless.sh single <compile-script> <test-page>`
+- `cd lib/web-easy/smoke && ./headless.sh list`
+
+Canonical Make targets:
+
+- `make smoke-ci`
+- `make smoke-ci-lite`
+- `make smoke-smoke`
+- `make smoke-parity`
+- `make smoke-dashboards`
+- `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...`
+- `make smoke-list`
+
+Machine-readable command inventory:
+
+- `lib/web-easy/smoke/COMMANDS.tsv`
 
 Known operational caveats:
 
