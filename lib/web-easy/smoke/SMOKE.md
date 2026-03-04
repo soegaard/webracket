@@ -33,6 +33,7 @@ make smoke-smoke
 make smoke-parity
 make smoke-dashboards
 make smoke-contract
+make smoke-compat
 make smoke-list
 make smoke-release
 make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
@@ -60,6 +61,8 @@ Deprecation window note:
 - Legacy names were removed from the primary interface in March 2026.
 - Compatibility aliases currently available: `make smoke-contract` and `make smoke-ci-full`.
 - Preferred names remain: `make smoke-dashboards` and `make smoke-ci`.
+- Planned removal date for compatibility aliases: 2026-07-31.
+- Aliases scheduled for removal: `make smoke-contract`, `make smoke-ci-full`.
 
 ## Release Quickstart
 
@@ -211,6 +214,7 @@ Repository-root aliases:
 - `make smoke-parity`
 - `make smoke-dashboards`
 - `make smoke-contract`
+- `make smoke-compat`
 - `make smoke-list`
 - `make smoke-release`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`

@@ -22,6 +22,7 @@ make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.
 make	make smoke-dashboards	Run contract+smoke dashboards headless.
 make	make smoke-contract	Compatibility alias for ./headless.sh contract.
+make	make smoke-compat	Show compatibility aliases and preferred replacements.
 make	make smoke-list	Print canonical commands.
 make	make smoke-commands	Regenerate COMMANDS.tsv.
 make	make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...	Run one page headless via Make variables.

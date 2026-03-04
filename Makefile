@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-ci-full smoke-ci-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-contract smoke-one smoke-list smoke-commands
+.PHONY: help smoke-ci smoke-ci-full smoke-ci-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-contract smoke-compat smoke-one smoke-list smoke-commands
 
 help:
 	@echo "Available targets:"
@@ -19,6 +19,7 @@ help:
 	@echo "  smoke-parity          Run parity-only headless dashboard."
 	@echo "  smoke-dashboards      Run contract+smoke dashboards headless."
 	@echo "  smoke-contract        Compatibility alias for headless contract."
+	@echo "  smoke-compat          Show compatibility aliases and preferred replacements."
 	@echo "  smoke-list            Print canonical smoke/headless commands."
 	@echo "  smoke-commands        Regenerate smoke/COMMANDS.tsv."
 	@echo "  smoke-one             Run one headless smoke page (set SINGLE_COMPILE, SINGLE_PAGE)."
@@ -50,6 +51,11 @@ smoke-dashboards:
 smoke-contract:
 	cd $(SMOKE_DIR) && ./headless.sh contract
 
+smoke-compat:
+	@echo "Compatibility aliases:"
+	@echo "smoke-ci-full -> smoke-ci"
+	@echo "smoke-contract -> smoke-dashboards (or ./headless.sh contract)"
+
 smoke-list:
 	@echo "Canonical headless modes:"
 	@cd $(SMOKE_DIR) && ./headless.sh list
@@ -65,6 +71,7 @@ smoke-list:
 	@echo "smoke-parity"
 	@echo "smoke-dashboards"
 	@echo "smoke-contract"
+	@echo "smoke-compat"
 	@echo "smoke-commands"
 	@echo "smoke-one"
 
