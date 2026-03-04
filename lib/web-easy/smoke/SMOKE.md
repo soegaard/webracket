@@ -18,6 +18,7 @@ make smoke-ci
 ./headless.sh smoke
 ./headless.sh dashboards
 ./headless.sh ci
+./headless.sh timings
 ./headless.sh single <compile-script> <test-page>
 ```
 
@@ -164,6 +165,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh dashboards`
 - `./headless.sh ci`
+- `./headless.sh timings`
 - `./headless.sh list`
 - `./headless.sh verify`
 - `./headless.sh guard`

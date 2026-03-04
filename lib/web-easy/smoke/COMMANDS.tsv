@@ -6,6 +6,7 @@ headless	./headless.sh parity	Run parity-only dashboard headless
 headless	./headless.sh contract	Run contract-only dashboard headless
 headless	./headless.sh dashboards	Run contract dashboard and full smoke dashboard
 headless	./headless.sh ci	Run dashboards and guard self-test
+headless	./headless.sh timings	Run contract/smoke/parity with compile skipped and print combined top timings
 headless	./headless.sh guard	Run dashboard guard self-test
 headless	./headless.sh all	Run check-all.sh --headless
 headless	./headless.sh single <compile-script> <test-page>	Run one page with check-single-headless.sh

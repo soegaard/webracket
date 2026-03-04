@@ -18,6 +18,7 @@ Modes:
   contract                 Run contract-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
   ci                       Run dashboards and guard self-test
+  timings                  Run contract/smoke/parity (skip compile) and print combined top timings
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
   single <compile> <page>  Run one page with check-single-headless.sh
@@ -30,6 +31,7 @@ Examples:
   ./headless.sh contract
   ./headless.sh dashboards
   ./headless.sh ci
+  ./headless.sh timings
   ./headless.sh guard
   ./headless.sh all
   ./headless.sh doctor
@@ -47,6 +49,7 @@ parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
 ci	Run dashboards and guard self-test
+timings	Run contract/smoke/parity with compile skipped and print combined top timings
 guard	Run dashboard guard self-test
 all	Run check-all.sh --headless
 single	Run one page with check-single-headless.sh
@@ -151,6 +154,36 @@ case "$1" in
     shift
     "$SCRIPT_DIR/headless.sh" dashboards "$@"
     "$SCRIPT_DIR/headless.sh" guard "$@"
+    ;;
+  timings)
+    shift
+    contract_file="/tmp/web-easy-contract-timings.tsv"
+    smoke_file="/tmp/web-easy-smoke-timings.tsv"
+    parity_file="/tmp/web-easy-parity-timings.tsv"
+    all_file="/tmp/web-easy-all-timings.tsv"
+    rm -f "$all_file"
+
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$contract_file" "$SCRIPT_DIR/check-contract-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$smoke_file" "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$parity_file" "$SCRIPT_DIR/check-parity-headless.sh" "$@"
+
+    {
+      echo -e "suite\tpage\tduration_ms"
+      for suite in contract smoke parity; do
+        file_var="${suite}_file"
+        file_path="${!file_var}"
+        if [ -f "$file_path" ]; then
+          awk -F $'\t' -v s="$suite" 'NR > 1 { print s "\t" $1 "\t" $2 }' "$file_path"
+        fi
+      done
+    } > "$all_file"
+
+    echo "Combined timing TSV written: $all_file"
+    echo "Top 10 slowest pages (all suites):"
+    awk -F $'\t' 'NR > 1 { print $3 "\t" $1 "\t" $2 }' "$all_file" \
+      | sort -nr \
+      | head -n 10 \
+      | awk -F $'\t' '{ printf("- %s [%s]: %sms\n", $3, $2, $1) }'
     ;;
   guard)
     shift
