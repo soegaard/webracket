@@ -238,6 +238,7 @@ Then open:
 - `http://localhost:8000/test-browser-dialog-contract.html`
 - `http://localhost:8000/test-browser-menu-single-open-contract.html`
 - `http://localhost:8000/test-browser-menu-roving-focus-contract.html`
+- `http://localhost:8000/test-browser-menu-close-reason-contract.html`
 - `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
@@ -274,6 +275,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-dialog-contract.html`
 - `http://localhost:8000/test-browser-parity-menu-single-open-contract.html`
 - `http://localhost:8000/test-browser-parity-menu-roving-focus-contract.html`
+- `http://localhost:8000/test-browser-parity-menu-close-reason-contract.html`
 
 Dashboards:
 
@@ -451,7 +453,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `47/47 smoke tests passed`
+1. full smoke: `PASS` with `49/49 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -473,6 +475,7 @@ Concurrency note:
 - dialog-contract: `PASS dialog contract: role/aria + focus trap + Escape focus return`
 - menu-single-open-contract: `PASS menu single-open contract: exactly one open menu at a time`
 - menu-roving-focus-contract: `PASS menu roving-focus contract: labels/items keyboard focus transitions`
+- menu-close-reason-contract: `PASS menu close-reason contract: Escape/Tab/focus-leave/switch`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -504,6 +507,7 @@ Concurrency note:
 - parity-dialog-contract: `PASS parity dialog contract: role/aria + focus trap + Escape focus return`
 - parity-menu-single-open-contract: `PASS parity menu single-open contract: exactly one open menu at a time`
 - parity-menu-roving-focus-contract: `PASS parity menu roving-focus contract: labels/items keyboard focus transitions`
+- parity-menu-close-reason-contract: `PASS parity menu close-reason contract: Escape/Tab/focus-leave/switch`
 - parity-incident: `PASS incident parity: filter + query + assign/resolve/reset`
 - parity-release: `PASS release parity: tabs + controls + list + menu actions`
 - parity-workspace: `PASS workspace parity: tabs + form + menu preset flow`
