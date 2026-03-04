@@ -115,8 +115,45 @@ jobs:
           ./check-smoke.sh
 
           echo "[4/4] unified headless CI (contract + smoke + guard)"
-          SMOKE_TIMEOUT_MS=300000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
+          SMOKE_TIMEOUT_MS=300000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
           echo "unified headless CI gate passed"
+
+      - name: Publish headless timing summary
+        if: always()
+        run: |
+          files=(
+            /tmp/web-easy-contract-timings.tsv
+            /tmp/web-easy-smoke-timings.tsv
+            /tmp/web-easy-parity-timings.tsv
+          )
+
+          {
+            echo "web-easy headless timing summary"
+            for f in "${files[@]}"; do
+              if [ -f "$f" ]; then
+                echo
+                echo "$(basename "$f"):"
+                awk -F $'\t' 'NR > 1 { print $2 "\t" $1 }' "$f" | sort -nr | head -n 10 | awk -F $'\t' '{ printf("  %s ms  %s\n", $1, $2) }'
+              else
+                echo
+                echo "$(basename "$f"): (missing)"
+              fi
+            done
+          } > /tmp/web-easy-headless-timing-summary.txt
+
+          {
+            echo "### web-easy headless timing summary"
+            for f in "${files[@]}"; do
+              if [ -f "$f" ]; then
+                echo
+                echo "#### $(basename "$f")"
+                echo
+                echo "| duration_ms | page |"
+                echo "| ---: | --- |"
+                awk -F $'\t' 'NR > 1 { print $2 "\t" $1 }' "$f" | sort -nr | head -n 10 | awk -F $'\t' '{ printf("| %s | %s |\n", $1, $2) }'
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare smoke failure context
         if: failure()
@@ -155,3 +192,15 @@ jobs:
             /tmp/web-easy-dashboard-guard.log
             /tmp/web-easy-smoke-failure-context.txt
             lib/web-easy/smoke/COMMANDS.tsv
+
+      - name: Upload headless timing artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-easy-headless-timings
+          if-no-files-found: warn
+          path: |
+            /tmp/web-easy-contract-timings.tsv
+            /tmp/web-easy-smoke-timings.tsv
+            /tmp/web-easy-parity-timings.tsv
+            /tmp/web-easy-headless-timing-summary.txt
