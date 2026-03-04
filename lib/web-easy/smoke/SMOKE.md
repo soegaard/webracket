@@ -58,6 +58,8 @@ make smoke-ci-lite
 make smoke-ci
 ```
 
+If this fails, run `make smoke-commands` and commit `COMMANDS.tsv`.
+
 ## Smoke Test Conventions
 
 All browser smoke pages under `smoke/test-browser-*.html` should follow these rules:
