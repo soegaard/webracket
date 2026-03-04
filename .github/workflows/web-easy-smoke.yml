@@ -154,3 +154,4 @@ jobs:
             /tmp/web-easy-smoke-headless.log
             /tmp/web-easy-dashboard-guard.log
             /tmp/web-easy-smoke-failure-context.txt
+            lib/web-easy/smoke/COMMANDS.tsv

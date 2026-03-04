@@ -26,10 +26,13 @@ Common top-level aliases:
 ```bash
 make smoke-ci
 make smoke-ci-lite
+make smoke-verify
+make smoke-quick
 make smoke-smoke
 make smoke-parity
 make smoke-dashboards
 make smoke-list
+make smoke-release
 make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
 ```
 
@@ -193,10 +196,13 @@ Repository-root aliases:
 
 - `make smoke-ci`
 - `make smoke-ci-lite`
+- `make smoke-verify`
+- `make smoke-quick`
 - `make smoke-smoke`
 - `make smoke-parity`
 - `make smoke-dashboards`
 - `make smoke-list`
+- `make smoke-release`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
 
 Command notes:

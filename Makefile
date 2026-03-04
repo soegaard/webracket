@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-ci-lite smoke-verify smoke-quick smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list smoke-commands
+.PHONY: help smoke-ci smoke-ci-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list smoke-commands
 
 help:
 	@echo "Available targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  smoke-ci-lite         Run local CI headless gate without compile."
 	@echo "  smoke-verify          Run local headless verify preflight."
 	@echo "  smoke-quick           Run smoke-verify + smoke-ci-lite."
+	@echo "  smoke-release         Run smoke-commands + smoke-quick + smoke-ci."
 	@echo "  smoke-smoke           Run full smoke dashboard headless."
 	@echo "  smoke-parity          Run parity-only headless dashboard."
 	@echo "  smoke-dashboards      Run contract+smoke dashboards headless."
@@ -30,6 +31,8 @@ smoke-verify:
 	cd $(SMOKE_DIR) && ./headless.sh verify
 
 smoke-quick: smoke-verify smoke-ci-lite
+
+smoke-release: smoke-commands smoke-quick smoke-ci
 
 smoke-smoke:
 	cd $(SMOKE_DIR) && ./headless.sh smoke
@@ -49,6 +52,7 @@ smoke-list:
 	@echo "smoke-ci-lite"
 	@echo "smoke-verify"
 	@echo "smoke-quick"
+	@echo "smoke-release"
 	@echo "smoke-smoke"
 	@echo "smoke-parity"
 	@echo "smoke-dashboards"
