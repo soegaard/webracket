@@ -120,8 +120,10 @@ jobs:
           SMOKE_BASE_URL="$BASE_URL" \
           SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
           node ./check-contract-headless.mjs
+          echo "contract gate passed"
 
           echo "[5/5] smoke headless dashboard"
           SMOKE_BASE_URL="$BASE_URL" \
           SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
           node ./check-smoke-headless.mjs
+          echo "full smoke gate passed"
