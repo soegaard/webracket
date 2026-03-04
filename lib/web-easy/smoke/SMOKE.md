@@ -407,7 +407,7 @@ Common failure patterns and what to check first:
 
 Note:
 
-- `check-ci-smoke.sh` is the local CI-helper command (`headless dashboard + guard self-test`).
+- `check-ci-smoke.sh` is the local CI-helper command and routes headless steps via `./headless.sh`.
 - GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs compile + `./headless.sh contract` + `./headless.sh smoke` + guard on pushes/PRs touching `lib/web-easy/**`.
 
 ## Recommended Daily Flow
