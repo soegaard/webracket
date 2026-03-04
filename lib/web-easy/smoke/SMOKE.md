@@ -136,7 +136,7 @@ Forbidden tokens checked in dashboard DOM attributes:
 Additional dashboard guard:
 
 - fails if any rendered widget node (`[data-we-widget]`) has a non-empty inline `style` attribute.
-- current allowlist for this check: layout/container widgets that still use backend layout inline style (`vpanel`, `hpanel`, `group`, `if-view`, `cond-view`, `case-view`, `observable-view`).
+- current allowlist for this check: layout/container widgets that still use backend layout inline style (`vpanel`, `hpanel`, `group`, `if-view`, `cond-view`, `case-view`).
 
 ## Timing Output
 

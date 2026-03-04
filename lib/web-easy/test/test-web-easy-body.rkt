@@ -533,6 +533,7 @@
 (define ov-container (node-child (node-child (renderer-root r15) 0) 0))
 (define ov-child0 (node-child ov-container 0))
 (check-equal (node-attr ov-container 'data-we-widget) "observable-view" "observable-view data-we-widget attr")
+(check-equal (node-attr ov-container 'class) "we-observable-view" "observable-view base class")
 (check-equal (dom-node-text ov-child0) "one" "observable-view initial child")
 (:= @ov "two")
 (define ov-child1 (node-child ov-container 0))

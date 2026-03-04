@@ -90,6 +90,7 @@
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
        .we-list-view{display:flex;flex-direction:column;gap:4px;}\
+       .we-observable-view{display:flex;flex-direction:column;gap:4px;}\
        .we-table{border-collapse:separate;border:1px solid #999;margin-bottom:6px;align-self:flex-start;}\
        .we-table.we-density-normal{border-spacing:2px 0;}\
        .we-table.we-density-compact{border-spacing:0 0;}\
@@ -936,8 +937,8 @@
          (define raw-data    (alist-ref (view-props v) 'data       'render))
          (define make-view   (alist-ref (view-props v) 'make-view  'render))
          (define equal-proc  (alist-ref (view-props v) 'equal-proc 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "observable-view")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "observable-view")
+                                           (cons 'class "we-observable-view")) '() #f #f #f))
          (define last-value #f)
          (define have-last? #f)
          (define (render-from-value! value)
