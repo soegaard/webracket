@@ -263,6 +263,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-table.html`
 - `http://localhost:8000/test-browser-parity-menu-keys.html`
 - `http://localhost:8000/test-browser-parity-menu-full.html`
+- `http://localhost:8000/test-browser-parity-dialog.html`
 - `http://localhost:8000/test-browser-parity-a11y-contract.html`
 - `http://localhost:8000/test-browser-parity-keyboard-contract.html`
 - `http://localhost:8000/test-browser-parity-focus-order.html`
@@ -415,6 +416,7 @@ From `lib/web-easy/smoke`:
   - `./run-browser-parity-table-test.sh`
   - `./run-browser-parity-menu-keys-test.sh`
   - `./run-browser-parity-menu-full-test.sh`
+  - `./run-browser-parity-dialog-test.sh`
 
 Parity quickstart:
 
@@ -443,7 +445,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `40/40 smoke tests passed`
+1. full smoke: `PASS` with `41/41 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -485,6 +487,7 @@ Concurrency note:
 - parity-table: `PASS table parity: multi-column cells + menu actions`
 - parity-menu-keys: `PASS parity menu popup + menu-item focus + Enter/Space activation`
 - parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space + type-ahead`
+- parity-dialog: `PASS parity dialog open/close: open button, Escape, cancel`
 - parity-a11y-contract: `PASS parity a11y contract: menu/tab/table semantics`
 - parity-keyboard-contract: `PASS parity keyboard contract: menu + tabs keyboard-only flow`
 - parity-focus-order: `PASS parity focus-order: menu labels + tab headers are stable`

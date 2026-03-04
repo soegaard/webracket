@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 labels=(
   "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/menu-full/group/dialog/operators/tab-panel/tab-panel-disabled)"
   "visual-check"
-  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/menu-keys/menu-full/list/todo/incident/release/workspace)"
+  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/menu-keys/menu-full/dialog/list/todo/incident/release/workspace)"
 )
 
 cmds=(
@@ -82,6 +82,7 @@ echo "  http://localhost:8000/test-browser-parity-settings.html"
 echo "  http://localhost:8000/test-browser-parity-table.html"
 echo "  http://localhost:8000/test-browser-parity-menu-keys.html"
 echo "  http://localhost:8000/test-browser-parity-menu-full.html"
+echo "  http://localhost:8000/test-browser-parity-dialog.html"
 echo "  http://localhost:8000/test-browser-parity-a11y-contract.html"
 echo "  http://localhost:8000/test-browser-parity-keyboard-contract.html"
 echo "  http://localhost:8000/test-browser-parity-focus-order.html"
