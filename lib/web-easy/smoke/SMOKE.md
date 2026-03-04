@@ -243,6 +243,7 @@ Then open:
 - `http://localhost:8000/test-browser-tab-close-style-contract.html`
 - `http://localhost:8000/test-browser-menu-typeahead-contract.html`
 - `http://localhost:8000/test-browser-tab-aria-linkage-contract.html`
+- `http://localhost:8000/test-browser-menu-aria-state-contract.html`
 - `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
@@ -284,6 +285,7 @@ Then open:
 - `http://localhost:8000/test-browser-parity-tab-close-style-contract.html`
 - `http://localhost:8000/test-browser-parity-menu-typeahead-contract.html`
 - `http://localhost:8000/test-browser-parity-tab-aria-linkage-contract.html`
+- `http://localhost:8000/test-browser-parity-menu-aria-state-contract.html`
 
 Dashboards:
 
@@ -461,7 +463,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `57/57 smoke tests passed`
+1. full smoke: `PASS` with `59/59 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -488,6 +490,7 @@ Concurrency note:
 - tab-close-style-contract: `PASS tab close-style contract: disabled + dynamic mutation focus/selection`
 - menu-typeahead-contract: `PASS menu type-ahead contract: label/item/no-match/switch`
 - tab-aria-linkage-contract: `PASS tab aria-linkage contract: controls/labelledby/selected/disabled`
+- menu-aria-state-contract: `PASS menu aria state contract: expanded/controls/menu-role transitions`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -524,6 +527,7 @@ Concurrency note:
 - parity-tab-close-style-contract: `PASS parity tab close-style contract: disabled + dynamic mutation focus/selection`
 - parity-menu-typeahead-contract: `PASS parity menu type-ahead contract: label/item/no-match/switch`
 - parity-tab-aria-linkage-contract: `PASS parity tab aria-linkage contract: controls/labelledby/selected/disabled`
+- parity-menu-aria-state-contract: `PASS parity menu aria state contract: expanded/controls/menu-role transitions`
 - parity-incident: `PASS incident parity: filter + query + assign/resolve/reset`
 - parity-release: `PASS release parity: tabs + controls + list + menu actions`
 - parity-workspace: `PASS workspace parity: tabs + form + menu preset flow`
