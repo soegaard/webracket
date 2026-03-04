@@ -11,10 +11,8 @@ Commands:
   check      Compile all smoke examples
   parity     Compile parity smoke examples, then print parity URLs
   parity-check Compile parity smoke examples only
-  all        Run core tests + webracket run + smoke compile
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
-  quick      Run local tool preflight, then core tests + smoke compile
   status     Print tools/artifacts status and suggested next command
   urls       Print smoke URLs without starting a server
   parity-open Print parity test URLs
@@ -139,7 +137,7 @@ status() {
     if [ "$artifacts" -eq 0 ]; then
       recommend="./smoke.sh rebuild"
     else
-      recommend="./smoke.sh all"
+      recommend="./smoke.sh check"
     fi
   fi
 
@@ -215,13 +213,6 @@ case "$1" in
     ;;
   parity-check)
     parity_check
-    ;;
-  all)
-    "$SCRIPT_DIR/check-all.sh"
-    ;;
-  quick)
-    doctor
-    "$SCRIPT_DIR/check-all.sh"
     ;;
   status)
     status
