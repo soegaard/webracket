@@ -100,6 +100,22 @@ Available utility commands:
   - `visual-check`
   - `parity-all`
 
+## CSS Hook Inspection
+
+For browser-side theming/debugging, inspect runtime nodes using:
+
+- `data-we-widget` (stable semantic widget id)
+- class names (default visual contract)
+
+Quick check flow:
+
+1. Run `./smoke.sh open`.
+2. Open `http://localhost:8000/test-browser-visual-check.html`.
+3. In DevTools, verify representative nodes expose expected hooks, for example:
+   - `data-we-widget="menu-popup"` + class `we-menu-popup`
+   - `data-we-widget="tab-button"` + class `we-tab-btn`
+   - `data-we-widget="table-data-cell"` + class `we-table-data-cell`
+
 ## Guard + Forbidden Tokens
 
 Guard self-test:
