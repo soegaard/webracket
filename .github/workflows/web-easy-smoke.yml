@@ -98,7 +98,7 @@ jobs:
           cd lib/web-easy/smoke
           SMOKE_LOCAL_TOOLS_DIR="$GITHUB_WORKSPACE/.local-tools" ./headless.sh verify
 
-      - name: Run web-easy smoke checks (contract gate + full dashboard)
+      - name: Run web-easy smoke checks (contract + theme + full dashboard)
         run: |
           cd lib/web-easy/smoke
           echo "[1/3] core tests (real Racket)"
@@ -114,7 +114,7 @@ jobs:
           echo "[3/4] smoke compile"
           ./check-smoke.sh
 
-          echo "[4/4] unified headless CI (contract + smoke + guard)"
+          echo "[4/4] unified headless CI (contract + theme + smoke + guard)"
           SMOKE_TIMEOUT_MS=300000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
           echo "unified headless CI gate passed"
 
@@ -125,6 +125,7 @@ jobs:
             /tmp/web-easy-contract-timings.tsv
             /tmp/web-easy-smoke-timings.tsv
             /tmp/web-easy-parity-timings.tsv
+            /tmp/web-easy-theme-timings.tsv
           )
 
           {
@@ -203,4 +204,5 @@ jobs:
             /tmp/web-easy-contract-timings.tsv
             /tmp/web-easy-smoke-timings.tsv
             /tmp/web-easy-parity-timings.tsv
+            /tmp/web-easy-theme-timings.tsv
             /tmp/web-easy-headless-timing-summary.txt

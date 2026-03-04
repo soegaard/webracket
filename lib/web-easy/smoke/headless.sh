@@ -18,8 +18,8 @@ Modes:
   contract                 Run contract-only dashboard headless
   theme                    Run theme-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
-  ci                       Run dashboards and guard self-test
-  timings                  Run contract/smoke/parity (skip compile) and print combined top timings
+  ci                       Run dashboards + theme dashboard and guard self-test
+  timings                  Run contract/smoke/parity/theme (skip compile) and print combined top timings
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
   single <compile> <page>  Run one page with check-single-headless.sh
@@ -51,8 +51,8 @@ parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
 theme	Run theme-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
-ci	Run dashboards and guard self-test
-timings	Run contract/smoke/parity with compile skipped and print combined top timings
+ci	Run dashboards + theme dashboard and guard self-test
+timings	Run contract/smoke/parity/theme with compile skipped and print combined top timings
 guard	Run dashboard guard self-test
 all	Run check-all.sh --headless
 single	Run one page with check-single-headless.sh
@@ -160,6 +160,7 @@ case "$1" in
   ci)
     shift
     "$SCRIPT_DIR/headless.sh" dashboards "$@"
+    "$SCRIPT_DIR/headless.sh" theme "$@"
     "$SCRIPT_DIR/headless.sh" guard "$@"
     ;;
   timings)
@@ -167,16 +168,18 @@ case "$1" in
     contract_file="/tmp/web-easy-contract-timings.tsv"
     smoke_file="/tmp/web-easy-smoke-timings.tsv"
     parity_file="/tmp/web-easy-parity-timings.tsv"
+    theme_file="/tmp/web-easy-theme-timings.tsv"
     all_file="/tmp/web-easy-all-timings.tsv"
     rm -f "$all_file"
 
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$contract_file" "$SCRIPT_DIR/check-contract-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$smoke_file" "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$parity_file" "$SCRIPT_DIR/check-parity-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$theme_file" "$SCRIPT_DIR/check-theme-headless.sh" "$@"
 
     {
       echo -e "suite\tpage\tduration_ms"
-      for suite in contract smoke parity; do
+      for suite in contract smoke parity theme; do
         file_var="${suite}_file"
         file_path="${!file_var}"
         if [ -f "$file_path" ]; then

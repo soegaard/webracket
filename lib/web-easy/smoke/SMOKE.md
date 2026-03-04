@@ -174,6 +174,7 @@ Headless timing behavior:
   - `/tmp/web-easy-contract-timings.tsv`
   - `/tmp/web-easy-smoke-timings.tsv`
   - `/tmp/web-easy-parity-timings.tsv`
+  - `/tmp/web-easy-theme-timings.tsv`
 - combined timing snapshot:
   - `./headless.sh timings`
   - writes `/tmp/web-easy-all-timings.tsv`
@@ -184,6 +185,7 @@ Headless timing behavior:
 - GitHub workflow: `.github/workflows/web-easy-smoke.yml`
   - runs `./headless.sh verify`
   - runs compile path + `./headless.sh ci` (`SMOKE_SKIP_COMPILE=1`)
+  - `ci` mode runs contract dashboard + theme dashboard + full smoke dashboard + guard
   - publishes headless timing artifacts
 
 ## Contract Reference
