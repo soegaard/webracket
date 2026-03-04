@@ -15,10 +15,9 @@ smoke	./smoke.sh headless-run <mode> [args]	Forward to headless dispatcher.
 smoke	./smoke.sh check	Compile smoke artifacts.
 smoke	./smoke.sh open	Serve smoke pages locally.
 make	make smoke-ci	Run canonical local CI headless gate.
-make	make smoke-ci-lite	Run canonical CI headless gate without compile.
 make	make smoke-headless-lite	Run contract+smoke+parity+guard without compile.
 make	make smoke-verify	Run local headless verify preflight.
-make	make smoke-quick	Run smoke-verify + smoke-ci-lite.
+make	make smoke-quick	Run smoke-verify + smoke-headless-lite.
 make	make smoke-release	Run smoke-commands + smoke-quick + smoke-ci.
 make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.

@@ -10,10 +10,10 @@ help:
 	@echo "Available targets:"
 	@echo "  help                  Show this help."
 	@echo "  smoke-ci              Run local CI smoke entrypoint (preferred)."
-	@echo "  smoke-ci-lite         Run local CI-lite headless gate without compile."
-	@echo "  smoke-headless-lite   Run contract+smoke+parity+guard without compile."
+	@echo "  smoke-headless-lite   Run contract+smoke+parity+guard without compile (preferred)."
+	@echo "  smoke-ci-lite         Deprecated alias for smoke-headless-lite."
 	@echo "  smoke-verify          Run local headless verify preflight."
-	@echo "  smoke-quick           Run smoke-verify + smoke-ci-lite."
+	@echo "  smoke-quick           Run smoke-verify + smoke-headless-lite."
 	@echo "  smoke-release         Run smoke-commands + smoke-quick + smoke-ci."
 	@echo "  smoke-smoke           Run full smoke dashboard headless."
 	@echo "  smoke-parity          Run parity-only headless dashboard."
@@ -26,6 +26,7 @@ smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
 
 smoke-ci-lite:
+	@echo "warning: smoke-ci-lite is deprecated; use smoke-headless-lite"
 	cd $(SMOKE_DIR) && ./headless.sh ci-lite
 
 smoke-headless-lite:
@@ -34,7 +35,7 @@ smoke-headless-lite:
 smoke-verify:
 	cd $(SMOKE_DIR) && ./headless.sh verify
 
-smoke-quick: smoke-verify smoke-ci-lite
+smoke-quick: smoke-verify smoke-headless-lite
 
 smoke-release: smoke-commands smoke-quick smoke-ci
 
@@ -53,7 +54,6 @@ smoke-list:
 	@echo
 	@echo "Canonical Make targets:"
 	@echo "smoke-ci"
-	@echo "smoke-ci-lite"
 	@echo "smoke-headless-lite"
 	@echo "smoke-verify"
 	@echo "smoke-quick"

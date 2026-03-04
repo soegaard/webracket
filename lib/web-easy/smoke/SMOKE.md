@@ -8,7 +8,7 @@ Use these as the default interface:
 
 ```bash
 make smoke-commands
-make smoke-ci-lite
+make smoke-headless-lite
 make smoke-ci
 
 ./headless.sh list
@@ -27,7 +27,6 @@ Common top-level commands:
 
 ```bash
 make smoke-ci
-make smoke-ci-lite
 make smoke-headless-lite
 make smoke-verify
 make smoke-quick
@@ -43,11 +42,15 @@ make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
 
 ```bash
 make smoke-commands
-make smoke-ci-lite
+make smoke-headless-lite
 make smoke-ci
 ```
 
 If this fails, run `make smoke-commands` and commit `COMMANDS.tsv`.
+
+Deprecated alias:
+
+- `make smoke-ci-lite` -> `make smoke-headless-lite`
 
 ## Recommended Workflow
 
@@ -197,7 +200,6 @@ CI helper script:
 Repository-root aliases:
 
 - `make smoke-ci`
-- `make smoke-ci-lite`
 - `make smoke-headless-lite`
 - `make smoke-verify`
 - `make smoke-quick`
