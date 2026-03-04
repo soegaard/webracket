@@ -595,6 +595,46 @@ Current width defaults are intentionally split between layout containers and lea
   - containers define structure and usually fill available width;
   - leaf widgets stay intrinsic by default to avoid accidental full-width controls.
 
+## Theme/Class Contract (Current)
+
+Renderer output now exposes two styling hooks:
+
+1. Stable semantic marker: `data-we-widget="<widget-name>"`.
+2. Class-based defaults for appearance/layout.
+
+Recommended targeting order:
+
+1. Use `data-we-widget` for component-level targeting that should survive class refactors.
+2. Use classes for detailed visual tuning aligned with current default CSS.
+
+Current default classes:
+
+- Core controls:
+  - `.we-button`, `.we-input`, `.we-checkbox`, `.we-choice`, `.we-slider`, `.we-progress`, `.we-radios`, `.we-image`
+- Table:
+  - `.we-table`
+  - density variants: `.we-density-normal`, `.we-density-compact`
+  - cells: `.we-table-header-cell`, `.we-table-data-cell`
+- Tabs:
+  - `.we-tab-panel`, `.we-tab-list`, `.we-tab-content`, `.we-tab-btn`
+  - tab state variants: `.is-selected`, `.is-disabled`
+- Dialog:
+  - `.we-dialog`, `.we-dialog-panel`
+  - open-state variant: `.is-open`
+- Menu:
+  - `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`
+  - open-state variant: `.is-open`
+
+`data-we-widget` examples:
+
+- containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `spacer`
+- controls: `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
+- complex widgets:
+  - menu: `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item`
+  - dialog: `dialog`, `dialog-panel`
+  - table: `table`, `table-row`, `table-header-cell`, `table-data-cell`
+  - tabs: `tab-panel`, `tab-list`, `tab-content`, `tab-button`
+
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
