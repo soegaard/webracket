@@ -18,6 +18,7 @@ Modes:
   contract                 Run contract-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
   ci                       Run dashboards and guard self-test
+  ci-lite                  Run contract/smoke/parity/guard with compile skipped
   timings                  Run contract/smoke/parity (skip compile) and print combined top timings
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
@@ -31,6 +32,7 @@ Examples:
   ./headless.sh contract
   ./headless.sh dashboards
   ./headless.sh ci
+  ./headless.sh ci-lite
   ./headless.sh timings
   ./headless.sh guard
   ./headless.sh all
@@ -49,6 +51,7 @@ parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
 ci	Run dashboards and guard self-test
+ci-lite	Run contract/smoke/parity/guard with compile skipped
 timings	Run contract/smoke/parity with compile skipped and print combined top timings
 guard	Run dashboard guard self-test
 all	Run check-all.sh --headless
@@ -154,6 +157,13 @@ case "$1" in
     shift
     "$SCRIPT_DIR/headless.sh" dashboards "$@"
     "$SCRIPT_DIR/headless.sh" guard "$@"
+    ;;
+  ci-lite)
+    shift
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-contract-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-parity-headless.sh" "$@"
+    "$SCRIPT_DIR/check-dashboard-guard.sh" "$@"
     ;;
   timings)
     shift

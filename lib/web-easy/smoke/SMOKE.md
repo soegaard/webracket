@@ -18,6 +18,7 @@ make smoke-ci
 ./headless.sh smoke
 ./headless.sh dashboards
 ./headless.sh ci
+./headless.sh ci-lite
 ./headless.sh timings
 ./headless.sh single <compile-script> <test-page>
 ```
@@ -27,6 +28,7 @@ Common top-level commands:
 ```bash
 make smoke-ci
 make smoke-ci-lite
+make smoke-headless-lite
 make smoke-verify
 make smoke-quick
 make smoke-smoke
@@ -165,6 +167,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh dashboards`
 - `./headless.sh ci`
+- `./headless.sh ci-lite`
 - `./headless.sh timings`
 - `./headless.sh list`
 - `./headless.sh verify`
@@ -181,6 +184,7 @@ Repository-root aliases:
 
 - `make smoke-ci`
 - `make smoke-ci-lite`
+- `make smoke-headless-lite`
 - `make smoke-verify`
 - `make smoke-quick`
 - `make smoke-smoke`

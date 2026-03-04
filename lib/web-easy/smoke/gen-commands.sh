@@ -16,6 +16,7 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
       contract)   cmd="./headless.sh contract" ;;
       dashboards) cmd="./headless.sh dashboards" ;;
       ci)         cmd="./headless.sh ci" ;;
+      ci-lite)    cmd="./headless.sh ci-lite" ;;
       timings)    cmd="./headless.sh timings" ;;
       guard)      cmd="./headless.sh guard" ;;
       all)        cmd="./headless.sh all" ;;
@@ -33,6 +34,7 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
 
   echo -e "make\tmake smoke-ci\tRun canonical local CI headless gate."
   echo -e "make\tmake smoke-ci-lite\tRun canonical CI headless gate without compile."
+  echo -e "make\tmake smoke-headless-lite\tRun contract+smoke+parity+guard without compile."
   echo -e "make\tmake smoke-verify\tRun local headless verify preflight."
   echo -e "make\tmake smoke-quick\tRun smoke-verify + smoke-ci-lite."
   echo -e "make\tmake smoke-release\tRun smoke-commands + smoke-quick + smoke-ci."
