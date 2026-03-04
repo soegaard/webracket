@@ -97,12 +97,6 @@
       "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:flex;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
     (define menu-item-style      ; Inline style for menu-item chip appearance.
       "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;") 
-    (define dialog-style-closed  ; Inline style for hidden dialog overlay.
-      "position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:2000;") 
-    (define dialog-style-open    ; Inline style for visible dialog overlay.
-      "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:2000;") 
-    (define dialog-panel-style   ; Inline style for dialog content panel.
-      "min-width:280px;max-width:520px;background:#fff;border:1px solid #888;border-radius:8px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.28);") 
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -875,19 +869,18 @@
          (define style-node (dom-node 'style '() '() dialog-style-text #f #f))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
+                                      (cons 'data-we-widget "dialog")
                                       (cons 'class "we-dialog")
                                       (cons 'tabindex -1)
                                       (cons 'aria-modal "true")
-                                      (cons 'aria-hidden "true")
-                                      (cons 'style dialog-style-closed))
+                                      (cons 'aria-hidden "true"))
                                 '()
                                 #f
                                 #f
                                 #f))
          (define panel-node (dom-node 'div
                                       (list (cons 'class "we-dialog-panel")
-                                            (cons 'tabindex -1)
-                                            (cons 'style dialog-panel-style))
+                                            (cons 'tabindex -1))
                                       '()
                                       #f
                                       #f
@@ -897,12 +890,12 @@
            (set-dom-node-attrs!
             node
             (list (cons attr/role 'dialog)
+                  (cons 'data-we-widget "dialog")
                   (cons 'open open-value)
                   (cons 'class (if open-value "we-dialog is-open" "we-dialog"))
                   (cons 'tabindex -1)
                   (cons 'aria-modal "true")
-                  (cons 'aria-hidden (if open-value "false" "true"))
-                  (cons 'style (if open-value dialog-style-open dialog-style-closed)))))
+                  (cons 'aria-hidden (if open-value "false" "true")))))
          (when (procedure? on-close)
            (set-dom-node-on-change!
             node

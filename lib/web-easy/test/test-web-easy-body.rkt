@@ -168,6 +168,7 @@
 (define dialog-status-node (node-child dialog-panel-parent 2))
 (check-equal (dom-node-tag dialog-node) 'dialog "dialog tag")
 (check-equal (node-attr dialog-node 'role) 'dialog "dialog role attr")
+(check-equal (node-attr dialog-node 'data-we-widget) "dialog" "dialog data-we-widget attr")
 (check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog initially hidden")
 (check-equal (dom-node-text dialog-status-node) "dialog-status:idle" "dialog status initial")
 (dom-node-click! open-dialog-button)
