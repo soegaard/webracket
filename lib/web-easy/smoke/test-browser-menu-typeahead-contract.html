@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy menu type-ahead contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running menu type-ahead contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="web-easy menu type-ahead contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function menuLabelByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-label[role="button"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function menuItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const fileLabel = menuLabelByText(frameDoc, "File");
+          const editLabel = menuLabelByText(frameDoc, "Edit");
+          const openItem = menuItemByText(frameDoc, "open");
+          const saveItem = menuItemByText(frameDoc, "save");
+          const undoItem = menuItemByText(frameDoc, "undo");
+          const redoItem = menuItemByText(frameDoc, "redo");
+          if (fileLabel && editLabel && openItem && saveItem && undoItem && redoItem) {
+            return { frameDoc, fileLabel, editLabel, openItem, saveItem, undoItem, redoItem };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for menu type-ahead contract UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const { frameDoc, fileLabel, editLabel, openItem, saveItem, undoItem, redoItem } = ui;
+
+        fileLabel.focus();
+        await sleep(40);
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(60);
+        assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "Enter opens File menu");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === openItem, "ArrowDown enters File menu");
+
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "s", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === saveItem, "type-ahead from label focuses save");
+
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "o", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === openItem, "type-ahead from item focuses open");
+
+        const beforeNoMatch = frameDoc.activeElement;
+        openItem.dispatchEvent(new KeyboardEvent("keydown", { key: "z", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === beforeNoMatch, "no-match key keeps focus unchanged");
+
+        openItem.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === editLabel, "ArrowRight switches to Edit label");
+        assertTrue(editLabel.getAttribute("aria-expanded") === "true", "Edit menu opens on switch");
+
+        editLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "u", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === undoItem, "type-ahead in Edit focuses undo");
+
+        undoItem.dispatchEvent(new KeyboardEvent("keydown", { key: "r", bubbles: true }));
+        await sleep(60);
+        assertTrue(frameDoc.activeElement === redoItem, "type-ahead in Edit item focus moves to redo");
+
+        setStatus("PASS\nmenu type-ahead contract: label/item/no-match/switch", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: active=" + (frameDoc.activeElement ? frameDoc.activeElement.textContent : "") +
+             " body=" + JSON.stringify(bodyText(frameDoc).slice(0, 260)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>
