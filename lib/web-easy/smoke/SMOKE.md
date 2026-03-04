@@ -48,10 +48,6 @@ make smoke-ci
 
 If this fails, run `make smoke-commands` and commit `COMMANDS.tsv`.
 
-Deprecated alias:
-
-- `make smoke-ci-lite` -> `make smoke-headless-lite`
-
 ## Recommended Workflow
 
 Fast pre-push check (no compile):

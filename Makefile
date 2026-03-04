@@ -4,14 +4,13 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-ci-lite smoke-headless-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list smoke-commands
+.PHONY: help smoke-ci smoke-headless-lite smoke-verify smoke-quick smoke-release smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list smoke-commands
 
 help:
 	@echo "Available targets:"
 	@echo "  help                  Show this help."
 	@echo "  smoke-ci              Run local CI smoke entrypoint (preferred)."
 	@echo "  smoke-headless-lite   Run contract+smoke+parity+guard without compile (preferred)."
-	@echo "  smoke-ci-lite         Deprecated alias for smoke-headless-lite."
 	@echo "  smoke-verify          Run local headless verify preflight."
 	@echo "  smoke-quick           Run smoke-verify + smoke-headless-lite."
 	@echo "  smoke-release         Run smoke-commands + smoke-quick + smoke-ci."
@@ -24,10 +23,6 @@ help:
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
-
-smoke-ci-lite:
-	@echo "warning: smoke-ci-lite is deprecated; use smoke-headless-lite"
-	cd $(SMOKE_DIR) && ./headless.sh ci-lite
 
 smoke-headless-lite:
 	cd $(SMOKE_DIR) && ./headless.sh ci-lite
