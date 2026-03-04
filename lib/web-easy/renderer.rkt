@@ -55,7 +55,6 @@
 
     ;; Constants for node attributes and fallbacks.
     (define attr/role             'role)      ; Attribute key for semantic role.
-    (define attr/layout           'layout)    ; Attribute key for layout direction.
     (define text/fallback         "#<value>") ; Fallback when value cannot be rendered as text.
     (define table/density-normal  'normal)    ; Default table spacing density.
     (define table/density-compact 'compact)   ; Compact table spacing density.
@@ -86,11 +85,11 @@
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;}") 
     (define control-style-text ; CSS defaults for controls and table density classes.
-      ".we-button{align-self:flex-start;width:auto;}\
+      ".we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:4px;}\
+       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:4px;}\
+       .we-button{align-self:flex-start;width:auto;}\
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
-       .we-list-view{display:flex;flex-direction:column;gap:4px;}\
-       .we-observable-view{display:flex;flex-direction:column;gap:4px;}\
        .we-table{border-collapse:separate;border:1px solid #999;margin-bottom:6px;align-self:flex-start;}\
        .we-table.we-density-normal{border-spacing:2px 0;}\
        .we-table.we-density-compact{border-spacing:0 0;}\
@@ -387,15 +386,15 @@
          (backend-append-child! node style-node)
          node]
         [(vpanel)
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "vpanel")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "vpanel")
+                                           (cons 'class "we-vpanel")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
         [(hpanel)
-         (define node (dom-node 'div (list (cons attr/layout 'row)
-                                           (cons 'data-we-widget "hpanel")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "hpanel")
+                                           (cons 'class "we-hpanel")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
@@ -403,8 +402,8 @@
         [(group)
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define node (dom-node 'group
-                                (list (cons attr/layout 'column)
-                                      (cons 'data-we-widget "group"))
+                                (list (cons 'data-we-widget "group")
+                                      (cons 'class "we-group"))
                                 '()
                                 #f
                                 #f
@@ -607,8 +606,8 @@
          (define raw-cond  (alist-ref (view-props v) 'cond 'render))
          (define then-view (alist-ref (view-props v) 'then 'render))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "if-view")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "if-view")
+                                           (cons 'class "we-if-view")) '() #f #f #f))
          (define (render-branch! cond-value)
            (replace-with-single-child! node
                                        (if (cond-clause-active? cond-value) then-view else-view)
@@ -628,8 +627,8 @@
                                         'cond-view
                                         "clauses"))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "cond-view")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "cond-view")
+                                           (cons 'class "we-cond-view")) '() #f #f #f))
          (define (choose-view)
            (define selected
              (let loop ([cs clauses])
@@ -660,8 +659,8 @@
                                         'case-view
                                         "clauses"))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "case-view")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "case-view")
+                                           (cons 'class "we-case-view")) '() #f #f #f))
          (define (choose-view v*)
            (define selected
              (let loop ([cs clauses])

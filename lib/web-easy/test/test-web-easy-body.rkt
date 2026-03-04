@@ -120,6 +120,7 @@
 (define root-style-node (node-child root 1))
 (check-equal (node-attr root 'data-we-widget) "window" "window data-we-widget attr")
 (check-equal (node-attr panel 'data-we-widget) "vpanel" "vpanel data-we-widget attr")
+(check-equal (node-attr panel 'class) "we-vpanel" "vpanel base class")
 (check-equal (node-attr label-node 'data-we-widget) "text" "text data-we-widget attr")
 (check-equal (dom-node-tag root-style-node) 'style "window includes shared style node")
 (check-equal (dom-node-text label-node) "0" "initial text")
@@ -144,6 +145,17 @@
 (check-equal (dom-node-text label-node-lambda) "0" "lambda-action initial text")
 (dom-node-click! plus-node-lambda)
 (check-equal (dom-node-text label-node-lambda) "1" "lambda-action text after click")
+
+;; hpanel renders with class-based row layout
+(define r-hpanel
+  (render
+   (window
+    (hpanel
+     (text "left")
+     (text "right")))))
+(define hpanel-node (node-child (renderer-root r-hpanel) 0))
+(check-equal (node-attr hpanel-node 'data-we-widget) "hpanel" "hpanel data-we-widget attr")
+(check-equal (node-attr hpanel-node 'class) "we-hpanel" "hpanel base class")
 
 ;; dialog opens from trigger and closes on Escape via on-close callback
 (define @dialog-open (@ #f))
@@ -412,6 +424,7 @@
 (define group-content-node (node-child group-node 1))
 (check-equal (dom-node-tag group-node) 'group "group node tag")
 (check-equal (node-attr group-node 'data-we-widget) "group" "group data-we-widget attr")
+(check-equal (node-attr group-node 'class) "we-group" "group base class")
 (check-equal (dom-node-tag group-legend-node) 'legend "group legend node tag")
 (check-equal (dom-node-text group-legend-node) "Settings" "group initial legend text")
 (check-equal (dom-node-text group-content-node) "inside" "group child render")
@@ -429,6 +442,7 @@
               (text "else"))))))
 (define if-container (node-child (node-child (renderer-root r10) 0) 0))
 (check-equal (node-attr if-container 'data-we-widget) "if-view" "if-view data-we-widget attr")
+(check-equal (node-attr if-container 'class) "we-if-view" "if-view base class")
 (check-equal (dom-node-text (node-child if-container 0)) "then" "if-view initial then branch")
 (:= @show-then #f)
 (check-equal (dom-node-text (node-child if-container 0)) "else" "if-view switched else branch")
@@ -445,6 +459,7 @@
                 (text "none"))))))
 (define cond-container (node-child (node-child (renderer-root r11) 0) 0))
 (check-equal (node-attr cond-container 'data-we-widget) "cond-view" "cond-view data-we-widget attr")
+(check-equal (node-attr cond-container 'class) "we-cond-view" "cond-view base class")
 (check-equal (dom-node-text (node-child cond-container 0)) "two" "cond-view initial selected clause")
 (:= @c1 #t)
 (check-equal (dom-node-text (node-child cond-container 0)) "one" "cond-view first truthy clause wins")
@@ -464,6 +479,7 @@
                 (text "mode-other"))))))
 (define case-container (node-child (node-child (renderer-root r12) 0) 0))
 (check-equal (node-attr case-container 'data-we-widget) "case-view" "case-view data-we-widget attr")
+(check-equal (node-attr case-container 'class) "we-case-view" "case-view base class")
 (check-equal (dom-node-text (node-child case-container 0)) "mode-a" "case-view initial clause")
 (:= @mode 'c)
 (check-equal (dom-node-text (node-child case-container 0)) "mode-bc" "case-view matching multi-literal clause")
