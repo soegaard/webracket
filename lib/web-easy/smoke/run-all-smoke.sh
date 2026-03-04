@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 "$SCRIPT_DIR/run-browser-smoke-test.sh"
 echo
+"$SCRIPT_DIR/run-browser-dialog-test.sh"
+echo
 "$SCRIPT_DIR/run-browser-input-test.sh"
 echo
 "$SCRIPT_DIR/run-browser-checkbox-test.sh"

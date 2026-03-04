@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `39` tests
+- full dashboard (`test-browser-dashboard.html`): `40` tests
 - parity dashboard (`test-browser-parity-dashboard.html`): `20` tests
 
 Update these counts whenever test pages are added or removed.
 
-Last validated (2026-03-03):
+Last validated (2026-03-04):
 
-- full headless dashboard: `39/39` PASS
+- full headless dashboard: `40/40` PASS
 - parity-only headless dashboard: `20/20` PASS
-- latest local `check-all.sh --headless`: PASS (`39/39`)
+- latest local `check-all.sh --headless`: PASS (`40/40`)
 
 ## Menu Behavior Contract
 
@@ -228,6 +228,7 @@ Then open:
 - `http://localhost:8000/test-browser-contract-dashboard.html` (runs contract-only smoke pages)
 - `http://localhost:8000/test-browser-smoke.html`
 - `http://localhost:8000/test-browser-group.html`
+- `http://localhost:8000/test-browser-dialog.html`
 - `http://localhost:8000/test-browser-menu-keys.html`
 - `http://localhost:8000/test-browser-menu-full.html`
 - `http://localhost:8000/test-browser-a11y-contract.html`
@@ -442,7 +443,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `39/39 smoke tests passed`
+1. full smoke: `PASS` with `40/40 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -454,6 +455,7 @@ Concurrency note:
 
 - smoke: `PASS initial=0, after-click=1`
 - group: `PASS group uses fieldset + legend`
+- dialog: `PASS dialog open/close: open button, Escape, cancel`
 - menu-keys: `PASS menu popup + menu-item focus + Enter/Space activation`
 - menu-full: `PASS menu-full: multi-menu items + click/Enter/Space + type-ahead`
 - a11y-contract: `PASS a11y contract: menu/tab/group/table semantics`

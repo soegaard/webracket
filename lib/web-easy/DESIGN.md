@@ -255,7 +255,7 @@ Current status snapshot (March 1, 2026):
 | Area | Item | Status | Coverage | Notes |
 |---|---|---|---|---|
 | Renderer lifecycle | `render`, `renderer?`, `renderer-root`, `renderer-destroy` | Implemented | Core tests + smoke | Browser backend integrated via `backend-browser.rkt`. |
-| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer` | Implemented | Core tests + smoke | Uses DOM container mapping. |
+| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping. |
 | Basic controls | `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
 | Menus | `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests | Semantics intentionally differ from desktop-native menu systems. |
@@ -263,7 +263,7 @@ Current status snapshot (March 1, 2026):
 | Observables core | `obs?`, `obs`, `obs-name`, `obs-observe!`, `obs-unobserve!`, `obs-update!`, `obs-set!`, `obs-peek`, `obs-map`, `obs-filter` | Implemented | Core tests | Compatible MVP surface. |
 | Operators | `@`, `:=`, `<~`, `λ<~`, `~>`, `~#>` | Implemented | Core tests + smoke | Operator smoke covers filter + thunk behavior in browser runtime. |
 | Operators | `~#>`, `λ<~` | Implemented | Core tests | `~#>` maps to `obs-filter`; `λ<~` builds update thunks. |
-| Desktop-specific API parity | dialogs/snips/canvas/native window semantics | Deferred | N/A | Requires explicit web-specific capability design. |
+| Desktop-specific API parity | snips/canvas/native window semantics | Deferred | N/A | Requires explicit web-specific capability design. |
 | Automation | headless smoke in CI | Implemented | Local + CI headless | GitHub workflow runs compile + dashboard headless checks. |
 
 Remaining Step 2 planning items:
@@ -634,6 +634,7 @@ Current browser backend element mapping (as implemented today):
 | widget/tag | HTML element(s) | Notes |
 |---|---|---|
 | `window`, `vpanel`, `hpanel` | `div` | `vpanel`/`hpanel` use flex layout styles. |
+| `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
 | `button` | `button` | Native clickable button. |

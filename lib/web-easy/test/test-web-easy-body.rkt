@@ -138,6 +138,46 @@
 (dom-node-click! plus-node-lambda)
 (check-equal (dom-node-text label-node-lambda) "1" "lambda-action text after click")
 
+;; dialog opens from trigger and closes on Escape via on-close callback
+(define @dialog-open (@ #f))
+(define @dialog-status (@ "idle"))
+(define r-dialog
+  (render
+   (window
+    (vpanel
+     (button "open-dialog"
+             (lambda ()
+               (:= @dialog-open #t)
+               (:= @dialog-status "open")))
+     (dialog @dialog-open
+             (lambda ()
+               (:= @dialog-open #f)
+               (:= @dialog-status "esc-close"))
+             (vpanel
+              (text "Delete project?")
+              (button "cancel"
+                      (lambda ()
+                        (:= @dialog-open #f)
+                        (:= @dialog-status "cancel")))))
+     (text (~> @dialog-status
+               (lambda (status)
+                 (string-append "dialog-status:" status))))))))
+(define dialog-panel-parent (node-child (renderer-root r-dialog) 0))
+(define open-dialog-button (node-child dialog-panel-parent 0))
+(define dialog-node (node-child dialog-panel-parent 1))
+(define dialog-status-node (node-child dialog-panel-parent 2))
+(check-equal (dom-node-tag dialog-node) 'dialog "dialog tag")
+(check-equal (node-attr dialog-node 'role) 'dialog "dialog role attr")
+(check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog initially hidden")
+(check-equal (dom-node-text dialog-status-node) "dialog-status:idle" "dialog status initial")
+(dom-node-click! open-dialog-button)
+(check-equal (node-attr dialog-node 'aria-hidden) "false" "dialog visible after open button")
+(check-equal (dom-node-text dialog-status-node) "dialog-status:open" "dialog status after open")
+(dom-node-keydown! dialog-node "Escape")
+(check-equal (obs-peek @dialog-open) #f "dialog open state after Escape")
+(check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog hidden after Escape")
+(check-equal (dom-node-text dialog-status-node) "dialog-status:esc-close" "dialog status after Escape close")
+
 ;; renderer-destroy stops future updates
 (define @count2 (@ 0))
 (define r2

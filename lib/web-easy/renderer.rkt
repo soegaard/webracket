@@ -70,6 +70,11 @@
        .we-tab-btn.is-selected{border-color:#333;background:#ececec;font-weight:bold;}\
        .we-tab-btn.is-disabled{border-color:#bbb;background:#f3f3f3;color:#777;opacity:.7;}\
        .we-tab-btn:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}") 
+    (define dialog-style-text ; CSS for dialog overlay and panel.
+      ".we-dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:2000;}\
+       .we-dialog.is-open{display:flex;}\
+       .we-dialog-panel{min-width:280px;max-width:520px;background:#fff;border:1px solid #888;border-radius:8px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.28);}\
+       .we-dialog-panel:focus-visible{outline:2px solid #0a66c2;outline-offset:2px;}") 
     (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
       ".we-menu-item:focus,.we-menu-item:focus-visible,.we-menu-label:focus,.we-menu-label:focus-visible{outline:2px solid #0a66c2;outline-offset:1px;}\
        .we-menu-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 8px;border:1px solid #aaa;border-radius:4px;background:#f3f3f3;box-sizing:border-box;}\
@@ -92,6 +97,12 @@
       "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:flex;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
     (define menu-item-style      ; Inline style for menu-item chip appearance.
       "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;") 
+    (define dialog-style-closed  ; Inline style for hidden dialog overlay.
+      "position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:2000;") 
+    (define dialog-style-open    ; Inline style for visible dialog overlay.
+      "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:2000;") 
+    (define dialog-panel-style   ; Inline style for dialog content panel.
+      "min-width:280px;max-width:520px;background:#fff;border:1px solid #888;border-radius:8px;padding:14px;box-shadow:0 8px 22px rgba(0,0,0,.28);") 
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -203,7 +214,8 @@
                  role-pair
                  (or (eq? (cdr role-pair) 'tab)
                      (eq? (cdr role-pair) 'button)
-                     (eq? (cdr role-pair) 'menuitem)))
+                     (eq? (cdr role-pair) 'menuitem)
+                     (eq? (cdr role-pair) 'dialog)))
         (on-change key)))
 
     ;; alist-ref : (listof pair?) symbol? symbol? -> any/c
@@ -831,6 +843,60 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
            [else
             (render-tab! raw-selected)])
+         node]
+        [(dialog)
+         (define raw-open  (alist-ref (view-props v) 'open 'render))
+         (define on-close  (alist-ref (view-props v) 'on-close 'render))
+         (define style-node (dom-node 'style '() '() dialog-style-text #f #f))
+         (define node (dom-node 'dialog
+                                (list (cons attr/role 'dialog)
+                                      (cons 'class "we-dialog")
+                                      (cons 'tabindex -1)
+                                      (cons 'aria-modal "true")
+                                      (cons 'aria-hidden "true")
+                                      (cons 'style dialog-style-closed))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define panel-node (dom-node 'div
+                                      (list (cons 'class "we-dialog-panel")
+                                            (cons 'tabindex -1)
+                                            (cons 'style dialog-panel-style))
+                                      '()
+                                      #f
+                                      #f
+                                      #f))
+         (define (set-open! open?)
+           (define open-value (not (eq? open? #f)))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'dialog)
+                  (cons 'class (if open-value "we-dialog is-open" "we-dialog"))
+                  (cons 'tabindex -1)
+                  (cons 'aria-modal "true")
+                  (cons 'aria-hidden (if open-value "false" "true"))
+                  (cons 'style (if open-value dialog-style-open dialog-style-closed)))))
+         (when (procedure? on-close)
+           (set-dom-node-on-change!
+            node
+            (lambda (key)
+              (when (string=? key "Escape")
+                (on-close)))))
+         (backend-append-child! node style-node)
+         (backend-append-child! node panel-node)
+         (for-each (lambda (child)
+                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                   (view-children v))
+         (cond
+           [(obs? raw-open)
+            (set-open! (obs-peek raw-open))
+            (define (listener updated)
+              (set-open! updated))
+            (obs-observe! raw-open listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-open listener)))]
+           [else
+            (set-open! raw-open)])
          node]
         [(observable-view)
          (define raw-data    (alist-ref (view-props v) 'data       'render))

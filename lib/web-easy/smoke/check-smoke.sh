@@ -4,9 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 labels=(
-  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/menu-full/group/operators/tab-panel/tab-panel-disabled)"
+  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/menu-full/group/dialog/operators/tab-panel/tab-panel-disabled)"
   "visual-check"
-  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/menu-keys/menu-full/list/todo/incident/release)"
+  "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/menu-keys/menu-full/list/todo/incident/release/workspace)"
 )
 
 cmds=(
@@ -52,6 +52,7 @@ echo "Serve this directory and open these pages:"
 echo "  http://localhost:8000/test-browser-contract-dashboard.html"
 echo "  http://localhost:8000/test-browser-smoke.html"
 echo "  http://localhost:8000/test-browser-group.html"
+echo "  http://localhost:8000/test-browser-dialog.html"
 echo "  http://localhost:8000/test-browser-menu-keys.html"
 echo "  http://localhost:8000/test-browser-menu-full.html"
 echo "  http://localhost:8000/test-browser-a11y-contract.html"

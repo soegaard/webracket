@@ -27,6 +27,7 @@
 ;;   cond-view      Build a multi-branch conditional view.
 ;;   case-view      Build an equality-based branch view.
 ;;   tab-panel      Build a selected-tab branch view.
+;;   dialog         Build a modal dialog container view.
 ;;   observable-view  Build a dynamic view from observable value.
 ;;   spacer         Build an empty layout spacer view.
 ;;   table          Build a minimal table view.
@@ -58,6 +59,7 @@
    cond-view
    case-view
    tab-panel
+   dialog
    observable-view
    spacer
    table
@@ -86,6 +88,7 @@
     (define kind/cond-view 'cond-view) ; Multi-branch conditional view.
     (define kind/case-view 'case-view) ; Equality-based conditional view.
     (define kind/tab-panel 'tab-panel) ; Selected-tab conditional view.
+    (define kind/dialog 'dialog) ; Modal dialog container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
     (define kind/spacer    'spacer)    ; Empty layout spacer view.
     (define kind/table     'table)     ; Minimal tabular data view.
@@ -203,6 +206,13 @@
                                  (cons 'tabs tabs))
             '()))
 
+    ;; dialog : (or/c boolean? observable?) (-> any/c) view? ... -> view?
+    ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
+    (define (dialog open on-close . children)
+      (view kind/dialog (list (cons 'open open)
+                              (cons 'on-close on-close))
+            children))
+
     ;; observable-view : (or/c any/c observable?) (-> any/c view?) [(-> any/c any/c boolean?)] -> view?
     ;;   Construct a dynamic single-child view from value using make-view.
     ;;   Optional parameter equal-proc defaults to equal?.
@@ -290,6 +300,7 @@
             cond-view
             case-view
             tab-panel
+            dialog
             observable-view
             spacer
             table

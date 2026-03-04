@@ -222,6 +222,12 @@
       (let ([p (assq 'role (dom-node-record-attrs n))])
         (and p (eq? (cdr p) 'button))))
 
+    ;; role-dialog-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is dialog-like via role=dialog.
+    (define (role-dialog-node? n)
+      (let ([p (assq 'role (dom-node-record-attrs n))])
+        (and p (eq? (cdr p) 'dialog))))
+
     ;; input-enter-action : dom-node-record? -> any/c
     ;;   Return input Enter callback when present.
     (define (input-enter-action n)
@@ -743,6 +749,8 @@
                  (when (focus-matching-menu-item-from-item! native key)
                    (js-send evt "preventDefault" (vector))))]))
           (when (and callback (role-button-node? n))
+            (callback key))
+          (when (and callback (role-dialog-node? n))
             (callback key)))))
       (js-add-event-listener!
        native
