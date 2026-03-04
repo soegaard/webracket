@@ -116,6 +116,15 @@ Wrapper commands:
 - `./smoke.sh clean`
 - `./smoke.sh clean-dry`
 
+Headless dispatcher (for one-prefix approval workflows):
+
+- `./headless.sh smoke`
+- `./headless.sh parity`
+- `./headless.sh contract`
+- `./headless.sh guard`
+- `./headless.sh all`
+- `./headless.sh single <compile-script> <test-page>`
+
 CI helper script:
 
 - `./check-ci-smoke.sh` (runs full headless smoke + guard self-test)
@@ -327,6 +336,11 @@ This command:
 2. Starts a local static server.
 3. Opens `test-browser-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
+
+One-prefix approval tip (Codex runs):
+
+- Use `./headless.sh ...` as the single entrypoint for headless commands.
+- Approve this once as a command prefix so later headless runs do not prompt repeatedly.
 
 Contract-only headless runner:
 
