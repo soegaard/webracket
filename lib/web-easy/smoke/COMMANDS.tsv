@@ -15,6 +15,9 @@ smoke	./smoke.sh open	Serve smoke pages locally.
 make	make smoke-ci	Run canonical local CI headless gate.
 make	make smoke-ci-full	Compatibility alias for make smoke-ci.
 make	make smoke-ci-lite	Run canonical CI headless gate without compile.
+make	make smoke-verify	Run local headless verify preflight.
+make	make smoke-quick	Run smoke-verify + smoke-ci-lite.
+make	make smoke-release	Run smoke-commands + smoke-quick + smoke-ci.
 make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.
 make	make smoke-dashboards	Run contract+smoke dashboards headless.
