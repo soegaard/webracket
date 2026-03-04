@@ -16,7 +16,6 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
       contract)   cmd="./headless.sh contract" ;;
       dashboards) cmd="./headless.sh dashboards" ;;
       ci)         cmd="./headless.sh ci" ;;
-      ci-lite)    cmd="./headless.sh ci-lite" ;;
       timings)    cmd="./headless.sh timings" ;;
       guard)      cmd="./headless.sh guard" ;;
       all)        cmd="./headless.sh all" ;;

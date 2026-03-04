@@ -25,7 +25,10 @@ smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
 
 smoke-headless-lite:
-	cd $(SMOKE_DIR) && ./headless.sh ci-lite
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-contract-headless.sh
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-smoke-headless.sh
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-parity-headless.sh
+	cd $(SMOKE_DIR) && ./check-dashboard-guard.sh
 
 smoke-verify:
 	cd $(SMOKE_DIR) && ./headless.sh verify
