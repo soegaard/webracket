@@ -17,6 +17,7 @@ Commands:
   contract   Run doctor preflight, then contract-only headless dashboard
   all        Run core tests + webracket run + smoke compile
   headless   Run doctor preflight, then core + smoke + headless dashboard
+  headless-run Run unified headless dispatcher (smoke/parity/contract/guard/all/single)
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
   quick      Run doctor preflight, then core tests + smoke compile
@@ -246,7 +247,7 @@ open_server() {
   raco static-web --port "$port" --dir "$SCRIPT_DIR" "${launch_args[@]}"
 }
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
   usage
   exit 2
 fi
@@ -268,6 +269,10 @@ case "$1" in
   headless)
     doctor_headless
     "$SCRIPT_DIR/check-all.sh" --headless
+    ;;
+  headless-run)
+    shift
+    "$SCRIPT_DIR/headless.sh" "$@"
     ;;
   parity-headless)
     doctor_headless

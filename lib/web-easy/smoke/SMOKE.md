@@ -103,6 +103,7 @@ Wrapper commands:
 - `./smoke.sh contract`
 - `./smoke.sh all`
 - `./smoke.sh headless`
+- `./smoke.sh headless-run <mode> [args]`
 - `./smoke.sh rebuild`
 - `./smoke.sh quick`
 - `./smoke.sh ci`
@@ -123,6 +124,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh guard`
 - `./headless.sh all`
+- `./headless.sh doctor`
 - `./headless.sh single <compile-script> <test-page>`
 
 CI helper script:
@@ -341,6 +343,7 @@ One-prefix approval tip (Codex runs):
 
 - Use `./headless.sh ...` as the single entrypoint for headless commands.
 - Approve this once as a command prefix so later headless runs do not prompt repeatedly.
+- Optional alias: `./smoke.sh headless-run ...` forwards to `./headless.sh ...`.
 
 Contract-only headless runner:
 
@@ -405,7 +408,7 @@ Common failure patterns and what to check first:
 Note:
 
 - `check-ci-smoke.sh` is the local CI-helper command (`headless dashboard + guard self-test`).
-- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs `./smoke.sh ci` on pushes/PRs touching `lib/web-easy/**`.
+- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs compile + `./headless.sh contract` + `./headless.sh smoke` + guard on pushes/PRs touching `lib/web-easy/**`.
 
 ## Recommended Daily Flow
 

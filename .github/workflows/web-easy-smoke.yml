@@ -110,22 +110,11 @@ jobs:
           ./check-smoke.sh
 
           echo "[4/6] contract headless dashboard"
-          PORT=8765
-          HOST=127.0.0.1
-          BASE_URL="http://${HOST}:${PORT}"
-          raco static-web --port "$PORT" --dir . >/tmp/web-easy-smoke-headless.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
-          sleep 1
-          SMOKE_BASE_URL="$BASE_URL" \
-          SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
-          node ./check-contract-headless.mjs
+          SMOKE_SKIP_COMPILE=1 ./headless.sh contract
           echo "contract gate passed"
 
           echo "[5/6] smoke headless dashboard"
-          SMOKE_BASE_URL="$BASE_URL" \
-          SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
-          node ./check-smoke-headless.mjs
+          SMOKE_SKIP_COMPILE=1 ./headless.sh smoke
           echo "full smoke gate passed"
 
           echo "[6/6] dashboard guard self-test"
