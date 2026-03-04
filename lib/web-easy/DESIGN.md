@@ -450,8 +450,7 @@ Current `web-easy` test workflows:
    - `check-all.sh --headless` now validates parity pages alongside core smoke pages.
 26. Parity-only dashboard/headless loop:
    - parity dashboard: `smoke/test-browser-parity-dashboard.html`
-   - parity-only headless runner: `smoke/check-parity-headless.sh`
-   - wrapper command: `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
+   - parity-only headless runner: `smoke/headless.sh parity`
 
 Current dashboard test counts:
 
@@ -472,7 +471,7 @@ Smoke lifecycle quick commands:
 4. Clean generated smoke artifacts:
    - `cd lib/web-easy/smoke && ./clean-smoke.sh`
 
-`smoke.sh` wrapper commands:
+`smoke.sh` wrapper commands (non-headless + dispatcher):
 
 - `cd lib/web-easy/smoke && ./smoke.sh status`
 - `cd lib/web-easy/smoke && ./smoke.sh doctor`
@@ -486,24 +485,30 @@ Smoke lifecycle quick commands:
 - `cd lib/web-easy/smoke && ./smoke.sh rebuild`
 - `cd lib/web-easy/smoke && ./smoke.sh all`
 - `cd lib/web-easy/smoke && ./smoke.sh quick`
-- `cd lib/web-easy/smoke && ./smoke.sh ci`
-- `cd lib/web-easy/smoke && ./smoke.sh headless`
-- `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
-- `cd lib/web-easy/smoke && ./smoke.sh contract`
+- `cd lib/web-easy/smoke && ./smoke.sh headless-run <mode> [args]`
 - `cd lib/web-easy/smoke && ./smoke.sh clean`
 - `cd lib/web-easy/smoke && ./smoke.sh clean-dry`
 
+Canonical headless commands:
+
+- `cd lib/web-easy/smoke && ./headless.sh doctor`
+- `cd lib/web-easy/smoke && ./headless.sh contract`
+- `cd lib/web-easy/smoke && ./headless.sh parity`
+- `cd lib/web-easy/smoke && ./headless.sh smoke`
+- `cd lib/web-easy/smoke && ./headless.sh dashboards`
+- `cd lib/web-easy/smoke && ./headless.sh ci`
+- `cd lib/web-easy/smoke && ./headless.sh single <compile-script> <test-page>`
+
 Known operational caveats:
 
-1. Do not run `./smoke.sh parity-headless` and `./check-all.sh --headless` concurrently.
-2. Both commands write shared generated artifacts under `lib/web-easy/smoke`.
+1. Do not run multiple headless commands in parallel (`./headless.sh parity`, `./headless.sh smoke`, `./headless.sh all`, `./headless.sh dashboards`).
+2. These commands share generated artifacts under `lib/web-easy/smoke`.
 
 Verification sequence (run in order):
 
 1. `cd lib/web-easy/smoke && ./smoke.sh dashboards`
-2. `cd lib/web-easy/smoke && ./smoke.sh contract`
-3. `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
-4. `cd lib/web-easy/smoke && ./check-all.sh --headless`
+2. `cd lib/web-easy/smoke && ./headless.sh parity`
+3. `cd lib/web-easy/smoke && ./headless.sh ci`
 
 ## Error Handling
 

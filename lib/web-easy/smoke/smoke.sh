@@ -13,16 +13,11 @@ Commands:
   check      Compile all smoke examples
   parity     Compile parity smoke examples, then print parity URLs
   parity-check Compile parity smoke examples only
-  parity-headless Run doctor preflight, then parity-only headless dashboard
-  contract   Run doctor preflight, then contract-only headless dashboard
   all        Run core tests + webracket run + smoke compile
-  headless   Run doctor preflight, then core + smoke + headless dashboard
-  headless-run Run unified headless dispatcher (doctor/smoke/parity/contract/dashboards/ci/ci-fast/guard/all/single)
-  ci-fast    Deprecated alias for ci (kept for compatibility)
+  headless-run Run unified headless dispatcher (doctor/smoke/parity/contract/dashboards/ci/guard/all/single)
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
   quick      Run doctor preflight, then core tests + smoke compile
-  ci         CI smoke entrypoint (doctor + headless ci)
   status     Print tools/artifacts status and suggested next command
   urls       Print smoke URLs without starting a server
   parity-open Print parity test URLs
@@ -267,34 +262,13 @@ case "$1" in
   all)
     "$SCRIPT_DIR/check-all.sh"
     ;;
-  headless)
-    doctor_headless
-    "$SCRIPT_DIR/headless.sh" all
-    ;;
   headless-run)
     shift
     "$SCRIPT_DIR/headless.sh" "$@"
     ;;
-  parity-headless)
-    doctor_headless
-    "$SCRIPT_DIR/headless.sh" parity
-    ;;
-  contract)
-    doctor_headless
-    "$SCRIPT_DIR/headless.sh" contract
-    ;;
   quick)
     doctor
     "$SCRIPT_DIR/check-all.sh"
-    ;;
-  ci)
-    doctor_headless
-    "$SCRIPT_DIR/headless.sh" ci
-    ;;
-  ci-fast)
-    echo "smoke.sh ci-fast is deprecated; using ci"
-    doctor_headless
-    "$SCRIPT_DIR/headless.sh" ci
     ;;
   status)
     status

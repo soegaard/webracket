@@ -2,6 +2,30 @@
 
 Browser smoke tests for `lib/web-easy`.
 
+## Primary Commands
+
+Use these as the default interface:
+
+```bash
+./headless.sh doctor
+./headless.sh contract
+./headless.sh smoke
+./headless.sh dashboards
+./headless.sh ci
+./headless.sh single <compile-script> <test-page>
+```
+
+Common top-level aliases:
+
+```bash
+make smoke-ci
+make smoke-ci-lite
+make smoke-headless
+make smoke-parity-headless
+make smoke-all-contract
+make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
+```
+
 ## Smoke Test Conventions
 
 All browser smoke pages under `smoke/test-browser-*.html` should follow these rules:
@@ -99,15 +123,10 @@ Wrapper commands:
 - `./smoke.sh check`
 - `./smoke.sh parity`
 - `./smoke.sh parity-check`
-- `./smoke.sh parity-headless`
-- `./smoke.sh contract`
 - `./smoke.sh all`
-- `./smoke.sh headless`
 - `./smoke.sh headless-run <mode> [args]`
-- `./smoke.sh ci-fast` (deprecated alias for `./smoke.sh ci`)
 - `./smoke.sh rebuild`
 - `./smoke.sh quick`
-- `./smoke.sh ci`
 - `./smoke.sh status`
 - `./smoke.sh urls`
 - `./smoke.sh dashboards`
@@ -125,24 +144,10 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh dashboards`
 - `./headless.sh ci`
-- `./headless.sh ci-fast` (deprecated alias for `./headless.sh ci`)
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
 - `./headless.sh single <compile-script> <test-page>`
-
-## Canonical Headless Commands
-
-Use these as the primary entrypoints:
-
-```bash
-./headless.sh doctor
-./headless.sh contract
-./headless.sh smoke
-./headless.sh dashboards
-./headless.sh ci
-./headless.sh single <compile-script> <test-page>
-```
 
 CI helper script:
 
@@ -159,8 +164,7 @@ Repository-root aliases:
 Command notes:
 
 - `quick`: runs `doctor` preflight, then `all`.
-- `ci`: CI smoke entrypoint (`doctor` + `headless ci`).
-- `ci-fast`: deprecated alias for `ci`.
+- `headless-run`: preferred `smoke.sh` entrypoint for headless modes.
 - `status`: shows tool/artifact status and suggests the next command.
 
 `tab-panel` entry forms:
@@ -447,11 +451,11 @@ Note:
 From `lib/web-easy/smoke`:
 
 1. Fast contract gate:
-   - `./smoke.sh contract`
+   - `./headless.sh contract`
 2. Combined contract+smoke headless flow:
    - `./headless.sh dashboards`
 3. Optional guard self-test before push:
-   - `./smoke.sh guard`
+   - `./headless.sh guard`
 
 ## Parity Commands
 
@@ -519,6 +523,13 @@ Concurrency note:
 
 - Do not run multiple headless commands in parallel (`./headless.sh parity`, `./headless.sh smoke`, `./headless.sh all`, `./headless.sh dashboards`).
 - These commands share generated smoke artifacts in `lib/web-easy/smoke`.
+
+## Compatibility Appendix
+
+Compatibility wrappers still available:
+
+- `./check-ci-smoke.sh` (runs `headless.sh doctor` then `headless.sh ci`)
+- `./smoke.sh headless-run <mode> [args]` (dispatches to `headless.sh`)
 
 ## Expected PASS Lines
 

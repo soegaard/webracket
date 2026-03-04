@@ -16,7 +16,6 @@ Modes:
   contract                 Run contract-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
   ci                       Run dashboards and guard self-test
-  ci-fast                  Deprecated alias for ci
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
   single <compile> <page>  Run one page with check-single-headless.sh
@@ -27,7 +26,6 @@ Examples:
   ./headless.sh contract
   ./headless.sh dashboards
   ./headless.sh ci
-  ./headless.sh ci-fast
   ./headless.sh guard
   ./headless.sh all
   ./headless.sh doctor
@@ -118,11 +116,6 @@ case "$1" in
     shift
     "$SCRIPT_DIR/headless.sh" dashboards "$@"
     "$SCRIPT_DIR/headless.sh" guard "$@"
-    ;;
-  ci-fast)
-    shift
-    echo "headless.sh ci-fast is deprecated; using ci"
-    "$SCRIPT_DIR/headless.sh" ci "$@"
     ;;
   guard)
     shift
