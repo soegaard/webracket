@@ -106,10 +106,10 @@ jobs:
           fi
           echo "web-easy webracket tests passed"
 
-          echo "[3/5] smoke compile"
+          echo "[3/6] smoke compile"
           ./check-smoke.sh
 
-          echo "[4/5] contract headless dashboard"
+          echo "[4/6] contract headless dashboard"
           PORT=8765
           HOST=127.0.0.1
           BASE_URL="http://${HOST}:${PORT}"
@@ -122,8 +122,12 @@ jobs:
           node ./check-contract-headless.mjs
           echo "contract gate passed"
 
-          echo "[5/5] smoke headless dashboard"
+          echo "[5/6] smoke headless dashboard"
           SMOKE_BASE_URL="$BASE_URL" \
           SMOKE_NODE_MODULES="$GITHUB_WORKSPACE/.local-tools/node_modules" \
           node ./check-smoke-headless.mjs
           echo "full smoke gate passed"
+
+          echo "[6/6] dashboard guard self-test"
+          ./check-dashboard-guard.sh
+          echo "guard gate passed"
