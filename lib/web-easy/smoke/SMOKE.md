@@ -354,12 +354,12 @@ Note:
 
 From `lib/web-easy/smoke`:
 
-1. Clean generated artifacts:
-   - `./smoke.sh clean`
-2. Fresh compile smoke artifacts:
-   - `./smoke.sh rebuild`
-3. Run headless dashboard checks (when desired):
-   - `./smoke.sh headless` (runs `doctor` preflight first)
+1. Fast contract gate:
+   - `./smoke.sh contract`
+2. Full contract-first headless flow:
+   - `./check-all.sh --headless --contract-first`
+3. Optional guard self-test before push:
+   - `./smoke.sh guard`
 
 ## Parity Commands
 
