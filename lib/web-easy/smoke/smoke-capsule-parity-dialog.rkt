@@ -41,6 +41,12 @@
         (:= @open #f)
         (:= @status "cancel"))
 
+      ;; close-confirm! : -> void?
+      ;;   Close dialog from confirm action.
+      (define (close-confirm!)
+        (:= @open #f)
+        (:= @status "confirm"))
+
       (define app-renderer
         (render
          (window
@@ -50,7 +56,9 @@
                    close-escape!
                    (vpanel
                     (text "Delete project?")
-                    (button "cancel" close-cancel!)))
+                    (hpanel
+                     (button "cancel" close-cancel!)
+                     (button "confirm" close-confirm!))))
            (text (~> @status
                      (lambda (status)
                        (string-append "status:" status))))))))

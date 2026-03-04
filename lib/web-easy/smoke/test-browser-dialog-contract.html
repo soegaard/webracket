@@ -103,17 +103,23 @@
         await sleep(80);
 
         const cancelButton = buttonByText(ui.frameDoc, "cancel");
+        const confirmButton = buttonByText(ui.frameDoc, "confirm");
         assertTrue(!!cancelButton, "cancel button exists");
+        assertTrue(!!confirmButton, "confirm button exists");
         assertTrue(dlg.getAttribute("aria-hidden") === "false", "dialog visible after open");
         assertTrue(ui.frameDoc.activeElement === cancelButton, "initial focus is in dialog");
 
-        dlg.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === cancelButton, "Tab focus trap in dialog");
+        assertTrue(ui.frameDoc.activeElement === confirmButton, "Tab moves focus to next control");
 
-        dlg.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === cancelButton, "Shift+Tab focus trap in dialog");
+        assertTrue(ui.frameDoc.activeElement === cancelButton, "Tab wraps focus in dialog");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === confirmButton, "Shift+Tab cycles backward in dialog");
 
         dlg.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         await sleep(80);

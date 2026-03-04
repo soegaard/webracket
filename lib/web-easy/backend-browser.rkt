@@ -148,6 +148,18 @@
     ;; focus-cycled-dialog-target! : any/c boolean? -> void?
     ;;   Cycle focus inside dialog-native forward/backward depending on shift?.
     (define (focus-cycled-dialog-target! dialog-native shift?)
+      ;; same-dom-node? : any/c any/c -> boolean?
+      ;;   Compare external DOM nodes by JS identity semantics.
+      (define (same-dom-node? a b)
+        (and a
+             b
+             (not (extern-nullish? a))
+             (not (extern-nullish? b))
+             (extern-bool-true?
+              (js-send/extern/nullish
+               a
+               "isSameNode"
+               (vector b)))))
       (define items
         (js-send/extern/nullish
          dialog-native
@@ -169,7 +181,7 @@
                           (if (>= i count)
                               -1
                               (let ([candidate (nodelist-item items i)])
-                                (if (and candidate (eq? candidate active))
+                                (if (and candidate (same-dom-node? candidate active))
                                     i
                                     (loop (add1 i))))))]
                        [target-index
