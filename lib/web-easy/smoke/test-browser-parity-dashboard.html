@@ -162,6 +162,17 @@
                   durationMs: Date.now() - start
                 };
               }
+              const styleOffenders = window.smokeDashboardGuard.findInlineStyleAttrsOnWidgetsRecursively(doc, page);
+              if (styleOffenders.length > 0) {
+                frame.remove();
+                const samples = styleOffenders.slice(0, 4).join("; ");
+                return {
+                  page,
+                  ok: false,
+                  message: "FAIL\nFound inline style on data-we-widget node: " + samples,
+                  durationMs: Date.now() - start
+                };
+              }
               frame.remove();
               return { page, ok: true, message: text, durationMs: Date.now() - start };
             }
