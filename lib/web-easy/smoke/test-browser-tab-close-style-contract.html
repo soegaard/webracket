@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy tab close-style contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 360px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running tab close-style contract assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy tab close-style contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function tabByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('button[role="tab"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    function selectedTab(frameDoc) {
+      return frameDoc.querySelector('button[role="tab"][aria-selected="true"]');
+    }
+
+    function selectedTabLabel(frameDoc) {
+      const sel = selectedTab(frameDoc);
+      return sel ? (sel.textContent || "").trim() : "";
+    }
+
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    async function checkDisabled(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=tab-panel-disabled",
+        (d) => d.querySelectorAll('button[role="tab"]').length >= 3,
+        timeoutMs
+      );
+
+      const left = tabByText(frameDoc, "left");
+      const middle = tabByText(frameDoc, "middle");
+      const right = tabByText(frameDoc, "right");
+      assertTrue(!!left && !!middle && !!right, "disabled case tab headers present");
+      assertTrue(middle.getAttribute("aria-disabled") === "true", "middle tab marked disabled");
+      assertTrue(selectedTabLabel(frameDoc) === "left", "initial selected tab is left");
+
+      middle.click();
+      await sleep(60);
+      assertTrue(selectedTabLabel(frameDoc) === "left", "disabled click does not change selection");
+
+      left.focus();
+      await sleep(40);
+      left.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await sleep(60);
+      assertTrue(selectedTabLabel(frameDoc) === "right", "ArrowRight skips disabled");
+      assertTrue(frameDoc.activeElement === right, "focus tracks selected right tab");
+    }
+
+    async function checkDynamic(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=tab-panel-dynamic",
+        (d) => d.querySelectorAll('button[role="tab"]').length >= 3,
+        timeoutMs
+      );
+
+      const removeSelectedBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => (b.textContent || "").trim() === "remove-selected");
+      const removeDetailsBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => (b.textContent || "").trim() === "remove-details");
+      assertTrue(!!removeSelectedBtn && !!removeDetailsBtn, "dynamic action buttons present");
+
+      assertTrue(selectedTabLabel(frameDoc) === "overview", "dynamic initial selected is overview");
+      const overviewTab = tabByText(frameDoc, "overview");
+      assertTrue(!!overviewTab, "overview tab present");
+      overviewTab.focus();
+      await sleep(40);
+      overviewTab.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await sleep(60);
+      assertTrue(selectedTabLabel(frameDoc) === "details", "ArrowRight selects details before mutation");
+
+      removeSelectedBtn.focus();
+      removeSelectedBtn.click();
+      await sleep(80);
+      assertTrue(frameDoc.activeElement === removeSelectedBtn, "focus retained on remove-selected button");
+      assertTrue(selectedTabLabel(frameDoc) === "overview", "remove selected moves selection to first remaining tab");
+
+      removeDetailsBtn.focus();
+      removeDetailsBtn.click();
+      await sleep(80);
+      assertTrue(frameDoc.activeElement === removeDetailsBtn, "focus retained on remove-details button");
+      assertTrue(tabByText(frameDoc, "details") === undefined, "details tab removed");
+      assertTrue(selectedTabLabel(frameDoc) === "overview", "remove non-selected keeps selection stable");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const timeoutMs = 20000;
+        await checkDisabled(frame, timeoutMs);
+        await checkDynamic(frame, timeoutMs);
+        setStatus("PASS\ntab close-style contract: disabled + dynamic mutation focus/selection", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: body=" + JSON.stringify(bodyText(frameDoc).slice(0, 260)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

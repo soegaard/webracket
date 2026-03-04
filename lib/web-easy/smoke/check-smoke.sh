@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 labels=(
-  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/menu-full/group/dialog/operators/tab-panel/tab-panel-disabled)"
+  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/menu-keys/menu-full/group/dialog/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
   "visual-check"
   "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/menu-keys/menu-full/dialog/list/todo/incident/release/workspace)"
 )
@@ -64,6 +64,7 @@ echo "  http://localhost:8000/test-browser-menu-single-open-contract.html"
 echo "  http://localhost:8000/test-browser-menu-roving-focus-contract.html"
 echo "  http://localhost:8000/test-browser-menu-close-reason-contract.html"
 echo "  http://localhost:8000/test-browser-dialog-close-reason-contract.html"
+echo "  http://localhost:8000/test-browser-tab-close-style-contract.html"
 echo "  http://localhost:8000/test-browser-width.html"
 echo "  http://localhost:8000/test-browser-input.html"
 echo "  http://localhost:8000/test-browser-checkbox.html"
@@ -97,6 +98,7 @@ echo "  http://localhost:8000/test-browser-parity-menu-single-open-contract.html
 echo "  http://localhost:8000/test-browser-parity-menu-roving-focus-contract.html"
 echo "  http://localhost:8000/test-browser-parity-menu-close-reason-contract.html"
 echo "  http://localhost:8000/test-browser-parity-dialog-close-reason-contract.html"
+echo "  http://localhost:8000/test-browser-parity-tab-close-style-contract.html"
 echo "  http://localhost:8000/test-browser-parity-list.html"
 echo "  http://localhost:8000/test-browser-parity-todo.html"
 echo "  http://localhost:8000/test-browser-parity-incident.html"
