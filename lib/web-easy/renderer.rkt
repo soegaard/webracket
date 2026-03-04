@@ -85,6 +85,10 @@
        .we-menu-popup{position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;}") 
+    (define control-style-text ; CSS defaults for non-table controls previously styled inline.
+      ".we-button{align-self:flex-start;width:auto;}\
+       .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
+       .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}")
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -377,9 +381,11 @@
         [(window)
          (define node (dom-node 'div (list (cons attr/role 'window)
                                            (cons 'data-we-widget "window")) '() #f #f #f))
+         (define style-node (dom-node 'style '() '() control-style-text #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
+         (backend-append-child! node style-node)
          node]
         [(vpanel)
          (define node (dom-node 'div (list (cons attr/layout 'column)
@@ -439,7 +445,7 @@
          (define action (alist-ref (view-props v) 'action 'render))
          (dom-node 'button
                    (list (cons 'data-we-widget "button")
-                         (cons 'style "align-self:flex-start;width:auto;"))
+                         (cons 'class "we-button"))
                    '()
                    (value->text label)
                    action
@@ -451,7 +457,7 @@
          (define node (dom-node 'input
                                 (list (cons 'value "")
                                       (cons 'data-we-widget "input")
-                                      (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
+                                      (cons 'class "we-input")
                                       (cons 'on-enter-action on-enter))
                                 '()
                                 #f
@@ -461,7 +467,7 @@
          (define (set-input-value! value)
            (set-dom-node-attrs! node (list (cons 'value (value->text value))
                                            (cons 'data-we-widget "input")
-                                           (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
+                                           (cons 'class "we-input")
                                            (cons 'on-enter-action on-enter))))
          (cond
            [(obs? raw-value)
@@ -479,7 +485,7 @@
          (define node (dom-node 'checkbox
                                 (list (cons 'checked #f)
                                       (cons 'data-we-widget "checkbox")
-                                      (cons 'style "align-self:flex-start;"))
+                                      (cons 'class "we-checkbox"))
                                 '()
                                 #f
                                 #f
@@ -488,7 +494,7 @@
          (define (set-checked! v)
            (set-dom-node-attrs! node (list (cons 'checked (not (not v)))
                                            (cons 'data-we-widget "checkbox")
-                                           (cons 'style "align-self:flex-start;"))))
+                                           (cons 'class "we-checkbox"))))
          (cond
            [(obs? raw-value)
             (set-checked! (obs-peek raw-value))
@@ -508,7 +514,7 @@
          (define node (dom-node 'select
                                 (list (cons 'choices choices)
                                       (cons 'data-we-widget "choice")
-                                      (cons 'style "align-self:flex-start;")
+                                      (cons 'class "we-choice")
                                       (cons 'selected #f))
                                 '()
                                 #f
@@ -520,7 +526,7 @@
             node
             (list (cons 'choices  choices)
                   (cons 'data-we-widget "choice")
-                  (cons 'style    "align-self:flex-start;")
+                  (cons 'class    "we-choice")
                   (cons 'selected v))))
          (cond
            [(obs? raw-selected)
@@ -541,7 +547,7 @@
                                 (list (cons 'min   min-value)
                                       (cons 'max   max-value)
                                       (cons 'data-we-widget "slider")
-                                      (cons 'style "align-self:flex-start;")
+                                      (cons 'class "we-slider")
                                       (cons 'value 0))
                                 '()
                                 #f
@@ -554,7 +560,7 @@
             (list (cons 'min min-value)
                   (cons 'max max-value)
                   (cons 'data-we-widget "slider")
-                  (cons 'style "align-self:flex-start;")
+                  (cons 'class "we-slider")
                   (cons 'value v))))
          (cond
            [(obs? raw-value)
@@ -574,7 +580,7 @@
                                 (list (cons 'min   min-value)
                                       (cons 'max   max-value)
                                       (cons 'data-we-widget "progress")
-                                      (cons 'style "align-self:flex-start;")
+                                      (cons 'class "we-progress")
                                       (cons 'value 0))
                                 '()
                                 #f
@@ -586,7 +592,7 @@
             (list (cons 'min   min-value)
                   (cons 'max   max-value)
                   (cons 'data-we-widget "progress")
-                  (cons 'style "align-self:flex-start;")
+                  (cons 'class "we-progress")
                   (cons 'value v))))
          (cond
            [(obs? raw-value)
@@ -993,7 +999,7 @@
          (define node (dom-node 'radios
                                 (list (cons 'choices choices)
                                       (cons 'data-we-widget "radios")
-                                      (cons 'style "align-self:flex-start;")
+                                      (cons 'class "we-radios")
                                       (cons 'selected #f))
                                 '()
                                 #f
@@ -1005,7 +1011,7 @@
             node
             (list (cons 'choices  choices)
                   (cons 'data-we-widget "radios")
-                  (cons 'style    "align-self:flex-start;")
+                  (cons 'class    "we-radios")
                   (cons 'selected selected))))
          (cond
            [(obs? raw-selected)
@@ -1024,7 +1030,7 @@
          (define node (dom-node 'image
                                 (list (cons 'src "")
                                       (cons 'data-we-widget "image")
-                                      (cons 'style "align-self:flex-start;"))
+                                      (cons 'class "we-image"))
                                 '()
                                 #f
                                 #f
@@ -1038,7 +1044,7 @@
          (define (set-image-attrs! src width height)
            (define attrs/base (list (cons 'src   (value->text src))
                                     (cons 'data-we-widget "image")
-                                    (cons 'style "align-self:flex-start;")))
+                                    (cons 'class "we-image")))
            (define attrs/width (with-optional-attr attrs/base  'width  width))
            (define attrs/final (with-optional-attr attrs/width 'height height))
            (set-dom-node-attrs! node attrs/final))
