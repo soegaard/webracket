@@ -71,6 +71,7 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-keyboard-contract.html"
   echo "  $base_url/test-browser-parity-focus-order.html"
   echo "  $base_url/test-browser-parity-disabled-contract.html"
+  echo "  $base_url/test-browser-parity-dialog-contract.html"
   echo "  $base_url/test-browser-parity-list.html"
   echo "  $base_url/test-browser-parity-todo.html"
   echo "  $base_url/test-browser-parity-incident.html"
