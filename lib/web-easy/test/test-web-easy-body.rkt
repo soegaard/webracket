@@ -218,6 +218,7 @@
 (define list-container
   (node-child (node-child (renderer-root r3) 0) 0))
 (check-equal (node-attr list-container 'data-we-widget) "list-view" "list-view data-we-widget attr")
+(check-equal (node-attr list-container 'class) "we-list-view" "list-view base class")
 (define children0 (dom-node-children list-container))
 (define n1 (list-ref children0 0))
 (define n2 (list-ref children0 1))

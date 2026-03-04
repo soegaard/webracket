@@ -89,6 +89,7 @@
       ".we-button{align-self:flex-start;width:auto;}\
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
+       .we-list-view{display:flex;flex-direction:column;gap:4px;}\
        .we-table{border-collapse:separate;border:1px solid #999;margin-bottom:6px;align-self:flex-start;}\
        .we-table.we-density-normal{border-spacing:2px 0;}\
        .we-table.we-density-compact{border-spacing:0 0;}\
@@ -1218,8 +1219,8 @@
          (define raw-entries (alist-ref (view-props v) 'entries   'render))
          (define key-proc    (alist-ref (view-props v) 'key       'render))
          (define make-view   (alist-ref (view-props v) 'make-view 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)
-                                           (cons 'data-we-widget "list-view")) '() #f #f #f))
+         (define node (dom-node 'div (list (cons 'data-we-widget "list-view")
+                                           (cons 'class "we-list-view")) '() #f #f #f))
          (define items '())
          (define (render-from-entries entries)
            (set! items
