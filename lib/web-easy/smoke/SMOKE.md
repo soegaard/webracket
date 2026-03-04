@@ -20,11 +20,28 @@ Common top-level aliases:
 ```bash
 make smoke-ci
 make smoke-ci-lite
-make smoke-headless
-make smoke-parity-headless
-make smoke-all-contract
+make smoke-smoke
+make smoke-parity
+make smoke-dashboards
 make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
 ```
+
+## Migration Notes
+
+Command migration:
+
+- `./smoke.sh contract` -> `./headless.sh contract`
+- `./smoke.sh parity-headless` -> `./headless.sh parity`
+- `./smoke.sh headless` -> `./headless.sh all`
+- `./smoke.sh ci` -> `./headless.sh ci`
+- `./smoke.sh ci-fast` -> `./headless.sh ci`
+
+Make target migration:
+
+- `make smoke-headless` -> `make smoke-smoke`
+- `make smoke-parity-headless` -> `make smoke-parity`
+- `make smoke-all-contract` -> `make smoke-dashboards`
+- `make smoke-contract` -> `./headless.sh contract`
 
 ## Smoke Test Conventions
 
@@ -156,9 +173,9 @@ CI helper script:
 Repository-root aliases:
 
 - `make smoke-ci`
-- `make smoke-headless`
-- `make smoke-parity-headless`
-- `make smoke-all-contract`
+- `make smoke-smoke`
+- `make smoke-parity`
+- `make smoke-dashboards`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
 
 Command notes:

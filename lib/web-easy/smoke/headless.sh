@@ -10,6 +10,7 @@ usage() {
 Usage: ./headless.sh <mode> [args]
 
 Modes:
+  list                     Print available modes (stable, scriptable)
   doctor                   Check headless prerequisites
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
@@ -21,6 +22,7 @@ Modes:
   single <compile> <page>  Run one page with check-single-headless.sh
 
 Examples:
+  ./headless.sh list
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
@@ -31,6 +33,21 @@ Examples:
   ./headless.sh doctor
   SMOKE_SKIP_COMPILE=1 ./headless.sh single run-browser-smoke-all-compile.sh test-browser-tab-panel-dynamic.html
 USAGE
+}
+
+list_modes() {
+  cat <<'LIST'
+list	Print available modes (stable, scriptable)
+doctor	Check headless prerequisites
+smoke	Run full smoke dashboard headless
+parity	Run parity-only dashboard headless
+contract	Run contract-only dashboard headless
+dashboards	Run contract dashboard and full smoke dashboard
+ci	Run dashboards and guard self-test
+guard	Run dashboard guard self-test
+all	Run check-all.sh --headless
+single	Run one page with check-single-headless.sh
+LIST
 }
 
 doctor() {
@@ -85,6 +102,10 @@ if [ "$#" -lt 1 ]; then
 fi
 
 case "$1" in
+  list)
+    shift
+    list_modes "$@"
+    ;;
   doctor)
     shift
     doctor "$@"
