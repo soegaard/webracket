@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-ci-lite smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list
+.PHONY: help smoke-ci smoke-ci-lite smoke-smoke smoke-parity smoke-dashboards smoke-one smoke-list smoke-commands
 
 help:
 	@echo "Available targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  smoke-parity          Run parity-only headless dashboard."
 	@echo "  smoke-dashboards      Run contract+smoke dashboards headless."
 	@echo "  smoke-list            Print canonical smoke/headless commands."
+	@echo "  smoke-commands        Regenerate smoke/COMMANDS.tsv."
 	@echo "  smoke-one             Run one headless smoke page (set SINGLE_COMPILE, SINGLE_PAGE)."
 
 smoke-ci:
@@ -42,7 +43,11 @@ smoke-list:
 	@echo "smoke-smoke"
 	@echo "smoke-parity"
 	@echo "smoke-dashboards"
+	@echo "smoke-commands"
 	@echo "smoke-one"
+
+smoke-commands:
+	cd $(SMOKE_DIR) && ./gen-commands.sh
 
 smoke-one:
 	cd $(SMOKE_DIR) && ./headless.sh single $(SINGLE_COMPILE) $(SINGLE_PAGE)

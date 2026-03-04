@@ -1,12 +1,14 @@
 scope	command	description
-headless	./headless.sh list	Print available headless modes (stable, scriptable).
-headless	./headless.sh doctor	Check headless prerequisites.
-headless	./headless.sh contract	Run contract-only dashboard headless.
-headless	./headless.sh parity	Run parity-only dashboard headless.
-headless	./headless.sh smoke	Run full smoke dashboard headless.
-headless	./headless.sh dashboards	Run contract then smoke dashboards headless.
-headless	./headless.sh ci	Run dashboards and guard self-test.
-headless	./headless.sh single <compile-script> <test-page>	Run one page headless.
+headless	./headless.sh list	Print available modes (stable, scriptable)
+headless	./headless.sh doctor	Check headless prerequisites
+headless	./headless.sh smoke	Run full smoke dashboard headless
+headless	./headless.sh parity	Run parity-only dashboard headless
+headless	./headless.sh contract	Run contract-only dashboard headless
+headless	./headless.sh dashboards	Run contract dashboard and full smoke dashboard
+headless	./headless.sh ci	Run dashboards and guard self-test
+headless	./headless.sh guard	Run dashboard guard self-test
+headless	./headless.sh all	Run check-all.sh --headless
+headless	./headless.sh single <compile-script> <test-page>	Run one page with check-single-headless.sh
 smoke	./smoke.sh headless-run <mode> [args]	Forward to headless dispatcher.
 smoke	./smoke.sh check	Compile smoke artifacts.
 smoke	./smoke.sh open	Serve smoke pages locally.
@@ -15,5 +17,6 @@ make	make smoke-ci-lite	Run canonical CI headless gate without compile.
 make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.
 make	make smoke-dashboards	Run contract+smoke dashboards headless.
-make	make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...	Run one page headless via Make variables.
 make	make smoke-list	Print canonical commands.
+make	make smoke-commands	Regenerate COMMANDS.tsv.
+make	make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...	Run one page headless via Make variables.

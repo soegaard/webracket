@@ -189,6 +189,7 @@ Command notes:
 - `headless-run`: preferred `smoke.sh` entrypoint for headless modes.
 - `status`: shows tool/artifact status and suggests the next command.
 - `COMMANDS.tsv`: machine-readable inventory of canonical smoke/headless commands.
+- `COMMANDS.tsv` is generated; edit `gen-commands.sh` and regenerate via `make smoke-commands`.
 
 `tab-panel` entry forms:
 
