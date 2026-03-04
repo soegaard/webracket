@@ -306,6 +306,35 @@ Remaining Step 2 planning items:
    - desktop menu APIs have no direct browser equivalent.
    - implement as accessible component primitives and document differences.
 
+## CSS Strategy (Stylesheet-First)
+
+`web-easy` should support user customization via CSS stylesheet only, while keeping
+usable defaults out of the box.
+
+Rules:
+
+1. Renderer emits semantic classes/attributes, not visual inline styles.
+2. Shared defaults live in stylesheet text (or a default stylesheet asset), not in
+   per-node style strings.
+3. Runtime state is expressed through classes (for example `.is-open`,
+   `.is-selected`, `.is-disabled`) and ARIA attributes.
+4. Dynamic one-off geometry values may use inline style only when they cannot be
+   represented as stable classes/tokens.
+5. Selectors intended for user theming are part of the public contract and should be
+   treated as stable.
+
+`data-we-widget` role:
+
+- `data-we-widget` is a stable widget identity marker (for example
+  `data-we-widget="dialog"`), independent of visual class naming.
+- It allows user CSS to target component type reliably:
+  - `[data-we-widget='dialog'] { ... }`
+- It supports tooling/debugging/tests by giving a semantic hook that does not depend
+  on DOM shape details.
+- It complements classes instead of replacing them:
+  - class selectors for style/state
+  - `data-we-widget` for stable component identity.
+
 ## Internal Contracts
 
 Each internal view implementation should follow this shape:
