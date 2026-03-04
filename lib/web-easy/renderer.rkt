@@ -85,18 +85,6 @@
        .we-menu-popup{position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;}") 
-    (define menu-bar-style       ; Inline style for menu-bar container layout.
-      "display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 8px;border:1px solid #aaa;border-radius:4px;background:#f3f3f3;box-sizing:border-box;") 
-    (define menu-style           ; Inline style for menu container layout.
-      "position:relative;display:inline-block;") 
-    (define menu-label-style     ; Inline style for menu trigger button appearance.
-      "padding:2px 8px;border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;") 
-    (define menu-popup-style     ; Inline style for hidden menu item popup.
-      "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:none;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
-    (define menu-popup-open-style ; Inline style for visible menu item popup.
-      "position:absolute;top:calc(100% + 2px);left:0;min-width:120px;display:flex;flex-direction:column;gap:4px;padding:4px;border:1px solid #888;border-radius:4px;background:#fff;z-index:1000;") 
-    (define menu-item-style      ; Inline style for menu-item chip appearance.
-      "display:inline-block;padding:2px 8px;border:1px solid #888;border-radius:3px;background:#f6f6f6;cursor:pointer;user-select:none;") 
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -1045,9 +1033,9 @@
          (define style-node (dom-node 'style '() '() menu-style-text #f #f))
          (define node (dom-node 'menu-bar
                                 (list (cons 'class "we-menu-bar")
+                                      (cons 'data-we-widget "menu-bar")
                                       (cons attr/role 'menubar)
-                                      (cons 'aria-orientation "horizontal")
-                                      (cons 'style menu-bar-style))
+                                      (cons 'aria-orientation "horizontal"))
                                 '()
                                 #f
                                 #f
@@ -1063,7 +1051,7 @@
          (define open? #f)
          (define node (dom-node 'menu
                                 (list (cons 'class "we-menu")
-                                      (cons 'style menu-style))
+                                      (cons 'data-we-widget "menu"))
                                 '()
                                 #f
                                 #f
@@ -1073,7 +1061,6 @@
                                             (cons 'class "we-menu-label")
                                             (cons 'menu-trigger #t)
                                             (cons 'tabindex 0)
-                                            (cons 'style menu-label-style)
                                             (cons 'aria-haspopup "true")
                                             (cons 'aria-controls popup-id)
                                             (cons 'aria-expanded "false"))
@@ -1098,8 +1085,7 @@
          (define popup-node (dom-node 'vpanel
                                       (list (cons attr/role 'menu)
                                             (cons 'id popup-id)
-                                            (cons 'class "we-menu-popup")
-                                            (cons 'style menu-popup-style))
+                                            (cons 'class "we-menu-popup"))
                                       '()
                                       #f
                                       #f
@@ -1122,12 +1108,11 @@
                       (eq? active-menu-close close-self!))
              (set! active-menu-close #f))
            (set-dom-node-attrs!
-            label-node
+           label-node
             (list (cons attr/role 'button)
                   (cons 'class "we-menu-label")
                   (cons 'menu-trigger #t)
                   (cons 'tabindex 0)
-                  (cons 'style menu-label-style)
                   (cons 'aria-haspopup "true")
                   (cons 'aria-controls popup-id)
                   (cons 'aria-expanded (if open? "true" "false"))))
@@ -1135,8 +1120,7 @@
             popup-node
             (list (cons attr/role 'menu)
                   (cons 'id popup-id)
-                  (cons 'class (if open? "we-menu-popup is-open" "we-menu-popup"))
-                  (cons 'style (if open? menu-popup-open-style menu-popup-style)))))
+                  (cons 'class (if open? "we-menu-popup is-open" "we-menu-popup")))))
          (define (set-label! label-value)
            (set-dom-node-text! label-node (value->text label-value)))
          (cond
@@ -1179,8 +1163,8 @@
          (define node (dom-node 'menu-item
                                 (list (cons attr/role 'menuitem)
                                       (cons 'class    "we-menu-item")
-                                      (cons 'tabindex 0)
-                                      (cons 'style    menu-item-style))
+                                      (cons 'data-we-widget "menu-item")
+                                      (cons 'tabindex 0))
                                 '()
                                 ""
                                 action
