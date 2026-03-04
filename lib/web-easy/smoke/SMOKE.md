@@ -49,6 +49,20 @@ make smoke-ci
 
 If this fails, run `make smoke-commands` and commit `COMMANDS.tsv`.
 
+## Recommended Workflow
+
+Fast pre-push check (no compile):
+
+```bash
+make smoke-headless-lite
+```
+
+Full pre-release check (compile + headless gate):
+
+```bash
+make smoke-ci
+```
+
 ## Smoke Test Conventions
 
 All browser smoke pages under `smoke/test-browser-*.html` should follow these rules:
