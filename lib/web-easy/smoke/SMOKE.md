@@ -7,7 +7,12 @@ Browser smoke tests for `lib/web-easy`.
 Use these as the default interface:
 
 ```bash
+make smoke-commands
+make smoke-ci-lite
+make smoke-ci
+
 ./headless.sh list
+./headless.sh verify
 ./headless.sh doctor
 ./headless.sh contract
 ./headless.sh smoke
@@ -44,6 +49,14 @@ Make target migration:
 - `make smoke-parity-headless` -> `make smoke-parity`
 - `make smoke-all-contract` -> `make smoke-dashboards`
 - `make smoke-contract` -> `./headless.sh contract`
+
+## Release Quickstart
+
+```bash
+make smoke-commands
+make smoke-ci-lite
+make smoke-ci
+```
 
 ## Smoke Test Conventions
 
@@ -164,6 +177,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh dashboards`
 - `./headless.sh ci`
 - `./headless.sh list`
+- `./headless.sh verify`
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
@@ -468,7 +482,7 @@ Common failure patterns and what to check first:
 Note:
 
 - `check-ci-smoke.sh` is the local CI-helper command and routes headless steps via `./headless.sh` (`doctor` + `ci`).
-- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs `./headless.sh doctor`, then compile + `./headless.sh ci` (with `SMOKE_SKIP_COMPILE=1`) on pushes/PRs touching `lib/web-easy/**`.
+- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs `./headless.sh verify`, then compile + `./headless.sh ci` (with `SMOKE_SKIP_COMPILE=1`) on pushes/PRs touching `lib/web-easy/**`.
 
 ## Recommended Daily Flow
 

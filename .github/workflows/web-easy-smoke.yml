@@ -93,16 +93,10 @@ jobs:
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
 
-      - name: Headless doctor preflight
+      - name: Headless verify preflight
         run: |
           cd lib/web-easy/smoke
-          SMOKE_LOCAL_TOOLS_DIR="$GITHUB_WORKSPACE/.local-tools" ./headless.sh doctor
-
-      - name: Verify COMMANDS.tsv is up to date
-        run: |
-          cd lib/web-easy/smoke
-          ./gen-commands.sh
-          git diff --exit-code -- COMMANDS.tsv
+          SMOKE_LOCAL_TOOLS_DIR="$GITHUB_WORKSPACE/.local-tools" ./headless.sh verify
 
       - name: Run web-easy smoke checks (contract gate + full dashboard)
         run: |

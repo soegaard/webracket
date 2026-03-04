@@ -11,6 +11,7 @@ Usage: ./headless.sh <mode> [args]
 
 Modes:
   list                     Print available modes (stable, scriptable)
+  verify                   Run doctor + COMMANDS.tsv freshness check
   doctor                   Check headless prerequisites
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
@@ -23,6 +24,7 @@ Modes:
 
 Examples:
   ./headless.sh list
+  ./headless.sh verify
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
@@ -38,6 +40,7 @@ USAGE
 list_modes() {
   cat <<'LIST'
 list	Print available modes (stable, scriptable)
+verify	Run doctor + COMMANDS.tsv freshness check
 doctor	Check headless prerequisites
 smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
@@ -96,6 +99,13 @@ doctor() {
   return 1
 }
 
+verify() {
+  doctor
+  "$SCRIPT_DIR/gen-commands.sh"
+  git -C "$ROOT_DIR" diff --exit-code -- "$SCRIPT_DIR/COMMANDS.tsv"
+  echo "headless verify: COMMANDS.tsv is up to date"
+}
+
 if [ "$#" -lt 1 ]; then
   usage
   exit 2
@@ -105,6 +115,10 @@ case "$1" in
   list)
     shift
     list_modes "$@"
+    ;;
+  verify)
+    shift
+    verify "$@"
     ;;
   doctor)
     shift
