@@ -75,6 +75,7 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-menu-single-open-contract.html"
   echo "  $base_url/test-browser-parity-menu-roving-focus-contract.html"
   echo "  $base_url/test-browser-parity-menu-close-reason-contract.html"
+  echo "  $base_url/test-browser-parity-dialog-close-reason-contract.html"
   echo "  $base_url/test-browser-parity-list.html"
   echo "  $base_url/test-browser-parity-todo.html"
   echo "  $base_url/test-browser-parity-incident.html"
