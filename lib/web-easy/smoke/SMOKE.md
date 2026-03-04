@@ -124,10 +124,23 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh parity`
 - `./headless.sh contract`
 - `./headless.sh dashboards`
+- `./headless.sh ci`
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
 - `./headless.sh single <compile-script> <test-page>`
+
+## Canonical Headless Commands
+
+Use these as the primary entrypoints:
+
+```bash
+./headless.sh doctor
+./headless.sh contract
+./headless.sh smoke
+./headless.sh dashboards
+./headless.sh single <compile-script> <test-page>
+```
 
 CI helper script:
 
@@ -138,6 +151,7 @@ Repository-root aliases:
 - `make smoke-ci`
 - `make smoke-headless`
 - `make smoke-parity-headless`
+- `make smoke-all-contract`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`
 
 Command notes:

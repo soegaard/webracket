@@ -15,6 +15,7 @@ Modes:
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
+  ci                       Run dashboards and guard self-test
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
   single <compile> <page>  Run one page with check-single-headless.sh
@@ -24,6 +25,7 @@ Examples:
   ./headless.sh parity
   ./headless.sh contract
   ./headless.sh dashboards
+  ./headless.sh ci
   ./headless.sh guard
   ./headless.sh all
   ./headless.sh doctor
@@ -109,6 +111,11 @@ case "$1" in
       SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-contract-headless.sh" "$@"
       SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
     fi
+    ;;
+  ci)
+    shift
+    "$SCRIPT_DIR/headless.sh" dashboards "$@"
+    "$SCRIPT_DIR/headless.sh" guard "$@"
     ;;
   guard)
     shift
