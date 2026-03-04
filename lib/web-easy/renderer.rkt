@@ -373,19 +373,22 @@
       (define kind (view-kind v))
       (case kind
         [(window)
-         (define node (dom-node 'div (list (cons attr/role 'window)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/role 'window)
+                                           (cons 'data-we-widget "window")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
         [(vpanel)
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "vpanel")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
         [(hpanel)
-         (define node (dom-node 'div (list (cons attr/layout 'row)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'row)
+                                           (cons 'data-we-widget "hpanel")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
@@ -418,7 +421,7 @@
          node]
         [(text)
          (define raw  (alist-ref (view-props v) 'value 'render))
-         (define node (dom-node 'span '() '() "" #f #f))
+         (define node (dom-node 'span (list (cons 'data-we-widget "text")) '() "" #f #f))
          (cond
            [(obs? raw)
             (set-dom-node-text! node (value->text (obs-peek raw)))
@@ -597,7 +600,8 @@
          (define raw-cond  (alist-ref (view-props v) 'cond 'render))
          (define then-view (alist-ref (view-props v) 'then 'render))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "if-view")) '() #f #f #f))
          (define (render-branch! cond-value)
            (replace-with-single-child! node
                                        (if (cond-clause-active? cond-value) then-view else-view)
@@ -617,7 +621,8 @@
                                         'cond-view
                                         "clauses"))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "cond-view")) '() #f #f #f))
          (define (choose-view)
            (define selected
              (let loop ([cs clauses])
@@ -648,7 +653,8 @@
                                         'case-view
                                         "clauses"))
          (define else-view (alist-ref (view-props v) 'else 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "case-view")) '() #f #f #f))
          (define (choose-view v*)
            (define selected
              (let loop ([cs clauses])
@@ -928,7 +934,8 @@
          (define raw-data    (alist-ref (view-props v) 'data       'render))
          (define make-view   (alist-ref (view-props v) 'make-view  'render))
          (define equal-proc  (alist-ref (view-props v) 'equal-proc 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "observable-view")) '() #f #f #f))
          (define last-value #f)
          (define have-last? #f)
          (define (render-from-value! value)
@@ -947,7 +954,7 @@
             (render-from-value! raw-data)])
          node]
         [(spacer)
-         (dom-node 'spacer '() '() #f #f #f)]
+         (dom-node 'spacer (list (cons 'data-we-widget "spacer")) '() #f #f #f)]
         [(table)
          (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                       'table
@@ -1207,7 +1214,8 @@
          (define raw-entries (alist-ref (view-props v) 'entries   'render))
          (define key-proc    (alist-ref (view-props v) 'key       'render))
          (define make-view   (alist-ref (view-props v) 'make-view 'render))
-         (define node (dom-node 'div (list (cons attr/layout 'column)) '() #f #f #f))
+         (define node (dom-node 'div (list (cons attr/layout 'column)
+                                           (cons 'data-we-widget "list-view")) '() #f #f #f))
          (define items '())
          (define (render-from-entries entries)
            (set! items
