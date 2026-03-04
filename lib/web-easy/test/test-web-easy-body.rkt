@@ -691,6 +691,7 @@
 (check-equal (node-attr tab-panel-node 'selected) 'info "tab-panel initial selected tab")
 (check-equal (node-attr tab-panel-node 'data-we-widget) "tab-panel" "tab-panel data-we-widget attr")
 (check-equal (dom-node-tag tab-buttons-node) 'div "tab-panel header node tag")
+(check-equal (length (dom-node-children tab-panel-node)) 2 "tab-panel has only tablist and tabpanel children")
 (check-equal (node-attr tab-buttons-node 'data-we-widget) "tab-list" "tab-list data-we-widget attr")
 (check-equal (node-attr tab-content-node 'data-we-widget) "tab-content" "tab-content data-we-widget attr")
 (check-equal (length (dom-node-children tab-buttons-node)) 3 "tab-panel header button count")
