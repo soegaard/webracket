@@ -59,7 +59,6 @@
   <script src="./dashboard-guard.js"></script>
   <script>
     const tests = [
-      "test-browser-does-not-exist.html",
       "test-browser-a11y-contract.html",
       "test-browser-keyboard-contract.html",
       "test-browser-focus-order.html",
@@ -115,7 +114,7 @@
       frame.src = page;
       document.body.appendChild(frame);
 
-      const timeoutMs = 30000;
+      const timeoutMs = 15000;
       const start = Date.now();
 
       while (Date.now() - start < timeoutMs) {
@@ -157,6 +156,11 @@
         const result = await runOne(page);
         results.push(result);
         appendRow(page, result.ok ? "PASS" : "FAIL", result.message);
+        if (!result.ok) {
+          const passedSoFar = results.filter((r) => r.ok).length;
+          setSummary("FAIL\n" + passedSoFar + "/" + tests.length + " contract tests passed", "fail");
+          return;
+        }
       }
 
       const passed = results.filter((r) => r.ok).length;
