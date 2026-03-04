@@ -393,7 +393,8 @@
         [(group)
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define node (dom-node 'group
-                                (list (cons attr/layout 'column))
+                                (list (cons attr/layout 'column)
+                                      (cons 'data-we-widget "group"))
                                 '()
                                 #f
                                 #f
@@ -432,7 +433,8 @@
          (define label  (alist-ref (view-props v) 'label  'render))
          (define action (alist-ref (view-props v) 'action 'render))
          (dom-node 'button
-                   (list (cons 'style "align-self:flex-start;width:auto;"))
+                   (list (cons 'data-we-widget "button")
+                         (cons 'style "align-self:flex-start;width:auto;"))
                    '()
                    (value->text label)
                    action
@@ -443,6 +445,7 @@
          (define on-enter  (alist-ref (view-props v) 'on-enter 'render))
          (define node (dom-node 'input
                                 (list (cons 'value "")
+                                      (cons 'data-we-widget "input")
                                       (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
                                       (cons 'on-enter-action on-enter))
                                 '()
@@ -452,6 +455,7 @@
          (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
          (define (set-input-value! value)
            (set-dom-node-attrs! node (list (cons 'value (value->text value))
+                                           (cons 'data-we-widget "input")
                                            (cons 'style "align-self:stretch;width:100%;box-sizing:border-box;")
                                            (cons 'on-enter-action on-enter))))
          (cond
@@ -469,6 +473,7 @@
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'checkbox
                                 (list (cons 'checked #f)
+                                      (cons 'data-we-widget "checkbox")
                                       (cons 'style "align-self:flex-start;"))
                                 '()
                                 #f
@@ -477,6 +482,7 @@
          (set-dom-node-on-change! node (lambda (new-checked) (action (not (not new-checked)))))
          (define (set-checked! v)
            (set-dom-node-attrs! node (list (cons 'checked (not (not v)))
+                                           (cons 'data-we-widget "checkbox")
                                            (cons 'style "align-self:flex-start;"))))
          (cond
            [(obs? raw-value)
@@ -496,6 +502,7 @@
          (define action       (alist-ref (view-props v) 'action   'render))
          (define node (dom-node 'select
                                 (list (cons 'choices choices)
+                                      (cons 'data-we-widget "choice")
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'selected #f))
                                 '()
@@ -507,6 +514,7 @@
            (set-dom-node-attrs!
             node
             (list (cons 'choices  choices)
+                  (cons 'data-we-widget "choice")
                   (cons 'style    "align-self:flex-start;")
                   (cons 'selected v))))
          (cond
@@ -527,6 +535,7 @@
          (define node (dom-node 'slider
                                 (list (cons 'min   min-value)
                                       (cons 'max   max-value)
+                                      (cons 'data-we-widget "slider")
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
@@ -539,6 +548,7 @@
             node
             (list (cons 'min min-value)
                   (cons 'max max-value)
+                  (cons 'data-we-widget "slider")
                   (cons 'style "align-self:flex-start;")
                   (cons 'value v))))
          (cond
@@ -558,6 +568,7 @@
          (define node (dom-node 'progress
                                 (list (cons 'min   min-value)
                                       (cons 'max   max-value)
+                                      (cons 'data-we-widget "progress")
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'value 0))
                                 '()
@@ -569,6 +580,7 @@
             node
             (list (cons 'min   min-value)
                   (cons 'max   max-value)
+                  (cons 'data-we-widget "progress")
                   (cons 'style "align-self:flex-start;")
                   (cons 'value v))))
          (cond
@@ -669,6 +681,7 @@
          (define tabs         (map normalize-tab-entry tabs/raw))
          (define panel-id     (next-tab-panel-id))
          (define node (dom-node 'tab-panel (list (cons 'selected #f)
+                                                 (cons 'data-we-widget "tab-panel")
                                                  (cons 'class    "we-tab-panel"))
                                '()
                                #f
@@ -677,6 +690,7 @@
          (define style-node (dom-node 'style '() '() tab-panel-style-text #f #f))
          (define tabs-node  (dom-node 'div (list (cons attr/layout 'row)
                                                  (cons attr/role   'tablist)
+                                                 (cons 'data-we-widget "tab-list")
                                                  (cons 'class      "we-tab-list"))
                                       '()
                                       #f
@@ -684,6 +698,7 @@
                                       #f))
          (define content-node (dom-node 'div (list (cons attr/role 'tabpanel)
                                                    (cons 'id       panel-id)
+                                                   (cons 'data-we-widget "tab-content")
                                                    (cons 'aria-labelledby "")
                                                    (cons 'class    "we-tab-content"))
                                         '()
@@ -742,11 +757,14 @@
                       (loop (cdr entries)))])))
            (set-dom-node-attrs!
             content-node
-            (list (cons attr/role 'tabpanel)
+           (list (cons attr/role 'tabpanel)
                   (cons 'id panel-id)
+                  (cons 'data-we-widget "tab-content")
                   (cons 'aria-labelledby selected-button-id)
                   (cons 'class "we-tab-content")))
-           (set-dom-node-attrs! node (list (cons 'selected selected)))
+           (set-dom-node-attrs! node (list (cons 'selected selected)
+                                           (cons 'data-we-widget "tab-panel")
+                                           (cons 'class "we-tab-panel")))
            (set! selected-value selected)
            (for-each (lambda (entry)
                        (define tab-id (list-ref entry 0))
@@ -758,6 +776,7 @@
                         (list (cons 'tab-id tab-id)
                               (cons 'id button-id)
                               (cons 'role 'tab)
+                              (cons 'data-we-widget "tab-button")
                               (cons 'aria-controls panel-id)
                               (cons 'aria-disabled disabled?)
                               (cons 'aria-selected (and (equal? tab-id selected) (not disabled?)))
@@ -938,6 +957,7 @@
          (define density     (normalize-table-density (maybe-observable-value raw-density)))
          (define node (dom-node 'table
                                 (list (cons 'columns columns)
+                                      (cons 'data-we-widget "table")
                                       (cons 'density density)
                                       (cons 'style (table-dims-style density)))
                                 '()
@@ -962,6 +982,7 @@
          (define action       (alist-ref (view-props v) 'action   'render))
          (define node (dom-node 'radios
                                 (list (cons 'choices choices)
+                                      (cons 'data-we-widget "radios")
                                       (cons 'style "align-self:flex-start;")
                                       (cons 'selected #f))
                                 '()
@@ -973,6 +994,7 @@
            (set-dom-node-attrs!
             node
             (list (cons 'choices  choices)
+                  (cons 'data-we-widget "radios")
                   (cons 'style    "align-self:flex-start;")
                   (cons 'selected selected))))
          (cond
@@ -991,6 +1013,7 @@
          (define raw-height (alist-ref (view-props v) 'height 'render))
          (define node (dom-node 'image
                                 (list (cons 'src "")
+                                      (cons 'data-we-widget "image")
                                       (cons 'style "align-self:flex-start;"))
                                 '()
                                 #f
@@ -1004,6 +1027,7 @@
            (if (obs? v) (obs-peek v) v))
          (define (set-image-attrs! src width height)
            (define attrs/base (list (cons 'src   (value->text src))
+                                    (cons 'data-we-widget "image")
                                     (cons 'style "align-self:flex-start;")))
            (define attrs/width (with-optional-attr attrs/base  'width  width))
            (define attrs/final (with-optional-attr attrs/width 'height height))
