@@ -10,6 +10,7 @@
 (include/reader "smoke-capsule-parity-dynamic-list.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-counters.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tabs.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-tabs-disabled.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tabs-dynamic.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-profile.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-settings.rkt" read-syntax/skip-first-line)
@@ -39,6 +40,10 @@
               (list parity-counters-make-page parity-counters-run-test parity-counters-cleanup))
         (cons 'parity-tabs
               (list parity-tabs-make-page parity-tabs-run-test parity-tabs-cleanup))
+        (cons 'parity-tabs-disabled
+              (list parity-tabs-disabled-make-page
+                    parity-tabs-disabled-run-test
+                    parity-tabs-disabled-cleanup))
         (cons 'parity-tabs-dynamic
               (list parity-tabs-dynamic-make-page
                     parity-tabs-dynamic-run-test

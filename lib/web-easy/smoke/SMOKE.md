@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `30` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `15` tests
+- full dashboard (`test-browser-dashboard.html`): `38` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `19` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-03):
 
-- full headless dashboard: `30/30` PASS
-- parity-only headless dashboard: `15/15` PASS
-- latest local `check-all.sh --headless`: PASS (`30/30`)
+- full headless dashboard: `38/38` PASS
+- parity-only headless dashboard: `19/19` PASS
+- latest local `check-all.sh --headless`: PASS (`38/38`)
 
 ## Command Wrapper
 
@@ -79,6 +79,7 @@ Wrapper commands:
 - `./smoke.sh parity`
 - `./smoke.sh parity-check`
 - `./smoke.sh parity-headless`
+- `./smoke.sh contract`
 - `./smoke.sh all`
 - `./smoke.sh headless`
 - `./smoke.sh rebuild`
@@ -203,10 +204,15 @@ Then open:
 
 - `http://localhost:8000/test-browser-dashboard.html` (runs all smoke pages)
 - `http://localhost:8000/test-browser-parity-dashboard.html` (runs parity-only smoke pages)
+- `http://localhost:8000/test-browser-contract-dashboard.html` (runs contract-only smoke pages)
 - `http://localhost:8000/test-browser-smoke.html`
 - `http://localhost:8000/test-browser-group.html`
 - `http://localhost:8000/test-browser-menu-keys.html`
 - `http://localhost:8000/test-browser-menu-full.html`
+- `http://localhost:8000/test-browser-a11y-contract.html`
+- `http://localhost:8000/test-browser-keyboard-contract.html`
+- `http://localhost:8000/test-browser-focus-order.html`
+- `http://localhost:8000/test-browser-disabled-contract.html`
 - `http://localhost:8000/test-browser-width.html`
 - `http://localhost:8000/test-browser-input.html`
 - `http://localhost:8000/test-browser-checkbox.html`
@@ -234,11 +240,16 @@ Then open:
 - `http://localhost:8000/test-browser-parity-table.html`
 - `http://localhost:8000/test-browser-parity-menu-keys.html`
 - `http://localhost:8000/test-browser-parity-menu-full.html`
+- `http://localhost:8000/test-browser-parity-a11y-contract.html`
+- `http://localhost:8000/test-browser-parity-keyboard-contract.html`
+- `http://localhost:8000/test-browser-parity-focus-order.html`
+- `http://localhost:8000/test-browser-parity-disabled-contract.html`
 
 Dashboards:
 
 - full: `http://localhost:8000/test-browser-dashboard.html`
 - parity: `http://localhost:8000/test-browser-parity-dashboard.html`
+- contract: `http://localhost:8000/test-browser-contract-dashboard.html`
 
 Manual visual page:
 
@@ -272,6 +283,19 @@ This command:
 1. Compiles smoke artifacts (`smoke-all`, `visual-check`, `parity-all`).
 2. Starts a local static server.
 3. Opens `test-browser-dashboard.html` in headless Chromium.
+4. Exits `0` on PASS summary, nonzero on FAIL.
+
+Contract-only headless runner:
+
+```bash
+./check-contract-headless.sh
+```
+
+This command:
+
+1. Compiles `smoke-all` and `parity-all`.
+2. Starts a local static server.
+3. Opens `test-browser-contract-dashboard.html` in headless Chromium.
 4. Exits `0` on PASS summary, nonzero on FAIL.
 
 Environment flags:
@@ -330,12 +354,12 @@ Note:
 
 From `lib/web-easy/smoke`:
 
-1. Clean generated artifacts:
-   - `./smoke.sh clean`
-2. Fresh compile smoke artifacts:
-   - `./smoke.sh rebuild`
-3. Run headless dashboard checks (when desired):
-   - `./smoke.sh headless` (runs `doctor` preflight first)
+1. Fast contract gate:
+   - `./smoke.sh contract`
+2. Full contract-first headless flow:
+   - `./check-all.sh --headless --contract-first`
+3. Optional guard self-test before push:
+   - `./smoke.sh guard`
 
 ## Parity Commands
 
@@ -377,6 +401,13 @@ Parity quickstart:
 Verification snippet (sequential):
 
 1. `./smoke.sh dashboards`
+2. `./smoke.sh contract`
+3. `./smoke.sh parity-headless`
+4. `./check-all.sh --headless`
+
+Legacy parity-only snippet:
+
+1. `./smoke.sh dashboards`
 2. `./smoke.sh parity-headless`
 3. `./check-all.sh --headless`
 
@@ -388,7 +419,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `30/30 smoke tests passed`
+1. full smoke: `PASS` with `38/38 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -401,7 +432,11 @@ Concurrency note:
 - smoke: `PASS initial=0, after-click=1`
 - group: `PASS group uses fieldset + legend`
 - menu-keys: `PASS menu popup + menu-item focus + Enter/Space activation`
-- menu-full: `PASS menu-full: multi-menu items + click/Enter/Space`
+- menu-full: `PASS menu-full: multi-menu items + click/Enter/Space + type-ahead`
+- a11y-contract: `PASS a11y contract: menu/tab/group/table semantics`
+- keyboard-contract: `PASS keyboard contract: menu + tabs keyboard-only flow`
+- focus-order: `PASS focus-order: menu labels + tab headers are stable`
+- disabled-contract: `PASS disabled contract: disabled tab is non-activating and skipped`
 - width: `PASS input fill-width; checkbox/select/slider/progress/button/table content-width`
 - input: `PASS initial=alice, after-change=bob`
 - checkbox: `PASS initial=off, after-change=on`
@@ -424,4 +459,8 @@ Concurrency note:
 - parity-settings: `PASS settings parity: table rows + menu actions`
 - parity-table: `PASS table parity: multi-column cells + menu actions`
 - parity-menu-keys: `PASS parity menu popup + menu-item focus + Enter/Space activation`
-- parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space`
+- parity-menu-full: `PASS parity menu-full: multi-menu items + click/Enter/Space + type-ahead`
+- parity-a11y-contract: `PASS parity a11y contract: menu/tab/table semantics`
+- parity-keyboard-contract: `PASS parity keyboard contract: menu + tabs keyboard-only flow`
+- parity-focus-order: `PASS parity focus-order: menu labels + tab headers are stable`
+- parity-disabled-contract: `PASS parity disabled contract: disabled tab is non-activating and skipped`

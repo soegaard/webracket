@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy focus-order smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running focus-order assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy focus-order app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function labels(list) {
+      return list.map((el) => (el.textContent || "").trim());
+    }
+
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    async function checkMenuOrder(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=menu-full",
+        (d) => d.querySelectorAll('.we-menu-label[role="button"]').length === 2,
+        timeoutMs
+      );
+      const menuLabels = Array.from(frameDoc.querySelectorAll('.we-menu-label[role="button"]'));
+      const names = labels(menuLabels);
+      assertEqual(names.join(","), "File,Edit", "smoke menu label order");
+    }
+
+    async function checkTabOrder(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=tab-panel",
+        (d) => d.querySelectorAll('button[role="tab"]').length === 3,
+        timeoutMs
+      );
+      const tabs = Array.from(frameDoc.querySelectorAll('button[role="tab"]'));
+      const names = labels(tabs);
+      assertEqual(names.join(","), "info,settings,about", "smoke tab header order");
+      assertTrue(tabs[0].compareDocumentPosition(tabs[1]) & Node.DOCUMENT_POSITION_FOLLOWING,
+        "settings follows info");
+      assertTrue(tabs[1].compareDocumentPosition(tabs[2]) & Node.DOCUMENT_POSITION_FOLLOWING,
+        "about follows settings");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const timeoutMs = 20000;
+        await checkMenuOrder(frame, timeoutMs);
+        await checkTabOrder(frame, timeoutMs);
+        setStatus("PASS\nfocus-order: menu labels + tab headers are stable", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

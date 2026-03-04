@@ -151,6 +151,12 @@
           await sleep(50);
         }
         assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu opened");
+        fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "s", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === saveItem, "type-ahead from File label focuses save");
+        saveItem.dispatchEvent(new KeyboardEvent("keydown", { key: "o", bubbles: true }));
+        await sleep(50);
+        assertTrue(ui.frameDoc.activeElement === openItem, "type-ahead from save focuses open");
         fileLabel.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
         await sleep(50);
         assertTrue(ui.frameDoc.activeElement === openItem, "ArrowDown focuses first File item");
@@ -219,9 +225,15 @@
         fileLabel.click();
         await sleep(50);
         assertTrue(fileLabel.getAttribute("aria-expanded") === "true", "File menu opened before focus-leave");
-        ui.frameDoc.body.setAttribute("tabindex", "-1");
-        ui.frameDoc.body.focus();
+        const outsideFocus = ui.frameDoc.createElement("button");
+        outsideFocus.type = "button";
+        outsideFocus.textContent = "outside-focus-target";
+        outsideFocus.style.position = "absolute";
+        outsideFocus.style.left = "-9999px";
+        ui.frameDoc.body.appendChild(outsideFocus);
+        outsideFocus.focus();
         await sleep(60);
+        assertTrue(ui.frameDoc.activeElement === outsideFocus, "focus leaves menu container");
         assertTrue(fileLabel.getAttribute("aria-expanded") === "false", "File menu closes when focus leaves menu");
 
         fileLabel.click();
@@ -279,7 +291,7 @@
         assertTrue(text.includes("status:redo"), "status after redo click");
         assertTrue(text.includes("redo:1"), "redo counter after click");
 
-        setStatus("PASS\nmenu-full: multi-menu items + click/Enter/Space", "pass");
+        setStatus("PASS\nmenu-full: multi-menu items + click/Enter/Space + type-ahead", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");

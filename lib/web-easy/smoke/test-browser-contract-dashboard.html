@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>web-easy smoke dashboard</title>
+  <title>web-easy contract dashboard</title>
   <style>
     body {
       font-family: monospace;
@@ -43,8 +43,8 @@
   </style>
 </head>
 <body>
-  <h1>web-easy smoke dashboard</h1>
-  <div id="summary">Running all smoke pages...</div>
+  <h1>web-easy contract dashboard</h1>
+  <div id="summary">Running contract smoke pages...</div>
   <table id="results">
     <thead>
       <tr>
@@ -59,44 +59,14 @@
   <script src="./dashboard-guard.js"></script>
   <script>
     const tests = [
-      "test-browser-smoke.html",
-      "test-browser-group.html",
-      "test-browser-menu-keys.html",
-      "test-browser-menu-full.html",
       "test-browser-a11y-contract.html",
       "test-browser-keyboard-contract.html",
       "test-browser-focus-order.html",
       "test-browser-disabled-contract.html",
-      "test-browser-width.html",
-      "test-browser-input.html",
-      "test-browser-checkbox.html",
-      "test-browser-list.html",
-      "test-browser-destroy.html",
-      "test-browser-branch.html",
-      "test-browser-controls.html",
-      "test-browser-operators.html",
-      "test-browser-tab-panel.html",
-      "test-browser-tab-panel-keys.html",
-      "test-browser-tab-panel-disabled.html",
-      "test-browser-parity-hello.html",
-      "test-browser-parity-counter.html",
-      "test-browser-parity-dynamic-list.html",
-      "test-browser-parity-counters.html",
-      "test-browser-parity-tabs.html",
-      "test-browser-parity-tabs-dynamic.html",
-      "test-browser-parity-profile.html",
-      "test-browser-parity-settings.html",
-      "test-browser-parity-table.html",
-      "test-browser-parity-menu-keys.html",
-      "test-browser-parity-menu-full.html",
       "test-browser-parity-a11y-contract.html",
       "test-browser-parity-keyboard-contract.html",
       "test-browser-parity-focus-order.html",
-      "test-browser-parity-disabled-contract.html",
-      "test-browser-parity-list.html",
-      "test-browser-parity-todo.html",
-      "test-browser-parity-incident.html",
-      "test-browser-parity-release.html"
+      "test-browser-parity-disabled-contract.html"
     ];
 
     function sleep(ms) {
@@ -144,7 +114,7 @@
       frame.src = page;
       document.body.appendChild(frame);
 
-      const timeoutMs = 30000;
+      const timeoutMs = 15000;
       const start = Date.now();
 
       while (Date.now() - start < timeoutMs) {
@@ -186,14 +156,19 @@
         const result = await runOne(page);
         results.push(result);
         appendRow(page, result.ok ? "PASS" : "FAIL", result.message);
+        if (!result.ok) {
+          const passedSoFar = results.filter((r) => r.ok).length;
+          setSummary("FAIL\n" + passedSoFar + "/" + tests.length + " contract tests passed", "fail");
+          return;
+        }
       }
 
       const passed = results.filter((r) => r.ok).length;
       const total = results.length;
       if (passed === total) {
-        setSummary("PASS\n" + passed + "/" + total + " smoke tests passed", "pass");
+        setSummary("PASS\n" + passed + "/" + total + " contract tests passed", "pass");
       } else {
-        setSummary("FAIL\n" + passed + "/" + total + " smoke tests passed", "fail");
+        setSummary("FAIL\n" + passed + "/" + total + " contract tests passed", "fail");
       }
     })();
   </script>

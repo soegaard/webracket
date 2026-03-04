@@ -14,6 +14,7 @@ Commands:
   parity     Compile parity smoke examples, then print parity URLs
   parity-check Compile parity smoke examples only
   parity-headless Run doctor preflight, then parity-only headless dashboard
+  contract   Run doctor preflight, then contract-only headless dashboard
   all        Run core tests + webracket run + smoke compile
   headless   Run doctor preflight, then core + smoke + headless dashboard
   dashboards Print full/parity dashboard URLs
@@ -38,6 +39,7 @@ print_urls() {
   printf '  %-10s %-13s %s\n' "visual" "(manual):" "$base_url/test-browser-visual-check.html"
   printf '  %-10s %-13s %s\n' "dashboard" "(automatic):" "$base_url/test-browser-dashboard.html"
   printf '  %-10s %-13s %s\n' "parity" "(automatic):" "$base_url/test-browser-parity-dashboard.html"
+  printf '  %-10s %-13s %s\n' "contract" "(automatic):" "$base_url/test-browser-contract-dashboard.html"
 }
 
 print_dashboards() {
@@ -46,6 +48,7 @@ print_dashboards() {
   echo "Dashboards:"
   echo "  full:   $base_url/test-browser-dashboard.html"
   echo "  parity: $base_url/test-browser-parity-dashboard.html"
+  echo "  contract: $base_url/test-browser-contract-dashboard.html"
 }
 
 print_parity_urls() {
@@ -63,6 +66,10 @@ print_parity_urls() {
   echo "  $base_url/test-browser-parity-table.html"
   echo "  $base_url/test-browser-parity-menu-keys.html"
   echo "  $base_url/test-browser-parity-menu-full.html"
+  echo "  $base_url/test-browser-parity-a11y-contract.html"
+  echo "  $base_url/test-browser-parity-keyboard-contract.html"
+  echo "  $base_url/test-browser-parity-focus-order.html"
+  echo "  $base_url/test-browser-parity-disabled-contract.html"
   echo "  $base_url/test-browser-parity-list.html"
   echo "  $base_url/test-browser-parity-todo.html"
   echo "  $base_url/test-browser-parity-incident.html"
@@ -254,6 +261,10 @@ case "$1" in
   parity-headless)
     doctor_headless
     "$SCRIPT_DIR/check-parity-headless.sh"
+    ;;
+  contract)
+    doctor_headless
+    "$SCRIPT_DIR/check-contract-headless.sh"
     ;;
   quick)
     doctor

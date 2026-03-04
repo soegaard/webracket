@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity a11y contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 420px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity a11y contract assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy parity a11y contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    function checkMenuContract(frameDoc) {
+      const menubar = frameDoc.querySelector('.we-menu-bar[role="menubar"]');
+      assertTrue(!!menubar, "parity menubar role present");
+      assertTrue(menubar.getAttribute("aria-orientation") === "horizontal", "parity menubar orientation");
+
+      const labels = Array.from(frameDoc.querySelectorAll('.we-menu-label[role="button"]'));
+      const popups = Array.from(frameDoc.querySelectorAll('.we-menu-popup[role="menu"]'));
+      const items = Array.from(frameDoc.querySelectorAll('.we-menu-item[role="menuitem"]'));
+      assertTrue(labels.length >= 2, "parity menu labels present");
+      assertTrue(popups.length >= 2, "parity menu popups present");
+      assertTrue(items.length >= 4, "parity menu items present");
+
+      labels.forEach((label, idx) => {
+        assertTrue(label.getAttribute("aria-haspopup") === "true", "parity label aria-haspopup true [" + idx + "]");
+        const controls = label.getAttribute("aria-controls");
+        assertTrue(!!controls, "parity label aria-controls present [" + idx + "]");
+        const popup = frameDoc.getElementById(controls);
+        assertTrue(!!popup, "parity aria-controls resolves popup [" + idx + "]");
+        assertTrue(popup.getAttribute("role") === "menu", "parity popup has menu role [" + idx + "]");
+      });
+    }
+
+    function checkTabContract(frameDoc) {
+      const tablist = frameDoc.querySelector('[role="tablist"]');
+      assertTrue(!!tablist, "parity tablist role present");
+      const tabs = Array.from(frameDoc.querySelectorAll('[role="tab"]'));
+      const panels = Array.from(frameDoc.querySelectorAll('[role="tabpanel"]'));
+      assertTrue(tabs.length >= 3, "parity tab roles present");
+      assertTrue(panels.length >= 1, "parity tabpanel present");
+      const selected = tabs.filter((tab) => tab.getAttribute("aria-selected") === "true");
+      assertTrue(selected.length === 1, "parity exactly one selected tab");
+      tabs.forEach((tab, idx) => {
+        const controls = tab.getAttribute("aria-controls");
+        assertTrue(!!controls, "parity tab aria-controls present [" + idx + "]");
+        const panel = frameDoc.getElementById(controls);
+        assertTrue(!!panel, "parity tab aria-controls resolves panel [" + idx + "]");
+      });
+    }
+
+    function checkTableContract(frameDoc) {
+      const table = frameDoc.querySelector("table");
+      assertTrue(!!table, "parity table present");
+      const headers = frameDoc.querySelectorAll("table th");
+      const rows = frameDoc.querySelectorAll("table tr");
+      const cells = frameDoc.querySelectorAll("table td");
+      assertTrue(headers.length >= 2, "parity table headers present");
+      assertTrue(rows.length >= 2, "parity table rows present");
+      assertTrue(cells.length >= 2, "parity table data cells present");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const timeoutMs = 20000;
+
+        const menuDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-menu-full",
+          (d) => d.querySelectorAll('.we-menu-item[role="menuitem"]').length >= 4,
+          timeoutMs
+        );
+        checkMenuContract(menuDoc);
+
+        const tabsDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-tabs",
+          (d) => d.querySelectorAll('[role="tab"]').length >= 3 && d.querySelector('[role="tabpanel"]'),
+          timeoutMs
+        );
+        checkTabContract(tabsDoc);
+
+        const tableDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-table",
+          (d) => d.querySelectorAll("table th").length >= 2 && d.querySelectorAll("table td").length >= 2,
+          timeoutMs
+        );
+        checkTableContract(tableDoc);
+
+        setStatus("PASS\nparity a11y contract: menu/tab/table semantics", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: body=" + JSON.stringify(bodyText(frameDoc).slice(0, 240)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

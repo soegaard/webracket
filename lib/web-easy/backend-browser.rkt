@@ -503,6 +503,120 @@
           (when label-native
             (js-send label-native "focus" (vector))))))
 
+    ;; menu-typeahead-key? : string? -> boolean?
+    ;;   Check whether key should trigger menu type-ahead focus behavior.
+    (define (menu-typeahead-key? key)
+      (and (= (string-length key) 1)
+           (char-alphabetic? (string-ref key 0))))
+
+    ;; node-text-downcase : any/c -> string?
+    ;;   Read node textContent as lowercase string.
+    (define (node-text-downcase node)
+      (string-downcase
+       (js-value->string
+        (js-ref/extern node "textContent"))))
+
+    ;; node-first-non-space-char : any/c -> any/c
+    ;;   Return first non-whitespace character from node text or #f.
+    (define (node-first-non-space-char node)
+      (define text (node-text-downcase node))
+      (let loop ([idx 0])
+        (cond
+          [(>= idx (string-length text))
+           #f]
+          [(char-whitespace? (string-ref text idx))
+           (loop (add1 idx))]
+          [else
+           (string-ref text idx)])))
+
+    ;; menu-item-matches-key? : any/c string? -> boolean?
+    ;;   Check whether item's visible label starts with key (ignoring leading spaces).
+    (define (menu-item-matches-key? item-native key)
+      (define key-ch (char-downcase (string-ref key 0)))
+      (define first-ch (node-first-non-space-char item-native))
+      (and first-ch
+           (char=? first-ch key-ch)))
+
+    ;; extern-node-same? : any/c any/c -> boolean?
+    ;;   Check whether a and b refer to the same DOM node.
+    (define (extern-node-same? a b)
+      (and a
+           b
+           (extern-bool-true?
+            (js-send/extern/nullish a "isSameNode" (vector b)))))
+
+    ;; nodelist-index-of-node : any/c any/c -> integer?
+    ;;   Return index of node in node-list, or -1 when not present.
+    (define (nodelist-index-of-node node-list node)
+      (define len (nodelist-length node-list))
+      (let loop ([idx 0])
+        (cond
+          [(>= idx len)
+           -1]
+          [else
+           (define candidate (nodelist-item node-list idx))
+           (if (and candidate (extern-node-same? candidate node))
+               idx
+               (loop (add1 idx)))])))
+
+    ;; focus-matching-menu-item-from-list! : any/c integer? string? -> boolean?
+    ;;   Focus first item in node-list matching key, scanning from start with wrap.
+    (define (focus-matching-menu-item-from-list! node-list start key)
+      (define len (nodelist-length node-list))
+      (let loop ([offset 0])
+        (cond
+          [(or (= len 0)
+               (>= offset len))
+           #f]
+          [else
+           (define idx (modulo (+ start offset) len))
+           (define item (nodelist-item node-list idx))
+           (if (and item (menu-item-matches-key? item key))
+               (begin
+                 (js-send item "focus" (vector))
+                 #t)
+               (loop (add1 offset)))])))
+
+    ;; focus-matching-menu-item-from-label! : any/c string? -> boolean?
+    ;;   Open label popup (if needed) and focus first matching item for key.
+    (define (focus-matching-menu-item-from-label! label-native key)
+      (define expanded
+        (js-value->string
+         (js-send/extern/nullish label-native "getAttribute" (vector "aria-expanded"))))
+      (when (not (string=? expanded "true"))
+        (js-send label-native "click" (vector)))
+      (define popup-native (js-ref/extern label-native "nextElementSibling"))
+      (if popup-native
+          (let ([item-list
+                 (js-send/extern/nullish
+                  popup-native
+                  "querySelectorAll"
+                  (vector ".we-menu-item[role='menuitem']"))])
+            (if item-list
+                (focus-matching-menu-item-from-list! item-list 0 key)
+                #f))
+          #f))
+
+    ;; focus-matching-menu-item-from-item! : any/c string? -> boolean?
+    ;;   Focus next matching item in same popup for key, wrapping in menu order.
+    (define (focus-matching-menu-item-from-item! item-native key)
+      (define popup-native (js-ref/extern item-native "parentElement"))
+      (if popup-native
+          (let ([item-list
+                 (js-send/extern/nullish
+                  popup-native
+                  "querySelectorAll"
+                  (vector ".we-menu-item[role='menuitem']"))])
+            (if item-list
+                (let* ([idx (nodelist-index-of-node item-list item-native)]
+                       [len (nodelist-length item-list)]
+                       [start (if (and (>= idx 0) (> len 0))
+                                  (modulo (add1 idx) len)
+                                  0)])
+                  (focus-matching-menu-item-from-list! item-list start key))
+                #f))
+          #f))
+
     ;; focus-selected-sibling-tab! : any/c -> void?
     ;;   Focus selected tab button in the same tablist as native.
     (define (focus-selected-sibling-tab! native)
@@ -600,7 +714,9 @@
                (when callback
                  (callback "focusout"))]
               [else
-               (void)]))
+               (when (menu-typeahead-key? key)
+                 (when (focus-matching-menu-item-from-label! native key)
+                   (js-send evt "preventDefault" (vector))))]))
           (when (menu-item-node? n)
             (case (string->symbol key)
               [(ArrowDown)
@@ -623,7 +739,9 @@
                  (callback "Escape"))
                (focus-own-menu-label! native)]
               [else
-               (void)]))
+               (when (menu-typeahead-key? key)
+                 (when (focus-matching-menu-item-from-item! native key)
+                   (js-send evt "preventDefault" (vector))))]))
           (when (and callback (role-button-node? n))
             (callback key)))))
       (js-add-event-listener!

@@ -455,8 +455,9 @@ Current `web-easy` test workflows:
 
 Current dashboard test counts:
 
-1. full dashboard (`smoke/test-browser-dashboard.html`): `30` tests
-2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `15` tests
+1. full dashboard (`smoke/test-browser-dashboard.html`): `38` tests
+2. parity dashboard (`smoke/test-browser-parity-dashboard.html`): `19` tests
+3. contract dashboard (`smoke/test-browser-contract-dashboard.html`): `8` tests
 
 Update these counts whenever test pages are added or removed.
 
@@ -488,6 +489,7 @@ Smoke lifecycle quick commands:
 - `cd lib/web-easy/smoke && ./smoke.sh ci`
 - `cd lib/web-easy/smoke && ./smoke.sh headless`
 - `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
+- `cd lib/web-easy/smoke && ./smoke.sh contract`
 - `cd lib/web-easy/smoke && ./smoke.sh clean`
 - `cd lib/web-easy/smoke && ./smoke.sh clean-dry`
 
@@ -499,8 +501,9 @@ Known operational caveats:
 Verification sequence (run in order):
 
 1. `cd lib/web-easy/smoke && ./smoke.sh dashboards`
-2. `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
-3. `cd lib/web-easy/smoke && ./check-all.sh --headless`
+2. `cd lib/web-easy/smoke && ./smoke.sh contract`
+3. `cd lib/web-easy/smoke && ./smoke.sh parity-headless`
+4. `cd lib/web-easy/smoke && ./check-all.sh --headless`
 
 ## Error Handling
 
@@ -656,6 +659,7 @@ Current browser backend element mapping (as implemented today):
 - `Up`/`Down` inside a popup is clamped (no wrap), matching current macOS-style behavior.
 - `Home`/`End` on labels moves to first/last label.
 - `Enter`/`Space` activates menu items.
+- Typing a letter while a menu label or menu item has focus performs type-ahead focus to the next matching menu item.
 - `Escape` closes the popup and returns focus to the owning label.
 - Leaving menu focus (focus moves outside menu container) closes the open popup.
 
@@ -677,16 +681,24 @@ Current width defaults are intentionally split between layout containers and lea
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:
-  - full dashboard baseline: `30` automated smoke tests.
-  - parity dashboard baseline: `15` automated parity tests.
+  - full dashboard baseline: `38` automated smoke tests.
+  - parity dashboard baseline: `19` automated parity tests.
   - recent additions to full dashboard baseline:
     - `test-browser-group.html` (fieldset + legend semantics)
     - `test-browser-menu-keys.html` (menu popup + menu-item focus + Enter/Space activation)
     - `test-browser-menu-full.html` (multi-menu/multi-item activation and status updates)
+    - `test-browser-a11y-contract.html` (cross-widget semantic/ARIA contract checks for menu/tab/group/table)
+    - `test-browser-keyboard-contract.html` (keyboard-only contract checks for menu/tab navigation and activation)
+    - `test-browser-focus-order.html` (focus-order contract checks for menu-label and tab-header ordering)
+    - `test-browser-disabled-contract.html` (disabled-tab contract checks for non-activation and keyboard skip behavior)
     - `test-browser-width.html` (width-policy runtime assertions)
     - `test-browser-parity-incident.html` (real-world incident triage parity flow)
     - `test-browser-parity-release.html` (real-world release checklist parity flow)
     - `test-browser-parity-menu-full.html` (richer parity menu interaction coverage)
+    - `test-browser-parity-a11y-contract.html` (parity-side semantic/ARIA contract checks for menu/tab/table)
+    - `test-browser-parity-keyboard-contract.html` (parity keyboard-only contract checks for menu/tab flows)
+    - `test-browser-parity-focus-order.html` (parity focus-order contract checks for menu/tab ordering)
+    - `test-browser-parity-disabled-contract.html` (parity disabled-tab contract checks for non-activation and keyboard skip behavior)
 
 ## Open Design Questions
 
