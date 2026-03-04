@@ -96,6 +96,8 @@
        .we-table-header-cell.we-density-compact{padding:1px 4px;text-align:left;border-bottom:1px solid #bbb;}\
        .we-table-data-cell.we-density-normal{padding:2px 8px;}\
        .we-table-data-cell.we-density-compact{padding:1px 4px;}")
+    (define shared-style-text ; Shared stylesheet injected once per window root.
+      (string-append control-style-text tab-panel-style-text dialog-style-text menu-style-text))
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -376,7 +378,7 @@
         [(window)
          (define node (dom-node 'div (list (cons attr/role 'window)
                                            (cons 'data-we-widget "window")) '() #f #f #f))
-         (define style-node (dom-node 'style '() '() control-style-text #f #f))
+         (define style-node (dom-node 'style '() '() shared-style-text #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
@@ -696,7 +698,6 @@
                                #f
                                #f
                                #f))
-         (define style-node (dom-node 'style '() '() tab-panel-style-text #f #f))
          (define tabs-node  (dom-node 'div (list (cons attr/layout 'row)
                                                  (cons attr/role   'tablist)
                                                  (cons 'data-we-widget "tab-list")
@@ -714,7 +715,6 @@
                                         #f
                                         #f
                                         #f))
-         (backend-append-child! node style-node)
          (backend-append-child! node tabs-node)
          (backend-append-child! node content-node)
          (define tab-buttons    '())
@@ -882,7 +882,6 @@
         [(dialog)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
          (define on-close  (alist-ref (view-props v) 'on-close 'render))
-         (define style-node (dom-node 'style '() '() dialog-style-text #f #f))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
                                       (cons 'data-we-widget "dialog")
@@ -919,7 +918,6 @@
             (lambda (key)
               (when (string=? key "Escape")
                 (on-close)))))
-         (backend-append-child! node style-node)
          (backend-append-child! node panel-node)
          (for-each (lambda (child)
                      (backend-append-child! panel-node (build-node child register-cleanup!)))
@@ -1066,7 +1064,6 @@
            (register-cleanup! (lambda () (obs-unobserve! raw-height height-listener))))
          node]
         [(menu-bar)
-         (define style-node (dom-node 'style '() '() menu-style-text #f #f))
          (define node (dom-node 'menu-bar
                                 (list (cons 'class "we-menu-bar")
                                       (cons 'data-we-widget "menu-bar")
@@ -1076,7 +1073,6 @@
                                 #f
                                 #f
                                 #f))
-         (backend-append-child! node style-node)
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))

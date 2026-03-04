@@ -645,29 +645,24 @@ Current width defaults are intentionally split between layout containers and lea
    - review whether each widget currently maps to the best semantic HTML element.
    - document intended element mapping policy and any accessibility tradeoffs.
 5. Revisit CSS strategy (inline vs stylesheet/classes):
-   - define when inline style is acceptable vs when class-based styles in shared `<style>` should be preferred.
-   - align renderer output with that policy for maintainability and visual consistency.
+   - continue consolidating defaults into shared class-based styles where possible.
+   - keep inline style usage only for dynamic geometry values that cannot be represented via classes.
 
-## Element/CSS Cleanup Start (2026-03-03)
+## Element/CSS Cleanup Status (2026-03-04)
 
-Initial cleanup slice completed:
+Current status:
 
-1. Menu-related inline styles are now centralized as named renderer constants (`menu-bar-style`, `menu-style`, `menu-item-style`) instead of repeated literal strings.
-2. Existing behavior is unchanged; this is a maintainability refactor only.
-3. Browser element mapping now uses:
-   - `menu-bar` -> `<nav>`
-   - `menu` -> `<div>`
-   - `menu-item` -> `<button type=\"button\">`
+1. `renderer.rkt` no longer emits inline visual style attributes for core controls, menu, dialog, tab-panel, or table density/cell spacing.
+2. Default visual behavior is provided through injected stylesheet rules (`control-style-text`, `menu-style-text`, `dialog-style-text`, `tab-panel-style-text`).
+3. Stable CSS/test targeting is now available through `data-we-widget` markers across container, control, and sub-widget nodes (for example menu popup/label, dialog panel, table rows/cells, tab list/content/buttons).
 
 Rationale:
 
-- Reduces copy-paste drift when adjusting spacing/appearance across `menu-bar`, `menu`, and `menu-item`.
-- Establishes a repeatable pattern for moving widget styling from scattered literals toward an explicit style policy.
-- Keeps risk low while we prepare larger semantic-element decisions.
-- Avoids nested navigation landmarks and gives menu actions native button semantics.
+- Keeps rendering output themeable via stylesheet-only overrides.
+- Reduces renderer-side style duplication and attr churn during updates.
+- Improves test/tool resilience by targeting widget identity (`data-we-widget`) instead of brittle DOM shape assumptions.
 
-Next cleanup slices:
+Remaining follow-up:
 
-1. Define target semantic element mapping table per widget (`menu-item`, `choice/radios`, `table`, `group`, `tab-panel` controls).
-2. Move additional repeated style literals (width/alignment policy styles) into shared constants.
-3. Decide which widget styles should become class-based + shared `<style>` blocks versus staying inline.
+1. Decide whether stylesheet injection should be centralized per root window to avoid repeated `<style>` nodes when multiple styled composites are present.
+2. Expand and document the public theme/class contract (which classes are stable API vs internal).
