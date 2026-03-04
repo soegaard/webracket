@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity tab aria-linkage contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 360px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity tab aria-linkage contract assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy parity tab aria-linkage contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function tabByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll('button[role="tab"]'))
+        .find((el) => (el.textContent || "").trim() === label);
+    }
+
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    function checkAriaLinkage(frameDoc) {
+      const tabs = Array.from(frameDoc.querySelectorAll('button[role="tab"]'));
+      const panel = frameDoc.querySelector('[role="tabpanel"]');
+      assertTrue(tabs.length >= 3, "parity tab headers present");
+      assertTrue(!!panel, "parity tabpanel present");
+
+      const selected = tabs.filter((tab) => tab.getAttribute("aria-selected") === "true");
+      assertTrue(selected.length === 1, "parity exactly one tab selected");
+      const selectedTab = selected[0];
+
+      tabs.forEach((tab, idx) => {
+        const controls = tab.getAttribute("aria-controls");
+        assertTrue(!!controls, "parity tab aria-controls present [" + idx + "]");
+        assertTrue(controls === panel.id, "parity tab aria-controls points to panel [" + idx + "]");
+      });
+
+      const labelledby = panel.getAttribute("aria-labelledby");
+      assertTrue(!!labelledby, "parity tabpanel aria-labelledby present");
+      assertTrue(labelledby === selectedTab.id, "parity tabpanel aria-labelledby matches selected tab id");
+    }
+
+    async function checkDisabledCase(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-parity-all.html?test=parity-tabs-disabled",
+        (d) => d.querySelectorAll('button[role="tab"]').length >= 3,
+        timeoutMs
+      );
+
+      const left = tabByText(frameDoc, "left");
+      const middle = tabByText(frameDoc, "middle");
+      assertTrue(!!left && !!middle, "parity disabled tabs present");
+      assertTrue(middle.getAttribute("aria-disabled") === "true", "parity middle tab aria-disabled true");
+      assertTrue(left.getAttribute("aria-selected") === "true", "parity left initially selected");
+
+      middle.click();
+      await sleep(60);
+      assertTrue(left.getAttribute("aria-selected") === "true", "parity disabled click does not activate middle");
+
+      left.focus();
+      await sleep(40);
+      left.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await sleep(60);
+      assertTrue(middle.getAttribute("aria-selected") !== "true", "parity keyboard skip keeps disabled tab inactive");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const timeoutMs = 20000;
+
+        const linkageDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-tabs",
+          (d) => d.querySelectorAll('button[role="tab"]').length >= 3 && d.querySelector('[role="tabpanel"]'),
+          timeoutMs
+        );
+        checkAriaLinkage(linkageDoc);
+        await checkDisabledCase(frame, timeoutMs);
+
+        setStatus("PASS\nparity tab aria-linkage contract: controls/labelledby/selected/disabled", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: body=" + JSON.stringify(bodyText(frameDoc).slice(0, 260)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

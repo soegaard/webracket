@@ -702,6 +702,7 @@
                                       #f))
          (define content-node (dom-node 'div (list (cons attr/role 'tabpanel)
                                                    (cons 'id       panel-id)
+                                                   (cons 'aria-labelledby "")
                                                    (cons 'class    "we-tab-content"))
                                         '()
                                         #f
@@ -748,15 +749,32 @@
                     (list-ref tab 2)
                     (loop (cdr ts)))])))
          (define (set-selected! selected)
+           (define selected-button-id
+             (let loop ([entries tab-buttons])
+               (cond
+                 [(null? entries) ""]
+                 [else
+                  (define entry (car entries))
+                  (if (equal? (list-ref entry 0) selected)
+                      (list-ref entry 1)
+                      (loop (cdr entries)))])))
+           (set-dom-node-attrs!
+            content-node
+            (list (cons attr/role 'tabpanel)
+                  (cons 'id panel-id)
+                  (cons 'aria-labelledby selected-button-id)
+                  (cons 'class "we-tab-content")))
            (set-dom-node-attrs! node (list (cons 'selected selected)))
            (set! selected-value selected)
            (for-each (lambda (entry)
-                       (define tab-id (car entry))
-                       (define button-node (cdr entry))
+                       (define tab-id (list-ref entry 0))
+                       (define button-id (list-ref entry 1))
+                       (define button-node (list-ref entry 2))
                        (define disabled? (tab-disabled? tab-id))
                        (set-dom-node-attrs!
                         button-node
                         (list (cons 'tab-id tab-id)
+                              (cons 'id button-id)
                               (cons 'role 'tab)
                               (cons 'aria-controls panel-id)
                               (cons 'aria-disabled disabled?)
@@ -805,12 +823,19 @@
              [else (void)]))
          (define (init-tabs!)
            (set! tab-buttons
-                 (map (lambda (tab)
+                 (let loop ([remaining tabs] [idx 0])
+                   (cond
+                     [(null? remaining) '()]
+                     [else
+                      (define tab (car remaining))
                         (define tab-id (car tab))
+                        (define button-id
+                          (string-append panel-id "-tab-" (number->string idx)))
                         (define disabled? (list-ref tab 2))
                         (define button-node
                           (dom-node 'button
                                     (list (cons 'tab-id   tab-id)
+                                          (cons 'id button-id)
                                           (cons 'selected #f))
                                     '()
                                     (value->text tab-id)
@@ -827,9 +852,9 @@
                            (lambda (key)
                              (unless disabled?
                                (handle-tab-key key)))))
-                        (cons tab-id button-node))
-                      tabs))
-           (backend-replace-children! tabs-node (map cdr tab-buttons)))
+                        (cons (list tab-id button-id button-node)
+                              (loop (cdr remaining) (add1 idx)))])))
+           (backend-replace-children! tabs-node (map (lambda (entry) (list-ref entry 2)) tab-buttons)))
          (define (render-tab! selected)
            (set-selected! selected)
            (backend-set-single-child! content-node (build-node (choose-view selected) register-cleanup!)))
