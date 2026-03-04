@@ -625,6 +625,17 @@ Current default classes:
   - `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`
   - open-state variant: `.is-open`
 
+Default theme tokens (CSS custom properties):
+
+- Focus/overlay:
+  - `--we-focus`, `--we-overlay`, `--we-shadow`
+- Surface/background:
+  - `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-disabled`, `--we-bg-hover`
+- Borders/text:
+  - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg-muted`
+- Spacing/gaps:
+  - `--we-space-xs`, `--we-space-sm`, `--we-space-md`, `--we-space-lg`, `--we-gap`, `--we-gap-tab`
+
 `data-we-widget` examples:
 
 - containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `spacer`
