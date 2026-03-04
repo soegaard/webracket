@@ -81,7 +81,6 @@ All browser smoke pages under `smoke/test-browser-*.html` should follow these ru
 Guard self-test command:
 
 - `./check-dashboard-guard.sh`
-- `./smoke.sh guard`
 - expected result: script exits `0` when guard correctly reports a `FAIL` for the intentional fixture page.
 
 ## Smoke Grouping
@@ -159,14 +158,12 @@ Wrapper commands:
 - `./smoke.sh parity`
 - `./smoke.sh parity-check`
 - `./smoke.sh all`
-- `./smoke.sh headless-run <mode> [args]`
 - `./smoke.sh rebuild`
 - `./smoke.sh quick`
 - `./smoke.sh status`
 - `./smoke.sh urls`
 - `./smoke.sh dashboards`
 - `./smoke.sh parity-open`
-- `./smoke.sh guard`
 - `./smoke.sh open`
 - `./smoke.sh doctor`
 - `./smoke.sh clean`
@@ -207,7 +204,6 @@ Repository-root aliases:
 Command notes:
 
 - `quick`: runs `doctor` preflight, then `all`.
-- `headless-run`: preferred `smoke.sh` entrypoint for headless modes.
 - `status`: shows tool/artifact status and suggests the next command.
 - `COMMANDS.tsv`: machine-readable inventory of canonical smoke/headless commands.
 - `COMMANDS.tsv` is generated; edit `gen-commands.sh` and regenerate via `make smoke-commands`.
@@ -411,7 +407,6 @@ One-prefix approval tip (Codex runs):
 
 - Use `./headless.sh ...` as the single entrypoint for headless commands.
 - Approve this once as a command prefix so later headless runs do not prompt repeatedly.
-- Optional alias: `./smoke.sh headless-run ...` forwards to `./headless.sh ...`.
 
 Contract-only headless runner:
 
@@ -574,7 +569,6 @@ Concurrency note:
 Compatibility wrappers still available:
 
 - `./check-ci-smoke.sh` (runs `headless.sh doctor` then `headless.sh ci`)
-- `./smoke.sh headless-run <mode> [args]` (dispatches to `headless.sh`)
 
 ## Expected PASS Lines
 

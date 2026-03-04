@@ -27,7 +27,6 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
     echo -e "headless\t$cmd\t$desc"
   done < <("$SCRIPT_DIR/headless.sh" list)
 
-  echo -e "smoke\t./smoke.sh headless-run <mode> [args]\tForward to headless dispatcher."
   echo -e "smoke\t./smoke.sh check\tCompile smoke artifacts."
   echo -e "smoke\t./smoke.sh open\tServe smoke pages locally."
 

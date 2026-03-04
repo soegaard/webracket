@@ -31,7 +31,7 @@ fi
 
 if [ "$CONTRACT_FIRST" -eq 1 ]; then
   echo "[0/4] contract headless"
-  "$SCRIPT_DIR/smoke.sh" contract
+  "$SCRIPT_DIR/headless.sh" contract
   echo
 fi
 

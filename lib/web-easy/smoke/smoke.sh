@@ -2,8 +2,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-LOCAL_TOOLS_DIR="${SMOKE_LOCAL_TOOLS_DIR:-$ROOT_DIR/.local-tools}"
 
 usage() {
   cat <<'USAGE'
@@ -14,14 +12,12 @@ Commands:
   parity     Compile parity smoke examples, then print parity URLs
   parity-check Compile parity smoke examples only
   all        Run core tests + webracket run + smoke compile
-  headless-run Run unified headless dispatcher (doctor/smoke/parity/contract/dashboards/ci/guard/all/single)
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
-  quick      Run doctor preflight, then core tests + smoke compile
+  quick      Run local tool preflight, then core tests + smoke compile
   status     Print tools/artifacts status and suggested next command
   urls       Print smoke URLs without starting a server
   parity-open Print parity test URLs
-  guard      Run dashboard guard self-test
   open       Start local smoke server (raco static-web)
   doctor     Check local prerequisites and print setup hints
   clean      Remove generated smoke artifacts
@@ -134,19 +130,6 @@ status() {
     missing=1
   fi
 
-  if command -v node >/dev/null 2>&1; then
-    echo "tool: node              ok"
-  else
-    echo "tool: node              missing"
-    missing=1
-  fi
-
-  if [ -d "$LOCAL_TOOLS_DIR/node_modules/playwright" ]; then
-    echo "tool: playwright        ok ($LOCAL_TOOLS_DIR/node_modules/playwright)"
-  else
-    echo "tool: playwright        missing ($LOCAL_TOOLS_DIR/node_modules/playwright)"
-  fi
-
   artifacts="$(count_artifacts)"
   echo "artifacts: generated smoke files = $artifacts"
 
@@ -185,20 +168,6 @@ doctor() {
     ok=0
   fi
 
-  if command -v node >/dev/null 2>&1; then
-    echo "ok: node found ($(node --version))"
-  else
-    echo "missing: node (required for headless)"
-    ok=0
-  fi
-
-  if [ -d "$LOCAL_TOOLS_DIR/node_modules/playwright" ]; then
-    echo "ok: Playwright found at $LOCAL_TOOLS_DIR/node_modules/playwright"
-  else
-    echo "missing: Playwright in $LOCAL_TOOLS_DIR"
-    echo "hint: npm --prefix .local-tools install --save-dev playwright"
-  fi
-
   if [ "$ok" -eq 1 ]; then
     echo "doctor: required tools are available"
     return 0
@@ -206,18 +175,6 @@ doctor() {
 
   echo "doctor: missing required tools"
   return 1
-}
-
-doctor_headless() {
-  doctor
-
-  if [ ! -d "$LOCAL_TOOLS_DIR/node_modules/playwright" ]; then
-    echo "headless preflight: Playwright is required."
-    echo "hint: npm --prefix .local-tools install --save-dev playwright"
-    return 1
-  fi
-
-  echo "headless preflight: ready"
 }
 
 open_server() {
@@ -262,10 +219,6 @@ case "$1" in
   all)
     "$SCRIPT_DIR/check-all.sh"
     ;;
-  headless-run)
-    shift
-    "$SCRIPT_DIR/headless.sh" "$@"
-    ;;
   quick)
     doctor
     "$SCRIPT_DIR/check-all.sh"
@@ -285,9 +238,6 @@ case "$1" in
     ;;
   parity-open)
     print_parity_urls
-    ;;
-  guard)
-    "$SCRIPT_DIR/check-dashboard-guard.sh"
     ;;
   open)
     open_server

@@ -10,7 +10,6 @@ headless	./headless.sh timings	Run contract/smoke/parity with compile skipped an
 headless	./headless.sh guard	Run dashboard guard self-test
 headless	./headless.sh all	Run check-all.sh --headless
 headless	./headless.sh single <compile-script> <test-page>	Run one page with check-single-headless.sh
-smoke	./smoke.sh headless-run <mode> [args]	Forward to headless dispatcher.
 smoke	./smoke.sh check	Compile smoke artifacts.
 smoke	./smoke.sh open	Serve smoke pages locally.
 make	make smoke-ci	Run canonical local CI headless gate.
