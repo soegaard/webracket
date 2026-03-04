@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-contract smoke-all-contract smoke-headless smoke-parity-headless smoke-one
+.PHONY: help smoke-ci smoke-ci-lite smoke-contract smoke-all-contract smoke-headless smoke-parity-headless smoke-one
 
 help:
 	@echo "Available targets:"
@@ -14,10 +14,14 @@ help:
 	@echo "  smoke-headless        Run full headless smoke flow."
 	@echo "  smoke-parity-headless Run parity-only headless dashboard."
 	@echo "  smoke-ci              Run local CI smoke entrypoint (ci-fast)."
+	@echo "  smoke-ci-lite         Run local CI headless gate without compile."
 	@echo "  smoke-one             Run one headless smoke page (set SINGLE_COMPILE, SINGLE_PAGE)."
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./smoke.sh ci-fast
+
+smoke-ci-lite:
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./headless.sh ci
 
 smoke-contract:
 	cd $(SMOKE_DIR) && ./headless.sh contract

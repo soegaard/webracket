@@ -106,20 +106,12 @@ jobs:
           fi
           echo "web-easy webracket tests passed"
 
-          echo "[3/6] smoke compile"
+          echo "[3/4] smoke compile"
           ./check-smoke.sh
 
-          echo "[4/6] contract headless dashboard"
-          SMOKE_SKIP_COMPILE=1 ./headless.sh contract
-          echo "contract gate passed"
-
-          echo "[5/6] smoke headless dashboard"
-          SMOKE_SKIP_COMPILE=1 ./headless.sh smoke
-          echo "full smoke gate passed"
-
-          echo "[6/6] dashboard guard self-test"
-          ./check-dashboard-guard.sh
-          echo "guard gate passed"
+          echo "[4/4] unified headless CI (contract + smoke + guard)"
+          SMOKE_SKIP_COMPILE=1 ./headless.sh ci
+          echo "unified headless CI gate passed"
 
       - name: Prepare smoke failure context
         if: failure()
