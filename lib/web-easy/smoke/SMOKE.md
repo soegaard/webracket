@@ -104,7 +104,7 @@ Wrapper commands:
 - `./smoke.sh all`
 - `./smoke.sh headless`
 - `./smoke.sh headless-run <mode> [args]`
-- `./smoke.sh ci-fast`
+- `./smoke.sh ci-fast` (deprecated alias for `./smoke.sh ci`)
 - `./smoke.sh rebuild`
 - `./smoke.sh quick`
 - `./smoke.sh ci`
@@ -125,6 +125,7 @@ Headless dispatcher (for one-prefix approval workflows):
 - `./headless.sh contract`
 - `./headless.sh dashboards`
 - `./headless.sh ci`
+- `./headless.sh ci-fast` (deprecated alias for `./headless.sh ci`)
 - `./headless.sh guard`
 - `./headless.sh all`
 - `./headless.sh doctor`
@@ -139,6 +140,7 @@ Use these as the primary entrypoints:
 ./headless.sh contract
 ./headless.sh smoke
 ./headless.sh dashboards
+./headless.sh ci
 ./headless.sh single <compile-script> <test-page>
 ```
 
@@ -157,8 +159,8 @@ Repository-root aliases:
 Command notes:
 
 - `quick`: runs `doctor` preflight, then `all`.
-- `ci`: CI smoke entrypoint (`doctor` + `check-ci-smoke.sh`).
-- `ci-fast`: GitHub-like gate (`check-smoke` + `headless contract` + `headless smoke` + `headless guard`).
+- `ci`: CI smoke entrypoint (`doctor` + `headless ci`).
+- `ci-fast`: deprecated alias for `ci`.
 - `status`: shows tool/artifact status and suggests the next command.
 
 `tab-panel` entry forms:
@@ -437,8 +439,8 @@ Common failure patterns and what to check first:
 
 Note:
 
-- `check-ci-smoke.sh` is the local CI-helper command and routes headless steps via `./headless.sh`.
-- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs compile + `./headless.sh contract` + `./headless.sh smoke` + guard on pushes/PRs touching `lib/web-easy/**`.
+- `check-ci-smoke.sh` is the local CI-helper command and routes headless steps via `./headless.sh` (`doctor` + `ci`).
+- GitHub workflow: `.github/workflows/web-easy-smoke.yml` runs `./headless.sh doctor`, then compile + `./headless.sh ci` (with `SMOKE_SKIP_COMPILE=1`) on pushes/PRs touching `lib/web-easy/**`.
 
 ## Recommended Daily Flow
 
@@ -493,21 +495,20 @@ Parity quickstart:
 Verification snippet (sequential):
 
 1. `./smoke.sh dashboards`
-2. `./headless.sh contract`
-3. `./headless.sh parity`
-4. `./headless.sh smoke`
+2. `./headless.sh parity`
+3. `./headless.sh ci`
 
 Legacy parity-only snippet:
 
 1. `./smoke.sh dashboards`
 2. `./headless.sh parity`
-3. `./headless.sh smoke`
+3. `./headless.sh ci`
 
 ## Manual Release Checklist
 
 Before merge/release, run in this order from `lib/web-easy/smoke`:
 
-1. `./check-ci-smoke.sh`
+1. `./headless.sh ci`
 
 Expected high-level outcomes:
 

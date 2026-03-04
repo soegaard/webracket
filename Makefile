@@ -13,12 +13,12 @@ help:
 	@echo "  smoke-all-contract    Run contract+smoke dashboards headless."
 	@echo "  smoke-headless        Run full headless smoke flow."
 	@echo "  smoke-parity-headless Run parity-only headless dashboard."
-	@echo "  smoke-ci              Run local CI smoke entrypoint (ci-fast)."
+	@echo "  smoke-ci              Run local CI smoke entrypoint."
 	@echo "  smoke-ci-lite         Run local CI headless gate without compile."
 	@echo "  smoke-one             Run one headless smoke page (set SINGLE_COMPILE, SINGLE_PAGE)."
 
 smoke-ci:
-	cd $(SMOKE_DIR) && ./smoke.sh ci-fast
+	cd $(SMOKE_DIR) && ./headless.sh ci
 
 smoke-ci-lite:
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./headless.sh ci

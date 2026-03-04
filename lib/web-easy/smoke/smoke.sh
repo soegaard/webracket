@@ -17,12 +17,12 @@ Commands:
   contract   Run doctor preflight, then contract-only headless dashboard
   all        Run core tests + webracket run + smoke compile
   headless   Run doctor preflight, then core + smoke + headless dashboard
-  headless-run Run unified headless dispatcher (doctor/smoke/parity/contract/dashboards/guard/all/single)
-  ci-fast    Run compile + contract/smoke dashboards + guard (GitHub-like)
+  headless-run Run unified headless dispatcher (doctor/smoke/parity/contract/dashboards/ci/ci-fast/guard/all/single)
+  ci-fast    Deprecated alias for ci (kept for compatibility)
   dashboards Print full/parity dashboard URLs
   rebuild    Clean generated artifacts, then compile all smoke examples
   quick      Run doctor preflight, then core tests + smoke compile
-  ci         CI smoke entrypoint (doctor + check-ci-smoke)
+  ci         CI smoke entrypoint (doctor + headless ci)
   status     Print tools/artifacts status and suggested next command
   urls       Print smoke URLs without starting a server
   parity-open Print parity test URLs
@@ -288,22 +288,13 @@ case "$1" in
     "$SCRIPT_DIR/check-all.sh"
     ;;
   ci)
-    doctor
-    "$SCRIPT_DIR/check-ci-smoke.sh"
+    doctor_headless
+    "$SCRIPT_DIR/headless.sh" ci
     ;;
   ci-fast)
+    echo "smoke.sh ci-fast is deprecated; using ci"
     doctor_headless
-    echo "[1/4] smoke compile"
-    "$SCRIPT_DIR/check-smoke.sh"
-    echo
-    echo "[2/4] contract headless dashboard"
-    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/headless.sh" contract
-    echo
-    echo "[3/4] smoke headless dashboard"
-    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/headless.sh" smoke
-    echo
-    echo "[4/4] dashboard guard self-test"
-    "$SCRIPT_DIR/headless.sh" guard
+    "$SCRIPT_DIR/headless.sh" ci
     ;;
   status)
     status
