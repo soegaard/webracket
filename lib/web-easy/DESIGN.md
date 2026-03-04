@@ -704,5 +704,5 @@ Rationale:
 
 Remaining follow-up:
 
-1. Decide whether stylesheet injection should be centralized per root window to avoid repeated `<style>` nodes when multiple styled composites are present.
+1. Keep the shared-window stylesheet model and monitor bundle size if default CSS grows.
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
