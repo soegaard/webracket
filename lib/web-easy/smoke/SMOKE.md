@@ -54,16 +54,16 @@ Rationale:
 
 ## Current Test Counts
 
-- full dashboard (`test-browser-dashboard.html`): `40` tests
-- parity dashboard (`test-browser-parity-dashboard.html`): `20` tests
+- full dashboard (`test-browser-dashboard.html`): `60` tests
+- parity dashboard (`test-browser-parity-dashboard.html`): `30` tests
 
 Update these counts whenever test pages are added or removed.
 
 Last validated (2026-03-04):
 
-- full headless dashboard: `40/40` PASS
-- parity-only headless dashboard: `20/20` PASS
-- latest local `check-all.sh --headless`: PASS (`40/40`)
+- full headless dashboard: `60/60` PASS
+- parity-only headless dashboard: `30/30` PASS
+- latest local `check-all.sh --headless`: PASS (`60/60`)
 
 ## Menu Behavior Contract
 
@@ -255,6 +255,7 @@ Then open:
 - `http://localhost:8000/test-browser-tab-panel.html`
 - `http://localhost:8000/test-browser-tab-panel-keys.html`
 - `http://localhost:8000/test-browser-tab-panel-disabled.html`
+- `http://localhost:8000/test-browser-tab-panel-dynamic.html`
 - `http://localhost:8000/test-browser-visual-check.html` (manual visual sanity page)
 - `http://localhost:8000/test-browser-parity-hello.html`
 - `http://localhost:8000/test-browser-parity-counter.html`
@@ -463,7 +464,7 @@ Before merge/release, run in this order from `lib/web-easy/smoke`:
 
 Expected high-level outcomes:
 
-1. full smoke: `PASS` with `59/59 smoke tests passed`
+1. full smoke: `PASS` with `60/60 smoke tests passed`
 2. guard self-test: `FAIL` line that says guard correctly detected forbidden token leakage (this is expected/pass condition for the self-test command)
 
 Concurrency note:
@@ -502,6 +503,7 @@ Concurrency note:
 - tab-panel: `PASS initial=Info; click-Settings; key-ArrowRight=About; key-Home=Info`
 - tab-panel-keys: `PASS selection+focus track keyboard: info->settings->about->info->about->info->settings`
 - tab-panel-disabled: `PASS initial=left; disabled-click-kept-left; ArrowRight=right; ArrowLeft=left; wrap-left=right; wrap-right=left`
+- tab-panel-dynamic: `PASS dynamic tab-panel: Arrow keys + add faq + remove selected + remove details`
 - parity-hello: `PASS hello text rendered`
 - parity-counter: `PASS counter starts at 0 and increments to 1`
 - parity-dynamic-list: `PASS initial: a:0,b:0; inc-a: a:1; reorder: b before a; add-c: c:0; drop-b: a:1,c:0`
