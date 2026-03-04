@@ -337,14 +337,16 @@
       (define normalized-rows (ensure-list rows 'table "rows"))
       (define (header-cell column)
         (dom-node 'th
-                  (list (cons 'style (table-header-cell-style density)))
+                  (list (cons 'data-we-widget "table-header-cell")
+                        (cons 'style (table-header-cell-style density)))
                   '()
                   (value->text column)
                   #f
                   #f))
       (define (data-cell cell-value)
         (dom-node 'td
-                  (list (cons 'style (table-data-cell-style density)))
+                  (list (cons 'data-we-widget "table-data-cell")
+                        (cons 'style (table-data-cell-style density)))
                   '()
                   (value->text cell-value)
                   #f
@@ -354,7 +356,7 @@
             row
             (list row)))
       (define (build-row cell-values build-cell)
-        (define row-node (dom-node 'tr '() '() #f #f #f))
+        (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
         (backend-replace-children! row-node (map build-cell cell-values))
         row-node)
       (define header-row
@@ -893,6 +895,7 @@
                                 #f))
          (define panel-node (dom-node 'div
                                       (list (cons 'class "we-dialog-panel")
+                                            (cons 'data-we-widget "dialog-panel")
                                             (cons 'tabindex -1))
                                       '()
                                       #f
@@ -1090,6 +1093,7 @@
          (define label-node (dom-node 'button
                                       (list (cons attr/role 'button)
                                             (cons 'class "we-menu-label")
+                                            (cons 'data-we-widget "menu-label")
                                             (cons 'menu-trigger #t)
                                             (cons 'tabindex 0)
                                             (cons 'aria-haspopup "true")
@@ -1116,6 +1120,7 @@
          (define popup-node (dom-node 'vpanel
                                       (list (cons attr/role 'menu)
                                             (cons 'id popup-id)
+                                            (cons 'data-we-widget "menu-popup")
                                             (cons 'class "we-menu-popup"))
                                       '()
                                       #f
@@ -1142,6 +1147,7 @@
            label-node
             (list (cons attr/role 'button)
                   (cons 'class "we-menu-label")
+                  (cons 'data-we-widget "menu-label")
                   (cons 'menu-trigger #t)
                   (cons 'tabindex 0)
                   (cons 'aria-haspopup "true")
@@ -1151,6 +1157,7 @@
             popup-node
             (list (cons attr/role 'menu)
                   (cons 'id popup-id)
+                  (cons 'data-we-widget "menu-popup")
                   (cons 'class (if open? "we-menu-popup is-open" "we-menu-popup")))))
          (define (set-label! label-value)
            (set-dom-node-text! label-node (value->text label-value)))
