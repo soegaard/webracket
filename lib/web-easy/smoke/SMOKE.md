@@ -21,7 +21,7 @@ make smoke-ci
 ./headless.sh single <compile-script> <test-page>
 ```
 
-Common top-level aliases:
+Common top-level commands:
 
 ```bash
 make smoke-ci
@@ -31,29 +31,10 @@ make smoke-quick
 make smoke-smoke
 make smoke-parity
 make smoke-dashboards
-make smoke-compat
 make smoke-list
 make smoke-release
 make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...
 ```
-
-## Migration Notes
-
-Command migration:
-
-- `./smoke.sh contract` -> `./headless.sh contract`
-- `./smoke.sh parity-headless` -> `./headless.sh parity`
-- `./smoke.sh headless` -> `./headless.sh all`
-- `./smoke.sh ci` -> `./headless.sh ci`
-- `./smoke.sh ci-fast` -> `./headless.sh ci`
-
-Make target migration:
-
-- `make smoke-headless` -> `make smoke-smoke`
-- `make smoke-parity-headless` -> `make smoke-parity`
-- `make smoke-all-contract` -> `make smoke-dashboards`
-- `make smoke-contract` -> `make smoke-dashboards` (or `./headless.sh contract`)
-- `make smoke-ci-full` -> `make smoke-ci`
 
 ## Release Quickstart
 
@@ -203,7 +184,6 @@ Repository-root aliases:
 - `make smoke-smoke`
 - `make smoke-parity`
 - `make smoke-dashboards`
-- `make smoke-compat`
 - `make smoke-list`
 - `make smoke-release`
 - `make smoke-one SINGLE_COMPILE=run-browser-parity-all-compile.sh SINGLE_PAGE=test-browser-parity-menu-keys.html`

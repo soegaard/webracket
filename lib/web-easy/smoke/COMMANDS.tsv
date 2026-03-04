@@ -20,7 +20,6 @@ make	make smoke-release	Run smoke-commands + smoke-quick + smoke-ci.
 make	make smoke-smoke	Run full smoke dashboard headless.
 make	make smoke-parity	Run parity-only dashboard headless.
 make	make smoke-dashboards	Run contract+smoke dashboards headless.
-make	make smoke-compat	Show replacements for removed aliases.
 make	make smoke-list	Print canonical commands.
 make	make smoke-commands	Regenerate COMMANDS.tsv.
 make	make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...	Run one page headless via Make variables.
