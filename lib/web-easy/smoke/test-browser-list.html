@@ -50,7 +50,13 @@
     }
 
     function readListItems(frameDoc) {
-      const text = frameDoc.body ? frameDoc.body.textContent || "" : "";
+      const body = frameDoc.body;
+      if (!body) {
+        return [];
+      }
+      const clone = body.cloneNode(true);
+      Array.from(clone.querySelectorAll("style")).forEach((el) => el.remove());
+      const text = clone.textContent || "";
       const out = [];
       const re = /item:([a-z])/g;
       let m = null;
