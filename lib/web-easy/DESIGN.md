@@ -255,7 +255,7 @@ Current status snapshot (March 1, 2026):
 | Area | Item | Status | Coverage | Notes |
 |---|---|---|---|---|
 | Renderer lifecycle | `render`, `renderer?`, `renderer-root`, `renderer-destroy` | Implemented | Core tests + smoke | Browser backend integrated via `backend-browser.rkt`. |
-| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping. |
+| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse`. |
 | Basic controls | `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
 | Menus | `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests | Semantics intentionally differ from desktop-native menu systems. |
@@ -550,6 +550,8 @@ Current browser backend element mapping (as implemented today):
 | widget/tag | HTML element(s) | Notes |
 |---|---|---|
 | `window`, `vpanel`, `hpanel` | `div` | `vpanel`/`hpanel` use flex layout styles. |
+| `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
+| `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions. |
 | `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
@@ -654,13 +656,14 @@ Contract enforcement status:
 
 `data-we-widget` examples:
 
-- containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `spacer`
+- containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `collapse`, `spacer`
 - controls: `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
 - complex widgets:
   - menu: `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item`
   - dialog: `dialog`, `dialog-panel`
   - table: `table`, `table-row`, `table-header-cell`, `table-data-cell`
   - tabs: `tab-panel`, `tab-list`, `tab-content`, `tab-button`
+  - accordion: `accordion`, `accordion-section`, `accordion-trigger`, `collapse`
 
 ## Baseline Changelog
 
@@ -714,6 +717,40 @@ Contract enforcement status:
 5. Revisit CSS strategy (inline vs stylesheet/classes):
    - continue consolidating defaults into shared class-based styles where possible.
    - keep inline style usage only for dynamic geometry values that cannot be represented via classes.
+
+## Phase 2 Component Roadmap
+
+Priority order:
+
+1. `collapse` / `accordion` (Implemented in current baseline)
+   - Purpose: enable common settings/help disclosure patterns with keyboard-friendly section toggles.
+   - Why first: high utility, low conceptual overhead, composes directly with existing panel/layout primitives.
+   - Validation focus: `aria-expanded`/`aria-controls`, Enter/Space toggle, deterministic open/close state.
+
+2. `alert` (inline status banner)
+   - Purpose: provide standardized non-modal feedback (info/success/warn/error).
+   - Why now: current examples hand-roll status text; a first-class alert simplifies parity examples and docs.
+   - Validation focus: severity variants, optional dismiss action, focus behavior after dismiss, role semantics.
+
+3. `pagination`
+   - Purpose: pair naturally with `table` and `list-view` for paged datasets.
+   - Why now: practical for real-world examples and data-heavy parity pages.
+   - Validation focus: prev/next/first/last semantics, disabled-state behavior, keyboard navigation contracts.
+
+4. `toast` (transient non-modal notifications)
+   - Purpose: queue and show transient notifications without dialog interruption.
+   - Why now: common app requirement (save/deploy/completion feedback) not well served by modal flows.
+   - Validation focus: queue order, auto-dismiss timing, manual dismiss, hover/focus pause policy.
+
+5. `tooltip` (then optional `popover`)
+   - Purpose: concise contextual help for controls and icon-only actions.
+   - Why now: improves discoverability and usability in compact UIs.
+   - Validation focus: hover/focus trigger parity, Escape close, `aria-describedby`, placement-state classes.
+
+Notes:
+
+- This roadmap is intentionally web-native, not desktop widget parity for parity’s sake.
+- Desktop-specific surfaces (for example snip/canvas/native window semantics) remain deferred until explicit web capability design is finalized.
 
 ## Element/CSS Cleanup Status (2026-03-04)
 

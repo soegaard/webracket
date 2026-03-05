@@ -325,6 +325,62 @@ html.we-theme-dark .we-dialog-panel:focus-visible {
   outline-offset: 2px;
 }
 
+/* -------------------------------------------------------------------------- */
+/* 5) Accordion (section headers + right-side indicator)                       */
+/* -------------------------------------------------------------------------- */
+/* Accordion headers should read as section titles, not generic action buttons. */
+html.we-theme-dark .we-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+html.we-theme-dark .we-accordion-section {
+  border: 1px solid #7383a1;
+  border-radius: 6px;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: #212b3a;
+  color: var(--we-fg);
+  font-weight: 600;
+}
+
+/* Right-side indicator (Bootstrap-like) points to collapsed content. */
+html.we-theme-dark .we-accordion-trigger::after {
+  content: "▸";
+  display: inline-block;
+  margin-left: 8px;
+  color: #8f9bb1;
+  transform: rotate(0deg);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+html.we-theme-dark .we-accordion-trigger:hover {
+  background: #2f3b4f;
+}
+
+/* Open state rotates indicator downward and visually connects to the panel. */
+html.we-theme-dark .we-accordion-trigger.is-open {
+  background: #25344a;
+  border-bottom: 1px solid #7383a1;
+  border-radius: 6px 6px 0 0;
+}
+
+html.we-theme-dark .we-accordion-trigger.is-open::after {
+  transform: rotate(90deg);
+  color: #9ec2ff;
+}
+
 /*
  * Customization tip:
  * Keep text contrast high against backgrounds. If text is hard to read, adjust

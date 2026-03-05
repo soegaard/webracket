@@ -140,6 +140,54 @@
 (check-equal (node-attr hpanel-node 'data-we-widget) "hpanel" "hpanel data-we-widget attr")
 (check-equal (node-attr hpanel-node 'class) "we-hpanel" "hpanel base class")
 
+;; collapse toggles visibility class and aria-hidden from observable state
+(define @collapse-open (@ #f))
+(define r-collapse
+  (render
+   (window
+    (vpanel
+     (collapse @collapse-open
+               (text "secret-panel"))))))
+(define collapse-node (node-child (node-child (renderer-root r-collapse) 0) 0))
+(define collapse-child (node-child collapse-node 0))
+(check-equal (node-attr collapse-node 'data-we-widget) "collapse" "collapse data-we-widget attr")
+(check-equal (node-attr collapse-node 'class) "we-collapse" "collapse initial class")
+(check-equal (node-attr collapse-node 'aria-hidden) "true" "collapse initially hidden")
+(check-equal (dom-node-text collapse-child) "secret-panel" "collapse child rendered")
+(:= @collapse-open #t)
+(check-equal (node-attr collapse-node 'class) "we-collapse is-open" "collapse open class")
+(check-equal (node-attr collapse-node 'aria-hidden) "false" "collapse open aria")
+(:= @collapse-open #f)
+(check-equal (node-attr collapse-node 'class) "we-collapse" "collapse closed class after toggle")
+(check-equal (node-attr collapse-node 'aria-hidden) "true" "collapse closed aria after toggle")
+
+;; accordion toggles selected section and updates collapse state
+(define @accordion-selected (@ 'overview))
+(define r-accordion
+  (render
+   (window
+    (accordion @accordion-selected
+               (list (list 'overview "Overview" (text "overview-body"))
+                     (list 'details "Details" (text "details-body")))))))
+(define accordion-root (node-child (renderer-root r-accordion) 0))
+(define accordion-section-0 (node-child accordion-root 0))
+(define accordion-section-1 (node-child accordion-root 1))
+(define accordion-button-0 (node-child accordion-section-0 0))
+(define accordion-button-1 (node-child accordion-section-1 0))
+(define accordion-collapse-0 (node-child accordion-section-0 1))
+(define accordion-collapse-1 (node-child accordion-section-1 1))
+(check-equal (node-attr accordion-root 'data-we-widget) "accordion" "accordion root data-we-widget attr")
+(check-equal (node-attr accordion-button-0 'data-we-widget) "accordion-trigger" "accordion first header widget tag")
+(check-equal (node-attr accordion-collapse-0 'class) "we-collapse is-open" "accordion first section initially open")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse" "accordion second section initially closed")
+(dom-node-click! accordion-button-1)
+(check-equal (obs-peek @accordion-selected) 'details "accordion click selects details")
+(check-equal (node-attr accordion-collapse-0 'class) "we-collapse" "accordion first section closes after switching")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse is-open" "accordion second section opens after switching")
+(dom-node-click! accordion-button-1)
+(check-equal (obs-peek @accordion-selected) #f "accordion click on selected section clears selection")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse" "accordion selected section closes on second click")
+
 ;; dialog opens from trigger and closes on Escape via on-close callback
 (define @dialog-open (@ #f))
 (define @dialog-status (@ "idle"))

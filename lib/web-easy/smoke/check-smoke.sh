@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 labels=(
-  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/theme-vars/theme-dialog-vars/theme-menu-vars/theme-token-contract/menu-keys/menu-full/group/dialog/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
+  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/width/theme-vars/theme-dialog-vars/theme-menu-vars/theme-token-contract/menu-keys/menu-full/group/collapse/accordion/dialog/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
   "visual-check"
   "parity-all capsules (hello/counter/dynamic-list/counters/tabs/tabs-disabled/tabs-dynamic/profile/settings/table/theme-vars/theme-dialog-vars/theme-menu-vars/menu-keys/menu-full/dialog/list/todo/incident/release/workspace)"
 )
@@ -53,6 +53,8 @@ echo "  http://localhost:8000/test-browser-contract-dashboard.html"
 echo "  http://localhost:8000/test-browser-theme-contract-dashboard.html"
 echo "  http://localhost:8000/test-browser-smoke.html"
 echo "  http://localhost:8000/test-browser-group.html"
+echo "  http://localhost:8000/test-browser-collapse.html"
+echo "  http://localhost:8000/test-browser-accordion.html"
 echo "  http://localhost:8000/test-browser-dialog.html"
 echo "  http://localhost:8000/test-browser-menu-keys.html"
 echo "  http://localhost:8000/test-browser-menu-full.html"

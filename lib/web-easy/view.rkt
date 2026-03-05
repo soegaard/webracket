@@ -27,6 +27,8 @@
 ;;   cond-view      Build a multi-branch conditional view.
 ;;   case-view      Build an equality-based branch view.
 ;;   tab-panel      Build a selected-tab branch view.
+;;   collapse       Build a conditional visibility container view.
+;;   accordion      Build a single-open section accordion view.
 ;;   dialog         Build a modal dialog container view.
 ;;   observable-view  Build a dynamic view from observable value.
 ;;   spacer         Build an empty layout spacer view.
@@ -59,6 +61,8 @@
    cond-view
    case-view
    tab-panel
+   collapse
+   accordion
    dialog
    observable-view
    spacer
@@ -88,6 +92,8 @@
     (define kind/cond-view 'cond-view) ; Multi-branch conditional view.
     (define kind/case-view 'case-view) ; Equality-based conditional view.
     (define kind/tab-panel 'tab-panel) ; Selected-tab conditional view.
+    (define kind/collapse 'collapse) ; Conditional visibility view.
+    (define kind/accordion 'accordion) ; Single-open section accordion view.
     (define kind/dialog 'dialog) ; Modal dialog container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
     (define kind/spacer    'spacer)    ; Empty layout spacer view.
@@ -206,6 +212,19 @@
                                  (cons 'tabs tabs))
             '()))
 
+    ;; collapse : (or/c boolean? observable?) view? -> view?
+    ;;   Construct a container view that shows child only when open is true.
+    (define (collapse open child)
+      (view kind/collapse (list (cons 'open open))
+            (list child)))
+
+    ;; accordion : (or/c any/c observable?) list? -> view?
+    ;;   Construct a single-open accordion from section rows: (list id label view).
+    (define (accordion selected sections)
+      (view kind/accordion (list (cons 'selected selected)
+                                 (cons 'sections sections))
+            '()))
+
     ;; dialog : (or/c boolean? observable?) (-> any/c) view? ... -> view?
     ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
     (define (dialog open on-close . children)
@@ -300,6 +319,8 @@
             cond-view
             case-view
             tab-panel
+            collapse
+            accordion
             dialog
             observable-view
             spacer

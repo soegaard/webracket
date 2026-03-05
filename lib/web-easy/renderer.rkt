@@ -59,6 +59,7 @@
     (define table/density-normal  'normal)    ; Default table spacing density.
     (define table/density-compact 'compact)   ; Compact table spacing density.
     (define tab-panel-counter     0)          ; Monotonic counter for tab-panel ids.
+    (define accordion-panel-counter 0)        ; Monotonic counter for accordion panel ids.
     (define menu-popup-counter    0)          ; Monotonic counter for menu popup ids.
     (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
@@ -72,6 +73,15 @@
        .we-tab-btn.is-disabled{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-disabled,#f3f3f3);color:var(--we-fg-muted,#777);opacity:.7;}\
        .we-tab-btn:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-tab-content{border:1px solid var(--we-border-muted,#999);border-top:none;background:var(--we-bg,#fff);padding:var(--we-space-md,8px);}") 
+    (define accordion-style-text ; CSS for accordion trigger and section visuals.
+      ".we-accordion{display:flex;flex-direction:column;gap:var(--we-space-xs,2px);align-self:stretch;}\
+       .we-accordion-section{border:1px solid var(--we-border-muted,#999);border-radius:6px;background:var(--we-bg,#fff);}\
+       .we-accordion-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:none;border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);font-weight:600;cursor:pointer;}\
+       .we-accordion-trigger::after{content:'▸';display:inline-block;margin-left:var(--we-space-md,8px);color:var(--we-fg-muted,#777);transform:rotate(0deg);transition:transform .18s ease,color .18s ease;}\
+       .we-accordion-trigger:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-accordion-trigger.is-open{background:var(--we-bg-selected,#ececec);border-bottom:1px solid var(--we-border-soft,#bbb);border-radius:6px 6px 0 0;}\
+       .we-accordion-trigger.is-open::after{transform:rotate(90deg);color:var(--we-border-strong,#333);}\
+       .we-accordion-trigger:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define dialog-style-text ; CSS for dialog overlay and panel.
       ".we-dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
        .we-dialog.is-open{display:flex;}\
@@ -92,6 +102,9 @@
     (define control-style-text ; CSS defaults for controls and table density classes.
       ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;overflow:hidden;align-self:stretch;transition:grid-template-rows .18s ease,opacity .18s ease;}\
+       .we-collapse>*{min-height:0;overflow:hidden;}\
+       .we-collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;}\
        .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);}\
        .we-button{align-self:flex-start;width:auto;}\
        .we-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
@@ -107,7 +120,7 @@
        .we-table-data-cell.we-density-normal{padding:2px 8px;}\
        .we-table-data-cell.we-density-compact{padding:1px 4px;}")
     (define shared-style-text ; Shared stylesheet injected once per window root.
-      (string-append control-style-text tab-panel-style-text dialog-style-text menu-style-text))
+      (string-append control-style-text tab-panel-style-text accordion-style-text dialog-style-text menu-style-text))
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -262,6 +275,12 @@
     (define (next-tab-panel-id)
       (set! tab-panel-counter (add1 tab-panel-counter))
       (string-append "tab-panel-" (number->string tab-panel-counter)))
+
+    ;; next-accordion-panel-id : -> string?
+    ;;   Allocate a unique id string for accordion section content region.
+    (define (next-accordion-panel-id)
+      (set! accordion-panel-counter (add1 accordion-panel-counter))
+      (string-append "accordion-panel-" (number->string accordion-panel-counter)))
 
     ;; next-menu-popup-id : -> string?
     ;;   Allocate a unique id string for menu popup region.
@@ -888,6 +907,161 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
            [else
             (render-tab! raw-selected)])
+         node]
+        [(collapse)
+         (define raw-open (alist-ref (view-props v) 'open 'render))
+         (define child-view
+           (if (null? (view-children v))
+               (spacer)
+               (car (view-children v))))
+         (define node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "collapse")
+                           (cons 'class "we-collapse")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-set-single-child! node (build-node child-view register-cleanup!))
+         (define (set-open! open-value)
+           (define open? (not (not open-value)))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "collapse")
+                  (cons 'class (if open? "we-collapse is-open" "we-collapse"))
+                  (cons 'aria-hidden (if open? "false" "true")))))
+         (cond
+           [(obs? raw-open)
+            (set-open! (obs-peek raw-open))
+            (define (listener updated)
+              (set-open! updated))
+            (obs-observe! raw-open listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-open listener)))]
+           [else
+           (set-open! raw-open)])
+         node]
+        [(accordion)
+         (define raw-selected (alist-ref (view-props v) 'selected 'render))
+         (define sections
+           (ensure-list (alist-ref (view-props v) 'sections 'render)
+                        'accordion
+                        "sections"))
+         (define node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "accordion")
+                           (cons 'class "we-accordion"))
+                     '()
+                     #f
+                     #f
+                     #f))
+
+         ;; normalize-section : any/c -> list?
+         ;;   Validate section shape and return (list id label body-view).
+         (define (normalize-section section)
+           (unless (list? section)
+             (raise-arguments-error 'accordion
+                                    "expected section row as list"
+                                    "section"
+                                    section))
+           (unless (= (length section) 3)
+             (raise-arguments-error 'accordion
+                                    "expected section row of arity 3: (list id label view)"
+                                    "section"
+                                    section))
+           section)
+
+         (define sections/normalized (map normalize-section sections))
+         (define section-state '())
+
+         ;; section-open? : any/c -> boolean?
+         ;;   Determine whether the section id is currently selected/open.
+         (define (section-open? section-id)
+           (if (obs? raw-selected)
+               (equal? (obs-peek raw-selected) section-id)
+               (equal? raw-selected section-id)))
+
+         ;; set-trigger-open! : dom-node? string? boolean? -> void?
+         ;;   Update accordion trigger ARIA and class for open/closed state.
+         (define (set-trigger-open! trigger panel-id open?)
+           (set-dom-node-attrs!
+            trigger
+            (list (cons attr/role 'button)
+                  (cons 'data-we-widget "accordion-trigger")
+                  (cons 'aria-controls panel-id)
+                  (cons 'aria-expanded (if open? "true" "false"))
+                  (cons 'class (if open?
+                                   "we-accordion-trigger is-open"
+                                   "we-accordion-trigger")))))
+
+         ;; update-trigger-states! : -> void?
+         ;;   Refresh trigger classes/ARIA from current selected section.
+         (define (update-trigger-states!)
+           (for-each (lambda (entry)
+                       (define section-id (list-ref entry 0))
+                       (define panel-id   (list-ref entry 1))
+                       (define trigger    (list-ref entry 2))
+                       (set-trigger-open! trigger panel-id (section-open? section-id)))
+                     section-state))
+
+         (for-each
+          (lambda (section)
+            (define section-id    (list-ref section 0))
+            (define section-label (list-ref section 1))
+            (define section-view  (list-ref section 2))
+            (define panel-id      (next-accordion-panel-id))
+            (define section-node
+              (dom-node 'div
+                        (list (cons 'data-we-widget "accordion-section")
+                              (cons 'class "we-accordion-section"))
+                        '()
+                        #f
+                        #f
+                        #f))
+            (define trigger-node
+              (dom-node 'button
+                        (list (cons attr/role 'button)
+                              (cons 'data-we-widget "accordion-trigger")
+                              (cons 'aria-controls panel-id)
+                              (cons 'aria-expanded "false")
+                              (cons 'class "we-accordion-trigger"))
+                        '()
+                        (value->text section-label)
+                        #f
+                        #f))
+            (define collapse-open
+              (if (obs? raw-selected)
+                  (~> raw-selected
+                      (lambda (current-id)
+                        (equal? current-id section-id)))
+                  (equal? raw-selected section-id)))
+            (define collapse-node
+              (build-node (collapse collapse-open section-view) register-cleanup!))
+            (set-dom-node-attrs!
+             collapse-node
+             (append (dom-node-attrs collapse-node)
+                     (list (cons 'id panel-id))))
+            (when (obs? raw-selected)
+              (set-dom-node-on-click!
+               trigger-node
+               (lambda ()
+                 (if (equal? (obs-peek raw-selected) section-id)
+                     (obs-set! raw-selected #f)
+                     (obs-set! raw-selected section-id)))))
+            (set! section-state
+                  (append section-state
+                          (list (list section-id panel-id trigger-node))))
+            (backend-append-child! section-node trigger-node)
+            (backend-append-child! section-node collapse-node)
+            (backend-append-child! node section-node))
+          sections/normalized)
+
+         (update-trigger-states!)
+         (when (obs? raw-selected)
+           (define (listener _updated)
+             (update-trigger-states!))
+           (obs-observe! raw-selected listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-selected listener))))
          node]
         [(dialog)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
