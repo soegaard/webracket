@@ -140,6 +140,27 @@
 (check-equal (node-attr hpanel-node 'data-we-widget) "hpanel" "hpanel data-we-widget attr")
 (check-equal (node-attr hpanel-node 'class) "we-hpanel" "hpanel base class")
 
+;; alert renders severity classes and updates text/role from observables
+(define @alert-text (@ "Saved"))
+(define @alert-level (@ 'success))
+(define r-alert
+  (render
+   (window
+    (vpanel
+     (alert @alert-text @alert-level)))))
+(define alert-node (node-child (node-child (renderer-root r-alert) 0) 0))
+(check-equal (node-attr alert-node 'data-we-widget) "alert" "alert data-we-widget attr")
+(check-equal (node-attr alert-node 'class) "we-alert we-alert-success" "alert success class")
+(check-equal (node-attr alert-node 'role) 'status "alert success role")
+(check-equal (node-attr alert-node 'aria-live) "polite" "alert success aria-live")
+(check-equal (dom-node-text alert-node) "Saved" "alert initial text")
+(:= @alert-text "Disk almost full")
+(:= @alert-level 'warn)
+(check-equal (node-attr alert-node 'class) "we-alert we-alert-warn" "alert warn class")
+(check-equal (node-attr alert-node 'role) 'alert "alert warn role")
+(check-equal (node-attr alert-node 'aria-live) "assertive" "alert warn aria-live")
+(check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
+
 ;; collapse toggles visibility class and aria-hidden from observable state
 (define @collapse-open (@ #f))
 (define r-collapse

@@ -256,7 +256,7 @@ Current status snapshot (March 1, 2026):
 |---|---|---|---|---|
 | Renderer lifecycle | `render`, `renderer?`, `renderer-root`, `renderer-destroy` | Implemented | Core tests + smoke | Browser backend integrated via `backend-browser.rkt`. |
 | Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse`. |
-| Basic controls | `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
+| Basic controls | `text`, `alert`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
 | Menus | `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests | Semantics intentionally differ from desktop-native menu systems. |
 | Tabs | `tab-panel` | Implemented | Core tests + smoke | Includes keyboard navigation, disabled tabs, and focus tracking checks. |
@@ -555,6 +555,7 @@ Current browser backend element mapping (as implemented today):
 | `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
+| `alert` | `div` | Inline status banner with severity classes (`info/success/warn/error`). |
 | `button` | `button` | Native clickable button. |
 | `input` | `input` | Text input; supports Enter callback wiring. |
 | `checkbox` | `input[type=checkbox]` | Boolean toggle control. |

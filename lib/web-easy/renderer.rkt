@@ -102,6 +102,11 @@
     (define control-style-text ; CSS defaults for controls and table density classes.
       ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-alert{align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);}\
+       .we-alert-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-alert-success{border-color:#6a9b73;background:#e8f4e8;}\
+       .we-alert-warn{border-color:#b79256;background:#fff4df;}\
+       .we-alert-error{border-color:#b25a5a;background:#fdeaea;}\
        .we-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;overflow:hidden;align-self:stretch;transition:grid-template-rows .18s ease,opacity .18s ease;}\
        .we-collapse>*{min-height:0;overflow:hidden;}\
        .we-collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;}\
@@ -354,6 +359,31 @@
             [else             table/density-normal])
           table/density-normal))
 
+    ;; normalize-alert-level : any/c -> symbol?
+    ;;   Normalize alert level to one of info/success/warn/error.
+    (define (normalize-alert-level level)
+      (if (symbol? level)
+          (case level
+            [(info success warn error) level]
+            [else                     'info])
+          'info))
+
+    ;; alert-level-class : symbol? -> string?
+    ;;   Return CSS class suffix for alert level.
+    (define (alert-level-class level)
+      (case level
+        [(success) "we-alert-success"]
+        [(warn)    "we-alert-warn"]
+        [(error)   "we-alert-error"]
+        [else      "we-alert-info"]))
+
+    ;; alert-level-role : symbol? -> symbol?
+    ;;   Return semantic role for alert level severity.
+    (define (alert-level-role level)
+      (case level
+        [(warn error) 'alert]
+        [else         'status]))
+
     ;; density-class : symbol? -> string?
     ;;   Return CSS class for table density variants.
     (define (density-class density)
@@ -454,6 +484,41 @@
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
+         node]
+        [(alert)
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'status)
+                                      (cons 'data-we-widget "alert")
+                                      (cons 'class "we-alert we-alert-info")
+                                      (cons 'aria-live "polite"))
+                                '()
+                                ""
+                                #f
+                                #f))
+         (define (render-alert!)
+           (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (define role (alert-level-role level))
+           (define live (if (eq? role 'alert) "assertive" "polite"))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role role)
+                  (cons 'data-we-widget "alert")
+                  (cons 'class (string-append "we-alert " (alert-level-class level)))
+                  (cons 'aria-live live)))
+           (set-dom-node-text! node (value->text (maybe-observable-value raw-value))))
+         (when (obs? raw-value)
+           (define (value-listener _updated)
+             (render-alert!))
+           (obs-observe! raw-value value-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
+         (when (obs? raw-level)
+           (define (level-listener _updated)
+             (render-alert!))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (render-alert!)
          node]
         [(text)
          (define raw  (alist-ref (view-props v) 'value 'render))

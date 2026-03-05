@@ -16,6 +16,7 @@
 ;;   vpanel         Build a vertical panel view.
 ;;   hpanel         Build a horizontal panel view.
 ;;   group          Build a labeled container view.
+;;   alert          Build an inline status alert view.
 ;;   text           Build a text label view.
 ;;   button         Build a button view with click action.
 ;;   input          Build an input view with change action and optional Enter action.
@@ -50,6 +51,7 @@
    vpanel
    hpanel
    group
+   alert
    text
    button
    input
@@ -81,6 +83,7 @@
     (define kind/vpanel    'vpanel)    ; Vertical container view.
     (define kind/hpanel    'hpanel)    ; Horizontal container view.
     (define kind/group     'group)     ; Labeled container view.
+    (define kind/alert     'alert)     ; Inline status alert view.
     (define kind/text      'text)      ; Text label view.
     (define kind/button    'button)    ; Clickable action view.
     (define kind/input     'input)     ; Text input view.
@@ -124,6 +127,14 @@
     ;;   Construct a labeled container view with children.
     (define (group label . children)
       (view kind/group (list (cons 'label label)) children))
+
+    ;; alert : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
+    ;;   Construct an inline alert/status view with optional severity level.
+    ;;   Optional parameter level defaults to 'info.
+    (define (alert value [level 'info])
+      (view kind/alert (list (cons 'value value)
+                             (cons 'level level))
+            '()))
 
     ;; text : (or/c string? observable?) -> view?
     ;;   Construct a text view from static or observable value.
@@ -308,6 +319,7 @@
             vpanel
             hpanel
             group
+            alert
             text
             button
             input

@@ -255,7 +255,33 @@ html.we-theme-dark select option {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 4) Tabs (tab-strip look, not button-row look)                               */
+/* 4) Alerts (inline status banners)                                            */
+/* -------------------------------------------------------------------------- */
+/* Alert classes are severity-specific and easy to retheme independently. */
+html.we-theme-dark .we-alert {
+  border: 1px solid #7383a1;
+  border-radius: 4px;
+  background: #1a1f29;
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-alert-success {
+  border-color: #7ab088;
+  background: #1f3424;
+}
+
+html.we-theme-dark .we-alert-warn {
+  border-color: #c5a770;
+  background: #3b3020;
+}
+
+html.we-theme-dark .we-alert-error {
+  border-color: #cc7e7e;
+  background: #3b2222;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5) Tabs (tab-strip look, not button-row look)                               */
 /* -------------------------------------------------------------------------- */
 /* These rules make tabs look connected to the content panel. */
 html.we-theme-dark .we-tab-panel {
@@ -326,7 +352,7 @@ html.we-theme-dark .we-dialog-panel:focus-visible {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 5) Accordion (section headers + right-side indicator)                       */
+/* 6) Accordion (section headers + right-side indicator)                       */
 /* -------------------------------------------------------------------------- */
 /* Accordion headers should read as section titles, not generic action buttons. */
 html.we-theme-dark .we-accordion {
