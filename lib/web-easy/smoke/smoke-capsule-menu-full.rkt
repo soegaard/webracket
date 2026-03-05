@@ -45,11 +45,11 @@
         (render
          (window
           (vpanel
-           (text (~> @status (lambda (s) (string-append "status:" s))))
-           (text (~> @open-count (lambda (n) (string-append "open:" (number->string n)))))
-           (text (~> @save-count (lambda (n) (string-append "save:" (number->string n)))))
-           (text (~> @undo-count (lambda (n) (string-append "undo:" (number->string n)))))
-           (text (~> @redo-count (lambda (n) (string-append "redo:" (number->string n)))))
+           (text (~> @status (lambda (s) (~a "status:" s))))
+           (text (~> @open-count (lambda (n) (~a "open:" n))))
+           (text (~> @save-count (lambda (n) (~a "save:" n))))
+           (text (~> @undo-count (lambda (n) (~a "undo:" n))))
+           (text (~> @redo-count (lambda (n) (~a "redo:" n))))
            (menu-bar
             (menu "File"
                   (menu-item "open" open!)

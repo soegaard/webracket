@@ -36,7 +36,7 @@
         (hpanel
          (text (~> @count
                    (lambda (n)
-                     (string-append label ":" (number->string n)))))
+                     (~a label ":" n))))
          (button "+" (lambda ()
                        (<~ @count add1)))
          (button "-" (lambda ()

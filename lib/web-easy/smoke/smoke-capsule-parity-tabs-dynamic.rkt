@@ -56,7 +56,7 @@
       (define (panel-entries tabs)
         (map (lambda (tab)
                (cons (parity-tab-id tab)
-                     (text (string-append (parity-tab-label tab) " panel"))))
+                     (text (~a (parity-tab-label tab) " panel"))))
              tabs))
       
       ;; add-tab! : symbol? string? -> void?

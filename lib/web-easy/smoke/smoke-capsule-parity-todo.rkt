@@ -126,19 +126,18 @@
             (button "clear-done" clear-done!))
            (text (~> @todos
                      (lambda (todos)
-                       (string-append "remaining:"
-                                      (number->string
-                                       (length
-                                        (filter (lambda (entry)
-                                                  (not (todo-done? entry)))
-                                                todos)))))))
+                       (~a "remaining:"
+                           (length
+                            (filter (lambda (entry)
+                                      (not (todo-done? entry)))
+                                    todos))))))
            (list-view @todos
                       (lambda (_key entry)
                         (define id    (todo-id entry))
                         (define done? (todo-done? entry))
                         (define label (todo-text entry))
                         (hpanel
-                         (text (string-append (number->string id) ":"))
+                         (text (~a id ":"))
                          (checkbox done? (lambda (new-value)
                                            (toggle-todo! id new-value)))
                          (if-view (~> @editing-id (lambda (editing-id)

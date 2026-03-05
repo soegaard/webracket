@@ -45,11 +45,11 @@
         (render
          (window
           (vpanel
-           (text (~> @status (lambda (s) (string-append "status:" s))))
-           (text (~> @build-count (lambda (n) (string-append "build:" (number->string n)))))
-           (text (~> @deploy-count (lambda (n) (string-append "deploy:" (number->string n)))))
-           (text (~> @docs-count (lambda (n) (string-append "docs:" (number->string n)))))
-           (text (~> @about-count (lambda (n) (string-append "about:" (number->string n)))))
+           (text (~> @status (lambda (s) (~a "status:" s))))
+           (text (~> @build-count (lambda (n) (~a "build:" n))))
+           (text (~> @deploy-count (lambda (n) (~a "deploy:" n))))
+           (text (~> @docs-count (lambda (n) (~a "docs:" n))))
+           (text (~> @about-count (lambda (n) (~a "about:" n))))
            (menu-bar
             (menu "Project"
                   (menu-item "build" build!)

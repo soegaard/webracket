@@ -89,10 +89,10 @@
                   (table '(members) @rows)
                   (text (~> @rows
                             (lambda (rows)
-                              (string-append "count:" (number->string (length rows))))))
+                              (~a "count:" (length rows)))))
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Promote Alice" promote-alice!)

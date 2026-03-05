@@ -52,11 +52,11 @@
       ;; summary-rows-now : -> list?
       ;;   Build one-column summary rows from current workspace state.
       (define (summary-rows-now)
-        (list (string-append "name:" (obs-peek @name))
-              (string-append "email:" (obs-peek @email))
-              (string-append "two-factor:" (if (obs-peek @two-factor?) "on" "off"))
-              (string-append "notify-email:" (if (obs-peek @notify-email?) "on" "off"))
-              (string-append "theme:" (obs-peek @theme))))
+        (list (~a "name:" (obs-peek @name))
+              (~a "email:" (obs-peek @email))
+              (~a "two-factor:" (if (obs-peek @two-factor?) "on" "off"))
+              (~a "notify-email:" (if (obs-peek @notify-email?) "on" "off"))
+              (~a "theme:" (obs-peek @theme))))
 
       ;; refresh-summary! : -> void?
       ;;   Refresh summary rows observable from current state.
@@ -152,7 +152,7 @@
                   (table '(summary) @summary-rows)
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Save preset" save-preset!)

@@ -62,11 +62,11 @@
             (table '(item state) @rows 'compact)
             (tab-panel @tab
                        (list (list 'overview
-                                   (text (~> @name (lambda (n) (string-append "overview:" n)))))
+                                   (text (~> @name (lambda (n) (~a "overview:" n)))))
                              (list 'details
-                                   (text (~> @mode (lambda (m) (string-append "details:" m)))))
+                                   (text (~> @mode (lambda (m) (~a "details:" m)))))
                              (list 'status
-                                   (text (~> @status (lambda (s) (string-append "status:" s))))))))
+                                   (text (~> @status (lambda (s) (~a "status:" s))))))))
      (menu-bar
       (menu "Actions"
             (menu-item "bump level" bump-level!)

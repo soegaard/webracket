@@ -5,6 +5,7 @@
 ;; Minimal browser app for renderer-destroy lifecycle smoke tests.
 
 (include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-format.rkt" read-syntax/skip-first-line)
 
 (define @count (@ 0))
 
@@ -14,7 +15,7 @@
   (render
    (window
     (vpanel
-     (text (~> @count number->string))
+     (text (~> @count (lambda (n) (~a n))))
      (button "inc"
              (lambda ()
                (<~ @count add1)))

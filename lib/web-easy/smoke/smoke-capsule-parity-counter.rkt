@@ -32,7 +32,7 @@
         (render
          (window
           (vpanel
-           (text (~> @count number->string))
+           (text (~> @count (lambda (n) (~a n))))
            (button "+" (lambda ()
                           (<~ @count add1)))))))
       

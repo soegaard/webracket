@@ -35,7 +35,7 @@
         (render
          (window
           (vpanel
-           (text (~> @count (lambda (n) (string-append "count:" (number->string n)))))
+           (text (~> @count (lambda (n) (~a "count:" n))))
            (menu-bar
             (menu "Actions"
                   (menu-item "inc" inc!)))))))

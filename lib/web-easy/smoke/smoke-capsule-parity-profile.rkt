@@ -120,23 +120,23 @@
           (vpanel
            (group (~> @profile-name
                       (lambda (name)
-                        (string-append "Profile: " name)))
-                  (text (~> @mode
+                        (~a "Profile: " name)))
+                   (text (~> @mode
                             (lambda (mode)
-                              (string-append "mode:" (mode->text mode)))))
+                              (~a "mode:" (mode->text mode)))))
                   (radios (list mode/photo mode/initials mode/icon)
                           @mode
                           (lambda (new-value)
                             (set-mode! new-value)))
                   (image (~> @img-src
                              (lambda (src)
-                               (string-append "../" src))))
+                               (~a "../" src))))
                   (text (~> @img-src
                             (lambda (src)
-                              (string-append "img:" src))))
+                              (~a "img:" src))))
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Rename Bob" rename-bob!)

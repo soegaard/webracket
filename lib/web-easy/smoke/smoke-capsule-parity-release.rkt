@@ -54,11 +54,10 @@
       ;; item->row : checklist-item? -> string?
       ;;   Convert checklist item to one summary row string.
       (define (item->row item)
-        (string-append
-         (number->string (checklist-item-id item)) ":"
-         (checklist-item-owner item) ":"
-         (if (checklist-item-done? item) "done" "todo") ":"
-         (checklist-item-title item)))
+        (~a (checklist-item-id item) ":"
+            (checklist-item-owner item) ":"
+            (if (checklist-item-done? item) "done" "todo") ":"
+            (checklist-item-title item)))
 
       ;; visible-rows : -> list?
       ;;   Build table rows for visible checklist items.
@@ -85,10 +84,10 @@
       (define (summary-text)
         (define items   (obs-peek @items))
         (define visible (visible-items))
-        (string-append "visible:" (number->string (length visible))
-                       ";total:" (number->string (length items))
-                       ";done:" (number->string (done-count items))
-                       ";pct:" (number->string (completion-pct))))
+        (~a "visible:" (length visible)
+                       ";total:" (length items)
+                       ";done:" (done-count items)
+                       ";pct:" (completion-pct)))
 
       ;; update-item : number? (checklist-item? -> checklist-item?) -> void?
       ;;   Apply updater f to item with matching id.
@@ -116,7 +115,7 @@
                                  (not (checklist-item-done? item))
                                  (checklist-item-owner item)
                                  (checklist-item-title item))))
-              (:= @status (string-append "toggled:" (number->string id))))))
+              (:= @status (~a "toggled:" id)))))
 
       ;; assign-visible-bob! : -> void?
       ;;   Assign first visible checklist item to bob.
@@ -133,7 +132,7 @@
                                  (checklist-item-done? item)
                                  owner/bob
                                  (checklist-item-title item))))
-              (:= @status (string-append "assigned-bob:" (number->string id))))))
+              (:= @status (~a "assigned-bob:" id)))))
 
       ;; reset-checklist! : -> void?
       ;;   Restore default checklist items and filter.
@@ -161,7 +160,7 @@
                                                          (table '(checklist) (visible-rows)))))))
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Toggle Visible" toggle-visible!)

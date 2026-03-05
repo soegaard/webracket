@@ -61,7 +61,7 @@
                      (button "confirm" close-confirm!))))
            (text (~> @status
                      (lambda (status)
-                       (string-append "status:" status))))))))
+                       (~a "status:" status))))))))
 
       (set! parity-dialog-renderer app-renderer)
       (mount-renderer! app-renderer root)

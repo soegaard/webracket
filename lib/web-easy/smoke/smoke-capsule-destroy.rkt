@@ -24,7 +24,7 @@
         (render
          (window
           (vpanel
-           (text (~> @count (lambda (n) (string-append "count:" (number->string n)))))
+           (text (~> @count (lambda (n) (~a "count:" n))))
            (button "inc"
                    (lambda ()
                      (<~ @count add1)))

@@ -5,6 +5,7 @@
 ;; Single compiled smoke driver for isolated test capsules selected by `?test=...`.
 
 (include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-format.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-smoke.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-input.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-checkbox.rkt" read-syntax/skip-first-line)

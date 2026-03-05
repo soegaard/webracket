@@ -27,9 +27,9 @@
          (window
           (vpanel
            (text (~> @count (lambda (n)
-                              (string-append "count:" (number->string n)))))
+                              (~a "count:" n))))
            (text (~> @even (lambda (n)
-                             (string-append "even:" (number->string n)))))
+                             (~a "even:" n))))
            (button "inc" inc!)))))
       (mount-renderer! operators-renderer root)
       (void))

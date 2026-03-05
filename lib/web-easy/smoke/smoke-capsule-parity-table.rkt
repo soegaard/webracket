@@ -109,11 +109,11 @@
                   (table '(name role status) @rows 'compact)
                   (text (~> @rows
                             (lambda (rows)
-                              (string-append "rows:" (number->string (length rows)))))
+                              (~a "rows:" (length rows))))
                   )
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Activate Bob" activate-bob!)

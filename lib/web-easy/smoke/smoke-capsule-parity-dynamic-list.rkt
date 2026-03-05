@@ -84,9 +84,7 @@
                       (lambda (_key entry)
                         (define id (car entry))
                         (define n  (cdr entry))
-                        (text (string-append (symbol->string id)
-                                             ":"
-                                             (number->string n))))
+                        (text (~a id ":" n)))
                       car)))))
       
       (set! parity-dynamic-list-renderer app-renderer)

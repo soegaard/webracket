@@ -29,7 +29,7 @@
                      (:= @items '((3 . "c") (1 . "a") (2 . "b")))))
            (list-view @items
                       (lambda (_key entry)
-                        (text (string-append "item:" (cdr entry))))
+                        (text (~a "item:" (cdr entry))))
                       car)))))
       (mount-renderer! list-renderer root)
       (void))

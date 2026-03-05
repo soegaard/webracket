@@ -45,10 +45,10 @@
 
     ;; panel-entries : list? -> list?
     ;;   Convert tabs to tab-panel entries.
-    (define (panel-entries tabs)
-      (map (lambda (tab)
-             (cons (tab-id tab)
-                   (text (string-append (tab-label tab) " panel"))))
+      (define (panel-entries tabs)
+        (map (lambda (tab)
+               (cons (tab-id tab)
+                     (text (~a (tab-label tab) " panel"))))
            tabs))
 
     ;; tab-panel-dynamic-make-page : any/c -> void?

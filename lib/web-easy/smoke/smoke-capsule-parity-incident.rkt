@@ -57,12 +57,11 @@
       ;; incident->row : incident? -> string?
       ;;   Convert incident record to one row summary string.
       (define (incident->row item)
-        (string-append
-         (number->string (incident-id item)) ":"
-         (incident-priority item) ":"
-         (incident-state item) ":"
-         (incident-owner item) ":"
-         (incident-title item)))
+        (~a (incident-id item) ":"
+            (incident-priority item) ":"
+            (incident-state item) ":"
+            (incident-owner item) ":"
+            (incident-title item)))
 
       ;; incident-matches? : incident? string? string? -> boolean?
       ;;   Return #t when incident passes priority and query filters.
@@ -97,9 +96,9 @@
       (define (summary-text)
         (define all-items     (obs-peek @incidents))
         (define visible-items (visible-incidents))
-        (string-append "visible:" (number->string (length visible-items))
-                       ";total:" (number->string (length all-items))
-                       ";resolved:" (number->string (resolved-count all-items))))
+        (~a "visible:" (length visible-items)
+                       ";total:" (length all-items)
+                       ";resolved:" (resolved-count all-items)))
 
       ;; update-incident : number? (incident? -> incident?) -> void?
       ;;   Update incident matching id by applying f.
@@ -128,7 +127,7 @@
                            (incident-state item)
                            "me"
                            (incident-title item))))
-              (:= @status (string-append "assigned:" (number->string id))))))
+              (:= @status (~a "assigned:" id)))))
 
       ;; resolve-visible! : -> void?
       ;;   Resolve first visible incident.
@@ -146,7 +145,7 @@
                            "resolved"
                            (incident-owner item)
                            (incident-title item))))
-              (:= @status (string-append "resolved:" (number->string id))))))
+              (:= @status (~a "resolved:" id)))))
 
       ;; reset-triage! : -> void?
       ;;   Restore initial incidents and clear filters.
@@ -181,7 +180,7 @@
                                                                             (table '(incidents) (visible-rows)))))))))
                   (text (~> @status
                             (lambda (status)
-                              (string-append "status:" status)))))
+                              (~a "status:" status)))))
            (menu-bar
             (menu "Actions"
                   (menu-item "Assign Visible" assign-visible!)
