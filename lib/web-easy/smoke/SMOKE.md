@@ -9,6 +9,7 @@ Use `make` from repo root:
 ```bash
 make smoke-commands
 make smoke-headless-lite
+make smoke-style
 make smoke-ci
 ```
 
@@ -19,6 +20,7 @@ Use `headless.sh` from `lib/web-easy/smoke`:
 ./headless.sh verify
 ./headless.sh doctor
 ./headless.sh contract
+./headless.sh style
 ./headless.sh smoke
 ./headless.sh parity
 ./headless.sh dashboards
@@ -58,6 +60,8 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Full local CI gate | `make smoke-ci` |
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
+| Style-hook contracts only | `./headless.sh style` |
+| Style-hook contracts only (direct script) | `./check-style-headless.sh` |
 | Theme token smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-contract.html` |
 | Theme-only dashboard headless | `./headless.sh theme` |
 | Compile smoke artifacts only | `./smoke.sh check` |
@@ -69,6 +73,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 
 - `make smoke-ci`
 - `make smoke-headless-lite`
+- `make smoke-style`
 - `make smoke-verify`
 - `make smoke-quick`
 - `make smoke-release`
@@ -104,6 +109,9 @@ Available utility commands:
 - Generated browser artifacts are written to `smoke/generated/`.
 - Core smoke pages compile via `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile via `example-browser-parity-all.rkt` selected by `?test=...`.
+- Dedicated progress pages:
+  - `test-browser-progress.html` (`?test=progress`)
+  - `test-browser-parity-progress.html` (`?test=parity-progress`)
 - `check-smoke.sh` compiles:
   - `smoke-all`
   - `visual-check`
@@ -122,11 +130,13 @@ Smoke pages:
 - `test-browser-theme-vars.html`
 - `test-browser-theme-dialog-vars.html`
 - `test-browser-theme-menu-vars.html`
+- `test-browser-theme-progress-vars.html`
 - `test-browser-theme-token-contract.html`
 - `test-browser-theme-external-css-contract.html`
 - `test-browser-parity-theme-vars.html`
 - `test-browser-parity-theme-dialog-vars.html`
 - `test-browser-parity-theme-menu-vars.html`
+- `test-browser-parity-theme-progress-vars.html`
 
 All are part of the standard dashboard/headless runs (`check-all.sh --headless`, `headless.sh smoke`, `headless.sh parity`).
 Theme-only fast gate:
@@ -181,14 +191,17 @@ Headless timing behavior:
 
 - runners print `TIMING\tpage\tduration_ms` rows
 - warning threshold from `SMOKE_WARN_MS` (default `2000`)
+- style-only warning override: `SMOKE_WARN_MS_STYLE` (falls back to `SMOKE_WARN_MS`)
 - per-suite timing TSV files in `/tmp`:
   - `/tmp/web-easy-contract-timings.tsv`
   - `/tmp/web-easy-smoke-timings.tsv`
   - `/tmp/web-easy-parity-timings.tsv`
   - `/tmp/web-easy-theme-timings.tsv`
+  - `/tmp/web-easy-style-timings.tsv`
 - combined timing snapshot:
   - `./headless.sh timings`
   - writes `/tmp/web-easy-all-timings.tsv`
+  - includes suites: contract, smoke, parity, theme, style
 
 ## CI
 
@@ -204,6 +217,11 @@ Headless timing behavior:
 Contract behavior and expected PASS lines are documented in:
 
 - `SMOKE-CONTRACTS.md`
+
+## Style vs Contract
+
+- Use `./headless.sh style` (or `./check-style-headless.sh`) when iterating only on CSS hooks/classes and `data-we-widget` stability.
+- Use `./headless.sh contract` for the full contract suite (a11y, keyboard, focus, disabled, dialog, menu, tabs, style, progress).
 
 ## Notes
 

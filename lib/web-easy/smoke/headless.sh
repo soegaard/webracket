@@ -16,10 +16,11 @@ Modes:
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
+  style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
   ci                       Run dashboards + theme dashboard and guard self-test
-  timings                  Run contract/smoke/parity/theme (skip compile) and print combined top timings
+  timings                  Run contract/smoke/parity/theme/style (skip compile) and print combined top timings
   guard                    Run dashboard guard self-test
   all                      Run check-all.sh --headless
   single <compile> <page>  Run one page with check-single-headless.sh
@@ -30,6 +31,7 @@ Examples:
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
+  ./headless.sh style
   ./headless.sh theme
   ./headless.sh dashboards
   ./headless.sh ci
@@ -49,10 +51,11 @@ doctor	Check headless prerequisites
 smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
+style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
 ci	Run dashboards + theme dashboard and guard self-test
-timings	Run contract/smoke/parity/theme with compile skipped and print combined top timings
+timings	Run contract/smoke/parity/theme/style with compile skipped and print combined top timings
 guard	Run dashboard guard self-test
 all	Run check-all.sh --headless
 single	Run one page with check-single-headless.sh
@@ -142,6 +145,10 @@ case "$1" in
     shift
     exec "$SCRIPT_DIR/check-contract-headless.sh" "$@"
     ;;
+  style)
+    shift
+    exec "$SCRIPT_DIR/check-style-headless.sh" "$@"
+    ;;
   theme)
     shift
     exec "$SCRIPT_DIR/check-theme-headless.sh" "$@"
@@ -169,6 +176,7 @@ case "$1" in
     smoke_file="/tmp/web-easy-smoke-timings.tsv"
     parity_file="/tmp/web-easy-parity-timings.tsv"
     theme_file="/tmp/web-easy-theme-timings.tsv"
+    style_file="/tmp/web-easy-style-timings.tsv"
     all_file="/tmp/web-easy-all-timings.tsv"
     rm -f "$all_file"
 
@@ -176,10 +184,11 @@ case "$1" in
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$smoke_file" "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$parity_file" "$SCRIPT_DIR/check-parity-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$theme_file" "$SCRIPT_DIR/check-theme-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$style_file" "$SCRIPT_DIR/check-style-headless.sh" "$@"
 
     {
       echo -e "suite\tpage\tduration_ms"
-      for suite in contract smoke parity theme; do
+      for suite in contract smoke parity theme style; do
         file_var="${suite}_file"
         file_path="${!file_var}"
         if [ -f "$file_path" ]; then

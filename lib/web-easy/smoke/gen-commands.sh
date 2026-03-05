@@ -14,6 +14,7 @@ OUT_FILE="$SCRIPT_DIR/COMMANDS.tsv"
       smoke)      cmd="./headless.sh smoke" ;;
       parity)     cmd="./headless.sh parity" ;;
       contract)   cmd="./headless.sh contract" ;;
+      style)      cmd="./headless.sh style" ;;
       theme)      cmd="./headless.sh theme" ;;
       dashboards) cmd="./headless.sh dashboards" ;;
       ci)         cmd="./headless.sh ci" ;;
