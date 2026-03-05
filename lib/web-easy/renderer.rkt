@@ -64,11 +64,14 @@
 
     ;; Style constants
     (define tab-panel-style-text ; CSS for class-based tab styles.
-      ".we-tab-list{display:flex;gap:var(--we-gap-tab,6px);align-items:stretch;border-bottom:1px solid var(--we-border-muted,#999);padding-bottom:var(--we-space-sm,4px);margin-bottom:var(--we-space-sm,4px);}\
-       .we-tab-btn{min-width:88px;padding:var(--we-space-sm,4px) var(--we-space-md,10px);border:1px solid var(--we-border-muted,#999);border-bottom-width:2px;background:var(--we-bg,#fff);font-weight:normal;}\
-       .we-tab-btn.is-selected{border-color:var(--we-border-strong,#333);background:var(--we-bg-selected,#ececec);font-weight:bold;}\
+      ".we-tab-panel{display:flex;flex-direction:column;align-items:stretch;}\
+       .we-tab-list{display:flex;gap:0;align-items:flex-end;border-bottom:1px solid var(--we-border-muted,#999);padding:0 var(--we-space-xs,2px);margin:0;}\
+       .we-tab-btn{min-width:88px;padding:var(--we-space-sm,4px) var(--we-space-md,10px);border:1px solid var(--we-border-muted,#999);border-bottom-color:var(--we-border-muted,#999);border-radius:6px 6px 0 0;background:var(--we-bg-subtle,#f3f3f3);font-weight:normal;margin:0;}\
+       .we-tab-btn+.we-tab-btn{margin-left:var(--we-space-xs,2px);}\
+       .we-tab-btn.is-selected{border-color:var(--we-border-strong,#333);border-bottom-color:var(--we-bg-selected,#ececec);background:var(--we-bg-selected,#ececec);font-weight:bold;position:relative;z-index:1;}\
        .we-tab-btn.is-disabled{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-disabled,#f3f3f3);color:var(--we-fg-muted,#777);opacity:.7;}\
-       .we-tab-btn:focus-visible{outline:2px solid var(--we-focus,#0a66c2);outline-offset:1px;}") 
+       .we-tab-btn:focus-visible{outline:2px solid var(--we-focus,#0a66c2);outline-offset:1px;}\
+       .we-tab-content{border:1px solid var(--we-border-muted,#999);border-top:none;background:var(--we-bg,#fff);padding:var(--we-space-md,8px);}") 
     (define dialog-style-text ; CSS for dialog overlay and panel.
       ".we-dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
        .we-dialog.is-open{display:flex;}\
@@ -76,15 +79,15 @@
        .we-dialog-panel:focus-visible{outline:2px solid var(--we-focus,#0a66c2);outline-offset:2px;}") 
     (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
       ".we-menu-item:focus,.we-menu-item:focus-visible,.we-menu-label:focus,.we-menu-label:focus-visible{outline:2px solid var(--we-focus,#0a66c2);outline-offset:1px;}\
-       .we-menu-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:var(--we-space-sm,4px) var(--we-space-lg,8px);border:1px solid var(--we-border-menu,#aaa);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);box-sizing:border-box;}\
+       .we-menu-bar{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);align-items:center;padding:var(--we-space-xs,2px) var(--we-space-sm,4px);border:1px solid var(--we-border-menu,#aaa);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);box-sizing:border-box;}\
        .we-menu{position:relative;display:inline-block;}\
-       .we-menu-label{padding:var(--we-space-xs,2px) var(--we-space-lg,8px);border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;}\
-       .we-menu-label:hover{background:var(--we-bg-hover,#e8e8e8);border-color:var(--we-border-hover,#c0c0c0);}\
-       .we-menu-label[aria-expanded='true']{background:var(--we-bg,#fff);border-color:var(--we-border,#888);border-bottom-color:var(--we-bg,#fff);position:relative;z-index:1001;}\
-       .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:120px;display:none;flex-direction:column;gap:var(--we-space-sm,4px);padding:var(--we-space-sm,4px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;}\
+       .we-menu-label{padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;}\
+       .we-menu-label:hover{background:var(--we-bg-hover,#e8e8e8);border-color:var(--we-border-muted,#999);}\
+       .we-menu-label[aria-expanded='true']{background:var(--we-bg-selected,#ececec);border-color:var(--we-border-strong,#333);border-bottom-color:var(--we-bg,#fff);position:relative;z-index:1001;}\
+       .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;gap:0;padding:var(--we-space-xs,2px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));}\
        .we-menu-popup.is-open{display:flex;}\
-       .we-menu-item{display:block;width:100%;text-align:left;background:var(--we-bg,#fff);color:var(--we-fg,#111);border:1px solid var(--we-border-soft,#bbb);border-radius:3px;}\
-       .we-menu-item:hover{background:var(--we-bg-hover,#e8e8e8);border-color:var(--we-border-hover,#c0c0c0);}") 
+       .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:transparent;color:var(--we-fg,#111);border:none;border-radius:3px;}\
+       .we-menu-item:hover{background:var(--we-bg-hover,#e8e8e8);}") 
     (define control-style-text ; CSS defaults for controls and table density classes.
       ":root{--we-focus:#0a66c2;--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\

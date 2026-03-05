@@ -1,29 +1,68 @@
+/*
+ * Web Easy external light theme example.
+ *
+ * This file is intended as a "starter template" for users writing their own
+ * stylesheet. The page enables this theme by adding the class
+ *   we-theme-light
+ * on the <html> element.
+ *
+ * Quick start:
+ * 1) Change colors in the Design Tokens section.
+ * 2) Keep the selectors the same at first.
+ * 3) Refresh the page and iterate.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 1) Design Tokens (CSS variables)                                            */
+/* -------------------------------------------------------------------------- */
+/* These variables are shared by many widgets.                                 */
+/* If you only change this section, the whole theme updates consistently.      */
 html.we-theme-light {
+  /* Focus ring color for keyboard focus (Tab navigation). */
   --we-focus: #0a66c2;
+  /* Main text color. */
   --we-fg: #1a1f2b;
+  /* Main page background. */
   --we-bg: #ffffff;
+  /* Subtle background blocks (groups/panels). */
   --we-bg-subtle: #f3f3f3;
+  /* Selected tab/menu states. */
   --we-bg-selected: #e7f0ff;
+  /* Disabled controls. */
   --we-bg-disabled: #f3f3f3;
+  /* Hover background for interactive controls. */
   --we-bg-hover: #e8e8e8;
+  /* General border color. */
   --we-border: #888888;
+  /* Menu container border color. */
   --we-border-menu: #aaaaaa;
+  /* Less prominent borders. */
   --we-border-muted: #999999;
+  /* Very soft borders/separators. */
   --we-border-soft: #bbbbbb;
+  /* Border when hovering controls. */
   --we-border-hover: #c0c0c0;
+  /* Strong/highlighted border. */
   --we-border-strong: #2f4f7f;
+  /* Muted/secondary text. */
   --we-fg-muted: #777777;
+  /* Backdrop color for overlays/dialogs. */
   --we-overlay: rgba(0, 0, 0, 0.45);
+  /* Drop shadow color. */
   --we-shadow: rgba(0, 0, 0, 0.28);
+  /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
   --we-space-md: 8px;
   --we-space-lg: 10px;
   --we-gap: 4px;
   --we-gap-tab: 6px;
+
+  /* Fallback text color on the <html> element itself. */
   color: var(--we-fg);
 }
 
+/* Page background and default text. */
 html.we-theme-light {
   background: var(--we-bg);
 }
@@ -33,6 +72,87 @@ html.we-theme-light body {
   color: var(--we-fg);
 }
 
+/* -------------------------------------------------------------------------- */
+/* 2) Menu-specific tuning                                                      */
+/* -------------------------------------------------------------------------- */
+/* Menus are a bar of labels with popup lists, not a row of chip buttons. */
+html.we-theme-light .we-menu-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+  padding: 2px 4px;
+  border: 1px solid #aaaaaa;
+  border-radius: 4px;
+  background: #f3f3f3;
+  box-sizing: border-box;
+}
+
+html.we-theme-light .we-menu {
+  position: relative;
+  display: inline-block;
+}
+
+html.we-theme-light .we-menu-label {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-menu-label:hover {
+  background: #edf4ff;
+  border-color: #9fb7dd;
+}
+
+html.we-theme-light .we-menu-label[aria-expanded='true'] {
+  background: #dce9ff;
+  border-color: #5b749d;
+  border-bottom-color: #ffffff;
+  position: relative;
+  z-index: 1001;
+}
+
+html.we-theme-light .we-menu-popup {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 150px;
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+  border: 1px solid #888888;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+html.we-theme-light .we-menu-popup.is-open {
+  display: flex;
+}
+
+html.we-theme-light .we-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 2px 8px;
+  background: #ffffff;
+  color: var(--we-fg);
+  border: none;
+  border-radius: 3px;
+}
+
+html.we-theme-light .we-menu-item:hover {
+  background: #e8e8e8;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3) Control Basics (buttons, inputs, select, textarea)                       */
+/* -------------------------------------------------------------------------- */
+/* Keep contrast high for readability.                                         */
 html.we-theme-light button,
 html.we-theme-light input,
 html.we-theme-light select,
@@ -56,6 +176,7 @@ html.we-theme-light textarea::placeholder {
 html.we-theme-light input:focus-visible,
 html.we-theme-light textarea:focus-visible,
 html.we-theme-light .we-input:focus-visible {
+  /* Focus-visible keeps rings for keyboard users without always showing on click. */
   outline: 2px solid var(--we-focus);
   outline-offset: 1px;
   border-color: #5c78a6;
@@ -104,3 +225,70 @@ html.we-theme-light select option {
   background: #ffffff;
   color: var(--we-fg);
 }
+
+/* -------------------------------------------------------------------------- */
+/* 4) Tabs (tab-strip look, not button-row look)                               */
+/* -------------------------------------------------------------------------- */
+/* These rules make tabs look connected to the content panel. */
+html.we-theme-light .we-tab-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+html.we-theme-light .we-tab-list {
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  border-bottom: 1px solid #9aa9c3;
+  padding: 0 2px;
+  margin: 0;
+}
+
+html.we-theme-light .we-tab-btn {
+  min-width: 88px;
+  padding: 4px 10px;
+  border: 1px solid #9aa9c3;
+  border-radius: 6px 6px 0 0;
+  border-bottom-color: #9aa9c3;
+  background: #f3f6fb;
+  color: var(--we-fg);
+  margin: 0;
+}
+
+html.we-theme-light .we-tab-btn + .we-tab-btn {
+  margin-left: 2px;
+}
+
+html.we-theme-light .we-tab-btn.is-selected {
+  border-color: #5b749d;
+  border-bottom-color: #ffffff;
+  background: #ffffff;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+}
+
+html.we-theme-light .we-tab-btn.is-disabled {
+  border-color: #c1cde0;
+  background: #f3f3f3;
+  color: #7d8aa2;
+}
+
+html.we-theme-light .we-tab-content {
+  border: 1px solid #9aa9c3;
+  border-top: none;
+  background: #ffffff;
+  padding: 8px;
+}
+
+html.we-theme-light .we-tab-btn:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+}
+
+/*
+ * Customization tip:
+ * When creating your own theme, prefer changing variables first. If you later
+ * need component-specific styling, add new blocks below this line.
+ */
