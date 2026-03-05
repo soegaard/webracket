@@ -52,6 +52,26 @@ Popup item behavior:
 - navigation bar exposes navigation semantics (`role="navigation"`)
 - button actions update selected state text deterministically
 
+## Button Group / Toolbar Contract Semantics
+
+- button-group exposes grouped action controls with stable class hooks
+- button-toolbar contains grouped button-group clusters with predictable structure
+
+## Card Contract Semantics
+
+- card renders header/body/footer hooks consistently
+- header/footer text updates reactively when backing observables change
+
+## List Group Contract Semantics
+
+- list-group renders item hooks for each entry
+- selecting an item updates current/active class state
+
+## Pagination Contract Semantics
+
+- pagination exposes page-button hooks and stable current-page class state
+- next/prev or page selection transitions the current-page marker predictably
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -83,6 +103,11 @@ Popup item behavior:
 - `PASS popover contract:`
 - `PASS dropdown contract:`
 - `PASS navigation-bar contract:`
+- `PASS button-group contract:`
+- `PASS button-toolbar contract:`
+- `PASS card contract:`
+- `PASS list-group contract:`
+- `PASS pagination contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -104,6 +129,11 @@ Popup item behavior:
 - `PASS parity popover contract:`
 - `PASS parity dropdown contract:`
 - `PASS parity navigation-bar contract:`
+- `PASS parity button-group contract:`
+- `PASS parity button-toolbar contract:`
+- `PASS parity card contract:`
+- `PASS parity list-group contract:`
+- `PASS parity pagination contract:`
 
 ## Guard Self-Test Expectation
 

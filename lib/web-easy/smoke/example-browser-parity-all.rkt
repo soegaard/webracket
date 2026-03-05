@@ -21,6 +21,11 @@
 (include/reader "smoke-capsule-parity-menu-full.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dropdown.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-navigation-bar.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-button-group.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-button-toolbar.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-card.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-pagination.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-list-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
@@ -80,6 +85,26 @@
               (list parity-navigation-bar-make-page
                     parity-navigation-bar-run-test
                     parity-navigation-bar-cleanup))
+        (cons 'parity-button-group
+              (list parity-button-group-make-page
+                    parity-button-group-run-test
+                    parity-button-group-cleanup))
+        (cons 'parity-button-toolbar
+              (list parity-button-toolbar-make-page
+                    parity-button-toolbar-run-test
+                    parity-button-toolbar-cleanup))
+        (cons 'parity-card
+              (list parity-card-make-page
+                    parity-card-run-test
+                    parity-card-cleanup))
+        (cons 'parity-pagination
+              (list parity-pagination-make-page
+                    parity-pagination-run-test
+                    parity-pagination-cleanup))
+        (cons 'parity-list-group
+              (list parity-list-group-make-page
+                    parity-list-group-run-test
+                    parity-list-group-cleanup))
         (cons 'parity-dialog
               (list parity-dialog-make-page
                     parity-dialog-run-test
