@@ -162,9 +162,10 @@
 (define (warn-duration start-ms)
   (define dur (- (now-ms) start-ms))
   (when (> dur exec-path-from-shell-warn-ms)
+    (define rounded-ms (inexact->exact (round dur)))
     (eprintf
      "Warning: exec-path-from-shell took ~ams; consider slimming shell init.\n"
-     dur)))
+     rounded-ms)))
 
 
 (define (extract-between-markers out)
