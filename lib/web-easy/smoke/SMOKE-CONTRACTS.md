@@ -40,6 +40,13 @@ Popup item behavior:
 - `Escape` closes popover
 - focus returns to trigger when popover closes
 
+## Dropdown Contract Semantics
+
+- trigger/menu label toggles popup via `aria-expanded`
+- `Enter` opens dropdown popup
+- `Escape` closes dropdown popup
+- selecting an item triggers action and closes popup
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -69,6 +76,7 @@ Popup item behavior:
 - `PASS progress contract:`
 - `PASS style hook contract:`
 - `PASS popover contract:`
+- `PASS dropdown contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -88,6 +96,7 @@ Popup item behavior:
 - `PASS parity progress contract:`
 - `PASS parity style hook contract:`
 - `PASS parity popover contract:`
+- `PASS parity dropdown contract:`
 
 ## Guard Self-Test Expectation
 

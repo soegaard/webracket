@@ -19,6 +19,7 @@
 (include/reader "smoke-capsule-parity-table.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-menu-keys.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-menu-full.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-dropdown.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
@@ -70,6 +71,10 @@
               (list parity-menu-full-make-page
                     parity-menu-full-run-test
                     parity-menu-full-cleanup))
+        (cons 'parity-dropdown
+              (list parity-dropdown-make-page
+                    parity-dropdown-run-test
+                    parity-dropdown-cleanup))
         (cons 'parity-dialog
               (list parity-dialog-make-page
                     parity-dialog-run-test
