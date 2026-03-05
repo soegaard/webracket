@@ -24,8 +24,13 @@
 (include/reader "smoke-capsule-parity-button-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-button-toolbar.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-card.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-alert.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-badge.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-spinner.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-pagination.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list-group.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-toast.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-collapse.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
@@ -97,6 +102,18 @@
               (list parity-card-make-page
                     parity-card-run-test
                     parity-card-cleanup))
+        (cons 'parity-alert
+              (list parity-alert-make-page
+                    parity-alert-run-test
+                    parity-alert-cleanup))
+        (cons 'parity-badge
+              (list parity-badge-make-page
+                    parity-badge-run-test
+                    parity-badge-cleanup))
+        (cons 'parity-spinner
+              (list parity-spinner-make-page
+                    parity-spinner-run-test
+                    parity-spinner-cleanup))
         (cons 'parity-pagination
               (list parity-pagination-make-page
                     parity-pagination-run-test
@@ -105,6 +122,14 @@
               (list parity-list-group-make-page
                     parity-list-group-run-test
                     parity-list-group-cleanup))
+        (cons 'parity-toast
+              (list parity-toast-make-page
+                    parity-toast-run-test
+                    parity-toast-cleanup))
+        (cons 'parity-collapse
+              (list parity-collapse-make-page
+                    parity-collapse-run-test
+                    parity-collapse-cleanup))
         (cons 'parity-dialog
               (list parity-dialog-make-page
                     parity-dialog-run-test

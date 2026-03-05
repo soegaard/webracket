@@ -72,6 +72,26 @@ Popup item behavior:
 - pagination exposes page-button hooks and stable current-page class state
 - next/prev or page selection transitions the current-page marker predictably
 
+## Alert / Badge Contract Semantics
+
+- alert and badge expose stable severity class hooks
+- severity updates reflect class and message changes deterministically
+
+## Spinner Contract Semantics
+
+- spinner exposes stable widget and label hooks
+- label updates reflect current activity text deterministically
+
+## Toast Contract Semantics
+
+- toast open/close state is reflected by class and aria-hidden hooks
+- severity and dismissible state transitions are reflected in rendered controls
+
+## Collapse Contract Semantics
+
+- collapse open/closed state is reflected by class and aria-hidden hooks
+- toggle action transitions the collapse state deterministically
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -108,6 +128,11 @@ Popup item behavior:
 - `PASS card contract:`
 - `PASS list-group contract:`
 - `PASS pagination contract:`
+- `PASS alert contract:`
+- `PASS badge contract:`
+- `PASS spinner contract:`
+- `PASS toast contract:`
+- `PASS collapse contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -134,6 +159,11 @@ Popup item behavior:
 - `PASS parity card contract:`
 - `PASS parity list-group contract:`
 - `PASS parity pagination contract:`
+- `PASS parity alert contract:`
+- `PASS parity badge contract:`
+- `PASS parity spinner contract:`
+- `PASS parity toast contract:`
+- `PASS parity collapse contract:`
 
 ## Guard Self-Test Expectation
 
