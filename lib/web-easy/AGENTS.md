@@ -31,3 +31,4 @@ Coding guidelines for Racket/WebRacket code in `lib/web-easy`.
 20. Use `data-we-widget` as a stable semantic marker for each rendered widget root (for example `data-we-widget=\"dialog\"`) so user CSS/tests/tooling can target component type without relying on DOM shape.
 21. User-facing example CSS files (especially external theme examples) must be commented and novice-readable: include section headers, explain token purpose, and provide brief customization guidance.
 22. In beginner-facing CSS examples, add comments for non-obvious layout/stacking or visual-state rules (for example `z-index`, transparent border reservation, border-color seam fixes, and focus tint techniques) so readers understand why those rules exist.
+23. For consecutive calls with the same callee and simple arguments, align argument columns to improve scanability.

@@ -22,49 +22,56 @@
       ;;;
       ;;; web-easy Browser Parity List Example
       ;;;
-      
+
       ;; Parity example: list ordering and keyed updates.
-      
-      
+
       ;; Constants for example-local observable state.
-      (define @entries (@ '((a . "alpha") (b . "beta"))))
-      
+      ;; The representation in @entries is chosen by the web-easy user.
+      ;; list-view only requires a key function and an entry renderer.
+      (define @entries  (@ '((a "alpha") (b "beta"))))
+      (define id-of     first)
+      (define label-of  second)
+
       ;; reverse-list! : -> void?
       ;;   Reverse the current entry order.
       (define (reverse-list!)
         (obs-update! @entries reverse))
-      
+
       ;; add-gamma! : -> void?
       ;;   Append key g with label gamma when missing.
       (define (add-gamma!)
         (obs-update! @entries
                      (lambda (entries)
-                       (if (assq 'g entries)
+                       (if (memf (lambda (entry)
+                                   (eq? (id-of entry) 'g))
+                                 entries)
                            entries
-                           (append entries (list (cons 'g "gamma")))))))
-      
+                           (append entries (list (list 'g "gamma")))))))
+
       ;; remove-beta! : -> void?
       ;;   Remove the entry keyed by b.
       (define (remove-beta!)
         (obs-update! @entries
                      (lambda (entries)
                        (filter (lambda (entry)
-                                 (not (eq? (car entry) 'b)))
+                                 (not (eq? (id-of entry) 'b)))
                                entries))))
-      
+
+      ;; render-entry : any/c list? -> view?
+      ;;   Render one parity list entry.
+      (define (render-entry _key entry)
+        (text (label-of entry)))
+
       (define app-renderer
         (render
          (window
           (vpanel
            (hpanel
-            (button "reverse" reverse-list!)
-            (button "add-gamma" add-gamma!)
+            (button "reverse"     reverse-list!)
+            (button "add-gamma"   add-gamma!)
             (button "remove-beta" remove-beta!))
-           (list-view @entries
-                      (lambda (_key entry)
-                        (text (cdr entry)))
-                      car)))))
-      
+           (list-view @entries render-entry id-of)))))
+
       (set! parity-list-renderer app-renderer)
       (mount-renderer! app-renderer root)
       (void))
