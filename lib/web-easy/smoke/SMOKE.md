@@ -123,6 +123,7 @@ Smoke pages:
 - `test-browser-theme-dialog-vars.html`
 - `test-browser-theme-menu-vars.html`
 - `test-browser-theme-token-contract.html`
+- `test-browser-theme-external-css-contract.html`
 - `test-browser-parity-theme-vars.html`
 - `test-browser-parity-theme-dialog-vars.html`
 - `test-browser-parity-theme-menu-vars.html`
@@ -131,6 +132,10 @@ All are part of the standard dashboard/headless runs (`check-all.sh --headless`,
 Theme-only fast gate:
 
 - `./headless.sh theme` runs `test-browser-theme-contract-dashboard.html`
+- Manual external CSS theming example:
+  - `test-browser-theme-external-css.html`
+  - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`
+  - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 
 ## CSS Hook Inspection
 

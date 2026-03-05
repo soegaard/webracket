@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy external CSS theme contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 720px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running external CSS theme contract assertions...</div>
+  <iframe id="app-frame" src="./test-browser-theme-external-css.html" title="web-easy external theme demo"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function normalizedCssColor(v) {
+      return (v || "").replace(/\s+/g, "").toLowerCase();
+    }
+
+    function firstBySelector(frameDoc, selector) {
+      return frameDoc.querySelector(selector);
+    }
+
+    async function waitForDemoReady(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const demoDoc = frameDocFrom(frame);
+        if (demoDoc) {
+          const current = demoDoc.getElementById("current");
+          const btnDark = demoDoc.getElementById("btn-dark");
+          const btnLight = demoDoc.getElementById("btn-light");
+          const menuFrame = demoDoc.getElementById("frame-menu");
+          const tabsFrame = demoDoc.getElementById("frame-tabs");
+          const controlsFrame = demoDoc.getElementById("frame-controls");
+          const dialogFrame = demoDoc.getElementById("frame-dialog");
+          if (current && btnDark && btnLight && menuFrame && tabsFrame && controlsFrame && dialogFrame) {
+            const menuDoc = frameDocFrom(menuFrame);
+            const tabsDoc = frameDocFrom(tabsFrame);
+            const controlsDoc = frameDocFrom(controlsFrame);
+            const dialogDoc = frameDocFrom(dialogFrame);
+            if (menuDoc && tabsDoc && controlsDoc && dialogDoc) {
+              const menuItem = firstBySelector(menuDoc, ".we-menu-item");
+              const tabButton = firstBySelector(tabsDoc, ".we-tab-btn");
+              const input = firstBySelector(controlsDoc, "input");
+              const openDialogBtn = Array.from(dialogDoc.querySelectorAll("button"))
+                .find((b) => (b.textContent || "").trim() === "open-dialog");
+              if (menuItem && tabButton && input && openDialogBtn) {
+                return {
+                  demoDoc,
+                  current,
+                  btnDark,
+                  btnLight,
+                  menuDoc,
+                  tabsDoc,
+                  controlsDoc,
+                  dialogDoc,
+                  menuItem,
+                  tabButton,
+                  input,
+                  openDialogBtn
+                };
+              }
+            }
+          }
+        }
+        await sleep(30);
+      }
+      throw new Error("Timed out waiting for external theme demo UI");
+    }
+
+    async function ensureDialogOpen(ui) {
+      ui.openDialogBtn.click();
+      const start = Date.now();
+      while (Date.now() - start < 6000) {
+        const panel = firstBySelector(ui.dialogDoc, ".we-dialog-panel");
+        const dialog = firstBySelector(ui.dialogDoc, ".we-dialog");
+        if (panel && dialog && dialog.getAttribute("aria-hidden") === "false") {
+          return panel;
+        }
+        await sleep(30);
+      }
+      throw new Error("Timed out waiting for dialog open in external theme demo");
+    }
+
+    function captureStyleSet(ui, dialogPanel) {
+      return {
+        menuBg: normalizedCssColor(getComputedStyle(ui.menuItem).backgroundColor),
+        tabBg: normalizedCssColor(getComputedStyle(ui.tabButton).backgroundColor),
+        inputBg: normalizedCssColor(getComputedStyle(ui.input).backgroundColor),
+        dialogBg: normalizedCssColor(getComputedStyle(dialogPanel).backgroundColor)
+      };
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForDemoReady(frame, 30000);
+        assertTrue((ui.current.textContent || "").includes("light"), "initial theme is light");
+
+        const lightDialogPanel = await ensureDialogOpen(ui);
+        const light = captureStyleSet(ui, lightDialogPanel);
+
+        ui.btnDark.click();
+        await sleep(220);
+        assertTrue((ui.current.textContent || "").includes("dark"), "theme switched to dark");
+
+        const darkDialogPanel = firstBySelector(ui.dialogDoc, ".we-dialog-panel") || lightDialogPanel;
+        const dark = captureStyleSet(ui, darkDialogPanel);
+
+        assertTrue(dark.menuBg !== light.menuBg, "menu item background differs dark vs light");
+        assertTrue(dark.tabBg !== light.tabBg, "tab button background differs dark vs light");
+        assertTrue(dark.inputBg !== light.inputBg, "input background differs dark vs light");
+        assertTrue(dark.dialogBg !== light.dialogBg, "dialog panel background differs dark vs light");
+
+        ui.btnLight.click();
+        await sleep(220);
+        assertTrue((ui.current.textContent || "").includes("light"), "theme switched back to light");
+
+        const light2 = captureStyleSet(ui, darkDialogPanel);
+        assertTrue(light2.menuBg === light.menuBg, "menu background restored after switching back");
+
+        setStatus(
+          "PASS\nexternal CSS theme contract: menu/tab/input/dialog change across light/dark",
+          "pass"
+        );
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

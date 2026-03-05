@@ -128,7 +128,9 @@
                           @mode
                           (lambda (new-value)
                             (set-mode! new-value)))
-                  (image @img-src)
+                  (image (~> @img-src
+                             (lambda (src)
+                               (string-append "../" src))))
                   (text (~> @img-src
                             (lambda (src)
                               (string-append "img:" src))))

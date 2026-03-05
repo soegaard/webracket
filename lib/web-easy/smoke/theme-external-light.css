@@ -1,0 +1,106 @@
+html.we-theme-light {
+  --we-focus: #0a66c2;
+  --we-fg: #1a1f2b;
+  --we-bg: #ffffff;
+  --we-bg-subtle: #f3f3f3;
+  --we-bg-selected: #e7f0ff;
+  --we-bg-disabled: #f3f3f3;
+  --we-bg-hover: #e8e8e8;
+  --we-border: #888888;
+  --we-border-menu: #aaaaaa;
+  --we-border-muted: #999999;
+  --we-border-soft: #bbbbbb;
+  --we-border-hover: #c0c0c0;
+  --we-border-strong: #2f4f7f;
+  --we-fg-muted: #777777;
+  --we-overlay: rgba(0, 0, 0, 0.45);
+  --we-shadow: rgba(0, 0, 0, 0.28);
+  --we-space-xs: 2px;
+  --we-space-sm: 4px;
+  --we-space-md: 8px;
+  --we-space-lg: 10px;
+  --we-gap: 4px;
+  --we-gap-tab: 6px;
+  color: var(--we-fg);
+}
+
+html.we-theme-light {
+  background: var(--we-bg);
+}
+
+html.we-theme-light body {
+  background: var(--we-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-light button,
+html.we-theme-light input,
+html.we-theme-light select,
+html.we-theme-light textarea {
+  color: var(--we-fg);
+}
+
+html.we-theme-light input,
+html.we-theme-light textarea,
+html.we-theme-light .we-input {
+  background: #ffffff;
+  border: 1px solid #9aa9c3;
+  color: var(--we-fg);
+}
+
+html.we-theme-light input::placeholder,
+html.we-theme-light textarea::placeholder {
+  color: #6f7f99;
+}
+
+html.we-theme-light input:focus-visible,
+html.we-theme-light textarea:focus-visible,
+html.we-theme-light .we-input:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+  border-color: #5c78a6;
+}
+
+html.we-theme-light button,
+html.we-theme-light .we-button {
+  background: #f7f9fd;
+  border: 1px solid #9aa9c3;
+  color: var(--we-fg);
+  border-radius: 3px;
+}
+
+html.we-theme-light button:hover,
+html.we-theme-light .we-button:hover {
+  background: #e9f0fb;
+  border-color: #6f86aa;
+}
+
+html.we-theme-light button:active,
+html.we-theme-light .we-button:active {
+  background: #dce7f7;
+  border-color: #5b749d;
+}
+
+html.we-theme-light button:focus-visible,
+html.we-theme-light .we-button:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+}
+
+html.we-theme-light select,
+html.we-theme-light .we-choice {
+  background: #ffffff;
+  border: 1px solid #9aa9c3;
+  color: var(--we-fg);
+}
+
+html.we-theme-light select:focus-visible,
+html.we-theme-light .we-choice:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+}
+
+html.we-theme-light select option {
+  background: #ffffff;
+  color: var(--we-fg);
+}

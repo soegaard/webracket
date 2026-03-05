@@ -1,0 +1,134 @@
+html.we-theme-dark {
+  --we-focus: #7db7ff;
+  --we-fg: #d9e2f3;
+  --we-bg: #13161c;
+  --we-bg-subtle: #1a1f29;
+  --we-bg-selected: #25344a;
+  --we-bg-disabled: #2a2f38;
+  --we-bg-hover: #2a3342;
+  --we-border: #56607a;
+  --we-border-menu: #4f5b72;
+  --we-border-muted: #616d86;
+  --we-border-soft: #727f99;
+  --we-border-hover: #8a97b0;
+  --we-border-strong: #9ec2ff;
+  --we-fg-muted: #a3afc4;
+  --we-overlay: rgba(2, 6, 12, 0.72);
+  --we-shadow: rgba(0, 0, 0, 0.5);
+  --we-space-xs: 2px;
+  --we-space-sm: 4px;
+  --we-space-md: 8px;
+  --we-space-lg: 10px;
+  --we-gap: 4px;
+  --we-gap-tab: 6px;
+  background: var(--we-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-dark body {
+  background: var(--we-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-menu-popup {
+  background: #161d28;
+  border-color: #5e6a84;
+}
+
+html.we-theme-dark .we-menu-label {
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-menu-label:hover {
+  background: #2b3648;
+  border-color: #7f8eab;
+}
+
+html.we-theme-dark .we-menu-label[aria-expanded='true'] {
+  background: #1f2836;
+  border-color: #8ea4cc;
+  border-bottom-color: #1f2836;
+}
+
+html.we-theme-dark .we-menu-item {
+  background: #202a38;
+  color: var(--we-fg);
+  border-color: #6f7d99;
+}
+
+html.we-theme-dark .we-menu-item:hover {
+  background: #2f3b4f;
+  border-color: #9eb2d5;
+}
+
+html.we-theme-dark button,
+html.we-theme-dark input,
+html.we-theme-dark select,
+html.we-theme-dark textarea {
+  color: var(--we-fg);
+}
+
+html.we-theme-dark input,
+html.we-theme-dark textarea,
+html.we-theme-dark .we-input {
+  background: #1a2230;
+  border: 1px solid #7383a1;
+  color: var(--we-fg);
+}
+
+html.we-theme-dark input::placeholder,
+html.we-theme-dark textarea::placeholder {
+  color: #9aabc8;
+}
+
+html.we-theme-dark input:focus-visible,
+html.we-theme-dark textarea:focus-visible,
+html.we-theme-dark .we-input:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+  border-color: #9eb2d5;
+}
+
+html.we-theme-dark button,
+html.we-theme-dark .we-button {
+  background: #2a3342;
+  border: 1px solid #7f8eab;
+  color: var(--we-fg);
+  border-radius: 3px;
+}
+
+html.we-theme-dark button:hover,
+html.we-theme-dark .we-button:hover {
+  background: #37445a;
+  border-color: #a3b5d5;
+}
+
+html.we-theme-dark button:active,
+html.we-theme-dark .we-button:active {
+  background: #1f2938;
+  border-color: #90a4c9;
+}
+
+html.we-theme-dark button:focus-visible,
+html.we-theme-dark .we-button:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+}
+
+html.we-theme-dark select,
+html.we-theme-dark .we-choice {
+  background: #1f2836;
+  border: 1px solid #7f8eab;
+  color: var(--we-fg);
+}
+
+html.we-theme-dark select:focus-visible,
+html.we-theme-dark .we-choice:focus-visible {
+  outline: 2px solid var(--we-focus);
+  outline-offset: 1px;
+}
+
+html.we-theme-dark select option {
+  background: #1f2836;
+  color: var(--we-fg);
+}

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy external CSS theme demo</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+      max-width: 1200px;
+    }
+    #controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    #note {
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 10px;
+    }
+    .panel {
+      border: 1px solid #999;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fafafa;
+    }
+    .panel h2 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    iframe {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #999;
+      background: white;
+    }
+    button {
+      padding: 4px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>web-easy external CSS theme demo</h1>
+  <div id="note">
+    This page demonstrates user theming via external CSS files only.
+    Edit <code>theme-external-light.css</code> and <code>theme-external-dark.css</code> to customize widgets.
+    Coverage: menu/menu-item, tab-panel (normal + disabled), dialog, group, input, checkbox, choice/select,
+    slider, progress, table, list-view, radios, image, and common buttons/text.
+  </div>
+
+  <div id="controls">
+    <strong>Theme:</strong>
+    <button id="btn-light" type="button">Light</button>
+    <button id="btn-dark" type="button">Dark</button>
+    <span id="current">(loading)</span>
+  </div>
+
+  <div id="gallery">
+    <section class="panel">
+      <h2>Workspace (profile/settings/table/list)</h2>
+      <iframe id="frame-workspace" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="workspace"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Profile (radios + image)</h2>
+      <iframe id="frame-profile" src="./generated/example-browser-parity-all.html?test=parity-profile" title="profile"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Menu Full</h2>
+      <iframe id="frame-menu" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="menu full"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Tabs</h2>
+      <iframe id="frame-tabs" src="./generated/example-browser-parity-all.html?test=parity-tabs" title="tabs"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Tabs Disabled</h2>
+      <iframe id="frame-tabs-disabled" src="./generated/example-browser-smoke-all.html?test=tab-panel-disabled" title="tabs disabled"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Dialog</h2>
+      <iframe id="frame-dialog" src="./generated/example-browser-smoke-all.html?test=dialog" title="dialog"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Controls</h2>
+      <iframe id="frame-controls" src="./generated/example-browser-smoke-all.html?test=controls" title="controls"></iframe>
+    </section>
+    <section class="panel">
+      <h2>Width Policy (group + form/table)</h2>
+      <iframe id="frame-width" src="./generated/example-browser-smoke-all.html?test=width" title="width policy"></iframe>
+    </section>
+    <section class="panel">
+      <h2>List View</h2>
+      <iframe id="frame-list" src="./generated/example-browser-parity-all.html?test=parity-list" title="list view"></iframe>
+    </section>
+  </div>
+
+  <script>
+    const THEMES = {
+      light: "../theme-external-light.css",
+      dark: "../theme-external-dark.css"
+    };
+
+    const FRAME_IDS = [
+      "frame-workspace",
+      "frame-profile",
+      "frame-menu",
+      "frame-tabs",
+      "frame-tabs-disabled",
+      "frame-dialog",
+      "frame-controls",
+      "frame-width",
+      "frame-list"
+    ];
+
+    let currentTheme = "light";
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function ensureThemeLink(frameDoc) {
+      let link = frameDoc.getElementById("external-theme-css");
+      if (!link) {
+        link = frameDoc.createElement("link");
+        link.id = "external-theme-css";
+        link.rel = "stylesheet";
+        frameDoc.head.appendChild(link);
+      }
+      return link;
+    }
+
+    function applyThemeToFrame(frame, name) {
+      const frameDoc = frameDocFrom(frame);
+      if (!frameDoc) {
+        return;
+      }
+      frameDoc.documentElement.classList.remove("we-theme-light", "we-theme-dark");
+      frameDoc.documentElement.classList.add(name === "dark" ? "we-theme-dark" : "we-theme-light");
+      const link = ensureThemeLink(frameDoc);
+      link.href = THEMES[name];
+    }
+
+    function applyTheme(name) {
+      currentTheme = name;
+      for (const id of FRAME_IDS) {
+        const frame = document.getElementById(id);
+        if (frame) {
+          applyThemeToFrame(frame, name);
+        }
+      }
+      document.getElementById("current").textContent = "current=" + name;
+    }
+
+    for (const id of FRAME_IDS) {
+      const frame = document.getElementById(id);
+      frame.addEventListener("load", () => {
+        applyThemeToFrame(frame, currentTheme);
+      });
+    }
+
+    document.getElementById("btn-light").addEventListener("click", () => applyTheme("light"));
+    document.getElementById("btn-dark").addEventListener("click", () => applyTheme("dark"));
+
+    window.addEventListener("load", () => {
+      applyTheme("light");
+    });
+  </script>
+</body>
+</html>
