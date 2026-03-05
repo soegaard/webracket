@@ -140,8 +140,9 @@ Planned target:
   - `renderer-destroy`
 - Core views:
   - `window` (mapped to root container node)
-  - `hpanel`, `vpanel`, `group`
+  - `hpanel`, `vpanel`, `group`, `button-group`, `button-toolbar`, `card`, `navigation-bar`
   - `text`
+  - `spinner`
   - `button`
   - `input`
   - `checkbox`
@@ -150,6 +151,9 @@ Planned target:
   - `progress`
   - `radios`
   - `image`
+  - `breadcrumb`
+  - `list-group`
+  - `dropdown`
   - `menu-bar` (web-adapted)
   - `menu` (web-adapted)
   - `menu-item` (web-adapted)
@@ -177,7 +181,12 @@ Implemented now:
   - `hpanel`
   - `vpanel`
   - `group`
+  - `button-group`
+  - `button-toolbar`
+  - `card`
+  - `navigation-bar`
   - `text`
+  - `spinner`
   - `button`
   - `input`
   - `checkbox`
@@ -194,6 +203,9 @@ Implemented now:
   - `list-view`
   - `radios`
   - `image`
+  - `breadcrumb`
+  - `list-group`
+  - `dropdown`
   - `menu-bar` (web-adapted)
   - `menu` (web-adapted)
   - `menu-item` (web-adapted)
@@ -255,10 +267,10 @@ Current status snapshot (March 1, 2026):
 | Area | Item | Status | Coverage | Notes |
 |---|---|---|---|---|
 | Renderer lifecycle | `render`, `renderer?`, `renderer-root`, `renderer-destroy` | Implemented | Core tests + smoke | Browser backend integrated via `backend-browser.rkt`. |
-| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse`. |
-| Basic controls | `text`, `alert`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
+| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `button-group`, `button-toolbar`, `card`, `navigation-bar`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse` with keyboard navigation. |
+| Basic controls | `text`, `spinner`, `alert`, `badge`, `toast`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `pagination`, `breadcrumb`, `list-group`, `radios`, `image`, `tooltip`, `popover` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
-| Menus | `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests | Semantics intentionally differ from desktop-native menu systems. |
+| Menus | `dropdown`, `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests + smoke | `dropdown` is a single-trigger menu wrapper over shared menu semantics. |
 | Tabs | `tab-panel` | Implemented | Core tests + smoke | Includes keyboard navigation, disabled tabs, and focus tracking checks. |
 | Observables core | `obs?`, `obs`, `obs-name`, `obs-observe!`, `obs-unobserve!`, `obs-update!`, `obs-set!`, `obs-peek`, `obs-map`, `obs-filter` | Implemented | Core tests | Compatible MVP surface. |
 | Operators | `@`, `:=`, `<~`, `λ<~`, `~>`, `~#>` | Implemented | Core tests + smoke | Operator smoke covers filter + thunk behavior in browser runtime. |
@@ -549,23 +561,32 @@ Current browser backend element mapping (as implemented today):
 
 | widget/tag | HTML element(s) | Notes |
 |---|---|---|
-| `window`, `vpanel`, `hpanel` | `div` | `vpanel`/`hpanel` use flex layout styles. |
+| `window`, `vpanel`, `hpanel`, `button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
 | `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
 | `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions. |
 | `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
+| `spinner` | `div` + `span` | Animated loading indicator with optional status label. |
 | `alert` | `div` | Inline status banner with severity classes (`info/success/warn/error`). |
+| `badge` | `span` | Compact inline severity marker with class-based variants. |
+| `toast` | `div` + optional `button` + optional title node | Non-modal notification anchored to viewport; supports level variants plus optional title and dismissibility. |
 | `button` | `button` | Native clickable button. |
 | `input` | `input` | Text input; supports Enter callback wiring. |
 | `checkbox` | `input[type=checkbox]` | Boolean toggle control. |
 | `choice`, `radios` | `select` | `radios` currently rendered as select in browser backend. |
 | `slider` | `input[type=range]` | Numeric range input. |
-| `progress` | `progress` | One-way progress display. |
+| `progress` | `progress` | One-way progress display with variant classes (`info/success/warn/error`). |
+| `pagination` | `nav` + `button` | Page navigation with prev/next and current-page classes/ARIA state. |
+| `breadcrumb` | `nav` + `button` + `span` | Hierarchical navigation trail with current item marker. |
+| `list-group` | `div` + `button` | Selectable list rows with current-item marker classes. |
 | `tab-panel` | composite: `div` + `button` + `div` + injected `style` | Tab strip uses tab buttons with ARIA attrs and keyboard handling. |
 | `spacer` | `div` | Empty layout spacer. |
 | `table` | `table` + `tr` + `th` + `td` | Header row from columns, data rows from row values. |
 | `image` | `img` | Optional `width`/`height`; keeps intrinsic size by default. |
+| `dropdown` | `div` + `menu` composite | Single-trigger popup menu using same behavior as `menu`/`menu-item`. |
+| `tooltip` | `div` + trigger child + `span` bubble | Hover/focus tooltip with `aria-describedby` from trigger to bubble id. |
+| `popover` | `div` + `button` trigger + `div` panel | Click-toggle detail panel with `aria-expanded`/`aria-hidden` and Escape close. |
 | `menu-bar` | `nav` (`role="menubar"`, `aria-orientation="horizontal"`) | Top-level menu label row. |
 | `menu` | `div` (`role="menu"`, popup `id`) | Popup menu container linked from label via `aria-controls`. |
 | `menu-item` | `button type="button"` (`role="menuitem"`) | Action entry with keyboard activation (`Enter`/`Space`). |
@@ -636,6 +657,8 @@ Default theme tokens (CSS custom properties):
   - `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-disabled`, `--we-bg-hover`
 - Borders/text:
   - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg`, `--we-fg-muted`
+- Progress variants:
+  - `--we-progress-success`, `--we-progress-warn`, `--we-progress-error`
 - Spacing/gaps:
   - `--we-space-xs`, `--we-space-sm`, `--we-space-md`, `--we-space-lg`, `--we-gap`, `--we-gap-tab`
 
@@ -644,7 +667,11 @@ Stable styling contract (current baseline):
 | Surface | Stable `data-we-widget` hooks | Stable classes | Primary token hooks |
 |---|---|---|---|
 | Buttons/inputs/select | `button`, `input`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg` |
-| Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress` | `--we-fg`, `--we-focus` |
+| Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warn`, `.we-progress-error` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warn`, `--we-progress-error` |
+| Alert/badge/spinner | `alert`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
+| Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
+| Pagination/breadcrumb/list-group | `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `list-group`, `list-group-item` | `.we-pagination`, `.we-page-btn`, `.we-breadcrumb`, `.we-breadcrumb-item`, `.we-list-group`, `.we-list-group-item`, `.is-current` | `--we-bg`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-fg`, `--we-fg-muted`, `--we-focus` |
+| Card/navigation | `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar` | `.we-card`, `.we-card-header`, `.we-card-body`, `.we-card-footer`, `.we-navigation-bar` | `--we-bg`, `--we-bg-subtle`, `--we-border-soft`, `--we-border-menu`, `--we-fg` |
 | Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
 | Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus` |
 | Dialog | `dialog`, `dialog-panel` | `.we-dialog`, `.we-dialog-panel`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
@@ -653,13 +680,20 @@ Stable styling contract (current baseline):
 Contract enforcement status:
 
 - Automated smoke contract page: `smoke/test-browser-style-hook-contract.html`.
+- Automated parity contract page: `smoke/test-browser-parity-style-hook-contract.html`.
 - Included in `smoke/test-browser-contract-dashboard.html` and headless contract CI path.
+- Theme token contract page: `smoke/test-browser-theme-token-contract.html`.
+  - verifies token definition presence and runtime token override effects across menu/card/pagination/breadcrumb.
 
 `data-we-widget` examples:
 
 - containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `collapse`, `spacer`
 - controls: `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
-- complex widgets:
+  - complex widgets:
+  - alert/badge/spinner: `alert`, `badge`, `spinner`
+  - toast/collapse: `toast`, `collapse`
+  - pagination/breadcrumb/list-group: `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `breadcrumb-sep`, `list-group`, `list-group-item`
+  - card/navigation: `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar`
   - menu: `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item`
   - dialog: `dialog`, `dialog-panel`
   - table: `table`, `table-row`, `table-header-cell`, `table-data-cell`
@@ -743,10 +777,9 @@ Priority order:
    - Why now: common app requirement (save/deploy/completion feedback) not well served by modal flows.
    - Validation focus: queue order, auto-dismiss timing, manual dismiss, hover/focus pause policy.
 
-5. `tooltip` (then optional `popover`)
-   - Purpose: concise contextual help for controls and icon-only actions.
-   - Why now: improves discoverability and usability in compact UIs.
-   - Validation focus: hover/focus trigger parity, Escape close, `aria-describedby`, placement-state classes.
+5. `tooltip` / `popover` (Implemented in current baseline)
+   - Purpose: concise contextual help and inline details for compact controls.
+   - Validation focus: tooltip `aria-describedby`, popover open/close aria state, Escape close behavior.
 
 Notes:
 

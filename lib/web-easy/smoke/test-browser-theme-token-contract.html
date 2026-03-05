@@ -25,14 +25,14 @@
     }
     #app-frame {
       width: 100%;
-      height: 280px;
+      height: 300px;
       border: 1px solid #999;
     }
   </style>
 </head>
 <body>
   <div id="status">Running browser theme token contract assertions...</div>
-  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="web-easy theme token contract app"></iframe>
+  <iframe id="app-frame" src="about:blank" title="web-easy theme token contract app"></iframe>
 
   <script>
     function setStatus(text, cls) {
@@ -59,34 +59,108 @@
       return (v || "").replace(/\s+/g, "").toLowerCase();
     }
 
-    async function waitForUI(frame, timeoutMs) {
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
-        if (frameDoc) {
-          const bar = frameDoc.querySelector(".we-menu-bar[role='menubar']");
-          if (bar) {
-            return { frameDoc, bar };
-          }
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
         }
         await sleep(25);
       }
-      throw new Error("Timed out waiting for theme token contract UI");
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    function assertTokenDefined(rootStyle, tokenName) {
+      const value = (rootStyle.getPropertyValue(tokenName) || "").trim();
+      assertTrue(value.length > 0, tokenName + " is defined");
+    }
+
+    async function checkMenuBarBgToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=menu-full",
+        (d) => d.querySelector(".we-menu-bar[role='menubar']"),
+        timeoutMs
+      );
+      const menuBar = doc.querySelector(".we-menu-bar[role='menubar']");
+      const before = normalizedCssColor(getComputedStyle(menuBar).backgroundColor);
+      doc.documentElement.style.setProperty("--we-bg-subtle", "rgb(248, 240, 220)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(menuBar).backgroundColor);
+      assertTrue(after === "rgb(248,240,220)", "menu bar background updates from --we-bg-subtle");
+      assertTrue(after !== before, "menu bar background changed after token override");
+    }
+
+    async function checkCardBgToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=card",
+        (d) => d.querySelector(".we-card-header"),
+        timeoutMs
+      );
+      const cardHeader = doc.querySelector(".we-card-header");
+      const before = normalizedCssColor(getComputedStyle(cardHeader).backgroundColor);
+      doc.documentElement.style.setProperty("--we-bg-subtle", "rgb(242, 235, 252)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(cardHeader).backgroundColor);
+      assertTrue(after === "rgb(242,235,252)", "card header background updates from --we-bg-subtle");
+      assertTrue(after !== before, "card header background changed after token override");
+    }
+
+    async function checkSelectedBgToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=pagination",
+        (d) => d.querySelector(".we-page-btn.is-current"),
+        timeoutMs
+      );
+      const currentPageBtn = doc.querySelector(".we-page-btn.is-current");
+      const before = normalizedCssColor(getComputedStyle(currentPageBtn).backgroundColor);
+      doc.documentElement.style.setProperty("--we-bg-selected", "rgb(222, 240, 255)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(currentPageBtn).backgroundColor);
+      assertTrue(after === "rgb(222,240,255)", "selected page background updates from --we-bg-selected");
+      assertTrue(after !== before, "selected page background changed after token override");
+    }
+
+    async function checkMutedFgToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=breadcrumb",
+        (d) => d.querySelector(".we-breadcrumb-sep"),
+        timeoutMs
+      );
+      const sep = doc.querySelector(".we-breadcrumb-sep");
+      const before = normalizedCssColor(getComputedStyle(sep).color);
+      doc.documentElement.style.setProperty("--we-fg-muted", "rgb(10, 120, 90)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(sep).color);
+      assertTrue(after === "rgb(10,120,90)", "breadcrumb separator color updates from --we-fg-muted");
+      assertTrue(after !== before, "breadcrumb separator color changed after token override");
     }
 
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
-          frame.addEventListener("load", () => {
-            clearTimeout(timer);
-            resolve();
-          }, { once: true });
-        });
+        const timeoutMs = 20000;
 
-        const ui = await waitForUI(frame, 20000);
-        const rootStyle = getComputedStyle(ui.frameDoc.documentElement);
+        const tokenDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=menu-full",
+          (d) => d.querySelector(".we-menu-bar[role='menubar']"),
+          timeoutMs
+        );
+        const rootStyle = getComputedStyle(tokenDoc.documentElement);
         const requiredTokens = [
           "--we-focus",
           "--we-bg",
@@ -95,24 +169,22 @@
           "--we-border",
           "--we-border-menu",
           "--we-border-strong",
-          "--we-overlay"
+          "--we-overlay",
+          "--we-progress-success",
+          "--we-progress-warn",
+          "--we-progress-error"
         ];
-
         for (const token of requiredTokens) {
-          const value = (rootStyle.getPropertyValue(token) || "").trim();
-          assertTrue(value.length > 0, token + " is defined");
+          assertTokenDefined(rootStyle, token);
         }
 
-        const bgBefore = normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
-        ui.frameDoc.documentElement.style.setProperty("--we-bg-subtle", "rgb(248, 240, 220)");
-        await sleep(80);
-        const bgAfter = normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
-
-        assertTrue(bgAfter === "rgb(248,240,220)", "menu bar background updates from --we-bg-subtle");
-        assertTrue(bgAfter !== bgBefore, "menu bar background changed after token override");
+        await checkMenuBarBgToken(frame, timeoutMs);
+        await checkCardBgToken(frame, timeoutMs);
+        await checkSelectedBgToken(frame, timeoutMs);
+        await checkMutedFgToken(frame, timeoutMs);
 
         setStatus(
-          "PASS\nrequired --we-* tokens are defined; token override changes widget style",
+          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb",
           "pass"
         );
       } catch (err) {

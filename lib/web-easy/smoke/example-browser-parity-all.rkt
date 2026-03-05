@@ -28,9 +28,11 @@
 (include/reader "smoke-capsule-parity-badge.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-spinner.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-pagination.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-breadcrumb.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-toast.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-collapse.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-accordion.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
@@ -118,6 +120,10 @@
               (list parity-pagination-make-page
                     parity-pagination-run-test
                     parity-pagination-cleanup))
+        (cons 'parity-breadcrumb
+              (list parity-breadcrumb-make-page
+                    parity-breadcrumb-run-test
+                    parity-breadcrumb-cleanup))
         (cons 'parity-list-group
               (list parity-list-group-make-page
                     parity-list-group-run-test
@@ -130,6 +136,10 @@
               (list parity-collapse-make-page
                     parity-collapse-run-test
                     parity-collapse-cleanup))
+        (cons 'parity-accordion
+              (list parity-accordion-make-page
+                    parity-accordion-run-test
+                    parity-accordion-cleanup))
         (cons 'parity-dialog
               (list parity-dialog-make-page
                     parity-dialog-run-test

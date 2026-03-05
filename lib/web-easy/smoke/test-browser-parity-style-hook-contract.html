@@ -127,6 +127,46 @@
       assertHook(frameDoc, "[data-we-widget='popover-panel'].we-popover-panel", "parity popover panel");
     }
 
+    function checkParityAlertHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='alert'].we-alert", "parity alert");
+    }
+
+    function checkParityBadgeHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='badge'].we-badge", "parity badge");
+    }
+
+    function checkParitySpinnerHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='spinner'].we-spinner", "parity spinner");
+    }
+
+    function checkParityPaginationHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='pagination'].we-pagination", "parity pagination");
+      assertHook(frameDoc, "[data-we-widget='page-button'].we-page-btn", "parity page button");
+    }
+
+    function checkParityBreadcrumbHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='breadcrumb'].we-breadcrumb", "parity breadcrumb");
+      assertHook(frameDoc, "[data-we-widget='breadcrumb-item'].we-breadcrumb-item", "parity breadcrumb item");
+    }
+
+    function checkParityListGroupHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='list-group'].we-list-group", "parity list-group");
+      assertHook(frameDoc, "[data-we-widget='list-group-item'].we-list-group-item", "parity list-group item");
+    }
+
+    function checkParityToastHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='toast'].we-toast", "parity toast");
+    }
+
+    function checkParityCollapseHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='collapse'].we-collapse", "parity collapse");
+    }
+
+    function checkParityAccordionHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='accordion'].we-accordion", "parity accordion");
+      assertHook(frameDoc, "[data-we-widget='accordion-trigger'].we-accordion-trigger", "parity accordion trigger");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -179,6 +219,78 @@
           timeoutMs
         );
         checkParityPopoverHooks(popoverDoc);
+
+        const alertDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-alert",
+          (d) => d.querySelector("[data-we-widget='alert']"),
+          timeoutMs
+        );
+        checkParityAlertHooks(alertDoc);
+
+        const badgeDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-badge",
+          (d) => d.querySelector("[data-we-widget='badge']"),
+          timeoutMs
+        );
+        checkParityBadgeHooks(badgeDoc);
+
+        const spinnerDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-spinner",
+          (d) => d.querySelector("[data-we-widget='spinner']"),
+          timeoutMs
+        );
+        checkParitySpinnerHooks(spinnerDoc);
+
+        const paginationDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-pagination",
+          (d) => d.querySelector("[data-we-widget='page-button']"),
+          timeoutMs
+        );
+        checkParityPaginationHooks(paginationDoc);
+
+        const breadcrumbDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-breadcrumb",
+          (d) => d.querySelector("[data-we-widget='breadcrumb-item']"),
+          timeoutMs
+        );
+        checkParityBreadcrumbHooks(breadcrumbDoc);
+
+        const listGroupDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-list-group",
+          (d) => d.querySelector("[data-we-widget='list-group-item']"),
+          timeoutMs
+        );
+        checkParityListGroupHooks(listGroupDoc);
+
+        const toastDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-toast",
+          (d) => d.querySelector("[data-we-widget='toast']"),
+          timeoutMs
+        );
+        checkParityToastHooks(toastDoc);
+
+        const collapseDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-collapse",
+          (d) => d.querySelector("[data-we-widget='collapse']"),
+          timeoutMs
+        );
+        checkParityCollapseHooks(collapseDoc);
+
+        const accordionDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-accordion",
+          (d) => d.querySelector("[data-we-widget='accordion-trigger']"),
+          timeoutMs
+        );
+        checkParityAccordionHooks(accordionDoc);
 
         setStatus("PASS\nparity style hook contract: class + data-we-widget markers stable", "pass");
       } catch (err) {

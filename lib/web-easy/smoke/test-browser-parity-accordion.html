@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity accordion smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 260px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity accordion smoke assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-accordion" title="web-easy parity accordion app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const buttons = Array.from(frameDoc.querySelectorAll("button"));
+          const details = buttons.find((b) => b.textContent.trim() === "Details");
+          const overview = buttons.find((b) => b.textContent.trim() === "Overview");
+          const selectedText = Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+            .find((e) => e.textContent.trim().startsWith("parity-selected:"));
+          const collapses = frameDoc.querySelectorAll("[data-we-widget='collapse']");
+          if (details && overview && selectedText && collapses.length >= 2) {
+            return { details, overview, selectedText, collapses };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity accordion smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const firstCollapse = ui.collapses[0];
+        const secondCollapse = ui.collapses[1];
+        assertEqual(firstCollapse.getAttribute("class"), "we-collapse", "parity first section initially closed");
+        assertEqual(secondCollapse.getAttribute("class"), "we-collapse is-open", "parity second section initially open");
+
+        ui.overview.click();
+        await sleep(100);
+
+        assertEqual(firstCollapse.getAttribute("class"), "we-collapse is-open", "parity first section opens after switch");
+        assertEqual(secondCollapse.getAttribute("class"), "we-collapse", "parity second section closes after switch");
+
+        ui.overview.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+        await sleep(100);
+        assertEqual(ui.selectedText.textContent.trim(), "parity-selected:details", "parity accordion End key selects last section");
+        setStatus("PASS\nparity accordion click + keyboard navigation", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

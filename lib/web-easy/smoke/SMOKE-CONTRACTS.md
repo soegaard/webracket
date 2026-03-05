@@ -92,6 +92,18 @@ Popup item behavior:
 - collapse open/closed state is reflected by class and aria-hidden hooks
 - toggle action transitions the collapse state deterministically
 
+## Breadcrumb Contract Semantics
+
+- breadcrumb root exposes navigation semantics (`role="navigation"`)
+- exactly one breadcrumb item is marked current (`aria-current="page"`)
+- clicking a non-current item switches the current marker deterministically
+
+## Accordion Contract Semantics
+
+- accordion trigger `aria-expanded` reflects selected/open section
+- roving keyboard selection (`ArrowUp`/`ArrowDown`/`Home`/`End`) updates open section
+- open/closed section state is reflected by collapse class hooks
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -133,6 +145,8 @@ Popup item behavior:
 - `PASS spinner contract:`
 - `PASS toast contract:`
 - `PASS collapse contract:`
+- `PASS breadcrumb contract:`
+- `PASS accordion contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -164,6 +178,8 @@ Popup item behavior:
 - `PASS parity spinner contract:`
 - `PASS parity toast contract:`
 - `PASS parity collapse contract:`
+- `PASS parity breadcrumb contract:`
+- `PASS parity accordion contract:`
 
 ## Guard Self-Test Expectation
 
