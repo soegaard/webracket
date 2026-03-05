@@ -37,6 +37,9 @@
 ;;   backend-append-child!
 ;;   backend-set-single-child!
 ;;   backend-replace-children!
+;;   backend-scrollspy-observe-scroll!
+;;   backend-scrollspy-scroll-into-view!
+;;   backend-scrollspy-active-id
 
 (define-values
   (renderer?
@@ -91,17 +94,17 @@
        .we-dialog-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:2px;}") 
     (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
       ".we-menu-item:focus,.we-menu-item:focus-visible{outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;background-color:var(--we-focus-tint,rgba(10,102,194,.20));position:relative;z-index:1;}\
-       .we-menu-label:focus,.we-menu-label:focus-visible{outline:none;background:transparent;color:var(--we-border-strong,#333);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
+       .we-menu-label:focus,.we-menu-label:focus-visible{outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;background:var(--we-focus-tint,rgba(10,102,194,.20));color:var(--we-fg,#111);border-color:var(--we-border-soft,#bbb);}\
        .we-menu-bar{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);align-items:center;padding:var(--we-space-xs,2px) var(--we-space-sm,4px);border:1px solid var(--we-border-menu,#aaa);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);box-sizing:border-box;}\
        .we-menu{position:relative;display:inline-block;}\
-       .we-menu-label{padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;}\
-       .we-menu-label:hover{background:transparent;color:var(--we-border-strong,#333);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
-       .we-menu-label[aria-expanded='true']{background:transparent;color:var(--we-border-strong,#333);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;position:relative;z-index:1001;}\
+       .we-menu-label{padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid transparent;border-radius:3px;background:transparent;color:var(--we-fg,#111);cursor:pointer;user-select:none;}\
+       .we-menu-label:hover{background:var(--we-bg-hover,#e8e8e8);color:var(--we-fg,#111);border-color:var(--we-border-soft,#bbb);}\
+       .we-menu-label[aria-expanded='true']{background:var(--we-bg-selected,#ececec);color:var(--we-fg,#111);border-color:var(--we-border-soft,#bbb);position:relative;z-index:1001;}\
        .we-dropdown .we-menu-label::after{content:'▾';display:inline-block;margin-left:var(--we-space-xs,2px);color:var(--we-fg-muted,#777);transition:transform .16s ease,color .16s ease;}\
-       .we-dropdown .we-menu-label[aria-expanded='true']::after{transform:rotate(180deg);color:var(--we-border-strong,#333);}\
+       .we-dropdown .we-menu-label[aria-expanded='true']::after{transform:rotate(180deg);color:var(--we-fg,#111);}\
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;gap:0;padding:var(--we-space-xs,2px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));}\
        .we-menu-popup.is-open{display:flex;}\
-       .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:transparent;color:var(--we-fg,#111);border:none;border-radius:3px;}\
+       .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:var(--we-bg,#fff);color:var(--we-fg,#111);border:none;border-radius:3px;}\
        .we-menu-item:hover{background:var(--we-bg-hover,#e8e8e8);}") 
     (define tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
       ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
@@ -131,6 +134,13 @@
        .we-toast-error{border-color:#b25a5a;background:#fdeaea;}\
        .we-toast-title{display:block;font-weight:600;}\
        .we-toast-message{flex:1 1 auto;}\
+       /* Keep close-button content-sized in vpanel/hpanel flex layouts (avoid default stretch-to-full-width). */\
+       .we-close-button{align-self:flex-start;width:auto;padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--we-fg,#111);line-height:1.2;cursor:pointer;}\
+       /* The icon glyph is CSS-driven, so users can replace it in stylesheets via `.we-close-button-icon::before`. */\
+       .we-close-button-icon{display:inline-block;min-width:1ch;text-align:center;font-weight:700;line-height:1;}\
+       .we-close-button-icon::before{content:'×';}\
+       .we-close-button:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-close-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-toast-close{padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;line-height:1.2;}\
        .we-toast-close:hover{background:var(--we-bg-hover,#e8e8e8);}\
        .we-toast-close:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
@@ -142,6 +152,10 @@
        .we-spinner{display:inline-flex;align-items:center;gap:var(--we-space-sm,4px);align-self:flex-start;color:var(--we-fg,#111);}\
        .we-spinner-icon{width:12px;height:12px;border:2px solid var(--we-border-soft,#bbb);border-top-color:var(--we-border-strong,#333);border-radius:50%;animation:we-spin .8s linear infinite;}\
        .we-spinner-label{color:var(--we-fg,#111);}\
+       .we-placeholder{display:inline-block;align-self:flex-start;border:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);color:transparent;}\
+       .we-placeholder-text{height:0.9em;width:7em;border-radius:4px;}\
+       .we-placeholder-rect{height:2.4em;width:7em;border-radius:6px;}\
+       .we-placeholder-circle{height:2.2em;width:2.2em;border-radius:50%;}\
        @keyframes we-spin{to{transform:rotate(360deg);}}\
        .we-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;overflow:hidden;align-self:stretch;transition:grid-template-rows .18s ease,opacity .18s ease;}\
        .we-collapse>*{min-height:0;overflow:hidden;}\
@@ -185,6 +199,25 @@
        .we-card-body{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);}\
        .we-card-footer{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-top:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-menu,#aaa);border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-offcanvas{position:fixed;inset:0;display:none;z-index:2100;}\
+       .we-offcanvas.is-open{display:block;}\
+       .we-offcanvas-backdrop{position:absolute;inset:0;background:var(--we-overlay,rgba(0,0,0,0.45));}\
+       .we-offcanvas-panel{position:absolute;top:0;bottom:0;width:min(380px,85vw);display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));overflow:auto;}\
+       .we-offcanvas-panel.is-end{right:0;border-radius:8px 0 0 8px;}\
+       .we-offcanvas-panel.is-start{left:0;border-radius:0 8px 8px 0;}\
+       .we-carousel{display:flex;flex-direction:column;gap:var(--we-gap,4px);align-self:stretch;border:1px solid var(--we-border-soft,#bbb);border-radius:8px;background:var(--we-bg,#fff);padding:var(--we-space-sm,4px);}\
+       .we-carousel-viewport{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-sm,4px);}\
+       .we-carousel-controls{display:flex;align-items:center;justify-content:space-between;gap:var(--we-space-sm,4px);}\
+       .we-carousel-indicators{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);}\
+       .we-carousel-indicator{width:1.6em;height:1.6em;border:1px solid var(--we-border-soft,#bbb);border-radius:999px;background:var(--we-bg,#fff);}\
+       .we-carousel-indicator.is-current{background:var(--we-bg-selected,#ececec);border-color:var(--we-border-strong,#333);}\
+       .we-scrollspy{display:flex;flex-direction:column;align-self:stretch;gap:var(--we-space-xs,2px);padding:var(--we-space-xs,2px);border:1px solid var(--we-border-soft,#bbb);border-radius:6px;background:var(--we-bg,#fff);}\
+       .we-scrollspy-nav{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
+       .we-scrollspy-sections{display:flex;flex-direction:column;gap:var(--we-space-sm,4px);max-height:240px;overflow:auto;padding:var(--we-space-xs,2px);border-top:1px solid var(--we-border-soft,#bbb);}\
+       .we-scrollspy-section{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-sm,4px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg,#fff);}\
+       .we-scrollspy-item{padding:2px 8px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--we-fg,#111);}\
+       .we-scrollspy-item:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-scrollspy-item.is-current{background:var(--we-bg-selected,#ececec);border-color:var(--we-border-soft,#bbb);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
        .we-table{border-collapse:separate;border:1px solid var(--we-border-muted,#999);margin-bottom:6px;align-self:flex-start;}\
        .we-table.we-density-normal{border-spacing:2px 0;}\
        .we-table.we-density-compact{border-spacing:0 0;}\
@@ -605,6 +638,72 @@
     (define (dropdown-label entry)
       (cadr (ensure-list entry 'dropdown "entry")))
 
+    ;; carousel-item-id : any/c -> any/c
+    ;;   Extract carousel item id from (list id label view) row.
+    (define (carousel-item-id entry)
+      (car (ensure-list entry 'carousel "entry")))
+
+    ;; carousel-item-label : any/c -> any/c
+    ;;   Extract carousel item label from (list id label view) row.
+    (define (carousel-item-label entry)
+      (cadr (ensure-list entry 'carousel "entry")))
+
+    ;; carousel-item-view : any/c -> view?
+    ;;   Extract carousel item view from (list id label view) row.
+    (define (carousel-item-view entry)
+      (caddr (ensure-list entry 'carousel "entry")))
+
+    ;; scrollspy-section-id : any/c -> any/c
+    ;;   Extract scrollspy section id from (list id label) row.
+    (define (scrollspy-section-id entry)
+      (car (ensure-list entry 'scrollspy "section")))
+
+    ;; scrollspy-section-label : any/c -> any/c
+    ;;   Extract scrollspy section label from (list id label) row.
+    (define (scrollspy-section-label entry)
+      (cadr (ensure-list entry 'scrollspy "section")))
+
+    ;; scrollspy-section-content : any/c -> view?
+    ;;   Extract optional scrollspy section view from (list id label [view]); fallback to text label.
+    (define (scrollspy-section-content entry)
+      (define section (ensure-list entry 'scrollspy "section"))
+      (if (and (list? section)
+               (pair? (cddr section)))
+          (let ([content (caddr section)])
+            (if (view? content)
+                content
+                (text content)))
+          (text (scrollspy-section-label entry))))
+
+    ;; scrollspy-section-dom-id : any/c -> string?
+    ;;   Build deterministic DOM id for a scrollspy section identifier.
+    (define (scrollspy-section-dom-id section-id)
+      (define section-text
+        (cond
+          [(string? section-id) section-id]
+          [(symbol? section-id) (symbol->string section-id)]
+          [(number? section-id) (number->string section-id)]
+          [else                text/fallback]))
+      (string-append "we-scrollspy-section-" section-text))
+
+    ;; normalize-placeholder-shape : any/c -> symbol?
+    ;;   Normalize placeholder shape to text/rect/circle.
+    (define (normalize-placeholder-shape shape)
+      (if (symbol? shape)
+          (case shape
+            [(text rect circle) shape]
+            [else               'text])
+          'text))
+
+    ;; normalize-offcanvas-side : any/c -> symbol?
+    ;;   Normalize offcanvas side to start/end.
+    (define (normalize-offcanvas-side side)
+      (if (symbol? side)
+          (case side
+            [(start end) side]
+            [else        'end])
+          'end))
+
     ;; density-class : symbol? -> string?
     ;;   Return CSS class for table density variants.
     (define (density-class density)
@@ -804,7 +903,7 @@
            (dom-node 'button
                      (list (cons attr/role 'button)
                            (cons 'data-we-widget "toast-close")
-                           (cons 'class "we-toast-close")
+                           (cons 'class "we-close-button we-toast-close")
                            (cons 'aria-label "Close toast"))
                      '()
                      "×"
@@ -925,13 +1024,56 @@
          (backend-append-child! node label-node)
          (define (render-spinner!)
            (set-dom-node-text! label-node (value->text (maybe-observable-value raw-label))))
-         (when (obs? raw-label)
-           (define (label-listener _updated)
-             (render-spinner!))
-           (obs-observe! raw-label label-listener)
-           (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener))))
-         (render-spinner!)
+        (when (obs? raw-label)
+          (define (label-listener _updated)
+            (render-spinner!))
+          (obs-observe! raw-label label-listener)
+          (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener))))
+        (render-spinner!)
         node]
+        [(placeholder)
+         (define raw-shape (alist-ref (view-props v) 'shape 'render))
+         (define raw-width (alist-ref (view-props v) 'width 'render))
+         (define node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "placeholder")
+                           (cons 'class "we-placeholder we-placeholder-text")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define (set-placeholder-attrs! shape0 width0)
+           (define shape-class
+             (case (normalize-placeholder-shape shape0)
+               [(rect)   "we-placeholder-rect"]
+               [(circle) "we-placeholder-circle"]
+               [else     "we-placeholder-text"]))
+           (define attrs/base
+             (list (cons 'data-we-widget "placeholder")
+                   (cons 'class (string-append "we-placeholder " shape-class))
+                   (cons 'aria-hidden "true")))
+           (set-dom-node-attrs!
+            node
+            (if (eq? width0 #f)
+                attrs/base
+                (append attrs/base
+                        (list (cons 'width (value->text width0)))))))
+         (define (render-placeholder!)
+           (set-placeholder-attrs! (maybe-observable-value raw-shape)
+                                   (maybe-observable-value raw-width)))
+         (when (obs? raw-shape)
+           (define (shape-listener _updated)
+             (render-placeholder!))
+           (obs-observe! raw-shape shape-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-shape shape-listener))))
+         (when (obs? raw-width)
+           (define (width-listener _updated)
+             (render-placeholder!))
+           (obs-observe! raw-width width-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-width width-listener))))
+         (render-placeholder!)
+         node]
         [(text)
          (define raw  (alist-ref (view-props v) 'value 'render))
          (define node (dom-node 'span (list (cons 'data-we-widget "text")) '() "" #f #f))
@@ -955,6 +1097,46 @@
                    (value->text label)
                    action
                    #f)]
+        [(close-button)
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define raw-aria-label (alist-ref (view-props v) 'aria-label 'render))
+         (define node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "close-button")
+                           (cons 'class "we-close-button")
+                           (cons 'aria-label "Close"))
+                     '()
+                     #f
+                     action
+                     #f))
+         (define icon-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "close-button-icon")
+                           (cons 'class "we-close-button-icon")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-set-single-child! node icon-node)
+         (define (set-aria-label! v0)
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'button)
+                  (cons 'data-we-widget "close-button")
+                  (cons 'class "we-close-button")
+                  (cons 'aria-label (value->text v0)))))
+         (cond
+           [(obs? raw-aria-label)
+            (set-aria-label! (obs-peek raw-aria-label))
+            (define (listener updated)
+              (set-aria-label! updated))
+            (obs-observe! raw-aria-label listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-aria-label listener)))]
+           [else
+            (set-aria-label! raw-aria-label)])
+         node]
         [(input)
          (define raw-value (alist-ref (view-props v) 'value    'render))
          (define action    (alist-ref (view-props v) 'action   'render))
@@ -1820,6 +2002,70 @@
            (obs-observe! raw-selected listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-selected listener))))
          node]
+        [(offcanvas)
+         (define raw-open (alist-ref (view-props v) 'open 'render))
+         (define on-close (alist-ref (view-props v) 'on-close 'render))
+         (define raw-side (alist-ref (view-props v) 'side 'render))
+         (define node
+           (dom-node 'div
+                     (list (cons attr/role 'dialog)
+                           (cons 'data-we-widget "offcanvas")
+                           (cons 'class "we-offcanvas")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define backdrop-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "offcanvas-backdrop")
+                           (cons 'class "we-offcanvas-backdrop"))
+                     '()
+                     #f
+                     (lambda ()
+                       (when (procedure? on-close)
+                         (on-close)))
+                     #f))
+         (define panel-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "offcanvas-panel")
+                           (cons 'class "we-offcanvas-panel is-end"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-append-child! panel-node (build-node (close-button on-close "Close panel") register-cleanup!))
+         (for-each (lambda (child)
+                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                   (view-children v))
+         (backend-append-child! node backdrop-node)
+         (backend-append-child! node panel-node)
+         (define (refresh-offcanvas!)
+           (define open? (not (eq? (maybe-observable-value raw-open) #f)))
+           (define side (normalize-offcanvas-side (maybe-observable-value raw-side)))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'dialog)
+                  (cons 'data-we-widget "offcanvas")
+                  (cons 'class (if open? "we-offcanvas is-open" "we-offcanvas"))
+                  (cons 'aria-hidden (if open? "false" "true"))))
+           (set-dom-node-attrs!
+            panel-node
+            (list (cons 'data-we-widget "offcanvas-panel")
+                  (cons 'class (string-append "we-offcanvas-panel "
+                                              (if (eq? side 'start) "is-start" "is-end"))))))
+         (when (obs? raw-open)
+           (define (open-listener _updated)
+             (refresh-offcanvas!))
+           (obs-observe! raw-open open-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-open open-listener))))
+         (when (obs? raw-side)
+           (define (side-listener _updated)
+             (refresh-offcanvas!))
+           (obs-observe! raw-side side-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-side side-listener))))
+         (refresh-offcanvas!)
+         node]
         [(dialog)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
          (define on-close  (alist-ref (view-props v) 'on-close 'render))
@@ -2025,8 +2271,240 @@
                              (lambda ()
                                (action entry-id))))
                 entries))
-         (define menu-view (apply menu (cons raw-label menu-items)))
-         (backend-set-single-child! node (build-node menu-view register-cleanup!))
+        (define menu-view (apply menu (cons raw-label menu-items)))
+        (backend-set-single-child! node (build-node menu-view register-cleanup!))
+        node]
+        [(carousel)
+         (define raw-items (alist-ref (view-props v) 'items 'render))
+         (define raw-current-index (alist-ref (view-props v) 'current-index 'render))
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "carousel")
+                           (cons 'class "we-carousel"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define viewport-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "carousel-viewport")
+                           (cons 'class "we-carousel-viewport"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define controls-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "carousel-controls")
+                           (cons 'class "we-carousel-controls"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define indicators-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "carousel-indicators")
+                           (cons 'class "we-carousel-indicators"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define prev-node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "carousel-prev")
+                           (cons 'class "we-button"))
+                     '()
+                     "Prev"
+                     #f
+                     #f))
+         (define next-node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "carousel-next")
+                           (cons 'class "we-button"))
+                     '()
+                     "Next"
+                     #f
+                     #f))
+         (backend-append-child! controls-node prev-node)
+         (backend-append-child! controls-node indicators-node)
+         (backend-append-child! controls-node next-node)
+         (backend-append-child! node viewport-node)
+         (backend-append-child! node controls-node)
+         (define (refresh-carousel!)
+           (define items (ensure-list (maybe-observable-value raw-items) 'carousel "items"))
+           (define count (length items))
+           (define current-index/raw (maybe-observable-value raw-current-index))
+           (define current-index
+             (if (and (number? current-index/raw)
+                      (integer? current-index/raw)
+                      (> count 0))
+                 (min (- count 1) (max 0 current-index/raw))
+                 0))
+           (define has-items? (> count 0))
+           (define (set-index! next-index)
+             (when has-items?
+               (action (modulo (+ next-index count) count))))
+           (set-dom-node-on-click! prev-node (lambda () (set-index! (- current-index 1))))
+           (set-dom-node-on-click! next-node (lambda () (set-index! (+ current-index 1))))
+           (if has-items?
+               (replace-with-single-child! viewport-node
+                                           (carousel-item-view (list-ref items current-index))
+                                           register-cleanup!)
+               (backend-replace-children! viewport-node
+                                          (list (dom-node 'span
+                                                          (list (cons 'data-we-widget "carousel-empty"))
+                                                          '()
+                                                          "No slides"
+                                                          #f
+                                                          #f))))
+           (define indicator-nodes
+             (let loop ([i 0]
+                        [rest items])
+               (if (null? rest)
+                   '()
+                   (let* ([entry (car rest)]
+                          [label (value->text (carousel-item-label entry))]
+                          [is-current (= i current-index)]
+                          [node/indicator
+                           (dom-node 'button
+                                     (list (cons attr/role 'button)
+                                           (cons 'data-we-widget "carousel-indicator")
+                                           (cons 'class (string-append "we-carousel-indicator"
+                                                                       (if is-current " is-current" "")))
+                                           (cons 'aria-label label))
+                                     '()
+                                     ""
+                                     (lambda ()
+                                       (action i))
+                                     #f)])
+                     (cons node/indicator
+                           (loop (add1 i) (cdr rest)))))))
+           (backend-replace-children! indicators-node indicator-nodes))
+         (when (obs? raw-items)
+           (define (items-listener _updated)
+             (refresh-carousel!))
+           (obs-observe! raw-items items-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-items items-listener))))
+         (when (obs? raw-current-index)
+           (define (index-listener _updated)
+             (refresh-carousel!))
+           (obs-observe! raw-current-index index-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-current-index index-listener))))
+         (refresh-carousel!)
+         node]
+        [(scrollspy)
+         (define raw-sections (alist-ref (view-props v) 'sections 'render))
+         (define raw-current (alist-ref (view-props v) 'current 'render))
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define node
+           (dom-node 'div
+                     (list (cons attr/role 'navigation)
+                           (cons 'data-we-widget "scrollspy")
+                           (cons 'class "we-scrollspy"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define nav-node
+           (dom-node 'nav
+                     (list (cons 'data-we-widget "scrollspy-nav")
+                           (cons 'class "we-scrollspy-nav"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define sections-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "scrollspy-sections")
+                           (cons 'class "we-scrollspy-sections"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-replace-children! node (list nav-node sections-node))
+         ;; Constants for scrollspy runtime state.
+         (define section-bindings '()) ; Association list mapping section id to dom-node section.
+         ;; find-scrollspy-section-node : any/c -> (or/c dom-node? false/c)
+         ;;   Return section node for section-id or #f when absent.
+         (define (find-scrollspy-section-node section-id)
+           (define pair (assq section-id section-bindings))
+           (if pair (cdr pair) #f))
+         ;; scroll-to-section-id! : any/c -> void?
+         ;;   Scroll matched section into view in the active backend.
+         (define (scroll-to-section-id! section-id)
+           (define target-node (find-scrollspy-section-node section-id))
+           (when target-node
+             (backend-scrollspy-scroll-into-view! target-node)))
+         ;; sync-current-from-scroll! : void? -> void?
+         ;;   Update current section id from scroll position in section container.
+         (define (sync-current-from-scroll!)
+           (define active-id (backend-scrollspy-active-id section-bindings))
+           (define current (maybe-observable-value raw-current))
+           (when (and active-id (not (equal? active-id current)))
+             (action active-id)))
+         (define (refresh-scrollspy!)
+           (define sections (ensure-list (maybe-observable-value raw-sections) 'scrollspy "sections"))
+           (define current (maybe-observable-value raw-current))
+           (define nav-items
+             (map (lambda (entry)
+                    (define section-id (scrollspy-section-id entry))
+                    (define label (scrollspy-section-label entry))
+                    (define current? (equal? section-id current))
+                    (dom-node 'button
+                              (list (cons attr/role 'button)
+                                    (cons 'data-we-widget "scrollspy-item")
+                                    (cons 'aria-current (if current? "true" "false"))
+                                    (cons 'class (string-append "we-scrollspy-item"
+                                                                (if current? " is-current" ""))))
+                              '()
+                              (value->text label)
+                              (lambda ()
+                                (action section-id)
+                                (scroll-to-section-id! section-id))
+                              #f))
+                  sections))
+           (define section-nodes
+             (map (lambda (entry)
+                    (define section-id (scrollspy-section-id entry))
+                    (define section-view (scrollspy-section-content entry))
+                    (define section-node
+                      (dom-node 'section
+                                (list (cons 'data-we-widget "scrollspy-section")
+                                      (cons 'class "we-scrollspy-section")
+                                      (cons 'id (scrollspy-section-dom-id section-id)))
+                                '()
+                                #f
+                                #f
+                                #f))
+                    (backend-set-single-child! section-node (build-node section-view register-cleanup!))
+                    section-node)
+                  sections))
+           (set! section-bindings
+                 (map (lambda (entry section-node)
+                        (cons (scrollspy-section-id entry) section-node))
+                      sections
+                      section-nodes))
+           (backend-replace-children! nav-node nav-items)
+           (backend-replace-children! sections-node section-nodes)
+           (backend-scrollspy-observe-scroll!
+            sections-node
+            sync-current-from-scroll!
+            register-cleanup!))
+         (when (obs? raw-sections)
+           (define (sections-listener _updated)
+             (refresh-scrollspy!))
+           (obs-observe! raw-sections sections-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-sections sections-listener))))
+         (when (obs? raw-current)
+           (define (current-listener _updated)
+             (refresh-scrollspy!))
+           (obs-observe! raw-current current-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
+         (refresh-scrollspy!)
+         (sync-current-from-scroll!)
          node]
         [(tooltip)
          (define raw-message (alist-ref (view-props v) 'message 'render))

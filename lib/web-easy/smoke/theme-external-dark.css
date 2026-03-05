@@ -120,19 +120,15 @@ html.we-theme-dark .we-menu-label {
 }
 
 html.we-theme-dark .we-menu-label:hover {
-  background: transparent;
-  color: #9ec2ff;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 2px;
+  background: var(--we-bg-hover);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
 }
 
 html.we-theme-dark .we-menu-label[aria-expanded='true'] {
-  background: transparent;
-  color: #9ec2ff;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 2px;
+  background: var(--we-bg-selected);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
   /* Keep open menu title above popup border so the join looks clean. */
   position: relative;
   z-index: 1001;
@@ -143,14 +139,14 @@ html.we-theme-dark .we-menu-item {
   width: 100%;
   text-align: left;
   padding: 2px 8px;
-  background: #202a38;
+  background: var(--we-bg);
   color: var(--we-fg);
   border: none;
   border-radius: 3px;
 }
 
 html.we-theme-dark .we-menu-item:hover {
-  background: #2f3b4f;
+  background: var(--we-bg-hover);
 }
 
 html.we-theme-dark .we-menu-label:focus-visible,
@@ -159,12 +155,10 @@ html.we-theme-dark .we-menu-item:focus-visible {
 }
 
 html.we-theme-dark .we-menu-label:focus-visible {
-  background: transparent;
-  color: #9ec2ff;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 2px;
-  outline: none;
+  background-color: var(--we-focus-tint);
+  outline: 1px solid var(--we-focus);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
 }
 
 html.we-theme-dark .we-menu-item:focus-visible {
@@ -242,6 +236,11 @@ html.we-theme-dark .we-choice {
   color: var(--we-fg);
 }
 
+/* The close icon is CSS-driven; override this selector to use another glyph. */
+html.we-theme-dark .we-close-button-icon::before {
+  content: "✕";
+}
+
 html.we-theme-dark select:focus-visible,
 html.we-theme-dark .we-choice:focus-visible {
   background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
@@ -281,7 +280,38 @@ html.we-theme-dark .we-alert-error {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 5) Tabs (tab-strip look, not button-row look)                               */
+/* 5) Toasts (floating non-modal notifications)                                 */
+/* -------------------------------------------------------------------------- */
+/* Toasts share alert severity colors, but are positioned as floating overlays. */
+html.we-theme-dark .we-toast {
+  border: 1px solid #7383a1;
+  border-radius: 6px;
+  background: #13161c;
+  color: var(--we-fg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+html.we-theme-dark .we-toast-success {
+  border-color: #7ab088;
+  background: #1f3424;
+}
+
+html.we-theme-dark .we-toast-warn {
+  border-color: #c5a770;
+  background: #3b3020;
+}
+
+html.we-theme-dark .we-toast-error {
+  border-color: #cc7e7e;
+  background: #3b2222;
+}
+
+html.we-theme-dark .we-toast-close {
+  border-radius: 4px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6) Tabs (tab-strip look, not button-row look)                               */
 /* -------------------------------------------------------------------------- */
 /* These rules make tabs look connected to the content panel. */
 html.we-theme-dark .we-tab-panel {
@@ -352,7 +382,7 @@ html.we-theme-dark .we-dialog-panel:focus-visible {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 6) Accordion (section headers + right-side indicator)                       */
+/* 7) Accordion (section headers + right-side indicator)                       */
 /* -------------------------------------------------------------------------- */
 /* Accordion headers should read as section titles, not generic action buttons. */
 html.we-theme-dark .we-accordion {

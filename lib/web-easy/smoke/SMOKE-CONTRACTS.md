@@ -104,6 +104,40 @@ Popup item behavior:
 - roving keyboard selection (`ArrowUp`/`ArrowDown`/`Home`/`End`) updates open section
 - open/closed section state is reflected by collapse class hooks
 
+## Offcanvas Contract Semantics
+
+- offcanvas open/closed state is reflected by root class and `aria-hidden`
+- panel side (`start`/`end`) is reflected by stable side class hooks
+- backdrop/close-button actions invoke close behavior deterministically
+
+## Close Button Contract Semantics
+
+- close-button exposes a stable semantic hook and class (`data-we-widget`, `we-close-button`)
+- close-button has role/button semantics and stable `aria-label` support
+
+## Placeholder Contract Semantics
+
+- placeholder exposes stable class hooks for shape variants (`text`/`rect`/`circle`)
+- optional width value is reflected via a stable attribute hook
+
+## Carousel Contract Semantics
+
+- carousel exposes stable controls/indicator hooks
+- selecting prev/next/indicator transitions current indicator class deterministically
+
+## Scrollspy Contract Semantics
+
+- scrollspy exposes stable nav/item hooks
+- scrolling section content updates the current item class deterministically
+
+## Dropdown Contract Semantics
+
+- dropdown trigger exposes menu semantics (`aria-haspopup`, `aria-expanded`)
+- dropdown trigger exposes a stable indicator glyph hook (`.we-dropdown .we-menu-label::after`)
+- `ArrowDown` opens popup and moves focus into menu items
+- type-ahead on menu items moves focus to matching items
+- activation closes popup and updates selected-id text
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -147,6 +181,11 @@ Popup item behavior:
 - `PASS collapse contract:`
 - `PASS breadcrumb contract:`
 - `PASS accordion contract:`
+- `PASS offcanvas contract:`
+- `PASS close-button contract:`
+- `PASS placeholder contract:`
+- `PASS carousel contract:`
+- `PASS scrollspy contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -180,6 +219,11 @@ Popup item behavior:
 - `PASS parity collapse contract:`
 - `PASS parity breadcrumb contract:`
 - `PASS parity accordion contract:`
+- `PASS parity offcanvas contract:`
+- `PASS parity close-button contract:`
+- `PASS parity placeholder contract:`
+- `PASS parity carousel contract:`
+- `PASS parity scrollspy contract:`
 
 ## Guard Self-Test Expectation
 

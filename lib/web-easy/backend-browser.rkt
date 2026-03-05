@@ -26,6 +26,9 @@
 ;;   backend-set-single-child! Replace node children with a single child in model and browser DOM.
 ;;   backend-replace-children! Replace node children with a child list in model and browser DOM.
 ;;   backend-mount-root!      Mount root node into browser container.
+;;   backend-scrollspy-observe-scroll!  Register scroll observer callback for a container.
+;;   backend-scrollspy-scroll-into-view! Scroll section node into view in the browser.
+;;   backend-scrollspy-active-id  Compute active scrollspy id from section bindings.
 
 (define-values
   (dom-node
@@ -46,7 +49,10 @@
    backend-append-child!
    backend-set-single-child!
    backend-replace-children!
-   backend-mount-root!)
+   backend-mount-root!
+   backend-scrollspy-observe-scroll!
+   backend-scrollspy-scroll-into-view!
+   backend-scrollspy-active-id)
   (let ()
     (struct dom-node-record (tag attrs children text on-click on-change native)
       #:mutable
@@ -58,7 +64,14 @@
     (define attr/checked "checked") ; Property/attribute name for checked controls.
     (define dialog-focusable-selector
       "button,[href],input,select,textarea,[tabindex]:not([tabindex='-1'])") ; CSS selector for focusable dialog controls.
+    (define scrollspy-section-selector
+      "[data-we-widget='scrollspy-section']") ; Selector used to observe scrollspy sections.
+    (define scrollspy-item-selector
+      ".we-scrollspy-item") ; Selector used for scrollspy keyboard roving.
     (define dialog-focus-returns '()) ; Association list mapping dialog native nodes to return-focus targets.
+    (define scrollspy-observers '()) ; Association list mapping scrollspy container native nodes to observer handles.
+    (define scrollspy-listeners '()) ; Association list mapping scrollspy container native nodes to listener handles.
+    (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
 
     ;; symbol->attr-name : symbol? -> string?
     ;;   Convert attribute symbol key to browser DOM attribute name.
@@ -146,6 +159,56 @@
                 [(null? pairs) '()]
                 [(eq? (caar pairs) dialog-native) (cdr pairs)]
                 [else (cons (car pairs) (loop (cdr pairs)))]))))
+
+    ;; native-mapping-ref : list? any/c -> any/c
+    ;;   Lookup native key in mappings and return value or #f when missing.
+    (define (native-mapping-ref mappings native)
+      (define p (assq native mappings))
+      (if p (cdr p) #f))
+
+    ;; native-mapping-set : list? any/c any/c -> list?
+    ;;   Return mappings updated with native => value (replacing prior entry).
+    (define (native-mapping-set mappings native value)
+      (cons (cons native value)
+            (let loop ([pairs mappings])
+              (cond
+                [(null? pairs) '()]
+                [(eq? (caar pairs) native) (cdr pairs)]
+                [else (cons (car pairs) (loop (cdr pairs)))]))))
+
+    ;; native-mapping-remove : list? any/c -> list?
+    ;;   Return mappings without native entry.
+    (define (native-mapping-remove mappings native)
+      (let loop ([pairs mappings])
+        (cond
+          [(null? pairs) '()]
+          [(eq? (caar pairs) native) (cdr pairs)]
+          [else (cons (car pairs) (loop (cdr pairs)))])))
+
+    ;; native-member? : list? any/c -> boolean?
+    ;;   Return #t when native is tracked in natives list.
+    (define (native-member? natives native)
+      (let loop ([xs natives])
+        (cond
+          [(null? xs) #f]
+          [(eq? (car xs) native) #t]
+          [else (loop (cdr xs))])))
+
+    ;; native-add-unique : list? any/c -> list?
+    ;;   Add native to list only when not already present.
+    (define (native-add-unique natives native)
+      (if (native-member? natives native)
+          natives
+          (cons native natives)))
+
+    ;; native-remove : list? any/c -> list?
+    ;;   Remove native from list if present.
+    (define (native-remove natives native)
+      (let loop ([xs natives])
+        (cond
+          [(null? xs) '()]
+          [(eq? (car xs) native) (cdr xs)]
+          [else (cons (car xs) (loop (cdr xs)))])))
 
     ;; focus-first-dialog-target! : any/c -> void?
     ;;   Focus the first focusable dialog descendant, falling back to the dialog node.
@@ -414,15 +477,28 @@
           (value->attr-string (cdr p))
           ""))
 
+    ;; widget-value : dom-node-record? -> string?
+    ;;   Read data-we-widget attribute string for n, defaulting to empty.
+    (define (widget-value n)
+      (define p (assq 'data-we-widget (dom-node-record-attrs n)))
+      (if p
+          (value->attr-string (cdr p))
+          ""))
+
     ;; menu-label-node? : dom-node-record? -> boolean?
     ;;   Check whether n is a menu label button.
     (define (menu-label-node? n)
-      (string=? (class-value n) "we-menu-label"))
+      (string=? (widget-value n) "menu-label"))
 
     ;; menu-item-node? : dom-node-record? -> boolean?
     ;;   Check whether n is a menu item button.
     (define (menu-item-node? n)
-      (string=? (class-value n) "we-menu-item"))
+      (string=? (widget-value n) "menu-item"))
+
+    ;; scrollspy-item-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a scrollspy navigation item button.
+    (define (scrollspy-item-node? n)
+      (string=? (widget-value n) "scrollspy-item"))
 
     ;; string->int/default : string? integer? -> integer?
     ;;   Parse s as integer and return default-value on failure.
@@ -455,6 +531,14 @@
     ;;   Interpret external value as boolean true/false by string conversion.
     (define (extern-bool-true? v)
       (string=? (js-value->string v) "true"))
+
+    ;; extern-number/default : any/c number? -> number?
+    ;;   Parse external number-like value, returning fallback when parsing fails.
+    (define (extern-number/default v fallback)
+      (define maybe-n (string->number (js-value->string v)))
+      (if maybe-n
+          maybe-n
+          fallback))
 
     ;; menu-container-node? : any/c -> boolean?
     ;;   Check whether external node looks like a top-level .we-menu container.
@@ -788,6 +872,36 @@
         (when selected
           (js-send selected "focus" (vector)))))
 
+    ;; focus-scrollspy-item! : any/c integer? -> void?
+    ;;   Focus item at idx in the current scrollspy nav and trigger selection by click.
+    (define (focus-scrollspy-item! native idx)
+      (define parent* (js-ref/extern native "parentElement"))
+      (when (and parent* (not (extern-nullish? parent*)))
+        (define items
+          (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
+        (when (and items (not (extern-nullish? items)))
+          (define len (nodelist-length items))
+          (when (and (> len 0) (>= idx 0) (< idx len))
+            (define target (nodelist-item items idx))
+            (when (and target (not (extern-nullish? target)))
+              (js-send target "focus" (vector))
+              (js-send target "click" (vector)))))))
+
+    ;; focus-scrollspy-step! : any/c integer? -> void?
+    ;;   Move to the next/previous scrollspy item with wrap-around.
+    (define (focus-scrollspy-step! native step)
+      (define parent* (js-ref/extern native "parentElement"))
+      (when (and parent* (not (extern-nullish? parent*)))
+        (define items
+          (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
+        (when (and items (not (extern-nullish? items)))
+          (define len (nodelist-length items))
+          (when (> len 0)
+            (define idx (nodelist-index-of-node items native))
+            (define start (if (>= idx 0) idx 0))
+            (define next-idx (modulo (+ start step len) len))
+            (focus-scrollspy-item! native next-idx)))))
+
     ;; dom-node : symbol? list? list? any/c any/c any/c -> dom-node?
     ;;   Construct a browser-backed node and install event bridges.
     (define (dom-node tag attrs children text on-click on-change)
@@ -901,6 +1015,29 @@
                (when (menu-typeahead-key? key)
                  (when (focus-matching-menu-item-from-item! native key)
                    (js-send evt "preventDefault" (vector))))]))
+          (when (scrollspy-item-node? n)
+            (case (string->symbol key)
+              [(ArrowRight ArrowDown)
+               (js-send evt "preventDefault" (vector))
+               (focus-scrollspy-step! native 1)]
+              [(ArrowLeft ArrowUp)
+               (js-send evt "preventDefault" (vector))
+               (focus-scrollspy-step! native -1)]
+              [(Home)
+               (js-send evt "preventDefault" (vector))
+               (focus-scrollspy-item! native 0)]
+              [(End)
+               (js-send evt "preventDefault" (vector))
+               (define parent* (js-ref/extern native "parentElement"))
+               (when (and parent* (not (extern-nullish? parent*)))
+                 (define items
+                   (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
+                 (when (and items (not (extern-nullish? items)))
+                   (define len (nodelist-length items))
+                   (when (> len 0)
+                     (focus-scrollspy-item! native (- len 1)))))]
+              [else
+               (void)]))
           (when (and callback (role-button-node? n))
             (callback key))
           (when (and (role-dialog-node? n) (string=? key "Tab"))
@@ -1056,6 +1193,157 @@
       (js-replace-children! container (dom-node-record-native root))
       (void))
 
+    ;; backend-scrollspy-observe-scroll! : dom-node? (-> void?) (-> (-> void?) void?) -> void?
+    ;;   Register IntersectionObserver (fallback scroll listener) on container in browser backend.
+    (define (backend-scrollspy-observe-scroll! container callback register-cleanup!)
+      (define native (dom-node-record-native container))
+      (when (and native (not (extern-nullish? native)))
+        ;; Clear previously registered observer/listener before rebinding sections.
+        (define old-observer* (native-mapping-ref scrollspy-observers native))
+        (when (and old-observer* (not (extern-nullish? old-observer*)))
+          (js-send old-observer* "disconnect" (vector)))
+        (define old-listener* (native-mapping-ref scrollspy-listeners native))
+        (when (and old-listener* (not (extern-nullish? old-listener*)))
+          (js-send native "removeEventListener" (vector "scroll" old-listener*)))
+        (set! scrollspy-observers (native-mapping-remove scrollspy-observers native))
+        (set! scrollspy-listeners (native-mapping-remove scrollspy-listeners native))
+
+        ;; Prefer IntersectionObserver when available.
+        (define observer-ctor* (js-ref/extern (js-var "window") "IntersectionObserver"))
+        (define reflect* (js-var "Reflect"))
+        (define io-supported?
+          (and observer-ctor*
+               reflect*
+               (not (extern-nullish? observer-ctor*))
+               (not (extern-nullish? reflect*))))
+        (if io-supported?
+            (let* ([io-callback
+                    (procedure->external
+                     (lambda (_entries _observer)
+                       (callback)))]
+                   [observer
+                    (js-send/extern/nullish
+                     reflect*
+                     "construct"
+                     (vector observer-ctor*
+                             (vector io-callback)))]
+                   [sections
+                    (js-send/extern/nullish
+                     native
+                     "querySelectorAll"
+                     (vector scrollspy-section-selector))])
+              (if (or (not observer) (extern-nullish? observer))
+                  (let ([listener
+                         (procedure->external
+                          (lambda (_evt)
+                            (callback)))])
+                    (set! scrollspy-listeners
+                          (native-mapping-set scrollspy-listeners native listener))
+                    (js-send native "addEventListener" (vector "scroll" listener)))
+                  (begin
+                    (set! scrollspy-observers
+                          (native-mapping-set scrollspy-observers native observer))
+                    (let ([listener
+                           (procedure->external
+                            (lambda (_evt)
+                              (callback)))])
+                      (set! scrollspy-listeners
+                            (native-mapping-set scrollspy-listeners native listener))
+                      (js-send native "addEventListener" (vector "scroll" listener)))
+                    (when (and sections (not (extern-nullish? sections)))
+                      (define len (nodelist-length sections))
+                      (let loop ([i 0])
+                        (when (< i len)
+                          (define section-native (nodelist-item sections i))
+                          (when (and section-native (not (extern-nullish? section-native)))
+                            (js-send observer "observe" (vector section-native)))
+                          (loop (add1 i)))))
+                    (callback))))
+            (let ([listener
+                   (procedure->external
+                    (lambda (_evt)
+                      (callback)))])
+              (set! scrollspy-listeners
+                    (native-mapping-set scrollspy-listeners native listener))
+              (js-send native "addEventListener" (vector "scroll" listener))))
+
+        ;; Register one cleanup hook per native container.
+        (when (not (native-member? scrollspy-cleanup-registered native))
+          (set! scrollspy-cleanup-registered
+                (native-add-unique scrollspy-cleanup-registered native))
+          (register-cleanup!
+           (lambda ()
+             (define observer* (native-mapping-ref scrollspy-observers native))
+             (when (and observer* (not (extern-nullish? observer*)))
+               (js-send observer* "disconnect" (vector)))
+             (define listener* (native-mapping-ref scrollspy-listeners native))
+             (when (and listener* (not (extern-nullish? listener*)))
+               (js-send native "removeEventListener" (vector "scroll" listener*)))
+             (set! scrollspy-observers (native-mapping-remove scrollspy-observers native))
+             (set! scrollspy-listeners (native-mapping-remove scrollspy-listeners native))
+             (set! scrollspy-cleanup-registered
+                   (native-remove scrollspy-cleanup-registered native))))))
+      (void))
+
+    ;; backend-scrollspy-scroll-into-view! : dom-node? -> void?
+    ;;   Scroll section node into view in browser backend.
+    (define (backend-scrollspy-scroll-into-view! section-node)
+      (define native (dom-node-record-native section-node))
+      (when (and native (not (extern-nullish? native)))
+        ;; Pass `#t` so browser aligns selected section to top consistently.
+        (js-send native "scrollIntoView" (vector #t)))
+      (void))
+
+    ;; backend-scrollspy-active-id : list? -> any/c
+    ;;   Compute active section id from section bindings using container-relative geometry.
+    (define (backend-scrollspy-active-id section-bindings)
+      (if (null? section-bindings)
+          #f
+          (let* ([first-binding (car section-bindings)]
+                 [first-id (car first-binding)]
+                 [first-node (cdr first-binding)]
+                 [first-native (dom-node-record-native first-node)]
+                 [container-native* (if first-native
+                                        (js-ref/extern first-native "parentElement")
+                                        #f)])
+            (if (or (not container-native*)
+                    (extern-nullish? container-native*))
+                first-id
+                (let* ([container-rect
+                        (js-send/extern/nullish
+                         container-native*
+                         "getBoundingClientRect"
+                         (vector))]
+                       [container-top
+                        (if (extern-nullish? container-rect)
+                            0
+                            (extern-number/default (js-ref/extern container-rect "top") 0))])
+                  (let loop ([pairs section-bindings]
+                             [candidate #f])
+                    (if (null? pairs)
+                        (if candidate candidate first-id)
+                        (let* ([binding (car pairs)]
+                               [section-id (car binding)]
+                               [section-node (cdr binding)]
+                               [section-native (dom-node-record-native section-node)])
+                          (if (or (not section-native)
+                                  (extern-nullish? section-native))
+                              (loop (cdr pairs) candidate)
+                              (let ([section-rect
+                                     (js-send/extern/nullish
+                                      section-native
+                                      "getBoundingClientRect"
+                                      (vector))])
+                                (if (extern-nullish? section-rect)
+                                    (loop (cdr pairs) candidate)
+                                    (let ([section-top
+                                           (extern-number/default
+                                            (js-ref/extern section-rect "top")
+                                            0)])
+                                      (if (<= section-top (+ container-top 8))
+                                          (loop (cdr pairs) section-id)
+                                          (loop (cdr pairs) candidate))))))))))))))
+
     (values dom-node
             dom-node?
             dom-node-tag
@@ -1074,4 +1362,7 @@
             backend-append-child!
             backend-set-single-child!
             backend-replace-children!
-            backend-mount-root!)))
+            backend-mount-root!
+            backend-scrollspy-observe-scroll!
+            backend-scrollspy-scroll-into-view!
+            backend-scrollspy-active-id)))

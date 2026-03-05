@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity scrollspy contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 240px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity scrollspy contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-scrollspy"></iframe>
+  <script>
+    function setStatus(t, c) {
+      const s = document.getElementById("status");
+      s.textContent = t;
+      s.className = c;
+    }
+    function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+    function frameDocFrom(f) { return f.contentDocument || (f.contentWindow && f.contentWindow.document); }
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function parityCurrentText(doc) {
+      const node = Array.from(doc.querySelectorAll("[data-we-widget='text']"))
+        .find((n) => n.textContent.trim().startsWith("parity-current:"));
+      return node ? node.textContent.trim() : null;
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frameDocFrom(frame);
+        if (doc) {
+          const faq = Array.from(doc.querySelectorAll("[data-we-widget='scrollspy-item']"))
+            .find((n) => n.textContent.trim() === "FAQ");
+          const sectionWrap = doc.querySelector("[data-we-widget='scrollspy-sections']");
+          const txt = parityCurrentText(doc);
+          if (faq && sectionWrap && txt) {
+            return { doc, faq, sectionWrap };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity scrollspy contract UI");
+    }
+
+    async function waitForCondition(label, timeoutMs, pred) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        if (pred()) return;
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for " + label);
+    }
+
+    (async () => {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((res, rej) => {
+          const tt = setTimeout(() => rej(new Error("Timed out loading iframe")), 2e4);
+          frame.addEventListener("load", () => { clearTimeout(tt); res(); }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 2e4);
+        ui.faq.click();
+        await waitForCondition("parity scrollspy baseline faq", 2000, () => parityCurrentText(ui.doc) === "parity-current:faq");
+
+        const sectionWrapNow = ui.doc.querySelector("[data-we-widget='scrollspy-sections']");
+        assertEqual(!!sectionWrapNow, true, "parity scrollspy sections after baseline present");
+        sectionWrapNow.scrollTop = 0;
+        sectionWrapNow.dispatchEvent(new Event("scroll", { bubbles: true }));
+
+        await waitForCondition("Home tab current class after top scroll", 2000, () => {
+          const home = Array.from(ui.doc.querySelectorAll("[data-we-widget='scrollspy-item']"))
+            .find((n) => n.textContent.trim() === "Home");
+          return home && home.className.includes("is-current");
+        });
+
+        setStatus("PASS\nparity scrollspy contract: scroll updates current class", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

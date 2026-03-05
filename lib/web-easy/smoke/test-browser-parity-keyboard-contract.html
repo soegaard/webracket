@@ -59,6 +59,23 @@
       }
     }
 
+    function currentTextByPrefix(frameDoc, prefix) {
+      const node = Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+        .find((el) => (el.textContent || "").trim().startsWith(prefix));
+      return node ? (node.textContent || "").trim() : "";
+    }
+
+    async function waitForCondition(label, timeoutMs, pred) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        if (pred()) {
+          return;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for " + label);
+    }
+
     async function loadCase(frame, src, readyFn, timeoutMs) {
       await new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
@@ -98,6 +115,11 @@
     function selectedTabLabel(frameDoc) {
       const selected = frameDoc.querySelector("button[role='tab'][aria-selected='true']");
       return selected ? (selected.textContent || "").trim() : "";
+    }
+
+    function scrollspyItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll(".we-scrollspy-item"))
+        .find((el) => (el.textContent || "").trim() === label);
     }
 
     async function checkMenuKeyboardOnly(frame, timeoutMs) {
@@ -173,6 +195,32 @@
       frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
       await sleep(80);
       assertTrue(selectedTabLabel(frameDoc) === "overview", "Home selects overview");
+    }
+
+    async function checkScrollspyKeyboardOnly(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-parity-all.html?test=parity-scrollspy",
+        (d) => d.querySelectorAll(".we-scrollspy-item").length >= 3,
+        timeoutMs
+      );
+
+      const docsItem = scrollspyItemByText(frameDoc, "Docs");
+      const homeItem = scrollspyItemByText(frameDoc, "Home");
+      const faqItem  = scrollspyItemByText(frameDoc, "FAQ");
+      assertTrue(!!docsItem, "parity scrollspy docs item present");
+      assertTrue(!!homeItem, "parity scrollspy home item present");
+      assertTrue(!!faqItem, "parity scrollspy faq item present");
+      docsItem.click();
+      await waitForCondition("parity scrollspy baseline docs", 2000, () => currentTextByPrefix(frameDoc, "parity-current:") === "parity-current:docs");
+      const docsNow = scrollspyItemByText(frameDoc, "Docs");
+      assertTrue(!!docsNow, "parity scrollspy docs item after baseline present");
+      docsNow.focus();
+      await sleep(40);
+
+      docsNow.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await waitForCondition("parity scrollspy current faq", 2000, () => currentTextByPrefix(frameDoc, "parity-current:") === "parity-current:faq");
+
     }
 
     (async function run() {

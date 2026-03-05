@@ -147,6 +147,17 @@ Theme-only fast gate:
   - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`
   - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 
+Close-button icon theming:
+
+- The close icon is rendered through CSS (`.we-close-button-icon::before`), so custom themes can swap the glyph without changing Racket code.
+- Example override for external themes:
+
+```css
+.we-close-button-icon::before {
+  content: "✕"; /* replace with another symbol if desired */
+}
+```
+
 ## CSS Hook Inspection
 
 For browser-side theming/debugging, inspect runtime nodes using:

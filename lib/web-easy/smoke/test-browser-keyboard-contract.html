@@ -59,6 +59,23 @@
       }
     }
 
+    function currentTextByPrefix(frameDoc, prefix) {
+      const node = Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+        .find((el) => (el.textContent || "").trim().startsWith(prefix));
+      return node ? (node.textContent || "").trim() : "";
+    }
+
+    async function waitForCondition(label, timeoutMs, pred) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        if (pred()) {
+          return;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for " + label);
+    }
+
     async function loadCase(frame, src, readyFn, timeoutMs) {
       await new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
@@ -98,6 +115,11 @@
     function selectedTabLabel(frameDoc) {
       const selected = frameDoc.querySelector("button[role='tab'][aria-selected='true']");
       return selected ? (selected.textContent || "").trim() : "";
+    }
+
+    function scrollspyItemByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll(".we-scrollspy-item"))
+        .find((el) => (el.textContent || "").trim() === label);
     }
 
     async function checkMenuKeyboardOnly(frame, timeoutMs) {
@@ -175,13 +197,40 @@
       assertTrue(selectedTabLabel(frameDoc) === "info", "Home selects info");
     }
 
+    async function checkScrollspyKeyboardOnly(frame, timeoutMs) {
+      const frameDoc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=scrollspy",
+        (d) => d.querySelectorAll(".we-scrollspy-item").length >= 3 && bodyText(d).includes("current:home"),
+        timeoutMs
+      );
+
+      const homeItem = scrollspyItemByText(frameDoc, "Home");
+      const docsItem = scrollspyItemByText(frameDoc, "Docs");
+      const apiItem  = scrollspyItemByText(frameDoc, "API");
+      assertTrue(!!homeItem, "scrollspy home item present");
+      assertTrue(!!docsItem, "scrollspy docs item present");
+      assertTrue(!!apiItem, "scrollspy api item present");
+      homeItem.click();
+      await waitForCondition("scrollspy baseline home", 2000, () => currentTextByPrefix(frameDoc, "current:") === "current:home");
+      const homeNow = scrollspyItemByText(frameDoc, "Home");
+      assertTrue(!!homeNow, "scrollspy home item after baseline present");
+      homeNow.focus();
+      await sleep(40);
+
+      homeNow.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await waitForCondition("scrollspy current docs", 2000, () => currentTextByPrefix(frameDoc, "current:") === "current:docs");
+
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
         const timeoutMs = 20000;
         await checkMenuKeyboardOnly(frame, timeoutMs);
         await checkTabsKeyboardOnly(frame, timeoutMs);
-        setStatus("PASS\nkeyboard contract: menu + tabs keyboard-only flow", "pass");
+        await checkScrollspyKeyboardOnly(frame, timeoutMs);
+        setStatus("PASS\nkeyboard contract: menu + tabs + scrollspy keyboard-only flow", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");

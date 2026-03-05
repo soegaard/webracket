@@ -283,6 +283,38 @@ Remaining Step 2 planning items:
 1. Decide Phase 2 scope for desktop-specific APIs with explicit web fallbacks.
 2. Keep compatibility matrix updated as each deferred item moves to implemented/deferred-by-design.
 
+### Bootstrap-Style Coverage Audit (Current)
+
+`Y` means there is dedicated coverage in that lane.
+`P` means partial/indirect coverage (for example via a broader dashboard contract page).
+
+| Component | web-easy mapping | Implemented | Smoke | Parity | Contract |
+|---|---|---|---|---|---|
+| Accordion | `accordion` | Y | Y | Y | Y |
+| Alerts | `alert` | Y | Y | Y | Y |
+| Badge | `badge` | Y | Y | Y | Y |
+| Breadcrumb | `breadcrumb` | Y | Y | Y | Y |
+| Buttons | `button` | Y | Y | Y | P |
+| Button group | `button-group` | Y | Y | Y | Y |
+| Card | `card` | Y | Y | Y | Y |
+| Carousel | `carousel` | Y | Y | Y | Y |
+| Close button | `close-button` | Y | Y | Y | Y |
+| Collapse | `collapse` | Y | Y | Y | Y |
+| Dropdowns | `dropdown` | Y | Y | Y | Y |
+| List group | `list-group` | Y | Y | Y | Y |
+| Modal | `dialog` | Y | Y | Y | Y |
+| Offcanvas | `offcanvas` | Y | Y | Y | Y |
+| Navbar | `navigation-bar` | Y | Y | Y | Y |
+| Navs & tabs | `tab-panel` | Y | Y | Y | Y |
+| Pagination | `pagination` | Y | Y | Y | Y |
+| Placeholders | `placeholder` | Y | Y | Y | Y |
+| Popovers | `popover` | Y | Y | Y | Y |
+| Progress | `progress` | Y | Y | Y | Y |
+| Scrollspy | `scrollspy` | Y | Y | Y | Y |
+| Spinners | `spinner` | Y | Y | Y | Y |
+| Toasts | `toast` | Y | Y | Y | Y |
+| Tooltips | `tooltip` | Y | Y | Y | P |
+
 ## Phase 2 API
 
 - Menus as web-appropriate components (`menu-bar`, `menu`, `menu-item`, popup menus).
@@ -804,3 +836,4 @@ Remaining follow-up:
 
 1. Keep the shared-window stylesheet model and monitor bundle size if default CSS grows.
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
+3. Future enhancement: make close-button icon glyph fully CSS-driven (instead of fixed text content) so themes can replace the cross shape using stylesheet-only customization.

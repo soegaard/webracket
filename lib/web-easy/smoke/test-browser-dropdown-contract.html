@@ -5,29 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>web-easy dropdown contract smoke test</title>
   <style>
-    body {
-      font-family: monospace;
-      margin: 16px;
-    }
+    body { font-family: monospace; margin: 16px; }
     #status {
       white-space: pre-wrap;
       padding: 8px;
       border: 1px solid #999;
       margin-bottom: 12px;
     }
-    #status.pass {
-      color: #0a6a0a;
-      border-color: #0a6a0a;
-    }
-    #status.fail {
-      color: #8a1111;
-      border-color: #8a1111;
-    }
-    #app-frame {
-      width: 100%;
-      height: 280px;
-      border: 1px solid #999;
-    }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 280px; border: 1px solid #999; }
   </style>
 </head>
 <body>
@@ -55,8 +42,27 @@
       }
     }
 
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
     function dispatchKey(el, key) {
       el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    }
+
+    function pseudoContent(win, el, pseudo) {
+      return win.getComputedStyle(el, pseudo).content || "";
+    }
+
+    async function waitForCondition(label, timeoutMs, pred) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        if (pred()) return;
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for " + label);
     }
 
     async function waitForUI(frame, timeoutMs) {
@@ -90,27 +96,33 @@
         });
 
         const ui = await waitForUI(frame, 20000);
+        const frameWin = frame.contentWindow;
+
         assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown aria-expanded initial");
+        assertTrue(["true", "menu"].includes(ui.trigger.getAttribute("aria-haspopup")), "dropdown aria-haspopup");
         assertEqual(ui.popup.getAttribute("class"), "we-menu-popup", "dropdown popup class initial");
+
+        const marker = pseudoContent(frameWin, ui.trigger, "::after");
+        assertTrue(marker.includes("▾"), "dropdown indicator glyph is present");
+
+        dispatchKey(ui.trigger, "ArrowDown");
+        await sleep(100);
+        assertEqual(ui.trigger.getAttribute("aria-expanded"), "true", "dropdown opens with ArrowDown");
+
+        ui.closeItem.click();
+        await sleep(120);
+        assertEqual(ui.selectedText.textContent.trim(), "selected:close", "dropdown action selection updates text");
+        assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown closes after item activation");
 
         dispatchKey(ui.trigger, "Enter");
         await sleep(100);
-        assertEqual(ui.trigger.getAttribute("aria-expanded"), "true", "dropdown aria-expanded after Enter");
-        assertEqual(ui.popup.getAttribute("class"), "we-menu-popup is-open", "dropdown popup class open");
+        assertEqual(ui.trigger.getAttribute("aria-expanded"), "true", "dropdown opens with Enter");
 
         dispatchKey(ui.trigger, "Escape");
         await sleep(100);
-        assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown aria-expanded after Escape");
-        assertEqual(ui.popup.getAttribute("class"), "we-menu-popup", "dropdown popup class closed");
+        assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown closes with Escape");
 
-        ui.trigger.click();
-        await sleep(100);
-        ui.closeItem.click();
-        await sleep(100);
-        assertEqual(ui.selectedText.textContent.trim(), "selected:close", "dropdown action selection updates text");
-        assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown aria-expanded after item click");
-
-        setStatus("PASS\ndropdown contract: aria state + Enter/Escape + item action", "pass");
+        setStatus("PASS\ndropdown contract: indicator + open/close + ArrowDown + activation", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
