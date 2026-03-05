@@ -632,9 +632,25 @@ Default theme tokens (CSS custom properties):
 - Surface/background:
   - `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-disabled`, `--we-bg-hover`
 - Borders/text:
-  - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg-muted`
+  - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg`, `--we-fg-muted`
 - Spacing/gaps:
   - `--we-space-xs`, `--we-space-sm`, `--we-space-md`, `--we-space-lg`, `--we-gap`, `--we-gap-tab`
+
+Stable styling contract (current baseline):
+
+| Surface | Stable `data-we-widget` hooks | Stable classes | Primary token hooks |
+|---|---|---|---|
+| Buttons/inputs/select | `button`, `input`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg` |
+| Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress` | `--we-fg`, `--we-focus` |
+| Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
+| Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus` |
+| Dialog | `dialog`, `dialog-panel` | `.we-dialog`, `.we-dialog-panel`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
+| Menu | `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item` | `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`, `.is-open` | `--we-bg-subtle`, `--we-bg`, `--we-bg-hover`, `--we-border-menu`, `--we-border`, `--we-border-soft`, `--we-focus`, `--we-fg` |
+
+Contract enforcement status:
+
+- Automated smoke contract page: `smoke/test-browser-style-hook-contract.html`.
+- Included in `smoke/test-browser-contract-dashboard.html` and headless contract CI path.
 
 `data-we-widget` examples:
 
