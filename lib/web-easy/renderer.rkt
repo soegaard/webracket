@@ -138,7 +138,7 @@
        .we-close-button{align-self:flex-start;width:auto;padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--we-fg,#111);line-height:1.2;cursor:pointer;}\
        /* The icon glyph is CSS-driven, so users can replace it in stylesheets via `.we-close-button-icon::before`. */\
        .we-close-button-icon{display:inline-block;min-width:1ch;text-align:center;font-weight:700;line-height:1;}\
-       .we-close-button-icon::before{content:'×';}\
+       .we-close-button-icon::before{content:var(--we-close-glyph,'×');}\
        .we-close-button:hover{background:var(--we-bg-hover,#e8e8e8);}\
        .we-close-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-toast-close{padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;line-height:1.2;}\
@@ -2774,7 +2774,7 @@
                                             (cons 'data-we-widget "menu-label")
                                             (cons 'menu-trigger #t)
                                             (cons 'tabindex 0)
-                                            (cons 'aria-haspopup "true")
+                                            (cons 'aria-haspopup "menu")
                                             (cons 'aria-controls popup-id)
                                             (cons 'aria-expanded "false"))
                                       '()
@@ -2784,6 +2784,8 @@
                                       (lambda (key)
                                         (case (string->symbol key)
                                           [(ArrowDown)
+                                           (set-open! #t)]
+                                          [(ArrowUp)
                                            (set-open! #t)]
                                           [(mouseenter)
                                            (when (and active-menu-close
@@ -2828,7 +2830,7 @@
                   (cons 'data-we-widget "menu-label")
                   (cons 'menu-trigger #t)
                   (cons 'tabindex 0)
-                  (cons 'aria-haspopup "true")
+                  (cons 'aria-haspopup "menu")
                   (cons 'aria-controls popup-id)
                   (cons 'aria-expanded (if open? "true" "false"))))
           (set-dom-node-attrs!

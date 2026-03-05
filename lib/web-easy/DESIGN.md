@@ -836,4 +836,5 @@ Remaining follow-up:
 
 1. Keep the shared-window stylesheet model and monitor bundle size if default CSS grows.
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
-3. Future enhancement: make close-button icon glyph fully CSS-driven (instead of fixed text content) so themes can replace the cross shape using stylesheet-only customization.
+3. Completed: close-button icon glyph is CSS-token-driven via `--we-close-glyph` and contract-tested in core/parity close-button pages.
+4. Deep keyboard contracts for dropdown/scrollspy are now part of contract dashboard gating (core + parity).

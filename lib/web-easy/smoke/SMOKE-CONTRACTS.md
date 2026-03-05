@@ -132,11 +132,19 @@ Popup item behavior:
 
 ## Dropdown Contract Semantics
 
-- dropdown trigger exposes menu semantics (`aria-haspopup`, `aria-expanded`)
+- dropdown trigger exposes menu semantics (`aria-haspopup="menu"`, `aria-expanded`)
 - dropdown trigger exposes a stable indicator glyph hook (`.we-dropdown .we-menu-label::after`)
 - `ArrowDown` opens popup and moves focus into menu items
 - type-ahead on menu items moves focus to matching items
 - activation closes popup and updates selected-id text
+
+## Deep Keyboard Contracts (Gating)
+
+- `test-browser-scrollspy-keyboard-deep.html`
+- `test-browser-parity-scrollspy-keyboard-deep.html`
+- `test-browser-dropdown-keyboard-deep.html`
+- `test-browser-parity-dropdown-keyboard-deep.html`
+- These pages are part of the contract dashboard gate.
 
 ## Tabs Contract Semantics
 
@@ -168,6 +176,7 @@ Popup item behavior:
 - `PASS style hook contract:`
 - `PASS popover contract:`
 - `PASS dropdown contract:`
+- `PASS dropdown deep keyboard:`
 - `PASS navigation-bar contract:`
 - `PASS button-group contract:`
 - `PASS button-toolbar contract:`
@@ -186,6 +195,7 @@ Popup item behavior:
 - `PASS placeholder contract:`
 - `PASS carousel contract:`
 - `PASS scrollspy contract:`
+- `PASS scrollspy deep keyboard:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -206,6 +216,7 @@ Popup item behavior:
 - `PASS parity style hook contract:`
 - `PASS parity popover contract:`
 - `PASS parity dropdown contract:`
+- `PASS parity dropdown deep keyboard:`
 - `PASS parity navigation-bar contract:`
 - `PASS parity button-group contract:`
 - `PASS parity button-toolbar contract:`
@@ -224,6 +235,7 @@ Popup item behavior:
 - `PASS parity placeholder contract:`
 - `PASS parity carousel contract:`
 - `PASS parity scrollspy contract:`
+- `PASS parity scrollspy deep keyboard:`
 
 ## Guard Self-Test Expectation
 

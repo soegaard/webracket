@@ -16,6 +16,7 @@ Modes:
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
+  deep                     Run deep keyboard contract pages only
   style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
@@ -31,6 +32,7 @@ Examples:
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
+  ./headless.sh deep
   ./headless.sh style
   ./headless.sh theme
   ./headless.sh dashboards
@@ -51,6 +53,7 @@ doctor	Check headless prerequisites
 smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
+deep	Run deep keyboard contract pages only
 style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
@@ -144,6 +147,13 @@ case "$1" in
   contract)
     shift
     exec "$SCRIPT_DIR/check-contract-headless.sh" "$@"
+    ;;
+  deep)
+    shift
+    "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-dropdown-keyboard-deep.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-scrollspy-keyboard-deep.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-dropdown-keyboard-deep.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-scrollspy-keyboard-deep.html
     ;;
   style)
     shift

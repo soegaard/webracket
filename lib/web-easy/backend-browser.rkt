@@ -966,9 +966,13 @@
           (when (menu-label-node? n)
             (case (string->symbol key)
               [(ArrowDown)
+               (when callback
+                 (callback "ArrowDown"))
                (js-send evt "preventDefault" (vector))
                (focus-first-menu-item! native)]
               [(ArrowUp)
+               (when callback
+                 (callback "ArrowUp"))
                (js-send evt "preventDefault" (vector))
                (focus-last-menu-item! native)]
               [(ArrowRight)

@@ -61,6 +61,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
 | Style-hook contracts only | `./headless.sh style` |
+| Deep keyboard contracts only | `./headless.sh deep` |
 | Style-hook contracts only (direct script) | `./check-style-headless.sh` |
 | Theme token smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-contract.html` |
 | Theme-only dashboard headless | `./headless.sh theme` |
@@ -68,6 +69,10 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Run headless timing snapshot | `./headless.sh timings` |
 | Serve local smoke pages | `./smoke.sh open` |
 | Guard self-test only | `./headless.sh guard` |
+| Deep keyboard contract (scrollspy, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-scrollspy-keyboard-deep.html` |
+| Deep keyboard contract (scrollspy, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-scrollspy-keyboard-deep.html` |
+| Deep keyboard contract (dropdown, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dropdown-keyboard-deep.html` |
+| Deep keyboard contract (dropdown, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dropdown-keyboard-deep.html` |
 
 ## Make Targets
 
@@ -158,6 +163,38 @@ Close-button icon theming:
 }
 ```
 
+Beginner token walkthrough:
+
+- Change keyboard focus ring color:
+  - edit `--we-focus`
+- Change keyboard focus fill tint:
+  - edit `--we-focus-tint`
+- Change main text color:
+  - edit `--we-fg`
+- Change page/panel base background:
+  - edit `--we-bg`
+- Change subtle panel/menu-bar background:
+  - edit `--we-bg-subtle`
+- Change selected tab/menu background:
+  - edit `--we-bg-selected`
+- Change hover background for menu items/buttons:
+  - edit `--we-bg-hover`
+- Change primary border color:
+  - edit `--we-border`
+- Change menu container border color:
+  - edit `--we-border-menu`
+- Change muted helper text:
+  - edit `--we-fg-muted`
+- Change overlay backdrop darkness:
+  - edit `--we-overlay`
+
+Example tweak sequence:
+
+1. Set `--we-bg` and `--we-fg` first for overall light/dark feel.
+2. Tune `--we-bg-hover` and `--we-bg-selected` for interactive clarity.
+3. Tune `--we-focus` and `--we-focus-tint` for keyboard accessibility.
+4. Adjust `--we-border` and `--we-border-menu` for component separation.
+
 ## CSS Hook Inspection
 
 For browser-side theming/debugging, inspect runtime nodes using:
@@ -228,6 +265,15 @@ Headless timing behavior:
 Contract behavior and expected PASS lines are documented in:
 
 - `SMOKE-CONTRACTS.md`
+
+## Deep Keyboard Contracts
+
+- Gating pages:
+  - `test-browser-scrollspy-keyboard-deep.html`
+  - `test-browser-parity-scrollspy-keyboard-deep.html`
+  - `test-browser-dropdown-keyboard-deep.html`
+  - `test-browser-parity-dropdown-keyboard-deep.html`
+- Purpose: enforce multi-step keyboard behavior for scrollspy and dropdown in the same contract gate as other keyboard semantics.
 
 ## Style vs Contract
 
