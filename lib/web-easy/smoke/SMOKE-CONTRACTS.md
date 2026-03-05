@@ -47,6 +47,11 @@ Popup item behavior:
 - `Escape` closes dropdown popup
 - selecting an item triggers action and closes popup
 
+## Navigation Bar Contract Semantics
+
+- navigation bar exposes navigation semantics (`role="navigation"`)
+- button actions update selected state text deterministically
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -77,6 +82,7 @@ Popup item behavior:
 - `PASS style hook contract:`
 - `PASS popover contract:`
 - `PASS dropdown contract:`
+- `PASS navigation-bar contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -97,6 +103,7 @@ Popup item behavior:
 - `PASS parity style hook contract:`
 - `PASS parity popover contract:`
 - `PASS parity dropdown contract:`
+- `PASS parity navigation-bar contract:`
 
 ## Guard Self-Test Expectation
 
