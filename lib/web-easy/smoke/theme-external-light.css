@@ -241,6 +241,40 @@ html.we-theme-light .we-button:focus-visible {
   outline-offset: 0;
 }
 
+/* Button variants used by the public showcase page. */
+html.we-theme-light .we-button-primary {
+  background: #2f7ea0;
+  border-color: #2f7ea0;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-primary:hover {
+  background: #266985;
+  border-color: #266985;
+}
+
+html.we-theme-light .we-button-secondary {
+  background: #e9eef6;
+  border-color: #91a6c4;
+  color: #2f4563;
+}
+
+html.we-theme-light .we-button-secondary:hover {
+  background: #dce6f3;
+  border-color: #7e98bd;
+}
+
+html.we-theme-light .we-button-ghost {
+  background: transparent;
+  border-color: #9aa9c3;
+  color: #35567d;
+}
+
+html.we-theme-light .we-button-ghost:hover {
+  background: rgba(47, 126, 160, 0.10);
+  border-color: #6f86aa;
+}
+
 html.we-theme-light select,
 html.we-theme-light .we-choice {
   background: #ffffff;

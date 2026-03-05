@@ -3,109 +3,230 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>web-easy external CSS theme demo</title>
+  <title>web-easy theme showcase (external CSS)</title>
   <style>
-    body {
-      font-family: monospace;
-      margin: 16px;
-      max-width: 1200px;
+    :root {
+      --page-bg: #f6f7f8;
+      --page-fg: #1c232a;
+      --panel-bg: #ffffff;
+      --panel-border: #c8d0d7;
+      --accent: #2f7ea0;
     }
-    #controls {
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--page-fg);
+      background: var(--page-bg);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #ffffff;
+      border-bottom: 1px solid #d7dee4;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .controls {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 10px;
       flex-wrap: wrap;
     }
-    #note {
-      margin-bottom: 10px;
-      line-height: 1.5;
+
+    .controls strong {
+      font-size: 13px;
     }
+
+    .controls button,
+    .controls select,
+    .controls a {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #aab8c5;
+      background: #ffffff;
+      color: #20303b;
+      text-decoration: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .controls a {
+      display: inline-block;
+    }
+
+    .controls button:hover,
+    .controls select:hover,
+    .controls a:hover {
+      border-color: #6c8ea5;
+    }
+
+    #current {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2a5c76;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .lead {
+      margin: 0 0 12px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
     #gallery {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
+
     .panel {
-      border: 1px solid #999;
-      border-radius: 4px;
-      padding: 8px;
-      background: #fafafa;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      overflow: clip;
+      min-height: 340px;
     }
+
     .panel h2 {
-      margin: 0 0 8px 0;
-      font-size: 14px;
+      margin: 0;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #f9fbfc;
     }
+
     iframe {
       width: 100%;
       height: 320px;
-      border: 1px solid #999;
-      background: white;
-    }
-    button {
-      padding: 4px 10px;
+      border: 0;
+      background: #fff;
     }
   </style>
 </head>
 <body>
-  <h1>web-easy external CSS theme demo</h1>
-  <div id="note">
-    This page demonstrates user theming via external CSS files only.
-    Edit <code>theme-external-light.css</code> and <code>theme-external-dark.css</code> to customize widgets.
-    Coverage: menu/menu-item, tab-panel (normal + disabled), dialog, group, input, checkbox, choice/select,
-    slider, progress, table, list-view, radios, image, and common buttons/text.
-  </div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>web-easy Theme Showcase</h1>
+        <p>External CSS only. Includes a Solar-inspired theme.</p>
+      </div>
+      <div class="controls">
+        <strong>Theme</strong>
+        <select id="theme-select" aria-label="Choose theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="solar">Solar</option>
+        </select>
+        <button id="btn-light" type="button">Light</button>
+        <button id="btn-dark" type="button">Dark</button>
+        <button id="btn-solar" type="button">Solar</button>
+        <span id="current">(loading)</span>
+        <a href="./theme-external-light.css" download>Download Light CSS</a>
+        <a href="./theme-external-dark.css" download>Download Dark CSS</a>
+        <a href="./theme-external-solar.css" download>Download Solar CSS</a>
+      </div>
+    </div>
+  </header>
 
-  <div id="controls">
-    <strong>Theme:</strong>
-    <button id="btn-light" type="button">Light</button>
-    <button id="btn-dark" type="button">Dark</button>
-    <span id="current">(loading)</span>
-  </div>
+  <main class="page">
+    <p class="lead">
+      Inspired by the Solar visual direction from Bootswatch. This page is the web-easy equivalent of a
+      component theme showcase: pick a theme above and inspect real widgets across menu, tabs, dialog, forms,
+      table, list, radios, and image rendering.
+    </p>
 
-  <div id="gallery">
-    <section class="panel">
-      <h2>Workspace (profile/settings/table/list)</h2>
-      <iframe id="frame-workspace" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="workspace"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Profile (radios + image)</h2>
-      <iframe id="frame-profile" src="./generated/example-browser-parity-all.html?test=parity-profile" title="profile"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Menu Full</h2>
-      <iframe id="frame-menu" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="menu full"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Tabs</h2>
-      <iframe id="frame-tabs" src="./generated/example-browser-parity-all.html?test=parity-tabs" title="tabs"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Tabs Disabled</h2>
-      <iframe id="frame-tabs-disabled" src="./generated/example-browser-smoke-all.html?test=tab-panel-disabled" title="tabs disabled"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Dialog</h2>
-      <iframe id="frame-dialog" src="./generated/example-browser-smoke-all.html?test=dialog" title="dialog"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Controls</h2>
-      <iframe id="frame-controls" src="./generated/example-browser-smoke-all.html?test=controls" title="controls"></iframe>
-    </section>
-    <section class="panel">
-      <h2>Width Policy (group + form/table)</h2>
-      <iframe id="frame-width" src="./generated/example-browser-smoke-all.html?test=width" title="width policy"></iframe>
-    </section>
-    <section class="panel">
-      <h2>List View</h2>
-      <iframe id="frame-list" src="./generated/example-browser-parity-all.html?test=parity-list" title="list view"></iframe>
-    </section>
-  </div>
+    <div id="gallery">
+      <section class="panel">
+        <h2>Workspace (profile/settings/table/list)</h2>
+        <iframe id="frame-workspace" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="workspace"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Profile (radios + image)</h2>
+        <iframe id="frame-profile" src="./generated/example-browser-parity-all.html?test=parity-profile" title="profile"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Menu Full</h2>
+        <iframe id="frame-menu" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="menu full"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Tabs</h2>
+        <iframe id="frame-tabs" src="./generated/example-browser-parity-all.html?test=parity-tabs" title="tabs"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Tabs Disabled</h2>
+        <iframe id="frame-tabs-disabled" src="./generated/example-browser-smoke-all.html?test=tab-panel-disabled" title="tabs disabled"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Dialog</h2>
+        <iframe id="frame-dialog" src="./generated/example-browser-smoke-all.html?test=dialog" title="dialog"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Controls</h2>
+        <iframe id="frame-controls" src="./generated/example-browser-smoke-all.html?test=controls" title="controls"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Width Policy (group + form/table)</h2>
+        <iframe id="frame-width" src="./generated/example-browser-smoke-all.html?test=width" title="width policy"></iframe>
+      </section>
+      <section class="panel">
+        <h2>List View</h2>
+        <iframe id="frame-list" src="./generated/example-browser-parity-all.html?test=parity-list" title="list view"></iframe>
+      </section>
+    </div>
+  </main>
 
   <script>
     const THEMES = {
       light: "../theme-external-light.css",
-      dark: "../theme-external-dark.css"
+      dark: "../theme-external-dark.css",
+      solar: "../theme-external-solar.css"
     };
 
     const FRAME_IDS = [
@@ -139,11 +260,9 @@
 
     function applyThemeToFrame(frame, name) {
       const frameDoc = frameDocFrom(frame);
-      if (!frameDoc) {
-        return;
-      }
-      frameDoc.documentElement.classList.remove("we-theme-light", "we-theme-dark");
-      frameDoc.documentElement.classList.add(name === "dark" ? "we-theme-dark" : "we-theme-light");
+      if (!frameDoc) return;
+      frameDoc.documentElement.classList.remove("we-theme-light", "we-theme-dark", "we-theme-solar");
+      frameDoc.documentElement.classList.add("we-theme-" + name);
       const link = ensureThemeLink(frameDoc);
       link.href = THEMES[name];
     }
@@ -152,26 +271,23 @@
       currentTheme = name;
       for (const id of FRAME_IDS) {
         const frame = document.getElementById(id);
-        if (frame) {
-          applyThemeToFrame(frame, name);
-        }
+        if (frame) applyThemeToFrame(frame, name);
       }
+      document.getElementById("theme-select").value = name;
       document.getElementById("current").textContent = "current=" + name;
     }
 
     for (const id of FRAME_IDS) {
       const frame = document.getElementById(id);
-      frame.addEventListener("load", () => {
-        applyThemeToFrame(frame, currentTheme);
-      });
+      frame.addEventListener("load", () => applyThemeToFrame(frame, currentTheme));
     }
 
     document.getElementById("btn-light").addEventListener("click", () => applyTheme("light"));
     document.getElementById("btn-dark").addEventListener("click", () => applyTheme("dark"));
+    document.getElementById("btn-solar").addEventListener("click", () => applyTheme("solar"));
+    document.getElementById("theme-select").addEventListener("change", (e) => applyTheme(e.target.value));
 
-    window.addEventListener("load", () => {
-      applyTheme("light");
-    });
+    window.addEventListener("load", () => applyTheme("solar"));
   </script>
 </body>
 </html>

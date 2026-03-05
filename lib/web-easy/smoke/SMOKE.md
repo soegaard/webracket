@@ -149,7 +149,7 @@ Theme-only fast gate:
 - `./headless.sh theme` runs `test-browser-theme-contract-dashboard.html`
 - Manual external CSS theming example:
   - `test-browser-theme-external-css.html`
-  - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`
+  - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`, `theme-external-solar.css`
   - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 
 Close-button icon theming:
@@ -190,7 +190,7 @@ Beginner token walkthrough:
 
 Example tweak sequence:
 
-1. Set `--we-bg` and `--we-fg` first for overall light/dark feel.
+1. Set `--we-bg` and `--we-fg` first for overall light/dark/solar feel.
 2. Tune `--we-bg-hover` and `--we-bg-selected` for interactive clarity.
 3. Tune `--we-focus` and `--we-focus-tint` for keyboard accessibility.
 4. Adjust `--we-border` and `--we-border-menu` for component separation.

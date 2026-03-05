@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en" class="we-theme-solar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy Theme Showcase</title>
+  <style>
+    :root {
+      --we-bg: #ffffff;
+      --we-bg-subtle: #f3f3f3;
+      --we-bg-selected: #e7f0ff;
+      --we-bg-disabled: #f3f3f3;
+      --we-bg-hover: #e8e8e8;
+      --we-fg: #1a1f2b;
+      --we-fg-muted: #777777;
+      --we-border: #888888;
+      --we-border-menu: #aaaaaa;
+      --we-border-soft: #bbbbbb;
+      --we-border-strong: #2f4f7f;
+      --we-focus: #0a66c2;
+      --we-focus-tint: rgba(10, 102, 194, 0.20);
+      --we-overlay: rgba(0, 0, 0, 0.45);
+      --we-shadow: rgba(0, 0, 0, 0.28);
+      --we-close-glyph: "✕";
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--we-bg);
+      color: var(--we-fg);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid var(--we-border-soft);
+      background: var(--we-bg-subtle);
+      backdrop-filter: blur(4px);
+    }
+
+    .topbar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--we-fg-muted);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls select,
+    .controls a,
+    .controls button {
+      font: inherit;
+      color: var(--we-fg);
+      border: 1px solid var(--we-border);
+      background: var(--we-bg);
+      border-radius: 6px;
+      padding: 5px 10px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .controls a:hover,
+    .controls button:hover,
+    .controls select:hover {
+      background: var(--we-bg-hover);
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 14px 28px 14px;
+    }
+
+    .hero {
+      border: 1px solid var(--we-border-soft);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: var(--we-bg-subtle);
+    }
+
+    .hero h2 {
+      margin: 0 0 6px 0;
+      font-size: 23px;
+    }
+
+    .hero p {
+      margin: 0;
+      line-height: 1.5;
+      color: var(--we-fg-muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--we-border-soft);
+      border-radius: 8px;
+      background: var(--we-bg);
+      overflow: hidden;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--we-fg-muted);
+      background: var(--we-bg-subtle);
+      border-bottom: 1px solid var(--we-border-soft);
+      padding: 8px 10px;
+    }
+
+    .card-body {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .we-button,
+    .we-menu-label,
+    .we-menu-item,
+    .we-page-btn,
+    .tab-btn {
+      padding: 5px 9px;
+      border: 1px solid var(--we-border);
+      border-radius: 4px;
+      background: var(--we-bg);
+      color: var(--we-fg);
+    }
+
+    .we-button:hover,
+    .we-menu-label:hover,
+    .we-menu-item:hover,
+    .we-page-btn:hover,
+    .tab-btn:hover {
+      background: var(--we-bg-hover);
+    }
+
+    .we-button:focus-visible,
+    .we-menu-label:focus-visible,
+    .we-menu-item:focus-visible,
+    .we-page-btn:focus-visible,
+    .tab-btn:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 1px solid var(--we-focus);
+      outline-offset: 0;
+      background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+    }
+
+    .button-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .we-alert {
+      border: 1px solid var(--we-border);
+      border-radius: 6px;
+      padding: 7px 9px;
+      background: var(--we-bg-subtle);
+    }
+
+    .we-alert-success { border-color: #6a9b73; }
+    .we-alert-warn { border-color: #b79256; }
+    .we-alert-error { border-color: #b25a5a; }
+
+    .we-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--we-border);
+      background: var(--we-bg-subtle);
+      font-size: 12px;
+    }
+
+    .we-input,
+    select,
+    textarea {
+      width: 100%;
+      color: var(--we-fg);
+      background: var(--we-bg);
+      border: 1px solid var(--we-border);
+      border-radius: 5px;
+      padding: 6px 8px;
+    }
+
+    .we-menu-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid var(--we-border-menu);
+      border-radius: 5px;
+      padding: 5px;
+      background: var(--we-bg-subtle);
+      position: relative;
+    }
+
+    .we-menu {
+      position: relative;
+    }
+
+    .we-menu-popup {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 4px);
+      display: none;
+      min-width: 150px;
+      border: 1px solid var(--we-border-menu);
+      border-radius: 5px;
+      background: var(--we-bg);
+      padding: 4px;
+      box-shadow: 0 8px 22px var(--we-shadow);
+      z-index: 50;
+    }
+
+    .we-menu-popup.is-open { display: grid; gap: 4px; }
+
+    .tabs {
+      border: 1px solid var(--we-border-soft);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--we-border-soft);
+      padding: 6px;
+      background: var(--we-bg-subtle);
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: var(--we-bg-selected);
+      border-color: var(--we-border-strong);
+    }
+
+    .tab-panel { display: none; padding: 10px; }
+    .tab-panel.is-open { display: block; }
+
+    .we-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .we-table th,
+    .we-table td {
+      border: 1px solid var(--we-border-soft);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .we-list-group {
+      border: 1px solid var(--we-border-soft);
+      border-radius: 6px;
+      overflow: clip;
+    }
+
+    .we-list-group-item {
+      padding: 8px;
+      border-bottom: 1px solid var(--we-border-soft);
+      background: var(--we-bg);
+    }
+
+    .we-list-group-item:last-child { border-bottom: none; }
+    .we-list-group-item.is-active { background: var(--we-bg-selected); }
+
+    .we-breadcrumb {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .we-breadcrumb-sep { color: var(--we-fg-muted); }
+
+    .we-pagination {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .we-page-btn.is-current {
+      background: var(--we-bg-selected);
+      border-color: var(--we-border-strong);
+    }
+
+    .we-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--we-border-soft);
+      border-top-color: var(--we-border-strong);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .we-toast {
+      border: 1px solid var(--we-border);
+      border-radius: 6px;
+      background: var(--we-bg);
+      padding: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .we-close-button {
+      padding: 2px 7px;
+      border: 1px solid var(--we-border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--we-fg);
+    }
+
+    .we-close-button::before { content: var(--we-close-glyph); }
+
+    .we-accordion-item {
+      border: 1px solid var(--we-border-soft);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .we-accordion-trigger {
+      width: 100%;
+      text-align: left;
+      padding: 8px 9px;
+      border: none;
+      border-bottom: 1px solid var(--we-border-soft);
+      background: var(--we-bg-subtle);
+      color: var(--we-fg);
+    }
+
+    .we-accordion-content {
+      display: none;
+      padding: 8px 9px;
+      background: var(--we-bg);
+    }
+
+    .we-accordion-content.is-open { display: block; }
+  </style>
+  <link id="theme-link" rel="stylesheet" href="./theme-external-solar.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>web-easy Theme Showcase</h1>
+        <p>Solar-inspired style demo page (no iframes, no test harness)</p>
+      </div>
+      <div class="controls">
+        <label for="theme-select"><strong>Theme</strong></label>
+        <select id="theme-select" aria-label="Theme">
+          <option value="solar">Solar</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <a href="./theme-external-solar.css" download>Download Solar CSS</a>
+        <a href="./theme-external-light.css" download>Download Light CSS</a>
+        <a href="./theme-external-dark.css" download>Download Dark CSS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <h2>Solar Theme</h2>
+      <p>
+        This page is a user-facing component gallery inspired by the Solar Bootswatch look.
+        Use the theme selector above to switch between external stylesheets.
+      </p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h3>Buttons, Alerts, Badge</h3>
+        <div class="card-body">
+          <div class="button-row">
+            <button class="we-button we-button-primary">Primary</button>
+            <button class="we-button we-button-secondary">Secondary</button>
+            <button class="we-button we-button-ghost">Ghost</button>
+          </div>
+          <div class="we-alert">Info alert: configuration saved.</div>
+          <div class="we-alert we-alert-success">Success alert: build finished.</div>
+          <div class="we-alert we-alert-warn">Warning alert: pending review.</div>
+          <div class="we-alert we-alert-error">Error alert: deploy failed.</div>
+          <div class="button-row">
+            <span class="we-badge">Badge</span>
+            <span class="we-badge">42</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Forms & Menu</h3>
+        <div class="card-body">
+          <input class="we-input" placeholder="Your name">
+          <select>
+            <option>Alpha</option>
+            <option>Beta</option>
+            <option>Gamma</option>
+          </select>
+          <textarea rows="3" placeholder="Notes"></textarea>
+          <div class="we-menu-bar">
+            <div class="we-menu">
+              <button class="we-menu-label" data-menu="project">Project</button>
+              <div class="we-menu-popup" id="menu-project">
+                <button class="we-menu-item">Open</button>
+                <button class="we-menu-item">Save</button>
+                <button class="we-menu-item">Close</button>
+              </div>
+            </div>
+            <div class="we-menu">
+              <button class="we-menu-label" data-menu="help">Help</button>
+              <div class="we-menu-popup" id="menu-help">
+                <button class="we-menu-item">Docs</button>
+                <button class="we-menu-item">FAQ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Tabs, List Group, Table</h3>
+        <div class="card-body">
+          <div class="tabs">
+            <div class="tab-row we-tab-list">
+              <button class="tab-btn we-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
+              <button class="tab-btn we-tab-btn" data-tab="settings" aria-selected="false">Settings</button>
+              <button class="tab-btn we-tab-btn" data-tab="history" aria-selected="false">History</button>
+            </div>
+            <div class="tab-panel is-open" data-tab-panel="overview">Overview content.</div>
+            <div class="tab-panel" data-tab-panel="settings">Settings content.</div>
+            <div class="tab-panel" data-tab-panel="history">History content.</div>
+          </div>
+
+          <div class="we-list-group">
+            <div class="we-list-group-item is-active">Current item</div>
+            <div class="we-list-group-item">Secondary item</div>
+            <div class="we-list-group-item">Third item</div>
+          </div>
+
+          <table class="we-table">
+            <thead>
+              <tr><th>Name</th><th>Status</th><th>ETA</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Release 1.4</td><td>In Progress</td><td>2d</td></tr>
+              <tr><td>API Cleanup</td><td>Review</td><td>1d</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Breadcrumb, Pagination, Progress, Spinner, Toast</h3>
+        <div class="card-body">
+          <ol class="we-breadcrumb">
+            <li>Home</li><li class="we-breadcrumb-sep">/</li>
+            <li>Projects</li><li class="we-breadcrumb-sep">/</li>
+            <li>Solar Demo</li>
+          </ol>
+          <div class="we-pagination">
+            <button class="we-page-btn">Prev</button>
+            <button class="we-page-btn">1</button>
+            <button class="we-page-btn is-current">2</button>
+            <button class="we-page-btn">3</button>
+            <button class="we-page-btn">Next</button>
+          </div>
+          <progress value="62" max="100" style="width:100%"></progress>
+          <div class="button-row">
+            <div class="we-spinner" aria-label="loading"></div>
+            <span>Loading activity...</span>
+          </div>
+          <div class="we-toast">
+            <span>Toast: Changes published.</span>
+            <button class="we-close-button" aria-label="close"></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Accordion</h3>
+        <div class="card-body">
+          <div class="we-accordion-item">
+            <button class="we-accordion-trigger is-open" data-acc="a" aria-expanded="true">What is web-easy?</button>
+            <div class="we-accordion-content is-open" id="acc-a">
+              web-easy is a web-rendered gui-easy style toolkit for WebRacket.
+            </div>
+          </div>
+          <div class="we-accordion-item">
+            <button class="we-accordion-trigger" data-acc="b" aria-expanded="false">How do themes work?</button>
+            <div class="we-accordion-content" id="acc-b">
+              Theme files override CSS tokens and widget classes only.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const themeSelect = document.getElementById("theme-select");
+      const themeLink = document.getElementById("theme-link");
+      const root = document.documentElement;
+      const themeHref = {
+        solar: "./theme-external-solar.css",
+        light: "./theme-external-light.css",
+        dark: "./theme-external-dark.css"
+      };
+
+      function applyTheme(name) {
+        root.classList.remove("we-theme-light", "we-theme-dark", "we-theme-solar");
+        root.classList.add("we-theme-" + name);
+        themeLink.href = themeHref[name];
+      }
+
+      themeSelect.addEventListener("change", function (evt) {
+        applyTheme(evt.target.value);
+      });
+
+      document.addEventListener("click", function (evt) {
+        const label = evt.target.closest(".we-menu-label");
+        if (label) {
+          const id = "menu-" + label.getAttribute("data-menu");
+          const popup = document.getElementById(id);
+          document.querySelectorAll(".we-menu-popup").forEach(function (el) {
+            if (el !== popup) el.classList.remove("is-open");
+          });
+          popup.classList.toggle("is-open");
+          return;
+        }
+        if (!evt.target.closest(".we-menu")) {
+          document.querySelectorAll(".we-menu-popup").forEach(function (el) {
+            el.classList.remove("is-open");
+          });
+        }
+      });
+
+      document.querySelectorAll(".tab-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const name = btn.getAttribute("data-tab");
+          document.querySelectorAll(".tab-btn").forEach(function (b) {
+            b.setAttribute("aria-selected", b === btn ? "true" : "false");
+          });
+          document.querySelectorAll(".tab-panel").forEach(function (panel) {
+            panel.classList.toggle("is-open", panel.getAttribute("data-tab-panel") === name);
+          });
+        });
+      });
+
+      document.querySelectorAll(".we-accordion-trigger").forEach(function (trigger) {
+        trigger.addEventListener("click", function () {
+          const id = "acc-" + trigger.getAttribute("data-acc");
+          const panel = document.getElementById(id);
+          const open = !panel.classList.contains("is-open");
+          panel.classList.toggle("is-open", open);
+          trigger.classList.toggle("is-open", open);
+          trigger.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+      });
+
+      applyTheme("solar");
+    })();
+  </script>
+</body>
+</html>

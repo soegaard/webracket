@@ -1,0 +1,406 @@
+/*
+ * Web Easy external "Solar" theme example.
+ *
+ * Inspired by Bootswatch Solar (a Solarized-style palette), but adapted to
+ * web-easy widget classes and tokens.
+ *
+ * This file is beginner-facing:
+ * - Start by changing the variables in section 1.
+ * - Keep selectors unchanged until you are comfortable.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 1) Design Tokens (CSS variables)                                            */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar {
+  /* Main palette (Solarized-inspired). */
+  --we-bg: #002b36;
+  --we-bg-subtle: #073642;
+  --we-bg-selected: #0f3f4d;
+  --we-bg-disabled: #1a4753;
+  --we-bg-hover: #17414e;
+
+  --we-fg: #93a1a1;
+  --we-fg-muted: #6c8a8f;
+
+  --we-border: #2f6671;
+  --we-border-menu: #3a7480;
+  --we-border-muted: #376d78;
+  --we-border-soft: #4e818c;
+  --we-border-hover: #6d9aa3;
+  --we-border-strong: #b58900;
+
+  --we-focus: #268bd2;
+  --we-focus-tint: rgba(38, 139, 210, 0.24);
+  --we-overlay: rgba(0, 19, 24, 0.76);
+  --we-shadow: rgba(0, 0, 0, 0.52);
+
+  --we-space-xs: 2px;
+  --we-space-sm: 4px;
+  --we-space-md: 8px;
+  --we-space-lg: 10px;
+  --we-gap: 4px;
+  --we-gap-tab: 6px;
+
+  /* Semantic accents. */
+  --we-progress-success: #859900;
+  --we-progress-warn: #b58900;
+  --we-progress-error: #dc322f;
+
+  /* Optional close-button glyph token. */
+  --we-close-glyph: "✕";
+
+  background: var(--we-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-solar body {
+  background: var(--we-bg);
+  color: var(--we-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2) Controls (button/input/select/textarea)                                  */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar button,
+html.we-theme-solar input,
+html.we-theme-solar select,
+html.we-theme-solar textarea {
+  color: var(--we-fg);
+}
+
+html.we-theme-solar input,
+html.we-theme-solar textarea,
+html.we-theme-solar .we-input {
+  background: #073642;
+  border: 1px solid #3f7380;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar input::placeholder,
+html.we-theme-solar textarea::placeholder {
+  color: #7d979a;
+}
+
+html.we-theme-solar input:focus-visible,
+html.we-theme-solar textarea:focus-visible,
+html.we-theme-solar .we-input:focus-visible {
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  border-color: #5c93a0;
+}
+
+html.we-theme-solar button,
+html.we-theme-solar .we-button {
+  background: #0f3a47;
+  border: 1px solid #4c7f89;
+  color: #d4c38a;
+  border-radius: 3px;
+}
+
+html.we-theme-solar button:hover,
+html.we-theme-solar .we-button:hover {
+  background: #154654;
+  border-color: #6a9ca6;
+  color: #e0cf98;
+}
+
+html.we-theme-solar button:active,
+html.we-theme-solar .we-button:active {
+  background: #0d3340;
+  border-color: #7aa8b0;
+}
+
+html.we-theme-solar button:focus-visible,
+html.we-theme-solar .we-button:focus-visible {
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+/* Button variants used by the public showcase page. */
+html.we-theme-solar .we-button-primary {
+  background: #b58900;
+  border-color: #c79b19;
+  color: #002b36;
+}
+
+html.we-theme-solar .we-button-primary:hover {
+  background: #c79b19;
+  border-color: #d6ab30;
+  color: #001e26;
+}
+
+html.we-theme-solar .we-button-secondary {
+  background: #1a4753;
+  border-color: #4e818c;
+  color: #b9c9c9;
+}
+
+html.we-theme-solar .we-button-secondary:hover {
+  background: #215463;
+  border-color: #62939d;
+}
+
+html.we-theme-solar .we-button-ghost {
+  background: transparent;
+  border-color: #3a7480;
+  color: #8eb2b6;
+}
+
+html.we-theme-solar .we-button-ghost:hover {
+  background: rgba(42, 161, 152, 0.14);
+  border-color: #5a9099;
+  color: #afd0d3;
+}
+
+html.we-theme-solar select,
+html.we-theme-solar .we-choice {
+  background: #073642;
+  border: 1px solid #3f7380;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar select option {
+  background: #073642;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-close-button-icon::before {
+  content: var(--we-close-glyph);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3) Menus                                                                     */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar .we-menu-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+  padding: 2px 4px;
+  border: 1px solid var(--we-border-menu);
+  border-radius: 4px;
+  background: #073642;
+  box-sizing: border-box;
+}
+
+html.we-theme-solar .we-menu {
+  position: relative;
+  display: inline-block;
+}
+
+html.we-theme-solar .we-menu-label {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-menu-label:hover {
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-soft);
+}
+
+html.we-theme-solar .we-menu-label[aria-expanded='true'] {
+  background: var(--we-bg-selected);
+  border-color: var(--we-border-soft);
+  position: relative;
+  z-index: 1001;
+}
+
+html.we-theme-solar .we-menu-popup {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 160px;
+  display: none;
+  flex-direction: column;
+  padding: 2px;
+  border: 1px solid var(--we-border-menu);
+  border-radius: 4px;
+  background: #073642;
+  box-shadow: 0 4px 12px var(--we-shadow);
+  z-index: 1000;
+}
+
+html.we-theme-solar .we-menu-popup.is-open {
+  display: flex;
+}
+
+html.we-theme-solar .we-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 3px;
+  background: #073642;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-menu-item:hover {
+  background: var(--we-bg-hover);
+}
+
+html.we-theme-solar .we-menu-label:focus-visible,
+html.we-theme-solar .we-menu-item:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  background-color: var(--we-focus-tint);
+}
+
+/* Keep focused menu item outline above neighboring rows (prevents clipping). */
+html.we-theme-solar .we-menu-item:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4) Tabs / Group / Dialog / Table                                             */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar .we-tab-list,
+html.we-theme-solar .tab-row {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  border-bottom: 1px solid #2aa198;
+  background: #073642;
+  padding: 6px 6px 0 6px;
+}
+
+html.we-theme-solar .we-tab-btn,
+html.we-theme-solar .tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom-color: transparent;
+  border-radius: 4px 4px 0 0;
+  color: #93a1a1;
+  padding: 6px 10px;
+}
+
+html.we-theme-solar .we-tab-btn:hover,
+html.we-theme-solar .tab-btn:hover {
+  background: #0f3f4d;
+  color: #d0dbdb;
+}
+
+html.we-theme-solar .we-tab-btn[aria-selected='true'],
+html.we-theme-solar .tab-btn[aria-selected='true'] {
+  background: #002b36;
+  border-color: #2aa198;
+  border-bottom-color: #002b36;
+  color: #e4d6a6;
+  position: relative;
+  top: 1px;
+}
+
+html.we-theme-solar .we-group {
+  border-color: var(--we-border-soft);
+  background: #073642;
+}
+
+html.we-theme-solar .we-dialog-panel {
+  border-color: var(--we-border-menu);
+  background: #073642;
+  color: var(--we-fg);
+  box-shadow: 0 14px 32px var(--we-shadow);
+}
+
+html.we-theme-solar .we-table,
+html.we-theme-solar .we-table th,
+html.we-theme-solar .we-table td {
+  border-color: var(--we-border-muted);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5) Alerts / Toasts / Progress / List group                                   */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar .we-alert {
+  border-color: #4e818c;
+  background: #073642;
+}
+
+html.we-theme-solar .we-alert-success,
+html.we-theme-solar .we-toast-success {
+  border-color: #7da52b;
+  background: #183b26;
+}
+
+html.we-theme-solar .we-alert-warn,
+html.we-theme-solar .we-toast-warn {
+  border-color: #b58900;
+  background: #3a3214;
+}
+
+html.we-theme-solar .we-alert-error,
+html.we-theme-solar .we-toast-error {
+  border-color: #d65a57;
+  background: #3d1d22;
+}
+
+html.we-theme-solar .we-toast {
+  border-color: #4e818c;
+  background: #073642;
+  box-shadow: 0 8px 22px var(--we-shadow);
+}
+
+html.we-theme-solar progress {
+  accent-color: var(--we-progress-success);
+}
+
+html.we-theme-solar .we-list-group-item {
+  background: #073642;
+  border-color: var(--we-border-muted);
+}
+
+html.we-theme-solar .we-list-group-item.is-active {
+  background: var(--we-bg-selected);
+  border-color: var(--we-border-strong);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6) Accordion                                                                 */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar .we-accordion-item {
+  border: 1px solid #2f6671;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+html.we-theme-solar .we-accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 11px;
+  border: none;
+  border-bottom: 1px solid #2f6671;
+  background: linear-gradient(#0a3a46, #083540);
+  color: #b8c9c9;
+  text-align: left;
+  font-weight: 600;
+}
+
+html.we-theme-solar .we-accordion-trigger::after {
+  content: "▸";
+  color: #2aa198;
+  transition: transform .16s ease;
+}
+
+html.we-theme-solar .we-accordion-trigger.is-open {
+  background: linear-gradient(#0f4451, #0a3d49);
+  color: #e2d9b6;
+  border-bottom-color: #3a7480;
+}
+
+html.we-theme-solar .we-accordion-trigger.is-open::after {
+  transform: rotate(90deg);
+}
+
+html.we-theme-solar .we-accordion-content {
+  background: #073642;
+  color: var(--we-fg);
+}

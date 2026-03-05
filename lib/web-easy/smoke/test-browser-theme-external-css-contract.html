@@ -71,11 +71,12 @@
           const current = demoDoc.getElementById("current");
           const btnDark = demoDoc.getElementById("btn-dark");
           const btnLight = demoDoc.getElementById("btn-light");
+          const btnSolar = demoDoc.getElementById("btn-solar");
           const menuFrame = demoDoc.getElementById("frame-menu");
           const tabsFrame = demoDoc.getElementById("frame-tabs");
           const controlsFrame = demoDoc.getElementById("frame-controls");
           const dialogFrame = demoDoc.getElementById("frame-dialog");
-          if (current && btnDark && btnLight && menuFrame && tabsFrame && controlsFrame && dialogFrame) {
+          if (current && btnDark && btnLight && btnSolar && menuFrame && tabsFrame && controlsFrame && dialogFrame) {
             const menuDoc = frameDocFrom(menuFrame);
             const tabsDoc = frameDocFrom(tabsFrame);
             const controlsDoc = frameDocFrom(controlsFrame);
@@ -92,6 +93,7 @@
                   current,
                   btnDark,
                   btnLight,
+                  btnSolar,
                   menuDoc,
                   tabsDoc,
                   controlsDoc,
@@ -145,16 +147,23 @@
         });
 
         const ui = await waitForDemoReady(frame, 30000);
-        assertTrue((ui.current.textContent || "").includes("light"), "initial theme is light");
+        assertTrue((ui.current.textContent || "").includes("solar"), "initial theme is solar");
 
-        const lightDialogPanel = await ensureDialogOpen(ui);
+        const solarDialogPanel = await ensureDialogOpen(ui);
+        const solar = captureStyleSet(ui, solarDialogPanel);
+
+        ui.btnLight.click();
+        await sleep(220);
+        assertTrue((ui.current.textContent || "").includes("light"), "theme switched to light");
+
+        const lightDialogPanel = firstBySelector(ui.dialogDoc, ".we-dialog-panel") || solarDialogPanel;
         const light = captureStyleSet(ui, lightDialogPanel);
 
         ui.btnDark.click();
         await sleep(220);
         assertTrue((ui.current.textContent || "").includes("dark"), "theme switched to dark");
 
-        const darkDialogPanel = firstBySelector(ui.dialogDoc, ".we-dialog-panel") || lightDialogPanel;
+        const darkDialogPanel = firstBySelector(ui.dialogDoc, ".we-dialog-panel") || solarDialogPanel;
         const dark = captureStyleSet(ui, darkDialogPanel);
 
         assertTrue(dark.menuBg !== light.menuBg, "menu item background differs dark vs light");
@@ -162,15 +171,15 @@
         assertTrue(dark.inputBg !== light.inputBg, "input background differs dark vs light");
         assertTrue(dark.dialogBg !== light.dialogBg, "dialog panel background differs dark vs light");
 
-        ui.btnLight.click();
+        ui.btnSolar.click();
         await sleep(220);
-        assertTrue((ui.current.textContent || "").includes("light"), "theme switched back to light");
+        assertTrue((ui.current.textContent || "").includes("solar"), "theme switched to solar");
 
-        const light2 = captureStyleSet(ui, darkDialogPanel);
-        assertTrue(light2.menuBg === light.menuBg, "menu background restored after switching back");
+        const solar2 = captureStyleSet(ui, darkDialogPanel);
+        assertTrue(solar2.menuBg === solar.menuBg, "menu background restored after switching back to solar");
 
         setStatus(
-          "PASS\nexternal CSS theme contract: menu/tab/input/dialog change across light/dark",
+          "PASS\nexternal CSS theme contract: menu/tab/input/dialog change across solar/light/dark",
           "pass"
         );
       } catch (err) {
