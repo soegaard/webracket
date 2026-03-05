@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity dialog actions keyboard contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 340px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity dialog actions keyboard contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-dialog" title="web-easy parity dialog actions keyboard contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function bodyText(frameDoc) {
+      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => (b.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const openButton = buttonByText(frameDoc, "open-dialog");
+          const dialog = frameDoc.querySelector(".we-dialog[role='dialog']");
+          if (openButton && dialog) {
+            return { frameDoc, openButton, dialog };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity dialog actions keyboard contract UI");
+    }
+
+    async function openDialog(ui) {
+      ui.openButton.focus();
+      ui.openButton.click();
+      await sleep(80);
+      const cancelButton = buttonByText(ui.frameDoc, "cancel");
+      const confirmButton = buttonByText(ui.frameDoc, "confirm");
+      assertTrue(!!cancelButton && !!confirmButton, "parity cancel/confirm buttons present");
+      assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "parity dialog opened");
+      return { cancelButton, confirmButton };
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+
+        const first = await openDialog(ui);
+        assertTrue(ui.frameDoc.activeElement === first.cancelButton, "parity initial focus is cancel");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === first.confirmButton, "parity Tab moves focus to confirm");
+
+        ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === first.cancelButton, "parity Shift+Tab moves focus back to cancel");
+
+        first.cancelButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(80);
+        assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "parity Enter on cancel closes dialog");
+        assertTrue(bodyText(ui.frameDoc).includes("status:cancel"), "parity Enter on cancel triggers cancel path");
+        assertTrue(ui.frameDoc.activeElement === ui.openButton, "parity focus returns to opener after Enter on cancel");
+
+        const second = await openDialog(ui);
+        second.cancelButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+        await sleep(40);
+        assertTrue(ui.frameDoc.activeElement === second.confirmButton, "parity confirm focus restored on second open");
+
+        second.confirmButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        await sleep(80);
+        assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "parity Enter on confirm closes dialog");
+        assertTrue(bodyText(ui.frameDoc).includes("status:confirm"), "parity Enter on confirm triggers confirm path");
+        assertTrue(ui.frameDoc.activeElement === ui.openButton, "parity focus returns to opener after Enter on confirm");
+
+        const third = await openDialog(ui);
+        ui.dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        await sleep(80);
+        assertTrue(ui.dialog.getAttribute("aria-hidden") === "true", "parity Escape closes dialog");
+        assertTrue(bodyText(ui.frameDoc).includes("status:escape"), "parity Escape triggers non-confirm cancel path");
+        assertTrue(ui.frameDoc.activeElement === ui.openButton, "parity focus returns to opener after Escape");
+
+        setStatus("PASS\nparity dialog actions keyboard contract: Tab order + Enter actions + Escape cancel path", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: body=" + JSON.stringify(bodyText(frameDoc).slice(0, 280)))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

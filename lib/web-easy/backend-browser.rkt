@@ -794,9 +794,10 @@
           (define on-click (dom-node-record-on-click n))
           (define role-pair (assq 'role (dom-node-record-attrs n)))
           (when (and on-click
-                     role-pair
-                     (or (eq? (cdr role-pair) 'button)
-                         (eq? (cdr role-pair) 'menuitem))
+                     (or (eq? tag 'button)
+                         (and role-pair
+                              (or (eq? (cdr role-pair) 'button)
+                                  (eq? (cdr role-pair) 'menuitem))))
                      (activation-key? key))
             (js-send evt "preventDefault" (vector))
             (on-click))

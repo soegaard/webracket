@@ -17,6 +17,8 @@
 html.we-theme-dark {
   /* Focus ring color for keyboard focus (Tab navigation). */
   --we-focus: #7db7ff;
+  /* Focus tint fill used inside focused controls. */
+  --we-focus-tint: rgba(125, 183, 255, 0.22);
   /* Main text color. */
   --we-fg: #d9e2f3;
   /* Main page background. */
@@ -100,6 +102,7 @@ html.we-theme-dark .we-menu-popup {
   border-color: #5e6a84;
   border-radius: 4px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  /* Popup stays below the open title so borders/underline do not conflict. */
   z-index: 1000;
 }
 
@@ -109,6 +112,7 @@ html.we-theme-dark .we-menu-popup.is-open {
 
 html.we-theme-dark .we-menu-label {
   padding: 2px 8px;
+  /* Transparent border reserves space so state changes do not shift layout. */
   border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
@@ -116,14 +120,22 @@ html.we-theme-dark .we-menu-label {
 }
 
 html.we-theme-dark .we-menu-label:hover {
-  background: #263347;
-  border-color: #6f82a7;
+  background: transparent;
+  color: #9ec2ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
 }
 
 html.we-theme-dark .we-menu-label[aria-expanded='true'] {
-  background: #2b3a52;
-  border-color: #8ea4cc;
-  border-bottom-color: #161d28;
+  background: transparent;
+  color: #9ec2ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  /* Keep open menu title above popup border so the join looks clean. */
+  position: relative;
+  z-index: 1001;
 }
 
 html.we-theme-dark .we-menu-item {
@@ -139,6 +151,28 @@ html.we-theme-dark .we-menu-item {
 
 html.we-theme-dark .we-menu-item:hover {
   background: #2f3b4f;
+}
+
+html.we-theme-dark .we-menu-label:focus-visible,
+html.we-theme-dark .we-menu-item:focus-visible {
+  outline-offset: 0;
+}
+
+html.we-theme-dark .we-menu-label:focus-visible {
+  background: transparent;
+  color: #9ec2ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  outline: none;
+}
+
+html.we-theme-dark .we-menu-item:focus-visible {
+  background-color: var(--we-focus-tint);
+  outline: 1px solid var(--we-focus);
+  /* Keep the focus outline above neighboring items (avoids bottom-edge clipping). */
+  position: relative;
+  z-index: 1;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -167,9 +201,10 @@ html.we-theme-dark textarea::placeholder {
 html.we-theme-dark input:focus-visible,
 html.we-theme-dark textarea:focus-visible,
 html.we-theme-dark .we-input:focus-visible {
-  /* Focus-visible keeps rings for keyboard users without always showing on click. */
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  /* Gradient tint gives keyboard focus fill without replacing base colors entirely. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
   border-color: #9eb2d5;
 }
 
@@ -195,8 +230,9 @@ html.we-theme-dark .we-button:active {
 
 html.we-theme-dark button:focus-visible,
 html.we-theme-dark .we-button:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
 }
 
 html.we-theme-dark select,
@@ -208,8 +244,9 @@ html.we-theme-dark .we-choice {
 
 html.we-theme-dark select:focus-visible,
 html.we-theme-dark .we-choice:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
 }
 
 html.we-theme-dark select option {
@@ -253,9 +290,11 @@ html.we-theme-dark .we-tab-btn + .we-tab-btn {
 
 html.we-theme-dark .we-tab-btn.is-selected {
   border-color: #9eb2d5;
+  /* Match the content panel color to visually merge tab + panel. */
   border-bottom-color: #13161c;
   background: #13161c;
   font-weight: bold;
+  /* Keep selected tab border above neighboring tabs for a clean seam. */
   position: relative;
   z-index: 1;
 }
@@ -274,8 +313,16 @@ html.we-theme-dark .we-tab-content {
 }
 
 html.we-theme-dark .we-tab-btn:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  /* Focus tint overlays the tab while keeping tab shape and border cues visible. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+html.we-theme-dark .we-dialog-panel:focus-visible {
+  background-image: linear-gradient(rgba(125, 183, 255, 0.14), rgba(125, 183, 255, 0.14));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 2px;
 }
 
 /*

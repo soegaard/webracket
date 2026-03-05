@@ -20,6 +20,8 @@
 html.we-theme-light {
   /* Focus ring color for keyboard focus (Tab navigation). */
   --we-focus: #0a66c2;
+  /* Focus tint fill used inside focused controls. */
+  --we-focus-tint: rgba(10, 102, 194, 0.20);
   /* Main text color. */
   --we-fg: #1a1f2b;
   /* Main page background. */
@@ -95,6 +97,7 @@ html.we-theme-light .we-menu {
 
 html.we-theme-light .we-menu-label {
   padding: 2px 8px;
+  /* Transparent border reserves space so state changes do not shift layout. */
   border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
@@ -102,14 +105,20 @@ html.we-theme-light .we-menu-label {
 }
 
 html.we-theme-light .we-menu-label:hover {
-  background: #edf4ff;
-  border-color: #9fb7dd;
+  background: transparent;
+  color: #2f4f7f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
 }
 
 html.we-theme-light .we-menu-label[aria-expanded='true'] {
-  background: #dce9ff;
-  border-color: #5b749d;
-  border-bottom-color: #ffffff;
+  background: transparent;
+  color: #2f4f7f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  /* Keep open menu title above popup border so the join looks clean. */
   position: relative;
   z-index: 1001;
 }
@@ -127,6 +136,7 @@ html.we-theme-light .we-menu-popup {
   border-radius: 4px;
   background: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  /* Keep popup just below the open title (which uses z-index: 1001). */
   z-index: 1000;
 }
 
@@ -147,6 +157,28 @@ html.we-theme-light .we-menu-item {
 
 html.we-theme-light .we-menu-item:hover {
   background: #e8e8e8;
+}
+
+html.we-theme-light .we-menu-label:focus-visible,
+html.we-theme-light .we-menu-item:focus-visible {
+  outline-offset: 0;
+}
+
+html.we-theme-light .we-menu-label:focus-visible {
+  background: transparent;
+  color: #2f4f7f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  outline: none;
+}
+
+html.we-theme-light .we-menu-item:focus-visible {
+  background-color: var(--we-focus-tint);
+  outline: 1px solid var(--we-focus);
+  /* Keep the focus outline above neighboring items (avoids bottom-edge clipping). */
+  position: relative;
+  z-index: 1;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -176,9 +208,10 @@ html.we-theme-light textarea::placeholder {
 html.we-theme-light input:focus-visible,
 html.we-theme-light textarea:focus-visible,
 html.we-theme-light .we-input:focus-visible {
-  /* Focus-visible keeps rings for keyboard users without always showing on click. */
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  /* Gradient tint gives keyboard focus fill without replacing base colors entirely. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
   border-color: #5c78a6;
 }
 
@@ -204,8 +237,9 @@ html.we-theme-light .we-button:active {
 
 html.we-theme-light button:focus-visible,
 html.we-theme-light .we-button:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
 }
 
 html.we-theme-light select,
@@ -217,8 +251,9 @@ html.we-theme-light .we-choice {
 
 html.we-theme-light select:focus-visible,
 html.we-theme-light .we-choice:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
 }
 
 html.we-theme-light select option {
@@ -262,9 +297,11 @@ html.we-theme-light .we-tab-btn + .we-tab-btn {
 
 html.we-theme-light .we-tab-btn.is-selected {
   border-color: #5b749d;
+  /* Match the content panel color to visually merge tab + panel. */
   border-bottom-color: #ffffff;
   background: #ffffff;
   font-weight: bold;
+  /* Keep selected tab border above neighboring tabs for a clean seam. */
   position: relative;
   z-index: 1;
 }
@@ -283,8 +320,16 @@ html.we-theme-light .we-tab-content {
 }
 
 html.we-theme-light .we-tab-btn:focus-visible {
-  outline: 2px solid var(--we-focus);
-  outline-offset: 1px;
+  /* Focus tint overlays the tab while keeping tab shape and border cues visible. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+html.we-theme-light .we-dialog-panel:focus-visible {
+  background-image: linear-gradient(rgba(10, 102, 194, 0.14), rgba(10, 102, 194, 0.14));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 2px;
 }
 
 /*
