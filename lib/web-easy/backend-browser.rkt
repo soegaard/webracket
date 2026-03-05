@@ -105,6 +105,21 @@
       (define p (assq 'open attrs))
       (and p (not (eq? (cdr p) #f))))
 
+    ;; popover-panel-attr? : list? -> boolean?
+    ;;   Check whether attrs describe a popover panel node.
+    (define (popover-panel-attr? attrs)
+      (define p (assq 'data-we-widget attrs))
+      (and p
+           (string=? (value->attr-string (cdr p)) "popover-panel")))
+
+    ;; popover-hidden-attr? : list? -> boolean?
+    ;;   Read popover visibility state from aria-hidden attrs.
+    (define (popover-hidden-attr? attrs)
+      (define p (assq 'aria-hidden attrs))
+      (if p
+          (string=? (value->attr-string (cdr p)) "true")
+          #t))
+
     ;; dialog-focus-return-set! : any/c any/c -> void?
     ;;   Track focus return target for dialog-native.
     (define (dialog-focus-return-set! dialog-native target)
@@ -215,6 +230,24 @@
         (js-send target "focus" (vector)))
       (dialog-focus-return-remove! dialog-native))
 
+    ;; handle-popover-open-transition! : any/c -> void?
+    ;;   Focus popover panel when it transitions to visible.
+    (define (handle-popover-open-transition! panel-native)
+      (js-send panel-native "focus" (vector)))
+
+    ;; handle-popover-close-transition! : any/c -> void?
+    ;;   Return focus to sibling popover trigger when panel closes.
+    (define (handle-popover-close-transition! panel-native)
+      (define parent* (js-ref/extern panel-native "parentElement"))
+      (when (and parent* (not (extern-nullish? parent*)))
+        (define trigger*
+          (js-send/extern/nullish
+           parent*
+           "querySelector"
+           (vector ".we-popover-trigger")))
+        (when (and trigger* (not (extern-nullish? trigger*)))
+          (js-send trigger* "focus" (vector)))))
+
     ;; apply-attributes! : dom-node-record? list? list? -> void?
     ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
     (define (apply-attributes! n old-attrs attrs)
@@ -222,6 +255,9 @@
       (define tag (dom-node-record-tag n))
       (define old-open? (dialog-open-attr? old-attrs))
       (define new-open? (dialog-open-attr? attrs))
+      (define popover-panel? (popover-panel-attr? attrs))
+      (define old-popover-hidden? (popover-hidden-attr? old-attrs))
+      (define new-popover-hidden? (popover-hidden-attr? attrs))
       (when (or (eq? tag 'select)
                 (eq? tag 'radios)
                 (eq? tag 'choice))
@@ -249,7 +285,11 @@
       (when (and (eq? tag 'dialog) (not old-open?) new-open?)
         (handle-dialog-open-transition! native))
       (when (and (eq? tag 'dialog) old-open? (not new-open?))
-        (handle-dialog-close-transition! native)))
+        (handle-dialog-close-transition! native))
+      (when (and popover-panel? old-popover-hidden? (not new-popover-hidden?))
+        (handle-popover-open-transition! native))
+      (when (and popover-panel? (not old-popover-hidden?) new-popover-hidden?)
+        (handle-popover-close-transition! native)))
 
     ;; apply-text! : any/c any/c -> void?
     ;;   Replace native node children with a single text child.
@@ -266,6 +306,7 @@
         [(style) "style"]
         [(group) "fieldset"]
         [(legend) "legend"]
+        [(span) "span"]
         [(text) "span"]
         [(menu-item) "button"]
         [(button) "button"]

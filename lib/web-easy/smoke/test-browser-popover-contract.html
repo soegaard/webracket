@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy popover outside-click/focus contract smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 340px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running popover outside-click/focus contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=popover" title="web-easy popover contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button"))
+        .find((e) => (e.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const trigger = buttonByText(frameDoc, "actions");
+          const panel = frameDoc.querySelector(".we-popover-panel");
+          const backdrop = frameDoc.querySelector(".we-popover-backdrop");
+          if (trigger && panel && backdrop) {
+            return { frameDoc, trigger, panel, backdrop };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for popover contract UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        assertEqual(ui.panel.getAttribute("aria-hidden"), "true", "popover initially hidden");
+
+        ui.trigger.click();
+        await sleep(100);
+
+        assertEqual(ui.panel.getAttribute("aria-hidden"), "false", "popover opens from trigger");
+        assertTrue(ui.backdrop.className.includes("is-open"), "backdrop opens with popover");
+
+        ui.backdrop.click();
+        await sleep(120);
+
+        assertEqual(ui.panel.getAttribute("aria-hidden"), "true", "popover closes on outside click (backdrop)");
+        assertEqual(ui.frameDoc.activeElement, ui.trigger, "focus returns to trigger after outside click close");
+
+        ui.trigger.click();
+        await sleep(100);
+        assertEqual(ui.panel.getAttribute("aria-hidden"), "false", "popover opens again");
+
+        ui.panel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        await sleep(120);
+
+        assertEqual(ui.panel.getAttribute("aria-hidden"), "true", "Escape closes popover");
+        assertEqual(ui.frameDoc.activeElement, ui.trigger, "focus returns to trigger after Escape close");
+
+        setStatus("PASS\npopover contract: outside-click close + Escape close + focus return", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -33,6 +33,13 @@ Popup item behavior:
 - `Escape` closes dialog and restores focus to opener
 - cancel/confirm actions close with expected reason
 
+## Popover Contract Semantics
+
+- trigger toggles popover panel open/closed via aria state
+- outside click (backdrop click) closes popover
+- `Escape` closes popover
+- focus returns to trigger when popover closes
+
 ## Tabs Contract Semantics
 
 - disabled tabs are not activatable and are skipped by keyboard focus movement
@@ -59,6 +66,9 @@ Popup item behavior:
 - `PASS menu type-ahead contract:`
 - `PASS tab aria-linkage contract:`
 - `PASS menu aria state contract:`
+- `PASS progress contract:`
+- `PASS style hook contract:`
+- `PASS popover contract:`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -75,6 +85,9 @@ Popup item behavior:
 - `PASS parity menu type-ahead contract:`
 - `PASS parity tab aria-linkage contract:`
 - `PASS parity menu aria state contract:`
+- `PASS parity progress contract:`
+- `PASS parity style hook contract:`
+- `PASS parity popover contract:`
 
 ## Guard Self-Test Expectation
 

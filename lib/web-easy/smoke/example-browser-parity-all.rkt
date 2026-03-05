@@ -15,10 +15,13 @@
 (include/reader "smoke-capsule-parity-tabs-dynamic.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-profile.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-settings.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-progress.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-table.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-menu-keys.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-menu-full.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-todo.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-incident.rkt" read-syntax/skip-first-line)
@@ -55,6 +58,8 @@
               (list parity-profile-make-page parity-profile-run-test parity-profile-cleanup))
         (cons 'parity-settings
               (list parity-settings-make-page parity-settings-run-test parity-settings-cleanup))
+        (cons 'parity-progress
+              (list parity-progress-make-page parity-progress-run-test parity-progress-cleanup))
         (cons 'parity-table
               (list parity-table-make-page parity-table-run-test parity-table-cleanup))
         (cons 'parity-menu-keys
@@ -69,6 +74,14 @@
               (list parity-dialog-make-page
                     parity-dialog-run-test
                     parity-dialog-cleanup))
+        (cons 'parity-tooltip
+              (list parity-tooltip-make-page
+                    parity-tooltip-run-test
+                    parity-tooltip-cleanup))
+        (cons 'parity-popover
+              (list parity-popover-make-page
+                    parity-popover-run-test
+                    parity-popover-cleanup))
         (cons 'parity-list
               (list parity-list-make-page parity-list-run-test parity-list-cleanup))
         (cons 'parity-todo

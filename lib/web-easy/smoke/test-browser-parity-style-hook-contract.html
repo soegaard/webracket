@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity style hook contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 420px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity style hook contract assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy parity style hook contract app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    function assertHook(frameDoc, selector, label) {
+      assertTrue(!!frameDoc.querySelector(selector), label + " hook present: " + selector);
+    }
+
+    function checkParityTabHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='tab-panel'].we-tab-panel", "parity tabs panel");
+      assertHook(frameDoc, "[data-we-widget='tab-list'].we-tab-list", "parity tabs list");
+      assertHook(frameDoc, "[data-we-widget='tab-button'].we-tab-btn", "parity tabs button");
+      assertHook(frameDoc, "[data-we-widget='tab-content'].we-tab-content", "parity tabs content");
+    }
+
+    function checkParityDialogHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='dialog'].we-dialog", "parity dialog");
+      assertHook(frameDoc, "[data-we-widget='dialog-panel'].we-dialog-panel", "parity dialog panel");
+    }
+
+    function checkParityProfileHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='radios'].we-radios", "parity profile radios");
+      assertHook(frameDoc, "[data-we-widget='image'].we-image", "parity profile image");
+      assertHook(frameDoc, "[data-we-widget='menu-bar'].we-menu-bar", "parity profile menu bar");
+    }
+
+    function checkParityProgressHooks(frameDoc) {
+      const progress = frameDoc.querySelector("[data-we-widget='progress'].we-progress");
+      const successBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => b.textContent.trim() === "set-success");
+      const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => b.textContent.trim() === "set-error");
+      assertTrue(!!progress, "parity progress hook progress node present");
+      assertTrue(!!successBtn, "parity progress hook success button present");
+      assertTrue(!!errorBtn, "parity progress hook error button present");
+
+      successBtn.click();
+      assertTrue(progress.className.includes("we-progress-success"), "parity progress hook success class");
+      errorBtn.click();
+      assertTrue(progress.className.includes("we-progress-error"), "parity progress hook error class");
+    }
+
+    function checkParityTooltipHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='tooltip'].we-tooltip", "parity tooltip");
+      assertHook(frameDoc, "[data-we-widget='tooltip-trigger'].we-tooltip-trigger", "parity tooltip trigger");
+      assertHook(frameDoc, "[data-we-widget='tooltip-bubble'].we-tooltip-bubble", "parity tooltip bubble");
+    }
+
+    function checkParityPopoverHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='popover'].we-popover", "parity popover");
+      assertHook(frameDoc, "[data-we-widget='popover-trigger'].we-popover-trigger", "parity popover trigger");
+      assertHook(frameDoc, "[data-we-widget='popover-backdrop'].we-popover-backdrop", "parity popover backdrop");
+      assertHook(frameDoc, "[data-we-widget='popover-panel'].we-popover-panel", "parity popover panel");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const timeoutMs = 20000;
+
+        const tabsDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-tabs",
+          (d) => d.querySelector("[data-we-widget='tab-button']"),
+          timeoutMs
+        );
+        checkParityTabHooks(tabsDoc);
+
+        const dialogDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-dialog",
+          (d) => d.querySelector("[data-we-widget='dialog-panel']"),
+          timeoutMs
+        );
+        checkParityDialogHooks(dialogDoc);
+
+        const profileDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-profile",
+          (d) => d.querySelector("[data-we-widget='image']"),
+          timeoutMs
+        );
+        checkParityProfileHooks(profileDoc);
+
+        const progressDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-progress",
+          (d) => d.querySelector("[data-we-widget='progress']"),
+          timeoutMs
+        );
+        checkParityProgressHooks(progressDoc);
+
+        const tooltipDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-tooltip",
+          (d) => d.querySelector("[data-we-widget='tooltip-bubble']"),
+          timeoutMs
+        );
+        checkParityTooltipHooks(tooltipDoc);
+
+        const popoverDoc = await loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-popover",
+          (d) => d.querySelector("[data-we-widget='popover-panel']"),
+          timeoutMs
+        );
+        checkParityPopoverHooks(popoverDoc);
+
+        setStatus("PASS\nparity style hook contract: class + data-we-widget markers stable", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

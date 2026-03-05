@@ -86,6 +86,22 @@
       assertHook(frameDoc, "[data-we-widget='progress'].we-progress", "controls");
     }
 
+    function checkProgressVariantHooks(frameDoc) {
+      const progress = frameDoc.querySelector("[data-we-widget='progress'].we-progress");
+      const warnBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => b.textContent.trim() === "warn");
+      const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => b.textContent.trim() === "error");
+      assertTrue(!!progress, "progress variant hook progress node present");
+      assertTrue(!!warnBtn, "progress variant hook warn button present");
+      assertTrue(!!errorBtn, "progress variant hook error button present");
+
+      warnBtn.click();
+      assertTrue(progress.className.includes("we-progress-warn"), "progress variant hook warn class");
+      errorBtn.click();
+      assertTrue(progress.className.includes("we-progress-error"), "progress variant hook error class");
+    }
+
     function checkGroupTableHooks(frameDoc) {
       assertHook(frameDoc, "[data-we-widget='group'].we-group", "group");
       assertHook(frameDoc, "[data-we-widget='input'].we-input", "input");
@@ -121,6 +137,19 @@
       assertHook(frameDoc, "[data-we-widget='menu-bar'].we-menu-bar", "profile menu bar");
     }
 
+    function checkTooltipHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='tooltip'].we-tooltip", "tooltip");
+      assertHook(frameDoc, "[data-we-widget='tooltip-trigger'].we-tooltip-trigger", "tooltip trigger");
+      assertHook(frameDoc, "[data-we-widget='tooltip-bubble'].we-tooltip-bubble", "tooltip bubble");
+    }
+
+    function checkPopoverHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='popover'].we-popover", "popover");
+      assertHook(frameDoc, "[data-we-widget='popover-trigger'].we-popover-trigger", "popover trigger");
+      assertHook(frameDoc, "[data-we-widget='popover-backdrop'].we-popover-backdrop", "popover backdrop");
+      assertHook(frameDoc, "[data-we-widget='popover-panel'].we-popover-panel", "popover panel");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -133,6 +162,14 @@
           timeoutMs
         );
         checkControlsHooks(controlsDoc);
+
+        const progressDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=progress",
+          (d) => d.querySelector("[data-we-widget='progress']"),
+          timeoutMs
+        );
+        checkProgressVariantHooks(progressDoc);
 
         const groupDoc = await loadCase(
           frame,
@@ -173,6 +210,22 @@
           timeoutMs
         );
         checkProfileHooks(profileDoc);
+
+        const tooltipDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=tooltip",
+          (d) => d.querySelector("[data-we-widget='tooltip-bubble']"),
+          timeoutMs
+        );
+        checkTooltipHooks(tooltipDoc);
+
+        const popoverDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=popover",
+          (d) => d.querySelector("[data-we-widget='popover-panel']"),
+          timeoutMs
+        );
+        checkPopoverHooks(popoverDoc);
 
         setStatus("PASS\nstyle hook contract: class + data-we-widget markers stable", "pass");
       } catch (err) {

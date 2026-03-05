@@ -140,6 +140,61 @@
 (check-equal (node-attr hpanel-node 'data-we-widget) "hpanel" "hpanel data-we-widget attr")
 (check-equal (node-attr hpanel-node 'class) "we-hpanel" "hpanel base class")
 
+;; navigation-bar renders navigation container with child actions
+(define r-navigation-bar
+  (render
+   (window
+    (navigation-bar
+     (button "home" (lambda () (void)))
+     (button "docs" (lambda () (void)))))))
+(define navigation-bar-node (node-child (renderer-root r-navigation-bar) 0))
+(check-equal (node-attr navigation-bar-node 'data-we-widget) "navigation-bar" "navigation-bar data-we-widget attr")
+(check-equal (node-attr navigation-bar-node 'class) "we-navigation-bar" "navigation-bar base class")
+(check-equal (node-attr navigation-bar-node 'role) 'navigation "navigation-bar role attr")
+
+;; button-group renders grouped actions and preserves button callbacks
+(define @group-count (@ 0))
+(define r-button-group
+  (render
+   (window
+    (vpanel
+     (button-group
+      (button "-" (lambda () (:= @group-count (- (obs-peek @group-count) 1))))
+      (button "+" (lambda () (:= @group-count (+ (obs-peek @group-count) 1))))))))))
+(define button-group-node (node-child (node-child (renderer-root r-button-group) 0) 0))
+(define dec-node (node-child button-group-node 0))
+(define inc-node (node-child button-group-node 1))
+(check-equal (node-attr button-group-node 'data-we-widget) "button-group" "button-group data-we-widget attr")
+(check-equal (node-attr button-group-node 'class) "we-button-group" "button-group base class")
+(dom-node-click! inc-node)
+(check-equal (obs-peek @group-count) 1 "button-group increment action")
+(dom-node-click! dec-node)
+(check-equal (obs-peek @group-count) 0 "button-group decrement action")
+
+;; button-toolbar renders grouped controls and routes button actions
+(define @left-count  (@ 0))
+(define @right-count (@ 10))
+(define r-button-toolbar
+  (render
+   (window
+    (vpanel
+     (button-toolbar
+      (button-group
+       (button "L+" (lambda () (:= @left-count (+ (obs-peek @left-count) 1)))))
+      (button-group
+       (button "R-" (lambda () (:= @right-count (- (obs-peek @right-count) 1))))))))))
+(define button-toolbar-node (node-child (node-child (renderer-root r-button-toolbar) 0) 0))
+(define left-group-node (node-child button-toolbar-node 0))
+(define right-group-node (node-child button-toolbar-node 1))
+(define left-plus-node (node-child left-group-node 0))
+(define right-minus-node (node-child right-group-node 0))
+(check-equal (node-attr button-toolbar-node 'data-we-widget) "button-toolbar" "button-toolbar data-we-widget attr")
+(check-equal (node-attr button-toolbar-node 'class) "we-button-toolbar" "button-toolbar base class")
+(dom-node-click! left-plus-node)
+(check-equal (obs-peek @left-count) 1 "button-toolbar left action")
+(dom-node-click! right-minus-node)
+(check-equal (obs-peek @right-count) 9 "button-toolbar right action")
+
 ;; alert renders severity classes and updates text/role from observables
 (define @alert-text (@ "Saved"))
 (define @alert-level (@ 'success))
@@ -160,6 +215,190 @@
 (check-equal (node-attr alert-node 'role) 'alert "alert warn role")
 (check-equal (node-attr alert-node 'aria-live) "assertive" "alert warn aria-live")
 (check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
+
+;; badge renders level classes and updates text from observables
+(define @badge-text (@ "beta"))
+(define @badge-level (@ 'info))
+(define r-badge
+  (render
+   (window
+    (vpanel
+     (badge @badge-text @badge-level)))))
+(define badge-node (node-child (node-child (renderer-root r-badge) 0) 0))
+(check-equal (node-attr badge-node 'data-we-widget) "badge" "badge data-we-widget attr")
+(check-equal (node-attr badge-node 'class) "we-badge we-badge-info" "badge info class")
+(check-equal (dom-node-text badge-node) "beta" "badge initial text")
+(:= @badge-text "stable")
+(:= @badge-level 'success)
+(check-equal (node-attr badge-node 'class) "we-badge we-badge-success" "badge success class")
+(check-equal (dom-node-text badge-node) "stable" "badge text after update")
+
+;; spinner renders icon/label and updates observable label text
+(define @spinner-label (@ "Loading..."))
+(define r-spinner
+  (render
+   (window
+    (vpanel
+     (spinner @spinner-label)))))
+(define spinner-node (node-child (node-child (renderer-root r-spinner) 0) 0))
+(define spinner-icon-node (node-child spinner-node 0))
+(define spinner-label-node (node-child spinner-node 1))
+(check-equal (node-attr spinner-node 'data-we-widget) "spinner" "spinner data-we-widget attr")
+(check-equal (node-attr spinner-node 'class) "we-spinner" "spinner base class")
+(check-equal (node-attr spinner-icon-node 'class) "we-spinner-icon" "spinner icon class")
+(check-equal (node-attr spinner-label-node 'class) "we-spinner-label" "spinner label class")
+(check-equal (dom-node-text spinner-label-node) "Loading..." "spinner initial label text")
+(:= @spinner-label "Syncing")
+(check-equal (dom-node-text spinner-label-node) "Syncing" "spinner label updates from observable")
+
+;; toast renders as non-modal notification and closes via dismiss action
+(define @toast-open (@ #t))
+(define @toast-text (@ "Build complete"))
+(define @toast-level (@ 'success))
+(define r-toast
+  (render
+   (window
+    (vpanel
+     (toast @toast-open
+            (lambda () (:= @toast-open #f))
+            @toast-text
+            @toast-level)))))
+(define toast-node (node-child (node-child (renderer-root r-toast) 0) 0))
+(define toast-message-node (node-child toast-node 0))
+(define toast-close-node (node-child toast-node 1))
+(check-equal (node-attr toast-node 'data-we-widget) "toast" "toast data-we-widget attr")
+(check-equal (node-attr toast-node 'class) "we-toast we-toast-success is-open" "toast initial class")
+(check-equal (node-attr toast-node 'aria-hidden) "false" "toast initially visible")
+(check-equal (dom-node-text toast-message-node) "Build complete" "toast message text")
+(:= @toast-level 'error)
+(check-equal (node-attr toast-node 'class) "we-toast we-toast-error is-open" "toast error class")
+(dom-node-click! toast-close-node)
+(check-equal (obs-peek @toast-open) #f "toast close action updates open state")
+(check-equal (node-attr toast-node 'aria-hidden) "true" "toast hidden after close")
+
+;; toast supports optional title and non-dismissible mode
+(define @toast-open-2 (@ #t))
+(define @toast-title (@ "Sync"))
+(define r-toast-2
+  (render
+   (window
+    (vpanel
+     (toast @toast-open-2
+            (lambda () (:= @toast-open-2 #f))
+            "Please wait"
+            'info
+            @toast-title
+            #f)))))
+(define toast-node-2 (node-child (node-child (renderer-root r-toast-2) 0) 0))
+(define toast-title-node-2 (node-child toast-node-2 0))
+(define toast-message-node-2 (node-child toast-node-2 1))
+(check-equal (node-attr toast-title-node-2 'class) "we-toast-title" "toast title class")
+(check-equal (dom-node-text toast-title-node-2) "Sync" "toast title initial text")
+(check-equal (dom-node-text toast-message-node-2) "Please wait" "toast message initial text")
+(check-equal (length (dom-node-children toast-node-2)) 2 "toast non-dismissible has no close button")
+(:= @toast-title "Syncing")
+(define toast-title-node-2-after (node-child toast-node-2 0))
+(check-equal (dom-node-text toast-title-node-2-after) "Syncing" "toast title observable update")
+
+;; pagination renders page buttons and updates current page on click
+(define @page (@ 2))
+(define r-pagination
+  (render
+   (window
+    (vpanel
+     (pagination 4 @page (lambda (new-page) (:= @page new-page)))))))
+(define pagination-node (node-child (node-child (renderer-root r-pagination) 0) 0))
+(define (find-page-button-by-label children label)
+  (let loop ([rest children])
+    (cond
+      [(null? rest) #f]
+      [else
+       (define child (car rest))
+       (if (and (equal? (node-attr child 'data-we-widget) "page-button")
+                (string=? (dom-node-text child) label))
+           child
+           (loop (cdr rest)))])))
+(define pagination-buttons (dom-node-children pagination-node))
+(define first-button (find-page-button-by-label pagination-buttons "First"))
+(define page1-button (find-page-button-by-label pagination-buttons "1"))
+(define page2-button (find-page-button-by-label pagination-buttons "2"))
+(define next-button (find-page-button-by-label pagination-buttons "Next"))
+(check-equal (node-attr pagination-node 'data-we-widget) "pagination" "pagination data-we-widget attr")
+(check-equal (node-attr first-button 'class) "we-page-btn" "pagination first button present")
+(check-equal (node-attr page2-button 'class) "we-page-btn is-current" "pagination current page class")
+(check-equal (node-attr page2-button 'aria-current) "page" "pagination current page aria")
+(dom-node-click! next-button)
+(check-equal (obs-peek @page) 3 "pagination next button updates page")
+(dom-node-click! page1-button)
+(check-equal (obs-peek @page) 1 "pagination page button updates page")
+(define pagination-buttons-after (dom-node-children pagination-node))
+(define prev-button-after (find-page-button-by-label pagination-buttons-after "Prev"))
+(check-equal (node-attr prev-button-after 'class) "we-page-btn is-disabled" "pagination prev disabled at first page")
+
+;; pagination compact mode adds ellipsis + first/last controls for large page-count
+(define @page-large (@ 10))
+(define r-pagination-large
+  (render
+   (window
+    (vpanel
+     (pagination 20 @page-large (lambda (new-page) (:= @page-large new-page)))))))
+(define pagination-large-node (node-child (node-child (renderer-root r-pagination-large) 0) 0))
+(define pagination-large-children (dom-node-children pagination-large-node))
+(define ellipsis-nodes
+  (filter (lambda (child)
+            (equal? (node-attr child 'data-we-widget) "page-ellipsis"))
+          pagination-large-children))
+(define last-button-large (find-page-button-by-label pagination-large-children "Last"))
+(check-equal (length ellipsis-nodes) 2 "pagination compact mode renders two ellipses")
+(dom-node-click! last-button-large)
+(check-equal (obs-peek @page-large) 20 "pagination last button jumps to final page")
+
+;; breadcrumb renders separators and updates current item class after navigation
+(define @crumb-current (@ 'docs))
+(define r-breadcrumb
+  (render
+   (window
+    (vpanel
+     (breadcrumb '((home "Home") (docs "Docs") (api "API"))
+                 @crumb-current
+                 (lambda (new-id) (:= @crumb-current new-id)))))))
+(define breadcrumb-node (node-child (node-child (renderer-root r-breadcrumb) 0) 0))
+(define breadcrumb-children (dom-node-children breadcrumb-node))
+(define breadcrumb-home (list-ref breadcrumb-children 0))
+(define breadcrumb-docs (list-ref breadcrumb-children 2))
+(define breadcrumb-api (list-ref breadcrumb-children 4))
+(check-equal (node-attr breadcrumb-node 'data-we-widget) "breadcrumb" "breadcrumb data-we-widget attr")
+(check-equal (node-attr breadcrumb-docs 'class) "we-breadcrumb-item is-current" "breadcrumb current item class")
+(check-equal (node-attr breadcrumb-docs 'aria-current) "page" "breadcrumb current aria")
+(dom-node-click! breadcrumb-home)
+(check-equal (obs-peek @crumb-current) 'home "breadcrumb click updates current id")
+(define breadcrumb-children-after (dom-node-children breadcrumb-node))
+(define breadcrumb-home-after (list-ref breadcrumb-children-after 0))
+(define breadcrumb-docs-after (list-ref breadcrumb-children-after 2))
+(check-equal (node-attr breadcrumb-home-after 'class) "we-breadcrumb-item is-current" "breadcrumb home class after click")
+(check-equal (node-attr breadcrumb-docs-after 'class) "we-breadcrumb-item" "breadcrumb docs class after click")
+(check-equal (dom-node-text breadcrumb-api) "API" "breadcrumb trailing label text")
+
+;; list-group renders current item and updates selection on click
+(define @list-group-current (@ 'b))
+(define r-list-group
+  (render
+   (window
+    (vpanel
+     (list-group '((a "Alpha") (b "Beta") (c "Gamma"))
+                 @list-group-current
+                 (lambda (new-id) (:= @list-group-current new-id)))))))
+(define list-group-node (node-child (node-child (renderer-root r-list-group) 0) 0))
+(define list-group-items (dom-node-children list-group-node))
+(define list-group-a (list-ref list-group-items 0))
+(define list-group-b (list-ref list-group-items 1))
+(check-equal (node-attr list-group-node 'data-we-widget) "list-group" "list-group data-we-widget attr")
+(check-equal (node-attr list-group-b 'class) "we-list-group-item is-current" "list-group current class")
+(dom-node-click! list-group-a)
+(check-equal (obs-peek @list-group-current) 'a "list-group click updates current id")
+(define list-group-items-after (dom-node-children list-group-node))
+(define list-group-a-after (list-ref list-group-items-after 0))
+(check-equal (node-attr list-group-a-after 'class) "we-list-group-item is-current" "list-group class after selection")
 
 ;; collapse toggles visibility class and aria-hidden from observable state
 (define @collapse-open (@ #f))
@@ -208,6 +447,16 @@
 (dom-node-click! accordion-button-1)
 (check-equal (obs-peek @accordion-selected) #f "accordion click on selected section clears selection")
 (check-equal (node-attr accordion-collapse-1 'class) "we-collapse" "accordion selected section closes on second click")
+(dom-node-keydown! accordion-button-0 "ArrowDown")
+(check-equal (obs-peek @accordion-selected) 'details "accordion ArrowDown moves to next section")
+(dom-node-keydown! accordion-button-1 "ArrowUp")
+(check-equal (obs-peek @accordion-selected) 'overview "accordion ArrowUp moves to previous section")
+(dom-node-keydown! accordion-button-0 "End")
+(check-equal (obs-peek @accordion-selected) 'details "accordion End selects last section")
+(dom-node-keydown! accordion-button-1 "Home")
+(check-equal (obs-peek @accordion-selected) 'overview "accordion Home selects first section")
+(dom-node-keydown! accordion-button-0 "Enter")
+(check-equal (obs-peek @accordion-selected) #f "accordion Enter toggles selected section closed")
 
 ;; dialog opens from trigger and closes on Escape via on-close callback
 (define @dialog-open (@ #f))
@@ -459,9 +708,23 @@
 (check-equal (node-attr progress-node 'max) 100 "progress max attr")
 (check-equal (node-attr progress-node 'value) 10 "progress initial value")
 (check-equal (node-attr progress-node 'data-we-widget) "progress" "progress data-we-widget attr")
-(check-equal (node-attr progress-node 'class) "we-progress" "progress base class")
+(check-equal (node-attr progress-node 'class) "we-progress we-progress-info" "progress base class")
 (:= @percent 65)
 (check-equal (node-attr progress-node 'value) 65 "progress reflects observable update")
+
+;; progress supports variant classes
+(define @progress-variant (@ 'warn))
+(define r8b
+  (render
+   (window
+    (vpanel
+     (progress 30 0 100 @progress-variant)))))
+(define progress-node-2 (node-child (node-child (renderer-root r8b) 0) 0))
+(check-equal (node-attr progress-node-2 'class) "we-progress we-progress-warn" "progress warn variant class")
+(:= @progress-variant 'success)
+(check-equal (node-attr progress-node-2 'class) "we-progress we-progress-success" "progress success variant class")
+(:= @progress-variant 'mystery)
+(check-equal (node-attr progress-node-2 'class) "we-progress we-progress-info" "progress unknown variant falls back to info class")
 
 ;; group supports labeled container semantics
 (define @group-label (@ "Settings"))
@@ -676,6 +939,125 @@
 (check-equal (node-attr image-node3 'src) "size.png" "image sized src")
 (check-equal (node-attr image-node3 'width) 64 "image optional width attr")
 (check-equal (node-attr image-node3 'height) 32 "image optional height attr")
+
+;; dropdown renders single-trigger menu and item actions update selected id
+(define @dropdown-label (@ "Actions"))
+(define @dropdown-selected (@ 'none))
+(define r19c
+  (render
+   (window
+    (vpanel
+     (dropdown @dropdown-label
+               '((open "Open") (save "Save"))
+               (lambda (new-id)
+                 (:= @dropdown-selected new-id)))))))
+(define dropdown-node (node-child (node-child (renderer-root r19c) 0) 0))
+(define dropdown-menu-node (node-child dropdown-node 0))
+(define dropdown-label-node (node-child dropdown-menu-node 0))
+(define dropdown-popup-node (node-child dropdown-menu-node 1))
+(define dropdown-open-item (node-child dropdown-popup-node 0))
+(define dropdown-save-item (node-child dropdown-popup-node 1))
+(check-equal (node-attr dropdown-node 'data-we-widget) "dropdown" "dropdown data-we-widget attr")
+(check-equal (node-attr dropdown-node 'class) "we-dropdown" "dropdown base class")
+(check-equal (node-attr dropdown-popup-node 'class) "we-menu-popup" "dropdown popup initial class")
+(dom-node-click! dropdown-label-node)
+(check-equal (node-attr dropdown-popup-node 'class) "we-menu-popup is-open" "dropdown popup open class")
+(dom-node-click! dropdown-save-item)
+(check-equal (obs-peek @dropdown-selected) 'save "dropdown item click updates selected id")
+(check-equal (node-attr dropdown-popup-node 'class) "we-menu-popup" "dropdown popup closes after item click")
+(check-equal (dom-node-text dropdown-open-item) "Open" "dropdown first item label")
+(:= @dropdown-label "More")
+(check-equal (dom-node-text dropdown-label-node) "More" "dropdown label observable update")
+
+;; tooltip wraps trigger content and tracks observable message text
+(define @tooltip-message (@ "Click to run"))
+(define r19tooltip
+  (render
+   (window
+    (vpanel
+     (tooltip @tooltip-message
+              (button "run" (lambda () (void))))))))
+(define tooltip-node (node-child (node-child (renderer-root r19tooltip) 0) 0))
+(define tooltip-trigger-node (node-child tooltip-node 0))
+(define tooltip-child-node (node-child tooltip-trigger-node 0))
+(define tooltip-bubble-node (node-child tooltip-node 1))
+(check-equal (node-attr tooltip-node 'data-we-widget) "tooltip" "tooltip data-we-widget attr")
+(check-equal (node-attr tooltip-node 'class) "we-tooltip" "tooltip base class")
+(check-equal (node-attr tooltip-trigger-node 'data-we-widget) "tooltip-trigger" "tooltip trigger data-we-widget attr")
+(check-equal (node-attr tooltip-bubble-node 'data-we-widget) "tooltip-bubble" "tooltip bubble data-we-widget attr")
+(check-equal (node-attr tooltip-bubble-node 'role) 'tooltip "tooltip bubble role attr")
+(check-equal (dom-node-text tooltip-bubble-node) "Click to run" "tooltip initial message")
+(check-equal (node-attr tooltip-child-node 'aria-describedby)
+             (node-attr tooltip-bubble-node 'id)
+             "tooltip child aria-describedby references bubble id")
+(:= @tooltip-message "Click to run selected plan")
+(check-equal (dom-node-text tooltip-bubble-node) "Click to run selected plan" "tooltip observable message update")
+
+;; popover toggles panel class/aria state and updates observable label
+(define @popover-label (@ "Actions"))
+(define r19popover
+  (render
+   (window
+    (vpanel
+     (popover @popover-label
+              (text "deploy-body")
+              (button "confirm" (lambda () (void))))))))
+(define popover-node (node-child (node-child (renderer-root r19popover) 0) 0))
+(define popover-trigger-node (node-child popover-node 0))
+(define popover-backdrop-node (node-child popover-node 1))
+(define popover-panel-node (node-child popover-node 2))
+(check-equal (node-attr popover-node 'data-we-widget) "popover" "popover data-we-widget attr")
+(check-equal (node-attr popover-node 'class) "we-popover" "popover base class")
+(check-equal (node-attr popover-trigger-node 'data-we-widget) "popover-trigger" "popover trigger data-we-widget attr")
+(check-equal (node-attr popover-backdrop-node 'data-we-widget) "popover-backdrop" "popover backdrop data-we-widget attr")
+(check-equal (node-attr popover-panel-node 'data-we-widget) "popover-panel" "popover panel data-we-widget attr")
+(check-equal (node-attr popover-backdrop-node 'class) "we-popover-backdrop" "popover initial backdrop class")
+(check-equal (node-attr popover-panel-node 'class) "we-popover-panel" "popover initial panel class")
+(check-equal (node-attr popover-backdrop-node 'aria-hidden) "true" "popover backdrop initially hidden")
+(check-equal (node-attr popover-panel-node 'aria-hidden) "true" "popover panel initially hidden")
+(dom-node-click! popover-trigger-node)
+(check-equal (node-attr popover-backdrop-node 'class) "we-popover-backdrop is-open" "popover backdrop class after open")
+(check-equal (node-attr popover-panel-node 'class) "we-popover-panel is-open" "popover panel class after open")
+(check-equal (node-attr popover-panel-node 'aria-hidden) "false" "popover panel visible after open")
+(dom-node-click! popover-backdrop-node)
+(check-equal (node-attr popover-panel-node 'class) "we-popover-panel" "popover panel class after backdrop close")
+(check-equal (node-attr popover-panel-node 'aria-hidden) "true" "popover panel hidden after backdrop close")
+(dom-node-click! popover-trigger-node)
+(dom-node-keydown! popover-panel-node "Escape")
+(check-equal (node-attr popover-panel-node 'class) "we-popover-panel" "popover panel class after Escape close")
+(check-equal (node-attr popover-panel-node 'aria-hidden) "true" "popover panel hidden after Escape")
+(:= @popover-label "More")
+(check-equal (dom-node-text popover-trigger-node) "More" "popover trigger observable label update")
+
+;; card renders optional header/footer and body children
+(define @card-title (@ "Profile"))
+(define @card-footer (@ "updated now"))
+(define r19d
+  (render
+   (window
+    (vpanel
+     (card @card-title
+           @card-footer
+           (text "body-line"))))))
+(define card-node (node-child (node-child (renderer-root r19d) 0) 0))
+(define card-header-node (node-child card-node 0))
+(define card-body-node (node-child card-node 1))
+(define card-footer-node (node-child card-node 2))
+(define card-body-child (node-child card-body-node 0))
+(check-equal (node-attr card-node 'data-we-widget) "card" "card data-we-widget attr")
+(check-equal (node-attr card-node 'class) "we-card" "card base class")
+(check-equal (node-attr card-header-node 'class) "we-card-header" "card header class")
+(check-equal (node-attr card-body-node 'class) "we-card-body" "card body class")
+(check-equal (node-attr card-footer-node 'class) "we-card-footer" "card footer class")
+(check-equal (dom-node-text card-header-node) "Profile" "card initial header text")
+(check-equal (dom-node-text card-body-child) "body-line" "card body child text")
+(check-equal (dom-node-text card-footer-node) "updated now" "card initial footer text")
+(:= @card-title "Account")
+(:= @card-footer "saved")
+(define card-header-node-after (node-child card-node 0))
+(define card-footer-node-after (node-child card-node 2))
+(check-equal (dom-node-text card-header-node-after) "Account" "card header observable update")
+(check-equal (dom-node-text card-footer-node-after) "saved" "card footer observable update")
 
 ;; menu-bar/menu/menu-item render and menu-item action
 (define @menu-label (@ "File"))

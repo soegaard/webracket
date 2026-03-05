@@ -61,6 +61,8 @@
     (define tab-panel-counter     0)          ; Monotonic counter for tab-panel ids.
     (define accordion-panel-counter 0)        ; Monotonic counter for accordion panel ids.
     (define menu-popup-counter    0)          ; Monotonic counter for menu popup ids.
+    (define tooltip-counter       0)          ; Monotonic counter for tooltip ids.
+    (define popover-panel-counter 0)          ; Monotonic counter for popover panel ids.
     (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
     ;; Style constants
@@ -95,28 +97,94 @@
        .we-menu-label{padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid transparent;border-radius:3px;background:transparent;cursor:pointer;user-select:none;}\
        .we-menu-label:hover{background:transparent;color:var(--we-border-strong,#333);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
        .we-menu-label[aria-expanded='true']{background:transparent;color:var(--we-border-strong,#333);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;position:relative;z-index:1001;}\
+       .we-dropdown .we-menu-label::after{content:'▾';display:inline-block;margin-left:var(--we-space-xs,2px);color:var(--we-fg-muted,#777);transition:transform .16s ease,color .16s ease;}\
+       .we-dropdown .we-menu-label[aria-expanded='true']::after{transform:rotate(180deg);color:var(--we-border-strong,#333);}\
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;gap:0;padding:var(--we-space-xs,2px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:transparent;color:var(--we-fg,#111);border:none;border-radius:3px;}\
        .we-menu-item:hover{background:var(--we-bg-hover,#e8e8e8);}") 
+    (define tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
+      ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
+       .we-tooltip-trigger{display:inline-flex;}\
+       .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,2px);display:block;padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);white-space:nowrap;pointer-events:none;opacity:0;z-index:1200;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));transition:opacity .14s ease,transform .14s ease;}\
+       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble{opacity:1;transform:translate(-50%,0);}\
+       .we-popover{display:inline-flex;align-self:flex-start;position:relative;z-index:1201;}\
+       .we-popover-trigger{align-self:flex-start;position:relative;z-index:1201;}\
+       .we-popover-backdrop{position:fixed;inset:0;display:none;background:transparent;z-index:1190;}\
+       .we-popover-backdrop.is-open{display:block;}\
+       .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));min-width:220px;display:none;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:8px;background:var(--we-bg,#fff);color:var(--we-fg,#111);z-index:1200;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
+       .we-popover-panel.is-open{display:flex;}\
+       .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define control-style-text ; CSS defaults for controls and table density classes.
-      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
+      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
        .we-alert{align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);}\
        .we-alert-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-alert-success{border-color:#6a9b73;background:#e8f4e8;}\
        .we-alert-warn{border-color:#b79256;background:#fff4df;}\
        .we-alert-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-toast{position:fixed;right:var(--we-space-md,8px);bottom:var(--we-space-md,8px);display:none;align-items:flex-start;gap:var(--we-space-sm,4px);min-width:220px;max-width:min(420px,calc(100vw - 2 * var(--we-space-md,8px)));padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:6px;background:var(--we-bg,#fff);color:var(--we-fg,#111);box-shadow:0 6px 18px var(--we-shadow,rgba(0,0,0,.28));transform:translateY(6px);opacity:0;transition:opacity .18s ease,transform .18s ease;}\
+       .we-toast.is-open{display:flex;transform:translateY(0);opacity:1;}\
+       .we-toast-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg,#fff);}\
+       .we-toast-success{border-color:#6a9b73;background:#e8f4e8;}\
+       .we-toast-warn{border-color:#b79256;background:#fff4df;}\
+       .we-toast-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-toast-title{display:block;font-weight:600;}\
+       .we-toast-message{flex:1 1 auto;}\
+       .we-toast-close{padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;line-height:1.2;}\
+       .we-toast-close:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-toast-close:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-badge{display:inline-block;align-self:flex-start;padding:1px 8px;border:1px solid var(--we-border-soft,#bbb);border-radius:999px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);font-size:.85em;font-weight:600;line-height:1.4;}\
+       .we-badge-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-badge-success{border-color:#6a9b73;background:#e8f4e8;}\
+       .we-badge-warn{border-color:#b79256;background:#fff4df;}\
+       .we-badge-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-spinner{display:inline-flex;align-items:center;gap:var(--we-space-sm,4px);align-self:flex-start;color:var(--we-fg,#111);}\
+       .we-spinner-icon{width:12px;height:12px;border:2px solid var(--we-border-soft,#bbb);border-top-color:var(--we-border-strong,#333);border-radius:50%;animation:we-spin .8s linear infinite;}\
+       .we-spinner-label{color:var(--we-fg,#111);}\
+       @keyframes we-spin{to{transform:rotate(360deg);}}\
        .we-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;overflow:hidden;align-self:stretch;transition:grid-template-rows .18s ease,opacity .18s ease;}\
        .we-collapse>*{min-height:0;overflow:hidden;}\
        .we-collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;}\
        .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);}\
+       .we-button-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-sm,4px);}\
+       .we-button-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:0;border:1px solid var(--we-border-soft,#bbb);border-radius:6px;overflow:hidden;background:var(--we-bg,#fff);}\
+       .we-button-group>.we-button{border:0;border-right:1px solid var(--we-border-soft,#bbb);border-radius:0;margin:0;}\
+       .we-button-group>.we-button:last-child{border-right:0;}\
        .we-button{align-self:flex-start;width:auto;}\
        .we-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
        .we-input:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
+       .we-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);align-self:flex-start;}\
+       .we-page-btn{min-width:30px;padding:2px 8px;border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);}\
+       .we-page-btn.is-current{border-color:var(--we-border-strong,#333);background:var(--we-bg-selected,#ececec);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
+       .we-page-btn.is-disabled{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-disabled,#f3f3f3);color:var(--we-fg-muted,#777);}\
+       .we-page-btn:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-page-ellipsis{color:var(--we-fg-muted,#777);padding:0 4px;}\
+       .we-breadcrumb{display:flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);}\
+       .we-breadcrumb-item{padding:2px 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--we-fg,#111);}\
+       .we-breadcrumb-item:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-breadcrumb-item:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-breadcrumb-item.is-current{color:var(--we-fg,#111);cursor:default;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
+       .we-breadcrumb-sep{color:var(--we-fg-muted,#777);padding:0 2px;}\
+       .we-list-group{display:flex;flex-direction:column;align-self:flex-start;border:1px solid var(--we-border-soft,#bbb);border-radius:6px;overflow:hidden;background:var(--we-bg,#fff);}\
+       .we-list-group-item{padding:6px 10px;border:0;border-bottom:1px solid var(--we-border-soft,#bbb);background:transparent;color:var(--we-fg,#111);text-align:left;}\
+       .we-list-group-item:last-child{border-bottom:0;}\
+       .we-list-group-item:hover{background:var(--we-bg-hover,#e8e8e8);}\
+       .we-list-group-item:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-list-group-item.is-current{background:var(--we-bg-selected,#ececec);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
        .we-choice:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-progress-info{}\
+       .we-progress-success{accent-color:var(--we-progress-success,#3a9147);}\
+       .we-progress-warn{accent-color:var(--we-progress-warn,#b57c1c);}\
+       .we-progress-error{accent-color:var(--we-progress-error,#b24545);}\
+       .we-dropdown{display:inline-block;align-self:flex-start;}\
+       .we-card{display:flex;flex-direction:column;align-self:stretch;border:1px solid var(--we-border-soft,#bbb);border-radius:8px;background:var(--we-bg,#fff);overflow:hidden;}\
+       .we-card-header{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-bottom:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);font-weight:600;}\
+       .we-card-body{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);}\
+       .we-card-footer{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-top:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-menu,#aaa);border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);}\
        .we-table{border-collapse:separate;border:1px solid var(--we-border-muted,#999);margin-bottom:6px;align-self:flex-start;}\
        .we-table.we-density-normal{border-spacing:2px 0;}\
        .we-table.we-density-compact{border-spacing:0 0;}\
@@ -125,7 +193,12 @@
        .we-table-data-cell.we-density-normal{padding:2px 8px;}\
        .we-table-data-cell.we-density-compact{padding:1px 4px;}")
     (define shared-style-text ; Shared stylesheet injected once per window root.
-      (string-append control-style-text tab-panel-style-text accordion-style-text dialog-style-text menu-style-text))
+      (string-append control-style-text
+                     tab-panel-style-text
+                     accordion-style-text
+                     dialog-style-text
+                     menu-style-text
+                     tooltip-popover-style-text))
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -293,6 +366,18 @@
       (set! menu-popup-counter (add1 menu-popup-counter))
       (string-append "menu-popup-" (number->string menu-popup-counter)))
 
+    ;; next-tooltip-id : -> string?
+    ;;   Allocate a unique id string for tooltip bubble region.
+    (define (next-tooltip-id)
+      (set! tooltip-counter (add1 tooltip-counter))
+      (string-append "tooltip-" (number->string tooltip-counter)))
+
+    ;; next-popover-panel-id : -> string?
+    ;;   Allocate a unique id string for popover panel region.
+    (define (next-popover-panel-id)
+      (set! popover-panel-counter (add1 popover-panel-counter))
+      (string-append "popover-panel-" (number->string popover-panel-counter)))
+
     ;; normalize-tab-entry : any/c -> list?
     ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
     (define (normalize-tab-entry tab)
@@ -384,6 +469,142 @@
         [(warn error) 'alert]
         [else         'status]))
 
+    ;; toast-level-class : symbol? -> string?
+    ;;   Return CSS class suffix for toast level.
+    (define (toast-level-class level)
+      (case level
+        [(success) "we-toast-success"]
+        [(warn)    "we-toast-warn"]
+        [(error)   "we-toast-error"]
+        [else      "we-toast-info"]))
+
+    ;; progress-level-class : symbol? -> string?
+    ;;   Return CSS class suffix for progress variant level.
+    (define (progress-level-class level)
+      (case level
+        [(success) "we-progress-success"]
+        [(warn)    "we-progress-warn"]
+        [(error)   "we-progress-error"]
+        [else      "we-progress-info"]))
+
+    ;; badge-level-class : symbol? -> string?
+    ;;   Return CSS class suffix for badge level.
+    (define (badge-level-class level)
+      (case level
+        [(success) "we-badge-success"]
+        [(warn)    "we-badge-warn"]
+        [(error)   "we-badge-error"]
+        [else      "we-badge-info"]))
+
+    ;; normalize-page-count : any/c -> number?
+    ;;   Normalize page-count to a positive integer.
+    (define (normalize-page-count page-count)
+      (if (and (number? page-count)
+               (integer? page-count)
+               (> page-count 0))
+          page-count
+          1))
+
+    ;; clamp-current-page : any/c number? -> number?
+    ;;   Clamp current page to [1, page-count].
+    (define (clamp-current-page current-page page-count)
+      (if (and (number? current-page)
+               (integer? current-page))
+          (min page-count (max 1 current-page))
+          1))
+
+    ;; contains-equal? : list? any/c -> boolean?
+    ;;   Check whether xs contains v using equal?.
+    (define (contains-equal? xs v)
+      (cond
+        [(null? xs) #f]
+        [else
+         (if (equal? (car xs) v)
+             #t
+             (contains-equal? (cdr xs) v))]))
+
+    ;; unique-sorted-numbers : list? -> list?
+    ;;   Sort numeric values and remove duplicates.
+    (define (unique-sorted-numbers nums)
+      (define sorted
+        (sort (filter number? nums) <))
+      (let loop ([rest sorted]
+                 [acc '()])
+        (cond
+          [(null? rest)
+           (reverse acc)]
+          [else
+           (define n (car rest))
+           (if (contains-equal? acc n)
+               (loop (cdr rest) acc)
+               (loop (cdr rest) (cons n acc)))])))
+
+    ;; pagination-visible-pages : number? number? -> list?
+    ;;   Return page number list with 'ellipsis markers for compact rendering.
+    (define (pagination-visible-pages page-count current-page)
+      (if (<= page-count 7)
+          (let loop ([n 1])
+            (if (> n page-count)
+                '()
+                (cons n (loop (add1 n)))))
+          (let* ([base-pages (unique-sorted-numbers
+                              (list 1
+                                    page-count
+                                    (- current-page 1)
+                                    current-page
+                                    (+ current-page 1)))]
+                 [bounded-pages (filter (lambda (n)
+                                          (and (>= n 1)
+                                               (<= n page-count)))
+                                        base-pages)])
+            (let loop ([rest bounded-pages]
+                       [prev #f]
+                       [acc '()])
+              (cond
+                [(null? rest)
+                 (reverse acc)]
+                [else
+                 (define n (car rest))
+                 (define next-acc
+                   (cond
+                     [(eq? prev #f)
+                      (cons n acc)]
+                     [(= n (+ prev 1))
+                      (cons n acc)]
+                     [else
+                      (cons n (cons 'ellipsis acc))]))
+                 (loop (cdr rest) n next-acc)])))))
+
+    ;; breadcrumb-id : any/c -> any/c
+    ;;   Extract breadcrumb entry id from (list id label) row.
+    (define (breadcrumb-id entry)
+      (car (ensure-list entry 'breadcrumb "entry")))
+
+    ;; breadcrumb-label : any/c -> any/c
+    ;;   Extract breadcrumb entry label from (list id label) row.
+    (define (breadcrumb-label entry)
+      (cadr (ensure-list entry 'breadcrumb "entry")))
+
+    ;; list-group-id : any/c -> any/c
+    ;;   Extract list-group entry id from (list id label) row.
+    (define (list-group-id entry)
+      (car (ensure-list entry 'list-group "entry")))
+
+    ;; list-group-label : any/c -> any/c
+    ;;   Extract list-group entry label from (list id label) row.
+    (define (list-group-label entry)
+      (cadr (ensure-list entry 'list-group "entry")))
+
+    ;; dropdown-id : any/c -> any/c
+    ;;   Extract dropdown entry id from (list id label) row.
+    (define (dropdown-id entry)
+      (car (ensure-list entry 'dropdown "entry")))
+
+    ;; dropdown-label : any/c -> any/c
+    ;;   Extract dropdown entry label from (list id label) row.
+    (define (dropdown-label entry)
+      (cadr (ensure-list entry 'dropdown "entry")))
+
     ;; density-class : symbol? -> string?
     ;;   Return CSS class for table density variants.
     (define (density-class density)
@@ -459,6 +680,32 @@
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
+        [(button-group)
+         (define node (dom-node 'div
+                                (list (cons attr/role 'group)
+                                      (cons 'data-we-widget "button-group")
+                                      (cons 'class "we-button-group"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(button-toolbar)
+         (define node (dom-node 'div
+                                (list (cons attr/role 'toolbar)
+                                      (cons 'data-we-widget "button-toolbar")
+                                      (cons 'class "we-button-toolbar"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
         [(group)
          (define raw-label (alist-ref (view-props v) 'label 'render))
          (define node (dom-node 'group
@@ -520,6 +767,171 @@
            (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
          (render-alert!)
          node]
+        [(toast)
+         (define raw-open  (alist-ref (view-props v) 'open 'render))
+         (define on-close  (alist-ref (view-props v) 'on-close 'render))
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define raw-title (alist-ref (view-props v) 'title 'render))
+         (define raw-dismissible (alist-ref (view-props v) 'dismissible? 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'status)
+                                      (cons 'data-we-widget "toast")
+                                      (cons 'class "we-toast we-toast-info")
+                                      (cons 'aria-live "polite")
+                                      (cons 'aria-hidden "true"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define title-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "toast-title")
+                           (cons 'class "we-toast-title"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define message-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "toast-message")
+                           (cons 'class "we-toast-message"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define close-node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "toast-close")
+                           (cons 'class "we-toast-close")
+                           (cons 'aria-label "Close toast"))
+                     '()
+                     "×"
+                     on-close
+                     #f))
+         ;; refresh-toast-children! : -> void?
+         ;;   Rebuild toast children based on optional title and dismissibility.
+         (define (refresh-toast-children!)
+           (define title-value (maybe-observable-value raw-title))
+           (define dismissible? (not (eq? (maybe-observable-value raw-dismissible) #f)))
+           (set-dom-node-text! title-node (value->text title-value))
+           (backend-replace-children!
+            node
+            (append (if (eq? title-value #f) '() (list title-node))
+                    (list message-node)
+                    (if dismissible? (list close-node) '()))))
+         (define (render-toast!)
+           (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (define role (alert-level-role level))
+           (define live (if (eq? role 'alert) "assertive" "polite"))
+           (define open? (not (not (maybe-observable-value raw-open))))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role role)
+                  (cons 'data-we-widget "toast")
+                  (cons 'class (string-append "we-toast "
+                                              (toast-level-class level)
+                                              (if open? " is-open" "")))
+                  (cons 'aria-live live)
+                  (cons 'aria-hidden (if open? "false" "true"))))
+           (refresh-toast-children!)
+           (set-dom-node-text! message-node (value->text (maybe-observable-value raw-value))))
+         (when (obs? raw-open)
+           (define (open-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-open open-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-open open-listener))))
+         (when (obs? raw-value)
+           (define (value-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-value value-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
+         (when (obs? raw-level)
+           (define (level-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-dismissible)
+           (define (dismissible-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-dismissible dismissible-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-dismissible dismissible-listener))))
+         (render-toast!)
+         node]
+        [(badge)
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define node (dom-node 'span
+                                (list (cons 'data-we-widget "badge")
+                                      (cons 'class "we-badge we-badge-info"))
+                                '()
+                                ""
+                                #f
+                                #f))
+         (define (render-badge!)
+           (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "badge")
+                  (cons 'class (string-append "we-badge " (badge-level-class level)))))
+           (set-dom-node-text! node (value->text (maybe-observable-value raw-value))))
+         (when (obs? raw-value)
+           (define (value-listener _updated)
+             (render-badge!))
+           (obs-observe! raw-value value-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
+         (when (obs? raw-level)
+           (define (level-listener _updated)
+             (render-badge!))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (render-badge!)
+        node]
+        [(spinner)
+         (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'status)
+                                      (cons 'data-we-widget "spinner")
+                                      (cons 'class "we-spinner")
+                                      (cons 'aria-live "polite"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define icon-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "spinner-icon")
+                           (cons 'class "we-spinner-icon")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define label-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "spinner-label")
+                           (cons 'class "we-spinner-label"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (backend-append-child! node icon-node)
+         (backend-append-child! node label-node)
+         (define (render-spinner!)
+           (set-dom-node-text! label-node (value->text (maybe-observable-value raw-label))))
+         (when (obs? raw-label)
+           (define (label-listener _updated)
+             (render-spinner!))
+           (obs-observe! raw-label label-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener))))
+         (render-spinner!)
+        node]
         [(text)
          (define raw  (alist-ref (view-props v) 'value 'render))
          (define node (dom-node 'span (list (cons 'data-we-widget "text")) '() "" #f #f))
@@ -669,23 +1081,26 @@
          (define raw-value (alist-ref (view-props v) 'value 'render))
          (define min-value (alist-ref (view-props v) 'min   'render))
          (define max-value (alist-ref (view-props v) 'max   'render))
+         (define raw-variant (alist-ref (view-props v) 'variant 'render))
          (define node (dom-node 'progress
                                 (list (cons 'min   min-value)
                                       (cons 'max   max-value)
                                       (cons 'data-we-widget "progress")
-                                      (cons 'class "we-progress")
+                                      (cons 'class "we-progress we-progress-info")
                                       (cons 'value 0))
                                 '()
                                 #f
                                 #f
                                 #f))
          (define (set-progress-value! v)
+           (define variant (normalize-alert-level (maybe-observable-value raw-variant)))
            (set-dom-node-attrs!
             node
             (list (cons 'min   min-value)
                   (cons 'max   max-value)
                   (cons 'data-we-widget "progress")
-                  (cons 'class "we-progress")
+                  (cons 'class (string-append "we-progress "
+                                              (progress-level-class variant)))
                   (cons 'value v))))
          (cond
            [(obs? raw-value)
@@ -695,7 +1110,230 @@
             (obs-observe! raw-value listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
            [else
-            (set-progress-value! raw-value)])
+           (set-progress-value! raw-value)])
+         (when (obs? raw-variant)
+           (define (variant-listener _updated)
+             (set-progress-value! (maybe-observable-value raw-value)))
+           (obs-observe! raw-variant variant-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-variant variant-listener))))
+         node]
+        [(pagination)
+         (define raw-page-count  (alist-ref (view-props v) 'page-count 'render))
+         (define raw-current-page (alist-ref (view-props v) 'current-page 'render))
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define node (dom-node 'nav
+                                (list (cons attr/role 'navigation)
+                                      (cons 'data-we-widget "pagination")
+                                      (cons 'class "we-pagination"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         ;; make-page-button : string? number? boolean? boolean? -> dom-node?
+         ;;   Construct a pagination button node with disabled/current states.
+         (define (make-page-button label target-page disabled? current?)
+           (define button-node
+             (dom-node 'button
+                       (list (cons attr/role 'button)
+                             (cons 'data-we-widget "page-button")
+                             (cons 'aria-current (if current? "page" "false"))
+                             (cons 'aria-disabled (if disabled? "true" "false"))
+                             (cons 'class (cond
+                                            [disabled? "we-page-btn is-disabled"]
+                                            [current?  "we-page-btn is-current"]
+                                            [else      "we-page-btn"])))
+                       '()
+                       label
+                       #f
+                       #f))
+           (unless disabled?
+             (set-dom-node-on-click!
+              button-node
+              (lambda ()
+                (action target-page))))
+           button-node)
+         ;; render-pagination! : -> void?
+         ;;   Rebuild pagination controls from current count/page values.
+         (define (render-pagination!)
+           (define page-count (normalize-page-count (maybe-observable-value raw-page-count)))
+           (define current-page (clamp-current-page (maybe-observable-value raw-current-page)
+                                                    page-count))
+           (define first-disabled? (<= current-page 1))
+           (define prev-disabled? (<= current-page 1))
+           (define next-disabled? (>= current-page page-count))
+           (define last-disabled? (>= current-page page-count))
+           (define page-items (pagination-visible-pages page-count current-page))
+           (define page-buttons
+             (map (lambda (item)
+                    (if (eq? item 'ellipsis)
+                        (dom-node 'span
+                                  (list (cons 'data-we-widget "page-ellipsis")
+                                        (cons 'class "we-page-ellipsis")
+                                        (cons 'aria-hidden "true"))
+                                  '()
+                                  "..."
+                                  #f
+                                  #f)
+                        (make-page-button (number->string item)
+                                          item
+                                          #f
+                                          (= item current-page))))
+                  page-items))
+           (backend-replace-children!
+            node
+            (append (list (make-page-button "First" 1 first-disabled? #f)
+                          (make-page-button "Prev" (max 1 (- current-page 1)) prev-disabled? #f))
+                    page-buttons
+                    (list (make-page-button "Next" (min page-count (+ current-page 1)) next-disabled? #f)
+                          (make-page-button "Last" page-count last-disabled? #f)))))
+         (when (obs? raw-page-count)
+           (define (page-count-listener _updated)
+             (render-pagination!))
+           (obs-observe! raw-page-count page-count-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-page-count page-count-listener))))
+         (when (obs? raw-current-page)
+           (define (current-page-listener _updated)
+             (render-pagination!))
+           (obs-observe! raw-current-page current-page-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-current-page current-page-listener))))
+         (render-pagination!)
+         node]
+        [(breadcrumb)
+         (define raw-entries (alist-ref (view-props v) 'entries 'render))
+         (define raw-current (alist-ref (view-props v) 'current 'render))
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define node (dom-node 'nav
+                                (list (cons attr/role 'navigation)
+                                      (cons 'data-we-widget "breadcrumb")
+                                      (cons 'class "we-breadcrumb"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         ;; make-separator-node : -> dom-node?
+         ;;   Build a breadcrumb separator node.
+         (define (make-separator-node)
+           (dom-node 'span
+                     (list (cons 'data-we-widget "breadcrumb-sep")
+                           (cons 'class "we-breadcrumb-sep")
+                           (cons 'aria-hidden "true"))
+                     '()
+                     "/"
+                     #f
+                     #f))
+         ;; make-item-node : any/c any/c boolean? -> dom-node?
+         ;;   Build a breadcrumb item node as current label or clickable action.
+         (define (make-item-node item-id item-label current?)
+           (if current?
+               (dom-node 'span
+                         (list (cons 'data-we-widget "breadcrumb-item")
+                               (cons 'class "we-breadcrumb-item is-current")
+                               (cons 'aria-current "page"))
+                         '()
+                         (value->text item-label)
+                         #f
+                         #f)
+               (dom-node 'button
+                         (list (cons attr/role 'button)
+                               (cons 'data-we-widget "breadcrumb-item")
+                               (cons 'class "we-breadcrumb-item"))
+                         '()
+                         (value->text item-label)
+                         (lambda ()
+                           (action item-id))
+                         #f)))
+         ;; render-breadcrumb! : -> void?
+         ;;   Rebuild breadcrumb controls from current entries/current id values.
+         (define (render-breadcrumb!)
+           (define entries (ensure-list (maybe-observable-value raw-entries) 'breadcrumb "entries"))
+           (define current (maybe-observable-value raw-current))
+           (define children
+             (let loop ([es entries]
+                        [acc '()])
+               (cond
+                 [(null? es)
+                  (reverse acc)]
+                 [else
+                  (define entry       (car es))
+                  (define item-id     (breadcrumb-id entry))
+                  (define item-label  (breadcrumb-label entry))
+                  (define current?    (equal? item-id current))
+                  (define item-node   (make-item-node item-id item-label current?))
+                  (define next-acc    (cons item-node acc))
+                  (loop (cdr es)
+                        (if (null? (cdr es))
+                            next-acc
+                            (cons (make-separator-node) next-acc)))])))
+           (backend-replace-children! node children))
+         (when (obs? raw-entries)
+           (define (entries-listener _updated)
+             (render-breadcrumb!))
+           (obs-observe! raw-entries entries-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-entries entries-listener))))
+         (when (obs? raw-current)
+           (define (current-listener _updated)
+             (render-breadcrumb!))
+           (obs-observe! raw-current current-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
+         (render-breadcrumb!)
+         node]
+        [(list-group)
+         (define raw-entries (alist-ref (view-props v) 'entries 'render))
+         (define raw-current (alist-ref (view-props v) 'current 'render))
+         (define action (alist-ref (view-props v) 'action 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'list)
+                                      (cons 'data-we-widget "list-group")
+                                      (cons 'class "we-list-group"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         ;; make-list-item-node : any/c any/c boolean? -> dom-node?
+         ;;   Build one list-group row node with current-state marker.
+         (define (make-list-item-node item-id item-label current?)
+           (define item-node
+             (dom-node 'button
+                       (list (cons attr/role 'listitem)
+                             (cons 'data-we-widget "list-group-item")
+                             (cons 'class (if current?
+                                              "we-list-group-item is-current"
+                                              "we-list-group-item"))
+                             (cons 'aria-current (if current? "true" "false")))
+                       '()
+                       (value->text item-label)
+                       #f
+                       #f))
+           (unless current?
+             (set-dom-node-on-click!
+              item-node
+              (lambda ()
+                (action item-id))))
+           item-node)
+         ;; render-list-group! : -> void?
+         ;;   Rebuild list-group controls from current entries/current id values.
+         (define (render-list-group!)
+           (define entries (ensure-list (maybe-observable-value raw-entries) 'list-group "entries"))
+           (define current (maybe-observable-value raw-current))
+           (define children
+             (map (lambda (entry)
+                    (define item-id    (list-group-id entry))
+                    (define item-label (list-group-label entry))
+                    (define current?   (equal? item-id current))
+                    (make-list-item-node item-id item-label current?))
+                  entries))
+           (backend-replace-children! node children))
+         (when (obs? raw-entries)
+           (define (entries-listener _updated)
+             (render-list-group!))
+           (obs-observe! raw-entries entries-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-entries entries-listener))))
+         (when (obs? raw-current)
+           (define (current-listener _updated)
+             (render-list-group!))
+           (obs-observe! raw-current current-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
+         (render-list-group!)
          node]
         [(if-view)
          (define raw-cond  (alist-ref (view-props v) 'cond 'render))
@@ -1039,6 +1677,44 @@
          (define sections/normalized (map normalize-section sections))
          (define section-state '())
 
+         ;; section-id-index : any/c -> number?
+         ;;   Return index of section-id in section-state, or #f when missing.
+         (define (section-id-index section-id)
+           (let loop ([entries section-state]
+                      [i 0])
+             (cond
+               [(null? entries) #f]
+               [else
+                (if (equal? (list-ref (car entries) 0) section-id)
+                    i
+                    (loop (cdr entries) (add1 i)))])))
+
+         ;; select-section! : any/c -> void?
+         ;;   Select section-id when selected is observable.
+         (define (select-section! section-id)
+           (when (obs? raw-selected)
+             (obs-set! raw-selected section-id)))
+
+         ;; toggle-section! : any/c -> void?
+         ;;   Toggle section-id open/closed when selected is observable.
+         (define (toggle-section! section-id)
+           (when (obs? raw-selected)
+             (if (equal? (obs-peek raw-selected) section-id)
+                 (obs-set! raw-selected #f)
+                 (obs-set! raw-selected section-id))))
+
+         ;; move-selection! : any/c number? -> void?
+         ;;   Move selection by delta in section order with wrapping.
+         (define (move-selection! section-id delta)
+           (define count (length section-state))
+           (when (and (obs? raw-selected)
+                      (> count 0))
+             (define index (section-id-index section-id))
+             (define base-index (if index index 0))
+             (define next-index (modulo (+ base-index delta count) count))
+             (define next-id (list-ref (list-ref section-state next-index) 0))
+             (select-section! next-id)))
+
          ;; section-open? : any/c -> boolean?
          ;;   Determine whether the section id is currently selected/open.
          (define (section-open? section-id)
@@ -1110,9 +1786,25 @@
               (set-dom-node-on-click!
                trigger-node
                (lambda ()
-                 (if (equal? (obs-peek raw-selected) section-id)
-                     (obs-set! raw-selected #f)
-                     (obs-set! raw-selected section-id)))))
+                 (toggle-section! section-id)))
+              (set-dom-node-on-change!
+               trigger-node
+               (lambda (key)
+                 (cond
+                   [(string=? key "ArrowDown")
+                    (move-selection! section-id 1)]
+                   [(string=? key "ArrowUp")
+                    (move-selection! section-id -1)]
+                   [(string=? key "Home")
+                    (when (pair? section-state)
+                      (select-section! (list-ref (car section-state) 0)))]
+                   [(string=? key "End")
+                   (when (pair? section-state)
+                      (select-section! (list-ref (list-ref section-state
+                                                           (- (length section-state) 1))
+                                                 0)))]
+                   [else
+                    (void)]))))
             (set! section-state
                   (append section-state
                           (list (list section-id panel-id trigger-node))))
@@ -1311,6 +2003,267 @@
              (refresh-image!))
            (obs-observe! raw-height height-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-height height-listener))))
+         node]
+        [(dropdown)
+         (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define entries   (ensure-list (alist-ref (view-props v) 'entries 'render)
+                                        'dropdown
+                                        "entries"))
+         (define action    (alist-ref (view-props v) 'action 'render))
+         (define node (dom-node 'div
+                                (list (cons 'data-we-widget "dropdown")
+                                      (cons 'class "we-dropdown"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define menu-items
+           (map (lambda (entry)
+                  (define entry-id    (dropdown-id entry))
+                  (define entry-label (dropdown-label entry))
+                  (menu-item entry-label
+                             (lambda ()
+                               (action entry-id))))
+                entries))
+         (define menu-view (apply menu (cons raw-label menu-items)))
+         (backend-set-single-child! node (build-node menu-view register-cleanup!))
+         node]
+        [(tooltip)
+         (define raw-message (alist-ref (view-props v) 'message 'render))
+         (define child-view
+           (if (null? (view-children v))
+               (spacer)
+               (car (view-children v))))
+         (define bubble-id (next-tooltip-id))
+         (define node (dom-node 'div
+                                (list (cons 'data-we-widget "tooltip")
+                                      (cons 'class "we-tooltip"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define trigger-node (dom-node 'div
+                                        (list (cons 'data-we-widget "tooltip-trigger")
+                                              (cons 'class "we-tooltip-trigger"))
+                                        '()
+                                        #f
+                                        #f
+                                        #f))
+         (define bubble-node (dom-node 'span
+                                       (list (cons attr/role 'tooltip)
+                                             (cons 'id bubble-id)
+                                             (cons 'data-we-widget "tooltip-bubble")
+                                             (cons 'class "we-tooltip-bubble"))
+                                       '()
+                                       ""
+                                       #f
+                                       #f))
+         ;; set-trigger-describedby! : dom-node? string? -> void?
+         ;;   Add aria-describedby to trigger child attrs while preserving other attrs.
+         (define (set-trigger-describedby! child-node desc-id)
+           (define old-attrs (dom-node-attrs child-node))
+           (define filtered-attrs
+             (let loop ([attrs old-attrs])
+               (cond
+                 [(null? attrs) '()]
+                 [(eq? (caar attrs) 'aria-describedby)
+                  (loop (cdr attrs))]
+                 [else
+                  (cons (car attrs) (loop (cdr attrs)))])))
+           (set-dom-node-attrs! child-node
+                                (append filtered-attrs
+                                        (list (cons 'aria-describedby desc-id)))))
+         (define child-node (build-node child-view register-cleanup!))
+         (set-trigger-describedby! child-node bubble-id)
+         (backend-append-child! trigger-node child-node)
+         (define (set-message! message)
+           (set-dom-node-text! bubble-node (value->text message)))
+         (cond
+           [(obs? raw-message)
+            (set-message! (obs-peek raw-message))
+            (define (listener updated)
+              (set-message! updated))
+            (obs-observe! raw-message listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-message listener)))]
+           [else
+            (set-message! raw-message)])
+         (backend-append-child! node trigger-node)
+         (backend-append-child! node bubble-node)
+         node]
+        [(popover)
+         (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define panel-id (next-popover-panel-id))
+         (define open? #f)
+         (define node (dom-node 'div
+                                (list (cons 'data-we-widget "popover")
+                                      (cons 'class "we-popover"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define trigger-node (dom-node 'button
+                                        (list (cons attr/role 'button)
+                                              (cons 'data-we-widget "popover-trigger")
+                                              (cons 'class "we-popover-trigger")
+                                              (cons 'tabindex 0)
+                                              (cons 'aria-haspopup "dialog")
+                                              (cons 'aria-controls panel-id)
+                                              (cons 'aria-expanded "false"))
+                                        '()
+                                        ""
+                                        (lambda ()
+                                          (set-open! (not open?)))
+                                        (lambda (key)
+                                          (case (string->symbol key)
+                                            [(Escape)
+                                             (set-open! #f)]
+                                            [else
+                                             (void)]))))
+         (define backdrop-node (dom-node 'div
+                                         (list (cons 'data-we-widget "popover-backdrop")
+                                               (cons 'aria-hidden "true")
+                                               (cons 'class "we-popover-backdrop"))
+                                         '()
+                                         #f
+                                         (lambda ()
+                                           (set-open! #f))
+                                         #f))
+         (define panel-node (dom-node 'div
+                                      (list (cons attr/role 'dialog)
+                                            (cons 'id panel-id)
+                                            (cons 'tabindex -1)
+                                            (cons 'aria-hidden "true")
+                                            (cons 'data-we-widget "popover-panel")
+                                            (cons 'class "we-popover-panel"))
+                                      '()
+                                      #f
+                                      #f
+                                      (lambda (key)
+                                        (case (string->symbol key)
+                                          [(Escape)
+                                           (set-open! #f)]
+                                          [else
+                                           (void)]))))
+         ;; set-open! : boolean? -> void?
+         ;;   Toggle panel visibility and aria state.
+         (define (set-open! next-open?)
+           (set! open? (not (not next-open?)))
+           (set-dom-node-attrs!
+            trigger-node
+            (list (cons attr/role 'button)
+                  (cons 'data-we-widget "popover-trigger")
+                  (cons 'class "we-popover-trigger")
+                  (cons 'tabindex 0)
+                  (cons 'aria-haspopup "dialog")
+                  (cons 'aria-controls panel-id)
+                  (cons 'aria-expanded (if open? "true" "false"))))
+           (set-dom-node-attrs!
+            panel-node
+            (list (cons attr/role 'dialog)
+                  (cons 'id panel-id)
+                  (cons 'tabindex -1)
+                  (cons 'aria-hidden (if open? "false" "true"))
+                  (cons 'data-we-widget "popover-panel")
+                  (cons 'class (if open? "we-popover-panel is-open" "we-popover-panel"))))
+           (set-dom-node-attrs!
+            backdrop-node
+            (list (cons 'data-we-widget "popover-backdrop")
+                  (cons 'aria-hidden (if open? "false" "true"))
+                  (cons 'class (if open? "we-popover-backdrop is-open" "we-popover-backdrop")))))
+         (define (set-label! label-value)
+           (set-dom-node-text! trigger-node (value->text label-value)))
+         (cond
+           [(obs? raw-label)
+            (set-label! (obs-peek raw-label))
+            (define (listener updated)
+              (set-label! updated))
+            (obs-observe! raw-label listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
+           [else
+            (set-label! raw-label)])
+         (for-each (lambda (child)
+                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                   (view-children v))
+         (backend-append-child! node trigger-node)
+         (backend-append-child! node backdrop-node)
+         (backend-append-child! node panel-node)
+         node]
+        [(card)
+         (define raw-title  (alist-ref (view-props v) 'title  'render))
+         (define raw-footer (alist-ref (view-props v) 'footer 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'group)
+                                      (cons 'data-we-widget "card")
+                                      (cons 'class "we-card"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define body-node (dom-node 'div
+                                     (list (cons 'data-we-widget "card-body")
+                                           (cons 'class "we-card-body"))
+                                     '()
+                                     #f
+                                     #f
+                                     #f))
+         (define title-node #f)
+         (define footer-node #f)
+         ;; refresh-card-structure! : -> void?
+         ;;   Rebuild card children from current title/footer values and body node.
+         (define (refresh-card-structure!)
+           (define title-value  (maybe-observable-value raw-title))
+           (define footer-value (maybe-observable-value raw-footer))
+           (set! title-node
+                 (if (eq? title-value #f)
+                     #f
+                     (dom-node 'div
+                               (list (cons 'data-we-widget "card-header")
+                                     (cons 'class "we-card-header"))
+                               '()
+                               (value->text title-value)
+                               #f
+                               #f)))
+           (set! footer-node
+                 (if (eq? footer-value #f)
+                     #f
+                     (dom-node 'div
+                               (list (cons 'data-we-widget "card-footer")
+                                     (cons 'class "we-card-footer"))
+                               '()
+                               (value->text footer-value)
+                               #f
+                               #f)))
+           (define nodes (append (if title-node (list title-node) '())
+                                 (list body-node)
+                                 (if footer-node (list footer-node) '())))
+           (backend-replace-children! node nodes))
+         (for-each (lambda (child)
+                     (backend-append-child! body-node (build-node child register-cleanup!)))
+                   (view-children v))
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-footer)
+           (define (footer-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-footer footer-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (refresh-card-structure!)
+         node]
+        [(navigation-bar)
+         (define node (dom-node 'nav
+                                (list (cons attr/role 'navigation)
+                                      (cons 'data-we-widget "navigation-bar")
+                                      (cons 'class "we-navigation-bar"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
          node]
         [(menu-bar)
          (define node (dom-node 'menu-bar
