@@ -72,6 +72,8 @@
     (define scrollspy-observers '()) ; Association list mapping scrollspy container native nodes to observer handles.
     (define scrollspy-listeners '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
+    (define menu-typeahead-timeout-ms 700) ; Milliseconds before menu typeahead prefix resets.
+    (define menu-typeahead-state '()) ; Association list mapping popup native nodes to (cons timestamp-ms prefix).
 
     ;; symbol->attr-name : symbol? -> string?
     ;;   Convert attribute symbol key to browser DOM attribute name.
@@ -99,17 +101,25 @@
       (define p (assq key attrs))
       (if p (cdr p) default))
 
-    ;; sync-select-options! : any/c list? -> void?
-    ;;   Replace select children with option nodes for choices.
-    (define (sync-select-options! native choices)
+    ;; sync-select-options! : any/c list? list? -> void?
+    ;;   Replace select children with option nodes for choices/option-pairs.
+    (define (sync-select-options! native choices option-pairs)
       (define fragment (js-create-document-fragment))
-      (for-each (lambda (choice)
+      (define rows
+        (if (null? option-pairs)
+            (map (lambda (choice)
+                   (cons (value->attr-string choice)
+                         (value->attr-string choice)))
+                 choices)
+            option-pairs))
+      (for-each (lambda (row)
                   (define option (js-create-element "option"))
-                  (define s (value->attr-string choice))
-                  (js-set-attribute! option "value" s)
-                  (js-replace-children! option (js-create-text-node s))
+                  (define value-text (car row))
+                  (define label-text (cdr row))
+                  (js-set-attribute! option "value" value-text)
+                  (js-replace-children! option (js-create-text-node label-text))
                   (js-append-child! fragment option))
-                choices)
+                rows)
       (js-replace-children! native fragment))
 
     ;; dialog-open-attr? : list? -> boolean?
@@ -325,12 +335,13 @@
                 (eq? tag 'radios)
                 (eq? tag 'choice))
         (define choices (alist-ref/default attrs 'choices '()))
-        (sync-select-options! native choices))
+        (define option-pairs (alist-ref/default attrs 'option-pairs '()))
+        (sync-select-options! native choices option-pairs))
       (for-each (lambda (a)
                   (define name (car a))
                   (define value (cdr a))
                   (case name
-                    [(choices columns density menu-trigger open)
+                    [(choices option-pairs columns density menu-trigger open)
                      (void)]
                     [(selected)
                      (js-set! native "value" (value->attr-string value))]
@@ -373,6 +384,8 @@
         [(text) "span"]
         [(menu-item) "button"]
         [(button) "button"]
+        [(a) "a"]
+        [(hr) "hr"]
         [(input) "input"]
         [(checkbox) "input"]
         [(choice radios select) "select"]
@@ -715,20 +728,46 @@
               (js-send to-label "focus" (vector)))))))
 
     ;; focus-next-menu-item! : any/c -> void?
-    ;;   Move focus to next item in same popup, clamping at last.
+    ;;   Move focus to next item in same popup, wrapping to first from last.
     (define (focus-next-menu-item! item-native)
       (define next-item (js-ref/extern item-native "nextElementSibling"))
       (if next-item
           (js-send next-item "focus" (vector))
-          (js-send item-native "focus" (vector))))
+          (let ([popup-native (js-ref/extern item-native "parentElement")])
+            (if popup-native
+                (let ([first-item
+                       (js-send/extern/nullish
+                        popup-native
+                        "querySelector"
+                        (vector ".we-menu-item[role='menuitem']"))])
+                  (if first-item
+                      (js-send first-item "focus" (vector))
+                      (js-send item-native "focus" (vector))))
+                (js-send item-native "focus" (vector))))))
 
     ;; focus-prev-menu-item! : any/c -> void?
-    ;;   Move focus to previous item in same popup, clamping at first.
+    ;;   Move focus to previous item in same popup, wrapping to last from first.
     (define (focus-prev-menu-item! item-native)
       (define prev-item (js-ref/extern item-native "previousElementSibling"))
       (if prev-item
           (js-send prev-item "focus" (vector))
-          (js-send item-native "focus" (vector))))
+          (let ([popup-native (js-ref/extern item-native "parentElement")])
+            (if popup-native
+                (let ([item-list
+                       (js-send/extern/nullish
+                        popup-native
+                        "querySelectorAll"
+                        (vector ".we-menu-item[role='menuitem']"))])
+                  (if item-list
+                      (let ([len (nodelist-length item-list)])
+                        (if (> len 0)
+                            (let ([last-item (nodelist-item item-list (- len 1))])
+                              (if last-item
+                                  (js-send last-item "focus" (vector))
+                                  (js-send item-native "focus" (vector))))
+                            (js-send item-native "focus" (vector))))
+                      (js-send item-native "focus" (vector))))
+                (js-send item-native "focus" (vector))))))
 
     ;; focus-own-menu-label! : any/c -> void?
     ;;   Focus top-level menu label for item-native.
@@ -758,26 +797,18 @@
        (js-value->string
         (js-ref/extern node "textContent"))))
 
-    ;; node-first-non-space-char : any/c -> any/c
-    ;;   Return first non-whitespace character from node text or #f.
-    (define (node-first-non-space-char node)
-      (define text (node-text-downcase node))
-      (let loop ([idx 0])
-        (cond
-          [(>= idx (string-length text))
-           #f]
-          [(char-whitespace? (string-ref text idx))
-           (loop (add1 idx))]
-          [else
-           (string-ref text idx)])))
+    ;; node-text-trimmed-downcase : any/c -> string?
+    ;;   Read node textContent as lowercase text with leading/trailing spaces removed.
+    (define (node-text-trimmed-downcase node)
+      (string-trim (node-text-downcase node)))
 
-    ;; menu-item-matches-key? : any/c string? -> boolean?
-    ;;   Check whether item's visible label starts with key (ignoring leading spaces).
-    (define (menu-item-matches-key? item-native key)
-      (define key-ch (char-downcase (string-ref key 0)))
-      (define first-ch (node-first-non-space-char item-native))
-      (and first-ch
-           (char=? first-ch key-ch)))
+    ;; menu-item-matches-query? : any/c string? -> boolean?
+    ;;   Check whether item's visible label starts with query.
+    (define (menu-item-matches-query? item-native query)
+      (define text (node-text-trimmed-downcase item-native))
+      (define query-len (string-length query))
+      (and (>= (string-length text) query-len)
+           (string=? (substring text 0 query-len) query)))
 
     ;; extern-node-same? : any/c any/c -> boolean?
     ;;   Check whether a and b refer to the same DOM node.
@@ -802,8 +833,8 @@
                (loop (add1 idx)))])))
 
     ;; focus-matching-menu-item-from-list! : any/c integer? string? -> boolean?
-    ;;   Focus first item in node-list matching key, scanning from start with wrap.
-    (define (focus-matching-menu-item-from-list! node-list start key)
+    ;;   Focus first item in node-list matching query, scanning from start with wrap.
+    (define (focus-matching-menu-item-from-list! node-list start query)
       (define len (nodelist-length node-list))
       (let loop ([offset 0])
         (cond
@@ -813,15 +844,50 @@
           [else
            (define idx (modulo (+ start offset) len))
            (define item (nodelist-item node-list idx))
-           (if (and item (menu-item-matches-key? item key))
+           (if (and item (menu-item-matches-query? item query))
                (begin
                  (js-send item "focus" (vector))
                  #t)
                (loop (add1 offset)))])))
 
-    ;; focus-matching-menu-item-from-label! : any/c string? -> boolean?
-    ;;   Open label popup (if needed) and focus first matching item for key.
-    (define (focus-matching-menu-item-from-label! label-native key)
+    ;; event-timestamp-ms : any/c -> number?
+    ;;   Return event timestamp in ms, or 0 when unavailable.
+    (define (event-timestamp-ms evt)
+      (define parsed (string->number (js-value->string (js-ref/extern evt "timeStamp"))))
+      (if (number? parsed) parsed 0))
+
+    ;; popup-typeahead-state-ref : any/c -> (or/c pair? false/c)
+    ;;   Return saved (cons timestamp-ms prefix) for popup-native.
+    (define (popup-typeahead-state-ref popup-native)
+      (native-mapping-ref menu-typeahead-state popup-native))
+
+    ;; popup-typeahead-state-set! : any/c number? string? -> void?
+    ;;   Save typeahead state for popup-native.
+    (define (popup-typeahead-state-set! popup-native timestamp-ms prefix)
+      (set! menu-typeahead-state
+            (native-mapping-set menu-typeahead-state popup-native (cons timestamp-ms prefix))))
+
+    ;; popup-typeahead-query! : any/c string? any/c -> string?
+    ;;   Build next prefix query from popup state, key, and timestamp.
+    (define (popup-typeahead-query! popup-native key evt)
+      (define stamp (event-timestamp-ms evt))
+      (define state (popup-typeahead-state-ref popup-native))
+      (define previous-stamp (if state (car state) 0))
+      (define previous-query (if state (cdr state) ""))
+      (define expired? (> (- stamp previous-stamp) menu-typeahead-timeout-ms))
+      (define next-query
+        (if (or expired?
+                (string=? previous-query "")
+                (and (= (string-length previous-query) 1)
+                     (string=? previous-query key)))
+            key
+            (string-append previous-query key)))
+      (popup-typeahead-state-set! popup-native stamp next-query)
+      next-query)
+
+    ;; focus-matching-menu-item-from-label! : any/c string? any/c -> boolean?
+    ;;   Open label popup (if needed) and focus first matching item for key/query.
+    (define (focus-matching-menu-item-from-label! label-native key evt)
       (define expanded
         (js-value->string
          (js-send/extern/nullish label-native "getAttribute" (vector "aria-expanded"))))
@@ -835,13 +901,16 @@
                   "querySelectorAll"
                   (vector ".we-menu-item[role='menuitem']"))])
             (if item-list
-                (focus-matching-menu-item-from-list! item-list 0 key)
+                (focus-matching-menu-item-from-list!
+                 item-list
+                 0
+                 (popup-typeahead-query! popup-native key evt))
                 #f))
           #f))
 
-    ;; focus-matching-menu-item-from-item! : any/c string? -> boolean?
-    ;;   Focus next matching item in same popup for key, wrapping in menu order.
-    (define (focus-matching-menu-item-from-item! item-native key)
+    ;; focus-matching-menu-item-from-item! : any/c string? any/c -> boolean?
+    ;;   Focus next matching item in same popup for key/query, wrapping in menu order.
+    (define (focus-matching-menu-item-from-item! item-native key evt)
       (define popup-native (js-ref/extern item-native "parentElement"))
       (if popup-native
           (let ([item-list
@@ -855,7 +924,10 @@
                        [start (if (and (>= idx 0) (> len 0))
                                   (modulo (add1 idx) len)
                                   0)])
-                  (focus-matching-menu-item-from-list! item-list start key))
+                  (focus-matching-menu-item-from-list!
+                   item-list
+                   start
+                   (popup-typeahead-query! popup-native key evt)))
                 #f))
           #f))
 
@@ -992,7 +1064,7 @@
                  (callback "focusout"))]
               [else
                (when (menu-typeahead-key? key)
-                 (when (focus-matching-menu-item-from-label! native key)
+                 (when (focus-matching-menu-item-from-label! native key evt)
                    (js-send evt "preventDefault" (vector))))]))
           (when (menu-item-node? n)
             (case (string->symbol key)
@@ -1017,7 +1089,7 @@
                (focus-own-menu-label! native)]
               [else
                (when (menu-typeahead-key? key)
-                 (when (focus-matching-menu-item-from-item! native key)
+                 (when (focus-matching-menu-item-from-item! native key evt)
                    (js-send evt "preventDefault" (vector))))]))
           (when (scrollspy-item-node? n)
             (case (string->symbol key)

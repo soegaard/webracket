@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity choice keyboard deep contract</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 340px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running deep parity choice keyboard contract...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-workspace"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-workspace",
+          (d) => Array.from(d.querySelectorAll("button[role='tab']")).some((t) => (t.textContent || "").trim() === "notifications"),
+          20000
+        );
+        const notificationsTab = Array.from(doc.querySelectorAll("button[role='tab']"))
+          .find((t) => (t.textContent || "").trim() === "notifications");
+        H.assertTrue(!!notificationsTab, "notifications tab exists");
+        notificationsTab.click();
+        await H.sleep(100);
+        const select = doc.querySelector("[data-we-widget='choice']");
+        H.assertTrue(!!select, "theme choice exists");
+        const summaryText = function () {
+          return (doc.body.textContent || "");
+        };
+
+        select.focus();
+        await H.sleep(30);
+        select.selectedIndex = select.options.length - 1;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        await H.waitForCondition("theme dark", 1500, function () {
+          return summaryText().includes("theme:dark");
+        });
+
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        await H.waitForCondition("theme system", 1500, function () {
+          return summaryText().includes("theme:system");
+        });
+
+        H.setStatus("PASS\nparity choice deep keyboard: Home/End update workspace theme", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

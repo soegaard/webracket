@@ -34,6 +34,11 @@ html.we-theme-solar {
   --we-focus-tint: rgba(38, 139, 210, 0.24);
   --we-overlay: rgba(0, 19, 24, 0.76);
   --we-shadow: rgba(0, 0, 0, 0.52);
+  /* Menu hover and tab/input specifics for clearer customization examples. */
+  --we-menu-item-hover-bg: #17414e;
+  --we-menu-item-hover-fg: #93a1a1;
+  --we-tab-active-border: #0f3f4d;
+  --we-input-placeholder: #6c8a8f;
 
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -52,11 +57,21 @@ html.we-theme-solar {
 
   background: var(--we-bg);
   color: var(--we-fg);
+  margin: 0;
+  padding: 0;
+}
+
+html.we-theme-solar * {
+  box-sizing: border-box;
 }
 
 html.we-theme-solar body {
   background: var(--we-bg);
   color: var(--we-fg);
+  /* Match demo-theme-showcase typography. */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -72,14 +87,16 @@ html.we-theme-solar textarea {
 html.we-theme-solar input,
 html.we-theme-solar textarea,
 html.we-theme-solar .we-input {
-  background: #073642;
-  border: 1px solid #3f7380;
+  background: var(--we-bg);
+  border: 1px solid var(--we-border);
   color: var(--we-fg);
+  border-radius: 5px;
+  padding: 6px 8px;
 }
 
 html.we-theme-solar input::placeholder,
 html.we-theme-solar textarea::placeholder {
-  color: #7d979a;
+  color: var(--we-input-placeholder);
 }
 
 html.we-theme-solar input:focus-visible,
@@ -93,23 +110,24 @@ html.we-theme-solar .we-input:focus-visible {
 
 html.we-theme-solar button,
 html.we-theme-solar .we-button {
-  background: #0f3a47;
-  border: 1px solid #4c7f89;
-  color: #d4c38a;
-  border-radius: 3px;
+  background: var(--we-bg);
+  border: 1px solid var(--we-border);
+  color: var(--we-fg);
+  border-radius: 4px;
+  padding: 5px 9px;
 }
 
 html.we-theme-solar button:hover,
 html.we-theme-solar .we-button:hover {
-  background: #154654;
-  border-color: #6a9ca6;
-  color: #e0cf98;
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar button:active,
 html.we-theme-solar .we-button:active {
-  background: #0d3340;
-  border-color: #7aa8b0;
+  background: var(--we-bg-selected);
+  border-color: var(--we-border-soft);
 }
 
 html.we-theme-solar button:focus-visible,
@@ -121,45 +139,57 @@ html.we-theme-solar .we-button:focus-visible {
 
 /* Button variants used by the public showcase page. */
 html.we-theme-solar .we-button-primary {
-  background: #b58900;
-  border-color: #c79b19;
-  color: #002b36;
+  background: var(--we-bg-selected);
+  border-color: var(--we-border-strong);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar .we-button-primary:hover {
-  background: #c79b19;
-  border-color: #d6ab30;
-  color: #001e26;
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-soft);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar .we-button-secondary {
-  background: #1a4753;
-  border-color: #4e818c;
-  color: #b9c9c9;
+  background: var(--we-bg-subtle);
+  border-color: var(--we-border-soft);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar .we-button-secondary:hover {
-  background: #215463;
-  border-color: #62939d;
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
 }
 
 html.we-theme-solar .we-button-ghost {
   background: transparent;
-  border-color: #3a7480;
-  color: #8eb2b6;
+  border-color: var(--we-border);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar .we-button-ghost:hover {
-  background: rgba(42, 161, 152, 0.14);
-  border-color: #5a9099;
-  color: #afd0d3;
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar select,
 html.we-theme-solar .we-choice {
-  background: #073642;
-  border: 1px solid #3f7380;
+  background: var(--we-bg);
+  border: 1px solid var(--we-border);
   color: var(--we-fg);
+  border-radius: 5px;
+  padding: 6px 30px 6px 8px;
+  line-height: 1.2;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--we-fg-muted) 50%),
+    linear-gradient(135deg, var(--we-fg-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 13px) calc(50% - 1px),
+    calc(100% - 8px) calc(50% - 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }
 
 html.we-theme-solar select option {
@@ -177,12 +207,12 @@ html.we-theme-solar .we-close-button-icon::before {
 html.we-theme-solar .we-menu-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: 6px;
   align-items: center;
-  padding: 2px 4px;
+  padding: 5px;
   border: 1px solid var(--we-border-menu);
-  border-radius: 4px;
-  background: #073642;
+  border-radius: 5px;
+  background: var(--we-bg-subtle);
   box-sizing: border-box;
 }
 
@@ -192,10 +222,10 @@ html.we-theme-solar .we-menu {
 }
 
 html.we-theme-solar .we-menu-label {
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  background: transparent;
+  padding: 5px 9px;
+  border: 1px solid var(--we-border);
+  border-radius: 4px;
+  background: var(--we-bg);
   color: var(--we-fg);
 }
 
@@ -213,16 +243,17 @@ html.we-theme-solar .we-menu-label[aria-expanded='true'] {
 
 html.we-theme-solar .we-menu-popup {
   position: absolute;
-  top: calc(100% + 2px);
+  top: calc(100% + 4px);
   left: 0;
-  min-width: 160px;
+  min-width: 150px;
   display: none;
   flex-direction: column;
-  padding: 2px;
+  gap: 4px;
+  padding: 4px;
   border: 1px solid var(--we-border-menu);
-  border-radius: 4px;
-  background: #073642;
-  box-shadow: 0 4px 12px var(--we-shadow);
+  border-radius: 6px;
+  background: var(--we-bg);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
   z-index: 1000;
 }
 
@@ -234,15 +265,16 @@ html.we-theme-solar .we-menu-item {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 2px 8px;
-  border: none;
-  border-radius: 3px;
-  background: #073642;
+  padding: 5px 9px;
+  border: 1px solid var(--we-border);
+  border-radius: 4px;
+  background: var(--we-bg);
   color: var(--we-fg);
 }
 
 html.we-theme-solar .we-menu-item:hover {
-  background: var(--we-bg-hover);
+  background: var(--we-menu-item-hover-bg);
+  color: var(--we-menu-item-hover-fg);
 }
 
 html.we-theme-solar .we-menu-label:focus-visible,
@@ -264,37 +296,42 @@ html.we-theme-solar .we-menu-item:focus-visible {
 html.we-theme-solar .we-tab-list,
 html.we-theme-solar .tab-row {
   display: flex;
-  gap: 2px;
-  align-items: flex-end;
-  border-bottom: 1px solid #2aa198;
-  background: #073642;
-  padding: 6px 6px 0 6px;
+  gap: 4px;
+  align-items: center;
+  border-bottom: 1px solid var(--we-border-soft);
+  background: var(--we-bg-subtle);
+  padding: 6px;
 }
 
 html.we-theme-solar .we-tab-btn,
 html.we-theme-solar .tab-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  border-bottom-color: transparent;
-  border-radius: 4px 4px 0 0;
-  color: #93a1a1;
-  padding: 6px 10px;
+  background: var(--we-bg);
+  border: 1px solid var(--we-border);
+  border-radius: 4px;
+  color: var(--we-fg);
+  padding: 5px 9px;
 }
 
 html.we-theme-solar .we-tab-btn:hover,
 html.we-theme-solar .tab-btn:hover {
-  background: #0f3f4d;
-  color: #d0dbdb;
+  background: var(--we-bg-hover);
+  color: var(--we-fg);
 }
 
 html.we-theme-solar .we-tab-btn[aria-selected='true'],
 html.we-theme-solar .tab-btn[aria-selected='true'] {
-  background: #002b36;
-  border-color: #2aa198;
-  border-bottom-color: #002b36;
-  color: #e4d6a6;
-  position: relative;
-  top: 1px;
+  background: var(--we-bg-selected);
+  border-color: var(--we-border-strong);
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-tab-btn:focus-visible,
+html.we-theme-solar .tab-btn:focus-visible,
+html.we-theme-solar .we-page-btn:focus-visible,
+html.we-theme-solar .we-breadcrumb-item:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
 }
 
 html.we-theme-solar .we-group {
@@ -312,38 +349,67 @@ html.we-theme-solar .we-dialog-panel {
 html.we-theme-solar .we-table,
 html.we-theme-solar .we-table th,
 html.we-theme-solar .we-table td {
-  border-color: var(--we-border-muted);
+  border-color: var(--we-border-soft);
+}
+
+html.we-theme-solar .we-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+html.we-theme-solar .we-table th,
+html.we-theme-solar .we-table td {
+  padding: 6px 8px;
+  text-align: left;
+}
+
+html.we-theme-solar .we-table th {
+  background: var(--we-bg-subtle);
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-table td {
+  background: var(--we-bg);
 }
 
 /* -------------------------------------------------------------------------- */
 /* 5) Alerts / Toasts / Progress / List group                                   */
 /* -------------------------------------------------------------------------- */
 html.we-theme-solar .we-alert {
-  border-color: #4e818c;
-  background: #073642;
+  border: 1px solid var(--we-border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  background: var(--we-bg-subtle);
 }
 
 html.we-theme-solar .we-alert-success,
 html.we-theme-solar .we-toast-success {
-  border-color: #7da52b;
-  background: #183b26;
+  border-color: #6a9b73;
+  background: var(--we-bg-subtle);
 }
 
 html.we-theme-solar .we-alert-warn,
 html.we-theme-solar .we-toast-warn {
-  border-color: #b58900;
-  background: #3a3214;
+  border-color: #b79256;
+  background: var(--we-bg-subtle);
 }
 
 html.we-theme-solar .we-alert-error,
 html.we-theme-solar .we-toast-error {
-  border-color: #d65a57;
-  background: #3d1d22;
+  border-color: #b25a5a;
+  background: var(--we-bg-subtle);
 }
 
 html.we-theme-solar .we-toast {
-  border-color: #4e818c;
-  background: #073642;
+  border-color: var(--we-border);
+  background: var(--we-bg);
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   box-shadow: 0 8px 22px var(--we-shadow);
 }
 
@@ -352,17 +418,92 @@ html.we-theme-solar progress {
 }
 
 html.we-theme-solar .we-list-group-item {
-  background: #073642;
-  border-color: var(--we-border-muted);
+  padding: 8px;
+  border-bottom: 1px solid var(--we-border-soft);
+  background: var(--we-bg);
+}
+
+html.we-theme-solar .we-list-group {
+  border: 1px solid var(--we-border-soft);
+  border-radius: 6px;
+  overflow: clip;
 }
 
 html.we-theme-solar .we-list-group-item.is-active {
   background: var(--we-bg-selected);
-  border-color: var(--we-border-strong);
+}
+
+html.we-theme-solar .we-list-group-item:last-child {
+  border-bottom: none;
+}
+
+html.we-theme-solar .we-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--we-border);
+  background: var(--we-bg-subtle);
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 /* -------------------------------------------------------------------------- */
-/* 6) Accordion                                                                 */
+/* 6) Breadcrumb                                                                */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar .we-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+html.we-theme-solar .we-breadcrumb-item {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--we-fg);
+  padding: 0;
+}
+
+html.we-theme-solar .we-breadcrumb-item:hover {
+  background: transparent;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .we-breadcrumb-item.is-current {
+  background: transparent;
+  border: none;
+  color: var(--we-fg);
+  text-decoration: none;
+}
+
+html.we-theme-solar .we-breadcrumb-sep {
+  color: var(--we-fg-muted);
+  opacity: 1;
+  padding: 0;
+}
+
+html.we-theme-solar .we-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--we-border-soft);
+  border-top-color: var(--we-border-strong);
+  border-radius: 50%;
+  animation: spin .9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 7) Accordion                                                                 */
 /* -------------------------------------------------------------------------- */
 html.we-theme-solar .we-accordion-item {
   border: 1px solid #2f6671;
@@ -403,4 +544,237 @@ html.we-theme-solar .we-accordion-trigger.is-open::after {
 html.we-theme-solar .we-accordion-content {
   background: #073642;
   color: var(--we-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 8) Theme Showcase Page Layout (for generated/example-browser-theme-showcase) */
+/* -------------------------------------------------------------------------- */
+/* This section styles only the showcase demo classes added via with-class. */
+html.we-theme-solar .showcase-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 28px 0;
+  gap: 14px;
+}
+
+/* Sticky topbar card to mimic the demo page header feel. */
+html.we-theme-solar .showcase-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: var(--we-bg-subtle);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid #8ec3cb;
+}
+
+html.we-theme-solar .showcase-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--we-border-soft);
+  pointer-events: none;
+}
+
+/* Remove card framing so topbar reads as a full-width header band. */
+html.we-theme-solar .showcase-topbar.we-card {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  border-radius: 0;
+}
+
+html.we-theme-solar .showcase-topbar .we-card-body {
+  background: var(--we-bg-subtle);
+  gap: 0;
+  padding: 10px 14px;
+}
+
+html.we-theme-solar .showcase-topbar-inner.we-inline {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+html.we-theme-solar .showcase-brand.we-stack {
+  gap: 2px;
+}
+
+html.we-theme-solar .showcase-brand-title {
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .showcase-brand-subtitle {
+  font-size: 12px;
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-solar .showcase-topbar-controls.we-stack {
+  align-items: flex-start;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+html.we-theme-solar .showcase-controls-label {
+  font-weight: 600;
+  color: var(--we-fg);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+html.we-theme-solar .showcase-theme-choice.we-choice {
+  min-width: 170px;
+  width: 170px;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+html.we-theme-solar .showcase-controls-download-row.we-toolbar {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html.we-theme-solar .showcase-topbar-controls .we-choice,
+html.we-theme-solar .showcase-link-button.we-button,
+html.we-theme-solar .showcase-link-button.we-link {
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+html.we-theme-solar .showcase-link-button.we-button,
+html.we-theme-solar .showcase-link-button.we-link {
+  background: var(--we-bg);
+  border-color: var(--we-border);
+  color: var(--we-fg);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+html.we-theme-solar .showcase-link-button.we-button:hover,
+html.we-theme-solar .showcase-link-button.we-link:hover {
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
+  color: var(--we-fg);
+}
+
+/* Hero card under the topbar. */
+html.we-theme-solar .showcase-hero {
+  margin-top: 0;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: var(--we-bg-subtle);
+  border-bottom: 1px solid var(--we-border-soft);
+}
+
+html.we-theme-solar .showcase-hero.we-card {
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent;
+  padding: 14px;
+}
+
+html.we-theme-solar .showcase-hero .we-card-header {
+  background: transparent;
+  border-bottom-color: transparent;
+  color: var(--we-fg);
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0 0 6px 0;
+  border-bottom: none;
+}
+
+html.we-theme-solar .showcase-hero .we-card-body {
+  background: transparent;
+  color: var(--we-fg-muted);
+  line-height: 1.5;
+  width: 100%;
+  padding: 0;
+  gap: 6px;
+}
+
+html.we-theme-solar .showcase-hero-title {
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--we-fg);
+}
+
+html.we-theme-solar .showcase-hero-lead {
+  color: var(--we-fg-muted);
+  line-height: 1.5;
+}
+
+html.we-theme-solar .showcase-main {
+  width: min(1200px, calc(100vw - 28px));
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 14px 0 14px;
+  gap: 12px;
+}
+
+/* Grid rows: wrap cards as viewport changes, similar to demo cards grid. */
+html.we-theme-solar .showcase-grid-row.we-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+html.we-theme-solar .showcase-grid-row .showcase-card.we-card {
+  min-width: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border-color: var(--we-border-soft);
+  background: var(--we-bg);
+}
+
+html.we-theme-solar .showcase-card .we-card-header {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+  background: var(--we-bg-subtle);
+  color: var(--we-fg-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--we-border-soft);
+}
+
+html.we-theme-solar .showcase-card .we-card-body {
+  display: grid;
+  padding: 10px;
+  gap: 8px;
+  background: var(--we-bg);
+}
+
+/* Keep grouped button rows visually compact and aligned. */
+html.we-theme-solar .showcase-button-row.we-inline {
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Forms card placeholder text should read as muted helper text, not disabled content. */
+html.we-theme-solar .showcase-card .we-input::placeholder {
+  color: var(--we-fg-muted);
+  opacity: 1;
 }

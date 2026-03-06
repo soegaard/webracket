@@ -52,6 +52,13 @@ html.we-theme-light {
   --we-overlay: rgba(0, 0, 0, 0.45);
   /* Drop shadow color. */
   --we-shadow: rgba(0, 0, 0, 0.28);
+  /* Menu item hover colors (separate from general hover for fine tuning). */
+  --we-menu-item-hover-bg: #e8e8e8;
+  --we-menu-item-hover-fg: #1a1f2b;
+  /* Active tab bottom border color. */
+  --we-tab-active-border: #e7f0ff;
+  /* Input/textarea placeholder text color. */
+  --we-input-placeholder: #6f7f99;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -67,11 +74,17 @@ html.we-theme-light {
 /* Page background and default text. */
 html.we-theme-light {
   background: var(--we-bg);
+  margin: 0;
+  padding: 0;
 }
 
 html.we-theme-light body {
   background: var(--we-bg);
   color: var(--we-fg);
+  /* Match demo-theme-showcase typography. */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -152,7 +165,8 @@ html.we-theme-light .we-menu-item {
 }
 
 html.we-theme-light .we-menu-item:hover {
-  background: var(--we-bg-hover);
+  background: var(--we-menu-item-hover-bg);
+  color: var(--we-menu-item-hover-fg);
 }
 
 html.we-theme-light .we-menu-label:focus-visible,
@@ -196,7 +210,7 @@ html.we-theme-light .we-input {
 
 html.we-theme-light input::placeholder,
 html.we-theme-light textarea::placeholder {
-  color: #6f7f99;
+  color: var(--we-input-placeholder);
 }
 
 html.we-theme-light input:focus-visible,
@@ -483,3 +497,177 @@ html.we-theme-light .we-accordion-trigger.is-open::after {
  * When creating your own theme, prefer changing variables first. If you later
  * need component-specific styling, add new blocks below this line.
  */
+
+/* -------------------------------------------------------------------------- */
+/* 8) Theme Showcase Page Layout (for generated/example-browser-theme-showcase) */
+/* -------------------------------------------------------------------------- */
+html.we-theme-light .showcase-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 14px 14px 14px;
+  gap: 14px;
+}
+
+/* Sticky topbar card to mimic the demo page header feel. */
+html.we-theme-light .showcase-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  border-bottom: 1px solid var(--we-border-soft);
+}
+
+/* Remove card framing so topbar reads as a full-width header band. */
+html.we-theme-light .showcase-topbar.we-card {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  border-radius: 0;
+}
+
+html.we-theme-light .showcase-topbar .we-card-body {
+  background: #f3f3f3;
+  gap: 0;
+  padding: 12px 14px;
+}
+
+html.we-theme-light .showcase-topbar-inner.we-inline {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+html.we-theme-light .showcase-brand.we-stack {
+  gap: 3px;
+}
+
+html.we-theme-light .showcase-brand-title {
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+
+html.we-theme-light .showcase-brand-subtitle {
+  font-size: 12px;
+  color: #777777;
+}
+
+html.we-theme-light .showcase-topbar-controls.we-stack {
+  align-items: stretch;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+html.we-theme-light .showcase-controls-download-row.we-toolbar {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html.we-theme-light .showcase-controls-label {
+  font-weight: 600;
+}
+
+html.we-theme-light .showcase-theme-choice.we-choice {
+  min-width: 170px;
+  width: 170px;
+}
+
+html.we-theme-light .showcase-topbar-controls .we-choice,
+html.we-theme-light .showcase-link-button.we-button,
+html.we-theme-light .showcase-link-button.we-link {
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+html.we-theme-light .showcase-link-button.we-button,
+html.we-theme-light .showcase-link-button.we-link {
+  background: var(--we-bg);
+  border-color: var(--we-border);
+  color: var(--we-fg);
+  text-decoration: none;
+}
+
+html.we-theme-light .showcase-link-button.we-button:hover,
+html.we-theme-light .showcase-link-button.we-link:hover {
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
+  color: var(--we-fg);
+}
+
+/* Hero card under the topbar. */
+html.we-theme-light .showcase-hero {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: 16px;
+}
+
+html.we-theme-light .showcase-hero.we-card {
+  border-radius: 10px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.we-theme-light .showcase-hero .we-card-header {
+  background: #f3f3f3;
+  border-bottom-color: #f3f3f3;
+  color: #1a1f2b;
+  font-size: 23px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+html.we-theme-light .showcase-hero .we-card-body {
+  background: #ffffff;
+  color: #4f607a;
+  line-height: 1.45;
+  width: 100%;
+  padding-top: 8px;
+  padding-bottom: 14px;
+}
+
+html.we-theme-light .showcase-hero-title {
+  font-size: 23px;
+  color: #1a1f2b;
+}
+
+html.we-theme-light .showcase-hero-lead {
+  color: #777777;
+  line-height: 1.5;
+}
+
+/* Grid rows: wrap cards as viewport changes, similar to demo cards grid. */
+html.we-theme-light .showcase-grid-row.we-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+html.we-theme-light .showcase-grid-row .showcase-card.we-card {
+  min-width: 0;
+}
+
+html.we-theme-light .showcase-card .we-card-header {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+}
+
+html.we-theme-light .showcase-card .we-card-body {
+  gap: 8px;
+}
+
+/* Keep grouped button rows visually compact and aligned. */
+html.we-theme-light .showcase-button-row.we-inline {
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}

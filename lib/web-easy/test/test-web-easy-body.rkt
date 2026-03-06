@@ -39,6 +39,17 @@
            child
            (loop (cdr children)))])))
 
+(define (node-child-by-widget n widget)
+  (let loop ([children (dom-node-children n)])
+    (cond
+      [(null? children)
+       (error 'node-child-by-widget "missing child data-we-widget")]
+      [else
+       (define child (car children))
+       (if (equal? (node-attr child 'data-we-widget) widget)
+           child
+           (loop (cdr children)))])))
+
 ;; obs-update notifies observers
 (define o (obs 0))
 (define seen '())
@@ -140,6 +151,38 @@
 (check-equal (node-attr hpanel-node 'data-we-widget) "hpanel" "hpanel data-we-widget attr")
 (check-equal (node-attr hpanel-node 'class) "we-hpanel" "hpanel base class")
 
+;; layout primitives render expected widget/class attrs and basic structure
+(define r-layout-primitives
+  (render
+   (window
+    (container
+     (stack
+      (inline
+       (text "left")
+       (spacer 2)
+       (text "right"))
+      (grid 2
+            (text "a")
+            (text "b")))))))
+(define container-node (node-child (renderer-root r-layout-primitives) 0))
+(define stack-layout-node (node-child container-node 0))
+(define inline-layout-node (node-child stack-layout-node 0))
+(define grid-layout-node (node-child stack-layout-node 1))
+(define spacer-layout-node (node-child inline-layout-node 1))
+(check-equal (node-attr container-node 'data-we-widget) "container" "container data-we-widget attr")
+(check-equal (node-attr container-node 'class) "we-container" "container class")
+(check-equal (node-attr stack-layout-node 'data-we-widget) "stack" "stack data-we-widget attr")
+(check-equal (node-attr stack-layout-node 'class) "we-stack" "stack class")
+(check-equal (node-attr inline-layout-node 'data-we-widget) "inline" "inline data-we-widget attr")
+(check-equal (node-attr inline-layout-node 'class) "we-inline" "inline class")
+(check-equal (node-attr grid-layout-node 'data-we-widget) "grid" "grid data-we-widget attr")
+(check-equal (node-attr grid-layout-node 'class) "we-grid" "grid class")
+(check-equal (node-attr spacer-layout-node 'data-we-widget) "spacer" "spacer data-we-widget attr")
+(check-equal (node-attr spacer-layout-node 'class) "we-spacer" "spacer class")
+(check-equal (node-attr spacer-layout-node 'style) "flex-grow:2;" "spacer grow style")
+(check-equal (node-attr grid-layout-node 'style) "--we-grid-columns:repeat(2,minmax(0,1fr));" "grid columns style")
+(check-equal (length (dom-node-children grid-layout-node)) 2 "grid child count")
+
 ;; navigation-bar renders navigation container with child actions
 (define r-navigation-bar
   (render
@@ -151,6 +194,102 @@
 (check-equal (node-attr navigation-bar-node 'data-we-widget) "navigation-bar" "navigation-bar data-we-widget attr")
 (check-equal (node-attr navigation-bar-node 'class) "we-navigation-bar" "navigation-bar base class")
 (check-equal (node-attr navigation-bar-node 'role) 'navigation "navigation-bar role attr")
+
+;; close-button renders class/aria semantics and action callback
+(define @close-count (@ 0))
+(define r-close-button
+  (render
+   (window
+    (vpanel
+     (close-button (lambda ()
+                     (:= @close-count (+ (obs-peek @close-count) 1)))
+                   "Close panel")))))
+(define close-button-node (node-child (node-child (renderer-root r-close-button) 0) 0))
+(check-equal (node-attr close-button-node 'data-we-widget) "close-button" "close-button data-we-widget attr")
+(check-equal (node-attr close-button-node 'class) "we-close-button" "close-button class")
+(check-equal (node-attr close-button-node 'aria-label) "Close panel" "close-button aria-label")
+(dom-node-click! close-button-node)
+(check-equal (obs-peek @close-count) 1 "close-button action callback")
+
+;; placeholder renders shape classes and width attribute from observables
+(define @placeholder-shape (@ 'text))
+(define @placeholder-width (@ "10em"))
+(define r-placeholder
+  (render
+   (window
+    (vpanel
+     (placeholder @placeholder-shape @placeholder-width)))))
+(define placeholder-node (node-child (node-child (renderer-root r-placeholder) 0) 0))
+(check-equal (node-attr placeholder-node 'data-we-widget) "placeholder" "placeholder data-we-widget attr")
+(check-equal (node-attr placeholder-node 'width) "10em" "placeholder width attr")
+(check-equal (node-attr placeholder-node 'class) "we-placeholder we-placeholder-text" "placeholder initial class")
+(:= @placeholder-shape 'circle)
+(check-equal (node-attr placeholder-node 'class) "we-placeholder we-placeholder-circle" "placeholder circle class")
+
+;; offcanvas toggles open class and side class from observables
+(define @off-open (@ #f))
+(define @off-side (@ 'end))
+(define r-offcanvas
+  (render
+   (window
+    (vpanel
+     (offcanvas @off-open
+                (lambda ()
+                  (:= @off-open #f))
+                @off-side
+                (text "body"))))))
+(define off-root-node (node-child (node-child (renderer-root r-offcanvas) 0) 0))
+(define off-panel-node (node-child-by-widget off-root-node "offcanvas-panel"))
+(check-equal (node-attr off-root-node 'class) "we-offcanvas" "offcanvas initial class")
+(check-equal (node-attr off-panel-node 'class) "we-offcanvas-panel is-end" "offcanvas panel initial side")
+(:= @off-open #t)
+(check-equal (node-attr off-root-node 'class) "we-offcanvas is-open" "offcanvas open class")
+(:= @off-side 'start)
+(check-equal (node-attr off-panel-node 'class) "we-offcanvas-panel is-start" "offcanvas panel start side")
+
+;; carousel updates index via prev/next button actions
+(define @carousel-index (@ 0))
+(define carousel-items
+  (list (list 0 "a" (text "A"))
+        (list 1 "b" (text "B"))
+        (list 2 "c" (text "C"))))
+(define r-carousel
+  (render
+   (window
+    (vpanel
+     (carousel carousel-items
+               @carousel-index
+               (lambda (next-index)
+                 (:= @carousel-index next-index)))))))
+(define carousel-node (node-child (node-child (renderer-root r-carousel) 0) 0))
+(define carousel-controls (node-child-by-widget carousel-node "carousel-controls"))
+(define carousel-next (node-child-by-widget carousel-controls "carousel-next"))
+(dom-node-click! carousel-next)
+(check-equal (obs-peek @carousel-index) 1 "carousel next action")
+
+;; scrollspy marks selected item current and updates via click action
+(define @scroll-current (@ 'home))
+(define scroll-sections
+  (list (list 'home "Home")
+        (list 'docs "Docs")
+        (list 'api "API")))
+(define r-scrollspy
+  (render
+   (window
+    (vpanel
+     (scrollspy scroll-sections
+                @scroll-current
+                (lambda (id)
+                  (:= @scroll-current id)))))))
+(define scrollspy-node (node-child (node-child (renderer-root r-scrollspy) 0) 0))
+(define scrollspy-nav (node-child scrollspy-node 0))
+(define scrollspy-docs (node-child scrollspy-nav 1))
+(dom-node-click! scrollspy-docs)
+(check-equal (obs-peek @scroll-current) 'docs "scrollspy click action")
+(define scrollspy-node/after (node-child (node-child (renderer-root r-scrollspy) 0) 0))
+(define scrollspy-nav/after (node-child scrollspy-node/after 0))
+(define scrollspy-docs/after (node-child scrollspy-nav/after 1))
+(check-equal (node-attr scrollspy-docs/after 'class) "we-scrollspy-item is-current" "scrollspy current class")
 
 ;; button-group renders grouped actions and preserves button callbacks
 (define @group-count (@ 0))
@@ -486,6 +625,7 @@
 (define open-dialog-button (node-child dialog-panel-parent 0))
 (define dialog-node (node-child dialog-panel-parent 1))
 (define dialog-panel-node (node-child dialog-node 0))
+(define dialog-first-text (node-child dialog-panel-node 0))
 (define dialog-status-node (node-child dialog-panel-parent 2))
 (check-equal (dom-node-tag dialog-node) 'dialog "dialog tag")
 (check-equal (node-attr dialog-node 'role) 'dialog "dialog role attr")
@@ -493,6 +633,9 @@
 (check-equal (node-attr dialog-panel-node 'data-we-widget) "dialog-panel" "dialog panel data-we-widget attr")
 (check-equal (node-attr dialog-node 'class) "we-dialog" "dialog initial class")
 (check-equal (node-attr dialog-panel-node 'class) "we-dialog-panel" "dialog panel class")
+(check-equal (node-attr dialog-panel-node 'aria-describedby)
+             (node-attr dialog-first-text 'id)
+             "dialog panel aria-describedby points at first text child id")
 (check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog initially hidden")
 (check-equal (dom-node-text dialog-status-node) "dialog-status:idle" "dialog status initial")
 (dom-node-click! open-dialog-button)
@@ -827,7 +970,7 @@
 (check-equal (node-attr table-header-row 'data-we-widget) "table-row" "table header row data-we-widget attr")
 (check-equal (node-attr table-header-cell 'data-we-widget) "table-header-cell" "table header cell data-we-widget attr")
 (check-equal (node-attr table-node 'class) "we-table we-density-normal" "table normal density class")
-(check-equal (node-attr table-header-cell 'class) "we-table-header-cell we-density-normal" "table header cell normal class")
+(check-equal (node-attr table-header-cell 'class) "we-table-header-cell we-density-normal we-align-left" "table header cell normal class")
 (define (row-cell-texts row-node)
   (map dom-node-text (dom-node-children row-node)))
 (check-equal (map row-cell-texts (dom-node-children table-node))
@@ -841,7 +984,7 @@
 (define table-data-cell (node-child table-data-row 0))
 (check-equal (node-attr table-data-row 'data-we-widget) "table-row" "table data row data-we-widget attr")
 (check-equal (node-attr table-data-cell 'data-we-widget) "table-data-cell" "table data cell data-we-widget attr")
-(check-equal (node-attr table-data-cell 'class) "we-table-data-cell we-density-normal" "table data cell normal class")
+(check-equal (node-attr table-data-cell 'class) "we-table-data-cell we-density-normal we-align-left" "table data cell normal class")
 
 ;; table supports compact density style
 (define r14b
@@ -852,6 +995,29 @@
 (define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
 (check-equal (node-attr table-node-compact 'class) "we-table we-density-compact" "table compact density class")
+
+;; table supports per-column alignment in column specs: (list label align)
+(define r14c
+  (render
+   (window
+    (vpanel
+     (table '(("name" left) ("count" right) ("state" center))
+            '(("alpha" 12 "ok")))))))
+(define table-node-aligned (node-child (node-child (renderer-root r14c) 0) 0))
+(define table-aligned-header-row (node-child table-node-aligned 0))
+(define table-aligned-data-row (node-child table-node-aligned 1))
+(check-equal (node-attr (node-child table-aligned-header-row 0) 'class)
+             "we-table-header-cell we-density-normal we-align-left"
+             "table aligned header left class")
+(check-equal (node-attr (node-child table-aligned-header-row 1) 'class)
+             "we-table-header-cell we-density-normal we-align-right"
+             "table aligned header right class")
+(check-equal (node-attr (node-child table-aligned-header-row 2) 'class)
+             "we-table-header-cell we-density-normal we-align-center"
+             "table aligned header center class")
+(check-equal (node-attr (node-child table-aligned-data-row 1) 'class)
+             "we-table-data-cell we-density-normal we-align-right"
+             "table aligned data cell right class")
 
 ;; observable-view switches rendered child when data changes
 (define @ov (@ "one"))
@@ -1091,7 +1257,7 @@
 (check-equal (node-attr menu-popup-node 'data-we-widget) "menu-popup" "menu popup data-we-widget attr")
 (check-equal (node-attr menu-label-node 'class) "we-menu-label" "menu label base class")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup" "menu popup initial class")
-(check-equal (node-attr menu-label-node 'aria-haspopup) "true" "menu label popup attr")
+(check-equal (node-attr menu-label-node 'aria-haspopup) "menu" "menu label popup attr")
 (check-equal (node-attr menu-label-node 'aria-expanded) "false" "menu initial collapsed attr")
 (check-equal (node-attr menu-item-node 'role) 'menuitem "menu-item role attr")
 (check-equal (node-attr menu-item-node 'tabindex) 0 "menu-item tabindex attr")
@@ -1268,5 +1434,105 @@
 (check-equal (node-texts (dom-node-children nested-list-node))
              '("x" "y")
              "nested if-view/list-view content unchanged after destroy")
+
+;; link renders href and download/target attrs
+(define r23-link
+  (render
+   (window
+    (vpanel
+     (link "download" "/tmp/demo.css" #t "_blank")))))
+(define link-node (node-child (node-child (renderer-root r23-link) 0) 0))
+(check-equal (node-attr link-node 'data-we-widget) "link" "link data-we-widget attr")
+(check-equal (node-attr link-node 'class) "we-link" "link class")
+(check-equal (node-attr link-node 'href) "/tmp/demo.css" "link href attr")
+(check-equal (node-attr link-node 'download) "download" "link download attr")
+(check-equal (node-attr link-node 'target) "_blank" "link target attr")
+(check-equal (dom-node-text link-node) "download" "link label text")
+
+;; toolbar/toolbar-group/divider render expected classes and attrs
+(define r24-layout
+  (render
+   (window
+    (vpanel
+     (toolbar
+      (toolbar-group
+       (button "a" (lambda () (void))))
+      (divider 'vertical)
+      (toolbar-group
+       (button "b" (lambda () (void)))))))))
+(define toolbar-node (node-child (node-child (renderer-root r24-layout) 0) 0))
+(define toolbar-group-left (node-child toolbar-node 0))
+(define divider-node (node-child toolbar-node 1))
+(check-equal (node-attr toolbar-node 'data-we-widget) "toolbar" "toolbar data-we-widget attr")
+(check-equal (node-attr toolbar-node 'class) "we-toolbar" "toolbar class")
+(check-equal (node-attr toolbar-group-left 'data-we-widget) "toolbar-group" "toolbar-group data-we-widget attr")
+(check-equal (node-attr divider-node 'data-we-widget) "divider" "divider data-we-widget attr")
+(check-equal (node-attr divider-node 'aria-orientation) "vertical" "divider vertical orientation")
+
+;; input supports direct attrs list on constructor
+(define r25-input
+  (render
+   (window
+    (vpanel
+     (input "alice"
+            (lambda (_v) (void))
+            #f
+            '((placeholder "Your name")
+              (autocomplete "name")))))))
+(define input-node-attrs (node-child (node-child (renderer-root r25-input) 0) 0))
+(check-equal (node-attr input-node-attrs 'placeholder) "Your name" "input placeholder attr")
+(check-equal (node-attr input-node-attrs 'autocomplete) "name" "input autocomplete attr")
+
+;; choice supports (id label) entries and decodes change selection back to id.
+(define @role-selected (@ 'admin))
+(define @role-last (@ 'none))
+(define r26-choice
+  (render
+   (window
+    (vpanel
+     (choice '((admin "Admin")
+               (editor "Editor"))
+             @role-selected
+             (lambda (v)
+               (:= @role-last v)))))))
+(define choice-node-labeled (node-child (node-child (renderer-root r26-choice) 0) 0))
+(check-equal (node-attr choice-node-labeled 'selected) 'admin "choice selected keeps raw id value")
+(dom-node-select! choice-node-labeled "editor")
+(check-equal (obs-peek @role-last) 'editor "choice decodes selected id from label mapping")
+
+;; button and menu-item icon slots render icon children.
+(define r27-icons
+  (render
+   (window
+    (vpanel
+     (button "Save" (lambda () (void)) "💾" "›")
+     (menu-bar
+      (menu "File"
+            (menu-item "Open" (lambda () (void)) "📂" "›")))))))
+(define icon-button-node (node-child (node-child (renderer-root r27-icons) 0) 0))
+(define icon-menu-item-node (node-child-by-widget (node-child-by-widget (node-child (node-child (renderer-root r27-icons) 0) 1) "menu") "menu-popup"))
+(define icon-menu-item-child (node-child icon-menu-item-node 0))
+(check-equal (length (dom-node-children icon-button-node)) 3 "button icon slots add leading + label + trailing nodes")
+(check-equal (node-attr (node-child icon-button-node 0) 'data-we-widget) "button-icon" "button leading icon widget")
+(check-equal (length (dom-node-children icon-menu-item-child)) 3 "menu-item icon slots add leading + label + trailing nodes")
+
+;; card variants attach variant classes and headerless suppresses header node.
+(define r28-card
+  (render
+   (window
+    (vpanel
+     (card "T" "F" '(compact flat headerless)
+           (text "body"))))))
+(define card-node-variants (node-child (node-child (renderer-root r28-card) 0) 0))
+(check-equal (node-attr card-node-variants 'class) "we-card we-card-compact we-card-flat" "card variants class")
+(check-equal (length (dom-node-children card-node-variants)) 2 "headerless card renders body + footer only")
+
+;; theme-token runtime API stores and returns token values.
+(theme-token-set! 'we-bg "#111111")
+(check-equal (theme-token-ref 'we-bg) "#111111" "theme-token set/ref single value")
+(theme-token-set-many! '((we-fg . "#eeeeee")
+                         (we-border . "#333333")))
+(check-equal (theme-token-ref 'we-fg) "#eeeeee" "theme-token set-many fg")
+(check-equal (theme-token-ref 'we-border) "#333333" "theme-token set-many border")
 
 (displayln "web-easy tests passed")

@@ -64,7 +64,11 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Deep keyboard contracts only | `./headless.sh deep` |
 | Style-hook contracts only (direct script) | `./check-style-headless.sh` |
 | Theme token smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-contract.html` |
+| Theme token API smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-api.html` |
+| Theme token API contract page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-api-contract.html` |
+| Layout primitives smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-layout-primitives.html` |
 | Theme-only dashboard headless | `./headless.sh theme` |
+| Demo-vs-generated showcase diff | `./check-theme-showcase-diff.sh` |
 | Compile smoke artifacts only | `./smoke.sh check` |
 | Run headless timing snapshot | `./headless.sh timings` |
 | Serve local smoke pages | `./smoke.sh open` |
@@ -73,6 +77,10 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Deep keyboard contract (scrollspy, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-scrollspy-keyboard-deep.html` |
 | Deep keyboard contract (dropdown, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dropdown-keyboard-deep.html` |
 | Deep keyboard contract (dropdown, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dropdown-keyboard-deep.html` |
+| Deep keyboard contract (choice, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-choice-keyboard-deep.html` |
+| Deep keyboard contract (choice, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-choice-keyboard-deep.html` |
+| Dynamic tab ARIA contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tab-aria-dynamic-contract.html` |
+| Dynamic tab ARIA contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-tab-aria-dynamic-contract.html` |
 
 ## Make Targets
 
@@ -114,9 +122,41 @@ Available utility commands:
 - Generated browser artifacts are written to `smoke/generated/`.
 - Core smoke pages compile via `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile via `example-browser-parity-all.rkt` selected by `?test=...`.
+- Repeated iframe harness helpers are centralized in `smoke-harness.js` for new/updated pages.
+
+## Layout Recipes Demo
+
+- Manual recipes page:
+  - `demo-layout-recipes.html`
+- Recipes currently include:
+  - primitives baseline (`layout-primitives`)
+  - width policy reference (`width`)
+  - realistic workspace composition (`parity-workspace`)
 - Dedicated progress pages:
   - `test-browser-progress.html` (`?test=progress`)
   - `test-browser-parity-progress.html` (`?test=parity-progress`)
+- Dedicated layout smoke page:
+  - `test-browser-layout-primitives.html` (`?test=layout-primitives`)
+- Dedicated component API smoke pages:
+  - `test-browser-link.html` (`?test=link`)
+  - `test-browser-toolbar.html` (`?test=toolbar`)
+  - `test-browser-divider.html` (`?test=divider`)
+  - `test-browser-choice-labeled.html` (`?test=choice-labeled`)
+  - `test-browser-dropdown-labeled.html` (`?test=dropdown-labeled`)
+  - `test-browser-button-icons.html` (`?test=button-icons`)
+  - `test-browser-menu-icons.html` (`?test=menu-icons`)
+  - `test-browser-card-variants.html` (`?test=card-variants`)
+  - `test-browser-theme-token-api.html` (`?test=theme-token-api`)
+- Dedicated component API contract pages:
+  - `test-browser-link-contract.html`
+  - `test-browser-toolbar-contract.html`
+  - `test-browser-divider-contract.html`
+  - `test-browser-choice-labeled-contract.html`
+  - `test-browser-dropdown-labeled-contract.html`
+  - `test-browser-button-icons-contract.html`
+  - `test-browser-menu-icons-contract.html`
+  - `test-browser-card-variants-contract.html`
+  - `test-browser-theme-token-api-contract.html`
 - `check-smoke.sh` compiles:
   - `smoke-all`
   - `visual-check`
@@ -137,6 +177,7 @@ Smoke pages:
 - `test-browser-theme-menu-vars.html`
 - `test-browser-theme-progress-vars.html`
 - `test-browser-theme-token-contract.html`
+- `test-browser-theme-token-api-contract.html`
 - `test-browser-theme-external-css-contract.html`
 - `test-browser-parity-theme-vars.html`
 - `test-browser-parity-theme-dialog-vars.html`

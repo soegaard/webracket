@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy tab aria dynamic contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 360px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running tab aria dynamic contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=tab-panel-dynamic"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=tab-panel-dynamic",
+          (d) => d.querySelectorAll("button[role='tab']").length >= 2 && d.querySelector("[role='tabpanel']"),
+          20000
+        );
+
+        function checkAria() {
+          const tabs = Array.from(doc.querySelectorAll("button[role='tab']"));
+          const panel = doc.querySelector("[role='tabpanel']");
+          H.assertTrue(!!panel, "tabpanel exists");
+          H.assertTrue(tabs.length >= 1, "at least one tab exists");
+          const selected = tabs.filter((tab) => tab.getAttribute("aria-selected") === "true");
+          H.assertTrue(selected.length === 1, "exactly one selected tab");
+          const selectedTab = selected[0];
+          const panelId = panel.id;
+          H.assertTrue(!!panelId, "tabpanel id present");
+          tabs.forEach(function (tab, idx) {
+            H.assertEqual(tab.getAttribute("aria-controls"), panelId, "tab aria-controls points at panel [" + idx + "]");
+          });
+          H.assertEqual(panel.getAttribute("aria-labelledby"), selectedTab.id, "tabpanel labelledby selected tab id");
+        }
+
+        checkAria();
+
+        const addFaq = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "add-faq");
+        H.assertTrue(!!addFaq, "add-faq button exists");
+        addFaq.click();
+        await H.sleep(80);
+        checkAria();
+
+        const removeSelected = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "remove-selected");
+        H.assertTrue(!!removeSelected, "remove-selected button exists");
+        removeSelected.click();
+        await H.sleep(80);
+        checkAria();
+
+        H.setStatus("PASS\ntab dynamic contract: aria-controls/labelledby remain valid across add/remove", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

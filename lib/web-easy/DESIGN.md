@@ -141,6 +141,7 @@ Planned target:
 - Core views:
   - `window` (mapped to root container node)
   - `hpanel`, `vpanel`, `group`, `button-group`, `button-toolbar`, `card`, `navigation-bar`
+  - `container`, `grid`, `stack`, `inline`
   - `text`
   - `spinner`
   - `button`
@@ -180,11 +181,19 @@ Implemented now:
   - `window`
   - `hpanel`
   - `vpanel`
+  - `container`
+  - `grid`
+  - `stack`
+  - `inline`
   - `group`
   - `button-group`
   - `button-toolbar`
+  - `toolbar`
+  - `toolbar-group`
   - `card`
   - `navigation-bar`
+  - `link`
+  - `divider`
   - `text`
   - `spinner`
   - `button`
@@ -218,6 +227,17 @@ Implemented now:
 Current compatibility notes:
 
 - `obs` currently uses positional optional args (`name`, `derived?`) instead of keyword args.
+- New constructor extensions in this slice:
+  - `button`: optional leading/trailing icon args.
+  - `menu-item`: optional leading/trailing icon args.
+  - `input`: optional attrs list (for example `placeholder`, `autocomplete`).
+  - `card`: optional variant symbol/list (`compact`, `flat`, `headerless`).
+  - `choice`/`dropdown`: option rows now support scalar, pair, or 2-element list forms; labels can differ from ids.
+- New theme token API:
+  - `theme-token-ref`
+  - `theme-token-set!`
+  - `theme-token-set-many!`
+  - browser build installs a token applier to write CSS custom properties on `html`.
 - Observable operators now include `@`, `:=`, `<~`, `λ<~`, `~>`, and `~#>` in MVP.
 - View props/attrs are represented with alists in the current MVP.
 - `tab-panel` accepts both tab entry forms:
@@ -241,6 +261,7 @@ Current compatibility notes:
     - written to `smoke/generated/`
   - runtime harnesses:
     - `smoke/test-browser-smoke.html`
+    - `smoke/test-browser-layout-primitives.html`
     - `smoke/test-browser-input.html`
     - `smoke/test-browser-checkbox.html`
     - `smoke/test-browser-list.html`
@@ -259,6 +280,23 @@ Rationale:
 - Positional optional args avoid keyword support assumptions that may not hold in current WebRacket.
 - Alists avoid dependence on hash APIs that are not consistently available in the current dialect/runtime.
 - The in-memory DOM model lets us validate reactive semantics and lifecycle behavior before binding to browser DOM FFI details.
+
+## Layout Primitives
+
+`web-easy` now includes first-class layout primitives for page-level structure:
+
+- `container`: centered width-constrained wrapper
+- `grid`: responsive grid layout with columns specification
+- `stack`: vertical spacing/layout primitive
+- `inline`: horizontal wrapping row primitive
+- `spacer`: growable empty flex item (optional grow factor)
+
+Rationale:
+
+- Reduce reliance on CSS-only structure classes in examples and apps.
+- Make layout intent explicit in view code instead of encoded in wrapper class names.
+- Reduce parenthesis-heavy `with-class` composition for common layout patterns.
+- Keep visual customization in CSS while preserving semantic structure in view constructors.
 
 ## Step 2: Port Status Matrix
 
@@ -596,7 +634,7 @@ Current browser backend element mapping (as implemented today):
 | `window`, `vpanel`, `hpanel`, `button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
 | `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
 | `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions. |
-| `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`. |
+| `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`; panel uses `aria-describedby` when first child is descriptive text. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
 | `spinner` | `div` + `span` | Animated loading indicator with optional status label. |
@@ -614,7 +652,7 @@ Current browser backend element mapping (as implemented today):
 | `list-group` | `div` + `button` | Selectable list rows with current-item marker classes. |
 | `tab-panel` | composite: `div` + `button` + `div` + injected `style` | Tab strip uses tab buttons with ARIA attrs and keyboard handling. |
 | `spacer` | `div` | Empty layout spacer. |
-| `table` | `table` + `tr` + `th` + `td` | Header row from columns, data rows from row values. |
+| `table` | `table` + `tr` + `th` + `td` | Header row from columns, data rows from row values, optional per-column alignment (`left/center/right`) via 2-tuple column specs `(label align)`. |
 | `image` | `img` | Optional `width`/`height`; keeps intrinsic size by default. |
 | `dropdown` | `div` + `menu` composite | Single-trigger popup menu using same behavior as `menu`/`menu-item`. |
 | `tooltip` | `div` + trigger child + `span` bubble | Hover/focus tooltip with `aria-describedby` from trigger to bubble id. |
@@ -691,6 +729,8 @@ Default theme tokens (CSS custom properties):
   - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg`, `--we-fg-muted`
 - Progress variants:
   - `--we-progress-success`, `--we-progress-warn`, `--we-progress-error`
+- Menu/tab/input extras:
+  - `--we-menu-item-hover-bg`, `--we-menu-item-hover-fg`, `--we-tab-active-border`, `--we-input-placeholder`
 - Spacing/gaps:
   - `--we-space-xs`, `--we-space-sm`, `--we-space-md`, `--we-space-lg`, `--we-gap`, `--we-gap-tab`
 
@@ -698,16 +738,16 @@ Stable styling contract (current baseline):
 
 | Surface | Stable `data-we-widget` hooks | Stable classes | Primary token hooks |
 |---|---|---|---|
-| Buttons/inputs/select | `button`, `input`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg` |
+| Buttons/inputs/select | `button`, `input`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-input-placeholder` |
 | Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warn`, `.we-progress-error` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warn`, `--we-progress-error` |
 | Alert/badge/spinner | `alert`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
 | Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
 | Pagination/breadcrumb/list-group | `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `list-group`, `list-group-item` | `.we-pagination`, `.we-page-btn`, `.we-breadcrumb`, `.we-breadcrumb-item`, `.we-list-group`, `.we-list-group-item`, `.is-current` | `--we-bg`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-fg`, `--we-fg-muted`, `--we-focus` |
 | Card/navigation | `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar` | `.we-card`, `.we-card-header`, `.we-card-body`, `.we-card-footer`, `.we-navigation-bar` | `--we-bg`, `--we-bg-subtle`, `--we-border-soft`, `--we-border-menu`, `--we-fg` |
-| Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
-| Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus` |
+| Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact`, `.we-align-left`, `.we-align-center`, `.we-align-right` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
+| Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus`, `--we-tab-active-border` |
 | Dialog | `dialog`, `dialog-panel` | `.we-dialog`, `.we-dialog-panel`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
-| Menu | `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item` | `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`, `.is-open` | `--we-bg-subtle`, `--we-bg`, `--we-bg-hover`, `--we-border-menu`, `--we-border`, `--we-border-soft`, `--we-focus`, `--we-fg` |
+| Menu | `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item` | `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`, `.is-open` | `--we-bg-subtle`, `--we-bg`, `--we-bg-hover`, `--we-border-menu`, `--we-border`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-menu-item-hover-bg`, `--we-menu-item-hover-fg` |
 
 Contract enforcement status:
 

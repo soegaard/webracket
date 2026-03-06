@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy Layout Recipes</title>
+  <style>
+    body {
+      margin: 18px;
+      font: 14px/1.45 monospace;
+    }
+    h1, h2 {
+      margin: 0 0 8px;
+    }
+    p {
+      margin: 0 0 10px;
+    }
+    .recipe {
+      margin: 0 0 18px;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fafafa;
+    }
+    iframe {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #fff;
+    }
+    code {
+      background: #eee;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Layout Recipes</h1>
+  <p>Practical combinations of <code>container</code>, <code>grid</code>, <code>stack</code>, <code>inline</code>, and <code>spacer</code>.</p>
+
+  <div class="recipe">
+    <h2>Recipe 1: Basic Primitives</h2>
+    <p>Reference page for all five primitives in one example.</p>
+    <iframe src="./test-browser-layout-primitives.html" title="layout primitives"></iframe>
+  </div>
+
+  <div class="recipe">
+    <h2>Recipe 2: Width + Grouping</h2>
+    <p>Shows full-width containers mixed with content-width controls.</p>
+    <iframe src="./test-browser-width.html" title="width behavior"></iframe>
+  </div>
+
+  <div class="recipe">
+    <h2>Recipe 3: Theme-ready Workspace</h2>
+    <p>A realistic layout target with tabs, groups, menus, and tables.</p>
+    <iframe src="./test-browser-parity-workspace.html" title="workspace"></iframe>
+  </div>
+</body>
+</html>

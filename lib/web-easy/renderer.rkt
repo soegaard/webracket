@@ -66,6 +66,7 @@
     (define menu-popup-counter    0)          ; Monotonic counter for menu popup ids.
     (define tooltip-counter       0)          ; Monotonic counter for tooltip ids.
     (define popover-panel-counter 0)          ; Monotonic counter for popover panel ids.
+    (define dialog-body-counter   0)          ; Monotonic counter for dialog body ids.
     (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
     ;; Style constants
@@ -74,7 +75,7 @@
        .we-tab-list{display:flex;gap:0;align-items:flex-end;border-bottom:1px solid var(--we-border-muted,#999);padding:0 var(--we-space-xs,2px);margin:0;}\
        .we-tab-btn{min-width:88px;padding:var(--we-space-sm,4px) var(--we-space-md,10px);border:1px solid var(--we-border-muted,#999);border-bottom-color:var(--we-border-muted,#999);border-radius:6px 6px 0 0;background:var(--we-bg-subtle,#f3f3f3);font-weight:normal;margin:0;}\
        .we-tab-btn+.we-tab-btn{margin-left:var(--we-space-xs,2px);}\
-       .we-tab-btn.is-selected{border-color:var(--we-border-strong,#333);border-bottom-color:var(--we-bg-selected,#ececec);background:var(--we-bg-selected,#ececec);font-weight:bold;position:relative;z-index:1;}\
+       .we-tab-btn.is-selected{border-color:var(--we-border-strong,#333);border-bottom-color:var(--we-tab-active-border,var(--we-bg-selected,#ececec));background:var(--we-bg-selected,#ececec);font-weight:bold;position:relative;z-index:1;}\
        .we-tab-btn.is-disabled{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-disabled,#f3f3f3);color:var(--we-fg-muted,#777);opacity:.7;}\
        .we-tab-btn:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-tab-content{border:1px solid var(--we-border-muted,#999);border-top:none;background:var(--we-bg,#fff);padding:var(--we-space-md,8px);}") 
@@ -105,7 +106,7 @@
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;gap:0;padding:var(--we-space-xs,2px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:var(--we-bg,#fff);color:var(--we-fg,#111);border:none;border-radius:3px;}\
-       .we-menu-item:hover{background:var(--we-bg-hover,#e8e8e8);}") 
+       .we-menu-item:hover{background:var(--we-menu-item-hover-bg,var(--we-bg-hover,#e8e8e8));color:var(--we-menu-item-hover-fg,var(--we-fg,#111));}") 
     (define tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
       ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
        .we-tooltip-trigger{display:inline-flex;}\
@@ -119,8 +120,12 @@
        .we-popover-panel.is-open{display:flex;}\
        .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define control-style-text ; CSS defaults for controls and table density classes.
-      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
-       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
+       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view,.we-stack{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
+       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
+       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);flex-wrap:wrap;}\
+       .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\
        .we-alert{align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);}\
        .we-alert-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-alert-success{border-color:#6a9b73;background:#e8f4e8;}\
@@ -168,6 +173,7 @@
        .we-button{align-self:flex-start;width:auto;}\
        .we-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
+       .we-input::placeholder{color:var(--we-input-placeholder,var(--we-fg-muted,#777));}\
        .we-input:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
        .we-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);align-self:flex-start;}\
@@ -224,14 +230,36 @@
        .we-table-header-cell.we-density-normal{padding:2px 8px;text-align:left;border-bottom:1px solid var(--we-border-soft,#bbb);}\
        .we-table-header-cell.we-density-compact{padding:1px 4px;text-align:left;border-bottom:1px solid var(--we-border-soft,#bbb);}\
        .we-table-data-cell.we-density-normal{padding:2px 8px;}\
-       .we-table-data-cell.we-density-compact{padding:1px 4px;}")
+       .we-table-data-cell.we-density-compact{padding:1px 4px;}\
+       .we-table-header-cell.we-align-left,.we-table-data-cell.we-align-left{text-align:left;}\
+       .we-table-header-cell.we-align-center,.we-table-data-cell.we-align-center{text-align:center;}\
+       .we-table-header-cell.we-align-right,.we-table-data-cell.we-align-right{text-align:right;}")
+    (define component-extra-style-text ; Additional CSS for newer layout/content primitives.
+      ".we-link{display:inline-flex;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);color:var(--we-fg,#111);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;}\
+       .we-link:hover{color:var(--we-fg,#111);background:var(--we-bg-hover,#e8e8e8);}\
+       .we-link:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:stretch;gap:var(--we-space-sm,4px);}\
+       .we-toolbar-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);}\
+       .we-divider{align-self:stretch;border:0;border-top:1px solid var(--we-border-soft,#bbb);margin:0;}\
+       .we-divider-vertical{width:1px;min-height:1.5em;height:100%;align-self:stretch;border-top:0;border-left:1px solid var(--we-border-soft,#bbb);}\
+       .we-button-label,.we-menu-item-label{display:inline-block;}\
+       .we-button-icon,.we-menu-item-icon{display:inline-flex;align-items:center;justify-content:center;min-width:1ch;}\
+       .we-button-icon-leading,.we-menu-item-icon-leading{margin-right:var(--we-space-xs,2px);}\
+       .we-button-icon-trailing,.we-menu-item-icon-trailing{margin-left:var(--we-space-xs,2px);}\
+       .we-card-compact .we-card-header{padding:2px 6px;}\
+       .we-card-compact .we-card-body{padding:4px 6px;gap:2px;}\
+       .we-card-compact .we-card-footer{padding:2px 6px;}\
+       .we-card-flat{border:none;border-radius:0;background:transparent;}\
+       .we-card-flat .we-card-header,.we-card-flat .we-card-footer{background:transparent;}")
     (define shared-style-text ; Shared stylesheet injected once per window root.
       (string-append control-style-text
                      tab-panel-style-text
                      accordion-style-text
                      dialog-style-text
                      menu-style-text
-                     tooltip-popover-style-text))
+                     tooltip-popover-style-text
+                     component-extra-style-text))
+    (define backend-set-dom-node-attrs! set-dom-node-attrs!) ; Backend attr setter (unwrapped).
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
@@ -282,9 +310,13 @@
     ;; dom-node-select! : dom-node? any/c -> void?
     ;;   Update selected attribute and invoke the change callback.
     (define (dom-node-select! n selected)
+      (define attrs (dom-node-attrs n))
+      (define option-pairs-pair (assq 'option-pairs attrs))
+      (define option-pairs-value (if option-pairs-pair (cdr option-pairs-pair) '()))
       (set-dom-node-attrs!
        n
-       (list (cons 'choices (cdr (assq 'choices (dom-node-attrs n))))
+       (list (cons 'choices (cdr (assq 'choices attrs)))
+             (cons 'option-pairs option-pairs-value)
              (cons 'selected selected)))
       (define on-change (dom-node-on-change n))
       (when on-change
@@ -381,6 +413,122 @@
         [(symbol? v) (symbol->string v)]
         [else        text/fallback]))
 
+    ;; attr-remove-key : list? symbol? -> list?
+    ;;   Return attrs without entries for key.
+    (define (attr-remove-key attrs key)
+      (cond
+        [(null? attrs) '()]
+        [(eq? (caar attrs) key)
+         (attr-remove-key (cdr attrs) key)]
+        [else
+         (cons (car attrs)
+               (attr-remove-key (cdr attrs) key))]))
+
+    ;; attr-set : list? symbol? any/c -> list?
+    ;;   Set key to value in attrs, replacing any prior key entry.
+    (define (attr-set attrs key value)
+      (cons (cons key value)
+            (attr-remove-key attrs key)))
+
+    ;; class-value->list : any/c -> list?
+    ;;   Convert class value to list of class-name strings.
+    (define (class-value->list value)
+      (cond
+        [(string? value)
+         (list value)]
+        [(symbol? value)
+         (list (symbol->string value))]
+        [(list? value)
+         (let loop ([remaining value])
+           (cond
+             [(null? remaining) '()]
+             [(string? (car remaining))
+              (cons (car remaining)
+                    (loop (cdr remaining)))]
+             [(symbol? (car remaining))
+              (cons (symbol->string (car remaining))
+                    (loop (cdr remaining)))]
+             [else
+              (loop (cdr remaining))]))]
+        [else
+         '()]))
+
+    ;; props-extra-classes : list? -> list?
+    ;;   Return normalized extra classes from props.
+    (define (props-extra-classes props)
+      (class-value->list (let ([p (assq 'extra-class props)])
+                           (if p (cdr p) '()))))
+
+    ;; props-extra-attrs : list? -> list?
+    ;;   Return normalized extra attrs from props.
+    (define (props-extra-attrs props)
+      (define p (assq 'extra-attrs props))
+      (if (and p (list? (cdr p)))
+          (let loop ([remaining (cdr p)])
+            (cond
+              [(null? remaining) '()]
+              [(and (pair? (car remaining))
+                    (symbol? (caar remaining)))
+               (cons (car remaining)
+                     (loop (cdr remaining)))]
+              [else
+               (loop (cdr remaining))]))
+          '()))
+
+    ;; merge-class-values : list? list? -> string?
+    ;;   Build final class string by concatenating base and extra class tokens.
+    (define (merge-class-values base-classes extra-classes)
+      (define all-classes (append base-classes extra-classes))
+      (if (null? all-classes)
+          ""
+          (let loop ([remaining all-classes]
+                     [acc ""])
+            (cond
+              [(null? remaining) acc]
+              [(string=? acc "")
+               (loop (cdr remaining) (car remaining))]
+              [else
+               (loop (cdr remaining)
+                     (string-append acc " " (car remaining)))]))))
+
+    ;; merge-root-extra-attrs : view? list? -> list?
+    ;;   Merge with-attrs/with-class props into base root attrs.
+    (define (merge-root-extra-attrs v attrs)
+      (define props (view-props v))
+      (define base-class-pair (assq 'class attrs))
+      (define base-classes (if base-class-pair
+                               (class-value->list (cdr base-class-pair))
+                               '()))
+      (define extra-attrs/raw (props-extra-attrs props))
+      (define extra-class-from-attrs
+        (let loop ([remaining extra-attrs/raw])
+          (cond
+            [(null? remaining) '()]
+            [(eq? (caar remaining) 'class)
+             (append (class-value->list (cdar remaining))
+                     (loop (cdr remaining)))]
+            [else
+             (loop (cdr remaining))])))
+      (define extra-classes
+        (append (props-extra-classes props)
+                extra-class-from-attrs))
+      (define attrs/without-class (attr-remove-key attrs 'class))
+      (define attrs/merged
+        (let loop ([remaining extra-attrs/raw]
+                   [acc attrs/without-class])
+          (cond
+            [(null? remaining) acc]
+            [(or (eq? (caar remaining) 'class)
+                 (eq? (caar remaining) 'data-we-widget))
+             (loop (cdr remaining) acc)]
+            [else
+             (loop (cdr remaining)
+                   (attr-set acc (caar remaining) (cdar remaining)))])))
+      (define final-class (merge-class-values base-classes extra-classes))
+      (if (string=? final-class "")
+          attrs/merged
+          (attr-set attrs/merged 'class final-class)))
+
     ;; next-tab-panel-id : -> string?
     ;;   Allocate a unique id string for tab-panel content region.
     (define (next-tab-panel-id)
@@ -410,6 +558,12 @@
     (define (next-popover-panel-id)
       (set! popover-panel-counter (add1 popover-panel-counter))
       (string-append "popover-panel-" (number->string popover-panel-counter)))
+
+    ;; next-dialog-body-id : -> string?
+    ;;   Allocate a unique id string for dialog descriptive text.
+    (define (next-dialog-body-id)
+      (set! dialog-body-counter (add1 dialog-body-counter))
+      (string-append "dialog-body-" (number->string dialog-body-counter)))
 
     ;; normalize-tab-entry : any/c -> list?
     ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
@@ -476,6 +630,46 @@
             [(normal compact) density]
             [else             table/density-normal])
           table/density-normal))
+
+    ;; normalize-table-align : any/c -> symbol?
+    ;;   Normalize alignment to left/center/right.
+    (define (normalize-table-align align)
+      (if (symbol? align)
+          (case align
+            [(left center right) align]
+            [else                'left])
+          'left))
+
+    ;; normalize-table-column : any/c -> list?
+    ;;   Normalize column spec to (list label align).
+    (define (normalize-table-column column)
+      (cond
+        [(and (list? column) (= (length column) 2))
+         (list (list-ref column 0)
+               (normalize-table-align (list-ref column 1)))]
+        [else
+         (list column 'left)]))
+
+    ;; grid-columns-template : any/c -> string?
+    ;;   Normalize grid columns value to CSS template expression string.
+    (define (grid-columns-template columns)
+      (cond
+        [(or (eq? columns 'auto) (eq? columns 'responsive))
+         "repeat(auto-fit,minmax(320px,1fr))"]
+        [(number? columns)
+         (if (> columns 0)
+             (string-append "repeat(" (number->string columns) ",minmax(0,1fr))")
+             "repeat(auto-fit,minmax(320px,1fr))")]
+        [(string? columns) columns]
+        [else
+         "repeat(auto-fit,minmax(320px,1fr))"]))
+
+    ;; normalize-spacer-grow : any/c -> number?
+    ;;   Normalize spacer grow factor to positive numeric value.
+    (define (normalize-spacer-grow grow)
+      (cond
+        [(and (number? grow) (> grow 0)) grow]
+        [else 1]))
 
     ;; normalize-alert-level : any/c -> symbol?
     ;;   Normalize alert level to one of info/success/warn/error.
@@ -628,15 +822,66 @@
     (define (list-group-label entry)
       (cadr (ensure-list entry 'list-group "entry")))
 
-    ;; dropdown-id : any/c -> any/c
-    ;;   Extract dropdown entry id from (list id label) row.
-    (define (dropdown-id entry)
-      (car (ensure-list entry 'dropdown "entry")))
+    ;; choice-entry-id : any/c -> any/c
+    ;;   Extract selectable entry id from scalar, pair, or 2-element list.
+    (define (choice-entry-id entry)
+      (cond
+        [(and (list? entry) (pair? entry) (pair? (cdr entry)))
+         (car entry)]
+        [(pair? entry)
+         (car entry)]
+        [else
+         entry]))
 
-    ;; dropdown-label : any/c -> any/c
-    ;;   Extract dropdown entry label from (list id label) row.
-    (define (dropdown-label entry)
-      (cadr (ensure-list entry 'dropdown "entry")))
+    ;; choice-entry-label : any/c -> any/c
+    ;;   Extract selectable entry label from scalar, pair, or 2-element list.
+    (define (choice-entry-label entry)
+      (cond
+        [(and (list? entry) (pair? entry) (pair? (cdr entry)))
+         (cadr entry)]
+        [(pair? entry)
+         (cdr entry)]
+        [else
+         entry]))
+
+    ;; normalized-option-pairs : list? -> list?
+    ;;   Convert choices/entries rows into (cons id label) pairs.
+    (define (normalized-option-pairs rows)
+      (map (lambda (row)
+             (cons (choice-entry-id row)
+                   (choice-entry-label row)))
+           rows))
+
+    ;; option-pairs->value-choices : list? -> list?
+    ;;   Convert option pairs into serialized id choices.
+    (define (option-pairs->value-choices option-pairs)
+      (map (lambda (entry)
+             (value->text (car entry)))
+           option-pairs))
+
+    ;; option-pairs->dom-option-pairs : list? -> list?
+    ;;   Convert option pairs into DOM option rows: (value-string . label-string).
+    (define (option-pairs->dom-option-pairs option-pairs)
+      (map (lambda (entry)
+             (cons (value->text (car entry))
+                   (value->text (cdr entry))))
+           option-pairs))
+
+    ;; decode-option-selection : list? any/c -> any/c
+    ;;   Decode selected DOM value back to original option id.
+    (define (decode-option-selection option-pairs selected)
+      (define selected-text
+        (if (string? selected)
+            selected
+            (value->text selected)))
+      (let loop ([remaining option-pairs])
+        (cond
+          [(null? remaining)
+           selected]
+          [(string=? (value->text (caar remaining)) selected-text)
+           (caar remaining)]
+          [else
+           (loop (cdr remaining))])))
 
     ;; carousel-item-id : any/c -> any/c
     ;;   Extract carousel item id from (list id label view) row.
@@ -711,24 +956,80 @@
         [(compact) "we-density-compact"]
         [else      "we-density-normal"]))
 
+    ;; normalize-card-variants : any/c -> list?
+    ;;   Normalize variant value to accepted card variant symbols.
+    (define (normalize-card-variants raw)
+      (define (allowed-variant? v)
+        (and (symbol? v)
+             (case v
+               [(default compact flat headerless) #t]
+               [else #f])))
+      (define (loop xs)
+        (cond
+          [(null? xs) '()]
+          [(allowed-variant? (car xs))
+           (cons (car xs) (loop (cdr xs)))]
+          [else
+           (loop (cdr xs))]))
+      (cond
+        [(allowed-variant? raw)
+         (list raw)]
+        [(list? raw)
+         (loop raw)]
+        [else
+         (list 'default)]))
+
+    ;; card-variant-class : list? -> string?
+    ;;   Build card class string from variant symbols.
+    (define (card-variant-class variants)
+      (define compact? (contains-equal? variants 'compact))
+      (define flat?    (contains-equal? variants 'flat))
+      (string-append
+       "we-card"
+       (if compact? " we-card-compact" "")
+       (if flat? " we-card-flat" "")))
+
+    ;; icon-node : string? string? -> dom-node?
+    ;;   Construct icon span node with data-we-widget/class and text content.
+    (define (icon-node widget class-name icon-text)
+      (dom-node 'span
+                (list (cons 'data-we-widget widget)
+                      (cons 'class class-name)
+                      (cons 'aria-hidden "true"))
+                '()
+                icon-text
+                #f
+                #f))
+
     ;; render-table-rows! : dom-node? list? list? symbol? -> void?
     ;;   Replace table rows with a header row and data rows rendered as table cells.
     (define (render-table-rows! table-node columns rows density)
       (define normalized-rows (ensure-list rows 'table "rows"))
-      (define (header-cell column)
+      (define normalized-columns (map normalize-table-column columns))
+      (define (align-class align)
+        (case align
+          [(center) "we-align-center"]
+          [(right)  "we-align-right"]
+          [else     "we-align-left"]))
+      (define (header-cell column-spec)
         (define density-css (density-class density))
+        (define align-css (align-class (list-ref column-spec 1)))
         (dom-node 'th
                   (list (cons 'data-we-widget "table-header-cell")
-                        (cons 'class (string-append "we-table-header-cell " density-css)))
+                        (cons 'class (string-append "we-table-header-cell " density-css " " align-css)))
                   '()
-                  (value->text column)
+                  (value->text (list-ref column-spec 0))
                   #f
                   #f))
-      (define (data-cell cell-value)
+      (define (data-cell index cell-value)
         (define density-css (density-class density))
+        (define align-css
+          (if (< index (length normalized-columns))
+              (align-class (list-ref (list-ref normalized-columns index) 1))
+              "we-align-left"))
         (dom-node 'td
                   (list (cons 'data-we-widget "table-data-cell")
-                        (cons 'class (string-append "we-table-data-cell " density-css)))
+                        (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
                   '()
                   (value->text cell-value)
                   #f
@@ -741,21 +1042,40 @@
         (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
         (backend-replace-children! row-node (map build-cell cell-values))
         row-node)
+      (define (build-data-row row)
+        (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
+        (define cells
+          (let loop ([rest (row-values row)]
+                     [index 0])
+            (if (null? rest)
+                '()
+                (cons (data-cell index (car rest))
+                      (loop (cdr rest) (add1 index))))))
+        (backend-replace-children! row-node cells)
+        row-node)
       (define header-row
-        (if (null? columns)
+        (if (null? normalized-columns)
             '()
-            (list (build-row columns header-cell))))
+            (list (build-row normalized-columns header-cell))))
       (define data-rows
-        (map (lambda (row)
-               (build-row (row-values row) data-cell))
-             normalized-rows))
+        (map build-data-row normalized-rows))
       (backend-replace-children! table-node (append header-row data-rows)))
 
     ;; build-node : view? (-> (-> void?) void?) -> dom-node?
     ;;   Build a dom-node tree from v and register lifecycle cleanups.
     (define (build-node v register-cleanup!)
       (define kind (view-kind v))
-      (case kind
+      (define root-node #f)
+      ;; set-dom-node-attrs! : dom-node? list? -> void?
+      ;;   Set attrs, applying view-level style hooks only on this view's root node.
+      (define (set-dom-node-attrs! n attrs)
+        (backend-set-dom-node-attrs!
+         n
+         (if (and root-node (eq? n root-node))
+             (merge-root-extra-attrs v attrs)
+             attrs)))
+      (define node
+        (case kind
         [(window)
          (define node (dom-node 'div (list (cons attr/role 'window)
                                            (cons 'data-we-widget "window")) '() #f #f #f))
@@ -775,6 +1095,55 @@
         [(hpanel)
          (define node (dom-node 'div (list (cons 'data-we-widget "hpanel")
                                            (cons 'class "we-hpanel")) '() #f #f #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(container)
+         (define node (dom-node 'div (list (cons 'data-we-widget "container")
+                                           (cons 'class "we-container")) '() #f #f #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(grid)
+         (define raw-columns      (alist-ref (view-props v) 'columns 'render))
+         (define columns-template (grid-columns-template (maybe-observable-value raw-columns)))
+         (define node (dom-node 'div (list (cons 'data-we-widget "grid")
+                                           (cons 'class "we-grid")
+                                           (cons 'style (string-append "--we-grid-columns:" columns-template ";")))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(stack)
+         (define node (dom-node 'div (list (cons 'data-we-widget "stack")
+                                           (cons 'class "we-stack")) '() #f #f #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(inline)
+         (define node (dom-node 'div (list (cons 'data-we-widget "inline")
+                                           (cons 'class "we-inline")) '() #f #f #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(toolbar)
+         (define node (dom-node 'div (list (cons 'data-we-widget "toolbar")
+                                           (cons 'class "we-toolbar")) '() #f #f #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
+         node]
+        [(toolbar-group)
+         (define node (dom-node 'div (list (cons 'data-we-widget "toolbar-group")
+                                           (cons 'class "we-toolbar-group")) '() #f #f #f))
          (for-each (lambda (child)
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
@@ -1090,13 +1459,124 @@
         [(button)
          (define label  (alist-ref (view-props v) 'label  'render))
          (define action (alist-ref (view-props v) 'action 'render))
-         (dom-node 'button
-                   (list (cons 'data-we-widget "button")
-                         (cons 'class "we-button"))
-                   '()
-                   (value->text label)
-                   action
-                   #f)]
+         (define raw-leading-icon (alist-ref (view-props v) 'leading-icon 'render))
+         (define raw-trailing-icon (alist-ref (view-props v) 'trailing-icon 'render))
+         (define node (dom-node 'button
+                                (list (cons 'data-we-widget "button")
+                                      (cons 'class "we-button"))
+                                '()
+                                ""
+                                action
+                                #f))
+         (define label-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "button-label")
+                           (cons 'class "we-button-label"))
+                     '()
+                     (value->text (if (obs? label) (obs-peek label) label))
+                     #f
+                     #f))
+         (define (refresh-button-children!)
+           (define leading-icon (maybe-observable-value raw-leading-icon))
+           (define trailing-icon (maybe-observable-value raw-trailing-icon))
+           (if (and (eq? leading-icon #f) (eq? trailing-icon #f))
+               (begin
+                 (backend-replace-children! node '())
+                 (set-dom-node-text! node (value->text (if (obs? label) (obs-peek label) label))))
+               (let ([children
+                      (append
+                       (if (eq? leading-icon #f)
+                           '()
+                           (list (icon-node "button-icon" "we-button-icon we-button-icon-leading"
+                                            (value->text leading-icon))))
+                       (list label-node)
+                       (if (eq? trailing-icon #f)
+                           '()
+                           (list (icon-node "button-icon" "we-button-icon we-button-icon-trailing"
+                                            (value->text trailing-icon)))))])
+                 (set-dom-node-text! node #f)
+                 (backend-replace-children! node children))))
+         (define (set-label! v0)
+           (set-dom-node-text! label-node (value->text v0))
+           (when (null? (dom-node-children node))
+             (set-dom-node-text! node (value->text v0))))
+         (cond
+           [(obs? label)
+            (set-label! (obs-peek label))
+            (define (listener updated)
+              (set-label! updated))
+            (obs-observe! label listener)
+            (register-cleanup! (lambda () (obs-unobserve! label listener)))]
+           [else
+            (set-label! label)])
+         (when (obs? raw-leading-icon)
+           (define (leading-icon-listener _updated)
+             (refresh-button-children!))
+           (obs-observe! raw-leading-icon leading-icon-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-leading-icon leading-icon-listener))))
+         (when (obs? raw-trailing-icon)
+           (define (trailing-icon-listener _updated)
+             (refresh-button-children!))
+           (obs-observe! raw-trailing-icon trailing-icon-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-trailing-icon trailing-icon-listener))))
+         (refresh-button-children!)
+         node]
+        [(link)
+         (define raw-label    (alist-ref (view-props v) 'label 'render))
+         (define raw-href     (alist-ref (view-props v) 'href 'render))
+         (define raw-download (alist-ref (view-props v) 'download 'render))
+         (define raw-target   (alist-ref (view-props v) 'target 'render))
+         (define node (dom-node 'a
+                                (list (cons attr/role 'link)
+                                      (cons 'data-we-widget "link")
+                                      (cons 'class "we-link")
+                                      (cons 'href "#"))
+                                '()
+                                ""
+                                #f
+                                #f))
+         (define (refresh-link!)
+           (define href (maybe-observable-value raw-href))
+           (define download? (maybe-observable-value raw-download))
+           (define target (maybe-observable-value raw-target))
+           (set-dom-node-attrs!
+            node
+            (append
+             (list (cons attr/role 'link)
+                   (cons 'data-we-widget "link")
+                   (cons 'class "we-link")
+                   (cons 'href (value->text href)))
+             (if download?
+                 (list (cons 'download "download"))
+                 '())
+             (if (eq? target #f)
+                 '()
+                 (list (cons 'target (value->text target)))))))
+         (define (set-link-label! v0)
+           (set-dom-node-text! node (value->text v0)))
+         (cond
+           [(obs? raw-label)
+            (set-link-label! (obs-peek raw-label))
+            (define (label-listener updated)
+              (set-link-label! updated))
+            (obs-observe! raw-label label-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener)))]
+           [else
+            (set-link-label! raw-label)])
+         (when (obs? raw-href)
+           (define (href-listener _updated) (refresh-link!))
+           (obs-observe! raw-href href-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-href href-listener))))
+         (when (obs? raw-download)
+           (define (download-listener _updated) (refresh-link!))
+           (obs-observe! raw-download download-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-download download-listener))))
+         (when (obs? raw-target)
+           (define (target-listener _updated) (refresh-link!))
+           (obs-observe! raw-target target-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-target target-listener))))
+         (refresh-link!)
+         node]
         [(close-button)
          (define action (alist-ref (view-props v) 'action 'render))
          (define raw-aria-label (alist-ref (view-props v) 'aria-label 'render))
@@ -1141,6 +1621,11 @@
          (define raw-value (alist-ref (view-props v) 'value    'render))
          (define action    (alist-ref (view-props v) 'action   'render))
          (define on-enter  (alist-ref (view-props v) 'on-enter 'render))
+         (define input-attrs/raw (alist-ref (view-props v) 'attrs 'render))
+         (define input-attrs
+           (if (list? input-attrs/raw)
+               input-attrs/raw
+               '()))
          (define node (dom-node 'input
                                 (list (cons 'value "")
                                       (cons 'data-we-widget "input")
@@ -1151,11 +1636,32 @@
                                 #f
                                 #f))
          (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
+         (define (with-input-extra-attrs attrs)
+           (let loop ([remaining input-attrs]
+                      [acc attrs])
+             (cond
+               [(null? remaining) acc]
+               [(and (list? (car remaining))
+                     (= (length (car remaining)) 2)
+                     (symbol? (car (car remaining))))
+                (loop (cdr remaining)
+                      (attr-set acc
+                                (car (car remaining))
+                                (cadr (car remaining))))]
+               [(and (pair? (car remaining))
+                     (symbol? (caar remaining)))
+                (loop (cdr remaining)
+                      (attr-set acc (caar remaining) (cdar remaining)))]
+               [else
+                (loop (cdr remaining) acc)])))
          (define (set-input-value! value)
-           (set-dom-node-attrs! node (list (cons 'value (value->text value))
-                                           (cons 'data-we-widget "input")
-                                           (cons 'class "we-input")
-                                           (cons 'on-enter-action on-enter))))
+           (set-dom-node-attrs!
+            node
+            (with-input-extra-attrs
+             (list (cons 'value (value->text value))
+                   (cons 'data-we-widget "input")
+                   (cons 'class "we-input")
+                   (cons 'on-enter-action on-enter)))))
          (cond
            [(obs? raw-value)
             (set-input-value! (obs-peek raw-value))
@@ -1193,13 +1699,17 @@
             (set-checked! raw-value)])
          node]
         [(choice)
-         (define choices      (ensure-list (alist-ref (view-props v) 'choices 'render)
+         (define choice-rows  (ensure-list (alist-ref (view-props v) 'choices 'render)
                                            'choice
                                            "choices"))
+         (define option-pairs (normalized-option-pairs choice-rows))
+         (define choices      (option-pairs->value-choices option-pairs))
+         (define dom-option-pairs (option-pairs->dom-option-pairs option-pairs))
          (define raw-selected (alist-ref (view-props v) 'selected 'render))
          (define action       (alist-ref (view-props v) 'action   'render))
          (define node (dom-node 'select
                                 (list (cons 'choices choices)
+                                      (cons 'option-pairs dom-option-pairs)
                                       (cons 'data-we-widget "choice")
                                       (cons 'class "we-choice")
                                       (cons 'selected #f))
@@ -1207,11 +1717,15 @@
                                 #f
                                 #f
                                 #f))
-         (set-dom-node-on-change! node (lambda (new-selected) (action new-selected)))
+         (set-dom-node-on-change!
+          node
+          (lambda (new-selected)
+            (action (decode-option-selection option-pairs new-selected))))
          (define (set-selected! v)
            (set-dom-node-attrs!
             node
             (list (cons 'choices  choices)
+                  (cons 'option-pairs dom-option-pairs)
                   (cons 'data-we-widget "choice")
                   (cons 'class    "we-choice")
                   (cons 'selected v))))
@@ -2088,8 +2602,17 @@
                                       #f
                                       #f
                                       #f))
+         (define dialog-desc-id #f)
          (define (set-open! open?)
            (define open-value (not (eq? open? #f)))
+           (define panel-attrs/base
+             (list (cons 'class "we-dialog-panel")
+                   (cons 'data-we-widget "dialog-panel")
+                   (cons 'tabindex -1)))
+           (define panel-attrs
+             (if dialog-desc-id
+                 (append panel-attrs/base (list (cons 'aria-describedby dialog-desc-id)))
+                 panel-attrs/base))
            (set-dom-node-attrs!
             node
             (list (cons attr/role 'dialog)
@@ -2098,7 +2621,8 @@
                   (cons 'class (if open-value "we-dialog is-open" "we-dialog"))
                   (cons 'tabindex -1)
                   (cons 'aria-modal "true")
-                  (cons 'aria-hidden (if open-value "false" "true")))))
+                  (cons 'aria-hidden (if open-value "false" "true"))))
+           (set-dom-node-attrs! panel-node panel-attrs))
          (when (procedure? on-close)
            (set-dom-node-on-change!
             node
@@ -2109,6 +2633,15 @@
          (for-each (lambda (child)
                      (backend-append-child! panel-node (build-node child register-cleanup!)))
                    (view-children v))
+         ;; If first child is text, wire it as aria-describedby for the dialog panel.
+         (define panel-children (dom-node-children panel-node))
+         (when (pair? panel-children)
+           (define first-child (car panel-children))
+           (when (equal? (alist-ref (dom-node-attrs first-child) 'data-we-widget #f) "text")
+             (set! dialog-desc-id (next-dialog-body-id))
+             (set-dom-node-attrs!
+              first-child
+              (attr-set (dom-node-attrs first-child) 'id dialog-desc-id))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -2143,7 +2676,35 @@
             (render-from-value! raw-data)])
          node]
         [(spacer)
-         (dom-node 'spacer (list (cons 'data-we-widget "spacer")) '() #f #f #f)]
+         (define raw-grow   (alist-ref (view-props v) 'grow 'render))
+         (define grow-value (normalize-spacer-grow (maybe-observable-value raw-grow)))
+         (dom-node 'spacer (list (cons 'data-we-widget "spacer")
+                                 (cons 'class "we-spacer")
+                                 (cons 'style (string-append "flex-grow:" (number->string grow-value) ";")))
+                   '()
+                   #f
+                   #f
+                   #f)]
+        [(divider)
+         (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
+         (define orientation
+           (if (symbol? raw-orientation)
+               (case raw-orientation
+                 [(horizontal vertical) raw-orientation]
+                 [else 'horizontal])
+               'horizontal))
+         (dom-node 'hr (list (cons attr/role 'separator)
+                             (cons 'data-we-widget "divider")
+                             (cons 'aria-orientation (if (eq? orientation 'vertical)
+                                                         "vertical"
+                                                         "horizontal"))
+                             (cons 'class (if (eq? orientation 'vertical)
+                                              "we-divider we-divider-vertical"
+                                              "we-divider we-divider-horizontal")))
+                   '()
+                   #f
+                   #f
+                   #f)]
         [(table)
          (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                       'table
@@ -2252,9 +2813,10 @@
          node]
         [(dropdown)
          (define raw-label (alist-ref (view-props v) 'label 'render))
-         (define entries   (ensure-list (alist-ref (view-props v) 'entries 'render)
+         (define rows      (ensure-list (alist-ref (view-props v) 'entries 'render)
                                         'dropdown
                                         "entries"))
+         (define option-pairs (normalized-option-pairs rows))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'div
                                 (list (cons 'data-we-widget "dropdown")
@@ -2265,15 +2827,15 @@
                                 #f))
          (define menu-items
            (map (lambda (entry)
-                  (define entry-id    (dropdown-id entry))
-                  (define entry-label (dropdown-label entry))
+                  (define entry-id    (car entry))
+                  (define entry-label (cdr entry))
                   (menu-item entry-label
                              (lambda ()
                                (action entry-id))))
-                entries))
-        (define menu-view (apply menu (cons raw-label menu-items)))
-        (backend-set-single-child! node (build-node menu-view register-cleanup!))
-        node]
+                option-pairs))
+         (define menu-view (apply menu (cons raw-label menu-items)))
+         (backend-set-single-child! node (build-node menu-view register-cleanup!))
+         node]
         [(carousel)
          (define raw-items (alist-ref (view-props v) 'items 'render))
          (define raw-current-index (alist-ref (view-props v) 'current-index 'render))
@@ -2669,10 +3231,12 @@
         [(card)
          (define raw-title  (alist-ref (view-props v) 'title  'render))
          (define raw-footer (alist-ref (view-props v) 'footer 'render))
+         (define raw-variants (alist-ref (view-props v) 'variants 'render))
+         (define variants (normalize-card-variants raw-variants))
          (define node (dom-node 'div
                                 (list (cons attr/role 'group)
                                       (cons 'data-we-widget "card")
-                                      (cons 'class "we-card"))
+                                      (cons 'class (card-variant-class variants)))
                                 '()
                                 #f
                                 #f
@@ -2691,8 +3255,9 @@
          (define (refresh-card-structure!)
            (define title-value  (maybe-observable-value raw-title))
            (define footer-value (maybe-observable-value raw-footer))
+           (define headerless?  (contains-equal? variants 'headerless))
            (set! title-node
-                 (if (eq? title-value #f)
+                 (if (or headerless? (eq? title-value #f))
                      #f
                      (dom-node 'div
                                (list (cons 'data-we-widget "card-header")
@@ -2878,6 +3443,8 @@
         [(menu-item)
          (define raw-label (alist-ref (view-props v) 'label  'render))
          (define action    (alist-ref (view-props v) 'action 'render))
+         (define raw-leading-icon (alist-ref (view-props v) 'leading-icon 'render))
+         (define raw-trailing-icon (alist-ref (view-props v) 'trailing-icon 'render))
          (define node (dom-node 'menu-item
                                 (list (cons attr/role 'menuitem)
                                       (cons 'class    "we-menu-item")
@@ -2887,15 +3454,60 @@
                                 ""
                                 action
                                 #f))
+         (define label-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "menu-item-label")
+                           (cons 'class "we-menu-item-label"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define (refresh-menu-item-children!)
+           (define leading-icon (maybe-observable-value raw-leading-icon))
+           (define trailing-icon (maybe-observable-value raw-trailing-icon))
+           (if (and (eq? leading-icon #f) (eq? trailing-icon #f))
+               (begin
+                 (backend-replace-children! node '())
+                 (set-dom-node-text! node (value->text (if (obs? raw-label) (obs-peek raw-label) raw-label))))
+               (let ([children
+                      (append
+                       (if (eq? leading-icon #f)
+                           '()
+                           (list (icon-node "menu-item-icon"
+                                            "we-menu-item-icon we-menu-item-icon-leading"
+                                            (value->text leading-icon))))
+                       (list label-node)
+                       (if (eq? trailing-icon #f)
+                           '()
+                           (list (icon-node "menu-item-icon"
+                                            "we-menu-item-icon we-menu-item-icon-trailing"
+                                            (value->text trailing-icon)))))])
+                 (set-dom-node-text! node #f)
+                 (backend-replace-children! node children))))
+         (define (set-menu-item-label! v0)
+           (set-dom-node-text! label-node (value->text v0))
+           (when (null? (dom-node-children node))
+             (set-dom-node-text! node (value->text v0))))
          (cond
            [(obs? raw-label)
-            (set-dom-node-text! node (value->text (obs-peek raw-label)))
+            (set-menu-item-label! (obs-peek raw-label))
             (define (listener updated)
-              (set-dom-node-text! node (value->text updated)))
+              (set-menu-item-label! updated))
             (obs-observe! raw-label listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
            [else
-            (set-dom-node-text! node (value->text raw-label))])
+            (set-menu-item-label! raw-label)])
+         (when (obs? raw-leading-icon)
+           (define (leading-icon-listener _updated)
+             (refresh-menu-item-children!))
+           (obs-observe! raw-leading-icon leading-icon-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-leading-icon leading-icon-listener))))
+         (when (obs? raw-trailing-icon)
+           (define (trailing-icon-listener _updated)
+             (refresh-menu-item-children!))
+           (obs-observe! raw-trailing-icon trailing-icon-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-trailing-icon trailing-icon-listener))))
+         (refresh-menu-item-children!)
          node]
         [(list-view)
          (define raw-entries (alist-ref (view-props v) 'entries   'render))
@@ -2927,6 +3539,9 @@
                                 "unknown view kind"
                                 "kind"
                                 kind)]))
+      (set! root-node node)
+      (set-dom-node-attrs! node (dom-node-attrs node))
+      node)
 
     ;; render : view? [renderer?] -> renderer?
     ;;   Create a renderer for v, optionally as a child of parent.
