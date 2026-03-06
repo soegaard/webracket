@@ -44,27 +44,27 @@
 ;;;
 
 (provide
- ;; Initialize Racket’s process environment from the user’s login shell.
+ ;; Initialize Racket's process environment from the user's login shell.
  ;; Intended for GUI-launched Racket so (system ...) sees the same PATH,
  ;; MANPATH, etc. as a terminal session.
  exec-path-from-shell-initialize
 
- ;; Import a single environment variable from the user’s login shell and
- ;; install it into Racket’s environment.  Returns the variable’s value
+ ;; Import a single environment variable from the user's login shell and
+ ;; install it into Racket's environment.  Returns the variable's value
  ;; or #f if it is unset in the shell.
  exec-path-from-shell-copy-env
 
- ;; Import multiple environment variables from the user’s login shell and
- ;; install them into Racket’s environment.  Returns an alist mapping
+ ;; Import multiple environment variables from the user's login shell and
+ ;; install them into Racket's environment.  Returns an alist mapping
  ;; variable names to their values (or #f if unset).
  exec-path-from-shell-copy-envs
 
- ;; Query a single environment variable from the user’s login shell without
- ;; modifying Racket’s current environment.  Returns the value or #f.
+ ;; Query a single environment variable from the user's login shell without
+ ;; modifying Racket's current environment.  Returns the value or #f.
  exec-path-from-shell-getenv
 
- ;; Query multiple environment variables from the user’s login shell without
- ;; modifying Racket’s current environment.  Returns an alist mapping names
+ ;; Query multiple environment variables from the user's login shell without
+ ;; modifying Racket's current environment.  Returns an alist mapping names
  ;; to values (or #f if unset).
  exec-path-from-shell-getenvs)
 
@@ -90,6 +90,8 @@
   (define shs (shell->string sh))
   (cond [(and shs (regexp-match? #rx"t?csh(\\.exe)?$" shs)) '("-d")]
         [(and shs (regexp-match? #rx"fish(\\.exe)?$" shs)) '("-l")]
+        [(and shs (regexp-match? #rx"(pwsh|powershell)(\\.exe)?$" shs))
+         '("-NoProfile" "-NonInteractive")]
         [else                                              '("-l")]))
 
 
@@ -153,6 +155,13 @@
   (or exec-path-from-shell-shell-name
       (getenv "SHELL")
       (and (eq? (system-type 'os) 'windows)
+           (or (find-executable-path "pwsh")
+               (find-executable-path "powershell")
+               (find-executable-path "powershell.exe")
+               (find-executable-path "pwsh.exe")
+               (find-executable-path "bash")
+               (find-executable-path "sh")))
+      (and (not (eq? (system-type 'os) 'windows))
            (or (find-executable-path "bash")
                (find-executable-path "sh")))
       #f))
@@ -161,10 +170,14 @@
   (define shs (shell->string sh))
   (and shs (regexp-match? #rx"nu(\\.exe)?$" shs)))
 
+(define (powershell? sh)
+  (define shs (shell->string sh))
+  (and shs (regexp-match? #rx"(pwsh|powershell)(\\.exe)?$" shs)))
+
 (define (standard-shell? sh)
   ;; supports ${VAR-default}
   (define shs (shell->string sh))
-  (not (and shs (regexp-match? #rx"(fish|nu|t?csh)(\\.exe)?$" shs))))
+  (not (and shs (regexp-match? #rx"(fish|nu|t?csh|pwsh|powershell)(\\.exe)?$" shs))))
 
 (define (now-ms)
   (current-inexact-monotonic-milliseconds))
@@ -315,6 +328,38 @@
    (for/fold ([acc '()]) ([n names] [v js])
      (cons (cons n (normalize v)) acc))))
 
+
+(define (hash-ref/name js n [default #f])
+  (cond
+    [(not (hash? js)) default]
+    [(hash-has-key? js n) (hash-ref js n)]
+    [else
+     (define sym (string->symbol n))
+     (if (hash-has-key? js sym)
+         (hash-ref js sym)
+         default)]))
+
+(define (ps-quote s)
+  ;; Escape single quotes for PowerShell single-quoted strings.
+  (format "'~a'" (string-replace s "'" "''")))
+
+(define (getenvs-powershell names)
+  ;; Query environment variables in PowerShell and return as JSON.
+  (define sh (shell-to-use))
+  (define names-lit (string-join (map ps-quote names) ", "))
+  (define expr
+    (string-append
+     "$obj = @{}; "
+     "$names = @(" names-lit "); "
+     "foreach ($n in $names) { $obj[$n] = [Environment]::GetEnvironmentVariable($n) }; "
+     "$obj | ConvertTo-Json -Compress"))
+  (define out (run-shell-c sh (list "-Command" expr)))
+  (define js (bytes->jsexpr out))
+  (for/list ([n names])
+    (define v (hash-ref/name js n 'missing))
+    (cons n (cond [(or (eq? v 'null) (eq? v 'missing)) #f]
+                  [else (~a v)]))))
+
 ;; ----------------------------
 ;; Public API
 ;; ----------------------------
@@ -323,9 +368,10 @@
   (define sh (shell-to-use))
   (cond
     [sh
-     (if (nushell? sh)
-         (getenvs-nushell names)
-         (getenvs-standard names))]
+     (cond
+       [(powershell? sh) (getenvs-powershell names)]
+       [(nushell? sh) (getenvs-nushell names)]
+       [else (getenvs-standard names)])]
     [else
      (for/list ([n names]) (cons n #f))]))
 
