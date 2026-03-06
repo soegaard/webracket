@@ -224,12 +224,23 @@
   ;; fmt should contain sequences like "\\000" (one backslash in the string)
   ;; so that printf receives \000 and emits a NUL byte.
   (define printf-bin (or (find-executable-path "printf") "printf"))
+  (define (shell-word-quote s)
+    (format "~s" s))
+  (define (shell-command-path v)
+    (define s (if (path? v) (path->string v) v))
+    ;; On Windows, bash/fish parse forward slashes more reliably than
+    ;; backslashes in -c command strings.
+    (if (eq? (system-type 'os) 'windows)
+        (string-replace s "\\" "/")
+        s))
   (define format-arg (string-append "__RESULT\\000" fmt "\\000__RESULT"))
   (define cmd
     (string-append
-     (format "~a " (if (path? printf-bin) (path->string printf-bin) printf-bin))
-     (format "~s " format-arg) ; quote as a single argv word for the shell
-     (string-join (map (λ (s) (format "~s" s)) args) " ")))
+     (shell-word-quote (shell-command-path printf-bin))
+     " "
+     (shell-word-quote format-arg)
+     " "
+     (string-join (map shell-word-quote args) " ")))
 
   (define sh       (shell-to-use))
   (define full-cmd (if (standard-shell? sh)
