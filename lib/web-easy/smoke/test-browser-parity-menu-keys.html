@@ -97,7 +97,7 @@
 
         const ui = await waitForUI(frame, 20000);
         assertTrue(ui.label.getAttribute("role") === "button", "menu label role");
-        assertTrue(ui.label.getAttribute("aria-haspopup") === "true", "menu label popup attr");
+        assertTrue(ui.label.getAttribute("aria-haspopup") === "menu", "menu label popup attr");
         assertTrue(ui.item.getAttribute("role") === "menuitem", "menu-item role");
         assertTrue(ui.item.getAttribute("tabindex") === "0", "menu-item tabindex");
 
