@@ -52,6 +52,7 @@
 ;;   accordion      Build a single-open section accordion view.
 ;;   offcanvas      Build an offcanvas side panel view.
 ;;   dialog         Build a modal dialog container view.
+;;   modal          Build a modal container view.
 ;;   observable-view  Build a dynamic view from observable value.
 ;;   spacer         Build an empty layout spacer view.
 ;;   divider        Build a horizontal or vertical divider view.
@@ -116,6 +117,7 @@
    accordion
    offcanvas
    dialog
+   modal
    observable-view
    spacer
    divider
@@ -174,6 +176,7 @@
     (define kind/accordion 'accordion) ; Single-open section accordion view.
     (define kind/offcanvas 'offcanvas) ; Side-sheet/offcanvas panel view.
     (define kind/dialog 'dialog) ; Modal dialog container view.
+    (define kind/modal 'modal) ; Modal container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
     (define kind/spacer    'spacer)    ; Empty layout spacer view.
     (define kind/divider   'divider)   ; Horizontal/vertical divider view.
@@ -416,18 +419,22 @@
                              (cons 'level level))
             '()))
 
-    ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] -> view?
-    ;;   Construct a non-modal toast with open flag, close action, message, optional title, and dismiss control.
+    ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
+    ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, and pause-on-hover.
     ;;   Optional parameter level defaults to 'info.
     ;;   Optional parameter title defaults to #f.
     ;;   Optional parameter dismissible? defaults to #t.
-    (define (toast open on-close value [level 'info] [title #f] [dismissible? #t])
+    ;;   Optional parameter duration-ms defaults to 0.
+    ;;   Optional parameter pause-on-hover? defaults to #t.
+    (define (toast open on-close value [level 'info] [title #f] [dismissible? #t] [duration-ms 0] [pause-on-hover? #t])
       (view kind/toast (list (cons 'open open)
                              (cons 'on-close on-close)
                              (cons 'value value)
                              (cons 'level level)
                              (cons 'title title)
-                             (cons 'dismissible? dismissible?))
+                             (cons 'dismissible? dismissible?)
+                             (cons 'duration-ms duration-ms)
+                             (cons 'pause-on-hover? pause-on-hover?))
             '()))
 
     ;; close-button : (-> any/c) [(or/c string? observable?)] -> view?
@@ -641,6 +648,13 @@
                               (cons 'on-close on-close))
             children))
 
+    ;; modal : (or/c boolean? observable?) (-> any/c) view? ... -> view?
+    ;;   Construct a modal container that mirrors dialog behavior.
+    (define (modal open on-close . children)
+      (view kind/modal (list (cons 'open open)
+                             (cons 'on-close on-close))
+            children))
+
     ;; observable-view : (or/c any/c observable?) (-> any/c view?) [(-> any/c any/c boolean?)] -> view?
     ;;   Construct a dynamic single-child view from value using make-view.
     ;;   Optional parameter equal-proc defaults to equal?.
@@ -698,12 +712,16 @@
                                 (cons 'action action))
             '()))
 
-    ;; carousel : list? (or/c number? observable?) (-> any/c any/c) -> view?
-    ;;   Construct a carousel from item rows, current index, and index-change action.
-    (define (carousel items current-index action)
+    ;; carousel : list? (or/c number? observable?) (-> any/c any/c) [boolean?] [boolean?] -> view?
+    ;;   Construct a carousel from item rows, current index, and index-change action with optional wrap and autoplay flags.
+    ;;   Optional parameter wrap? defaults to #t.
+    ;;   Optional parameter autoplay? defaults to #f.
+    (define (carousel items current-index action [wrap? #t] [autoplay? #f])
       (view kind/carousel (list (cons 'items items)
                                 (cons 'current-index current-index)
-                                (cons 'action action))
+                                (cons 'action action)
+                                (cons 'wrap? wrap?)
+                                (cons 'autoplay? autoplay?))
             '()))
 
     ;; scrollspy : list? (or/c any/c observable?) (-> any/c any/c) -> view?
@@ -751,10 +769,33 @@
                             (cons 'variants variants))
             children))
 
-    ;; navigation-bar : view? ... -> view?
-    ;;   Construct a navigation bar container for nav links/actions.
-    (define (navigation-bar . children)
-      (view kind/navigation-bar '() children))
+    ;; navigation-bar : [symbol?] [boolean?] [symbol?] view? ... -> view?
+    ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
+    ;;   Optional parameter orientation defaults to 'horizontal.
+    ;;   Optional parameter collapsed? defaults to #f.
+    ;;   Optional parameter expand defaults to 'always.
+    (define (navigation-bar . args)
+      (define orientation 'horizontal)
+      (define collapsed? #f)
+      (define expand 'always)
+      (define children args)
+      (when (and (pair? children)
+                 (symbol? (car children)))
+        (set! orientation (car children))
+        (set! children (cdr children)))
+      (when (and (pair? children)
+                 (boolean? (car children)))
+        (set! collapsed? (car children))
+        (set! children (cdr children)))
+      (when (and (pair? children)
+                 (symbol? (car children)))
+        (set! expand (car children))
+        (set! children (cdr children)))
+      (view kind/navigation-bar
+            (list (cons 'orientation orientation)
+                  (cons 'collapsed? collapsed?)
+                  (cons 'expand expand))
+            children))
 
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.
@@ -831,6 +872,7 @@
             accordion
             offcanvas
             dialog
+            modal
             observable-view
             spacer
             divider

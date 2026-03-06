@@ -29,6 +29,8 @@
 ;;   backend-scrollspy-observe-scroll!  Register scroll observer callback (no-op here).
 ;;   backend-scrollspy-scroll-into-view! Scroll section node into view (no-op here).
 ;;   backend-scrollspy-active-id  Compute active scrollspy id from section bindings.
+;;   backend-set-timeout!    Register a timeout callback (no-op here).
+;;   backend-clear-timeout!  Clear timeout callback handle (no-op here).
 
 (define-values
   (dom-node
@@ -52,7 +54,9 @@
    backend-mount-root!
    backend-scrollspy-observe-scroll!
    backend-scrollspy-scroll-into-view!
-   backend-scrollspy-active-id)
+   backend-scrollspy-active-id
+   backend-set-timeout!
+   backend-clear-timeout!)
   (let ()
     (struct dom-node (tag attrs children text on-click on-change) #:mutable #:transparent)
 
@@ -101,6 +105,16 @@
           (caar section-bindings)
           #f))
 
+    ;; backend-set-timeout! : number? (-> void?) -> any/c
+    ;;   Return #f in DOM-like backend because there is no async timer host.
+    (define (backend-set-timeout! _duration-ms _callback)
+      #f)
+
+    ;; backend-clear-timeout! : any/c -> void?
+    ;;   No-op timeout cleanup in DOM-like backend.
+    (define (backend-clear-timeout! _handle)
+      (void))
+
     (values dom-node
             dom-node?
             dom-node-tag
@@ -122,4 +136,6 @@
             backend-mount-root!
             backend-scrollspy-observe-scroll!
             backend-scrollspy-scroll-into-view!
-            backend-scrollspy-active-id)))
+            backend-scrollspy-active-id
+            backend-set-timeout!
+            backend-clear-timeout!)))

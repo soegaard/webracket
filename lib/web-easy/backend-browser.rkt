@@ -29,6 +29,8 @@
 ;;   backend-scrollspy-observe-scroll!  Register scroll observer callback for a container.
 ;;   backend-scrollspy-scroll-into-view! Scroll section node into view in the browser.
 ;;   backend-scrollspy-active-id  Compute active scrollspy id from section bindings.
+;;   backend-set-timeout!     Register timeout callback in browser host.
+;;   backend-clear-timeout!   Clear timeout callback handle in browser host.
 
 (define-values
   (dom-node
@@ -52,7 +54,9 @@
    backend-mount-root!
    backend-scrollspy-observe-scroll!
    backend-scrollspy-scroll-into-view!
-   backend-scrollspy-active-id)
+   backend-scrollspy-active-id
+   backend-set-timeout!
+   backend-clear-timeout!)
   (let ()
     (struct dom-node-record (tag attrs children text on-click on-change native)
       #:mutable
@@ -142,6 +146,22 @@
       (if p
           (string=? (value->attr-string (cdr p)) "true")
           #t))
+
+    ;; backend-set-timeout! : number? (-> void?) -> any/c
+    ;;   Register callback to run after duration-ms; returns timeout handle.
+    (define (backend-set-timeout! duration-ms callback)
+      (js-send (js-window-window)
+               "setTimeout"
+               (vector (procedure->external
+                        (lambda ()
+                          (callback)))
+                       duration-ms)))
+
+    ;; backend-clear-timeout! : any/c -> void?
+    ;;   Clear timeout callback handle.
+    (define (backend-clear-timeout! handle)
+      (when handle
+        (js-send (js-window-window) "clearTimeout" (vector handle))))
 
     ;; dialog-focus-return-set! : any/c any/c -> void?
     ;;   Track focus return target for dialog-native.
@@ -1129,8 +1149,16 @@
        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-change n))
-          (when (and callback (menu-trigger-node? n))
+          (when callback
             (callback "mouseenter")))))
+      (js-add-event-listener!
+       native
+       "mouseleave"
+       (procedure->external
+        (lambda (_evt)
+          (define callback (dom-node-record-on-change n))
+          (when callback
+            (callback "mouseleave")))))
       (js-add-event-listener!
        native
        "focusout"
@@ -1441,4 +1469,6 @@
             backend-mount-root!
             backend-scrollspy-observe-scroll!
             backend-scrollspy-scroll-into-view!
-            backend-scrollspy-active-id)))
+            backend-scrollspy-active-id
+            backend-set-timeout!
+            backend-clear-timeout!)))

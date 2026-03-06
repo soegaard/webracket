@@ -195,6 +195,29 @@
 (check-equal (node-attr navigation-bar-node 'class) "we-navigation-bar" "navigation-bar base class")
 (check-equal (node-attr navigation-bar-node 'role) 'navigation "navigation-bar role attr")
 
+;; navigation-bar supports orientation + collapsed state with toggle expansion
+(define r-navigation-bar-collapsed
+  (render
+   (window
+    (navigation-bar 'vertical #t 'always
+                    (button "one" (lambda () (void)))
+                    (button "two" (lambda () (void)))))))
+(define navigation-bar-collapsed-node (node-child (renderer-root r-navigation-bar-collapsed) 0))
+(define navigation-bar-toggle-node (node-child navigation-bar-collapsed-node 0))
+(check-equal (node-attr navigation-bar-collapsed-node 'class)
+             "we-navigation-bar is-vertical is-collapsed"
+             "navigation-bar collapsed + vertical class")
+(check-equal (node-attr navigation-bar-toggle-node 'aria-expanded)
+             "false"
+             "navigation-bar toggle aria-expanded false when collapsed")
+(dom-node-click! navigation-bar-toggle-node)
+(check-equal (node-attr navigation-bar-collapsed-node 'class)
+             "we-navigation-bar is-vertical"
+             "navigation-bar class after toggle expand")
+(check-equal (node-attr navigation-bar-toggle-node 'aria-expanded)
+             "true"
+             "navigation-bar toggle aria-expanded true when expanded")
+
 ;; close-button renders class/aria semantics and action callback
 (define @close-count (@ 0))
 (define r-close-button
@@ -266,6 +289,25 @@
 (define carousel-next (node-child-by-widget carousel-controls "carousel-next"))
 (dom-node-click! carousel-next)
 (check-equal (obs-peek @carousel-index) 1 "carousel next action")
+
+;; carousel with wrap disabled keeps index at boundary and marks next as disabled
+(define @carousel-index-no-wrap (@ 2))
+(define r-carousel-no-wrap
+  (render
+   (window
+    (vpanel
+     (carousel carousel-items
+               @carousel-index-no-wrap
+               (lambda (next-index)
+                 (:= @carousel-index-no-wrap next-index))
+               #f
+               #f)))))
+(define carousel-node-no-wrap (node-child (node-child (renderer-root r-carousel-no-wrap) 0) 0))
+(define carousel-controls-no-wrap (node-child-by-widget carousel-node-no-wrap "carousel-controls"))
+(define carousel-next-no-wrap (node-child-by-widget carousel-controls-no-wrap "carousel-next"))
+(dom-node-click! carousel-next-no-wrap)
+(check-equal (obs-peek @carousel-index-no-wrap) 2 "carousel no-wrap keeps last index on next")
+(check-equal (node-attr carousel-next-no-wrap 'aria-disabled) "true" "carousel no-wrap marks next disabled")
 
 ;; scrollspy marks selected item current and updates via click action
 (define @scroll-current (@ 'home))
@@ -438,6 +480,24 @@
 (:= @toast-title "Syncing")
 (define toast-title-node-2-after (node-child toast-node-2 0))
 (check-equal (dom-node-text toast-title-node-2-after) "Syncing" "toast title observable update")
+
+;; modal renders modal semantics and updates open/aria state from observable
+(define @modal-open (@ #f))
+(define r-modal
+  (render
+   (window
+    (vpanel
+     (modal @modal-open
+            (lambda ()
+              (:= @modal-open #f))
+            (text "Modal body"))))))
+(define modal-node (node-child (node-child (renderer-root r-modal) 0) 0))
+(check-equal (node-attr modal-node 'data-we-widget) "modal" "modal data-we-widget attr")
+(check-equal (node-attr modal-node 'class) "we-modal" "modal base class")
+(check-equal (node-attr modal-node 'aria-hidden) "true" "modal hidden initially")
+(:= @modal-open #t)
+(check-equal (node-attr modal-node 'class) "we-modal is-open" "modal open class")
+(check-equal (node-attr modal-node 'aria-hidden) "false" "modal visible aria")
 
 ;; pagination renders page buttons and updates current page on click
 (define @page (@ 2))

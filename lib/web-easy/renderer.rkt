@@ -89,8 +89,8 @@
        .we-accordion-trigger.is-open::after{transform:rotate(90deg);color:var(--we-border-strong,#333);}\
        .we-accordion-trigger:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define dialog-style-text ; CSS for dialog overlay and panel.
-      ".we-dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
-       .we-dialog.is-open{display:flex;}\
+      ".we-dialog,.we-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
+       .we-dialog.is-open,.we-modal.is-open{display:flex;}\
        .we-dialog-panel{min-width:280px;max-width:520px;background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);border-radius:8px;padding:14px;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
        .we-dialog-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:2px;}") 
     (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
@@ -111,7 +111,7 @@
       ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
        .we-tooltip-trigger{display:inline-flex;}\
        .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,2px);display:block;padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);white-space:nowrap;pointer-events:none;opacity:0;z-index:1200;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));transition:opacity .14s ease,transform .14s ease;}\
-       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble{opacity:1;transform:translate(-50%,0);}\
+       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble,.we-tooltip.is-open .we-tooltip-bubble{opacity:1;transform:translate(-50%,0);}\
        .we-popover{display:inline-flex;align-self:flex-start;position:relative;z-index:1201;}\
        .we-popover-trigger{align-self:flex-start;position:relative;z-index:1201;}\
        .we-popover-backdrop{position:fixed;inset:0;display:none;background:transparent;z-index:1190;}\
@@ -205,6 +205,11 @@
        .we-card-body{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);}\
        .we-card-footer{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-top:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-menu,#aaa);border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-navigation-bar.is-vertical{flex-direction:column;align-items:stretch;}\
+       .we-navigation-bar-toggle{display:inline-flex;align-self:flex-start;}\
+       .we-navigation-bar-items{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);flex:1 1 auto;}\
+       .we-navigation-bar.is-collapsed .we-navigation-bar-items{display:none;}\
+       .we-navigation-bar.is-expanded .we-navigation-bar-items{display:flex;}\
        .we-offcanvas{position:fixed;inset:0;display:none;z-index:2100;}\
        .we-offcanvas.is-open{display:block;}\
        .we-offcanvas-backdrop{position:absolute;inset:0;background:var(--we-overlay,rgba(0,0,0,0.45));}\
@@ -217,6 +222,7 @@
        .we-carousel-indicators{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);}\
        .we-carousel-indicator{width:1.6em;height:1.6em;border:1px solid var(--we-border-soft,#bbb);border-radius:999px;background:var(--we-bg,#fff);}\
        .we-carousel-indicator.is-current{background:var(--we-bg-selected,#ececec);border-color:var(--we-border-strong,#333);}\
+       .we-carousel-nav.is-disabled{opacity:.55;cursor:not-allowed;}\
        .we-scrollspy{display:flex;flex-direction:column;align-self:stretch;gap:var(--we-space-xs,2px);padding:var(--we-space-xs,2px);border:1px solid var(--we-border-soft,#bbb);border-radius:6px;background:var(--we-bg,#fff);}\
        .we-scrollspy-nav{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
        .we-scrollspy-sections{display:flex;flex-direction:column;gap:var(--we-space-sm,4px);max-height:240px;overflow:auto;padding:var(--we-space-xs,2px);border-top:1px solid var(--we-border-soft,#bbb);}\
@@ -949,6 +955,26 @@
             [else        'end])
           'end))
 
+    ;; normalize-toast-duration : any/c -> number?
+    ;;   Normalize toast auto-hide duration to non-negative integer milliseconds.
+    (define (normalize-toast-duration duration-ms)
+      (cond
+        [(and (number? duration-ms)
+              (integer? duration-ms)
+              (>= duration-ms 0))
+         duration-ms]
+        [else
+         0]))
+
+    ;; normalize-nav-orientation : any/c -> symbol?
+    ;;   Normalize navigation-bar orientation to horizontal/vertical.
+    (define (normalize-nav-orientation orientation)
+      (if (symbol? orientation)
+          (case orientation
+            [(horizontal vertical) orientation]
+            [else                  'horizontal])
+          'horizontal))
+
     ;; density-class : symbol? -> string?
     ;;   Return CSS class for table density variants.
     (define (density-class density)
@@ -1242,6 +1268,8 @@
          (define raw-level (alist-ref (view-props v) 'level 'render))
          (define raw-title (alist-ref (view-props v) 'title 'render))
          (define raw-dismissible (alist-ref (view-props v) 'dismissible? 'render))
+         (define raw-duration-ms (alist-ref (view-props v) 'duration-ms 'render))
+         (define raw-pause-on-hover (alist-ref (view-props v) 'pause-on-hover? 'render))
          (define node (dom-node 'div
                                 (list (cons attr/role 'status)
                                       (cons 'data-we-widget "toast")
@@ -1278,6 +1306,32 @@
                      "×"
                      on-close
                      #f))
+         ;; Constants for toast runtime state.
+         (define toast-timeout-handle #f) ; Backend timeout handle for auto-hide.
+         (define toast-hovered? #f) ; Hover state used for pause-on-hover behavior.
+         ;; clear-toast-timeout! : -> void?
+         ;;   Clear any pending toast auto-hide timeout.
+         (define (clear-toast-timeout!)
+           (when toast-timeout-handle
+             (backend-clear-timeout! toast-timeout-handle)
+             (set! toast-timeout-handle #f)))
+         ;; maybe-schedule-auto-hide! : -> void?
+         ;;   Schedule auto-hide callback when toast is open and duration is positive.
+         (define (maybe-schedule-auto-hide!)
+           (clear-toast-timeout!)
+           (define open? (not (not (maybe-observable-value raw-open))))
+           (define duration-ms (normalize-toast-duration (maybe-observable-value raw-duration-ms)))
+           (define pause-on-hover? (not (eq? (maybe-observable-value raw-pause-on-hover) #f)))
+           (when (and open?
+                      (> duration-ms 0)
+                      (procedure? on-close)
+                      (or (not pause-on-hover?)
+                          (not toast-hovered?)))
+             (set! toast-timeout-handle
+                   (backend-set-timeout! duration-ms
+                                         (lambda ()
+                                           (set! toast-timeout-handle #f)
+                                           (on-close))))))
          ;; refresh-toast-children! : -> void?
          ;;   Rebuild toast children based on optional title and dismissibility.
          (define (refresh-toast-children!)
@@ -1304,7 +1358,23 @@
                   (cons 'aria-live live)
                   (cons 'aria-hidden (if open? "false" "true"))))
            (refresh-toast-children!)
-           (set-dom-node-text! message-node (value->text (maybe-observable-value raw-value))))
+           (set-dom-node-text! message-node (value->text (maybe-observable-value raw-value)))
+           (maybe-schedule-auto-hide!))
+         (set-dom-node-on-change!
+          node
+          (lambda (event-key)
+            (define pause-on-hover? (not (eq? (maybe-observable-value raw-pause-on-hover) #f)))
+            (case (string->symbol event-key)
+              [(mouseenter)
+               (set! toast-hovered? #t)
+               (when pause-on-hover?
+                 (clear-toast-timeout!))]
+              [(mouseleave)
+               (set! toast-hovered? #f)
+               (when pause-on-hover?
+                 (maybe-schedule-auto-hide!))]
+              [else
+               (void)])))
          (when (obs? raw-open)
            (define (open-listener _updated)
              (render-toast!))
@@ -1330,6 +1400,17 @@
              (render-toast!))
            (obs-observe! raw-dismissible dismissible-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-dismissible dismissible-listener))))
+         (when (obs? raw-duration-ms)
+           (define (duration-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-duration-ms duration-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-duration-ms duration-listener))))
+         (when (obs? raw-pause-on-hover)
+           (define (pause-listener _updated)
+             (render-toast!))
+           (obs-observe! raw-pause-on-hover pause-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-pause-on-hover pause-listener))))
+         (register-cleanup! (lambda () (clear-toast-timeout!)))
          (render-toast!)
          node]
         [(badge)
@@ -2652,6 +2733,78 @@
            [else
             (set-open! raw-open)])
          node]
+        [(modal)
+         (define raw-open  (alist-ref (view-props v) 'open 'render))
+         (define on-close  (alist-ref (view-props v) 'on-close 'render))
+         (define node (dom-node 'dialog
+                                (list (cons attr/role 'dialog)
+                                      (cons 'data-we-widget "modal")
+                                      (cons 'class "we-modal")
+                                      (cons 'tabindex -1)
+                                      (cons 'aria-modal "true")
+                                      (cons 'aria-hidden "true"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define panel-node (dom-node 'div
+                                      (list (cons 'class "we-dialog-panel")
+                                            (cons 'data-we-widget "modal-panel")
+                                            (cons 'tabindex -1))
+                                      '()
+                                      #f
+                                      #f
+                                      #f))
+         (define modal-desc-id #f)
+         (define (set-open! open?)
+           (define open-value (not (eq? open? #f)))
+           (define panel-attrs/base
+             (list (cons 'class "we-dialog-panel")
+                   (cons 'data-we-widget "modal-panel")
+                   (cons 'tabindex -1)))
+           (define panel-attrs
+             (if modal-desc-id
+                 (append panel-attrs/base (list (cons 'aria-describedby modal-desc-id)))
+                 panel-attrs/base))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'dialog)
+                  (cons 'data-we-widget "modal")
+                  (cons 'open open-value)
+                  (cons 'class (if open-value "we-modal is-open" "we-modal"))
+                  (cons 'tabindex -1)
+                  (cons 'aria-modal "true")
+                  (cons 'aria-hidden (if open-value "false" "true"))))
+           (set-dom-node-attrs! panel-node panel-attrs))
+         (when (procedure? on-close)
+           (set-dom-node-on-change!
+            node
+            (lambda (key)
+              (when (string=? key "Escape")
+                (on-close)))))
+         (backend-append-child! node panel-node)
+         (for-each (lambda (child)
+                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                   (view-children v))
+         ;; If first child is text, wire it as aria-describedby for the modal panel.
+         (define panel-children (dom-node-children panel-node))
+         (when (pair? panel-children)
+           (define first-child (car panel-children))
+           (when (equal? (alist-ref (dom-node-attrs first-child) 'data-we-widget #f) "text")
+             (set! modal-desc-id (next-dialog-body-id))
+             (set-dom-node-attrs!
+              first-child
+              (attr-set (dom-node-attrs first-child) 'id modal-desc-id))))
+         (cond
+           [(obs? raw-open)
+            (set-open! (obs-peek raw-open))
+            (define (listener updated)
+              (set-open! updated))
+            (obs-observe! raw-open listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-open listener)))]
+           [else
+            (set-open! raw-open)])
+         node]
         [(observable-view)
          (define raw-data    (alist-ref (view-props v) 'data       'render))
          (define make-view   (alist-ref (view-props v) 'make-view  'render))
@@ -2840,10 +2993,13 @@
          (define raw-items (alist-ref (view-props v) 'items 'render))
          (define raw-current-index (alist-ref (view-props v) 'current-index 'render))
          (define action (alist-ref (view-props v) 'action 'render))
+         (define raw-wrap? (alist-ref (view-props v) 'wrap? 'render))
+         (define raw-autoplay? (alist-ref (view-props v) 'autoplay? 'render))
          (define node
            (dom-node 'div
                      (list (cons 'data-we-widget "carousel")
-                           (cons 'class "we-carousel"))
+                           (cons 'class "we-carousel")
+                           (cons 'tabindex 0))
                      '()
                      #f
                      #f
@@ -2876,7 +3032,7 @@
            (dom-node 'button
                      (list (cons attr/role 'button)
                            (cons 'data-we-widget "carousel-prev")
-                           (cons 'class "we-button"))
+                           (cons 'class "we-button we-carousel-nav we-carousel-prev"))
                      '()
                      "Prev"
                      #f
@@ -2885,7 +3041,7 @@
            (dom-node 'button
                      (list (cons attr/role 'button)
                            (cons 'data-we-widget "carousel-next")
-                           (cons 'class "we-button"))
+                           (cons 'class "we-button we-carousel-nav we-carousel-next"))
                      '()
                      "Next"
                      #f
@@ -2895,10 +3051,20 @@
          (backend-append-child! controls-node next-node)
          (backend-append-child! node viewport-node)
          (backend-append-child! node controls-node)
+         ;; Constants for carousel runtime state.
+         (define carousel-timeout-handle #f) ; Backend timeout handle for autoplay.
+         ;; clear-carousel-timeout! : -> void?
+         ;;   Clear any pending autoplay timeout.
+         (define (clear-carousel-timeout!)
+           (when carousel-timeout-handle
+             (backend-clear-timeout! carousel-timeout-handle)
+             (set! carousel-timeout-handle #f)))
          (define (refresh-carousel!)
            (define items (ensure-list (maybe-observable-value raw-items) 'carousel "items"))
            (define count (length items))
            (define current-index/raw (maybe-observable-value raw-current-index))
+           (define wrap? (not (eq? (maybe-observable-value raw-wrap?) #f)))
+           (define autoplay? (not (eq? (maybe-observable-value raw-autoplay?) #f)))
            (define current-index
              (if (and (number? current-index/raw)
                       (integer? current-index/raw)
@@ -2906,11 +3072,74 @@
                  (min (- count 1) (max 0 current-index/raw))
                  0))
            (define has-items? (> count 0))
+           (define min-index 0)
+           (define max-index (if has-items? (- count 1) 0))
+           (define at-first? (or (not has-items?) (<= current-index min-index)))
+           (define at-last? (or (not has-items?) (>= current-index max-index)))
+           (define prev-disabled? (or (not has-items?)
+                                      (and (not wrap?) at-first?)))
+           (define next-disabled? (or (not has-items?)
+                                      (and (not wrap?) at-last?)))
+           ;; normalize-index : number? -> number?
+           ;;   Normalize or clamp target index based on wrap mode and item count.
+           (define (normalize-index idx)
+             (cond
+               [(not has-items?) 0]
+               [wrap? (modulo (+ idx count) count)]
+               [else  (min max-index (max min-index idx))]))
            (define (set-index! next-index)
              (when has-items?
-               (action (modulo (+ next-index count) count))))
-           (set-dom-node-on-click! prev-node (lambda () (set-index! (- current-index 1))))
-           (set-dom-node-on-click! next-node (lambda () (set-index! (+ current-index 1))))
+               (define normalized (normalize-index next-index))
+               (unless (= normalized current-index)
+                 (action normalized))))
+           (set-dom-node-on-click! prev-node
+                                   (lambda ()
+                                     (unless prev-disabled?
+                                       (set-index! (- current-index 1)))))
+           (set-dom-node-on-click! next-node
+                                   (lambda ()
+                                     (unless next-disabled?
+                                       (set-index! (+ current-index 1)))))
+           (set-dom-node-on-change!
+            node
+            (lambda (event-key)
+              (case (string->symbol event-key)
+                [(ArrowLeft)
+                 (unless prev-disabled?
+                   (set-index! (- current-index 1)))]
+                [(ArrowRight)
+                 (unless next-disabled?
+                   (set-index! (+ current-index 1)))]
+                [(Home)
+                 (unless at-first?
+                   (set-index! min-index))]
+                [(End)
+                 (unless at-last?
+                   (set-index! max-index))]
+                [else
+                 (void)])))
+           (set-dom-node-attrs!
+            prev-node
+            (append
+             (list (cons attr/role 'button)
+                   (cons 'data-we-widget "carousel-prev")
+                   (cons 'class (string-append "we-button we-carousel-nav we-carousel-prev"
+                                               (if prev-disabled? " is-disabled" "")))
+                   (cons 'aria-disabled (if prev-disabled? "true" "false")))
+             (if prev-disabled?
+                 (list (cons 'disabled #t))
+                 '())))
+           (set-dom-node-attrs!
+            next-node
+            (append
+             (list (cons attr/role 'button)
+                   (cons 'data-we-widget "carousel-next")
+                   (cons 'class (string-append "we-button we-carousel-nav we-carousel-next"
+                                               (if next-disabled? " is-disabled" "")))
+                   (cons 'aria-disabled (if next-disabled? "true" "false")))
+             (if next-disabled?
+                 (list (cons 'disabled #t))
+                 '())))
            (if has-items?
                (replace-with-single-child! viewport-node
                                            (carousel-item-view (list-ref items current-index))
@@ -2944,7 +3173,17 @@
                                      #f)])
                      (cons node/indicator
                            (loop (add1 i) (cdr rest)))))))
-           (backend-replace-children! indicators-node indicator-nodes))
+           (backend-replace-children! indicators-node indicator-nodes)
+           (clear-carousel-timeout!)
+           (when (and autoplay?
+                      has-items?
+                      (> count 1)
+                      (or wrap? (not at-last?)))
+             (set! carousel-timeout-handle
+                   (backend-set-timeout! 2500
+                                         (lambda ()
+                                           (set! carousel-timeout-handle #f)
+                                           (set-index! (+ current-index 1)))))))
          (when (obs? raw-items)
            (define (items-listener _updated)
              (refresh-carousel!))
@@ -2955,6 +3194,17 @@
              (refresh-carousel!))
            (obs-observe! raw-current-index index-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-current-index index-listener))))
+         (when (obs? raw-wrap?)
+           (define (wrap-listener _updated)
+             (refresh-carousel!))
+           (obs-observe! raw-wrap? wrap-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-wrap? wrap-listener))))
+         (when (obs? raw-autoplay?)
+           (define (autoplay-listener _updated)
+             (refresh-carousel!))
+           (obs-observe! raw-autoplay? autoplay-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-autoplay? autoplay-listener))))
+         (register-cleanup! (lambda () (clear-carousel-timeout!)))
          (refresh-carousel!)
          node]
         [(scrollspy)
@@ -3093,11 +3343,29 @@
                                        (list (cons attr/role 'tooltip)
                                              (cons 'id bubble-id)
                                              (cons 'data-we-widget "tooltip-bubble")
-                                             (cons 'class "we-tooltip-bubble"))
+                                             (cons 'class "we-tooltip-bubble")
+                                             (cons 'aria-hidden "true"))
                                        '()
                                        ""
                                        #f
                                        #f))
+         ;; Constants for tooltip runtime state.
+         (define tooltip-open? #f) ; Current tooltip open state from hover/focus.
+         ;; set-tooltip-open! : boolean? -> void?
+         ;;   Toggle tooltip class and bubble aria-hidden state.
+         (define (set-tooltip-open! next-open?)
+           (set! tooltip-open? (not (not next-open?)))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "tooltip")
+                  (cons 'class (if tooltip-open? "we-tooltip is-open" "we-tooltip"))))
+           (set-dom-node-attrs!
+            bubble-node
+            (list (cons attr/role 'tooltip)
+                  (cons 'id bubble-id)
+                  (cons 'data-we-widget "tooltip-bubble")
+                  (cons 'class "we-tooltip-bubble")
+                  (cons 'aria-hidden (if tooltip-open? "false" "true")))))
          ;; set-trigger-describedby! : dom-node? string? -> void?
          ;;   Add aria-describedby to trigger child attrs while preserving other attrs.
          (define (set-trigger-describedby! child-node desc-id)
@@ -3115,6 +3383,14 @@
                                         (list (cons 'aria-describedby desc-id)))))
          (define child-node (build-node child-view register-cleanup!))
          (set-trigger-describedby! child-node bubble-id)
+         (set-dom-node-on-change!
+          node
+          (lambda (event-key)
+            (case (string->symbol event-key)
+              [(mouseenter) (set-tooltip-open! #t)]
+              [(mouseleave focusout Escape) (set-tooltip-open! #f)]
+              [else (void)])))
+         (set-dom-node-on-change! trigger-node (dom-node-on-change node))
          (backend-append-child! trigger-node child-node)
          (define (set-message! message)
            (set-dom-node-text! bubble-node (value->text message)))
@@ -3129,6 +3405,7 @@
             (set-message! raw-message)])
          (backend-append-child! node trigger-node)
          (backend-append-child! node bubble-node)
+         (set-tooltip-open! #f)
          node]
         [(popover)
          (define raw-label (alist-ref (view-props v) 'label 'render))
@@ -3296,6 +3573,8 @@
          (refresh-card-structure!)
          node]
         [(navigation-bar)
+         (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
+         (define raw-collapsed? (alist-ref (view-props v) 'collapsed? 'render))
          (define node (dom-node 'nav
                                 (list (cons attr/role 'navigation)
                                       (cons 'data-we-widget "navigation-bar")
@@ -3304,9 +3583,74 @@
                                 #f
                                 #f
                                 #f))
+         (define toggle-node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "navigation-bar-toggle")
+                           (cons 'class "we-button we-navigation-bar-toggle")
+                           (cons 'aria-expanded "false")
+                           (cons 'aria-label "Toggle navigation"))
+                     '()
+                     "Menu"
+                     #f
+                     #f))
+         (define items-node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "navigation-bar-items")
+                           (cons 'class "we-navigation-bar-items"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         ;; Constants for navigation-bar runtime state.
+         (define nav-collapsed? #f) ; Current collapsed state (mirrors observable/initial value).
+         ;; set-collapsed! : boolean? -> void?
+         ;;   Apply collapsed/expanded classes and toggle aria-expanded.
+         (define (set-collapsed! collapsed?)
+           (set! nav-collapsed? (not (not collapsed?)))
+           (define orientation (normalize-nav-orientation (maybe-observable-value raw-orientation)))
+           (define base-class
+             (string-append "we-navigation-bar"
+                            (if (eq? orientation 'vertical) " is-vertical" "")
+                            (if nav-collapsed? " is-collapsed" "")))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'navigation)
+                  (cons 'data-we-widget "navigation-bar")
+                  (cons 'class base-class)))
+           (set-dom-node-attrs!
+            toggle-node
+            (list (cons attr/role 'button)
+                  (cons 'data-we-widget "navigation-bar-toggle")
+                  (cons 'class "we-button we-navigation-bar-toggle")
+                  (cons 'aria-expanded (if nav-collapsed? "false" "true"))
+                  (cons 'aria-label "Toggle navigation"))))
+         (set-dom-node-on-click!
+          toggle-node
+          (lambda ()
+            (define next-collapsed? (not nav-collapsed?))
+            (cond
+              [(obs? raw-collapsed?) (:= raw-collapsed? next-collapsed?)]
+              [else                  (set-collapsed! next-collapsed?)])))
          (for-each (lambda (child)
-                     (backend-append-child! node (build-node child register-cleanup!)))
+                     (backend-append-child! items-node (build-node child register-cleanup!)))
                    (view-children v))
+         (backend-append-child! node toggle-node)
+         (backend-append-child! node items-node)
+         (when (obs? raw-orientation)
+           (define (orientation-listener _updated)
+             (set-collapsed! nav-collapsed?))
+           (obs-observe! raw-orientation orientation-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-orientation orientation-listener))))
+         (cond
+           [(obs? raw-collapsed?)
+            (set-collapsed! (obs-peek raw-collapsed?))
+            (define (collapsed-listener updated)
+              (set-collapsed! updated))
+            (obs-observe! raw-collapsed? collapsed-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-collapsed? collapsed-listener)))]
+           [else
+            (set-collapsed! (maybe-observable-value raw-collapsed?))])
          node]
         [(menu-bar)
          (define node (dom-node 'menu-bar
