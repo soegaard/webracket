@@ -94,10 +94,30 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Choice decode contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-choice-decode-contract.html` |
 | Tooltip contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tooltip-contract.html` |
 | Tooltip contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-tooltip-contract.html` |
-| Modal contract (core, dialog-backed) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-modal-contract.html` |
-| Modal contract (parity, dialog-backed) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-modal-contract.html` |
+| Modal contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-modal-contract.html` |
+| Modal close-reason contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-modal-close-reason-contract.html` |
+| Modal contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-modal-contract.html` |
+| Modal close-reason contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-modal-close-reason-contract.html` |
 | Toast behavior contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-toast-behavior-contract.html` |
 | Toast behavior contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-toast-behavior-contract.html` |
+| Toast timer contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-toast-timer-contract.html` |
+| Toast hover-pause contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-toast-hover-pause-contract.html` |
+| Toast timer contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-toast-timer-contract.html` |
+| Toast hover-pause contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-toast-hover-pause-contract.html` |
+| Carousel wrap contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-carousel-wrap-contract.html` |
+| Carousel keyboard contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-carousel-keyboard-contract.html` |
+| Carousel autoplay contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-carousel-autoplay-contract.html` |
+| Carousel autoplay no-wrap contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-carousel-autoplay-nowrap-contract.html` |
+| Carousel wrap contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-carousel-wrap-contract.html` |
+| Carousel keyboard contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-carousel-keyboard-contract.html` |
+| Carousel autoplay contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-carousel-autoplay-contract.html` |
+| Carousel autoplay no-wrap contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-carousel-autoplay-nowrap-contract.html` |
+| Navigation-bar orientation contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-navigation-bar-orientation-contract.html` |
+| Navigation-bar collapsed contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-navigation-bar-collapsed-contract.html` |
+| Navigation-bar toggle a11y contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-navigation-bar-toggle-a11y-contract.html` |
+| Navigation-bar orientation contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-orientation-contract.html` |
+| Navigation-bar collapsed contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-collapsed-contract.html` |
+| Navigation-bar toggle a11y contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-toggle-a11y-contract.html` |
 | Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
 
 ## Make Targets

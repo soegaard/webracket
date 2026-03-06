@@ -769,7 +769,7 @@
                             (cons 'variants variants))
             children))
 
-    ;; navigation-bar : [symbol?] [boolean?] [symbol?] view? ... -> view?
+    ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?
     ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
     ;;   Optional parameter orientation defaults to 'horizontal.
     ;;   Optional parameter collapsed? defaults to #f.
@@ -780,11 +780,13 @@
       (define expand 'always)
       (define children args)
       (when (and (pair? children)
-                 (symbol? (car children)))
+                 (or (symbol? (car children))
+                     (obs? (car children))))
         (set! orientation (car children))
         (set! children (cdr children)))
       (when (and (pair? children)
-                 (boolean? (car children)))
+                 (or (boolean? (car children))
+                     (obs? (car children))))
         (set! collapsed? (car children))
         (set! children (cdr children)))
       (when (and (pair? children)

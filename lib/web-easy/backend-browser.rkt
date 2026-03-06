@@ -533,6 +533,11 @@
     (define (scrollspy-item-node? n)
       (string=? (widget-value n) "scrollspy-item"))
 
+    ;; carousel-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a carousel root that handles arrow/home/end keys.
+    (define (carousel-node? n)
+      (string=? (widget-value n) "carousel"))
+
     ;; string->int/default : string? integer? -> integer?
     ;;   Parse s as integer and return default-value on failure.
     (define (string->int/default s default-value)
@@ -1132,6 +1137,14 @@
                    (define len (nodelist-length items))
                    (when (> len 0)
                      (focus-scrollspy-item! native (- len 1)))))]
+              [else
+               (void)]))
+          (when (carousel-node? n)
+            (case (string->symbol key)
+              [(ArrowLeft ArrowRight Home End)
+               (js-send evt "preventDefault" (vector))
+               (when callback
+                 (callback key))]
               [else
                (void)]))
           (when (and callback (role-button-node? n))

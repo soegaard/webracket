@@ -559,9 +559,9 @@ Current test commands:
 
 The following M4-adjacent items are deferred as web-specific design work, not blockers for current MVP:
 
-1. Native window/dialog semantics:
+1. Native window semantics:
    - desktop-native top-level window APIs do not map 1:1 to browser hosting.
-   - current fallback: `window` maps to a root container; modal/dialog behavior is deferred.
+   - current fallback: `window` maps to a root container.
 2. Snip/canvas desktop APIs:
    - desktop editor/canvas integration surfaces are platform-specific.
    - current fallback: use web views (`image`, `table`, panels, custom DOM extension points) until a dedicated canvas component is specified.
@@ -634,7 +634,7 @@ Current browser backend element mapping (as implemented today):
 | `window`, `vpanel`, `hpanel`, `button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
 | `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
 | `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions. |
-| `dialog` | composite: overlay `div` + panel `div` + injected `style` | Overlay uses `role="dialog"` + `aria-modal`; visibility is controlled by observable `open`; panel uses `aria-describedby` when first child is descriptive text. |
+| `dialog`, `modal` | `dialog` + panel `div` | `data-we-widget` distinguishes `dialog` vs `modal`; both expose `role="dialog"` + `aria-modal` + observable `open` state, and panel uses `aria-describedby` when first child is descriptive text. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
 | `spinner` | `div` + `span` | Animated loading indicator with optional status label. |
@@ -917,3 +917,28 @@ Remaining follow-up:
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
 3. Completed: close-button icon glyph is CSS-token-driven via `--we-close-glyph` and contract-tested in core/parity close-button pages.
 4. Deep keyboard contracts for dropdown/scrollspy are now part of contract dashboard gating (core + parity).
+
+## Behavior Contract Update (2026-03-06)
+
+Recent contract expansion focuses on optional-argument behavior and close-reason semantics:
+
+1. `modal` now has dedicated core/parity capsules and contracts (no longer dialog-backed smoke indirection).
+2. `modal` close-reason contracts assert `cancel` / `confirm` / `escape` status transitions.
+3. `carousel` contracts now cover:
+   - `wrap? #f` boundary behavior
+   - keyboard (`ArrowLeft`, `ArrowRight`, `Home`, `End`)
+   - `autoplay? #t` progression
+   - no-wrap autoplay stop-at-end.
+4. `navigation-bar` contracts now cover:
+   - orientation class toggling (`is-vertical`)
+   - collapsed state class (`is-collapsed`)
+   - toggle `aria-expanded` transitions.
+5. `toast` contracts now cover:
+   - timer-based auto-hide (`duration-ms`)
+   - hover pause/resume (`pause-on-hover?`).
+
+Rationale:
+
+- These contracts target behavior introduced by optional parameters where regressions are easy to miss in static snapshots.
+- Core and parity dashboards now execute matching behavior checks, so surface differences are caught early.
+- Modal close-reason checks lock down observable state transitions used by real-world flows and examples.

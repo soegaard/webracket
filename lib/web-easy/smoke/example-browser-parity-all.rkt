@@ -22,6 +22,7 @@
 (include/reader "smoke-capsule-parity-dropdown.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-choice-decode.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-navigation-bar.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-navigation-bar-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-button-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-button-toolbar.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-card.rkt" read-syntax/skip-first-line)
@@ -32,10 +33,12 @@
 (include/reader "smoke-capsule-parity-breadcrumb.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-toast.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-toast-timing.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-collapse.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-accordion.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-offcanvas.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-modal.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog-no-desc.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-table-align.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
@@ -43,6 +46,7 @@
 (include/reader "smoke-capsule-parity-close-button.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-placeholder.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-carousel.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-carousel-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-scrollspy.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-scrollspy-docs.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list.rkt" read-syntax/skip-first-line)
@@ -105,6 +109,10 @@
               (list parity-navigation-bar-make-page
                     parity-navigation-bar-run-test
                     parity-navigation-bar-cleanup))
+        (cons 'parity-navigation-bar-advanced
+              (list parity-navigation-bar-advanced-make-page
+                    parity-navigation-bar-advanced-run-test
+                    parity-navigation-bar-advanced-cleanup))
         (cons 'parity-button-group
               (list parity-button-group-make-page
                     parity-button-group-run-test
@@ -145,6 +153,10 @@
               (list parity-toast-make-page
                     parity-toast-run-test
                     parity-toast-cleanup))
+        (cons 'parity-toast-timing
+              (list parity-toast-timing-make-page
+                    parity-toast-timing-run-test
+                    parity-toast-timing-cleanup))
         (cons 'parity-collapse
               (list parity-collapse-make-page
                     parity-collapse-run-test
@@ -161,6 +173,10 @@
               (list parity-dialog-make-page
                     parity-dialog-run-test
                     parity-dialog-cleanup))
+        (cons 'parity-modal
+              (list parity-modal-make-page
+                    parity-modal-run-test
+                    parity-modal-cleanup))
         (cons 'parity-dialog-no-desc
               (list parity-dialog-no-desc-make-page
                     parity-dialog-no-desc-run-test
@@ -189,6 +205,10 @@
               (list parity-carousel-make-page
                     parity-carousel-run-test
                     parity-carousel-cleanup))
+        (cons 'parity-carousel-advanced
+              (list parity-carousel-advanced-make-page
+                    parity-carousel-advanced-run-test
+                    parity-carousel-advanced-cleanup))
         (cons 'parity-scrollspy
               (list parity-scrollspy-make-page
                     parity-scrollspy-run-test

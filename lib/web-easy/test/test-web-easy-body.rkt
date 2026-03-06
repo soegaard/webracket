@@ -481,6 +481,26 @@
 (define toast-title-node-2-after (node-child toast-node-2 0))
 (check-equal (dom-node-text toast-title-node-2-after) "Syncing" "toast title observable update")
 
+;; toast supports duration-ms and pause-on-hover? optional args
+(define @toast-open-3 (@ #t))
+(define @toast-pause (@ #t))
+(define r-toast-3
+  (render
+   (window
+    (vpanel
+     (toast @toast-open-3
+            (lambda ()
+              (:= @toast-open-3 #f))
+            "Timed toast"
+            'info
+            "Timer"
+            #t
+            500
+            @toast-pause)))))
+(define toast-node-3 (node-child (node-child (renderer-root r-toast-3) 0) 0))
+(check-equal (node-attr toast-node-3 'data-we-widget) "toast" "toast timed data-we-widget attr")
+(check-equal (node-attr toast-node-3 'class) "we-toast we-toast-info is-open" "toast timed initial class")
+
 ;; modal renders modal semantics and updates open/aria state from observable
 (define @modal-open (@ #f))
 (define r-modal

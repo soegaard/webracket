@@ -29,6 +29,7 @@
 (include/reader "smoke-capsule-card-variants.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-theme-token-api.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-navigation-bar.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-navigation-bar-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-layout-primitives.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-button-group.rkt" read-syntax/skip-first-line)
@@ -41,17 +42,20 @@
 (include/reader "smoke-capsule-breadcrumb.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-list-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-toast.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-toast-timing.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-collapse.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-accordion.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-offcanvas.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-popover.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-dialog.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-modal.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-dialog-no-desc.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-table-align.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-close-button.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-placeholder.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-carousel.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-carousel-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-scrollspy.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-scrollspy-docs.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-operators.rkt" read-syntax/skip-first-line)
@@ -104,6 +108,10 @@
                     theme-token-api-cleanup))
         (cons 'navigation-bar
               (list navigation-bar-make-page navigation-bar-run-test navigation-bar-cleanup))
+        (cons 'navigation-bar-advanced
+              (list navigation-bar-advanced-make-page
+                    navigation-bar-advanced-run-test
+                    navigation-bar-advanced-cleanup))
         (cons 'group    (list group-make-page group-run-test group-cleanup))
         (cons 'layout-primitives
               (list layout-primitives-make-page
@@ -121,12 +129,15 @@
         (cons 'breadcrumb (list breadcrumb-make-page breadcrumb-run-test breadcrumb-cleanup))
         (cons 'list-group (list list-group-make-page list-group-run-test list-group-cleanup))
         (cons 'toast    (list toast-make-page toast-run-test toast-cleanup))
+        (cons 'toast-timing
+              (list toast-timing-make-page toast-timing-run-test toast-timing-cleanup))
         (cons 'collapse (list collapse-make-page collapse-run-test collapse-cleanup))
         (cons 'accordion (list accordion-make-page accordion-run-test accordion-cleanup))
         (cons 'offcanvas (list offcanvas-make-page offcanvas-run-test offcanvas-cleanup))
         (cons 'tooltip  (list tooltip-make-page tooltip-run-test tooltip-cleanup))
         (cons 'popover  (list popover-make-page popover-run-test popover-cleanup))
         (cons 'dialog   (list dialog-make-page dialog-run-test dialog-cleanup))
+        (cons 'modal   (list modal-make-page modal-run-test modal-cleanup))
         (cons 'dialog-no-desc
               (list dialog-no-desc-make-page dialog-no-desc-run-test dialog-no-desc-cleanup))
         (cons 'table-align
@@ -137,6 +148,10 @@
               (list placeholder-make-page placeholder-run-test placeholder-cleanup))
         (cons 'carousel
               (list carousel-make-page carousel-run-test carousel-cleanup))
+        (cons 'carousel-advanced
+              (list carousel-advanced-make-page
+                    carousel-advanced-run-test
+                    carousel-advanced-cleanup))
         (cons 'scrollspy
               (list scrollspy-make-page scrollspy-run-test scrollspy-cleanup))
         (cons 'scrollspy-docs

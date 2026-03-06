@@ -366,6 +366,7 @@
       (define on-change     (dom-node-on-change n))
       (define on-enter-pair (assq 'on-enter-action (dom-node-attrs n)))
       (define role-pair     (assq 'role (dom-node-attrs n)))
+      (define widget-pair   (assq 'data-we-widget (dom-node-attrs n)))
       (define tag           (dom-node-tag n))
       (when (and on-enter-pair
                  (procedure? (cdr on-enter-pair))
@@ -380,11 +381,17 @@
                      (string=? key " ")))
         (on-click))
       (when (and on-change
-                 role-pair
-                 (or (eq? (cdr role-pair) 'tab)
-                     (eq? (cdr role-pair) 'button)
-                     (eq? (cdr role-pair) 'menuitem)
-                     (eq? (cdr role-pair) 'dialog)))
+                 (or (and role-pair
+                          (or (eq? (cdr role-pair) 'tab)
+                              (eq? (cdr role-pair) 'button)
+                              (eq? (cdr role-pair) 'menuitem)
+                              (eq? (cdr role-pair) 'dialog)))
+                     (and widget-pair
+                          (eq? (cdr widget-pair) "carousel")
+                          (or (string=? key "ArrowLeft")
+                              (string=? key "ArrowRight")
+                              (string=? key "Home")
+                              (string=? key "End")))))
         (on-change key)))
 
     ;; alist-ref : (listof pair?) symbol? symbol? -> any/c
