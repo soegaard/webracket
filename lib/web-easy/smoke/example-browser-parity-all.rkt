@@ -20,6 +20,7 @@
 (include/reader "smoke-capsule-parity-menu-keys.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-menu-full.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dropdown.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-choice-decode.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-navigation-bar.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-button-group.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-button-toolbar.rkt" read-syntax/skip-first-line)
@@ -33,9 +34,17 @@
 (include/reader "smoke-capsule-parity-toast.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-collapse.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-accordion.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-offcanvas.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dialog.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-dialog-no-desc.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-table-align.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-tooltip.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-close-button.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-placeholder.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-carousel.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-scrollspy.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-scrollspy-docs.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-list.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-todo.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-incident.rkt" read-syntax/skip-first-line)
@@ -88,6 +97,10 @@
               (list parity-dropdown-make-page
                     parity-dropdown-run-test
                     parity-dropdown-cleanup))
+        (cons 'parity-choice-decode
+              (list parity-choice-decode-make-page
+                    parity-choice-decode-run-test
+                    parity-choice-decode-cleanup))
         (cons 'parity-navigation-bar
               (list parity-navigation-bar-make-page
                     parity-navigation-bar-run-test
@@ -140,10 +153,22 @@
               (list parity-accordion-make-page
                     parity-accordion-run-test
                     parity-accordion-cleanup))
+        (cons 'parity-offcanvas
+              (list parity-offcanvas-make-page
+                    parity-offcanvas-run-test
+                    parity-offcanvas-cleanup))
         (cons 'parity-dialog
               (list parity-dialog-make-page
                     parity-dialog-run-test
                     parity-dialog-cleanup))
+        (cons 'parity-dialog-no-desc
+              (list parity-dialog-no-desc-make-page
+                    parity-dialog-no-desc-run-test
+                    parity-dialog-no-desc-cleanup))
+        (cons 'parity-table-align
+              (list parity-table-align-make-page
+                    parity-table-align-run-test
+                    parity-table-align-cleanup))
         (cons 'parity-tooltip
               (list parity-tooltip-make-page
                     parity-tooltip-run-test
@@ -152,6 +177,26 @@
               (list parity-popover-make-page
                     parity-popover-run-test
                     parity-popover-cleanup))
+        (cons 'parity-close-button
+              (list parity-close-button-make-page
+                    parity-close-button-run-test
+                    parity-close-button-cleanup))
+        (cons 'parity-placeholder
+              (list parity-placeholder-make-page
+                    parity-placeholder-run-test
+                    parity-placeholder-cleanup))
+        (cons 'parity-carousel
+              (list parity-carousel-make-page
+                    parity-carousel-run-test
+                    parity-carousel-cleanup))
+        (cons 'parity-scrollspy
+              (list parity-scrollspy-make-page
+                    parity-scrollspy-run-test
+                    parity-scrollspy-cleanup))
+        (cons 'parity-scrollspy-docs
+              (list parity-scrollspy-docs-make-page
+                    parity-scrollspy-docs-run-test
+                    parity-scrollspy-docs-cleanup))
         (cons 'parity-list
               (list parity-list-make-page parity-list-run-test parity-list-cleanup))
         (cons 'parity-todo

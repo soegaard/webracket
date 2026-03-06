@@ -32,3 +32,9 @@ Coding guidelines for Racket/WebRacket code in `lib/web-easy`.
 21. User-facing example CSS files (especially external theme examples) must be commented and novice-readable: include section headers, explain token purpose, and provide brief customization guidance.
 22. In beginner-facing CSS examples, add comments for non-obvious layout/stacking or visual-state rules (for example `z-index`, transparent border reservation, border-color seam fixes, and focus tint techniques) so readers understand why those rules exist.
 23. For consecutive calls with the same callee and simple arguments, align argument columns to improve scanability.
+24. CSS comments are required when adding non-obvious visual behavior (for example no-layout-shift active states, focus rendering, layering, or seam fixes). In beginner-facing stylesheets, always explain the rationale in plain language.
+25. Use `navigation-bar` as the component/API name; avoid `navbar` naming to prevent confusion with HTML naming.
+26. For wrapper-style calls (for example `with-class`, `with-id`, `with-attrs`), keep the first argument on the same line as the callee:
+    - prefer `(with-class "name" ...)` over
+      `(with-class` newline `"name" ...`.
+27. For component calls where the first argument is a short title/label string (for example `card`, `group`, `menu`, `button`), keep that first string argument on the same line as the callee.

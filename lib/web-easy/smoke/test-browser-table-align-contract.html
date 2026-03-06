@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy table-align contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 280px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running table-align contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=table-align" title="web-easy table-align contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=table-align",
+          (d) => d.querySelectorAll("[data-we-widget='table-data-cell']").length >= 6,
+          20000
+        );
+
+        H.assertNoForbiddenAttrTokens(doc, "table-align");
+        H.assertNoInlineWidgetStyles(doc, "table-align");
+
+        const headerCells = Array.from(doc.querySelectorAll("[data-we-widget='table-header-cell']"));
+        const dataCells = Array.from(doc.querySelectorAll("[data-we-widget='table-data-cell']"));
+
+        H.assertEqual(headerCells.length, 3, "header cell count");
+        H.assertTrue((headerCells[0].className || "").includes("we-align-left"), "left header class");
+        H.assertTrue((headerCells[1].className || "").includes("we-align-right"), "right header class");
+        H.assertTrue((headerCells[2].className || "").includes("we-align-center"), "center header class");
+
+        H.assertTrue((dataCells[1].className || "").includes("we-align-right"), "count data class");
+        H.assertTrue((dataCells[2].className || "").includes("we-align-center"), "state data class");
+
+        const win = frame.contentWindow;
+        H.assertEqual(win.getComputedStyle(dataCells[1]).textAlign, "right", "count text-align");
+        H.assertEqual(win.getComputedStyle(dataCells[2]).textAlign, "center", "state text-align");
+
+        H.setStatus("PASS\ntable-align contract: left/right/center classes and computed alignment", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

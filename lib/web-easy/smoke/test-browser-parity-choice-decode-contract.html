@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity choice-decode contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 280px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity choice-decode contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-choice-decode" title="web-easy parity choice-decode contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-choice-decode",
+          (d) => !!d.querySelector("[data-we-widget='choice']") && !!d.querySelector("[data-we-widget='text']"),
+          20000
+        );
+
+        H.assertNoForbiddenAttrTokens(doc, "parity-choice-decode");
+        H.assertNoInlineWidgetStyles(doc, "parity-choice-decode");
+
+        const choice = doc.querySelector("[data-we-widget='choice']");
+        const text = doc.querySelector("[data-we-widget='text']");
+
+        H.assertEqual((text.textContent || "").trim(), "parity-selected:beta", "initial selected symbol value");
+
+        choice.value = "7";
+        choice.dispatchEvent(new Event("change", { bubbles: true }));
+        await H.sleep(100);
+        H.assertEqual((text.textContent || "").trim(), "parity-selected:7", "decoded numeric choice id");
+
+        choice.value = "omega";
+        choice.dispatchEvent(new Event("change", { bubbles: true }));
+        await H.sleep(100);
+        H.assertEqual((text.textContent || "").trim(), "parity-selected:omega", "decoded symbol choice id");
+
+        H.setStatus("PASS\nparity choice-decode contract: labeled options decode to symbol/number ids", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

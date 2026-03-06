@@ -58,13 +58,16 @@ echo "[3/3] smoke compile"
 
 if [ "$HEADLESS" -eq 1 ]; then
   if [ "$FAST_THEME" -eq 1 ]; then
-    echo "[4/6] contract headless"
+    echo "[4/7] contract headless"
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-contract-headless.sh"
     echo
-    echo "[5/6] theme headless"
+    echo "[5/7] theme headless"
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-theme-headless.sh"
     echo
-    echo "[6/6] guard self-test"
+    echo "[6/7] style headless"
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-style-headless.sh"
+    echo
+    echo "[7/7] guard self-test"
     "$SCRIPT_DIR/check-dashboard-guard.sh"
   else
     echo "[4/4] smoke headless"

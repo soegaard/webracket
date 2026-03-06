@@ -49,8 +49,13 @@
       return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
     }
 
-    function bodyText(frameDoc) {
-      return frameDoc && frameDoc.body ? frameDoc.body.textContent || "" : "";
+    function textWidgets(frameDoc) {
+      return Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+        .map((e) => e.textContent || "");
+    }
+
+    function hasText(frameDoc, needle) {
+      return textWidgets(frameDoc).some((s) => s.includes(needle));
     }
 
     function assertEqual(got, want, label) {
@@ -73,8 +78,7 @@
                         && inp.getAttribute("max") === "100"
                         && inp.value === "10");
           const progress = frameDoc.querySelector("progress");
-          const text = bodyText(frameDoc);
-          if (select && slider && (progress || text.includes("10"))) {
+          if (select && slider && (progress || hasText(frameDoc, "10"))) {
             return { frameDoc, select, slider, progress };
           }
         }
@@ -95,25 +99,31 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        assertEqual(bodyText(ui.frameDoc).includes("color:red"), true, "initial color text contains color:red");
-        assertEqual(bodyText(ui.frameDoc).includes("level:10"), true, "initial level text contains level:10");
+        assertEqual(hasText(ui.frameDoc, "color:red"), true, "initial color text contains color:red");
+        assertEqual(hasText(ui.frameDoc, "level:10"), true, "initial level text contains level:10");
+        if (ui.progress) {
+          assertEqual(ui.progress.className.includes("we-progress-error"), true, "initial progress variant class is error");
+        }
 
         ui.select.value = "green";
         ui.select.dispatchEvent(new Event("change", { bubbles: true }));
         await sleep(100);
-        assertEqual(bodyText(ui.frameDoc).includes("color:green"), true, "color text after select contains color:green");
+        assertEqual(hasText(ui.frameDoc, "color:green"), true, "color text after select contains color:green");
+        if (ui.progress) {
+          assertEqual(ui.progress.className.includes("we-progress-success"), true, "progress variant class after select is success");
+        }
 
         ui.slider.value = "42";
         ui.slider.dispatchEvent(new Event("change", { bubbles: true }));
         await sleep(100);
-        assertEqual(bodyText(ui.frameDoc).includes("level:42"), true, "level text after slider contains level:42");
+        assertEqual(hasText(ui.frameDoc, "level:42"), true, "level text after slider contains level:42");
         if (ui.progress) {
           assertEqual(ui.progress.getAttribute("value"), "42", "progress value attr after slider");
         } else {
-          assertEqual(bodyText(ui.frameDoc).includes("level:42"), true, "fallback progress/text contains level:42");
+          assertEqual(hasText(ui.frameDoc, "level:42"), true, "fallback progress/text contains level:42");
         }
 
-        setStatus("PASS\ncolor: red->green; level: 10->42; progress=42", "pass");
+        setStatus("PASS\ncolor: red->green; level: 10->42; progress variant: error->success", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");
@@ -122,7 +132,7 @@
           ? ("diag: selects=" + frameDoc.querySelectorAll("select").length +
              " inputs=" + frameDoc.querySelectorAll("input").length +
              " progress=" + frameDoc.querySelectorAll("progress").length +
-             " body=" + JSON.stringify(bodyText(frameDoc)))
+             " text-widgets=" + JSON.stringify(textWidgets(frameDoc)))
           : "diag: no frame document";
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
       }

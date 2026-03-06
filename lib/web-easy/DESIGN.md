@@ -772,6 +772,45 @@ Contract enforcement status:
   - tabs: `tab-panel`, `tab-list`, `tab-content`, `tab-button`
   - accordion: `accordion`, `accordion-section`, `accordion-trigger`, `collapse`
 
+## Contract Taxonomy
+
+Contract pages in `lib/web-easy/smoke/` are grouped by behavioral domain:
+
+1. Semantics and ARIA:
+   - `test-browser-a11y-contract.html`
+   - `test-browser-dialog-contract.html`
+   - `test-browser-tab-aria-linkage-contract.html`
+   - `test-browser-tab-aria-dynamic-contract.html`
+   - `test-browser-menu-aria-state-contract.html`
+   - `test-browser-dialog-no-desc-contract.html`
+   - parity mirrors with `test-browser-parity-...`
+2. Keyboard and focus:
+   - `test-browser-keyboard-contract.html`
+   - `test-browser-focus-order.html`
+   - `test-browser-menu-roving-focus-contract.html`
+   - `test-browser-menu-typeahead-contract.html`
+   - `test-browser-menu-typeahead-timeout-contract.html`
+   - `test-browser-dropdown-focus-return-contract.html`
+   - deep pages: `test-browser-dropdown-keyboard-deep.html`, `test-browser-choice-keyboard-deep.html`, `test-browser-scrollspy-keyboard-deep.html`
+3. Style and DOM-shape invariants:
+   - `test-browser-style-hook-contract.html`
+   - `test-browser-parity-style-hook-contract.html`
+   - dashboard guard checks for forbidden leaked tokens and inline widget styles
+4. Widget API contracts:
+   - list/toolbar/divider/link/navigation/card/button/icon/theme-token/progress/dropdown/choice pages under `test-browser-*-contract.html`
+   - explicit decode/alignment contracts:
+     - `test-browser-choice-decode-contract.html`
+     - `test-browser-table-align-contract.html`
+5. Parity contracts:
+   - all core contract families have parity mirrors under `test-browser-parity-...-contract.html`
+
+Execution model:
+
+- Core and parity contracts are split to reduce timeout coupling:
+  - `test-browser-contract-dashboard-core.html`
+  - `test-browser-contract-dashboard-parity.html`
+- `check-contract-headless.mjs` runs both dashboards and aggregates pass/fail + timing.
+
 ## Baseline Changelog
 
 - 2026-03-02 baseline update:

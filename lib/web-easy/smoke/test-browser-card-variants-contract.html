@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy card-variants contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running card-variants contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=card-variants" title="web-easy card-variants contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(frame, "./generated/example-browser-smoke-all.html?test=card-variants", (d) => d.querySelectorAll("[data-we-widget='card']").length >= 4, 20000);
+        H.assertNoForbiddenAttrTokens(doc, "card-variants-contract");
+        H.assertNoInlineWidgetStyles(doc, "card-variants-contract");
+        const cards = Array.from(doc.querySelectorAll("[data-we-widget='card']"));
+        const classes = cards.map((card) => card.getAttribute("class") || "");
+        H.assertTrue(classes.some((c) => c.includes("we-card-compact")), "compact class present");
+        H.assertTrue(classes.some((c) => c.includes("we-card-flat")), "flat class present");
+        const headerless = cards.find((card) => {
+          const body = card.querySelector("[data-we-widget='card-body']");
+          return body && (body.textContent || "").trim() === "headerless";
+        });
+        H.assertTrue(!!headerless, "headerless card present");
+        H.assertTrue(!headerless.querySelector("[data-we-widget='card-header']"), "headerless card omits header");
+        H.setStatus("PASS\ncard-variants contract: compact/flat classes + headerless behavior", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

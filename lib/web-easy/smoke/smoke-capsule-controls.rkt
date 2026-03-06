@@ -21,6 +21,13 @@
     (define (controls-make-page root)
       (define @color (@ 'red))
       (define @level (@ 10))
+      (define @variant
+        (~> @color
+            (lambda (color)
+              (case color
+                [(green) 'success]
+                [(red)   'error]
+                [else    'info]))))
       (set! controls-renderer
         (render
          (window
@@ -28,7 +35,9 @@
            (choice '(red green blue)
                    @color
                    (lambda (new-value)
-                     (:= @color (string->symbol new-value))))
+                     (:= @color (if (symbol? new-value)
+                                    new-value
+                                    (string->symbol new-value)))))
            (text (~> @color (lambda (s) (~a "color:" s))))
            (slider @level
                    (lambda (new-value)
@@ -36,7 +45,7 @@
                    0
                    100)
            (text (~> @level (lambda (n) (~a "level:" n))))
-           (progress @level 0 100)))))
+           (progress @level 0 100 @variant)))))
       (mount-renderer! controls-renderer root)
       (void))
 

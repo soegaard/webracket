@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - "lib/web-easy/**"
+  schedule:
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:
@@ -98,7 +100,7 @@ jobs:
           cd lib/web-easy/smoke
           SMOKE_LOCAL_TOOLS_DIR="$GITHUB_WORKSPACE/.local-tools" ./headless.sh verify
 
-      - name: Run web-easy smoke checks (contract + theme + full dashboard)
+      - name: Run web-easy smoke checks
         run: |
           cd lib/web-easy/smoke
           echo "[1/3] core tests (real Racket)"
@@ -114,9 +116,15 @@ jobs:
           echo "[3/4] smoke compile"
           ./check-smoke.sh
 
-          echo "[4/4] unified headless CI (contract + theme + smoke + guard)"
-          SMOKE_TIMEOUT_MS=300000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
-          echo "unified headless CI gate passed"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "[4/4] nightly deep headless CI (contract + theme + smoke + guard)"
+            SMOKE_TIMEOUT_MS=600000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
+            echo "nightly deep CI gate passed"
+          else
+            echo "[4/4] PR/push lean headless CI (smoke + key contracts)"
+            SMOKE_TIMEOUT_MS=300000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast
+            echo "lean CI gate passed"
+          fi
 
       - name: Publish headless timing summary
         if: always()

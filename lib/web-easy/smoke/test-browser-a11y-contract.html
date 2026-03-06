@@ -93,7 +93,7 @@
       assertTrue(items.length >= 4, "menu items present");
 
       labels.forEach((label, idx) => {
-        assertTrue(label.getAttribute("aria-haspopup") === "true", "label aria-haspopup true [" + idx + "]");
+        assertTrue(label.getAttribute("aria-haspopup") === "menu", "label aria-haspopup menu [" + idx + "]");
         const controls = label.getAttribute("aria-controls");
         assertTrue(!!controls, "label aria-controls present [" + idx + "]");
         const popup = frameDoc.getElementById(controls);

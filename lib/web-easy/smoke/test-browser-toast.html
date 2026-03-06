@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser toast smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 280px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser toast smoke assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=toast" title="web-easy toast smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const toast = frameDoc.querySelector("[data-we-widget='toast']");
+          const close = frameDoc.querySelector("[data-we-widget='toast-close']");
+          const title = frameDoc.querySelector("[data-we-widget='toast-title']");
+          const showError = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "show-error");
+          const showLocked = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "show-locked");
+          if (toast && close && title && showError && showLocked) {
+            return { frameDoc, toast, close, title, showError, showLocked };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for toast smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        assertEqual(ui.toast.getAttribute("class"), "we-toast we-toast-success is-open", "initial toast class");
+        assertEqual(ui.title.textContent.trim(), "Build", "initial toast title");
+        ui.close.click();
+        await sleep(100);
+        assertEqual(ui.toast.getAttribute("aria-hidden"), "true", "toast hidden after close");
+        ui.showError.click();
+        await sleep(100);
+        assertEqual(ui.toast.getAttribute("class"), "we-toast we-toast-error is-open", "toast class after show-error");
+        ui.showLocked.click();
+        await sleep(100);
+        const closeAfterLock = ui.frameDoc.querySelector("[data-we-widget='toast-close']");
+        assertEqual(closeAfterLock, null, "toast close hidden when non-dismissible");
+        setStatus("PASS\ntoast title/dismissible + severity behavior", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

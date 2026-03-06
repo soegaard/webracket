@@ -78,6 +78,27 @@
       throw new Error("Timed out waiting for theme-vars smoke UI");
     }
 
+    async function loadCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -105,8 +126,28 @@
         assertTrue(bgAfter !== bgBefore, "selected-tab background changed after var update");
         assertTrue(borderAfter !== borderBefore, "selected-tab border changed after var update");
 
+        const progressDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=progress",
+          (d) => d.querySelector("progress") && Array.from(d.querySelectorAll("button")).some((b) => b.textContent.trim() === "warn"),
+          20000
+        );
+        const progress = progressDoc.querySelector("progress");
+        const warnBtn = Array.from(progressDoc.querySelectorAll("button"))
+          .find((b) => b.textContent.trim() === "warn");
+        assertTrue(!!progress, "progress present in progress capsule");
+        assertTrue(!!warnBtn, "warn button present in progress capsule");
+
+        warnBtn.click();
+        await sleep(80);
+        progressDoc.documentElement.style.setProperty("--we-progress-warn", "rgb(18, 120, 210)");
+        await sleep(80);
+
+        const accentAfter = normalizedCssColor(getComputedStyle(progress).accentColor);
+        assertTrue(accentAfter === "rgb(18,120,210)", "progress warn accent follows --we-progress-warn");
+
         setStatus(
-          "PASS\nselected tab styles update via CSS variables (--we-bg-selected/--we-border-strong)",
+          "PASS\nselected tab + progress styles update via CSS variables",
           "pass"
         );
       } catch (err) {

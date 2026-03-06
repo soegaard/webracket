@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser card-variants smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser card-variants smoke assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=card-variants" title="web-easy card-variants smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) { const status = document.getElementById("status"); status.textContent = text; status.className = cls; }
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+    function frameDocFrom(frame) { return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document); }
+    function assertTrue(v, label) { if (!v) { throw new Error(label + ": expected true, got false"); } }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const cards = Array.from(frameDoc.querySelectorAll("[data-we-widget='card']"));
+          if (cards.length >= 4) {
+            return { frameDoc, cards };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for card-variants smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const classNames = ui.cards.map((card) => card.getAttribute("class") || "");
+        assertTrue(classNames.some((c) => c.includes("we-card-compact")), "compact class");
+        assertTrue(classNames.some((c) => c.includes("we-card-flat")), "flat class");
+        const headerlessCard = ui.cards.find((card) => {
+          const body = card.querySelector("[data-we-widget='card-body']");
+          return body && body.textContent.trim() === "headerless";
+        });
+        assertTrue(!!headerlessCard, "headerless card present");
+        assertTrue(!headerlessCard.querySelector("[data-we-widget='card-header']"), "headerless card has no header");
+        setStatus("PASS\ncard variants render (compact/flat classes, headerless behavior)", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

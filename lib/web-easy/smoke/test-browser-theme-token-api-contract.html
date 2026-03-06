@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme-token-api contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 260px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running theme-token-api contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=theme-token-api" title="web-easy theme-token-api contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(frame, "./generated/example-browser-smoke-all.html?test=theme-token-api", (d) => Array.from(d.querySelectorAll("button")).length >= 2, 20000);
+        H.assertNoForbiddenAttrTokens(doc, "theme-token-api-contract");
+        H.assertNoInlineWidgetStyles(doc, "theme-token-api-contract");
+        const applyTokens = Array.from(doc.querySelectorAll("button")).find((e) => (e.textContent || "").trim() === "apply tokens");
+        const applyMixed = Array.from(doc.querySelectorAll("button")).find((e) => (e.textContent || "").trim() === "apply mixed");
+        const fgText = Array.from(doc.querySelectorAll("[data-we-widget='text']")).find((e) => (e.textContent || "").trim().startsWith("fg:"));
+        const mixedText = Array.from(doc.querySelectorAll("[data-we-widget='text']")).find((e) => (e.textContent || "").trim().startsWith("mixed:"));
+        applyTokens.click();
+        await H.sleep(100);
+        H.assertEqual((fgText.textContent || "").trim(), "fg:rgb(64, 128, 32)", "theme-token-ref string token");
+        H.assertEqual(doc.documentElement.style.getPropertyValue("--we-fg").trim(), "rgb(64, 128, 32)", "--we-fg applied");
+        H.assertEqual(doc.documentElement.style.getPropertyValue("--we-bg-subtle").trim(), "rgb(240, 248, 230)", "--we-bg-subtle applied");
+        applyMixed.click();
+        await H.sleep(100);
+        H.assertEqual((mixedText.textContent || "").trim(), "mixed:6|solar", "theme-token-ref mixed values");
+        H.assertEqual(doc.documentElement.style.getPropertyValue("--we-radius").trim(), "6", "numeric token stringified");
+        H.assertEqual(doc.documentElement.style.getPropertyValue("--we-mode").trim(), "solar", "symbol token stringified");
+        H.setStatus("PASS\ntheme-token-api contract: set/ref/set-many + mixed values", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -108,6 +108,7 @@
       "test-browser-toolbar.html",
       "test-browser-divider.html",
       "test-browser-choice-labeled.html",
+      "test-browser-choice-decode-contract.html",
       "test-browser-choice-keyboard-deep.html",
       "test-browser-dropdown-labeled.html",
       "test-browser-button-icons.html",
@@ -141,6 +142,10 @@
       "test-browser-dialog-close-reason-contract.html",
       "test-browser-tab-close-style-contract.html",
       "test-browser-menu-typeahead-contract.html",
+      "test-browser-menu-typeahead-timeout-contract.html",
+      "test-browser-dropdown-focus-return-contract.html",
+      "test-browser-table-align-contract.html",
+      "test-browser-dialog-no-desc-contract.html",
       "test-browser-tab-aria-linkage-contract.html",
       "test-browser-tab-aria-dynamic-contract.html",
       "test-browser-menu-aria-state-contract.html",
@@ -215,6 +220,7 @@
       "test-browser-parity-menu-keys.html",
       "test-browser-parity-menu-full.html",
       "test-browser-parity-dropdown.html",
+      "test-browser-parity-choice-decode-contract.html",
       "test-browser-parity-choice-keyboard-deep.html",
       "test-browser-parity-navigation-bar.html",
       "test-browser-parity-tooltip.html",
@@ -235,6 +241,10 @@
       "test-browser-parity-dialog-close-reason-contract.html",
       "test-browser-parity-tab-close-style-contract.html",
       "test-browser-parity-menu-typeahead-contract.html",
+      "test-browser-parity-menu-typeahead-timeout-contract.html",
+      "test-browser-parity-dropdown-focus-return-contract.html",
+      "test-browser-parity-table-align-contract.html",
+      "test-browser-parity-dialog-no-desc-contract.html",
       "test-browser-parity-tab-aria-linkage-contract.html",
       "test-browser-parity-tab-aria-dynamic-contract.html",
       "test-browser-parity-menu-aria-state-contract.html",
@@ -245,6 +255,13 @@
       "test-browser-parity-release.html",
       "test-browser-parity-workspace.html"
     ];
+
+    const timeoutByPage = {
+      "test-browser-keyboard-contract.html": 30000,
+      "test-browser-parity-keyboard-contract.html": 30000,
+      "test-browser-menu-typeahead-timeout-contract.html": 25000,
+      "test-browser-parity-menu-typeahead-timeout-contract.html": 25000
+    };
 
     function sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
@@ -284,7 +301,7 @@
       tbody.appendChild(tr);
     }
 
-    async function runOne(page) {
+    async function runOne(page, timeoutMs) {
       const frame = document.createElement("iframe");
       frame.style.position = "absolute";
       frame.style.left = "-10000px";
@@ -295,7 +312,6 @@
       frame.src = page;
       document.body.appendChild(frame);
 
-      const timeoutMs = 30000;
       const start = Date.now();
 
       while (Date.now() - start < timeoutMs) {
@@ -351,7 +367,8 @@
     (async function runAll() {
       const results = [];
       for (const page of tests) {
-        const result = await runOne(page);
+        const timeoutMs = timeoutByPage[page] || 30000;
+        const result = await runOne(page, timeoutMs);
         results.push(result);
         appendRow(page, result.ok ? "PASS" : "FAIL", result.message, result.durationMs);
       }

@@ -26,6 +26,9 @@
 ;;   backend-set-single-child!  Replace node children with a single child.
 ;;   backend-replace-children! Replace node children with a child list.
 ;;   backend-mount-root!     Mount a root node into a host container (no-op here).
+;;   backend-scrollspy-observe-scroll!  Register scroll observer callback (no-op here).
+;;   backend-scrollspy-scroll-into-view! Scroll section node into view (no-op here).
+;;   backend-scrollspy-active-id  Compute active scrollspy id from section bindings.
 
 (define-values
   (dom-node
@@ -46,7 +49,10 @@
    backend-append-child!
    backend-set-single-child!
    backend-replace-children!
-   backend-mount-root!)
+   backend-mount-root!
+   backend-scrollspy-observe-scroll!
+   backend-scrollspy-scroll-into-view!
+   backend-scrollspy-active-id)
   (let ()
     (struct dom-node (tag attrs children text on-click on-change) #:mutable #:transparent)
 
@@ -78,6 +84,23 @@
     (define (backend-mount-root! _root [_container #f])
       (void))
 
+    ;; backend-scrollspy-observe-scroll! : dom-node? (-> void?) (-> (-> void?) void?) -> void?
+    ;;   No-op scroll observer registration for non-browser backend.
+    (define (backend-scrollspy-observe-scroll! _container _callback _register-cleanup!)
+      (void))
+
+    ;; backend-scrollspy-scroll-into-view! : dom-node? -> void?
+    ;;   No-op section scrolling in non-browser backend.
+    (define (backend-scrollspy-scroll-into-view! _section-node)
+      (void))
+
+    ;; backend-scrollspy-active-id : list? -> any/c
+    ;;   Return first section id (fallback behavior for non-browser backend).
+    (define (backend-scrollspy-active-id section-bindings)
+      (if (pair? section-bindings)
+          (caar section-bindings)
+          #f))
+
     (values dom-node
             dom-node?
             dom-node-tag
@@ -96,4 +119,7 @@
             backend-append-child!
             backend-set-single-child!
             backend-replace-children!
-            backend-mount-root!)))
+            backend-mount-root!
+            backend-scrollspy-observe-scroll!
+            backend-scrollspy-scroll-into-view!
+            backend-scrollspy-active-id)))

@@ -5,6 +5,7 @@
 ;; Manual visual sanity page for styled widgets in one place.
 
 (include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-format.rkt" read-syntax/skip-first-line)
 
 ;; Constants for choice values.
 (define mode/basic   "basic") ; Basic mode value.

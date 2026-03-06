@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser parity theme progress-vars smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser parity theme progress-vars assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-progress" title="web-easy parity theme progress vars app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function normalizedCssColor(v) {
+      return (v || "").replace(/\s+/g, "").toLowerCase();
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const progress = frameDoc.querySelector("progress");
+          const successBtn = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "set-success");
+          const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "set-error");
+          if (progress && successBtn && errorBtn) {
+            return { frameDoc, progress, successBtn, errorBtn };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity theme progress-vars smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        ui.successBtn.click();
+        await sleep(80);
+        ui.frameDoc.documentElement.style.setProperty("--we-progress-success", "rgb(30, 160, 80)");
+        await sleep(80);
+        assertTrue(
+          normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(30,160,80)",
+          "success accent follows --we-progress-success"
+        );
+
+        ui.errorBtn.click();
+        await sleep(80);
+        ui.frameDoc.documentElement.style.setProperty("--we-progress-error", "rgb(170, 30, 120)");
+        await sleep(80);
+        assertTrue(
+          normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(170,30,120)",
+          "error accent follows --we-progress-error"
+        );
+
+        setStatus("PASS\nparity progress variant accent colors follow progress theme tokens", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

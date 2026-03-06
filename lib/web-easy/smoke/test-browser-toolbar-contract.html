@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy toolbar contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 260px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running toolbar contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=toolbar" title="web-easy toolbar contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(frame, "./generated/example-browser-smoke-all.html?test=toolbar", (d) => d.querySelectorAll("[data-we-widget='toolbar-group']").length >= 2, 20000);
+        H.assertNoForbiddenAttrTokens(doc, "toolbar-contract");
+        H.assertNoInlineWidgetStyles(doc, "toolbar-contract");
+        const toolbar = doc.querySelector("[data-we-widget='toolbar']");
+        const groups = doc.querySelectorAll("[data-we-widget='toolbar-group']");
+        const publish = Array.from(doc.querySelectorAll("button")).find((e) => (e.textContent || "").trim() === "publish");
+        const statusText = Array.from(doc.querySelectorAll("[data-we-widget='text']")).find((e) => (e.textContent || "").trim().startsWith("status:"));
+        H.assertEqual(toolbar.getAttribute("class"), "we-toolbar", "toolbar class");
+        H.assertEqual(groups[0].getAttribute("class"), "we-toolbar-group", "toolbar-group class");
+        publish.click();
+        await H.sleep(100);
+        H.assertEqual((statusText.textContent || "").trim(), "status:publish", "publish action updates status");
+        H.setStatus("PASS\ntoolbar contract: structure classes + action update", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

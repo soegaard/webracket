@@ -99,7 +99,7 @@
         const frameWin = frame.contentWindow;
 
         assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "parity dropdown aria-expanded initial");
-        assertTrue(["true", "menu"].includes(ui.trigger.getAttribute("aria-haspopup")), "parity dropdown aria-haspopup");
+        assertEqual(ui.trigger.getAttribute("aria-haspopup"), "menu", "parity dropdown aria-haspopup");
         assertEqual(ui.popup.getAttribute("class"), "we-menu-popup", "parity dropdown popup class initial");
 
         const marker = pseudoContent(frameWin, ui.trigger, "::after");

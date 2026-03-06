@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser dropdown-labeled smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 260px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser dropdown-labeled smoke assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=dropdown-labeled" title="web-easy dropdown-labeled smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) { const status = document.getElementById("status"); status.textContent = text; status.className = cls; }
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+    function frameDocFrom(frame) { return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document); }
+    function assertEqual(got, want, label) { if (got !== want) { throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got)); } }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const trigger = frameDoc.querySelector("[data-we-widget='menu-label']");
+          const selectedText = Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+            .find((e) => e.textContent.trim().startsWith("selected:"));
+          if (trigger && selectedText) {
+            return { frameDoc, trigger, selectedText };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for dropdown-labeled smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        assertEqual(ui.selectedText.textContent.trim(), "selected:none", "initial selected");
+        ui.trigger.click();
+        await sleep(80);
+        const highItem = Array.from(ui.frameDoc.querySelectorAll("[data-we-widget='menu-item']"))
+          .find((e) => e.textContent.trim() === "High");
+        highItem.click();
+        await sleep(100);
+        assertEqual(ui.selectedText.textContent.trim(), "selected:high", "selected after click");
+        setStatus("PASS\ndropdown labeled entries decode to selected id", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

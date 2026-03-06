@@ -24,6 +24,7 @@ Use `headless.sh` from `lib/web-easy/smoke`:
 ./headless.sh smoke
 ./headless.sh parity
 ./headless.sh dashboards
+./headless.sh ci-fast
 ./headless.sh ci
 ./headless.sh timings
 ./headless.sh guard
@@ -81,6 +82,16 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Deep keyboard contract (choice, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-choice-keyboard-deep.html` |
 | Dynamic tab ARIA contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tab-aria-dynamic-contract.html` |
 | Dynamic tab ARIA contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-tab-aria-dynamic-contract.html` |
+| Table-align contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-table-align-contract.html` |
+| Table-align contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-table-align-contract.html` |
+| Dialog no-desc contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dialog-no-desc-contract.html` |
+| Dialog no-desc contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dialog-no-desc-contract.html` |
+| Menu typeahead-timeout contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-typeahead-timeout-contract.html` |
+| Menu typeahead-timeout contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-menu-typeahead-timeout-contract.html` |
+| Dropdown focus-return contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dropdown-focus-return-contract.html` |
+| Dropdown focus-return contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dropdown-focus-return-contract.html` |
+| Choice decode contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-choice-decode-contract.html` |
+| Choice decode contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-choice-decode-contract.html` |
 
 ## Make Targets
 
@@ -123,6 +134,25 @@ Available utility commands:
 - Core smoke pages compile via `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile via `example-browser-parity-all.rkt` selected by `?test=...`.
 - Repeated iframe harness helpers are centralized in `smoke-harness.js` for new/updated pages.
+- Contract dashboards are split to avoid monolithic headless timeout risk:
+  - `test-browser-contract-dashboard-core.html`
+  - `test-browser-contract-dashboard-parity.html`
+  - wrapper: `test-browser-contract-dashboard.html`
+
+## Single-Page Debug Loop
+
+Fastest iteration path for one failing page:
+
+1. Compile once:
+   - `./check-smoke.sh`
+2. Re-run one page headless with compile skipped:
+   - `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-<page>.html`
+   - parity variant: `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-<page>.html`
+3. Repeat step 2 while editing.
+
+For lean CI parity with local behavior:
+
+- `SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast`
 
 ## Layout Recipes Demo
 

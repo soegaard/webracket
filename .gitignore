@@ -5,3 +5,4 @@ compiled/
 *.bak
 \#*
 .\#*
+/.local-tools/

@@ -601,10 +601,10 @@ html.we-theme-solar .showcase-topbar-inner.we-inline {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 html.we-theme-solar .showcase-brand.we-stack {
@@ -623,9 +623,11 @@ html.we-theme-solar .showcase-brand-subtitle {
 }
 
 html.we-theme-solar .showcase-topbar-controls.we-stack {
-  align-items: flex-start;
+  align-items: stretch;
   gap: 8px;
   justify-content: flex-start;
+  width: 672px;
+  min-width: 672px;
 }
 
 html.we-theme-solar .showcase-controls-label {
@@ -636,8 +638,8 @@ html.we-theme-solar .showcase-controls-label {
 }
 
 html.we-theme-solar .showcase-theme-choice.we-choice {
-  min-width: 170px;
-  width: 170px;
+  min-width: 672px;
+  width: 672px;
   font-size: 14px;
   text-transform: capitalize;
 }
@@ -645,7 +647,7 @@ html.we-theme-solar .showcase-theme-choice.we-choice {
 html.we-theme-solar .showcase-controls-download-row.we-toolbar {
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 html.we-theme-solar .showcase-topbar-controls .we-choice,

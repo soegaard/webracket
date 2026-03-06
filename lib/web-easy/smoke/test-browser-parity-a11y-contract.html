@@ -93,7 +93,7 @@
       assertTrue(items.length >= 4, "parity menu items present");
 
       labels.forEach((label, idx) => {
-        assertTrue(label.getAttribute("aria-haspopup") === "true", "parity label aria-haspopup true [" + idx + "]");
+        assertTrue(label.getAttribute("aria-haspopup") === "menu", "parity label aria-haspopup menu [" + idx + "]");
         const controls = label.getAttribute("aria-controls");
         assertTrue(!!controls, "parity label aria-controls present [" + idx + "]");
         const popup = frameDoc.getElementById(controls);

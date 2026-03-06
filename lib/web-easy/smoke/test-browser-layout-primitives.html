@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser layout-primitives smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser layout-primitives assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=layout-primitives" title="web-easy layout-primitives app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const container = frameDoc.querySelector('[data-we-widget="container"]');
+          const stack = frameDoc.querySelector('[data-we-widget="stack"]');
+          const inline = frameDoc.querySelector('[data-we-widget="inline"]');
+          const grid = frameDoc.querySelector('[data-we-widget="grid"]');
+          const spacer = frameDoc.querySelector('[data-we-widget="spacer"]');
+          if (container && stack && inline && grid && spacer) {
+            return { frameDoc, container, stack, inline, grid, spacer };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for layout-primitives smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const style = ui.spacer.getAttribute("style") || "";
+        assertTrue(style.includes("flex-grow:2"), "spacer grow style");
+        assertTrue(ui.container.querySelector('[data-we-widget="stack"]') !== null, "stack inside container");
+        assertTrue(ui.stack.querySelector('[data-we-widget="inline"]') !== null, "inline inside stack");
+        assertTrue(ui.stack.querySelector('[data-we-widget="grid"]') !== null, "grid inside stack");
+        assertTrue(ui.grid.children.length >= 2, "grid has children");
+
+        setStatus("PASS\ncontainer/stack/inline/grid/spacer present with basic structure", "pass");
+      } catch (err) {
+        console.error(err);
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: container=" + frameDoc.querySelectorAll('[data-we-widget=\"container\"]').length +
+             " stack=" + frameDoc.querySelectorAll('[data-we-widget=\"stack\"]').length +
+             " inline=" + frameDoc.querySelectorAll('[data-we-widget=\"inline\"]').length +
+             " grid=" + frameDoc.querySelectorAll('[data-we-widget=\"grid\"]').length +
+             " spacer=" + frameDoc.querySelectorAll('[data-we-widget=\"spacer\"]').length)
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

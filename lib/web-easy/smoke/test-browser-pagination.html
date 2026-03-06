@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy browser pagination smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser pagination smoke assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=pagination" title="web-easy pagination smoke app"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) {
+        throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const nav = frameDoc.querySelector("[data-we-widget='pagination']");
+          const next = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "Next");
+          if (nav && next) {
+            return { frameDoc, nav, next };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for pagination smoke UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const buttons = Array.from(ui.frameDoc.querySelectorAll("[data-we-widget='page-button']"));
+        const page2 = buttons.find((b) => b.textContent.trim() === "2");
+        const page3 = buttons.find((b) => b.textContent.trim() === "3");
+        assertEqual(page2.getAttribute("class"), "we-page-btn is-current", "initial current page");
+
+        ui.next.click();
+        await sleep(100);
+        const buttonsAfter = Array.from(ui.frameDoc.querySelectorAll("[data-we-widget='page-button']"));
+        const page3After = buttonsAfter.find((b) => b.textContent.trim() === "3");
+        assertEqual(page3After.getAttribute("class"), "we-page-btn is-current", "current page after next");
+        setStatus("PASS\npagination updates selected page", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

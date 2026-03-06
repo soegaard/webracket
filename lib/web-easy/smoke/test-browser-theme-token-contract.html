@@ -85,6 +85,10 @@
       assertTrue(value.length > 0, tokenName + " is defined");
     }
 
+    function assertHook(frameDoc, selector, label) {
+      assertTrue(!!frameDoc.querySelector(selector), label + " hook present");
+    }
+
     async function checkMenuBarBgToken(frame, timeoutMs) {
       const doc = await loadCase(
         frame,
@@ -149,6 +153,75 @@
       assertTrue(after !== before, "breadcrumb separator color changed after token override");
     }
 
+    async function checkOffcanvasBgToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=offcanvas",
+        (d) => d.querySelector(".we-offcanvas-panel"),
+        timeoutMs
+      );
+      const panel = doc.querySelector(".we-offcanvas-panel");
+      const before = normalizedCssColor(getComputedStyle(panel).backgroundColor);
+      doc.documentElement.style.setProperty("--we-bg", "rgb(240, 244, 252)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(panel).backgroundColor);
+      assertTrue(after === "rgb(240,244,252)", "offcanvas panel background updates from --we-bg");
+      assertTrue(after !== before, "offcanvas panel background changed after token override");
+    }
+
+    async function checkScrollspySelectedToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=scrollspy",
+        (d) => d.querySelector(".we-scrollspy-item"),
+        timeoutMs
+      );
+      const docs = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
+        .find((n) => n.textContent.trim() === "Docs");
+      docs.click();
+      await sleep(80);
+      const docsAfterClick = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
+        .find((n) => n.textContent.trim() === "Docs");
+      const before = normalizedCssColor(getComputedStyle(docsAfterClick).backgroundColor);
+      doc.documentElement.style.setProperty("--we-bg-selected", "rgb(225, 240, 210)");
+      await sleep(80);
+      const docsAfterToken = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
+        .find((n) => n.textContent.trim() === "Docs");
+      const after = normalizedCssColor(getComputedStyle(docsAfterToken).backgroundColor);
+      assertTrue(after === "rgb(225,240,210)", "scrollspy current item background updates from --we-bg-selected");
+      assertTrue(after !== before, "scrollspy current item background changed after token override");
+    }
+
+    async function checkScrollspyThemeHooks(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=scrollspy",
+        (d) => d.querySelector("[data-we-widget='scrollspy-item']"),
+        timeoutMs
+      );
+      assertHook(doc, "[data-we-widget='scrollspy'].we-scrollspy", "scrollspy");
+      assertHook(doc, "[data-we-widget='scrollspy-nav'].we-scrollspy-nav", "scrollspy nav");
+      assertHook(doc, "[data-we-widget='scrollspy-sections'].we-scrollspy-sections", "scrollspy sections");
+      assertHook(doc, "[data-we-widget='scrollspy-section'].we-scrollspy-section", "scrollspy section");
+      assertHook(doc, "[data-we-widget='scrollspy-item'].we-scrollspy-item", "scrollspy item");
+    }
+
+    async function checkCloseButtonIconToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=close-button",
+        (d) => d.querySelector("[data-we-widget='close-button-icon']"),
+        timeoutMs
+      );
+      const icon = doc.querySelector("[data-we-widget='close-button-icon']");
+      const before = normalizedCssColor(getComputedStyle(icon).color);
+      doc.documentElement.style.setProperty("--we-fg", "rgb(13, 97, 163)");
+      await sleep(80);
+      const after = normalizedCssColor(getComputedStyle(icon).color);
+      assertTrue(after === "rgb(13,97,163)", "close-button icon color updates from --we-fg");
+      assertTrue(after !== before, "close-button icon color changed after token override");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -182,9 +255,13 @@
         await checkCardBgToken(frame, timeoutMs);
         await checkSelectedBgToken(frame, timeoutMs);
         await checkMutedFgToken(frame, timeoutMs);
+        await checkOffcanvasBgToken(frame, timeoutMs);
+        await checkScrollspySelectedToken(frame, timeoutMs);
+        await checkScrollspyThemeHooks(frame, timeoutMs);
+        await checkCloseButtonIconToken(frame, timeoutMs);
 
         setStatus(
-          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb",
+          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb/offcanvas/scrollspy/close-icon",
           "pass"
         );
       } catch (err) {

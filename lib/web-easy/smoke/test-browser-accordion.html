@@ -62,9 +62,12 @@
         if (frameDoc) {
           const buttons = Array.from(frameDoc.querySelectorAll("button"));
           const details = buttons.find((b) => b.textContent.trim() === "Details");
+          const overview = buttons.find((b) => b.textContent.trim() === "Overview");
+          const selectedText = Array.from(frameDoc.querySelectorAll("[data-we-widget='text']"))
+            .find((e) => e.textContent.trim().startsWith("selected:"));
           const collapses = frameDoc.querySelectorAll("[data-we-widget='collapse']");
-          if (details && collapses.length >= 2) {
-            return { frameDoc, details, collapses };
+          if (details && overview && selectedText && collapses.length >= 2) {
+            return { frameDoc, details, overview, selectedText, collapses };
           }
         }
         await sleep(25);
@@ -94,7 +97,11 @@
 
         assertEqual(firstCollapse.getAttribute("class"), "we-collapse", "first section closes after switch");
         assertEqual(secondCollapse.getAttribute("class"), "we-collapse is-open", "second section opens after switch");
-        setStatus("PASS\naccordion toggles open section", "pass");
+
+        ui.details.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
+        await sleep(100);
+        assertEqual(ui.selectedText.textContent.trim(), "selected:overview", "accordion Home key selects first section");
+        setStatus("PASS\naccordion click + keyboard navigation", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

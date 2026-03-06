@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity scrollspy smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #current {
+      padding: 8px;
+      border: 1px dashed #999;
+      margin-bottom: 12px;
+    }
+    #app-frame { width: 100%; height: 240px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity scrollspy smoke assertions...</div>
+  <div id="current">outside parity-current: (loading...)</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-scrollspy"></iframe>
+  <script>
+    function setStatus(t, c) {
+      const s = document.getElementById('status');
+      s.textContent = t;
+      s.className = c;
+    }
+    function setCurrent(t) {
+      const c = document.getElementById('current');
+      c.textContent = 'outside ' + t;
+    }
+    function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+    function frameDocFrom(f) { return f.contentDocument || (f.contentWindow && f.contentWindow.document); }
+    function assertEqual(g, w, l) {
+      if (g !== w) throw new Error(l + ': expected ' + JSON.stringify(w) + ', got ' + JSON.stringify(g));
+    }
+    function currentText(d) {
+      const txt = [...d.querySelectorAll("[data-we-widget='text']")]
+        .find((n) => n.textContent.trim().startsWith('parity-current:'));
+      return txt ? txt.textContent.trim() : null;
+    }
+    function startCurrentMirror(frame) {
+      return setInterval(() => {
+        const d = frameDocFrom(frame);
+        if (!d) return;
+        const t = currentText(d);
+        if (t) setCurrent(t);
+      }, 100);
+    }
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const d = frameDocFrom(frame);
+        if (d) {
+          const home = [...d.querySelectorAll("[data-we-widget='scrollspy-item']")]
+            .find((n) => n.textContent.trim() === 'Home');
+          const txt = currentText(d);
+          if (home && txt) return { d, home };
+        }
+        await sleep(25);
+      }
+      throw new Error('Timed out waiting for parity scrollspy smoke UI');
+    }
+
+    (async () => {
+      let mirror = null;
+      try {
+        const f = document.getElementById('app-frame');
+        await new Promise((res, rej) => {
+          const t = setTimeout(() => rej(new Error('Timed out loading iframe')), 2e4);
+          f.addEventListener('load', () => { clearTimeout(t); res(); }, { once: true });
+        });
+        mirror = startCurrentMirror(f);
+        const ui = await waitForUI(f, 2e4);
+        ui.home.click();
+        await sleep(80);
+        const txtAfter = currentText(ui.d);
+        assertEqual(txtAfter, 'parity-current:home', 'current id after click');
+        setStatus('PASS\nparity scrollspy click updates current id', 'pass');
+      } catch (err) {
+        console.error(err);
+        setStatus('FAIL\n' + (err && err.message ? err.message : String(err)), 'fail');
+      } finally {
+        if (mirror) clearInterval(mirror);
+      }
+    })();
+  </script>
+</body>
+</html>

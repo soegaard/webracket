@@ -119,6 +119,21 @@
       assertHook(frameDoc, "[data-we-widget='menu-item'].we-menu-item", "menu item");
     }
 
+    function checkMenuStateHooks(frameDoc) {
+      const label = frameDoc.querySelector("[data-we-widget='menu-label'].we-menu-label");
+      const popup = frameDoc.querySelector("[data-we-widget='menu-popup'].we-menu-popup");
+      assertTrue(!!label, "menu state label present");
+      assertTrue(!!popup, "menu state popup present");
+
+      label.click();
+      assertTrue(label.getAttribute("aria-expanded") === "true", "menu label aria-expanded true after click");
+      assertTrue(popup.className.includes("is-open"), "menu popup has is-open class after click");
+
+      label.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      assertTrue(label.getAttribute("aria-expanded") === "false", "menu label aria-expanded false after Escape");
+      assertTrue(!popup.className.includes("is-open"), "menu popup closes after Escape");
+    }
+
     function checkTabHooks(frameDoc) {
       assertHook(frameDoc, "[data-we-widget='tab-panel'].we-tab-panel", "tab panel");
       assertHook(frameDoc, "[data-we-widget='tab-list'].we-tab-list", "tab list");
@@ -190,6 +205,36 @@
       assertHook(frameDoc, "[data-we-widget='accordion-trigger'].we-accordion-trigger", "accordion trigger");
     }
 
+    function checkOffcanvasHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='offcanvas'].we-offcanvas", "offcanvas");
+      assertHook(frameDoc, "[data-we-widget='offcanvas-panel'].we-offcanvas-panel", "offcanvas panel");
+      assertHook(frameDoc, "[data-we-widget='offcanvas-backdrop'].we-offcanvas-backdrop", "offcanvas backdrop");
+      assertHook(frameDoc, "[data-we-widget='close-button'].we-close-button", "offcanvas close button");
+    }
+
+    function checkCloseButtonHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='close-button'].we-close-button", "close-button");
+      assertHook(frameDoc, "[data-we-widget='close-button-icon'].we-close-button-icon", "close-button icon");
+    }
+
+    function checkPlaceholderHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='placeholder'].we-placeholder", "placeholder");
+    }
+
+    function checkCarouselHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='carousel'].we-carousel", "carousel");
+      assertHook(frameDoc, "[data-we-widget='carousel-viewport'].we-carousel-viewport", "carousel viewport");
+      assertHook(frameDoc, "[data-we-widget='carousel-indicator'].we-carousel-indicator", "carousel indicator");
+    }
+
+    function checkScrollspyHooks(frameDoc) {
+      assertHook(frameDoc, "[data-we-widget='scrollspy'].we-scrollspy", "scrollspy");
+      assertHook(frameDoc, "[data-we-widget='scrollspy-nav'].we-scrollspy-nav", "scrollspy nav");
+      assertHook(frameDoc, "[data-we-widget='scrollspy-sections'].we-scrollspy-sections", "scrollspy sections");
+      assertHook(frameDoc, "[data-we-widget='scrollspy-section'].we-scrollspy-section", "scrollspy section");
+      assertHook(frameDoc, "[data-we-widget='scrollspy-item'].we-scrollspy-item", "scrollspy item");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -226,6 +271,7 @@
           timeoutMs
         );
         checkMenuHooks(menuDoc);
+        checkMenuStateHooks(menuDoc);
 
         const tabDoc = await loadCase(
           frame,
@@ -338,6 +384,46 @@
           timeoutMs
         );
         checkAccordionHooks(accordionDoc);
+
+        const offcanvasDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=offcanvas",
+          (d) => d.querySelector("[data-we-widget='offcanvas-panel']"),
+          timeoutMs
+        );
+        checkOffcanvasHooks(offcanvasDoc);
+
+        const closeButtonDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=close-button",
+          (d) => d.querySelector("[data-we-widget='close-button']"),
+          timeoutMs
+        );
+        checkCloseButtonHooks(closeButtonDoc);
+
+        const placeholderDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=placeholder",
+          (d) => d.querySelector("[data-we-widget='placeholder']"),
+          timeoutMs
+        );
+        checkPlaceholderHooks(placeholderDoc);
+
+        const carouselDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=carousel",
+          (d) => d.querySelector("[data-we-widget='carousel-indicator']"),
+          timeoutMs
+        );
+        checkCarouselHooks(carouselDoc);
+
+        const scrollspyDoc = await loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=scrollspy",
+          (d) => d.querySelector("[data-we-widget='scrollspy-item']"),
+          timeoutMs
+        );
+        checkScrollspyHooks(scrollspyDoc);
 
         setStatus("PASS\nstyle hook contract: class + data-we-widget markers stable", "pass");
       } catch (err) {

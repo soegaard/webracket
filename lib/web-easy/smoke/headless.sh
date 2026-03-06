@@ -20,6 +20,7 @@ Modes:
   style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
   dashboards               Run contract dashboard and full smoke dashboard
+  ci-fast                  Run lean CI path (smoke dashboard + key core contracts)
   ci                       Run dashboards + theme dashboard and guard self-test
   timings                  Run contract/smoke/parity/theme/style (skip compile) and print combined top timings
   guard                    Run dashboard guard self-test
@@ -36,6 +37,7 @@ Examples:
   ./headless.sh style
   ./headless.sh theme
   ./headless.sh dashboards
+  ./headless.sh ci-fast
   ./headless.sh ci
   ./headless.sh timings
   ./headless.sh guard
@@ -57,6 +59,7 @@ deep	Run deep keyboard contract pages only
 style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
 dashboards	Run contract dashboard and full smoke dashboard
+ci-fast	Run lean CI path (smoke dashboard + key core contracts)
 ci	Run dashboards + theme dashboard and guard self-test
 timings	Run contract/smoke/parity/theme/style with compile skipped and print combined top timings
 guard	Run dashboard guard self-test
@@ -173,6 +176,20 @@ case "$1" in
       SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-contract-headless.sh" "$@"
       SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
     fi
+    ;;
+  ci-fast)
+    shift
+    if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
+      "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
+    else
+      "$SCRIPT_DIR/check-smoke.sh"
+      SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-smoke-headless.sh" "$@"
+    fi
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-a11y-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-keyboard-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-dropdown-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-dialog-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-menu-typeahead-contract.html
     ;;
   ci)
     shift
