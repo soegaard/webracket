@@ -92,6 +92,13 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Dropdown focus-return contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dropdown-focus-return-contract.html` |
 | Choice decode contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-choice-decode-contract.html` |
 | Choice decode contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-choice-decode-contract.html` |
+| Tooltip contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tooltip-contract.html` |
+| Tooltip contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-tooltip-contract.html` |
+| Modal contract (core, dialog-backed) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-modal-contract.html` |
+| Modal contract (parity, dialog-backed) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-modal-contract.html` |
+| Toast behavior contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-toast-behavior-contract.html` |
+| Toast behavior contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-toast-behavior-contract.html` |
+| Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
 
 ## Make Targets
 

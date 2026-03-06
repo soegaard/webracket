@@ -13,6 +13,7 @@ if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
 else
   "$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-all-compile.sh"
+  "$SCRIPT_DIR/run-browser-theme-showcase-compile.sh"
 fi
 
 if ! command -v raco >/dev/null 2>&1; then
