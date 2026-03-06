@@ -81,11 +81,16 @@
 (define exec-path-from-shell-shell-name
   #f) ; if #f, use (getenv "SHELL") or error
 
-(define exec-path-from-shell-arguments
-  (let ([sh (or exec-path-from-shell-shell-name (getenv "SHELL"))])
-    (cond [(and sh (regexp-match? #rx"t?csh$" sh)) '("-d")]
-          [(and sh (regexp-match? #rx"fish" sh))   '("-l")]
-          [else                                    '("-l")])))
+(define (shell->string sh)
+  (cond [(path? sh)   (path->string sh)]
+        [(string? sh) sh]
+        [else         #f]))
+
+(define (shell-arguments sh)
+  (define shs (shell->string sh))
+  (cond [(and shs (regexp-match? #rx"t?csh(\\.exe)?$" shs)) '("-d")]
+        [(and shs (regexp-match? #rx"fish(\\.exe)?$" shs)) '("-l")]
+        [else                                              '("-l")]))
 
 
 
@@ -147,14 +152,19 @@
 (define (shell-to-use)
   (or exec-path-from-shell-shell-name
       (getenv "SHELL")
-      (error 'exec-path-from-shell "SHELL environment variable is unset")))
+      (and (eq? (system-type 'os) 'windows)
+           (or (find-executable-path "bash")
+               (find-executable-path "sh")))
+      #f))
 
 (define (nushell? sh)
-  (and sh (regexp-match? #rx"nu$" sh)))
+  (define shs (shell->string sh))
+  (and shs (regexp-match? #rx"nu(\\.exe)?$" shs)))
 
 (define (standard-shell? sh)
   ;; supports ${VAR-default}
-  (not (regexp-match? #rx"(fish|nu|t?csh)$" sh)))
+  (define shs (shell->string sh))
+  (not (and shs (regexp-match? #rx"(fish|nu|t?csh)(\\.exe)?$" shs))))
 
 (define (now-ms)
   (current-inexact-monotonic-milliseconds))
@@ -189,8 +199,11 @@
 
 
 (define (run-shell-c shell args)
+  (unless shell
+    (error 'exec-path-from-shell
+           "No shell available. Set SHELL or install a POSIX shell (bash/sh)."))
   (define start (now-ms))
-  (define argv  (append exec-path-from-shell-arguments args))
+  (define argv  (append (shell-arguments shell) args))
 
   ;; subprocess returns: proc, stdout-in, stdin-out, stderr-in
   (define-values (proc p-stdout p-stdin p-stderr)
@@ -308,9 +321,13 @@
 
 (define (exec-path-from-shell-getenvs names)
   (define sh (shell-to-use))
-  (if (nushell? sh)
-      (getenvs-nushell names)
-      (getenvs-standard names)))
+  (cond
+    [sh
+     (if (nushell? sh)
+         (getenvs-nushell names)
+         (getenvs-standard names))]
+    [else
+     (for/list ([n names]) (cons n #f))]))
 
 (define (exec-path-from-shell-getenv name)
   (define p (assoc name (exec-path-from-shell-getenvs (list name))))
